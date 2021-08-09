@@ -1,27 +1,13 @@
-cmake_minimum_required(VERSION 3.20 REQUIRED)
+cmake_minimum_required(VERSION 3.20)
 
-project(Logging_Project)
+project(Serenity_Sandbox)
 
-set(Logger_Header_Files
+option(BUILD_SANDBOX    "Build The Sandbox Project Alongside The Library"   ON)
 
-)
+add_subdirectory(Serenity)
+if(BUILD_SANDBOX)
+    add_subdirectory(Sandbox)
+endif()
 
-set(Logger_Header_Files
-
-)
 
 
-add_library(serenity
-STATIC
-${Logger_Header_Files}
-${Logger_Header_Files}
-)
-set_target_properties(
-${serenity}
-PROPERTIES
-CMAKE_ARCHIVE_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/lib
-CMAKE_LIBRARY_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/lib
-CMAKE_RUNTIME_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/bin
-OUTPUT_NAME "serenity"
-CMAKE_DEBUG_POSTFIX "_d.lib"
-)
