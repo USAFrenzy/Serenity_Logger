@@ -1,8 +1,12 @@
-set(PROJECT_NAME Sandbox)
+set (PROJECT_NAME Sandbox)
 
-set(SANDBOX_HEADER_FILES)
-set(SANDBOX_SOURCE_FILES "src/demoTestMain.cpp")
-set(SANDBOX_ALL_FILES ${SANDBOX_HEADER_FILES} ${SANDBOX_SOURCE_FILES})
+set (SANDBOX_HEADER_FILES)
+set (SANDBOX_SOURCE_FILES "src/demoTestMain.cpp")
+set (SANDBOX_ALL_FILES ${SANDBOX_HEADER_FILES} ${SANDBOX_SOURCE_FILES})
 
-add_executable(${PROJECT_NAME} ${SANDBOX_ALL_FILES})
-target_link_libraries(${PROJECT_NAME} LINK_PUBLIC Serenity)
+add_executable (${PROJECT_NAME} ${SANDBOX_ALL_FILES})
+target_link_libraries (
+    ${PROJECT_NAME}
+    LINK_PUBLIC
+    Serenity
+)
