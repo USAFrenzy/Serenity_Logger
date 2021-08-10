@@ -5,5 +5,7 @@
 int main()
 {
     PrintHello();
-
+    Logger log;
+    log.SetLoggerLevel(LoggerLevel::info);
+    
 }
