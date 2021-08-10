@@ -1,9 +1,8 @@
 #include "serenity/initialTest.hpp"
+#include <spdlog/spdlog.h>
 
-
-#include <iostream>
 
 void PrintHello()
 {
-    std::cout << "Hello From The Library Linked To Sandbox!\n";
+	spdlog::info("Hello from the spdlog world in the serenity library!");
 }
