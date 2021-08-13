@@ -5,6 +5,7 @@ set (SANDBOX_SOURCE_FILES "src/demoTestMain.cpp")
 set (SANDBOX_ALL_FILES ${SANDBOX_HEADER_FILES} ${SANDBOX_SOURCE_FILES})
 
 add_executable (${PROJECT_NAME} ${SANDBOX_ALL_FILES})
+set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 target_link_libraries (
     ${PROJECT_NAME}
     LINK_PUBLIC

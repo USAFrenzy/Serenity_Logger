@@ -1,4 +1,4 @@
 @echo off
 pushd ..
-RMDIR /S /Q build
+RMDIR  /S /Q build
 popd
