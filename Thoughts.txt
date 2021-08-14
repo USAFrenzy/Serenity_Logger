@@ -1,0 +1,5 @@
+- Just had a thought on possibly creating struct types for each sink that would have a variable of LogFileInfo so that 
+  I could possibly make the LogFileInfo struct smaller in size but more useful in ease of setup.
+- Could Also Possibly create namespace functions similar to InitializeSinks(), CreateSinks, InitializeLoggers()
+  in where these functions would be the default setup for each sink above and then in the Logger class, actually
+  go ahead and implement the targeted changes if a user would like to override the default settings that way.
