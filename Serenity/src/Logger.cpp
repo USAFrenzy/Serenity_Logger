@@ -20,9 +20,15 @@ void PrintHello( )
 std::shared_ptr<spdlog::logger> Logger::m_internalLogger;
 std::shared_ptr<spdlog::logger> Logger::m_clientLogger;
 
-Logger::Logger( ) { }
+Logger::Logger(std::string loggerName) 
+	:m_loggerName(loggerName)
+{ 
+}
 
-Logger::~Logger( ) { }
+Logger::~Logger( ) {
+	
+	spdlog::shutdown();
+ }
 
 namespace serenity {
 	std::string GetSerenityVerStr( ) 

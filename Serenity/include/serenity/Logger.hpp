@@ -19,7 +19,7 @@ using MappedLevel = spdlog::level::level_enum;
 class Logger
 {
       public:
-	Logger( );
+	Logger(std::string loggerName);
 	~Logger( );
 	static void Init(std::string fileName, LoggerLevel level);
 	void SetLoggerLevel(LoggerLevel logLevel, LoggerInterface logInterface);
@@ -31,15 +31,18 @@ class Logger
 	{
 		return m_clientLogger;
 	}
+	inline std::string GetLoggerName( )
+	{
+		return m_loggerName;
+	}
+	inline static MappedLevel MapLogLevel(LoggerLevel level);
 
       private:
-	inline static MappedLevel MapLogLevel(LoggerLevel level);
+	std::string m_loggerName;
 	static std::shared_ptr<spdlog::logger> m_internalLogger;
 	static std::shared_ptr<spdlog::logger> m_clientLogger;
 	MappedLevel m_level {MappedLevel::off};
 };
-
-
 
 
 namespace serenity {
@@ -48,39 +51,39 @@ namespace serenity {
 
 
 // Internal or "non-user" side macros
-	#define SE_INTERNAL_TRACE(...)                                                                            \
-		if(Logger::GetInternalLogger( ) != nullptr) {                                                     \
-			Logger::GetInternalLogger( )->trace(__VA_ARGS__);                                         \
-		}
-	#define SE_INTERNAL_DEBUG(...)                                                                            \
-		if(Logger::GetInternalLogger( ) != nullptr) {                                                     \
-			Logger::GetInternalLogger( )->debug(__VA_ARGS__);                                         \
-		}
-	#define SE_INTERNAL_INFO(...)                                                                             \
-		if(Logger::GetInternalLogger( ) != nullptr) {                                                     \
-			Logger::GetInternalLogger( )->info(__VA_ARGS__);                                          \
-		}
-	#define SE_INTERNAL_WARN(...)                                                                             \
-		if(Logger::GetInternalLogger( ) != nullptr) {                                                     \
-			Logger::GetInternalLogger( )->warn(__VA_ARGS__);                                          \
-		}
-	#define SE_INTERNAL_ERROR(...)                                                                            \
-		if(Logger::GetInternalLogger( ) != nullptr) {                                                     \
-			Logger::GetInternalLogger( )->error(__VA_ARGS__);                                         \
-		}
-	#define SE_INTERNAL_FATAL(...)                                                                            \
-		if(Logger::GetInternalLogger( ) != nullptr) {                                                     \
-			Logger::GetInternalLogger( )->critical(__VA_ARGS__);                                      \
-		}
-	#define SE_INTERNAL_ASSERT(condition, message, ...)                                                       \
-		if(!(condition)) {                                                                                \
-			SE_INTERNAL_FATAL("ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}",                    \
-					  SE_MACRO_STRING(condition),                                             \
-					  std::filesystem::path(__FILE__).filename( ).string( ),                  \
-					  (__LINE__),                                                             \
-					  (SE_ASSERT_VAR_MSG(message, __VA_ARGS__)));                             \
-			SE_DEBUG_BREAK                                                                            \
-		}
+#define SE_INTERNAL_TRACE(...)                                                                                    \
+	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::GetInternalLogger( )->trace(__VA_ARGS__);                                                 \
+	}
+#define SE_INTERNAL_DEBUG(...)                                                                                    \
+	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::GetInternalLogger( )->debug(__VA_ARGS__);                                                 \
+	}
+#define SE_INTERNAL_INFO(...)                                                                                     \
+	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::GetInternalLogger( )->info(__VA_ARGS__);                                                  \
+	}
+#define SE_INTERNAL_WARN(...)                                                                                     \
+	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::GetInternalLogger( )->warn(__VA_ARGS__);                                                  \
+	}
+#define SE_INTERNAL_ERROR(...)                                                                                    \
+	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::GetInternalLogger( )->error(__VA_ARGS__);                                                 \
+	}
+#define SE_INTERNAL_FATAL(...)                                                                                    \
+	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::GetInternalLogger( )->critical(__VA_ARGS__);                                              \
+	}
+#define SE_INTERNAL_ASSERT(condition, message, ...)                                                               \
+	if(!(condition)) {                                                                                        \
+		SE_INTERNAL_FATAL("ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}",                            \
+				  SE_MACRO_STRING(condition),                                                     \
+				  std::filesystem::path(__FILE__).filename( ).string( ),                          \
+				  (__LINE__),                                                                     \
+				  (SE_ASSERT_VAR_MSG(message, __VA_ARGS__)));                                     \
+		SE_DEBUG_BREAK                                                                                    \
+	}
 
 #ifndef NDEBUG
 // Client side macros
@@ -134,4 +137,4 @@ namespace serenity {
 	#define SE_ERROR(...)                               ( void ) 0
 	#define SE_FATAL(...)                               ( void ) 0
 	#define SE_ASSERT(condition, message, ...)          ( void ) 0
-	#endif // NDEBUG
+#endif // NDEBUG

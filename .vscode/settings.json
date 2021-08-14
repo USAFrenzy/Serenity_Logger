@@ -74,6 +74,9 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "charconv": "cpp",
+        "format": "cpp",
+        "forward_list": "cpp"
     }
 }

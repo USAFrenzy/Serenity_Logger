@@ -7,6 +7,7 @@ set (
     "include/serenity/Logger.hpp"
     "include/serenity/Defines.hpp"
     "include/serenity/Common.hpp"
+    "include/serenity/Temp.hpp"
 )
 
 set (SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})
