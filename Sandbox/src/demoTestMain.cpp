@@ -1,13 +1,18 @@
 
 #include "serenity/Logger.hpp"
 #include <iostream>
+#include "serenity/WIP/temp2.hpp"
+
+#define LOGGER_MESSAGES_SB   0
+#define LOGGER_FILESYSTEM_SB 1
 
 int main( )
 {
-	PrintHello( );
-	Logger log;
+	Logger log("Sandbox_Logger");
+	log.Init(log, "Logs/General_Log.txt", LoggerLevel::trace);
+
+#if LOGGER_MESSAGES_SB
 	// LoggerInfo loggerInfo = { };
-	log.Init("Logs/General_Log.txt", LoggerLevel::trace);
 	SE_INTERNAL_INFO("Hello From The True Library!\n- Serenity Library Info: \n\t- Version: {}",
 			 serenity::GetSerenityVerStr( ));
 	SE_INTERNAL_TRACE("This Is A General Trace Message - Time To Iterate Through The Log Levels!");
@@ -22,4 +27,30 @@ int main( )
 	int a = 5;
 	int b = 76;
 	SE_INTERNAL_ASSERT((a > b), "ACTUAL VALUES:\na: {}\nb:{}", a, b);
+#endif
+
+#if LOGGER_FILESYSTEM_SB
+	SE_INFO("Now Just Testing That The Logger Initialized Name Got Passed Through To The Logs");
+	SE_TRACE("Working With File Systems Now");
+	std::string logDir  = "Logs";
+	std::string logName = "Log.txt";
+	serenity::file::LogFileInfo logInfo(logDir, logName);
+
+	SE_INFO("\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}",
+		logInfo.currentPath,
+		logInfo.logDirectory,
+		logInfo.filePath,
+		logInfo.file);
+
+	SE_TRACE("Now Testing Swapping Log Names:");
+
+	logName = "New_Log_Test.txt";
+	logInfo.SetFileName(logName);
+	SE_INFO("\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}",
+		logInfo.currentPath,
+		logInfo.logDirectory,
+		logInfo.filePath,
+		logInfo.file);
+
+#endif
 }

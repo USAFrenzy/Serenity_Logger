@@ -20,18 +20,22 @@ void PrintHello( )
 std::shared_ptr<spdlog::logger> Logger::m_internalLogger;
 std::shared_ptr<spdlog::logger> Logger::m_clientLogger;
 
-Logger::Logger(std::string loggerName) 
-	:m_loggerName(loggerName)
-{ 
+// clang-format off
+/* 
+	In The Near Future, Would like to be able to just do 
+	- Logger(LoggerInfo loggerInfoStruct, LogFileInfo logInfoStruct, LogSink sinkInfo);
+*/
+// clang-format on
+
+Logger::Logger(std::string loggerName) : m_loggerName(loggerName) { }
+
+Logger::~Logger( )
+{
+	spdlog::shutdown( );
 }
 
-Logger::~Logger( ) {
-	
-	spdlog::shutdown();
- }
-
 namespace serenity {
-	std::string GetSerenityVerStr( ) 
+	std::string GetSerenityVerStr( )
 	{
 		auto version = VERSION_NUMBER(SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV);
 		return version;
@@ -39,8 +43,7 @@ namespace serenity {
 } // namespace serenity
 
 
-// Heavily Influenced by Chernos Hazel
-void Logger::Init(std::string fileName, LoggerLevel setLevel)
+void Logger::Init(Logger logger, std::string fileName, LoggerLevel setLevel)
 {
 	// Keeping this pretty simple before deviating too hard core - end goal would be to abstract some of the
 	// setup in some structs and then just pass in the desired struct into the init function
@@ -60,7 +63,7 @@ void Logger::Init(std::string fileName, LoggerLevel setLevel)
 	m_internalLogger->set_level(mappedLevel);
 	m_internalLogger->flush_on(mappedLevel);
 
-	m_clientLogger = std::make_shared<spdlog::logger>("CLIENT", begin(sinks), end(sinks));
+	m_clientLogger = std::make_shared<spdlog::logger>(logger.GetLoggerName( ), begin(sinks), end(sinks));
 	spdlog::register_logger(m_clientLogger);
 	m_clientLogger->set_level(mappedLevel);
 	m_clientLogger->flush_on(mappedLevel);

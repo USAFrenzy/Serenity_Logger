@@ -21,7 +21,7 @@ class Logger
       public:
 	Logger(std::string loggerName);
 	~Logger( );
-	static void Init(std::string fileName, LoggerLevel level);
+	static void Init(Logger logger, std::string fileName, LoggerLevel level);
 	void SetLoggerLevel(LoggerLevel logLevel, LoggerInterface logInterface);
 	static std::shared_ptr<spdlog::logger>& GetInternalLogger( )
 	{
@@ -96,13 +96,13 @@ namespace serenity {
 			Logger::GetClientSideLogger( )->debug(__VA_ARGS__);                                       \
 		}
 	#define SE_INFO(...)                                                                                      \
-		if(Logger::GetInternaGetClientSideLogger( ) != nullptr) {                                         \
+		if(Logger::GetClientSideLogger( ) != nullptr) {                                         \
 			Logger::GetClientSideLogger( )->info(__VA_ARGS__);                                        \
 		}
 	#define SE_WARN(...)                                                                                      \
 		if(Logger::GetClientSideLogger( ) != nullptr) {                                                   \
 			Logger::GetClientSideLogger( )->warn(__VA_ARGS__);                                        \
-		E
+		}
 	#define SE_ERROR(...)                                                                                     \
 		if(Logger::GetClientSideLogger( ) != nullptr) {                                                   \
 			Logger::GetClientSideLogger( )->error(__VA_ARGS__);                                       \
