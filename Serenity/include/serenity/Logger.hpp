@@ -10,18 +10,22 @@
 
 #include "Defines.hpp"
 #include "Common.hpp"
-// Just an Initial Test function
-void PrintHello( );
-// currently in global namespace
-using MappedLevel = spdlog::level::level_enum;
+#include "LogFileHelper.hpp"
 
+#include "serenity/WIP/Interfaces/IObserver.hpp"
 
-class Logger
+namespace serenity {
+	using MappedLevel = spdlog::level::level_enum;
+}
+
+class Logger : public serenity::LogFileHelper, public ILogger
 {
+
       public:
-	Logger(std::string loggerName);
+	Logger( ) = default;
+	Logger(std::string loggerName, LogFileHelper* fileInfo, LoggerLevel level);
 	~Logger( );
-	static void Init(Logger logger, std::string fileName, LoggerLevel level);
+	static void Init(Logger& logger, LogFileHelper& file, LoggerLevel level);
 	void SetLoggerLevel(LoggerLevel logLevel, LoggerInterface logInterface);
 	static std::shared_ptr<spdlog::logger>& GetInternalLogger( )
 	{
@@ -33,15 +37,24 @@ class Logger
 	}
 	inline std::string GetLoggerName( )
 	{
+		UpdateLoggerFileInfo( );
 		return m_loggerName;
 	}
-	inline static MappedLevel MapLogLevel(LoggerLevel level);
+	void UpdateLoggerFileInfo( ) override;
+	inline static serenity::MappedLevel MapLogLevel(LoggerLevel level);
+
+	static void ForwardFileUpdates( )
+	{
+		loggerInstance->UpdateLoggerFileInfo( );
+	}
 
       private:
 	std::string m_loggerName;
+	LogFileHelper logFileHandle;
+	serenity::MappedLevel m_level {serenity::MappedLevel::off};
 	static std::shared_ptr<spdlog::logger> m_internalLogger;
 	static std::shared_ptr<spdlog::logger> m_clientLogger;
-	MappedLevel m_level {MappedLevel::off};
+	static Logger* loggerInstance;
 };
 
 
@@ -53,29 +66,36 @@ namespace serenity {
 // Internal or "non-user" side macros
 #define SE_INTERNAL_TRACE(...)                                                                                    \
 	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::ForwardFileUpdates( );                                                                    \
 		Logger::GetInternalLogger( )->trace(__VA_ARGS__);                                                 \
 	}
 #define SE_INTERNAL_DEBUG(...)                                                                                    \
 	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::ForwardFileUpdates( );                                                                    \
 		Logger::GetInternalLogger( )->debug(__VA_ARGS__);                                                 \
 	}
 #define SE_INTERNAL_INFO(...)                                                                                     \
 	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::ForwardFileUpdates( );                                                                    \
 		Logger::GetInternalLogger( )->info(__VA_ARGS__);                                                  \
 	}
 #define SE_INTERNAL_WARN(...)                                                                                     \
 	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::ForwardFileUpdates( );                                                                    \
 		Logger::GetInternalLogger( )->warn(__VA_ARGS__);                                                  \
 	}
 #define SE_INTERNAL_ERROR(...)                                                                                    \
 	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::ForwardFileUpdates( );                                                                    \
 		Logger::GetInternalLogger( )->error(__VA_ARGS__);                                                 \
 	}
 #define SE_INTERNAL_FATAL(...)                                                                                    \
 	if(Logger::GetInternalLogger( ) != nullptr) {                                                             \
+		Logger::ForwardFileUpdates( );                                                                    \
 		Logger::GetInternalLogger( )->critical(__VA_ARGS__);                                              \
 	}
 #define SE_INTERNAL_ASSERT(condition, message, ...)                                                               \
+		Logger::ForwardFileUpdates( );                                                                    \
 	if(!(condition)) {                                                                                        \
 		SE_INTERNAL_FATAL("ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}",                            \
 				  SE_MACRO_STRING(condition),                                                     \
@@ -89,29 +109,36 @@ namespace serenity {
 // Client side macros
 	#define SE_TRACE(...)                                                                                     \
 		if(Logger::GetClientSideLogger( ) != nullptr) {                                                   \
+			Logger::ForwardFileUpdates( );                                                            \
 			Logger::GetClientSideLogger( )->trace(__VA_ARGS__);                                       \
 		}
 	#define SE_DEBUG(...)                                                                                     \
 		if(Logger::GetClientSideLogger( ) != nullptr) {                                                   \
+			Logger::ForwardFileUpdates( );                                                            \
 			Logger::GetClientSideLogger( )->debug(__VA_ARGS__);                                       \
 		}
 	#define SE_INFO(...)                                                                                      \
-		if(Logger::GetClientSideLogger( ) != nullptr) {                                         \
+		if(Logger::GetClientSideLogger( ) != nullptr) {                                                   \
+			Logger::ForwardFileUpdates( );                                                            \
 			Logger::GetClientSideLogger( )->info(__VA_ARGS__);                                        \
 		}
 	#define SE_WARN(...)                                                                                      \
 		if(Logger::GetClientSideLogger( ) != nullptr) {                                                   \
+			Logger::ForwardFileUpdates( );                                                            \
 			Logger::GetClientSideLogger( )->warn(__VA_ARGS__);                                        \
 		}
 	#define SE_ERROR(...)                                                                                     \
 		if(Logger::GetClientSideLogger( ) != nullptr) {                                                   \
+			Logger::ForwardFileUpdates( );                                                            \
 			Logger::GetClientSideLogger( )->error(__VA_ARGS__);                                       \
 		}
 	#define SE_FATAL(...)                                                                                     \
 		if(Logger::GetClientSideLogger( ) != nullptr) {                                                   \
+			Logger::ForwardFileUpdates( );                                                            \
 			Logger::GetClientSideLogger( )->critical(__VA_ARGS__);                                    \
 		}
 	#define SE_ASSERT(condition, message, ...)                                                                \
+		Logger::ForwardFileUpdates( );                                                                    \
 		if(!(condition)) {                                                                                \
 			SE_FATAL("ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}",                             \
 				 SE_MACRO_STRING(condition),                                                      \

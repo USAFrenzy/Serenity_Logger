@@ -3,6 +3,8 @@
 
 
 #define LOGGER_DEFAULT_NAME                           "SERENITY"
+#define INTERFACE_INTERNAL                            50
+#define INTERFACE_CLIENT                              51
 #define SERENITY_MAJOR                                0
 #define SERENITY_MINOR                                1
 #define SERENITY_REV                                  0
@@ -26,3 +28,7 @@
 	#define SE_ASSERT_VAR_MSG(message, ...) fmt::format(message, __VA_ARGS__)
 
 #endif // NDEBUG
+
+#define SE_NULL_PTR     nullptr
+#define SE_OPT_NULL_PTR (std::filesystem::path) nullptr
+#define SE_NULL_OPTION  std::nullopt
