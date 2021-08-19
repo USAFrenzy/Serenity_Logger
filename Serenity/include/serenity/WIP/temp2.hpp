@@ -1,5 +1,6 @@
 #pragma once
 
+#include "serenity/Common.hpp"
 
 namespace serenity {
 
@@ -14,31 +15,81 @@ namespace serenity {
 		LoggerInfo(std::string name, std::string pattern, LoggerLevel logLevel, LoggerLevel flushLevel);
 		~LoggerInfo( );
 
-		std::optional<LoggerInterface>
-		  SetLoggerName(std::string loggerName, std::optional<LoggerInterface> interface);
+		// General Setter/Getter Helper Functions
+		void SetLoggerName(std::string loggerName);
+		std::string GetLoggerName( );
+		void SetLoggerPattern(std::string logPattern);
+		void SetLoggerLevel(LoggerLevel logLevel);
+		void LoggerFlushOn(LoggerLevel flushLevel);
+
+		/*std::optional<LoggerInterface>
+		  SetLoggerName(std::string loggerName, std::optional<LoggerInterface> interface);*/
 
 	      private:
-		std::string m_clientName;
-		std::string m_internalName;
+		std::string m_loggerName;
 		std::string m_pattern;
 		LoggerLevel m_logLevel;
 		LoggerLevel m_flushLevel;
-	};
+
+	      private:
+		LoggerLevel GetLoggerFlushLevel( );
+		LoggerLevel GetLoggerLevel( );
+		std::string GetLoggerPattern( );
+
+	}; // class LoggerInfo
+
 	LoggerInfo::LoggerInfo(std::string name, std::string pattern, LoggerLevel logLevel, LoggerLevel flushLevel)
-	  : m_clientName(name),
-	    m_internalName("INTERNAL"),
-	    m_pattern(pattern),
-	    m_logLevel(logLevel),
-	    m_flushLevel(flushLevel)
+	  : m_loggerName(name), m_pattern(pattern), m_logLevel(logLevel), m_flushLevel(flushLevel)
 	{
 	}
 	LoggerInfo::~LoggerInfo( ) { }
 
+	inline void LoggerInfo::SetLoggerName(std::string loggerName)
+	{
+		m_loggerName = loggerName;
+	}
+	std::string LoggerInfo::GetLoggerName( )
+	{
+		return m_loggerName;
+	}
+
+	inline void LoggerInfo::SetLoggerPattern(std::string logPattern)
+	{
+		m_pattern = logPattern;
+	}
+
+	std::string LoggerInfo::GetLoggerPattern( )
+	{
+		return m_pattern;
+	}
+
+	inline void LoggerInfo::SetLoggerLevel(LoggerLevel logLevel)
+	{
+		m_logLevel = logLevel;
+	}
+
+	LoggerLevel LoggerInfo::GetLoggerLevel( )
+	{
+		return m_logLevel;
+	}
+
+	inline void LoggerInfo::LoggerFlushOn(LoggerLevel flushLevel)
+	{
+		m_flushLevel = flushLevel;
+	}
+
+	LoggerLevel LoggerInfo::GetLoggerFlushLevel( )
+	{
+		return m_flushLevel;
+	}
+
+
+	// ########################################################################################################
 	/*
 		Default Behavior Without Optional Interface Arg Is To Set The Client Logger Name.
 		Optional Interface Arg Can Be Either: 'internal' Or 'client'
 	*/
-	std::optional<LoggerInterface>
+	/*std::optional<LoggerInterface>
 	  LoggerInfo::SetLoggerName(std::string loggerName, std::optional<LoggerInterface> interface)
 	{
 		if(!interface.has_value( )) {
@@ -57,7 +108,9 @@ namespace serenity {
 					break;
 			}
 		}
-	}
+		return SE_NULL_OPTION;
+	}*/
+	// ########################################################################################################
 
 
 	struct LogSinkInfo

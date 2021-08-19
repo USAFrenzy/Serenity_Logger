@@ -8,6 +8,11 @@
 enum class LoggerLevel { trace, debug, info, warning, error, fatal };
 enum class LoggerInterface { internal = INTERFACE_INTERNAL, client = INTERFACE_CLIENT };
 
+namespace serenity {
+	using MappedLevel = spdlog::level::level_enum;
+}
+
+
 // struct LoggerInfo
 //{
 //	std::vector<spdlog::logger> loggers;

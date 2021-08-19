@@ -14,18 +14,29 @@
 
 #include "serenity/WIP/Interfaces/IObserver.hpp"
 
-namespace serenity {
-	using MappedLevel = spdlog::level::level_enum;
-}
+/* clang-format off
+ 
+	I believe what I'll end up doing is having the logger class have instance handles to the inherited classes
+   and in the constructor, ill go ahead and call those inherited classes move constructors(?) to go ahead and move
+   in the data thats passed into the logger construction to those handles. The question really becomes how best to
+   move the data around from user side to internally for correct variable values. Might create respective structs
+   to initialize values and use those values by reference in the logger construction
+   i.e.
+   struct LogFileInfo     fileInfo = {};           AND/OR    Have a default construction that initializes these values
+   struct LogggerSinkInfo loggerSinks = {};                             Logger defaultLogger;                
+   struct LoggerInfo      loggerInfo = {};								** Logger(){ defaultInit(); }
+   Logger myLogger(loggerInfo, loggerSinkInfo, fileInfo);
+
+clang-format on                                                                                                     */
+
 
 class Logger : public serenity::LogFileHelper, public ILogger
 {
-
       public:
 	Logger( ) = default;
-	Logger(std::string loggerName, LogFileHelper* fileInfo, LoggerLevel level);
+	Logger(std::string loggerName, std::string logName, LoggerLevel level);
 	~Logger( );
-	static void Init(Logger& logger, LogFileHelper& file, LoggerLevel level);
+	static void Init(Logger& logger, LoggerLevel level);
 	void SetLoggerLevel(LoggerLevel logLevel, LoggerInterface logInterface);
 	static std::shared_ptr<spdlog::logger>& GetInternalLogger( )
 	{
@@ -35,7 +46,7 @@ class Logger : public serenity::LogFileHelper, public ILogger
 	{
 		return m_clientLogger;
 	}
-	inline std::string GetLoggerName( )
+	std::string GetLoggerName( )
 	{
 		UpdateLoggerFileInfo( );
 		return m_loggerName;
@@ -43,14 +54,14 @@ class Logger : public serenity::LogFileHelper, public ILogger
 	void UpdateLoggerFileInfo( ) override;
 	inline static serenity::MappedLevel MapLogLevel(LoggerLevel level);
 
-	static void ForwardFileUpdates( )
+	inline static void ForwardFileUpdates( )
 	{
 		loggerInstance->UpdateLoggerFileInfo( );
 	}
 
       private:
 	std::string m_loggerName;
-	LogFileHelper logFileHandle;
+	LogFileHelper *logFileHandle;
 	serenity::MappedLevel m_level {serenity::MappedLevel::off};
 	static std::shared_ptr<spdlog::logger> m_internalLogger;
 	static std::shared_ptr<spdlog::logger> m_clientLogger;
@@ -95,7 +106,7 @@ namespace serenity {
 		Logger::GetInternalLogger( )->critical(__VA_ARGS__);                                              \
 	}
 #define SE_INTERNAL_ASSERT(condition, message, ...)                                                               \
-		Logger::ForwardFileUpdates( );                                                                    \
+	Logger::ForwardFileUpdates( );                                                                            \
 	if(!(condition)) {                                                                                        \
 		SE_INTERNAL_FATAL("ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}",                            \
 				  SE_MACRO_STRING(condition),                                                     \

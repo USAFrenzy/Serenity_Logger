@@ -28,10 +28,10 @@ never execute code uneccessarily (although it does always perform a condition ch
 void Logger::UpdateLoggerFileInfo( )
 {
 	if(fileInfoChanged) {
-		logFileHandle.UpdateFileInfo(logFileHandle.optCurrentDir,
-					     logFileHandle.optLogDir,
-					     logFileHandle.optFilePath,
-					     logFileHandle.optFileName);
+		logFileHandle->UpdateFileInfo(logFileHandle->optCurrentDir,
+					     logFileHandle->optLogDir,
+					     logFileHandle->optFilePath,
+					     logFileHandle->optFileName);
 	}
 	fileInfoChanged = (!fileInfoChanged);
 }
@@ -47,16 +47,27 @@ Logger* Logger::loggerInstance;
 */
 // clang-format on
 
-Logger::Logger(std::string loggerName, LogFileHelper* fileInfo, LoggerLevel level)
+Logger::Logger(std::string loggerName, std::string logName, LoggerLevel level) : m_loggerName(loggerName)
 {
-	m_loggerName = loggerName;
+	
 	loggerInstance = this;
-	Init(*loggerInstance, *fileInfo, level);
+	serenity::file_helper::path tempFile = logName;
+	serenity::file_helper::path logDir = (serenity::file_helper::current_path( )/="Logs");  
+	logFileHandle  = new LogFileHelper(logDir, tempFile);
+	logFileHandle->RenameFile(logName);
+	// I believe StorePathComponents() Would do a better job overall here
+	logFileHandle->UpdateFileInfo(logFileHandle->GetCurrentDir( ),
+				       logFileHandle->GetDirPath( ),
+				       logFileHandle->GetFilePath( ),
+				       logFileHandle->GetFileName( ));
+	logFileHandle->ChangeDir(logFileHandle->GetDirPath( ));
+	this->UpdateLoggerFileInfo( );
+	Init(*this, level);
 }
 
 Logger::~Logger( )
 {
-	logFileHandle.~LogFileHelper( );
+	logFileHandle->~LogFileHelper( );
 	spdlog::drop_all( );
 	spdlog::shutdown( );
 }
@@ -70,7 +81,7 @@ namespace serenity {
 } // namespace serenity
 
 
-void Logger::Init(Logger& logger, LogFileHelper& file, LoggerLevel setLevel)
+void Logger::Init(Logger& logger, LoggerLevel setLevel)
 {
 	// Keeping this pretty simple before deviating too hard core - end goal would be to abstract some of the
 	// setup in some structs and then just pass in the desired struct into the init function
@@ -79,7 +90,7 @@ void Logger::Init(Logger& logger, LogFileHelper& file, LoggerLevel setLevel)
 
 	sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ));
 	sinks.emplace_back(
-	  std::make_shared<spdlog::sinks::basic_file_sink_mt>(file.GetFileName( ).string( ), true));
+	  std::make_shared<spdlog::sinks::basic_file_sink_mt>(logger.logFileHandle->GetFilePath().filename().string(), true));
 	// Would Like To Format this in a more personalized and absstracted manner
 	sinks [0]->set_pattern("%^[%T] %n: %v%$");
 	sinks [1]->set_pattern("[%T] [%l] %n: %v");
@@ -92,7 +103,8 @@ void Logger::Init(Logger& logger, LogFileHelper& file, LoggerLevel setLevel)
 		m_internalLogger->set_level(mappedLevel);
 		m_internalLogger->flush_on(mappedLevel);
 	} else {
-		SE_INTERNAL_WARN("Warning: Trying To Initialize A Logger Of Same Name: {}", logger.GetLoggerName());
+		SE_INTERNAL_WARN("Warning: Trying To Initialize A Logger Of Same Name: {}",
+				 logger.GetLoggerName( ));
 	}
 
 	if(m_clientLogger.get( ) == nullptr) {

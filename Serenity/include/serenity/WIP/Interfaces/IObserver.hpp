@@ -6,6 +6,7 @@
 
 class IFileHelper
 {
+      public:
 	using optPath     = std::optional<std::filesystem::path>;
 	using MappedLevel = serenity::MappedLevel;
 

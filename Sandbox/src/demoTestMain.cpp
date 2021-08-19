@@ -1,9 +1,8 @@
 
 #include "serenity/Logger.hpp"
-#include <iostream>
-#include "serenity/WIP/temp2.hpp"
+// #include "serenity/WIP/temp2.hpp"
 
-#define LOGGER_MESSAGES_SB   1
+#define LOGGER_MESSAGES_SB   0
 #define TEST_ASSERT          0
 #define LOGGER_FILESYSTEM_SB 1
 
@@ -33,23 +32,16 @@ int main( )
 		SE_INTERNAL_ASSERT((a > b), "ACTUAL VALUES:\na: {}\nb:{}", a, b);
 	#endif
 	// clang-format on
-	logOne.~Logger( );
 #endif
 
 #if LOGGER_FILESYSTEM_SB
 
-	// Until LoggerInfo class is fully implemented, don't really have a way to differentiate or set logger
-	// fields for real here
-	serenity::file_helper::path logName2 = "FileLog.txt";
-	auto logDirPath2                     = serenity::file_helper::current_path( ) /= "Logs";
-	serenity::LogFileHelper logInfo2(logDirPath2, logName2);
-
-	Logger logTwo("Filesystem Logger", &logInfo2, LoggerLevel::trace);
+	Logger logTwo("Filesystem Logger", "File_System.txt", LoggerLevel::trace);
 
 	SE_INFO("Now Just Testing That The Logger Initialized Name Got Passed Through To The Logs");
-	SE_TRACE("Working With File Systems Now");
+	SE_TRACE("Working With File Systems Now\n\n");
 
-	SE_INFO("\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}",
+	SE_INFO("\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n",
 		logTwo.GetCurrentDir( ),
 		logTwo.GetDirPath( ),
 		logTwo.GetFilePath( ),
@@ -58,13 +50,33 @@ int main( )
 	SE_TRACE("Now Testing Swapping Log Names:");
 
 	logTwo.RenameFile("New_Log_Test.txt");
-	SE_INFO("\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}",
+	SE_INFO("New File Name: {}\n", logTwo.GetFileName( ));
+
+	SE_INFO("Previous Working Dir: {}", logTwo.GetCurrentDir( ))
+	serenity::file_helper::path pathToChangeToOne = "C:\\Users\\mccul\\Desktop\\Logging Project\\build";
+	serenity::file_helper::path pathToChangeToTwo = "C:\\Users\\mccul\\Desktop";
+
+	logTwo.ChangeDir(pathToChangeToOne);
+	SE_INFO("New Working Dir: {}\n", logTwo.GetCurrentDir( ));
+	SE_INFO("\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n",
 		logTwo.GetCurrentDir( ),
 		logTwo.GetDirPath( ),
 		logTwo.GetFilePath( ),
 		logTwo.GetFileName( ));
 
-	logInfo2.~LogFileHelper( );
-	logTwo.~Logger( );
+	logTwo.ChangeDir(pathToChangeToTwo);
+	SE_INFO("New Working Dir: {}\n", logTwo.GetCurrentDir( ));
+	SE_INFO("\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n",
+		logTwo.GetCurrentDir( ),
+		logTwo.GetDirPath( ),
+		logTwo.GetFilePath( ),
+		logTwo.GetFileName( ));
+
+	SE_INFO("Just Visual Representation Of Path Components:{}\n",
+		 logTwo.PathComponents_Str(pathToChangeToOne));
+	logTwo.RenameFile("lol.jpg.txt");
+	auto curD = logTwo.GetFilePath();
+	SE_INFO("\n\nSecond Visual Representation Of Path Components:{}\n",
+		logTwo.PathComponents_Str(curD) );
 #endif
 }

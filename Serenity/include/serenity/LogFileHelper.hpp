@@ -16,32 +16,12 @@ namespace serenity {
 		LogFileHelper( );
 		LogFileHelper(file_helper::path& pathToFileDir, file_helper::path& fileName);
 		~LogFileHelper( );
-
-		// void SetRelativePath( );
-
 		/*
 			Really Only Works To Rename the singular file referenced by m_logName and
 			not on arbitrary file renaming
 		*/
 		void RenameFile(std::string fileNewName);
-
-		// helper functions
-
-		file_helper::path GetFileName( );
-		file_helper::path GetFilePath( );
-		file_helper::path GetDirPath( );
-		file_helper::path GetCurrentDir( );
-
-
-	      private:
-		file_helper::path m_currentDir = file_helper::current_path( );
-		std::string m_logDir           = "Logs";
-		file_helper::path m_logDirPath = m_currentDir /= m_logDir;
-		std::string m_logName          = "Log.txt";
-		file_helper::path m_filePath   = m_logDirPath /= m_logName;
-		file_helper::path m_fileName   = m_filePath.filename( );
-
-	      public:
+		void ChangeDir(file_helper::path destDir);
 		// Best Way I Could Think Of For Selectively Updating Path Variables In An Update Funtion
 
 		static bool fileInfoChanged;
@@ -55,5 +35,36 @@ namespace serenity {
 								optPath optLogDir,
 								optPath optFilePath,
 								optPath optFileName) override;
+
+		// void SetRelativePath( );
+	      public:
+		file_helper::path GetFileName( );
+		file_helper::path GetFilePath( );
+		file_helper::path GetDirPath( );
+		file_helper::path GetCurrentDir( );
+		
+
+		// Testing Functions
+		std::string PathComponents_Str(file_helper::path& path);
+		void StorePathComponents( );
+
+	      private:
+		file_helper::path m_currentDir = file_helper::current_path( );
+		std::string m_logDir;
+		file_helper::path m_logDirPath = m_currentDir /= m_logDir;
+		std::string m_logName;
+		file_helper::path m_filePath   = m_logDirPath /= m_logName;
+		file_helper::path m_fileName   = m_filePath.filename( );
+
+		// Gonna Test These Out In Hopes Of Replacing The Hard-Coded Variables Above
+	      protected:
+		/*file_helper::path m_currentDir;
+		file_helper::path m_rootPath;
+		file_helper::path m_rootName;
+		file_helper::path m_rootDir;
+		file_helper::path m_parentPath;
+		file_helper::path m_relativePath;
+		file_helper::path m_pathStem;
+		file_helper::path m_fileName;*/
 	};
 } // namespace serenity
