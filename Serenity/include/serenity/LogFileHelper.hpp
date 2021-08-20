@@ -5,7 +5,8 @@
 #include <optional>
 #include "serenity/WIP/Interfaces/IObserver.hpp"
 
-namespace serenity {
+namespace serenity
+{
 	namespace file_helper = std::filesystem;
 
 	// Would Much Rather Be Able To Relatively Place Things If Able
@@ -14,57 +15,60 @@ namespace serenity {
 	{
 	      public:
 		LogFileHelper( );
-		LogFileHelper(file_helper::path& pathToFileDir, file_helper::path& fileName);
+		LogFileHelper( file_helper::path& pathToFileDir, file_helper::path& fileName );
 		~LogFileHelper( );
 		/*
 			Really Only Works To Rename the singular file referenced by m_logName and
 			not on arbitrary file renaming
 		*/
-		void RenameFile(std::string fileNewName);
-		void ChangeDir(file_helper::path destDir);
-		// Best Way I Could Think Of For Selectively Updating Path Variables In An Update Funtion
-
-		static bool fileInfoChanged;
+		void RenameLogFile( std::string fileNewName );
+		void ChangeDir( file_helper::path destDir );
+		void SetDir( file_helper::path oldPathDir, file_helper::path destDirPath );
+		void StorePathComponents( file_helper::path& pathToStore );
 		void NotifyLogger( ) override;
-		using optPath                                      = std::optional<file_helper::path>;
-		std::optional<std::filesystem::path> optCurrentDir = std::nullopt;
-		std::optional<std::filesystem::path> optLogDir     = std::nullopt;
-		std::optional<std::filesystem::path> optFilePath   = std::nullopt;
-		std::optional<std::filesystem::path> optFileName   = std::nullopt;
-		std::optional<file_helper::path> UpdateFileInfo(optPath optCurrentDir,
-								optPath optLogDir,
-								optPath optFilePath,
-								optPath optFileName) override;
+		void UpdateFileInfo( file_helper::path pathToFile ) override;
+		static bool fileInfoChanged;
 
 		// void SetRelativePath( );
 	      public:
 		file_helper::path GetFileName( );
 		file_helper::path GetFilePath( );
-		file_helper::path GetDirPath( );
+		file_helper::path GetLogDirPath( );
 		file_helper::path GetCurrentDir( );
-		
+
 
 		// Testing Functions
-		std::string PathComponents_Str(file_helper::path& path);
-		void StorePathComponents( );
+		std::string PathComponents_Str( file_helper::path& path );
 
 	      private:
-		file_helper::path m_currentDir = file_helper::current_path( );
-		std::string m_logDir;
-		file_helper::path m_logDirPath = m_currentDir /= m_logDir;
-		std::string m_logName;
-		file_helper::path m_filePath   = m_logDirPath /= m_logName;
-		file_helper::path m_fileName   = m_filePath.filename( );
+		file_helper::path m_cachePath;
+		file_helper::path m_cacheDir;
 
-		// Gonna Test These Out In Hopes Of Replacing The Hard-Coded Variables Above
-	      protected:
-		/*file_helper::path m_currentDir;
-		file_helper::path m_rootPath;
-		file_helper::path m_rootName;
-		file_helper::path m_rootDir;
-		file_helper::path m_parentPath;
-		file_helper::path m_relativePath;
-		file_helper::path m_pathStem;
-		file_helper::path m_fileName;*/
+		std::string m_logDir;
+		std::string m_logName;
+		file_helper::path m_currentDir   = file_helper::current_path( );
+		file_helper::path m_relativePath = m_currentDir.relative_path( );
+		file_helper::path m_logDirPath   = m_relativePath /= m_logDir;
+		file_helper::path m_filePath     = m_logDirPath /= m_logName;
+		file_helper::path m_rootPath     = m_currentDir.root_path( );
+		file_helper::path m_rootDir      = m_currentDir.root_directory( );
+		file_helper::path m_rootName     = m_currentDir.root_name( );
+		file_helper::path m_parentPath   = m_currentDir.parent_path( );
+		file_helper::path m_pathStem     = m_currentDir.stem( );
+		file_helper::path m_fileName     = m_filePath.filename( );
+
+	      private:
+		// Different From ChangeDir(); SetDir() assigns the paths to member variables
+		void ForceUpdate( );
 	};
-} // namespace serenity
+}  // namespace serenity
+
+
+namespace serenity
+{
+	namespace file_utils
+	{
+		bool ValidateFileName( std::string fileName );
+		void RenameFile( std::string oldFile, std::string newFile );
+	}  // namespace file_utils
+}  // namespace serenity

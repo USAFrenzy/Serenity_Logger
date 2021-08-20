@@ -4,10 +4,10 @@
 #include <map>
 #include <string>
 
-#pragma warning(push, 0)
+#pragma warning( push, 0 )
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#pragma warning(pop)
+#pragma warning( pop )
 
 /*           NOTE FOR FUTURE, SINCE DOING OBSERVER-LIKE PATTERNS ARE STILL NEW FOR ME RIGHT NOW
 ###########################################################################################################################
@@ -27,13 +27,10 @@ never execute code uneccessarily (although it does always perform a condition ch
 */
 void Logger::UpdateLoggerFileInfo( )
 {
-	if(fileInfoChanged) {
-		logFileHandle->UpdateFileInfo(logFileHandle->optCurrentDir,
-					     logFileHandle->optLogDir,
-					     logFileHandle->optFilePath,
-					     logFileHandle->optFileName);
+	if( fileInfoChanged ) {
+		logFileHandle->UpdateFileInfo( logFileHandle->GetFilePath( ) );
 	}
-	fileInfoChanged = (!fileInfoChanged);
+	fileInfoChanged = ( !fileInfoChanged );
 }
 
 std::shared_ptr<spdlog::logger> Logger::m_internalLogger;
@@ -47,22 +44,23 @@ Logger* Logger::loggerInstance;
 */
 // clang-format on
 
-Logger::Logger(std::string loggerName, std::string logName, LoggerLevel level) : m_loggerName(loggerName)
+Logger::Logger( std::string loggerName, std::string logName, LoggerLevel level )
+  : m_loggerName( loggerName ), m_logName( logName )
 {
-	
+	// Getting Close To Where I Would Want To Abstract Code Into The Respective Class's Init() Functions To
+	// Call Here
+	serenity::file_helper::path log_name = logName;
+	auto defaultPath                     = serenity::file_helper::current_path( );
+	serenity::file_helper::path logDir   = ( defaultPath /= "Logs" );
+	logFileHandle                        = new LogFileHelper( logDir, log_name );
+
+	logFileHandle->RenameLogFile( logName );
+	logFileHandle->UpdateFileInfo( logFileHandle->GetFilePath( ) );
+	logFileHandle->ChangeDir( logFileHandle->GetLogDirPath( ) );
+
 	loggerInstance = this;
-	serenity::file_helper::path tempFile = logName;
-	serenity::file_helper::path logDir = (serenity::file_helper::current_path( )/="Logs");  
-	logFileHandle  = new LogFileHelper(logDir, tempFile);
-	logFileHandle->RenameFile(logName);
-	// I believe StorePathComponents() Would do a better job overall here
-	logFileHandle->UpdateFileInfo(logFileHandle->GetCurrentDir( ),
-				       logFileHandle->GetDirPath( ),
-				       logFileHandle->GetFilePath( ),
-				       logFileHandle->GetFileName( ));
-	logFileHandle->ChangeDir(logFileHandle->GetDirPath( ));
 	this->UpdateLoggerFileInfo( );
-	Init(*this, level);
+	Init( *this, level );
 }
 
 Logger::~Logger( )
@@ -72,90 +70,90 @@ Logger::~Logger( )
 	spdlog::shutdown( );
 }
 
-namespace serenity {
+namespace serenity
+{
 	std::string GetSerenityVerStr( )
 	{
-		auto version = VERSION_NUMBER(SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV);
+		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
 		return version;
 	}
-} // namespace serenity
+}  // namespace serenity
 
 
-void Logger::Init(Logger& logger, LoggerLevel setLevel)
+void Logger::Init( Logger& logger, LoggerLevel setLevel )
 {
 	// Keeping this pretty simple before deviating too hard core - end goal would be to abstract some of the
 	// setup in some structs and then just pass in the desired struct into the init function
-	auto mappedLevel = MapLogLevel(setLevel);
+	auto mappedLevel = MapLogLevel( setLevel );
 	std::vector<spdlog::sink_ptr> sinks;
 
-	sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ));
-	sinks.emplace_back(
-	  std::make_shared<spdlog::sinks::basic_file_sink_mt>(logger.logFileHandle->GetFilePath().filename().string(), true));
+	sinks.emplace_back( std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ) );
+	sinks.emplace_back( std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+	  logger.logFileHandle->GetFilePath( ).filename( ).string( ), true ) );
 	// Would Like To Format this in a more personalized and absstracted manner
-	sinks [0]->set_pattern("%^[%T] %n: %v%$");
-	sinks [1]->set_pattern("[%T] [%l] %n: %v");
+	sinks[ 0 ]->set_pattern( "%^[%T] %n: %v%$" );
+	sinks[ 1 ]->set_pattern( "[%T] [%l] %n: %v" );
 
 	// For both logger types, would like to abstract away the mappedLevel in a way that a flush level doesnt
 	// always have to be the same as what is set
-	if(m_internalLogger.get( ) == nullptr) {
-		m_internalLogger = std::make_shared<spdlog::logger>("INTERNAL", begin(sinks), end(sinks));
-		spdlog::register_logger(m_internalLogger);
-		m_internalLogger->set_level(mappedLevel);
-		m_internalLogger->flush_on(mappedLevel);
-	} else {
-		SE_INTERNAL_WARN("Warning: Trying To Initialize A Logger Of Same Name: {}",
-				 logger.GetLoggerName( ));
+	if( m_internalLogger.get( ) == nullptr ) {
+		m_internalLogger = std::make_shared<spdlog::logger>( "INTERNAL", begin( sinks ), end( sinks ) );
+		spdlog::register_logger( m_internalLogger );
+		m_internalLogger->set_level( mappedLevel );
+		m_internalLogger->flush_on( mappedLevel );
+	}
+	else {
+		SE_INTERNAL_WARN( "Warning: Trying To Initialize A Logger Of Same Name: {}", logger.GetLoggerName( ) );
 	}
 
-	if(m_clientLogger.get( ) == nullptr) {
+	if( m_clientLogger.get( ) == nullptr ) {
 		m_clientLogger =
-		  std::make_shared<spdlog::logger>(logger.GetLoggerName( ), begin(sinks), end(sinks));
-		spdlog::register_logger(m_clientLogger);
-		m_clientLogger->set_level(mappedLevel);
-		m_clientLogger->flush_on(mappedLevel);
-	} else {
-		SE_WARN("Warning: Trying To Initialize A Logger Of Same Name: {}", logger.GetLoggerName( ));
+		  std::make_shared<spdlog::logger>( logger.GetLoggerName( ), begin( sinks ), end( sinks ) );
+		spdlog::register_logger( m_clientLogger );
+		m_clientLogger->set_level( mappedLevel );
+		m_clientLogger->flush_on( mappedLevel );
+	}
+	else {
+		SE_WARN( "Warning: Trying To Initialize A Logger Of Same Name: {}", logger.GetLoggerName( ) );
 	}
 }
 
 using MappedLevel = serenity::MappedLevel;
 
-void Logger::SetLoggerLevel(LoggerLevel level, LoggerInterface logInterface)
+void Logger::SetLoggerLevel( LoggerLevel level, LoggerInterface logInterface )
 {
-	m_level = MapLogLevel(level);
-	if(!m_level) {
-		throw std::runtime_error("Log Level Was Not A Valid Value");
+	m_level = MapLogLevel( level );
+	if( !m_level ) {
+		throw std::runtime_error( "Log Level Was Not A Valid Value" );
 	}
-	switch(logInterface) {
+	switch( logInterface ) {
 		case LoggerInterface::internal:
 			{
-				m_internalLogger->set_level(m_level);
+				m_internalLogger->set_level( m_level );
 			}
 		case LoggerInterface::client:
 			{
-				m_clientLogger->set_level(m_level);
+				m_clientLogger->set_level( m_level );
 			}
 		default:
 			{
-				m_internalLogger->set_level(MappedLevel::off);
-				m_clientLogger->set_level(MappedLevel::off);
-				throw std::runtime_error("Log Interface Was Not A Valid Value - Log Level Set To "
-							 "'OFF'\n");
+				m_internalLogger->set_level( MappedLevel::off );
+				m_clientLogger->set_level( MappedLevel::off );
+				throw std::runtime_error(
+				  "Log Interface Was Not A Valid Value - Log Level Set To 'OFF'\n" );
 			}
 	}
 }
 
-serenity::MappedLevel Logger::MapLogLevel(LoggerLevel level)
+serenity::MappedLevel Logger::MapLogLevel( LoggerLevel level )
 {
-	std::map<LoggerLevel, MappedLevel> levelMap = {{LoggerLevel::trace, MappedLevel::trace},
-						       {LoggerLevel::info, MappedLevel::info},
-						       {LoggerLevel::debug, MappedLevel::debug},
-						       {LoggerLevel::warning, MappedLevel::warn},
-						       {LoggerLevel::error, MappedLevel::err},
-						       {LoggerLevel::fatal, MappedLevel::critical}};
-	MappedLevel result                          = MappedLevel::off;
-	auto iterator                               = levelMap.find(level);
-	if(iterator != levelMap.end( )) {
+	std::map<LoggerLevel, MappedLevel> levelMap = {
+	  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
+	  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
+	  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
+	MappedLevel result = MappedLevel::off;
+	auto iterator      = levelMap.find( level );
+	if( iterator != levelMap.end( ) ) {
 		result = iterator->second;
 	}
 	return result;

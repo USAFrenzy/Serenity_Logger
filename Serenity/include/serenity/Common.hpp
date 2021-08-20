@@ -5,10 +5,23 @@
 #include <spdlog/spdlog.h>
 #include "serenity/Defines.hpp"
 
-enum class LoggerLevel { trace, debug, info, warning, error, fatal };
-enum class LoggerInterface { internal = INTERFACE_INTERNAL, client = INTERFACE_CLIENT };
+enum class LoggerLevel
+{
+	trace,
+	debug,
+	info,
+	warning,
+	error,
+	fatal
+};
+enum class LoggerInterface
+{
+	internal = INTERFACE_INTERNAL,
+	client   = INTERFACE_CLIENT
+};
 
-namespace serenity {
+namespace serenity
+{
 	using MappedLevel = spdlog::level::level_enum;
 }
 

@@ -7,7 +7,7 @@
 ########## The extra indent or outdent of access modifiers ##########
 AccessModifierOffset: -2
 ########## If true, horizontally aligns arguments after an open bracket ##########
-AlignAfterOpenBracket: true
+AlignAfterOpenBracket: Align
 ########## If true, aligns consecutive assignments ##########
 # int aaaa = 12;
 # int b    = 23;
@@ -38,7 +38,7 @@ AlignEscapedNewlines: Right
 ########## Horizontally align operands of binary and ternary expressions ##########
 # int aaa = bbbbbbbbbbbbbbb +
 #           ccccccccccccccc;
-AlignOperands: Align
+AlignOperands: AlignAfterOperator
 ########## If true, aligns trailing comments ##########
 # true:                                   false:
 # int a;     // My comment a      vs.     int a; // My comment a
@@ -116,7 +116,7 @@ AlwaysBreakAfterReturnType: None
 # aaaa =                         vs.     aaaa = "bbbb"
 #     "bbbb"                                    "cccc";
 #     "cccc";
-AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakBeforeMultilineStrings: true
 ########## Force break after template declaration only when ##########
 ########## the following declaration spans multiple lines.  ##########
 # template <typename T> T foo() {
@@ -143,7 +143,7 @@ AlwaysBreakTemplateDeclarations: MultiLine
 #    aaaaaaaaaaaaaaaaaaaa,
 #    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);
 # }
-BinPackArguments: false
+BinPackArguments: true
 ########## If false, a function declaration’s or function definition’s parameters ##########
 ##########      will either all be on the same line or will have one line each    ##########
 # false:
@@ -160,17 +160,17 @@ BraceWrapping:
   AfterCaseLabel: true
   AfterClass: true
   AfterControlStatement: MultiLine
-  AfterEnum: false
+  AfterEnum: true
   AfterFunction: true
-  AfterNamespace: false
+  AfterNamespace: true
   AfterObjCDeclaration: false
   AfterStruct: true
   AfterUnion: false
   AfterExternBlock: false
-  BeforeCatch: false
-  BeforeElse: false
+  BeforeCatch: true
+  BeforeElse: true
   BeforeLambdaBody: false
-  BeforeWhile: false
+  BeforeWhile: true
   IndentBraces: false
   # Due To Above Choices, Stylistically Looks Better This Way
   SplitEmptyFunction: true
@@ -199,9 +199,8 @@ BreakBeforeTernaryOperators: true
 #       initializer2()
 BreakConstructorInitializers: BeforeColon
 ########## Break inheritance list after the colon and commas ##########
-# class Foo :
-#    Base1,
-#    Base2
+# class Foo : Base1,
+#             Base2
 # {};
 BreakInheritanceList: AfterColon
 ########## Allow breaking string literals when formatting ##########
@@ -340,8 +339,8 @@ IndentWrappedFunctionNames: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 Language: Cpp
 ########## A regular expression matching macros that start and end a block #########
-MacroBlockBegin: ^REDEMPTION_.*_BEGIN|\RD_.*_BEGIN|\DEBUG_.*_BEGIN|\RD_TEST_.*_BEGIN
-MacroBlockEnd: ^REDEMPTION_.*_END|\RD_.*_END|\DEBUG_.*_END|\RD_TEST_.*_END
+# MacroBlockBegin:
+# MacroBlockEnd: 
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: All
 ########## A vector of macros which are used to open namespace blocks ##########
@@ -349,7 +348,7 @@ NamespaceIndentation: All
 # NAMESPACE(<namespace-name>, ...) {
 #   <namespace-content>
 # }
-# NamespaceMacros: RD_TESTS_.*
+# NamespaceMacros:
 
 PointerAlignment: Right
 ########## Defines hints for detecting supported ##########
@@ -377,19 +376,19 @@ SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: Never
 SpaceBeforeRangeBasedForLoopColon: true
-SpaceBeforeSquareBrackets: true
+SpaceBeforeSquareBrackets: false
 SpaceInEmptyBlock: true
 SpaceInEmptyParentheses: true
-SpacesBeforeTrailingComments: 1
+SpacesBeforeTrailingComments: 2
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: true
 SpacesInContainerLiterals: true
-SpacesInParentheses: false
-SpacesInSquareBrackets: false
+SpacesInParentheses: true
+SpacesInSquareBrackets: true
 
 Standard: c++20
 
-StatementMacros: ["DEPRACATED", "RD_UNUSED", "TODO", "NOTE"]
+# StatementMacros: ["DEPRACATED", "TODO", "NOTE"]
 
 UseTab: ForContinuationAndIndentation
 TabWidth: 8
@@ -397,8 +396,8 @@ TabWidth: 8
 PenaltyBreakAssignment: 15
 PenaltyBreakBeforeFirstCallParameter: 35
 PenaltyBreakComment: 10
-PenaltyBreakFirstLessLess: 0
-PenaltyBreakString: 15
+PenaltyBreakFirstLessLess: 15
+PenaltyBreakString: 5
 PenaltyBreakTemplateDeclaration: 65
-PenaltyExcessCharacter: 85
-PenaltyReturnTypeOnItsOwnLine: 5
+PenaltyExcessCharacter: 5
+PenaltyReturnTypeOnItsOwnLine: 10

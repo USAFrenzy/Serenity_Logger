@@ -2,8 +2,8 @@
 
 #include "serenity/Common.hpp"
 
-namespace serenity {
-
+namespace serenity
+{
 	/*
 		Will honestly need to think about this particular class a lot. Need to be sure that it's
 	   functionality won't be broken by adding the variability I want to Logger class as well as correctly
@@ -12,15 +12,15 @@ namespace serenity {
 	class LoggerInfo
 	{
 	      public:
-		LoggerInfo(std::string name, std::string pattern, LoggerLevel logLevel, LoggerLevel flushLevel);
+		LoggerInfo( std::string name, std::string pattern, LoggerLevel logLevel, LoggerLevel flushLevel );
 		~LoggerInfo( );
 
 		// General Setter/Getter Helper Functions
-		void SetLoggerName(std::string loggerName);
+		void SetLoggerName( std::string loggerName );
 		std::string GetLoggerName( );
-		void SetLoggerPattern(std::string logPattern);
-		void SetLoggerLevel(LoggerLevel logLevel);
-		void LoggerFlushOn(LoggerLevel flushLevel);
+		void SetLoggerPattern( std::string logPattern );
+		void SetLoggerLevel( LoggerLevel logLevel );
+		void LoggerFlushOn( LoggerLevel flushLevel );
 
 		/*std::optional<LoggerInterface>
 		  SetLoggerName(std::string loggerName, std::optional<LoggerInterface> interface);*/
@@ -36,15 +36,15 @@ namespace serenity {
 		LoggerLevel GetLoggerLevel( );
 		std::string GetLoggerPattern( );
 
-	}; // class LoggerInfo
+	};  // class LoggerInfo
 
-	LoggerInfo::LoggerInfo(std::string name, std::string pattern, LoggerLevel logLevel, LoggerLevel flushLevel)
-	  : m_loggerName(name), m_pattern(pattern), m_logLevel(logLevel), m_flushLevel(flushLevel)
+	LoggerInfo::LoggerInfo( std::string name, std::string pattern, LoggerLevel logLevel, LoggerLevel flushLevel )
+	  : m_loggerName( name ), m_pattern( pattern ), m_logLevel( logLevel ), m_flushLevel( flushLevel )
 	{
 	}
 	LoggerInfo::~LoggerInfo( ) { }
 
-	inline void LoggerInfo::SetLoggerName(std::string loggerName)
+	inline void LoggerInfo::SetLoggerName( std::string loggerName )
 	{
 		m_loggerName = loggerName;
 	}
@@ -53,7 +53,7 @@ namespace serenity {
 		return m_loggerName;
 	}
 
-	inline void LoggerInfo::SetLoggerPattern(std::string logPattern)
+	inline void LoggerInfo::SetLoggerPattern( std::string logPattern )
 	{
 		m_pattern = logPattern;
 	}
@@ -63,7 +63,7 @@ namespace serenity {
 		return m_pattern;
 	}
 
-	inline void LoggerInfo::SetLoggerLevel(LoggerLevel logLevel)
+	inline void LoggerInfo::SetLoggerLevel( LoggerLevel logLevel )
 	{
 		m_logLevel = logLevel;
 	}
@@ -73,7 +73,7 @@ namespace serenity {
 		return m_logLevel;
 	}
 
-	inline void LoggerInfo::LoggerFlushOn(LoggerLevel flushLevel)
+	inline void LoggerInfo::LoggerFlushOn( LoggerLevel flushLevel )
 	{
 		m_flushLevel = flushLevel;
 	}
@@ -117,7 +117,7 @@ namespace serenity {
 	{
 	};
 
-} // namespace serenity
+}  // namespace serenity
 
 // clang-format off
 /*

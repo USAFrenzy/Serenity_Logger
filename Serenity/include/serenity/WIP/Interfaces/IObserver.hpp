@@ -11,9 +11,8 @@ class IFileHelper
 	using MappedLevel = serenity::MappedLevel;
 
       protected:
-	virtual std::optional<std::filesystem::path>
-	  UpdateFileInfo(optPath optCurrentDir, optPath optLogDir, optPath optFilePath, optPath optFileName) = 0;
-	virtual void NotifyLogger( )                                                                         = 0;
+	virtual void UpdateFileInfo( std::filesystem::path pathToFile ) = 0;
+	virtual void NotifyLogger( )                                    = 0;
 };
 
 class ILogger
