@@ -11,13 +11,12 @@ int main( )
 {
 #if LOGGER_MESSAGES_SB
 
-	serenity::file_helper::path logName1 = "MacroLog.txt";
-	auto logDirPath1                     = serenity::file_helper::current_path( ) /= "Logs";
-	serenity::LogFileHelper logInfo1( logDirPath1, logName1 );
-	Logger logOne( "Macro Test Logger", &logInfo1, LoggerLevel::trace );
+	serenity::file_helper::path logName1    = "MacroLog.txt";
+	auto                        logDirPath1 = serenity::file_helper::current_path( ) /= "Logs";
+	serenity::LogFileHelper     logInfo1( logDirPath1, logName1 );
+	Logger                      logOne( "Macro Test Logger", &logInfo1, LoggerLevel::trace );
 
-	SE_INTERNAL_INFO( "Hello From The True Library!\n- Serenity Library Info: \n\t- Version: {}",
-			  serenity::GetSerenityVerStr( ) );
+	SE_INTERNAL_INFO( "Hello From The True Library!\n- Serenity Library Info: \n\t- Version: {}", serenity::GetSerenityVerStr( ) );
 	SE_INTERNAL_TRACE( "This Is A General Trace Message - Time To Iterate Through The Log Levels!" );
 	std::string A = "Hello A";
 	SE_INTERNAL_DEBUG( "Oh Hey, A Debug Message! Variable Substitution for 'A' should be 'Hello A': {}", A );
@@ -49,8 +48,8 @@ int main( )
 	SE_INFO( "Now Just Testing That The Logger Initialized Name Got Passed Through To The Logs" );
 	SE_TRACE( "Working With File Systems Now\n\n" );
 
-	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ),
-		 logTwo.GetLogDirPath( ), logTwo.GetFilePath( ), logTwo.GetFileName( ) );
+	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath( ),
+		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
 
 	SE_TRACE( "Now Testing Swapping Log Names:" );
 
@@ -66,13 +65,13 @@ int main( )
 	logTwo.ChangeDir( pathToChangeToOne );
 	SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
 
-	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ),
-		 logTwo.GetLogDirPath( ), logTwo.GetFilePath( ), logTwo.GetFileName( ) );
+	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath( ),
+		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
 
 	logTwo.ChangeDir( pathToChangeToTwo );
 	SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
-	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ),
-		 logTwo.GetLogDirPath( ), logTwo.GetFilePath( ), logTwo.GetFileName( ) );
+	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath( ),
+		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
 
 	logTwo.ChangeDir( originalPath );
 	SE_INFO( "Just Visual Representation Of Path Components:{}\n", logTwo.PathComponents_Str( pathToChangeToOne ) );
@@ -104,7 +103,16 @@ int main( )
 	// This One Currently Does NOT Write To A Log On That Path..
 	logTwo.RenameLogFile( "Test_Log.txt" );
 	auto newTestPath = originalPath / logTwo.GetFileName( );
-	SE_INFO( "Should Be Writing To A Log Under:\n{}", logTwo.GetLogDirPath( ) );
+	SE_INFO( "Should Be Writing To A Log Under: {}\n", logTwo.GetLogDirPath( ) );
+
+	auto pathToTest = logTwo.GetCurrentDir( );
+	SE_TRACE( "Quick Test Of The Whole File Retrieval Deal With RetrieveDirEntries():" );
+	SE_TRACE( "Listing Files Under: {}\n", pathToTest );
+	auto dirFiles = serenity::file_utils::RetrieveDirEntries( pathToTest );
+	for( const auto &file : dirFiles ) {
+		SE_INFO( "File Found: \nPath: {}\nFile: {}", file.path( ), file.path( ).filename( ) );
+	}
+
 
 	#endif
 
@@ -137,3 +145,13 @@ int main( )
 	  attributes/status
 ######################################################################################################################################################
 clang-format on */
+
+/*
+	ideas:
+
+
+
+
+
+
+*/

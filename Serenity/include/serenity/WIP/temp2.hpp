@@ -16,11 +16,11 @@ namespace serenity
 		~LoggerInfo( );
 
 		// General Setter/Getter Helper Functions
-		void SetLoggerName( std::string loggerName );
+		void        SetLoggerName( std::string loggerName );
 		std::string GetLoggerName( );
-		void SetLoggerPattern( std::string logPattern );
-		void SetLoggerLevel( LoggerLevel logLevel );
-		void LoggerFlushOn( LoggerLevel flushLevel );
+		void        SetLoggerPattern( std::string logPattern );
+		void        SetLoggerLevel( LoggerLevel logLevel );
+		void        LoggerFlushOn( LoggerLevel flushLevel );
 
 		/*std::optional<LoggerInterface>
 		  SetLoggerName(std::string loggerName, std::optional<LoggerInterface> interface);*/

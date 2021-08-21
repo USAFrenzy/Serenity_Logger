@@ -5,6 +5,9 @@
 #include <optional>
 #include "serenity/WIP/Interfaces/IObserver.hpp"
 
+
+// (NOTE): With The file_utils namespace, highly debating on some restructuring in the future
+
 namespace serenity
 {
 	namespace file_helper = std::filesystem;
@@ -15,18 +18,18 @@ namespace serenity
 	{
 	      public:
 		LogFileHelper( );
-		LogFileHelper( file_helper::path& pathToFileDir, file_helper::path& fileName );
+		LogFileHelper( file_helper::path &pathToFileDir, file_helper::path &fileName );
 		~LogFileHelper( );
 		/*
 			Really Only Works To Rename the singular file referenced by m_logName and
 			not on arbitrary file renaming
 		*/
-		void RenameLogFile( std::string fileNewName );
-		void ChangeDir( file_helper::path destDir );
-		void SetDir( file_helper::path oldPathDir, file_helper::path destDirPath );
-		void StorePathComponents( file_helper::path& pathToStore );
-		void NotifyLogger( ) override;
-		void UpdateFileInfo( file_helper::path pathToFile ) override;
+		void        RenameLogFile( std::string fileNewName );
+		void        ChangeDir( file_helper::path destDir );
+		void        SetDir( file_helper::path oldPathDir, file_helper::path destDirPath );
+		void        StorePathComponents( file_helper::path &pathToStore );
+		void        NotifyLogger( ) override;
+		void        UpdateFileInfo( file_helper::path pathToFile ) override;
 		static bool fileInfoChanged;
 
 		// void SetRelativePath( );
@@ -38,14 +41,14 @@ namespace serenity
 
 
 		// Testing Functions
-		std::string PathComponents_Str( file_helper::path& path );
+		std::string PathComponents_Str( file_helper::path &path );
 
 	      private:
 		file_helper::path m_cachePath;
 		file_helper::path m_cacheDir;
 
-		std::string m_logDir;
-		std::string m_logName;
+		std::string       m_logDir;
+		std::string       m_logName;
 		file_helper::path m_currentDir   = file_helper::current_path( );
 		file_helper::path m_relativePath = m_currentDir.relative_path( );
 		file_helper::path m_logDirPath   = m_relativePath /= m_logDir;
@@ -68,7 +71,13 @@ namespace serenity
 {
 	namespace file_utils
 	{
-		bool ValidateFileName( std::string fileName );
-		void RenameFile( std::string oldFile, std::string newFile );
+		static bool dirEntryExists { false };
+
+		std::vector<std::filesystem::directory_entry> RetrieveDirEntries( std::filesystem::path &path );
+		std::filesystem::path                         SearchDirEntries( std::string &searchString );    // Not Implemented
+		std::filesystem::directory_entry RetrieveDirObject( std::filesystem::directory_entry &entry );  // Not Implemented
+		bool                             ValidateFileName( std::string fileName );
+		bool                             ValidateForSameExtension( std::string oldFile, std::string newFile );
+		void                             RenameFile( std::string oldFile, std::string newFile );
 	}  // namespace file_utils
 }  // namespace serenity

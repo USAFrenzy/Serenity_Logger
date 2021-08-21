@@ -14,9 +14,7 @@ AlignAfterOpenBracket: Align
 # int ccc  = 23;
 AlignConsecutiveAssignments: true
 ########## If true, aligns consecutive declarations. ##########
-# Avoiding This One As I Personally Like Having Vars Near Types
-# Like The Bitfield And Assignment Fields
-AlignConsecutiveDeclarations: false
+AlignConsecutiveDeclarations: true
 ########## If true, aligns consecutive bitfield members ##########
 # int aaaa : 1;
 # int b    : 12;
@@ -209,7 +207,7 @@ BreakInheritanceList: AfterColon
 #                 "ryVeryVeryVeryVeryVery"
 #                 "VeryLongString";
 BreakStringLiterals: true
-ColumnLimit: 115
+ColumnLimit: 135
 ########## A regular expression that describes comments with special meaning ##########
 CommentPragmas: "^ IWYU pragma:"
 ########## If false, each namespace is declared on a new line ##########
@@ -245,7 +243,8 @@ DeriveLineEnding: true
 ########## Analyze the formatted file for the most common alignment of & and *. Pointer   ##########
 ##########    and reference alignment styles are going to be updated according to the     ##########
 ########## preferences found in the file. PointerAlignment is then used only as fallback. ##########
-DerivePointerAlignment: true
+DerivePointerAlignment: false
+PointerAlignment: left
 ########## Disables formatting completely ##########
 DisableFormat: false
 ########## If true, clang-format adds missing namespace ##########

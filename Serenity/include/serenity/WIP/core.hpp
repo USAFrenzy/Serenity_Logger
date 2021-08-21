@@ -15,4 +15,4 @@
 
 #include <string>
 #include <vector>
-#include <iostream> // used for ostream &os = std::cout as default
+#include <iostream>  // used for ostream &os = std::cout as default

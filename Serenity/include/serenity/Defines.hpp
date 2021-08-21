@@ -1,6 +1,13 @@
 #pragma once
 #include <filesystem>
 
+// Toggle For Logger Macros In Release Mode
+#define TESTS 1
+#if TESTS
+	#define SERENITY_TEST_RUN
+#else
+	#undef SERENITY_TEST_RUN
+#endif
 
 #define LOGGER_DEFAULT_NAME                             "SERENITY"
 #define INTERFACE_INTERNAL                              50
