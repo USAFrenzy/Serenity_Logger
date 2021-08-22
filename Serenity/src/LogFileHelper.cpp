@@ -61,47 +61,65 @@ namespace serenity
 	{
 		fileInfoChanged = true;
 	}
-	// clang-format off
-		/*
-			^([_[:alnum:][:space:]])+.[a-zA-Z]+$|^[.]([_[:alnum:][:space:]])+[.]([_[:alnum:][:space:]])+$|^[.]([_[:alnum:][:space:]])+$
-			I'm positive there's a better way to do this, but for now, it works for what I've tested:
-			- Accepts hidden files (.file), hidden files with extensions (.hidden.jpg), files with spaces in between (Spaced File.txt), and normal files (NormalFile.bmp)
-				- Warning is now correctly thrown on files like log.jpg.txt 
-				- In The future, could add test cases in case valid files like (Server.Data.Logs.txt) exist since right now, the warning would still be issued 
-		*/
-	// clang-format on
 
-
+	// #######################################################################################
+	// # (TODO): Look For A Better Way To Filter The File Name And Extension                 #
+	// # -> Creating A Temp Variable And All The Extra Stuff Is Really Hacky At The Moment   #
+	// #######################################################################################
 	void LogFileHelper::RenameLogFile( std::string fileNewName )
 	{
-		std::string       extension;
-		file_helper::path oldFileName = m_filePath.filename( );
-		/*
-			Check to see if fileNewName is a valid rename string and if so, then check if it contains
-		   it's own extension. If it does, throw away the stored extension and use the one include,
-		   otherwise, retain the old extension format
-		*/
-		if( file_utils::ValidateFileName( fileNewName ) ) {
-			if( file_utils::ValidateForSameExtension( m_filePath.filename( ).extension( ).string( ), fileNewName ) ) {
-				extension = m_filePath.filename( ).extension( ).string( );
-			}
-			else {
-				if( fileNewName.find_last_of( "." ) != std::string::npos ) {
-					extension = static_cast<char>( fileNewName.find_last_of( "." ) + 1 );
+		std::string newExtension;
+		std::string newFileName;
+		std::string tmp = fileNewName;
+		try {
+			if( file_utils::ValidateFileName( fileNewName ) && file_utils::ValidateExtension( fileNewName ) ) {
+				try {
+					if( file_utils::CompareExtensions( m_filePath.filename( ).string( ), fileNewName ) ) {
+						m_filePath.replace_filename( fileNewName );
+						UpdateFileInfo( m_filePath );
+					}
+					else {
+						// If The Extensions Are NOT The Same:
+						/*
+							Iterate through the tmp string which has been assigned from input string,
+						   extract the filename without the extension and assign that to newFileName. Then do
+						   the same thing with the input string, finding the extension instead and extracting
+						   that out to assign to newExtension. Finally, replace the file name and extension and
+						   update the file info for the logger
+						*/
+						auto extBegin = tmp.find_last_of( "." );
+						auto exEnd    = ( tmp.find_last_not_of( "." ) + 1 );
+						if( tmp.begin( ) != tmp.end( ) ) {
+							tmp.erase( extBegin, exEnd - extBegin );
+							newFileName = tmp;
+							SE_INTERNAL_DEBUG( "newFileName: {}", newFileName );
+						}
+
+						auto begin = fileNewName.find_first_not_of( "." );
+						auto end   = fileNewName.find_last_of( "." );
+						if( std::string::npos != begin && std::string::npos != end && begin <= end ) {
+							fileNewName.erase( begin, end - begin );
+							newExtension.assign( fileNewName );
+							SE_INTERNAL_DEBUG( "newExtension: {}", newExtension );
+						}
+
+						SE_INTERNAL_DEBUG( "Full New File Name: {}{}", newFileName, newExtension );
+						m_filePath.replace_filename( newFileName );
+						m_filePath.replace_extension( newExtension );
+						UpdateFileInfo( m_filePath );
+					}
+				}
+				catch( std::exception &nEx ) {
+					std::throw_with_nested( nEx );
 				}
 			}
-			m_filePath.replace_filename( fileNewName );
-			m_filePath.replace_extension( extension );
-			UpdateFileInfo( m_filePath );
-			m_logName   = m_filePath.filename( ).string( );
-			m_cachePath = m_filePath;
-			m_cacheDir  = m_cachePath.stem( );
 		}
-		else {
-			SE_ERROR( "ERROR: Could Not Rename {} To {}\tReason: Not A Valid Rename String", m_filePath.filename( ),
-				  fileNewName );
-			m_fileName = oldFileName;  // Just Ensuring That The Old File Name Remains
+		catch( std::exception &ex ) {
+			SE_INTERNAL_ERROR( "EXCEPTION CAUGHT IN RenameLogFile( ) :\n { }", ex.what( ) );
 		}
+
+		m_cachePath = m_filePath;
+		m_cacheDir  = m_cachePath.stem( );
 	}
 
 	void LogFileHelper::ChangeDir( file_helper::path destDir )
@@ -111,7 +129,7 @@ namespace serenity
 			file_helper::current_path( destDir );
 		}
 		catch( const std::exception &e ) {
-			SE_FATAL( "EXCEPTION CAUGHT:\n{}", e.what( ) );
+			SE_INTERNAL_FATAL( "EXCEPTION CAUGHT:\n{}", e.what( ) );
 		}
 		UpdateFileInfo( destDir );
 		m_cachePath = destDir;
@@ -125,13 +143,12 @@ namespace serenity
 	}
 	file_helper::path LogFileHelper::GetFileName( )
 	{
-		// Second Check Is A Hack Around Files That Contain No Leading String
-		// (ex: .config, .conf, .gitignore)
-		if( ( m_fileName.has_extension( ) ) || ( m_fileName.string( ).find_first_of( "." ) != std::string::npos ) ) {
+		if( m_fileName.has_extension( ) )  // i.e Not A Directory
+		{
 			return m_fileName;
 		}
 		else {
-			SE_WARN( "Path: [ {} ] Doesn't Point To A File", m_currentDir );
+			SE_INTERNAL_WARN( "Path: [ {} ] Doesn't Point To A File", m_currentDir );
 			return "";
 		}
 	}
@@ -142,8 +159,6 @@ namespace serenity
 	}
 	file_helper::path LogFileHelper::GetLogDirPath( )
 	{
-		SetDir( m_logDir, m_cacheDir );
-		ForceUpdate( );
 		return m_logDirPath;
 	}
 	file_helper::path LogFileHelper::GetCurrentDir( )
@@ -160,6 +175,7 @@ namespace serenity
 
 	void LogFileHelper::StorePathComponents( file_helper::path &pathToStore )
 	{
+		m_filePath     = pathToStore;
 		m_currentDir   = file_helper::current_path( );
 		m_cachePath    = m_currentDir;
 		m_rootPath     = pathToStore.root_path( );
@@ -171,7 +187,8 @@ namespace serenity
 		m_cacheDir     = m_pathStem;
 		m_fileName     = pathToStore.filename( );
 		m_logName      = m_fileName.string( );  // Honestly Pretty Redundant
-		m_logDir       = ( m_relativePath /= m_fileName ).string( );
+		m_logDirPath   = m_filePath.string( );
+		m_logDir       = m_relativePath.string( );
 	}
 	// clang-format off
 	// ############################################################################### Testing Functions  ###############################################################################
@@ -210,48 +227,95 @@ namespace serenity
 			I should probably add that scheme back into the regex match for valid names.
 			Once RenameFile() in file_utils namespace has implemented more checks - will fix
 		*/
+
+
+		/*
+		This Regex Pattern will allow any filename other than those that contain these in their name:
+		-/	-|	-<	->	-:	-\	-?	-*	-" // Invalid Windows File Name
+	   Characters -CON, PRN, AUX, NUL, COM1, COM2, COM3, COM4, COM5, COM6, COM7, COM8, COM9, LPT1, LPT2, LPT3,
+	   LPT4, LPT5, LPT6, LPT7, LPT8, LPT9 // Windows Reserved File Names
+
+		Otherwise The Only Banned Characters Are:
+		-\	-NUL	-:   -/                      // Only Restrictions On Linux/Unix And Forcing ':' And '/'
+	   To Be Restricted For MacOS And Sanity Respectively
+	*/
 		bool ValidateFileName( std::string fileName )
 		{
-			std::smatch match;
-			std::regex  validateFile(
-                          "^([_[:alnum:][:space:]])+.[a-zA-Z]+$|^[.]([_[:alnum:][:space:]])+[.]([_[:alnum:][:"
-                          "space:]])+$|^"
-                          "[.]([_[:alnum:][:space:]])+$" );
-			if( !( std::regex_search( fileName, match, validateFile ) ) ) {
-				SE_INTERNAL_WARN(
-				  "WARNING:\t"
-				  "File Name [ {} ] May Contain Invalid Characters Or Extension May Be Invalid.",
-				  fileName );
-				return false;
+			try {
+				std::smatch match;
+#if WIN32
+				std::regex validateFile(
+				  "^[\\/:\"*?<>|]|CON|PRN|AUX|NUL|COM1|COM2|COM3|COM4|COM5|COM6|COM7|"
+				  "COM8|COM9|LPT1|LPT2|LPT3|LPT4|LPT5|LPT6|LPT7|LPT8|LPT9+$" );
+#else
+				std::regex validateFile( "^[\\/:]|NUL+$" );
+#endif
+				if( ( std::regex_search( fileName, match, validateFile ) ) ) {
+					SE_INTERNAL_WARN(
+					  "WARNING:\t"
+					  "File Name [ {} ] Contains Invalid Characters.",
+					  fileName );
+					return false;
+				}
+				else {
+					return true;
+				}
 			}
-			else {
-				return true;
+			catch( const std::exception &e ) {
+				SE_INTERNAL_ERROR( "EXCEPTION CAUGHT IN ValidateFileName():\n{}", e.what( ) );
 			}
 		}
 
-		bool ValidateForSameExtension( std::string oldFile, std::string newFile )
+		bool ValidateExtension( std::string fileName )
 		{
-			std::string oldExtension, newExtension;
-			// Find The Respective Extensions
-			if( !( oldFile.find_last_of( "." ) != std::string::npos ) ) {
-				oldExtension = static_cast<char>( oldFile.substr( ).find_last_of( "." ) + 1 );
+			try {
+				std::smatch match;
+				std::regex  validExtension( "^.[a-zA-Z]{7}$" );  // making 7 a thing here due to files like .config
+				if( ( std::regex_search( fileName, match, validExtension ) ) ) {
+					SE_INTERNAL_WARN(
+					  "WARNING:\t"
+					  "File Name [ {} ] Extension Is Invalid.",
+					  fileName );
+					return false;
+				}
+				else {
+					return true;
+				}
 			}
-			if( !( newFile.find_last_of( "." ) != std::string::npos ) ) {
-				newExtension = static_cast<char>( newFile.substr( ).find_last_of( "." ) + 1 );
-			}
-			if( !( newExtension == oldExtension ) ) {
-				SE_WARN(
-				  "WARNING:\t"
-				  "New File Name: [ {} ] Does Not Have The Same Extension As Old File: [ {} ]",
-				  oldFile, newFile );
-				return false;
-			}
-			else {
-				return true;
+			catch( const std::exception &e ) {
+				SE_INTERNAL_ERROR( "EXCEPTION CAUGHT IN ValidateExtension():\n{}", e.what( ) );
 			}
 		}
 
-		void RenameFile( std::string oldFile, std::string newFile )
+
+		bool CompareExtensions( std::string oldFile, std::string newFile )
+		{
+			try {
+				std::string oldExtension, newExtension;
+				// Find The Respective Extensions
+				if( !( oldFile.find_last_of( "." ) != std::string::npos ) ) {
+					oldExtension = static_cast<char>( oldFile.substr( ).find_last_of( "." ) + 1 );
+				}
+				if( !( newFile.find_last_of( "." ) != std::string::npos ) ) {
+					newExtension = static_cast<char>( newFile.substr( ).find_last_of( "." ) + 1 );
+				}
+				if( !( newExtension == oldExtension ) ) {
+					SE_INTERNAL_WARN(
+					  "WARNING:\t"
+					  "New File Name: [ {} ] Does Not Have The Same Extension As Old File: [ {} ]",
+					  oldFile, newFile );
+					return false;
+				}
+				else {
+					return true;
+				}
+			}
+			catch( const std::exception &e ) {
+				SE_INTERNAL_ERROR( "EXCEPTION CAUGHT IN CompareExtensions():\n{}", e.what( ) );
+			}
+		}
+
+		void Rename( std::string oldFile, std::string newFile )
 		{
 			std::string extension;
 			/*
@@ -260,11 +324,11 @@ namespace serenity
 			   rename string, then just rename the file to the new file name.
 			*/
 			if( file_utils::ValidateFileName( newFile ) ) {
-				file_utils::ValidateForSameExtension( oldFile, newFile );
+				file_utils::CompareExtensions( oldFile, newFile );
 				oldFile = newFile;
 			}
 			else {
-				SE_ERROR( "Could Not Rename {} To {}\tReason: Not A Valid Rename String", oldFile, newFile );
+				SE_INTERNAL_ERROR( "Could Not Rename {} To {}\tReason: Not A Valid Rename String", oldFile, newFile );
 			}
 		}
 

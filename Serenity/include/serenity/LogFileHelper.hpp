@@ -77,7 +77,8 @@ namespace serenity
 		std::filesystem::path                         SearchDirEntries( std::string &searchString );    // Not Implemented
 		std::filesystem::directory_entry RetrieveDirObject( std::filesystem::directory_entry &entry );  // Not Implemented
 		bool                             ValidateFileName( std::string fileName );
-		bool                             ValidateForSameExtension( std::string oldFile, std::string newFile );
-		void                             RenameFile( std::string oldFile, std::string newFile );
+		bool                             ValidateExtension( std::string fileName );
+		bool                             CompareExtensions( std::string oldFile, std::string newFile );
+		void                             Rename( std::string oldFile, std::string newFile );
 	}  // namespace file_utils
 }  // namespace serenity

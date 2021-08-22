@@ -6,6 +6,7 @@
 #define TEST_ASSERT          0
 #define LOGGER_FILESYSTEM_SB 1
 #define FILE_RENAME_TEST     1
+#define TEST_FILE_RETRIEVAL  0
 
 int main( )
 {
@@ -105,6 +106,7 @@ int main( )
 	auto newTestPath = originalPath / logTwo.GetFileName( );
 	SE_INFO( "Should Be Writing To A Log Under: {}\n", logTwo.GetLogDirPath( ) );
 
+		#if TEST_FILE_RETRIEVAL
 	auto pathToTest = logTwo.GetCurrentDir( );
 	SE_TRACE( "Quick Test Of The Whole File Retrieval Deal With RetrieveDirEntries():" );
 	SE_TRACE( "Listing Files Under: {}\n", pathToTest );
@@ -112,6 +114,7 @@ int main( )
 	for( const auto &file : dirFiles ) {
 		SE_INFO( "File Found: \nPath: {}\nFile: {}", file.path( ), file.path( ).filename( ) );
 	}
+		#endif
 
 
 	#endif
