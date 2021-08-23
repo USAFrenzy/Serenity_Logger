@@ -15,7 +15,7 @@
 
 #include <string>
 #include <vector>
-#include <iostream> // used for ostream &os = std::cout as default
+#include <iostream>  // used for ostream &os = std::cout as default
 
 // clang-format off
 
@@ -48,11 +48,11 @@ struct LogSinkInfo
 	// Should Probably look into using std::filesystem here?
 	// (NOTE): Due to the way I Have The Functions Working, I Need To Add Separate Name Fields And Other Fields
 	// That Have Yet To Be Added For Individual Sinks Here
-#if defined(WIN32) || (_WIN32)
-	const char* separator = "/";
+#if defined( WIN32 ) || ( _WIN32 )
+	const char *separator = "/";
 #else
-	const char* separator = "\\";
-#endif // Separator definition
+	const char *separator = "\\";
+#endif  // Separator definition
 	std::string fileName = "Log.txt";
 	std::string fileDir  = "Logs";
 	// basic file sink specific
@@ -60,25 +60,26 @@ struct LogSinkInfo
 	// Rotating file sink specific
 	std::size_t maxFileSize;
 	std::size_t maxNumFiles;
-	bool rotateWhenOpened = false;
+	bool        rotateWhenOpened = false;
 	// ansicolor sink specific
-	FILE* file;
+	FILE *             file;
 	spdlog::color_mode colorMode = spdlog::color_mode::automatic;
 	// daily sink specific
-	int rotateHour;
-	int rotateMin;
+	int      rotateHour;
+	int      rotateMin;
 	uint16_t maxDailySinkFiles = 0;
 	// ostream sink specific
-	std::ostream& os = std::cout;
-	bool forceFlush  = false;
+	std::ostream &os         = std::cout;
+	bool          forceFlush = false;
 	// wincolor sink specific
-	void* outputHandle;
+	void *outputHandle;
 } LogFileInfo;
 
 // Not An Exhaustive List Of LoggerSinks::SinkType (spdlog Has Many More), Just Ones I Want To Support
 struct LoggerSinks
 {
-	enum class SinkType {
+	enum class SinkType
+	{
 		androidSink,
 		ansiColorSink,
 		basicFileSink,
@@ -96,119 +97,98 @@ struct LoggerSinks
 
 struct LoggerProperties
 {
-	void AddSinkForLogger(LoggerSinks::SinkType sink)
+	void AddSinkForLogger( LoggerSinks::SinkType sink )
 	{
-		sinkTypeList.emplace_back(sink);
+		sinkTypeList.emplace_back( sink );
 	}
-	LogSinkInfo* logSinkInfo = &LogFileInfo;
+	LogSinkInfo *                      logSinkInfo = &LogFileInfo;
 	std::vector<LoggerSinks::SinkType> sinkTypeList;
-	std::vector<spdlog::sink_ptr>* loggerSinks = &SE_sinks.logSinks;
+	std::vector<spdlog::sink_ptr> *    loggerSinks = &SE_sinks.logSinks;
 };
 
-namespace serenity {
-
-
-	spdlog::sink_ptr CreateSinks(std::vector<LoggerSinks::SinkType> sinkTypeList)
+namespace serenity
+{
+	spdlog::sink_ptr CreateSinks( std::vector<LoggerSinks::SinkType> sinkTypeList )
 	{
-		for(auto const& sink : sinkTypeList) {
+		for( auto const &sink : sinkTypeList ) {
 			using Sink = LoggerSinks::SinkType;
-			switch(sink) {
+			switch( sink ) {
 				case Sink::androidSink:
 					{
 #ifdef __ANDROID__
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::android_sink_mt>( ));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::android_sink_mt>( ) );
 #endif
 					}
 					break;
 				case Sink::ansiColorSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>(
-						    LogFileInfo.file,
-						    LogFileInfo.colorMode));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>(
+						  LogFileInfo.file, LogFileInfo.colorMode ) );
 					}
 					break;
 				case Sink::basicFileSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-						    (LogFileInfo.fileDir + LogFileInfo.separator +
-						     LogFileInfo.fileName),
-						    LogFileInfo.isTruncated));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+						  ( LogFileInfo.fileDir + LogFileInfo.separator + LogFileInfo.fileName ),
+						  LogFileInfo.isTruncated ) );
 					}
 					break;
 				case Sink::dailyFileSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::daily_file_sink_mt>(
-						    LogFileInfo.fileName,
-						    LogFileInfo.rotateHour,
-						    LogFileInfo.rotateMin,
-						    LogFileInfo.isTruncated,
-						    LogFileInfo.maxDailySinkFiles));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::daily_file_sink_mt>(
+						  LogFileInfo.fileName, LogFileInfo.rotateHour, LogFileInfo.rotateMin,
+						  LogFileInfo.isTruncated, LogFileInfo.maxDailySinkFiles ) );
 					}
 					break;
 				case Sink::ostreamSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::ostream_sink_mt>(
-						    LogFileInfo.os,
-						    LogFileInfo.forceFlush));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::ostream_sink_mt>(
+						  LogFileInfo.os, LogFileInfo.forceFlush ) );
 					}
 					break;
 				case Sink::rotatingFileSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-						    LogFileInfo.fileName,
-						    LogFileInfo.maxFileSize,
-						    LogFileInfo.maxNumFiles,
-						    LogFileInfo.rotateWhenOpened));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+						  LogFileInfo.fileName, LogFileInfo.maxFileSize, LogFileInfo.maxNumFiles,
+						  LogFileInfo.rotateWhenOpened ) );
 					}
 					break;
 				case Sink::stdoutColorSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ) );
 					}
 					break;
 				case Sink::stdoutSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::stdout_sink_mt>( ));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::stdout_sink_mt>( ) );
 					}
 					break;
 				case Sink::winColorSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>(
-						    LogFileInfo.outputHandle,
-						    LogFileInfo.colorMode));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>(
+						  LogFileInfo.outputHandle, LogFileInfo.colorMode ) );
 					}
 					break;
 				case Sink::winDebugSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::msvc_sink_mt>( ));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::msvc_sink_mt>( ) );
 					}
 					break;
 				case Sink::winEventSink:
 					{
-						SE_sinks.logSinks.emplace_back(
-						  std::make_shared<spdlog::sinks::win_eventlog_sink_mt>( ));
+						SE_sinks.logSinks.emplace_back( std::make_shared<spdlog::sinks::win_eventlog_sink_mt>( ) );
 					}
 					break;
 				default:
 					{
-						throw std::runtime_error("Sink Undefined");
+						throw std::runtime_error( "Sink Undefined" );
 					}
 					break;
 			}
 		}
 	}
 
-} // namespace serenity
+}  // namespace serenity
 
 // this include will go away when I can test things properly and slowly integrate them/change them to work with the
 // Logger class
@@ -217,52 +197,50 @@ namespace serenity {
 
 struct LoggerInfo
 {
-	LoggerInfo(Logger logger)
+	LoggerInfo( Logger logger )
 	{
-		AddLoggerToList(logger);
+		AddLoggerToList( logger );
 	}
-	void AddLoggerToList(Logger logger)
+	void AddLoggerToList( Logger logger )
 	{
 		this->loggerName == logger.GetLoggerName( );
-		loggers.emplace_back(logger);
+		loggers.emplace_back( logger );
 	}
-	const std::string loggerName;
-	std::vector<Logger> loggers;
+	const std::string           loggerName;
+	std::vector<Logger>         loggers;
 	std::vector<spdlog::logger> loggersList;
-	LoggerProperties loggerProps = { };
+	LoggerProperties            loggerProps = { };
 
 } SE_Logger;
 
-namespace serenity {
+namespace serenity
+{
 	void InitializeSinks( )
 	{
 		// This Now Populates logSinks vector via what was added into sinkTypeList
 		// Now we pass the logsinks vector into a function that will have the begin(sinks), end(sinks)
 		// parameters;
-		serenity::CreateSinks(SE_Logger.loggerProps.sinkTypeList);
-		
+		serenity::CreateSinks( SE_Logger.loggerProps.sinkTypeList );
 	}
 
-	void InitializeLoggers(LoggerLevel setLevel)
+	void InitializeLoggers( LoggerLevel setLevel )
 	{
-		int i            = 0;
-		auto mappedLevel = Logger::MapLogLevel(setLevel);
-		for(i; i < SE_Logger.loggers.size( ); i++) {
-			auto loggerName     = SE_Logger.loggers [i].GetLoggerName( );
-			auto clientLogger   = SE_Logger.loggers [i].GetClientSideLogger( );
-			auto internalLogger = SE_Logger.loggers [i].GetClientSideLogger( );
-			clientLogger        = std::make_shared<spdlog::logger>(loggerName,
-                                                                        begin(SE_sinks.logSinks),
-                                                                        end(SE_sinks.logSinks));
-			spdlog::register_logger(clientLogger);
-			clientLogger->set_level(mappedLevel);
-			clientLogger->flush_on(mappedLevel);
-			internalLogger = std::make_shared<spdlog::logger>(loggerName,
-									  begin(SE_sinks.logSinks),
-									  end(SE_sinks.logSinks));
-			spdlog::register_logger(internalLogger);
-			internalLogger->set_level(mappedLevel);
-			internalLogger->flush_on(mappedLevel);
+		int  i           = 0;
+		auto mappedLevel = Logger::MapLogLevel( setLevel );
+		for( i; i < SE_Logger.loggers.size( ); i++ ) {
+			auto loggerName     = SE_Logger.loggers[ i ].GetLoggerName( );
+			auto clientLogger   = SE_Logger.loggers[ i ].GetClientSideLogger( );
+			auto internalLogger = SE_Logger.loggers[ i ].GetClientSideLogger( );
+			clientLogger =
+			  std::make_shared<spdlog::logger>( loggerName, begin( SE_sinks.logSinks ), end( SE_sinks.logSinks ) );
+			spdlog::register_logger( clientLogger );
+			clientLogger->set_level( mappedLevel );
+			clientLogger->flush_on( mappedLevel );
+			internalLogger =
+			  std::make_shared<spdlog::logger>( loggerName, begin( SE_sinks.logSinks ), end( SE_sinks.logSinks ) );
+			spdlog::register_logger( internalLogger );
+			internalLogger->set_level( mappedLevel );
+			internalLogger->flush_on( mappedLevel );
 		}
 	}
-} // namespace serenity
+}  // namespace serenity

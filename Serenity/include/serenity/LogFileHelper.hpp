@@ -3,7 +3,7 @@
 #include <string>
 #include <filesystem>
 #include <optional>
-#include "serenity/WIP/Interfaces/IObserver.hpp"
+#include "serenity/Interfaces/IObserver.hpp"
 
 
 // (NOTE): With The file_utils namespace, highly debating on some restructuring in the future
@@ -24,7 +24,7 @@ namespace serenity
 			Really Only Works To Rename the singular file referenced by m_logName and
 			not on arbitrary file renaming
 		*/
-		void        RenameLogFile( std::string fileNewName );
+		bool        RenameLogFile( std::string fileNewName );
 		void        ChangeDir( file_helper::path destDir );
 		void        SetDir( file_helper::path oldPathDir, file_helper::path destDirPath );
 		void        StorePathComponents( file_helper::path &pathToStore );
@@ -71,11 +71,14 @@ namespace serenity
 {
 	namespace file_utils
 	{
-		static bool dirEntryExists { false };
+		std::vector<std::filesystem::directory_entry> RetrieveDirEntries( std::filesystem::path &path, bool recursiveSearch );
+		/* Searches Input Directory Vector For A Match And Returns 'true' If Found As Well As The Path To The File, Otherwise,
+		 * Returns False
+		 */
+		std::tuple<bool, std::vector<std::filesystem::directory_entry>>
+		  SearchDirEntries( std::vector<std::filesystem::directory_entry> dirEntries, std::string searchString );
 
-		std::vector<std::filesystem::directory_entry> RetrieveDirEntries( std::filesystem::path &path );
-		std::filesystem::path                         SearchDirEntries( std::string &searchString );    // Not Implemented
-		std::filesystem::directory_entry RetrieveDirObject( std::filesystem::directory_entry &entry );  // Not Implemented
+		std::filesystem::directory_entry RetrieveDirObject( std::filesystem::directory_entry &entry );  // not Implemented
 		bool                             ValidateFileName( std::string fileName );
 		bool                             ValidateExtension( std::string fileName );
 		bool                             CompareExtensions( std::string oldFile, std::string newFile );

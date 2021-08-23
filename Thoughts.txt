@@ -3,3 +3,8 @@
 - Could Also Possibly create namespace functions similar to InitializeSinks(), CreateSinks, InitializeLoggers()
   in where these functions would be the default setup for each sink above and then in the Logger class, actually
   go ahead and implement the targeted changes if a user would like to override the default settings that way.
+
+- TODO: See about getting rid of the check as well as the return for m_fileName in GetFileName() and just 
+  return m_filePath.filename()
+- TODO: Implement a much better filter for extension and file name assignment in RenameLogFile()
+- TODO: Possibly just extract RenameLogFile() functionality to RenameFile()?

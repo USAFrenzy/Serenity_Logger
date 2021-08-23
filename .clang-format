@@ -57,7 +57,7 @@ AllowAllConstructorInitializersOnNextLine: true
 # void myFunction(int a,
 #                 int b,
 #                 int c);
-AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: true
 ########## Always merge short blocks into a single line ##########
 # while (true) {}
 # while (true) { continue; }
@@ -148,7 +148,7 @@ BinPackArguments: true
 # void f(int aaaaaaaaaaaaaaaaaaaa,
 #        int aaaaaaaaaaaaaaaaaaaa,
 #        int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}
-BinPackParameters: false
+BinPackParameters: true
 ########## Add space after the : only ##########
 # unsigned bf: 2;
 # BitFieldColonSpacing: After

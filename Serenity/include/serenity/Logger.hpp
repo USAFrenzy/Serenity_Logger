@@ -12,7 +12,7 @@
 #include "Common.hpp"
 #include "LogFileHelper.hpp"
 
-#include "serenity/WIP/Interfaces/IObserver.hpp"
+#include "serenity/Interfaces/IObserver.hpp"
 
 /* clang-format off
  

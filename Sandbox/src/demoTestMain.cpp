@@ -6,7 +6,11 @@
 #define TEST_ASSERT          0
 #define LOGGER_FILESYSTEM_SB 1
 #define FILE_RENAME_TEST     1
-#define TEST_FILE_RETRIEVAL  0
+#define TEST_FILE_RETRIEVAL  1
+#define TEST_FILE_SEARCH     1
+// This One Is Just For Me
+#define WANT_TO_SEE_MSGS 0
+
 
 int main( )
 {
@@ -24,7 +28,7 @@ int main( )
 	SE_INTERNAL_WARN( "What Do Ya Know? It's A Warning Message! Best Take Care With These!" );
 	SE_INTERNAL_ERROR( "Say Hello To The Darkness - This Is An Error Message. You Done Fucked Up" );
 	SE_INTERNAL_FATAL(
-	  "Last But Not Least, This Is A Fatal Message - Your Application Is Crashing My "
+	  "Last But ! Least, This Is A Fatal Message - Your Application Is Crashing My "
 	  "Friend..." );
 	// clang-format off
 	#if TEST_ASSERT
@@ -37,12 +41,6 @@ int main( )
 #endif
 
 #if LOGGER_FILESYSTEM_SB
-
-	/*	serenity::file_helper::path testPath = serenity::file_helper::current_path( );
-		serenity::file_helper::path testFile = "File_System.txt";
-
-		serenity::LogFileHelper test(testPath, testFile);*/
-
 
 	Logger logTwo( "Filesystem Logger", "File_System.txt", LoggerLevel::trace );
 
@@ -101,19 +99,36 @@ int main( )
 
 	logTwo.RenameLogFile( ".hiddenFile.jpg" );
 	SE_INFO( "\nFile Name:{}\nFile Path: {}\n", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-	// This One Currently Does NOT Write To A Log On That Path..
-	logTwo.RenameLogFile( "Test_Log.txt" );
-	auto newTestPath = originalPath / logTwo.GetFileName( );
-	SE_INFO( "Should Be Writing To A Log Under: {}\n", logTwo.GetLogDirPath( ) );
 
+	// This One Currently Does NOT Write To A Log On That Path.. (Need file stream objects)
+	/*logTwo.RenameLogFile( "Test_Log.txt" );
+	auto newTestPath = originalPath / logTwo.GetFileName( );
+	SE_INFO( "Should Be Writing To A Log Under: {}\n", logTwo.GetLogDirPath( ) );*/
+
+
+	serenity::file_helper::path pathToRootDir = "C:\\Users\\mccul\\Desktop\\Logging Project";
+	logTwo.ChangeDir( pathToRootDir );
 		#if TEST_FILE_RETRIEVAL
-	auto pathToTest = logTwo.GetCurrentDir( );
 	SE_TRACE( "Quick Test Of The Whole File Retrieval Deal With RetrieveDirEntries():" );
-	SE_TRACE( "Listing Files Under: {}\n", pathToTest );
-	auto dirFiles = serenity::file_utils::RetrieveDirEntries( pathToTest );
-	for( const auto &file : dirFiles ) {
-		SE_INFO( "File Found: \nPath: {}\nFile: {}", file.path( ), file.path( ).filename( ) );
+	SE_TRACE( "Listing Files Under: {}\n", pathToRootDir );
+	auto dirEntries = serenity::file_utils::RetrieveDirEntries( pathToRootDir, true );
+			#if WANT_TO_SEE_MSGS
+	for( const auto &file : dirEntries ) {
+		SE_INFO( "File Retrieved:\tPath: {}", file.path( ).relative_path( ) );
 	}
+			#endif
+			#if TEST_FILE_SEARCH
+	SE_TRACE( "Quick Test Of Searching The Retrieved Files For A Match:" );
+	auto dirFiles  = serenity::file_utils::SearchDirEntries( dirEntries, "Manually_placed_file.txt" );
+	auto fileFound = std::get<0>( dirFiles );
+	auto files     = std::get<1>( dirFiles );  // tuples are weird -> Might try to find a way to abstract this if possible
+	if( fileFound ) {
+		for( const auto &file : files ) {
+			SE_INFO( "Search Found: {}\nPath: {}", file.path( ).filename( ), file );
+		}
+	}
+			#endif
+
 		#endif
 
 
@@ -123,7 +138,7 @@ int main( )
 }
 /* clang-format off
 ######################################################################################################################################################
-#                                                               General Notes
+#                                                               General !es
 ######################################################################################################################################################
 - Currently, even if changing directories (or at least setting what should be a change in directories), no directories are actually created or checked
   - Possibly need to actually use filesystem::create_directories function for this but checks for if that directory already exists would then need to

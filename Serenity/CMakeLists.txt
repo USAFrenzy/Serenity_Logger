@@ -1,13 +1,18 @@
 set (PROJECT_NAME Serenity)
 
-set (SERENITY_SOURCE_FILES "src/Logger.cpp")
+set (
+    SERENITY_SOURCE_FILES 
+    "src/Logger.cpp"
+    "src/LogFileHelper.cpp"
+)
 
 set (
     SERENITY_HEADER_FILES
     "include/serenity/Logger.hpp"
     "include/serenity/Defines.hpp"
     "include/serenity/Common.hpp"
-    "include/serenity/Temp.hpp"
+    "include/serenity/LogFileHelper.hpp"
+    "include/serenity/Interfaces/IObserver.hpp"
 )
 
 set (SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})

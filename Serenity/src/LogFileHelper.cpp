@@ -66,60 +66,45 @@ namespace serenity
 	// # (TODO): Look For A Better Way To Filter The File Name And Extension                 #
 	// # -> Creating A Temp Variable And All The Extra Stuff Is Really Hacky At The Moment   #
 	// #######################################################################################
-	void LogFileHelper::RenameLogFile( std::string fileNewName )
+	bool LogFileHelper::RenameLogFile( std::string fileNewName )
 	{
 		std::string newExtension;
 		std::string newFileName;
 		std::string tmp = fileNewName;
-		try {
-			if( file_utils::ValidateFileName( fileNewName ) && file_utils::ValidateExtension( fileNewName ) ) {
-				try {
-					if( file_utils::CompareExtensions( m_filePath.filename( ).string( ), fileNewName ) ) {
-						m_filePath.replace_filename( fileNewName );
-						UpdateFileInfo( m_filePath );
-					}
-					else {
-						// If The Extensions Are NOT The Same:
-						/*
-							Iterate through the tmp string which has been assigned from input string,
-						   extract the filename without the extension and assign that to newFileName. Then do
-						   the same thing with the input string, finding the extension instead and extracting
-						   that out to assign to newExtension. Finally, replace the file name and extension and
-						   update the file info for the logger
-						*/
-						auto extBegin = tmp.find_last_of( "." );
-						auto exEnd    = ( tmp.find_last_not_of( "." ) + 1 );
-						if( tmp.begin( ) != tmp.end( ) ) {
-							tmp.erase( extBegin, exEnd - extBegin );
-							newFileName = tmp;
-							SE_INTERNAL_DEBUG( "newFileName: {}", newFileName );
-						}
-
-						auto begin = fileNewName.find_first_not_of( "." );
-						auto end   = fileNewName.find_last_of( "." );
-						if( std::string::npos != begin && std::string::npos != end && begin <= end ) {
-							fileNewName.erase( begin, end - begin );
-							newExtension.assign( fileNewName );
-							SE_INTERNAL_DEBUG( "newExtension: {}", newExtension );
-						}
-
-						SE_INTERNAL_DEBUG( "Full New File Name: {}{}", newFileName, newExtension );
-						m_filePath.replace_filename( newFileName );
-						m_filePath.replace_extension( newExtension );
-						UpdateFileInfo( m_filePath );
-					}
+		// Possibly Redundant Checks (Really should just parameterize this to take a path to a target log file to rename)
+		if( ( !( m_filePath.filename( ).has_extension( ) ) && ( m_filePath.filename( ) == m_pathStem ) ) ) {
+			SE_INTERNAL_WARN( "WARNING: Couldn't Rename File. Current Path Is Pointing To Directory: {} And Not A File.",
+					  m_filePath.filename( ) );
+			return false;
+		}
+		if( file_utils::ValidateFileName( fileNewName ) && file_utils::ValidateExtension( fileNewName ) ) {
+			if( file_utils::CompareExtensions( m_filePath.filename( ).string( ), fileNewName ) ) {
+				m_filePath.replace_filename( fileNewName );
+				UpdateFileInfo( m_filePath );
+			}
+			else {
+				auto extBegin = tmp.find_last_of( "." );
+				auto exEnd    = ( tmp.find_last_not_of( "." ) + 1 );
+				if( tmp.begin( ) != tmp.end( ) ) {
+					tmp.erase( extBegin, exEnd - extBegin );
+					newFileName = tmp;
+					SE_INTERNAL_DEBUG( "newFileName: {}", newFileName );
 				}
-				catch( std::exception &nEx ) {
-					std::throw_with_nested( nEx );
+				auto begin = fileNewName.find_first_not_of( "." );
+				auto end   = fileNewName.find_last_of( "." );
+				if( std::string::npos != begin && std::string::npos != end && begin <= end ) {
+					fileNewName.erase( begin, end - begin );
+					newExtension.assign( fileNewName );
+					SE_INTERNAL_DEBUG( "newExtension: {}", newExtension );
 				}
+				SE_INTERNAL_DEBUG( "Full New File Name: {}{}", newFileName, newExtension );
+				m_filePath.replace_filename( newFileName.append( newExtension ) );
+				UpdateFileInfo( m_filePath );
 			}
 		}
-		catch( std::exception &ex ) {
-			SE_INTERNAL_ERROR( "EXCEPTION CAUGHT IN RenameLogFile( ) :\n { }", ex.what( ) );
-		}
-
 		m_cachePath = m_filePath;
 		m_cacheDir  = m_cachePath.stem( );
+		return true;
 	}
 
 	void LogFileHelper::ChangeDir( file_helper::path destDir )
@@ -148,7 +133,6 @@ namespace serenity
 			return m_fileName;
 		}
 		else {
-			SE_INTERNAL_WARN( "Path: [ {} ] Doesn't Point To A File", m_currentDir );
 			return "";
 		}
 	}
@@ -221,14 +205,6 @@ namespace serenity
 
 	namespace file_utils
 	{
-		// specifically filters out files like sample.invalid.file.txt
-		/*	(NOTE):I know this file naming scheme is valid and with the introduction
-			of ValidateForSameExtension() And replace_extension() in RenameLogFile(),
-			I should probably add that scheme back into the regex match for valid names.
-			Once RenameFile() in file_utils namespace has implemented more checks - will fix
-		*/
-
-
 		/*
 		This Regex Pattern will allow any filename other than those that contain these in their name:
 		-/	-|	-<	->	-:	-\	-?	-*	-" // Invalid Windows File Name
@@ -302,8 +278,8 @@ namespace serenity
 				if( !( newExtension == oldExtension ) ) {
 					SE_INTERNAL_WARN(
 					  "WARNING:\t"
-					  "New File Name: [ {} ] Does Not Have The Same Extension As Old File: [ {} ]",
-					  oldFile, newFile );
+					  "New File Name: [ {} ] Does Not Have The Same Extension As Old File: [ {} ]\n",
+					  newFile, oldFile );
 					return false;
 				}
 				else {
@@ -332,28 +308,47 @@ namespace serenity
 			}
 		}
 
-		std::vector<std::filesystem::directory_entry> RetrieveDirEntries( std::filesystem::path &path )
+		std::vector<std::filesystem::directory_entry> RetrieveDirEntries( std::filesystem::path &path, bool recursiveSearch )
 		{
 			std::vector<std::filesystem::directory_entry> dirEntries;
-			std::size_t                                   pathSize = path.string( ).size( );  // Just To Simplify Reading
+			std::size_t                                   pathSize = path.string( ).size( );
+			dirEntries.clear( );
 
-			for( const std::filesystem::directory_entry &entry :
-			     // Or directory_iterator(path) if recursion isn't needed
-			     std::filesystem::recursive_directory_iterator( path ) )
-			{
-				dirEntries.emplace_back( entry.path( ).string( ).substr( pathSize ) );
+			if( path.has_extension( ) ) {
+				SE_INTERNAL_WARN(
+				  "WARNING: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: {}", path );
+				return dirEntries;
+			}
+			if( recursiveSearch ) {
+				for( const std::filesystem::directory_entry &entry :
+				     std::filesystem::recursive_directory_iterator( path ) ) {
+					dirEntries.emplace_back( entry.path( ).string( ) );
+				}
+			}
+			else {
+				for( const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator( path ) ) {
+					dirEntries.emplace_back( entry.path( ).string( ) );
+				}
 			}
 			return dirEntries;
 		}
 
-
-		// Both SearchDirEntries() and RetrieveDirObject() should utilize the bool dirEntryExists
-
-		// Return Path To Dir Object If Search String Exists (Not Yet Implemented)
-		std::filesystem::path SearchDirEntries( std::string &searchString )
+		std::tuple<bool, std::vector<std::filesystem::directory_entry>>
+		  SearchDirEntries( std::vector<std::filesystem::directory_entry> dirEntries, std::string searchString )
 		{
-			std::filesystem::path temp;
-			return temp;
+			std::vector<std::filesystem::directory_entry> matchedResults;
+			bool                                          containsMatch { false };
+
+
+			for( const auto &entry : dirEntries ) {
+				auto entryStr = entry.path( ).filename( ).string( );
+				// compare returns 0 if they're equal
+				if( entryStr.compare( searchString ) == 0 ) {
+					matchedResults.emplace_back( entry );
+					containsMatch = true;
+				}
+			}
+			return std::make_tuple( containsMatch, matchedResults );
 		}
 
 		// Return The Object Specified (Not Yet Implemented)
