@@ -1,5 +1,6 @@
 
-#include "serenity/Logger.hpp"
+#include <serenity/Logger.hpp>
+#include <serenity/Utilities/Utilities.hpp>
 
 #include <map>
 #include <string>
@@ -8,6 +9,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #pragma warning( pop )
+
 
 /* clang-format off
                   NOTE FOR FUTURE, SINCE DOING OBSERVER-LIKE PATTERNS ARE STILL NEW FOR ME RIGHT NOW
@@ -49,7 +51,7 @@ Logger::Logger( std::string loggerName, std::string logName, LoggerLevel level )
 
 	logFileHandle = new LogFileHelper( logDir, log_name );
 
-	logFileHandle->RenameLogFile( logName );
+	serenity::file_utils::RenameFile( logDir /= log_name, logName );
 	logFileHandle->UpdateFileInfo( logFileHandle->GetFilePath( ) );
 	logFileHandle->ChangeDir( logFileHandle->GetLogDirPath( ) );
 
@@ -86,8 +88,7 @@ void Logger::Init( Logger &logger, LoggerLevel setLevel )
 	std::vector<spdlog::sink_ptr> sinks;
 
 	sinks.emplace_back( std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ) );
-	sinks.emplace_back(
-	  std::make_shared<spdlog::sinks::basic_file_sink_mt>( logger.logFileHandle->GetFilePath( ).filename( ).string( ), true ) );
+	sinks.emplace_back( std::make_shared<spdlog::sinks::basic_file_sink_mt>( logger.GetFileName( ).string( ), true ) );
 	// Would Like To Format this in a more personalized and absstracted manner
 	sinks[ 0 ]->set_pattern( "%^[%T] %n: %v%$" );
 	sinks[ 1 ]->set_pattern( "[%T] [%l] %n: %v" );

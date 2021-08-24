@@ -8,11 +8,11 @@
 #include <spdlog/fmt/ostr.h>
 #pragma warning( pop )
 
-#include "Defines.hpp"
-#include "Common.hpp"
-#include "LogFileHelper.hpp"
+#include <serenity/Defines.hpp>
+#include <serenity/Common.hpp>
+#include <serenity/Helpers/LogFileHelper.hpp>
+#include <serenity/Interfaces/IObserver.hpp>
 
-#include "serenity/Interfaces/IObserver.hpp"
 
 /* clang-format off
  

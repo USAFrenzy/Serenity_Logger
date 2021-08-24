@@ -1,25 +1,25 @@
 
-#include "serenity/Logger.hpp"
-#include "serenity/LogFileHelper.hpp"
+#include <serenity/Logger.hpp>
+#include <serenity/Helpers/LogFileHelper.hpp>
+#include <serenity/Utilities/Utilities.hpp>
 
 #define LOGGER_MESSAGES_SB   0
 #define TEST_ASSERT          0
 #define LOGGER_FILESYSTEM_SB 1
-#define FILE_RENAME_TEST     1
-#define TEST_FILE_RETRIEVAL  1
-#define TEST_FILE_SEARCH     1
+#define FILE_RENAME_TEST     0
+#define TEST_FILE_RETRIEVAL  0
+#define TEST_FILE_SEARCH     0
 // This One Is Just For Me
 #define WANT_TO_SEE_MSGS 0
+#define TEST_NEW_RENAME  1
 
+#include <fstream>  // tmp
 
 int main( )
 {
 #if LOGGER_MESSAGES_SB
 
-	serenity::file_helper::path logName1    = "MacroLog.txt";
-	auto                        logDirPath1 = serenity::file_helper::current_path( ) /= "Logs";
-	serenity::LogFileHelper     logInfo1( logDirPath1, logName1 );
-	Logger                      logOne( "Macro Test Logger", &logInfo1, LoggerLevel::trace );
+	Logger logOne( "Macro Test Logger", "Macro_Test.txt", LoggerLevel::trace );
 
 	SE_INTERNAL_INFO( "Hello From The True Library!\n- Serenity Library Info: \n\t- Version: {}", serenity::GetSerenityVerStr( ) );
 	SE_INTERNAL_TRACE( "This Is A General Trace Message - Time To Iterate Through The Log Levels!" );
@@ -42,6 +42,13 @@ int main( )
 
 #if LOGGER_FILESYSTEM_SB
 
+
+	serenity::file_helper::path originalPath   = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
+	serenity::file_helper::path pathToSB_txt   = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox\\Sandbox.txt";
+	serenity::file_helper::path pathToBuildDir = "C:\\Users\\mccul\\Desktop\\Logging Project\\build";
+	serenity::file_helper::path pathToRootDir  = "C:\\Users\\mccul\\Desktop\\Logging Project";
+	serenity::file_helper::path pathToDesktop  = "C:\\Users\\mccul\\Desktop";
+
 	Logger logTwo( "Filesystem Logger", "File_System.txt", LoggerLevel::trace );
 
 	SE_INFO( "Now Just Testing That The Logger Initialized Name Got Passed Through To The Logs" );
@@ -51,89 +58,120 @@ int main( )
 		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
 
 	SE_TRACE( "Now Testing Swapping Log Names:" );
-
-	logTwo.RenameLogFile( "New_Log_Test.txt" );
+	auto originalFilePath = logTwo.GetFilePath( );
+	serenity::file_utils::RenameFile( originalFilePath, "New_Log_Test.txt" );
 	SE_INFO( "New File Name: {}\n", logTwo.GetFileName( ) );
 
-	auto originalPath = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
 
 	SE_INFO( "Previous Working Dir: {}", logTwo.GetCurrentDir( ) )
-	serenity::file_helper::path pathToChangeToOne = "C:\\Users\\mccul\\Desktop\\Logging Project\\build";
-	serenity::file_helper::path pathToChangeToTwo = "C:\\Users\\mccul\\Desktop";
 
-	logTwo.ChangeDir( pathToChangeToOne );
+	logTwo.ChangeDir( pathToBuildDir );
 	SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
 
 	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath( ),
 		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
 
-	logTwo.ChangeDir( pathToChangeToTwo );
+	logTwo.ChangeDir( pathToDesktop );
 	SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
 	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath( ),
 		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
 
 	logTwo.ChangeDir( originalPath );
-	SE_INFO( "Just Visual Representation Of Path Components:{}\n", logTwo.PathComponents_Str( pathToChangeToOne ) );
+	SE_INFO( "Just Visual Representation Of Path Components:{}\n", logTwo.PathComponents_Str( pathToBuildDir ) );
 
-	#if FILE_RENAME_TEST
-	SE_TRACE( "The Following Are Some Test Cases Of FileName Validations In RenameLogFile():\n" )
-	SE_INFO( "\nORIGINAL FILE NAME: {}\nFile Path: {}", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-
-	logTwo.RenameLogFile( "lol.jpg.txt" );
-	SE_INFO( "\nFile Name:{}\nFile Path: {}\n", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-
-	logTwo.RenameLogFile( "Samlple File.txt" );
-	SE_INFO( "\nFile Name:{}\nFile Path: {}\n", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-
-	logTwo.RenameLogFile( "Samlple_File.txt" );
-	SE_INFO( "\nFile Name:{}\nFile Path: {}\n", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-
-	logTwo.RenameLogFile( "Logger.conf" );
-	SE_INFO( "\nFile Name:{}\nFile Path: {}\n", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-
-	logTwo.RenameLogFile( "Logger.ini" );
-	SE_INFO( "\nFile Name:{}\nFile Path: {}\n", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-
-	logTwo.RenameLogFile( ".config" );
-	SE_INFO( "\nFile Name:{}\nFile Path: {}\n", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-
-	logTwo.RenameLogFile( ".hiddenFile.jpg" );
-	SE_INFO( "\nFile Name:{}\nFile Path: {}\n", logTwo.GetFileName( ), logTwo.GetFilePath( ) );
-
-	// This One Currently Does NOT Write To A Log On That Path.. (Need file stream objects)
-	/*logTwo.RenameLogFile( "Test_Log.txt" );
-	auto newTestPath = originalPath / logTwo.GetFileName( );
-	SE_INFO( "Should Be Writing To A Log Under: {}\n", logTwo.GetLogDirPath( ) );*/
-
-
-	serenity::file_helper::path pathToRootDir = "C:\\Users\\mccul\\Desktop\\Logging Project";
-	logTwo.ChangeDir( pathToRootDir );
-		#if TEST_FILE_RETRIEVAL
+	logTwo.ChangeDir( pathToDesktop );
+	#if TEST_FILE_RETRIEVAL
 	SE_TRACE( "Quick Test Of The Whole File Retrieval Deal With RetrieveDirEntries():" );
-	SE_TRACE( "Listing Files Under: {}\n", pathToRootDir );
-	auto dirEntries = serenity::file_utils::RetrieveDirEntries( pathToRootDir, true );
-			#if WANT_TO_SEE_MSGS
-	for( const auto &file : dirEntries ) {
-		SE_INFO( "File Retrieved:\tPath: {}", file.path( ).relative_path( ) );
+	SE_TRACE( "Listing Files Under: {}\n", pathToDesktop );
+	auto dirEntries = serenity::file_utils::RetrieveDirEntries( pathToDesktop, true );
+		#if WANT_TO_SEE_MSGS
+	for( const auto &file : dirEntries.retrievedItems ) {
+		SE_INFO( "File Retrieved At: {}", file.path( ).relative_path( ) );
 	}
-			#endif
-			#if TEST_FILE_SEARCH
+		#endif
+		#if TEST_FILE_SEARCH
+	SE_TRACE( "Number Of Files Retrieved: {}", dirEntries.fileCount );
+	SE_TRACE( "Time Taken To Complete: {}ms", dirEntries.elapsedTime );
 	SE_TRACE( "Quick Test Of Searching The Retrieved Files For A Match:" );
-	auto dirFiles  = serenity::file_utils::SearchDirEntries( dirEntries, "Manually_placed_file.txt" );
-	auto fileFound = std::get<0>( dirFiles );
-	auto files     = std::get<1>( dirFiles );  // tuples are weird -> Might try to find a way to abstract this if possible
-	if( fileFound ) {
-		for( const auto &file : files ) {
+	auto result = serenity::file_utils::SearchDirEntries( dirEntries.retrievedItems, "Manually_placed_file.txt" );
+	if( result.fileFound ) {
+		for( const auto &file : result.matchedResults ) {
 			SE_INFO( "Search Found: {}\nPath: {}", file.path( ).filename( ), file );
 		}
 	}
-			#endif
-
+	SE_TRACE( "Time Taken To Complete: {}ms", result.elapsedTime );
 		#endif
-
 
 	#endif
 
+
+#endif
+#if TEST_NEW_RENAME
+	/*
+		I'm assuming what I'm running into is a race condition? Keep catching the exception:
+		- "The process cannot access the file because it is being used by another process."
+		When trying multiple renames in a row with std::filesystem::path objs but not with string paths
+	*/
+	namespace su = serenity::se_utils;
+	namespace fu = serenity::file_utils;
+
+	SE_TRACE( "Testing The file_utils::RenameFile()\n" );
+	std::string sbPath = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
+	logTwo.ChangeDir( sbPath );
+	SE_DEBUG( "Current Dir: {}", logTwo.GetCurrentDir( ) );
+	auto cwd = logTwo.GetCurrentDir( );
+
+	serenity::file_helper::path aPath = cwd /= "a.txt";
+	SE_DEBUG( "aPath: {}", aPath );
+	std::ofstream file;
+	file.open( aPath.filename( ), std::ios_base::app );
+	while( file.is_open( ) ) {
+		SE_DEBUG( "file is opened" );
+		file << "This Is A Test String To Prove Size And Content Of File Remains Constant";
+		file.close( );
+	}
+	try {
+		serenity::file_utils::RenameFile( cwd /= "a.txt", cwd /= "b.txt" );
+		serenity::file_utils::RenameFile( cwd /= "b.txt", cwd /= "c.txt" );
+		serenity::file_utils::RenameFile( cwd /= "c.txt", cwd /= "d.txt" );
+		serenity::file_utils::RenameFile( cwd /= "d.txt", cwd /= "e.txt" );
+		serenity::file_utils::RenameFile( cwd /= "e.txt", cwd /= "f.txt" );
+		serenity::file_utils::RenameFile( cwd /= "f.txt", cwd /= "g.txt" );
+		serenity::file_utils::RenameFile( cwd /= "g.txt", cwd /= "h.txt" );
+		serenity::file_utils::RenameFile( cwd /= "h.txt", cwd /= "i.txt" );
+		serenity::file_utils::RenameFile( cwd /= "i.txt", cwd /= "j.txt" );
+		serenity::file_utils::RenameFile( cwd /= "j.txt", cwd /= "k.txt" );
+		serenity::file_utils::RenameFile( cwd /= "k.txt", cwd /= "l.txt" );
+		serenity::file_utils::RenameFile( cwd /= "l.txt", cwd /= "m.txt" );
+		serenity::file_utils::RenameFile( cwd /= "m.txt", cwd /= "n.txt" );
+		serenity::file_utils::RenameFile( cwd /= "n.txt", cwd /= "o.txt" );
+		serenity::file_utils::RenameFile( cwd /= "o.txt", cwd /= "p.txt" );
+		serenity::file_utils::RenameFile( cwd /= "p.txt", cwd /= "q.txt" );
+		serenity::file_utils::RenameFile( cwd /= "q.txt", cwd /= "r.txt" );
+		serenity::file_utils::RenameFile( cwd /= "r.txt", cwd /= "s.txt" );
+		serenity::file_utils::RenameFile( cwd /= "s.txt", cwd /= "t.txt" );
+		serenity::file_utils::RenameFile( cwd /= "t.txt", cwd /= "u.txt" );
+		serenity::file_utils::RenameFile( cwd /= "u.txt", cwd /= "v.txt" );
+		serenity::file_utils::RenameFile( cwd /= "v.txt", cwd /= "w.txt" );
+		serenity::file_utils::RenameFile( cwd /= "w.txt", cwd /= "x.txt" );
+		serenity::file_utils::RenameFile( cwd /= "x.txt", cwd /= "y.txt" );
+		serenity::file_utils::RenameFile( cwd /= "y.txt", cwd /= "z.txt" );
+		serenity::file_utils::RenameFile( cwd /= "z.txt", cwd /= "LastRename.txt" );
+		serenity::file_helper::path searchPath = sbPath;
+		auto                        rnFiles    = fu::RetrieveDirEntries( searchPath, false );
+		auto                        found      = fu::SearchDirEntries( rnFiles.retrievedItems, "LastRename.txt" );
+		if( found.fileFound ) {
+			for( auto &file : found.matchedResults ) {
+				SE_TRACE( "File: {} Was Successuly Found", file.path( ).filename( ) );
+				SE_INFO( "Rename Test Was Successful" );
+			}
+		}
+		serenity::file_utils::RenameFile( cwd /= "LastRename.txt", cwd /= "a.txt" );  // "reset"
+		SE_TRACE( "\"LastRename.txt\" Reset To \"a.txt\" " );
+	}
+	catch( const std::filesystem::filesystem_error &fs_err ) {
+		SE_FATAL( "FS EXCEPTION CAUGHT:\n{}", fs_err.what( ) );
+	}
 #endif
 }
 /* clang-format off

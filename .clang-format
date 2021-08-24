@@ -209,7 +209,7 @@ BreakInheritanceList: AfterColon
 BreakStringLiterals: true
 ColumnLimit: 135
 ########## A regular expression that describes comments with special meaning ##########
-CommentPragmas: "^ IWYU pragma:"
+CommentPragmas: '^///'
 ########## If false, each namespace is declared on a new line ##########
 # NOTE: Will Be Coupled With Custom Breaking And Indenting Rules Earlier
 # false:                                   With Earlier Choices:

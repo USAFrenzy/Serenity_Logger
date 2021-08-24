@@ -40,7 +40,6 @@
 #define SE_OPT_NULL_PTR ( std::filesystem::path ) nullptr
 #define SE_NULL_OPTION  std::nullopt
 
-
 // This Needs Work
 // namespace serenity {
 //	namespace se_exception {
