@@ -8,6 +8,7 @@
 #pragma warning( push, 0 )
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/details/os.h>
 #pragma warning( pop )
 
 
@@ -29,129 +30,242 @@
 clang-format on
 */
 
+namespace serenity
+{
+	std::shared_ptr<spdlog::logger>               Logger::m_internalLogger;
+	std::shared_ptr<spdlog::logger>               Logger::m_clientLogger;
+	std::shared_ptr<spdlog::details::file_helper> Logger::m_FileHelper;
+	Logger *                                      Logger::loggerInstance;
 
-std::shared_ptr<spdlog::logger> Logger::m_internalLogger;
-std::shared_ptr<spdlog::logger> Logger::m_clientLogger;
-Logger *                        Logger::loggerInstance;
-
-// clang-format off
+	// clang-format off
 /* 
 	In The Near Future, Would like to be able to just do 
 	- Logger(LoggerInfo loggerInfoStruct, LogFileInfo logInfoStruct, LogSink sinkInfo);
 */
-// clang-format on
+	// clang-format on
 
-Logger::Logger( std::string loggerName, std::string logName, LoggerLevel level ) : m_loggerName( loggerName ), m_logName( logName )
-{
-	// Getting Close To Where I Would Want To Abstract Code Into The Respective Class's Init() Functions To
-	// Call Here
-	serenity::file_helper::path log_name    = logName;
-	auto                        defaultPath = serenity::file_helper::current_path( );
-	serenity::file_helper::path logDir      = ( defaultPath /= "Logs" );
 
-	logFileHandle = new LogFileHelper( logDir, log_name );
-
-	serenity::file_utils::RenameFile( logDir /= log_name, logName );
-	logFileHandle->UpdateFileInfo( logFileHandle->GetFilePath( ) );
-	logFileHandle->ChangeDir( logFileHandle->GetLogDirPath( ) );
-
-	loggerInstance = this;
-	this->UpdateLoggerFileInfo( );
-	Init( *this, level );
-}
-
-void Logger::UpdateLoggerFileInfo( )
-{
-	if( fileInfoChanged ) {
-		logFileHandle->UpdateFileInfo( logFileHandle->GetFilePath( ) );
+	Logger::Logger( logger_info &infoStruct )
+	  : m_loggerName( infoStruct.loggerName ), m_logName( infoStruct.logName ), LogFileHelper( infoStruct.logDir, infoStruct.logName )
+	{
+		// Getting Close To Where I Would Want To Abstract Code Into The Respective Class's Init() Functions To
+		// Call Here, However, Should Re-evaluate If It's Neccessary That Logger Strictly Inherits From LogFileHelper
+		// Rather Than Just Having A Handle Or Vice Versa
+		auto                        defaultPath = serenity::file_helper::current_path( );
+		serenity::file_helper::path logDirPath  = infoStruct.logDir.path( );
+		logFileHandle                           = this;
+		auto filePath                           = logDirPath.string( ) + "\\" + infoStruct.logName;
+		logFileHandle->UpdateFileInfo( filePath );
+		UpdateLoggerFileInfo( );
+		loggerInstance = this;
+		m_FileHelper   = std::make_shared<spdlog::details::file_helper>( );
+		SetLogDirPath( logDirPath );
+		Init( *loggerInstance, infoStruct.level );
 	}
-	fileInfoChanged = ( !fileInfoChanged );
-}
 
-Logger::~Logger( )
-{
-	logFileHandle->~LogFileHelper( );
-	spdlog::drop_all( );
-	spdlog::shutdown( );
-}
+	void Logger::CloseLog( )
+	{
+		GetFileHelperHandle( )->flush( );
+		GetFileHelperHandle( )->close( );
+		loggerInstance->CacheLogger( );
+	}
+	void Logger::RefreshCache( )
+	{
+		CacheLogger( );
+	}
+	void Logger::RefreshFromCache( )
+	{
+		if( !prev_func_called ) {
+			cacheLogDirPath = GetLogDirPath( );
+		}
+		m_logName    = cacheLogName;
+		m_loggerName = cacheLoggerName;
+		m_level      = cacheLevel;
+		logFileHandle->SetLogFilePath( cacheLogPath );
+		auto refreshedPath = GetLogFilePath( );
+		logFileHandle->UpdateFileInfo( refreshedPath );
+		loggerInstance->UpdateLoggerFileInfo( );
+	}
 
-std::string Logger::GetLoggerName( )
-{
+	void Logger::CacheLogger( )
+	{
+		cacheLoggerName = m_loggerName;
+		cacheLogName    = m_logName;
+		cacheLevel      = m_level;
+		cacheLogPath    = logFileHandle->GetLogFilePath( );
+		logFileHandle->UpdateFileInfo( cacheLogPath );
+	}
+	void Logger::OpenLog( std::string fileName )
+	{
+		loggerInstance->RefreshFromCache( );
+		SE_DEBUG( "OpenLog(): LogFilePath() = {}", GetLogFilePath( ) );
+		try {
+			spdlogHandle.open( GetLogFilePath( ).string( ) );
+		}
+		catch( const std::exception &e ) {
+			printf( "Exception Thrown In OpenLog():\n%s\n", e.what( ) );
+		}
+	}
+	void Logger::SetLogDirPath( file_helper::path logDirPath )
+	{
+		prev_func_called = true;
+		cacheLogDirPath  = logDirPath;
+		RefreshCache( );
+		prev_func_called = false;
+	}
+	file_helper::path const Logger::GetLogDirPath( )
+	{
+		return cacheLogDirPath;
+	}
+	// Starting To Get Somewhere Now.. ATM, Just Creates A New Log With The Name
+	// Might Have To Settle With That TBH But Would Like To Be Able To Rename It
+	// Currently, It Also Does Not Write To This New File Anyways, Just Creates It
+	void Logger::SetLogName( std::string loggerName, std::string newLogName )
+	{
+		SE_DEBUG( "FROM INSIDE SetLogName()" );
+		SE_DEBUG( "Initial File Path: {}", GetLogFilePath( ) );
+		SE_DEBUG( "Initial Log Dir Path: {}", GetLogDirPath( ) );
+		GetClientSideLogger( )->flush( );
+		GetInternalLogger( )->flush( );
+		loggerInstance->CloseLog( );
+		const auto logDir     = GetLogDirPath( );
+		auto       oldLogPath = logDir.string( ) + "\\" + GetFileName( ).string( );
+		auto       newLogPath = logDir.string( ) + "\\" + newLogName;
+		spdlog::details::os::rename( oldLogPath, newLogPath );
+		logFileHandle->SetLogFilePath( newLogPath );
+		logFileHandle->UpdateFileInfo( newLogPath );
+		UpdateLoggerFileInfo( );
+		loggerInstance->OpenLog( newLogName );
+		SE_DEBUG( "After RenameFile() Path: {}", GetLogFilePath( ).filename( ) );
+	}
+
+	void Logger::UpdateLoggerFileInfo( )
+	{
+		if( fileInfoChanged ) {
+			// Sometimes is called already by caller, however, ensures the cache variables are up to date
+			logFileHandle->UpdateFileInfo( logFileHandle->GetLogFilePath( ) );
+			RefreshCache( );
+		}
+		fileInfoChanged = ( !fileInfoChanged );
+	}
+
+	/*file_helper::path const Logger::GetCurrentDir( )
+	{
+	logFileHandle->GetCurrentDir();
 	UpdateLoggerFileInfo( );
-	return m_loggerName;
-}
-void Logger::Init( Logger &logger, LoggerLevel setLevel )
-{
-	// Keeping this pretty simple before deviating too hard core - end goal would be to abstract some of the
-	// setup in some structs and then just pass in the desired struct into the init function
-	auto                          mappedLevel = MapLogLevel( setLevel );
-	std::vector<spdlog::sink_ptr> sinks;
 
-	sinks.emplace_back( std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ) );
-	sinks.emplace_back( std::make_shared<spdlog::sinks::basic_file_sink_mt>( logger.GetFileName( ).string( ), true ) );
-	// Would Like To Format this in a more personalized and absstracted manner
-	sinks[ 0 ]->set_pattern( "%^[%T] %n: %v%$" );
-	sinks[ 1 ]->set_pattern( "[%T] [%l] %n: %v" );
+	}*/
 
-	// For both logger types, would like to abstract away the mappedLevel in a way that a flush level doesnt
-	// always have to be the same as what is set
-	if( m_internalLogger.get( ) == nullptr ) {
-		m_internalLogger = std::make_shared<spdlog::logger>( "INTERNAL", begin( sinks ), end( sinks ) );
-		spdlog::register_logger( m_internalLogger );
-		m_internalLogger->set_level( mappedLevel );
-		m_internalLogger->flush_on( mappedLevel );
-	}
-	else {
-		SE_INTERNAL_WARN( "Warning: Trying To Initialize A Logger Of Same Name: {}", logger.GetLoggerName( ) );
+	Logger::~Logger( )
+	{
+		spdlog::shutdown( );
+		logFileHandle->~LogFileHelper( );
 	}
 
-	if( m_clientLogger.get( ) == nullptr ) {
-		m_clientLogger = std::make_shared<spdlog::logger>( logger.GetLoggerName( ), begin( sinks ), end( sinks ) );
-		spdlog::register_logger( m_clientLogger );
-		m_clientLogger->set_level( mappedLevel );
-		m_clientLogger->flush_on( mappedLevel );
+	std::string const Logger::GetLoggerName( )
+	{
+		return m_loggerName;
 	}
-	else {
-		SE_WARN( "Warning: Trying To Initialize A Logger Of Same Name: {}", logger.GetLoggerName( ) );
-	}
-}
+	void Logger::Init( Logger &logger, LoggerLevel setLevel )
+	{
+		// Keeping this pretty simple before deviating too hard core - end goal would be to abstract some of the
+		// setup in some structs and then just pass in the desired struct into the init function
+		auto                          mappedLevel = MapToMappedLevel( setLevel );
+		std::vector<spdlog::sink_ptr> sinks;
 
-using MappedLevel = serenity::MappedLevel;
+		sinks.emplace_back( std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ) );
+		sinks.emplace_back( std::make_shared<spdlog::sinks::basic_file_sink_mt>( logger.GetLogFilePath( ).string( ), true ) );
+		// Would Like To Format this in a more personalized and absstracted manner
+		sinks[ 0 ]->set_pattern( "%^[%T] %n: %v%$" );
+		sinks[ 1 ]->set_pattern( "[%T] [%l] %n: %v" );
 
-void Logger::SetLoggerLevel( LoggerLevel level, LoggerInterface logInterface )
-{
-	m_level = MapLogLevel( level );
-	if( !m_level ) {
-		throw std::runtime_error( "Log Level Was Not A Valid Value" );
-	}
-	switch( logInterface ) {
-		case LoggerInterface::internal:
-			{
-				m_internalLogger->set_level( m_level );
+		// For both logger types, would like to abstract away the mappedLevel in a way that a flush level doesnt
+		// always have to be the same as what is set
+		int i { 1 }, retries { 5 };
+
+		try {
+			if( ( m_internalLogger.get( ) == nullptr ) && ( m_clientLogger.get( ) == nullptr ) ) {
+				m_internalLogger = std::make_shared<spdlog::logger>( "INTERNAL", begin( sinks ), end( sinks ) );
+				spdlog::register_logger( m_internalLogger );
+				m_internalLogger->set_level( mappedLevel );
+				m_internalLogger->flush_on( mappedLevel );
+
+				m_clientLogger = std::make_shared<spdlog::logger>( logger.GetLoggerName( ), begin( sinks ), end( sinks ) );
+				spdlog::register_logger( m_clientLogger );
+				m_clientLogger->set_level( mappedLevel );
+				m_clientLogger->flush_on( mappedLevel );
 			}
-		case LoggerInterface::client:
-			{
-				m_clientLogger->set_level( m_level );
+			else {
+				if( i == 0 ) {
+					SE_WARN( "Warning: Trying To Initialize A Logger Of Same Name: {}", logger.GetLoggerName( ) );
+				}
 			}
-		default:
-			{
-				m_internalLogger->set_level( MappedLevel::off );
-				m_clientLogger->set_level( MappedLevel::off );
-				throw std::runtime_error( "Log Interface Was Not A Valid Value - Log Level Set To 'OFF'\n" );
+		}
+		catch( const std::exception &e ) {
+			SE_ERROR( "Logger {} Failed To Initialize", logger.GetLoggerName( ) );
+			SE_FATAL( "{}", e.what( ) );
+			if( i != retries ) {
+				printf( "Retrying... Attempt %i", i + 1 );
+				logger.CloseLog( );
+				spdlog::drop( "INTERNAL" );
+				spdlog::drop( logger.GetLoggerName( ) );
+				i++;
 			}
+			Init( logger, setLevel );
+		}
+		SE_INFO( "Logger: \"{}\" Successfully Initialized", logger.GetLoggerName( ) );
 	}
-}
 
-serenity::MappedLevel Logger::MapLogLevel( LoggerLevel level )
-{
-	std::map<LoggerLevel, MappedLevel> levelMap = {
-	  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
-	  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
-	  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
-	MappedLevel result   = MappedLevel::off;
-	auto        iterator = levelMap.find( level );
-	if( iterator != levelMap.end( ) ) {
-		result = iterator->second;
+	using MappedLevel = serenity::MappedLevel;
+	LoggerLevel Logger::MapToLogLevel( MappedLevel level )
+	{
+		std::map<MappedLevel, LoggerLevel> levelMap = {
+		  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
+		  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
+		  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
+		LoggerLevel result   = LoggerLevel::off;
+		auto        iterator = levelMap.find( level );
+		if( iterator != levelMap.end( ) ) {
+			result = iterator->second;
+		}
+		return result;
 	}
-	return result;
-}
+
+	void Logger::SetLoggerLevel( LoggerLevel level, LoggerInterface logInterface )
+	{
+		m_level = MapToMappedLevel( level );
+		if( !m_level ) {
+			throw std::runtime_error( "Log Level Was Not A Valid Value" );
+		}
+		switch( logInterface ) {
+			case LoggerInterface::internal:
+				{
+					m_internalLogger->set_level( m_level );
+				}
+			case LoggerInterface::client:
+				{
+					m_clientLogger->set_level( m_level );
+				}
+			default:
+				{
+					m_internalLogger->set_level( MappedLevel::off );
+					m_clientLogger->set_level( MappedLevel::off );
+					throw std::runtime_error( "Log Interface Was Not A Valid Value - Log Level Set To 'OFF'\n" );
+				}
+		}
+	}
+
+	serenity::MappedLevel Logger::MapToMappedLevel( LoggerLevel level )
+	{
+		std::map<LoggerLevel, MappedLevel> levelMap = {
+		  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
+		  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
+		  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
+		MappedLevel result   = MappedLevel::off;
+		auto        iterator = levelMap.find( level );
+		if( iterator != levelMap.end( ) ) {
+			result = iterator->second;
+		}
+		return result;
+	}
+}  // namespace serenity

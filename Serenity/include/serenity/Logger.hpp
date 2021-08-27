@@ -6,6 +6,8 @@
 #pragma warning( disable : 26812 )
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+#include <spdlog/details/file_helper.h>
+
 #pragma warning( pop )
 
 #include <serenity/Defines.hpp>
@@ -29,45 +31,83 @@
 
 clang-format on                                                                                                     */
 
-
-class Logger : public serenity::LogFileHelper, public ILogger
+namespace serenity
 {
-      public:
-	Logger( ) = default;
-	Logger( std::string loggerName, std::string logName, LoggerLevel level );
-	~Logger( );
-
-	void               SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
-	std::string        GetLoggerName( );
-	void               UpdateLoggerFileInfo( ) override;
-	static MappedLevel MapLogLevel( LoggerLevel level );
-	static void        Init( Logger &logger, LoggerLevel level );
-
-	static std::shared_ptr<spdlog::logger> &GetInternalLogger( )
+	class Logger : public serenity::LogFileHelper, public ILogger
 	{
-		return m_internalLogger;
-	}
-	static std::shared_ptr<spdlog::logger> &GetClientSideLogger( )
-	{
-		return m_clientLogger;
-	}
-	inline static void ForwardFileUpdates( )
-	{
-		loggerInstance->UpdateLoggerFileInfo( );
-	}
+	      public:
+		// This Will Be Abstracted Away Eventually, But Just To Simplyfy Logger Construction
+		struct logger_info
+		{
+			std::string                  loggerName;
+			std::string                  logName;
+			LoggerLevel                  level;
+			file_helper::directory_entry logDir;
+		};
 
-      public:
-	LogFileHelper *logFileHandle;
+		Logger( logger_info &infoStruct );
+		Logger( )                = delete;
+		Logger( const Logger & ) = delete;
+		~Logger( );
 
-      private:
-	std::string                            m_loggerName;
-	std::string                            m_logName;
-	serenity::MappedLevel                  m_level { serenity::MappedLevel::off };
-	static std::shared_ptr<spdlog::logger> m_internalLogger;
-	static std::shared_ptr<spdlog::logger> m_clientLogger;
-	static Logger *                        loggerInstance;
-};
+		void                    SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
+		void                    SetLogName( std::string loggerName, std::string newLogName );
+		std::string const       GetLoggerName( );
+		void                    UpdateLoggerFileInfo( ) override;
+		void                    SetLogDirPath( file_helper::path logDirPath ) override;
+		file_helper::path const GetLogDirPath( ) override;
+		// file_helper::path const GetCurrentDir( ) override;
 
+		static MappedLevel MapToMappedLevel( LoggerLevel level );
+		LoggerLevel        MapToLogLevel( MappedLevel level );
+		static void        Init( Logger &logger, LoggerLevel level );
+
+		static const std::shared_ptr<spdlog::logger> &GetInternalLogger( )
+		{
+			return m_internalLogger;
+		}
+		static const std::shared_ptr<spdlog::logger> &GetClientSideLogger( )
+		{
+			return m_clientLogger;
+		}
+		static const std::shared_ptr<spdlog::details::file_helper> &GetFileHelperHandle( )
+		{
+			return m_FileHelper;
+		}
+		inline static void ForwardFileUpdates( )
+		{
+			loggerInstance->UpdateLoggerFileInfo( );
+		}
+		void CloseLog( );
+		void OpenLog( std::string fileName );
+		void RefreshCache( );
+		void RefreshFromCache( );
+
+	      public:
+		LogFileHelper *logFileHandle;
+
+	      private:
+		std::string                                          m_loggerName;
+		std::string                                          m_logName;
+		serenity::MappedLevel                                m_level { serenity::MappedLevel::off };
+		static std::shared_ptr<spdlog::logger>               m_internalLogger;
+		static std::shared_ptr<spdlog::logger>               m_clientLogger;
+		static std::shared_ptr<spdlog::details::file_helper> m_FileHelper;
+		static Logger *                                      loggerInstance;
+		spdlog::details::file_helper                         spdlogHandle;
+		void                                                 CacheLogger( );
+		std::string                                          cacheLogName;
+		std::string                                          cacheLoggerName;
+		MappedLevel                                          cacheLevel;
+		file_helper::path                                    cacheLogPath;
+		file_helper::path                                    cacheLogDirPath;
+		file_helper::path                                    cachePath;
+		bool                                                 prev_func_called { false };
+
+	      private:
+	};
+
+}  // namespace serenity
 
 namespace serenity
 {

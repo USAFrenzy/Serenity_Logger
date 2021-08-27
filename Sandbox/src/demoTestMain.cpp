@@ -6,7 +6,6 @@
 #define LOGGER_MESSAGES_SB   0
 #define TEST_ASSERT          0
 #define LOGGER_FILESYSTEM_SB 1
-#define FILE_RENAME_TEST     0
 #define TEST_FILE_RETRIEVAL  0
 #define TEST_FILE_SEARCH     0
 // This One Is Just For Me
@@ -26,7 +25,7 @@ int main( )
 	std::string A = "Hello A";
 	SE_INTERNAL_DEBUG( "Oh Hey, A Debug Message! Variable Substitution for 'A' should be 'Hello A': {}", A );
 	SE_INTERNAL_WARN( "What Do Ya Know? It's A Warning Message! Best Take Care With These!" );
-	SE_INTERNAL_ERROR( "Say Hello To The Darkness - This Is An Error Message. You Done Fucked Up" );
+	SE_INTERNAL_ERROR( "Say Hello To The Darkness - This Is An Error Message. You Done file_utilscked Up" );
 	SE_INTERNAL_FATAL(
 	  "Last But ! Least, This Is A Fatal Message - Your Application Is Crashing My "
 	  "Friend..." );
@@ -42,48 +41,59 @@ int main( )
 
 #if LOGGER_FILESYSTEM_SB
 
+	using namespace serenity;
 
-	serenity::file_helper::path originalPath   = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
-	serenity::file_helper::path pathToSB_txt   = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox\\Sandbox.txt";
-	serenity::file_helper::path pathToBuildDir = "C:\\Users\\mccul\\Desktop\\Logging Project\\build";
-	serenity::file_helper::path pathToRootDir  = "C:\\Users\\mccul\\Desktop\\Logging Project";
-	serenity::file_helper::path pathToDesktop  = "C:\\Users\\mccul\\Desktop";
+	file_helper::path const originalPath   = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
+	file_helper::path const pathToSB_txt   = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox\\Sandbox.txt";
+	file_helper::path const pathToBuildDir = "C:\\Users\\mccul\\Desktop\\Logging Project\\build";
+	file_helper::path const pathToRootDir  = "C:\\Users\\mccul\\Desktop\\Logging Project";
+	file_helper::path const pathToDesktop  = "C:\\Users\\mccul\\Desktop";
 
-	Logger logTwo( "Filesystem Logger", "File_System.txt", LoggerLevel::trace );
+	auto logDirPath = originalPath;
+	logDirPath /= "Logs";
+	file_helper::directory_entry logDir { logDirPath };
+	Logger::logger_info          initInfo = { };
+	initInfo.loggerName                   = "Filesystem Logger";
+	initInfo.logName                      = "File_System.txt";
+	initInfo.logDir                       = logDir;
+	initInfo.level                        = LoggerLevel::trace;
 
-	SE_INFO( "Now Just Testing That The Logger Initialized Name Got Passed Through To The Logs" );
-	SE_TRACE( "Working With File Systems Now\n\n" );
+	Logger logTwo( initInfo );
 
-	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath( ),
-		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
+	// SE_INFO( "Now Just Testing That The Logger Initialized Name Got Passed Through To The Logs" );
+	// SE_TRACE( "Working With File Systems Now\n\n" );
 
-	SE_TRACE( "Now Testing Swapping Log Names:" );
-	auto originalFilePath = logTwo.GetFilePath( );
-	serenity::file_utils::RenameFile( originalFilePath, "New_Log_Test.txt" );
-	SE_INFO( "New File Name: {}\n", logTwo.GetFileName( ) );
+	// SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath(
+	// ), 	 logTwo.GetLogFilePath( ), logTwo.GetFileName( ) ); auto rnOld = logTwo.GetLogDirPath( ); SE_DEBUG( "logDirPath: {}",
+	// rnOld
+	// ); SE_DEBUG( "FILEPATH: {}", logTwo.GetLogFilePath( ) ); SE_TRACE( "Now Testing Swapping Log Names:" ); auto
+	// originalFilePath = logTwo.GetLogFilePath( );
 
 
-	SE_INFO( "Previous Working Dir: {}", logTwo.GetCurrentDir( ) )
+	// SE_INFO( "New File Name: {}\n", logTwo.GetFileName( ) );
 
-	logTwo.ChangeDir( pathToBuildDir );
-	SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
 
-	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath( ),
-		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
+	// SE_INFO( "Previous Working Dir: {}", logTwo.GetCurrentDir( ) )
 
-	logTwo.ChangeDir( pathToDesktop );
-	SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
-	SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath( ),
-		 logTwo.GetFilePath( ), logTwo.GetFileName( ) );
+	// file_utils::ChangeDir( pathToBuildDir );
+	// SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
 
-	logTwo.ChangeDir( originalPath );
-	SE_INFO( "Just Visual Representation Of Path Components:{}\n", logTwo.PathComponents_Str( pathToBuildDir ) );
+	// SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath(
+	// ), 	 logTwo.GetLogFilePath( ), logTwo.GetFileName( ) );
 
-	logTwo.ChangeDir( pathToDesktop );
+	// file_utils::ChangeDir( pathToDesktop );
+	// SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
+	// SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath(
+	// ), 	 logTwo.GetLogFilePath( ), logTwo.GetFileName( ) );
+
+	// file_utils::ChangeDir( originalPath );
+	// SE_INFO( "Just Visual Representation Of Path Components:{}\n", logTwo.PathComponents_Str( pathToBuildDir ) );
+
+	// file_utils::ChangeDir( pathToDesktop );
 	#if TEST_FILE_RETRIEVAL
 	SE_TRACE( "Quick Test Of The Whole File Retrieval Deal With RetrieveDirEntries():" );
 	SE_TRACE( "Listing Files Under: {}\n", pathToDesktop );
-	auto dirEntries = serenity::file_utils::RetrieveDirEntries( pathToDesktop, true );
+	auto dirEntries = file_utils::RetrieveDirEntries( pathToDesktop, true );
 		#if WANT_TO_SEE_MSGS
 	for( const auto &file : dirEntries.retrievedItems ) {
 		SE_INFO( "File Retrieved At: {}", file.path( ).relative_path( ) );
@@ -93,7 +103,7 @@ int main( )
 	SE_TRACE( "Number Of Files Retrieved: {}", dirEntries.fileCount );
 	SE_TRACE( "Time Taken To Complete: {}ms", dirEntries.elapsedTime );
 	SE_TRACE( "Quick Test Of Searching The Retrieved Files For A Match:" );
-	auto result = serenity::file_utils::SearchDirEntries( dirEntries.retrievedItems, "Manually_placed_file.txt" );
+	auto result = file_utils::SearchDirEntries( dirEntries.retrievedItems, "Manually_placed_file.txt" );
 	if( result.fileFound ) {
 		for( const auto &file : result.matchedResults ) {
 			SE_INFO( "Search Found: {}\nPath: {}", file.path( ).filename( ), file );
@@ -107,80 +117,102 @@ int main( )
 
 #endif
 #if TEST_NEW_RENAME
+	// clang-format off
+	// PROBABLY JUST NEED TO "CONST" ALL THE THINGS!!!!
+	// Man, Just Realizing by not const'ing, paths and shit are breaking..
 	/*
-		I'm assuming what I'm running into is a race condition? Keep catching the exception:
-		- "The process cannot access the file because it is being used by another process."
-		When trying multiple renames in a row with std::filesystem::path objs but not with string paths
+		With The Above Note Taken Into Consideration, Would Really Like A Way To Fully 
+		Ensure That Anyone Who Uses This In The Future (Myself Included) Doesn't End Up
+		Breaking Their Path Consistencies Like I Was Before By Directly Appending Paths..
+		i.e. How Do I Prevent The Bit Below From Affecting The Log File Path?
+		std::filesystem::path somePath = GetLogFilePath();
+		auto someOtherPath = somePath /= "someDir";
+		std::filesystem::path anotherPath = GetLogFilePath();
+		-> anotherPath Now Points To someOtherPath instead of GetLogFilePath()
 	*/
-	namespace su = serenity::se_utils;
-	namespace fu = serenity::file_utils;
+	// clang-format on
 
 	SE_TRACE( "Testing The file_utils::RenameFile()\n" );
-	std::string sbPath = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
-	logTwo.ChangeDir( sbPath );
-	SE_DEBUG( "Current Dir: {}", logTwo.GetCurrentDir( ) );
-	auto cwd = logTwo.GetCurrentDir( );
 
-	serenity::file_helper::path aPath = cwd /= "a.txt";
-	SE_DEBUG( "aPath: {}", aPath );
+	std::string const sbPath = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
+	file_utils::ChangeDir( sbPath );
+	SE_DEBUG( "Current Dir: {}", logTwo.GetCurrentDir( ) );
+
+	const auto re_logDir = initInfo.logDir;
+	SE_DEBUG( "initInfo.logDir: {}", initInfo.logDir );
+	SE_DEBUG( "re_logDir: {}", re_logDir );
+	SE_DEBUG( "GetLogDirPath(): {}", logTwo.GetLogDirPath( ) );
+
+	logTwo.SetLogDirPath( re_logDir );
+	// poorly named but meh, testing shit
+	auto renamePath = logTwo.GetLogDirPath( ).string( ) + "\\Rename_Test";
+	file_utils::CreateDir( renamePath );
+
+	const file_helper::path aPath = renamePath + "\\a.txt";
+	SE_DEBUG( "aPath {}", aPath );
+	const file_helper::path bPath = renamePath + "\\b.txt";
+	SE_DEBUG( "bPath {}", bPath );
+	const file_helper::path fPath = renamePath + "\\LastRename.txt";
+	SE_DEBUG( "fPath {}", fPath );
+
+	SE_DEBUG( "renamePath After string additions for other file paths: {}", renamePath );
+
+	// logTwo.ChangeDir( rnPath);
+	file_utils::ChangeDir( renamePath );
+	SE_DEBUG( "Current Dir: {}", logTwo.GetCurrentDir( ) );
+	const auto cwd = logTwo.GetCurrentDir( );
+
+	// Effectively Delete If Already Exists Just To Prove The Rename Process
+	auto finalFile = cwd.string( ) + "\\LastRename.txt";
+	file_utils::RemoveEntry( finalFile );
+
 	std::ofstream file;
+	// Note: opening with append won't append since the file is deleted for this test if it already existed
 	file.open( aPath.filename( ), std::ios_base::app );
+
 	while( file.is_open( ) ) {
-		SE_DEBUG( "file is opened" );
-		file << "This Is A Test String To Prove Size And Content Of File Remains Constant";
+		SE_DEBUG( "File is opened" );
+		SE_DEBUG( "Attempting Write To File" );
+		file << "This Is A Test String To Prove Size And Content Of File Remains Constant\n";
+		SE_DEBUG( "Finished Write To File" );
 		file.close( );
+		SE_DEBUG( "File is closed" );
 	}
+
+
 	try {
-		serenity::file_utils::RenameFile( cwd /= "a.txt", cwd /= "b.txt" );
-		serenity::file_utils::RenameFile( cwd /= "b.txt", cwd /= "c.txt" );
-		serenity::file_utils::RenameFile( cwd /= "c.txt", cwd /= "d.txt" );
-		serenity::file_utils::RenameFile( cwd /= "d.txt", cwd /= "e.txt" );
-		serenity::file_utils::RenameFile( cwd /= "e.txt", cwd /= "f.txt" );
-		serenity::file_utils::RenameFile( cwd /= "f.txt", cwd /= "g.txt" );
-		serenity::file_utils::RenameFile( cwd /= "g.txt", cwd /= "h.txt" );
-		serenity::file_utils::RenameFile( cwd /= "h.txt", cwd /= "i.txt" );
-		serenity::file_utils::RenameFile( cwd /= "i.txt", cwd /= "j.txt" );
-		serenity::file_utils::RenameFile( cwd /= "j.txt", cwd /= "k.txt" );
-		serenity::file_utils::RenameFile( cwd /= "k.txt", cwd /= "l.txt" );
-		serenity::file_utils::RenameFile( cwd /= "l.txt", cwd /= "m.txt" );
-		serenity::file_utils::RenameFile( cwd /= "m.txt", cwd /= "n.txt" );
-		serenity::file_utils::RenameFile( cwd /= "n.txt", cwd /= "o.txt" );
-		serenity::file_utils::RenameFile( cwd /= "o.txt", cwd /= "p.txt" );
-		serenity::file_utils::RenameFile( cwd /= "p.txt", cwd /= "q.txt" );
-		serenity::file_utils::RenameFile( cwd /= "q.txt", cwd /= "r.txt" );
-		serenity::file_utils::RenameFile( cwd /= "r.txt", cwd /= "s.txt" );
-		serenity::file_utils::RenameFile( cwd /= "s.txt", cwd /= "t.txt" );
-		serenity::file_utils::RenameFile( cwd /= "t.txt", cwd /= "u.txt" );
-		serenity::file_utils::RenameFile( cwd /= "u.txt", cwd /= "v.txt" );
-		serenity::file_utils::RenameFile( cwd /= "v.txt", cwd /= "w.txt" );
-		serenity::file_utils::RenameFile( cwd /= "w.txt", cwd /= "x.txt" );
-		serenity::file_utils::RenameFile( cwd /= "x.txt", cwd /= "y.txt" );
-		serenity::file_utils::RenameFile( cwd /= "y.txt", cwd /= "z.txt" );
-		serenity::file_utils::RenameFile( cwd /= "z.txt", cwd /= "LastRename.txt" );
-		serenity::file_helper::path searchPath = sbPath;
-		auto                        rnFiles    = fu::RetrieveDirEntries( searchPath, false );
-		auto                        found      = fu::SearchDirEntries( rnFiles.retrievedItems, "LastRename.txt" );
+		file_utils::RenameFile( aPath.filename( ), bPath.filename( ) );
+		file_utils::RenameFile( bPath.filename( ), fPath.filename( ) );
+
+		file_helper::path searchPath = logDirPath;
+		auto              rnFiles    = file_utils::RetrieveDirEntries( searchPath, false );
+		auto              found      = file_utils::SearchDirEntries( rnFiles.retrievedItems, "LastRename.txt" );
 		if( found.fileFound ) {
 			for( auto &file : found.matchedResults ) {
 				SE_TRACE( "File: {} Was Successuly Found", file.path( ).filename( ) );
-				SE_INFO( "Rename Test Was Successful" );
 			}
 		}
-		serenity::file_utils::RenameFile( cwd /= "LastRename.txt", cwd /= "a.txt" );  // "reset"
-		SE_TRACE( "\"LastRename.txt\" Reset To \"a.txt\" " );
 	}
 	catch( const std::filesystem::filesystem_error &fs_err ) {
 		SE_FATAL( "FS EXCEPTION CAUGHT:\n{}", fs_err.what( ) );
 	}
+	// Now That Things Above Have Been Seemingly Fixed...
+	// Time To Work On The Logger Portion
+
+	// spdloglog Rename
+	SE_DEBUG( "LogName: {}", logTwo.GetLogFilePath( ) );
+	logTwo.SetLogName( "Filesystem Logger", "RenamedSpdlogLog.txt" );
+	SE_TRACE( "SHOULD BE WRITING TO THE NEWLY NAMED LOG..." );
+
 #endif
 }
 /* clang-format off
 ######################################################################################################################################################
-#                                                               General !es
+#                                                               General Notees
 ######################################################################################################################################################
 - Currently, even if changing directories (or at least setting what should be a change in directories), no directories are actually created or checked
-  - Possibly need to actually use filesystem::create_directories function for this but checks for if that directory already exists would then need to
-    occur. I believe it's probably the same thing for files? I may need to explicitly create a file with a filesystem function using a passed in name.
+  - Possibly need to actually use filesystem::create_directories file_utilsnction for this but checks for if that directory already exists would then need to
+    occur. I believe it's probably the same thing for files? I may need to explicitly create a file with a filesystem file_utilsnction using a passed in name.
 	Although, checks for if that file already exists and how to write to it would then need to be in place.
 - Also, Definitely NEEEEEEED more exception handling.. just the one in ChangerDir() caught so many once I took away the error code and logged what it 
   threw. I had missed those exceptions using the non-throwing version of std::filesystem::path(&path, error_code) before that.

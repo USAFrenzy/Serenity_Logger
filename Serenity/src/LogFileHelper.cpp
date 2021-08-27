@@ -22,20 +22,51 @@ namespace serenity
 	*/
 	// clang-format on
 
-	LogFileHelper::LogFileHelper( ) : m_logDir( "Logs" ), m_logName( "Log.txt" )
+	// LogFileHelper::LogFileHelper( )
+	//{
+	//	serenity::file_helper::path logDirPath, logPathToFile;
+	//	auto defaultPath     = file_helper::current_path( );
+	//	logDirPath                                  = defaultPath /= "Logs";
+	//	serenity::file_helper::directory_entry logDir { logDirPath };
+	//	if( !logDir.exists( ) ) {
+	//		try {
+	//			serenity::file_helper::create_directories( logDir );
+	//		}
+	//		catch( const std::exception &er ) {
+	//			printf( "Exception Caught In Default LogFileHelper():\n%s", er.what( ) );
+	//		}
+	//
+	//	}
+	//	SetLogDirPath( logDirPath );
+	//	logPathToFile                                     = logDirPath /= "Log.txt";
+	//	StorePathComponents( logPathToFile );
+	//	ChangeDir( logDirPath );
+	//}
+	LogFileHelper::LogFileHelper( file_helper::directory_entry &logDir, std::string &fileName )
 	{
-		auto defaultPath     = file_helper::current_path( );
-		auto defaultFilePath = defaultPath /= ( m_logDir + "\\" + m_logName );
+		serenity::file_helper::path logDirPath, logPathToFile;
+		auto                        defaultPath = file_helper::current_path( );
+		if( !logDir.exists( ) ) {
+			try {
+				serenity::file_helper::create_directories( logDir );
+			}
+			catch( const std::exception &er ) {
+				printf( "Exception Caught In LogFileHelper():\n%s", er.what( ) );
+			}
+		}
+
+		logDirPath = logDir.path( );
+		SetLogDirPath( logDirPath );
+		auto defaultFilePath = logDirPath /= fileName;
+
 		StorePathComponents( defaultPath );
-		ChangeDir( defaultFilePath );
+		// ChangeDir( defaultFilePath );
 	}
-	LogFileHelper::LogFileHelper( file_helper::path &logDir, file_helper::path &fileName )
-	  : m_logDir( logDir.string( ) ), m_logName( fileName.string( ) )
+
+	void LogFileHelper::SetLogDirPath( file_helper::path logDirPath )
 	{
-		auto defaultPath     = file_helper::current_path( );
-		auto defaultFilePath = logDir /= fileName;
-		StorePathComponents( defaultPath );
-		ChangeDir( defaultFilePath );
+		m_logDirPath    = logDirPath;
+		fileInfoChanged = true;
 	}
 
 
@@ -46,7 +77,7 @@ namespace serenity
 	}
 	LogFileHelper::~LogFileHelper( )
 	{
-		m_logName.clear( );
+		m_fileName.clear( );
 		m_logDirPath.clear( );
 		m_filePath.clear( );
 		UpdateFileInfo( m_filePath );
@@ -58,7 +89,7 @@ namespace serenity
 	}
 
 
-	void LogFileHelper::ChangeDir( file_helper::path destDir )
+	/*void LogFileHelper::ChangeDir( file_helper::path destDir )
 	{
 		std::error_code ec;
 		try {
@@ -68,16 +99,18 @@ namespace serenity
 			SE_INTERNAL_FATAL( "EXCEPTION CAUGHT:\n{}", e.what( ) );
 		}
 		UpdateFileInfo( destDir );
-		m_cachePath = destDir;
-		m_cacheDir  = m_cachePath.stem( );
-	}
+		m_cachePath  = destDir;
+		m_cacheDir   = m_cachePath.stem( );
+		m_currentDir = destDir.string();
+	}*/
 
 	// Helper functions
-	void LogFileHelper::ForceUpdate( )
+	void LogFileHelper::ForceUpdate( )  // Probably Don't Need
 	{
 		UpdateFileInfo( m_cachePath );
 	}
-	file_helper::path LogFileHelper::GetFileName( )
+
+	file_helper::path const LogFileHelper::GetFileName( )
 	{
 		if( m_fileName.has_extension( ) )  // i.e Not A Directory
 		{
@@ -87,32 +120,37 @@ namespace serenity
 			return "";
 		}
 	}
-	file_helper::path LogFileHelper::GetFilePath( )
+	file_helper::path const LogFileHelper::GetLogFilePath( )
 	{
-		ForceUpdate( );
 		return m_filePath;
 	}
-	file_helper::path LogFileHelper::GetLogDirPath( )
+	file_helper::path const LogFileHelper::GetLogDirPath( )
 	{
 		return m_logDirPath;
 	}
-	file_helper::path LogFileHelper::GetCurrentDir( )
+
+	void LogFileHelper::SetLogFilePath( file_helper::path logPath )
 	{
-		ForceUpdate( );
+		m_filePath      = logPath;
+		fileInfoChanged = true;
+	}
+	file_helper::path const LogFileHelper::GetCurrentDir( )
+	{
 		return m_currentDir;
 	}
 	void LogFileHelper::SetDir( file_helper::path oldPathDir, file_helper::path destDirPath )
 	{
-		oldPathDir  = destDirPath;
-		m_cachePath = destDirPath;
-		m_cacheDir  = m_cachePath.stem( );
+		oldPathDir      = destDirPath;
+		m_cachePath     = destDirPath;
+		m_cacheDir      = m_cachePath.stem( );
+		fileInfoChanged = true;
 	}
 
 	void LogFileHelper::StorePathComponents( file_helper::path &pathToStore )
 	{
 		m_filePath     = pathToStore;
 		m_currentDir   = file_helper::current_path( );
-		m_cachePath    = m_currentDir;
+		m_cachePath    = pathToStore;
 		m_rootPath     = pathToStore.root_path( );
 		m_rootDir      = pathToStore.root_directory( );
 		m_rootName     = pathToStore.root_name( );
@@ -121,15 +159,12 @@ namespace serenity
 		m_pathStem     = pathToStore.stem( );
 		m_cacheDir     = m_pathStem;
 		m_fileName     = pathToStore.filename( );
-		m_logName      = m_fileName.string( );  // Honestly Pretty Redundant
-		m_logDirPath   = m_filePath.string( );
-		m_logDir       = m_relativePath.string( );
 	}
 	// clang-format off
 	// ############################################################################### Testing Functions  ###############################################################################
 	// clang-format on
 
-	std::string LogFileHelper::PathComponents_Str( file_helper::path &path )
+	std::string const LogFileHelper::PathComponents_Str( file_helper::path path )
 	{
 		auto pPath        = path.string( );
 		auto rootPath     = path.root_path( ).string( );

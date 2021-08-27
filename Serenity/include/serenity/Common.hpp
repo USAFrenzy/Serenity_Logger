@@ -12,7 +12,8 @@ enum class LoggerLevel
 	info,
 	warning,
 	error,
-	fatal
+	fatal,
+	off
 };
 enum class LoggerInterface
 {

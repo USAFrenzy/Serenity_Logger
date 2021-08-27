@@ -24,16 +24,20 @@ namespace serenity
 		{
 			switch( mode ) {
 				case time_mode::ms:
-					return std::chrono::duration_cast<std::chrono::nanoseconds>( m_End - m_Start ).count( );
+					return static_cast<float_t>(
+					  std::chrono::duration_cast<std::chrono::milliseconds>( m_End - m_Start ).count( ) );
 					break;
 				case time_mode::sec:
-					return std::chrono::duration_cast<std::chrono::seconds>( m_End - m_Start ).count( );
+					return static_cast<float_t>(
+					  std::chrono::duration_cast<std::chrono::seconds>( m_End - m_Start ).count( ) );
 					break;
 				case time_mode::min:
-					return std::chrono::duration_cast<std::chrono::minutes>( m_End - m_Start ).count( );
+					return static_cast<float_t>(
+					  std::chrono::duration_cast<std::chrono::minutes>( m_End - m_Start ).count( ) );
 					break;
 				case time_mode::hr:
-					return std::chrono::duration_cast<std::chrono::hours>( m_End - m_Start ).count( );
+					return static_cast<float_t>(
+					  std::chrono::duration_cast<std::chrono::hours>( m_End - m_Start ).count( ) );
 					break;
 				default: return 0.f; break;
 			}
@@ -63,7 +67,7 @@ namespace serenity
 	   To Be Restricted For MacOS And Sanity Respectively
 	*/
 
-		bool ValidateFileName( std::string fileName )
+		bool const ValidateFileName( std::string fileName )
 		{
 			std::smatch match;
 #if WIN32
@@ -74,12 +78,12 @@ namespace serenity
 			std::regex validateFile( "^[\\/:]|NUL+$" );
 #endif
 			if( ( std::regex_search( fileName, match, validateFile ) ) ) {
-				SE_INTERNAL_ERROR(
+				printf(
 				  "ERROR:\t"
-				  "File Name [ {} ] Contains Invalid Characters Or Reserved File Names. (If On Linux/Unix, This "
+				  "File Name [ %s ] Contains Invalid Characters Or Reserved File Names. (If On Linux/Unix, This "
 				  "Includes "
-				  "':' And '\\'",
-				  fileName );
+				  "':' And '\\'\n",
+				  fileName.c_str( ) );
 				return false;
 			}
 			else {
@@ -87,15 +91,15 @@ namespace serenity
 			}
 		}
 
-		bool ValidateExtension( std::string fileName )
+		bool const ValidateExtension( std::string fileName )
 		{
 			std::smatch match;
 			std::regex  validExtension( "^\\.[a-zA-Z]{7}$" );  // making 7 a thing here due to files like .config
 			if( ( std::regex_search( fileName, match, validExtension ) ) ) {
-				SE_INTERNAL_WARN(
+				printf(
 				  "WARNING:\t"
-				  "File Name [ {} ] Extension Is Invalid.",
-				  fileName );
+				  "File Name [ %s ] Extension Is Invalid.\n",
+				  fileName.c_str( ) );
 				return false;
 			}
 			else {
@@ -104,7 +108,7 @@ namespace serenity
 		}
 
 
-		bool CompareExtensions( std::string oldFile, std::string newFile )
+		bool const CompareExtensions( std::string oldFile, std::string newFile )
 		{
 			std::string oldExtension, newExtension;
 			// Find The Respective Extensions
@@ -120,8 +124,6 @@ namespace serenity
 		bool RenameFile( file_helper::path oldFile, file_helper::path newFile )
 		{
 			std::error_code ec;
-			std::ofstream   file1( oldFile );
-			std::ofstream   file2( newFile );
 			// dir_entries are really only neccessary due to file_size comparison and exists()
 			// if std::fs implements this for path objects, this is a candidate for removal
 			file_helper::directory_entry oldPath { oldFile };
@@ -130,44 +132,35 @@ namespace serenity
 			if( newPath.exists( ) ) {
 				return true;
 			}
-			if( file1.is_open( ) ) {
-				try {
-					file1.close( );
-				}
-				catch( const std::exception &e ) {
-					SE_INTERNAL_ERROR( "ERROR: {}", e.what( ) );
-					return false;
-				}
-			}
 			try {
 				file_utils::ValidateFileName( newFile.filename( ).string( ) );
 			}
 			catch( std::exception &fileName_err ) {
-				SE_INTERNAL_ERROR( "Could Not Rename {} To {}\nReason: {}", oldFile.filename( ), newFile.filename( ),
-						   fileName_err.what( ) );
+				printf( "Could Not Rename %s To %s\nReason: %s", oldFile.filename( ).string( ).c_str( ),
+					newFile.filename( ).string( ).c_str( ), fileName_err.what( ) );
 				return false;
 			}
 			if( !file_utils::ValidateExtension( newFile.extension( ).string( ) ) ) {
-				SE_INTERNAL_ERROR( "Could Not Rename {} To {}\tReason: Not A Valid Extension String",
-						   oldFile.filename( ), newFile.filename( ) );
+				printf( "Could Not Rename %s To %s\tReason: Not A Valid Extension String",
+					oldFile.filename( ).string( ).c_str( ), newFile.filename( ).string( ).c_str( ) );
 				return false;
 			}
 			else {
 				try {
 					if( !( file_utils::CompareExtensions( oldFile.extension( ).string( ),
 									      newFile.extension( ).string( ) ) ) ) {
-						SE_INTERNAL_WARN(
+						printf(
 						  "WARNING:\t"
-						  "New File Name: [ {} ] Does Not Have The Same Extension As Old File: [ {} ]\n",
-						  newFile.filename( ), oldFile.filename( ) );
-						file_helper::rename( oldPath.path( ).filename( ), newPath.path( ).filename( ) );
+						  "New File Name: [ %s ] Does Not Have The Same Extension As Old File: [ %s ]\n",
+						  newFile.filename( ).string( ).c_str( ), oldFile.filename( ).string( ).c_str( ) );
+						file_helper::rename( oldPath.path( ), newPath.path( ) );
 					}
 					else {
-						file_helper::rename( oldPath.path( ).filename( ), newPath.path( ).filename( ) );
+						file_helper::rename( oldPath.path( ), newPath.path( ) );
 					}
 				}
 				catch( const file_helper::filesystem_error &err ) {
-					SE_INTERNAL_ERROR( "Exception Caught In RenameFile():\n{}", err.what( ) );
+					printf( "Exception Caught In RenameFile():\n%s\n", err.what( ) );
 					return false;
 				}
 			}
@@ -179,7 +172,7 @@ namespace serenity
 			}
 		}
 
-		file_utils_results::retrieve_dir_entries RetrieveDirEntries( std::filesystem::path &path, bool recursive )
+		file_utils_results::retrieve_dir_entries const RetrieveDirEntries( std::filesystem::path &path, bool recursive )
 		{
 			std::vector<std::filesystem::directory_entry> dirEntries;
 			std::size_t                                   pathSize = path.string( ).size( );
@@ -191,8 +184,9 @@ namespace serenity
 			int fileCount { 0 };
 
 			if( path.has_extension( ) ) {
-				SE_INTERNAL_ERROR(
-				  "ERROR: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: {}", path );
+				printf( "ERROR: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: "
+					"%s\n",
+					path.string( ).c_str( ) );
 				results.retrievedItems = dirEntries;
 				results.success        = false;
 			}
@@ -228,7 +222,7 @@ namespace serenity
 
 
 		// std::tuple<bool, std::vector<std::filesystem::directory_entry>>
-		file_utils_results::search_dir_entries
+		file_utils_results::search_dir_entries const
 		  SearchDirEntries( std::vector<std::filesystem::directory_entry> &dirEntries, std::string searchString )
 		{
 			std::vector<std::filesystem::directory_entry> matchedResults;
@@ -258,11 +252,60 @@ namespace serenity
 		}
 
 		// Return The Object Specified (Not Yet Implemented)
-		std::filesystem::directory_entry RetrieveDirObject( std::filesystem::directory_entry &entry )
+		std::filesystem::directory_entry const RetrieveDirObject( std::filesystem::directory_entry &entry )
 		{
 			std::filesystem::directory_entry temp;
 			return temp;
 		}
+
+		bool CreateDir( std::filesystem::path dirPath )
+		{
+			file_helper::directory_entry entry { dirPath };
+			try {
+				if( entry.exists( ) ) {
+					return true;
+				}
+				else {
+					file_helper::create_directories( entry );
+					return true;
+				}
+			}
+			catch( const std::exception &e ) {
+				printf( "Exception In CreateDir():\n%s\n", e.what( ) );
+				return false;
+			}
+		}
+
+		bool RemoveEntry( std::filesystem::path entry )
+		{
+			try {
+				if( !file_helper::exists( entry ) ) {
+					return true;
+				}
+				else {
+					file_helper::remove( entry );
+					return true;
+				}
+			}
+			catch( const std::exception &e ) {
+				printf( "Exception In RemoveEntry():\n%s\n", e.what( ) );
+				return false;
+			}
+		}
+
+		bool ChangeDir( std::filesystem::path dirPath )
+		{
+			std::error_code ec;
+			try {
+				file_helper::current_path( dirPath, ec );
+				return true;
+			}
+			catch( std::filesystem::filesystem_error &e ) {
+				printf( "EXCEPTION CAUGHT:\n%s", e.what( ) );
+				return false;
+			}
+		}
+
 
 	}  // namespace file_utils
 }  // namespace serenity

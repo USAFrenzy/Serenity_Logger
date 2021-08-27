@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <string>
 #include <filesystem>
 #include <optional>
@@ -10,6 +11,8 @@
 #include <future>
 #include <type_traits>
 
+#include <spdlog/details/file_helper.h>
+
 namespace serenity
 {
 	namespace file_helper = std::filesystem;
@@ -17,12 +20,14 @@ namespace serenity
 	class LogFileHelper : protected IFileHelper
 	{
 	      public:
-		LogFileHelper( );
-		LogFileHelper( file_helper::path &pathToFileDir, file_helper::path &fileName );
+		LogFileHelper( ) = delete;
+		LogFileHelper( file_helper::directory_entry &pathToFileDir, std::string &fileName );
 		~LogFileHelper( );
 
-		void        ChangeDir( file_helper::path destDir );
-		void        SetDir( file_helper::path oldPathDir, file_helper::path destDirPath );
+		// void ChangeDir( file_helper::path destDir );
+		void SetDir( file_helper::path oldPathDir, file_helper::path destDirPath );
+		void virtual SetLogDirPath( file_helper::path logDirPath );
+		void        SetLogFilePath( file_helper::path logPath );
 		void        StorePathComponents( file_helper::path &pathToStore );
 		void        NotifyLogger( ) override;
 		void        UpdateFileInfo( file_helper::path pathToFile ) override;
@@ -30,33 +35,32 @@ namespace serenity
 
 		// void SetRelativePath( );
 	      public:
-		file_helper::path GetFileName( );
-		file_helper::path GetFilePath( );
-		file_helper::path GetLogDirPath( );
-		file_helper::path GetCurrentDir( );
+		file_helper::path const GetFileName( );
+		file_helper::path const GetLogFilePath( );
+		file_helper::path virtual const GetLogDirPath( );
+		file_helper::path virtual const GetCurrentDir( );
 
 
 		// Testing Functions
-		std::string PathComponents_Str( file_helper::path &path );
+		std::string const PathComponents_Str( file_helper::path path );
 
 	      private:
 		file_helper::path m_cachePath;
 		file_helper::path m_cacheDir;
 
-		std::string       m_logDir;
-		std::string       m_logName;
 		file_helper::path m_currentDir   = file_helper::current_path( );
 		file_helper::path m_relativePath = m_currentDir.relative_path( );
-		file_helper::path m_logDirPath   = m_relativePath /= m_logDir;
-		file_helper::path m_filePath     = m_logDirPath /= m_logName;
-		file_helper::path m_rootPath     = m_currentDir.root_path( );
-		file_helper::path m_rootDir      = m_currentDir.root_directory( );
-		file_helper::path m_rootName     = m_currentDir.root_name( );
-		file_helper::path m_parentPath   = m_currentDir.parent_path( );
-		file_helper::path m_pathStem     = m_currentDir.stem( );
-		file_helper::path m_fileName     = m_filePath.filename( );
+		file_helper::path m_logDirPath;
+		file_helper::path m_filePath   = m_logDirPath;
+		file_helper::path m_rootPath   = m_currentDir.root_path( );
+		file_helper::path m_rootDir    = m_currentDir.root_directory( );
+		file_helper::path m_rootName   = m_currentDir.root_name( );
+		file_helper::path m_parentPath = m_currentDir.parent_path( );
+		file_helper::path m_pathStem   = m_currentDir.stem( );
+		file_helper::path m_fileName   = m_filePath.filename( );
 
 	      private:
-		void ForceUpdate( );
+		void                         ForceUpdate( );
+		spdlog::details::file_helper spdLogFilehandle;
 	};
 }  // namespace serenity
