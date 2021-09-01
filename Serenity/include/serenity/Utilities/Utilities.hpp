@@ -36,7 +36,7 @@ namespace serenity
 		/// <summary>
 		/// A wrapper for thread sleeping
 		/// </summary>
-		static void SleepFor( time_mode mode, int time );
+		 void SleepFor( time_mode mode, int time );
 	}  // namespace se_utils
 
 	namespace file_utils

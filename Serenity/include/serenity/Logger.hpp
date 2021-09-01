@@ -39,19 +39,43 @@ namespace serenity
 		// This Will Be Abstracted Away Eventually, But Just To Simplyfy Logger Construction
 		struct logger_info
 		{
-			std::string                  loggerName;
-			std::string                  logName;
-			LoggerLevel                  level;
-			file_helper::directory_entry logDir;
+			std::string                  loggerName = "Logger";
+			std::string                  logName = "Log.txt";
+			LoggerLevel                  level = LoggerLevel::off;
+			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
 		};
 
-		Logger( logger_info &infoStruct );
+		struct cache_logger
+		{
+			explicit cache_logger( )
+			{
+				cache_instance( );
+			}
+
+			std::unique_ptr<spdlog::logger> cacheClientLogger;
+			std::unique_ptr<spdlog::logger> cacheInternalLogger;
+
+			cache_logger *instance( )
+			{
+				return m_instance;
+			}
+		private:
+		void cache_instance( )
+		{
+			m_instance = this;
+		}
+		    
+		private:
+			cache_logger* m_instance;
+		};
+
+		explicit Logger( logger_info &infoStruct );
 		Logger( )                = delete;
 		Logger( const Logger & ) = delete;
 		~Logger( );
 
 		void                    SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
-		void                    SetLogName( std::string loggerName, std::string newLogName );
+		void                    RenameLog( std::string newName );
 		std::string const       GetLoggerName( );
 		void                    UpdateLoggerFileInfo( ) override;
 		void                    SetLogDirPath( file_helper::path logDirPath ) override;
@@ -74,12 +98,16 @@ namespace serenity
 		{
 			return m_FileHelper;
 		}
+		static const std::shared_ptr<cache_logger> &GetCacheHandle( )
+		{
+			return cache_handle;
+		}
 		inline static void ForwardFileUpdates( )
 		{
 			loggerInstance->UpdateLoggerFileInfo( );
 		}
-		void CloseLog( );
-		void OpenLog( std::string fileName );
+		void CloseLog( std::string loggerName );
+		void OpenLog( file_helper::path filePath );
 		void RefreshCache( );
 		void RefreshFromCache( );
 
@@ -87,24 +115,28 @@ namespace serenity
 		LogFileHelper *logFileHandle;
 
 	      private:
-		std::string                                          m_loggerName;
-		std::string                                          m_logName;
-		serenity::MappedLevel                                m_level { serenity::MappedLevel::off };
+		logger_info           initInfo;
+		std::string           m_loggerName = initInfo.loggerName;
+		std::string           m_logName    = initInfo.logName;
+		serenity::MappedLevel m_level      = MapToMappedLevel( initInfo.level );
+
 		static std::shared_ptr<spdlog::logger>               m_internalLogger;
 		static std::shared_ptr<spdlog::logger>               m_clientLogger;
 		static std::shared_ptr<spdlog::details::file_helper> m_FileHelper;
 		static Logger *                                      loggerInstance;
 		spdlog::details::file_helper                         spdlogHandle;
-		void                                                 CacheLogger( );
-		std::string                                          cacheLogName;
-		std::string                                          cacheLoggerName;
-		MappedLevel                                          cacheLevel;
-		file_helper::path                                    cacheLogPath;
-		file_helper::path                                    cacheLogDirPath;
-		file_helper::path                                    cachePath;
-		bool                                                 prev_func_called { false };
 
-	      private:
+		cache_logger *                       m_cacheInstance;
+		static std::shared_ptr<cache_logger> cache_handle;
+		std::string                          cacheLogName;
+		std::string                          cacheLoggerName;
+		MappedLevel                          cacheLevel;
+		file_helper::path                    cacheLogPath;
+		file_helper::path                    cacheLogDirPath;
+		file_helper::path                    cachePath;
+
+		void CacheLogger( );
+		bool prev_func_called { false };
 	};
 
 }  // namespace serenity

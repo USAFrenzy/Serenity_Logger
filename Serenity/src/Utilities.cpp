@@ -160,7 +160,7 @@ namespace serenity
 					}
 				}
 				catch( const file_helper::filesystem_error &err ) {
-					printf( "Exception Caught In RenameFile():\n%s\n", err.what( ) );
+					printf( "\nException Caught In RenameFile():\n%s\n", err.what( ) );
 					return false;
 				}
 			}

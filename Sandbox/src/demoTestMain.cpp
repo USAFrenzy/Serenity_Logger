@@ -201,9 +201,12 @@ int main( )
 
 	// spdloglog Rename
 	SE_DEBUG( "LogName: {}", logTwo.GetLogFilePath( ) );
-	logTwo.SetLogName( "Filesystem Logger", "RenamedSpdlogLog.txt" );
-	SE_TRACE( "SHOULD BE WRITING TO THE NEWLY NAMED LOG..." );
-
+	auto spdDir     = logDirPath;
+	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
+	SE_DEBUG( "spdDir: {}", spdLogDest );
+	logTwo.RenameLog( spdLogDest );
+	// update path and re-cash
+	SE_DEBUG( "BACK IN MAIN!!!!" );
 #endif
 }
 /* clang-format off
