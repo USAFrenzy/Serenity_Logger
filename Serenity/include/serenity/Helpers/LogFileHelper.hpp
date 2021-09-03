@@ -4,7 +4,6 @@
 #include <string>
 #include <filesystem>
 #include <optional>
-#include "serenity/Interfaces/IObserver.hpp"
 // Currently For The Wrapper Funcs
 #include <chrono>
 #include <thread>
@@ -13,10 +12,11 @@
 
 #include <spdlog/details/file_helper.h>
 
+#include "serenity/Interfaces/IObserver.hpp"
+#include "serenity/Common.hpp"
+
 namespace serenity
 {
-	namespace file_helper = std::filesystem;
-
 	class LogFileHelper : protected IFileHelper
 	{
 	      public:
@@ -39,6 +39,7 @@ namespace serenity
 		file_helper::path const GetLogFilePath( );
 		file_helper::path virtual const GetLogDirPath( );
 		file_helper::path virtual const GetCurrentDir( );
+		LogFileHelper *_instance( );
 
 
 		// Testing Functions
@@ -58,6 +59,8 @@ namespace serenity
 		file_helper::path m_parentPath = m_currentDir.parent_path( );
 		file_helper::path m_pathStem   = m_currentDir.stem( );
 		file_helper::path m_fileName   = m_filePath.filename( );
+		LogFileHelper *   m_instance;  // probs uneccessary?
+
 
 	      private:
 		void                         ForceUpdate( );

@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 #include <spdlog/spdlog.h>
+#include <filesystem>
+
 #include "serenity/Defines.hpp"
 
 enum class LoggerLevel
@@ -23,8 +25,18 @@ enum class LoggerInterface
 
 namespace serenity
 {
-	using MappedLevel = spdlog::level::level_enum;
-}
+	using MappedLevel     = spdlog::level::level_enum;
+	namespace file_helper = std::filesystem;
+
+	struct logger_info
+	{
+		std::string                  loggerName = "Logger";
+		std::string                  logName    = "Log.txt";
+		LoggerLevel                  level      = LoggerLevel::off;
+		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
+	};
+
+}  // namespace serenity
 
 
 // struct LoggerInfo

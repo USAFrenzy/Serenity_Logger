@@ -46,6 +46,7 @@ namespace serenity
 	{
 		serenity::file_helper::path logDirPath, logPathToFile;
 		auto                        defaultPath = file_helper::current_path( );
+
 		if( !logDir.exists( ) ) {
 			try {
 				serenity::file_helper::create_directories( logDir );
@@ -61,7 +62,17 @@ namespace serenity
 
 		StorePathComponents( defaultPath );
 		// ChangeDir( defaultFilePath );
+		m_instance = this;
 	}
+	LogFileHelper *LogFileHelper::_instance( ) {
+		if( m_instance != nullptr ) {
+			return m_instance;
+		}
+		else {
+			throw std::runtime_error( "Error: LogFileHelper Instance Was Null." );
+		}
+	}
+
 
 	void LogFileHelper::SetLogDirPath( file_helper::path logDirPath )
 	{

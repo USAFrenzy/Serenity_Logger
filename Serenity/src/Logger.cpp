@@ -1,7 +1,7 @@
 
 #include <serenity/Logger.hpp>
 #include <serenity/Utilities/Utilities.hpp>
-
+#include <serenity/Cache/LoggerCache.hpp>
 
 #include <map>
 #include <string>
@@ -44,7 +44,7 @@ namespace serenity
 	std::shared_ptr<spdlog::logger>               Logger::m_clientLogger;
 	std::shared_ptr<spdlog::details::file_helper> Logger::m_FileHelper;
 	Logger *                                      Logger::loggerInstance;
-	std::shared_ptr<serenity::Logger::cache_logger> Logger::cache_handle;
+	std::shared_ptr<serenity::cache_logger> Logger::cache_handle;
 
 	// clang-format off
 /* 
@@ -57,54 +57,55 @@ namespace serenity
 	Logger::Logger( logger_info &infoStruct )
 	  : m_loggerName( infoStruct.loggerName ), m_logName( infoStruct.logName ), LogFileHelper( infoStruct.logDir, infoStruct.logName )
 	{
+		loggerInstance = this;
 		initInfo = infoStruct;
 		// Getting Close To Where I Would Want To Abstract Code Into The Respective Class's Init() Functions To
 		// Call Here, However, Should Re-evaluate If It's Neccessary That Logger Strictly Inherits From LogFileHelper
 		// Rather Than Just Having A Handle Or Vice Versa
 		auto                        defaultPath = serenity::file_helper::current_path( );
 		serenity::file_helper::path logDirPath  = infoStruct.logDir.path( );
-		logFileHandle                           = this;
+		logFileHandle = this->_instance();
 		auto filePath                           = logDirPath.string( ) + "\\" + infoStruct.logName;
-		logFileHandle->UpdateFileInfo( filePath );
-		UpdateLoggerFileInfo( );
-		loggerInstance = this;
 		cache_handle = std::make_shared<cache_logger>( );
 		m_cacheInstance = cache_handle.get()->instance();
-
 		m_FileHelper   = std::make_shared<spdlog::details::file_helper>( );
+
+		logFileHandle->UpdateFileInfo( filePath );
+		UpdateLoggerFileInfo( );
 		SetLogDirPath( logDirPath );
 		Init( *loggerInstance, infoStruct.level );
 	}
 
 	void Logger::CloseLog( std::string loggerName)
 	{
-		GetFileHelperHandle( )->flush( );
-		GetFileHelperHandle( )->close( );
+		
+		loggerInstance->GetFileHelperHandle( )->flush( );
+		loggerInstance->GetFileHelperHandle( )->close( );
 		std::ofstream log(loggerInstance->GetLogFilePath().string());
 		if( log.is_open( ) ) {
 			log.close( );
 		}
-
-		// spdlog::drop( loggerName );
-		// Not Too Sure If I'm Just Keeping The shared_ptr alive
-		spdlog::drop( loggerInstance->GetLoggerName( ) );
-		spdlog::drop( this->GetLoggerName( ) );
 		loggerInstance->CacheLogger( );
+		spdlog::drop( loggerInstance->m_clientLogger->name());
+		spdlog::drop( loggerInstance->m_internalLogger->name( ) );
 	}
-	// LOOK AT THIS FOR MACRO HANDLE
+	// As A Simple Function Wrapper That Does Nothing 
+	// Else At The Moment, Probably Can Just Get Rid Of This..
 	void Logger::RefreshCache( )
 	{
 		CacheLogger( );
 	}
+
 	void Logger::RefreshFromCache( )
 	{
 		if( !prev_func_called ) {
-			cacheLogDirPath = GetLogDirPath( );
+		loggerInstance->GetCacheHandle()->cacheLogDirPath = GetLogDirPath( );
 		}
-		m_logName    = cacheLogName;
-		m_loggerName = cacheLoggerName;
-		m_level      = cacheLevel;
-		logFileHandle->SetLogFilePath( cacheLogPath );
+		
+		m_logName    = loggerInstance->GetCacheHandle( )->instance( )->cacheLogName;
+		m_loggerName = loggerInstance->GetCacheHandle( )->instance( )->cacheLoggerName;
+		m_level      = loggerInstance->GetCacheHandle( )->instance( )->cacheLevel;
+		logFileHandle->SetLogFilePath( loggerInstance->GetCacheHandle( )->instance( )->cacheLogPath );
 		auto refreshedPath = GetLogFilePath( );
 		logFileHandle->UpdateFileInfo( refreshedPath );
 		loggerInstance->UpdateLoggerFileInfo( );
@@ -112,19 +113,19 @@ namespace serenity
 
 	void Logger::CacheLogger( )
 	{
-		m_logName       = initInfo.logName;
-		cacheLoggerName = m_loggerName;
-		cacheLogName    = m_logName;
-		cacheLevel      = m_level;
-		cacheLogPath    = logFileHandle->GetLogFilePath( );
-		logFileHandle->UpdateFileInfo( cacheLogPath );
+		m_logName                                                       = initInfo.logName;
+		loggerInstance->GetCacheHandle( )->instance( )->cacheLoggerName = m_loggerName;
+		loggerInstance->GetCacheHandle( )->instance( )->cacheLogName    = m_logName;
+		loggerInstance->GetCacheHandle( )->instance( )->cacheLevel      = m_level;
+		loggerInstance->GetCacheHandle( )->instance( )->cacheLogPath    = logFileHandle->GetLogFilePath( );
+		logFileHandle->UpdateFileInfo( loggerInstance->GetCacheHandle( )->instance( )->cacheLogPath );
 	}
-	void Logger::OpenLog( file_helper::path filePath)
+	void Logger::OpenLog( file_helper::path filePath )
 	{
 		loggerInstance->RefreshFromCache( );
 		SE_DEBUG( "OpenLog(): LogFilePath() = {}", GetLogFilePath( ) );
 		try {
-			spdlogHandle.open(filePath.string());
+			spdlogHandle.open( filePath.string( ) );
 		}
 		catch( const std::exception &e ) {
 			printf( "Exception Thrown In OpenLog():\n%s\n", e.what( ) );
@@ -132,23 +133,22 @@ namespace serenity
 	}
 	void Logger::SetLogDirPath( file_helper::path logDirPath )
 	{
-		cacheLogDirPath  = logDirPath;
-		prev_func_called = true;
+		loggerInstance->GetCacheHandle( )->instance( )->cacheLogDirPath = logDirPath;
+		prev_func_called                                                = true;
 		RefreshCache( );
 		prev_func_called = false;
 	}
 	file_helper::path const Logger::GetLogDirPath( )
 	{
-		return cacheLogDirPath;
+		return loggerInstance->GetCacheHandle( )->instance( )->cacheLogDirPath;
 	}
 
 	/* clang-format off
 	##################################################################################################################################
-	##################################################################################################################################
-	##################################################################################################################################
+	# THIS IS A WORK IN PROGRESS FUNCTION AND CURRENTLY DOES NOT WORK AS INTENDED - DROPS SPDLOG HANDLE W/NO WAY TO ATTAIN IT AGAIN  #
 	##################################################################################################################################
 	clang-format on */
-		void Logger::RenameLog( std::string newName )
+	void Logger::RenameLog( std::string newName )
 	{
 		// In Case Path Is Passed In
 		file_helper::path newFilePath = newName;
@@ -203,10 +203,8 @@ namespace serenity
 		initInfo.logName = newFilePath.filename().string();
 		RefreshCache( );
 		
-		loggerInstance->m_internalLogger->clone(internalLink.get()->name());
-		loggerInstance->m_clientLogger->clone( clientLink.get( )->name( ) );
-
-
+		/*loggerInstance->m_internalLogger->clone(internalLink.get()->name());
+		loggerInstance->m_clientLogger->clone( clientLink.get( )->name( ) );*/
 		}
 
 
@@ -220,13 +218,6 @@ namespace serenity
 		fileInfoChanged = ( !fileInfoChanged );
 	}
 
-	/*file_helper::path const Logger::GetCurrentDir( )
-	{
-	logFileHandle->GetCurrentDir();
-	UpdateLoggerFileInfo( );
-
-	}*/
-
 	Logger::~Logger( )
 	{
 		spdlog::shutdown( );
@@ -235,8 +226,9 @@ namespace serenity
 
 	std::string const Logger::GetLoggerName( )
 	{
-		return m_loggerName;
+		return loggerInstance->m_loggerName;
 	}
+
 	void Logger::Init( Logger &logger, LoggerLevel setLevel )
 	{
 		// Keeping this pretty simple before deviating too hard core - end goal would be to abstract some of the
@@ -290,7 +282,7 @@ namespace serenity
 				printf( "Retrying... Attempt %i", i + 1 );
 				logger.CloseLog(logger.GetLoggerName());
 				spdlog::drop( "INTERNAL" );
-				spdlog::drop( logger.GetLoggerName( ) );
+				spdlog::drop( logger.GetLoggerName( ) ); 
 				// Might Cause Unending Loop?
 				Init( logger, setLevel );
 			}
@@ -323,16 +315,19 @@ namespace serenity
 				{
 					m_internalLogger->set_level( m_level );
 				}
+				break;
 			case LoggerInterface::client:
 				{
 					m_clientLogger->set_level( m_level );
 				}
+				break;
 			default:
 				{
 					m_internalLogger->set_level( MappedLevel::off );
 					m_clientLogger->set_level( MappedLevel::off );
 					throw std::runtime_error( "Log Interface Was Not A Valid Value - Log Level Set To 'OFF'\n" );
 				}
+				break;
 		}
 	}
 

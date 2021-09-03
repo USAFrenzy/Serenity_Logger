@@ -14,6 +14,7 @@
 #include <serenity/Common.hpp>
 #include <serenity/Helpers/LogFileHelper.hpp>
 #include <serenity/Interfaces/IObserver.hpp>
+#include <serenity/Cache/LoggerCache.hpp>
 
 
 /* clang-format off
@@ -36,39 +37,6 @@ namespace serenity
 	class Logger : public serenity::LogFileHelper, public ILogger
 	{
 	      public:
-		// This Will Be Abstracted Away Eventually, But Just To Simplyfy Logger Construction
-		struct logger_info
-		{
-			std::string                  loggerName = "Logger";
-			std::string                  logName = "Log.txt";
-			LoggerLevel                  level = LoggerLevel::off;
-			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
-		};
-
-		struct cache_logger
-		{
-			explicit cache_logger( )
-			{
-				cache_instance( );
-			}
-
-			std::unique_ptr<spdlog::logger> cacheClientLogger;
-			std::unique_ptr<spdlog::logger> cacheInternalLogger;
-
-			cache_logger *instance( )
-			{
-				return m_instance;
-			}
-		private:
-		void cache_instance( )
-		{
-			m_instance = this;
-		}
-		    
-		private:
-			cache_logger* m_instance;
-		};
-
 		explicit Logger( logger_info &infoStruct );
 		Logger( )                = delete;
 		Logger( const Logger & ) = delete;
@@ -80,11 +48,13 @@ namespace serenity
 		void                    UpdateLoggerFileInfo( ) override;
 		void                    SetLogDirPath( file_helper::path logDirPath ) override;
 		file_helper::path const GetLogDirPath( ) override;
-		// file_helper::path const GetCurrentDir( ) override;
-
-		static MappedLevel MapToMappedLevel( LoggerLevel level );
-		LoggerLevel        MapToLogLevel( MappedLevel level );
-		static void        Init( Logger &logger, LoggerLevel level );
+		void                    CloseLog( std::string loggerName );
+		void                    OpenLog( file_helper::path filePath );
+		void                    RefreshCache( );
+		void                    RefreshFromCache( );
+		static MappedLevel      MapToMappedLevel( LoggerLevel level );
+		LoggerLevel             MapToLogLevel( MappedLevel level );
+		static void             Init( Logger &logger, LoggerLevel level );
 
 		static const std::shared_ptr<spdlog::logger> &GetInternalLogger( )
 		{
@@ -106,16 +76,13 @@ namespace serenity
 		{
 			loggerInstance->UpdateLoggerFileInfo( );
 		}
-		void CloseLog( std::string loggerName );
-		void OpenLog( file_helper::path filePath );
-		void RefreshCache( );
-		void RefreshFromCache( );
+
 
 	      public:
 		LogFileHelper *logFileHandle;
 
 	      private:
-		logger_info           initInfo;
+		logger_info           initInfo     = { };
 		std::string           m_loggerName = initInfo.loggerName;
 		std::string           m_logName    = initInfo.logName;
 		serenity::MappedLevel m_level      = MapToMappedLevel( initInfo.level );
@@ -123,17 +90,13 @@ namespace serenity
 		static std::shared_ptr<spdlog::logger>               m_internalLogger;
 		static std::shared_ptr<spdlog::logger>               m_clientLogger;
 		static std::shared_ptr<spdlog::details::file_helper> m_FileHelper;
-		static Logger *                                      loggerInstance;
 		spdlog::details::file_helper                         spdlogHandle;
+		// Thinking Of Somehow Manipulating Multiple Instances Of Loggers Using Something As A Pointer To Other Instances Here
+		static Logger *loggerInstance;
 
 		cache_logger *                       m_cacheInstance;
 		static std::shared_ptr<cache_logger> cache_handle;
-		std::string                          cacheLogName;
-		std::string                          cacheLoggerName;
-		MappedLevel                          cacheLevel;
-		file_helper::path                    cacheLogPath;
-		file_helper::path                    cacheLogDirPath;
-		file_helper::path                    cachePath;
+
 
 		void CacheLogger( );
 		bool prev_func_called { false };

@@ -17,7 +17,7 @@
 int main( )
 {
 #if LOGGER_MESSAGES_SB
-
+	// Not Testing ATM But Yeah, Logger Cnstr Changed - this doesnt reflect that change
 	Logger logOne( "Macro Test Logger", "Macro_Test.txt", LoggerLevel::trace );
 
 	SE_INTERNAL_INFO( "Hello From The True Library!\n- Serenity Library Info: \n\t- Version: {}", serenity::GetSerenityVerStr( ) );
@@ -43,16 +43,17 @@ int main( )
 
 	using namespace serenity;
 
-	file_helper::path const originalPath   = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
-	file_helper::path const pathToSB_txt   = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox\\Sandbox.txt";
-	file_helper::path const pathToBuildDir = "C:\\Users\\mccul\\Desktop\\Logging Project\\build";
-	file_helper::path const pathToRootDir  = "C:\\Users\\mccul\\Desktop\\Logging Project";
-	file_helper::path const pathToDesktop  = "C:\\Users\\mccul\\Desktop";
+	file_helper::path const originalPath   = file_helper::current_path();
+	file_helper::path const pathToBuildDir     = file_helper::current_path( ).parent_path( );
+	file_helper::path const relativePath       = file_helper::current_path( ).relative_path( );
+	file_helper::path const pathToSB_txt   = originalPath.string().append("\\Sandbox.txt");
+
+
 
 	auto logDirPath = originalPath;
 	logDirPath /= "Logs";
 	file_helper::directory_entry logDir { logDirPath };
-	Logger::logger_info          initInfo = { };
+	logger_info          initInfo = { };
 	initInfo.loggerName                   = "Filesystem Logger";
 	initInfo.logName                      = "File_System.txt";
 	initInfo.logDir                       = logDir;
@@ -60,36 +61,6 @@ int main( )
 
 	Logger logTwo( initInfo );
 
-	// SE_INFO( "Now Just Testing That The Logger Initialized Name Got Passed Through To The Logs" );
-	// SE_TRACE( "Working With File Systems Now\n\n" );
-
-	// SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath(
-	// ), 	 logTwo.GetLogFilePath( ), logTwo.GetFileName( ) ); auto rnOld = logTwo.GetLogDirPath( ); SE_DEBUG( "logDirPath: {}",
-	// rnOld
-	// ); SE_DEBUG( "FILEPATH: {}", logTwo.GetLogFilePath( ) ); SE_TRACE( "Now Testing Swapping Log Names:" ); auto
-	// originalFilePath = logTwo.GetLogFilePath( );
-
-
-	// SE_INFO( "New File Name: {}\n", logTwo.GetFileName( ) );
-
-
-	// SE_INFO( "Previous Working Dir: {}", logTwo.GetCurrentDir( ) )
-
-	// file_utils::ChangeDir( pathToBuildDir );
-	// SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
-
-	// SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath(
-	// ), 	 logTwo.GetLogFilePath( ), logTwo.GetFileName( ) );
-
-	// file_utils::ChangeDir( pathToDesktop );
-	// SE_INFO( "New Working Dir: {}\n", logTwo.GetCurrentDir( ) );
-	// SE_INFO( "\nCurrent Path: {} \nLog Dir: {} \nLog Path: {} \nLog Name: {}\n", logTwo.GetCurrentDir( ), logTwo.GetLogDirPath(
-	// ), 	 logTwo.GetLogFilePath( ), logTwo.GetFileName( ) );
-
-	// file_utils::ChangeDir( originalPath );
-	// SE_INFO( "Just Visual Representation Of Path Components:{}\n", logTwo.PathComponents_Str( pathToBuildDir ) );
-
-	// file_utils::ChangeDir( pathToDesktop );
 	#if TEST_FILE_RETRIEVAL
 	SE_TRACE( "Quick Test Of The Whole File Retrieval Deal With RetrieveDirEntries():" );
 	SE_TRACE( "Listing Files Under: {}\n", pathToDesktop );
@@ -139,8 +110,8 @@ int main( )
 	SE_DEBUG( "Current Dir: {}", logTwo.GetCurrentDir( ) );
 
 	const auto re_logDir = initInfo.logDir;
-	SE_DEBUG( "initInfo.logDir: {}", initInfo.logDir );
-	SE_DEBUG( "re_logDir: {}", re_logDir );
+	SE_DEBUG( "initInfo.logDir: {}", initInfo.logDir.path( ).string( ) );
+	SE_DEBUG( "re_logDir: {}", re_logDir.path( ).string( ) );
 	SE_DEBUG( "GetLogDirPath(): {}", logTwo.GetLogDirPath( ) );
 
 	logTwo.SetLogDirPath( re_logDir );
