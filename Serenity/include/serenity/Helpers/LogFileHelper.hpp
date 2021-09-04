@@ -31,10 +31,7 @@ namespace serenity
 		void        StorePathComponents( file_helper::path &pathToStore );
 		void        NotifyLogger( ) override;
 		void        UpdateFileInfo( file_helper::path pathToFile ) override;
-		static bool fileInfoChanged;
 
-		// void SetRelativePath( );
-	      public:
 		file_helper::path const GetFileName( );
 		file_helper::path const GetLogFilePath( );
 		file_helper::path virtual const GetLogDirPath( );
@@ -65,5 +62,9 @@ namespace serenity
 	      private:
 		void                         ForceUpdate( );
 		spdlog::details::file_helper spdLogFilehandle;
+
+	      public:
+		static bool fileInfoChanged;
+
 	};
 }  // namespace serenity

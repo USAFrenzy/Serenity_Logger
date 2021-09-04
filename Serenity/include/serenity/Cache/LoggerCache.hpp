@@ -14,19 +14,19 @@ namespace serenity
 		cache_logger *instance( );
 
 
-
 	      public:
 		std::unique_ptr<spdlog::logger> cacheInternalLogger;
 		std::unique_ptr<spdlog::logger> cacheClientLogger;
-		std::string       cacheLogName;
-		std::string       cacheLoggerName;
-		MappedLevel       cacheLevel;
-		file_helper::path cacheLogPath;
-		file_helper::path cacheLogDirPath;
-		file_helper::path cachePath;
+		std::string                     cacheLogName;
+		std::string                     cacheLoggerName;
+		MappedLevel                     cacheLevel;
+		file_helper::path               cacheLogPath;
+		file_helper::path               cacheLogDirPath;
+		file_helper::path               cachePath;
+		std::vector<spdlog::sink_ptr>   cacheSinks;
 
 	      private:
-		void cache_instance(cache_logger *cacheObj );
+		void cache_instance( cache_logger *cacheObj );
 
 	      private:
 		cache_logger *m_instance;

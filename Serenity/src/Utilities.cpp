@@ -127,7 +127,19 @@ namespace serenity
 			// dir_entries are really only neccessary due to file_size comparison and exists()
 			// if std::fs implements this for path objects, this is a candidate for removal
 			file_helper::directory_entry oldPath { oldFile };
+			oldPath.status().permissions(file_helper::perms::all);
 			file_helper::directory_entry newPath { newFile };
+			newPath.status( ).permissions( file_helper::perms::all );
+			
+			std::fstream oldF( oldFile, std::ios_base::app);
+
+			if( oldF.is_open( ) ) {
+				oldF.close( );
+				if( oldF.is_open( ) ) {
+					printf( "Failed To Close File: %s\n", oldFile.filename( ).string( ).c_str( ) );
+				}
+
+			}
 
 			if( newPath.exists( ) ) {
 				return true;
@@ -156,7 +168,7 @@ namespace serenity
 						file_helper::rename( oldPath.path( ), newPath.path( ) );
 					}
 					else {
-						file_helper::rename( oldPath.path( ), newPath.path( ) );
+						file_helper::rename( oldPath.path( ), newPath.path( ));
 					}
 				}
 				catch( const file_helper::filesystem_error &err ) {

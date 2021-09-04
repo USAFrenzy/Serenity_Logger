@@ -52,6 +52,9 @@ namespace serenity
 		void                    OpenLog( file_helper::path filePath );
 		void                    RefreshCache( );
 		void                    RefreshFromCache( );
+		void                    StopLoggers( );
+		void                    StartLoggers( );
+
 		static MappedLevel      MapToMappedLevel( LoggerLevel level );
 		LoggerLevel             MapToLogLevel( MappedLevel level );
 		static void             Init( Logger &logger, LoggerLevel level );
