@@ -18,4 +18,12 @@ namespace serenity
 	{
 		m_instance = std::move(cacheObj);
 	}
+
+	// Probs Be Something Like CloneLogger() Once Set Up
+	//std::unique_ptr<Logger> cache_logger::GetNewLogger( )
+	//{
+	//	std::unique_ptr<Logger> log = std::make_unique<Logger>( cacheInitInfo );
+	//	std::copy(log.get(), log.get(), cacheNewLogger);
+	//	return log;
+	//}
 }  // namespace serenity

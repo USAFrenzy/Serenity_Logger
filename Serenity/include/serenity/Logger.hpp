@@ -7,6 +7,9 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/details/file_helper.h>
+// Only Here For The Sink Struct - Remove When Struct Moves From Here
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #pragma warning( pop )
 
@@ -15,6 +18,7 @@
 #include <serenity/Helpers/LogFileHelper.hpp>
 #include <serenity/Interfaces/IObserver.hpp>
 #include <serenity/Cache/LoggerCache.hpp>
+#include <serenity/Utilities/Utilities.hpp>
 
 
 /* clang-format off
@@ -37,27 +41,81 @@ namespace serenity
 	class Logger : public serenity::LogFileHelper, public ILogger
 	{
 	      public:
-		explicit Logger( logger_info &infoStruct );
-		Logger( )                = delete;
-		Logger( const Logger & ) = delete;
+		// ##############################################################################
+		struct Sinks  // Will Be A Separate Class Later On
+		{
+			std::vector<spdlog::sink_ptr> sinkVector;
+
+			// testing before flushing out the rest
+			enum class SinkType
+			{
+				stdout_color_mt,
+				basic_file_mt,
+			};
+
+			void set_sink_type( SinkType sinkType )
+			{
+				m_sinkType = sinkType;
+			}
+			SinkType get_sink_type( )
+			{
+				return m_sinkType;
+			}
+
+			void CreateSink( SinkType sink, logger_info &infoStruct )
+			{
+				switch( sink ) {
+					case SinkType::basic_file_mt:
+						{
+							auto basic_logger = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+							  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ), false );
+							basic_logger->set_pattern( "[%T] [%l] %n: %v" );
+							sinkVector.emplace_back( basic_logger );
+						}
+						break;
+					case SinkType::stdout_color_mt:
+						{
+							auto console_logger = std::make_shared<spdlog::sinks::stdout_color_sink_mt>( );
+							console_logger->set_pattern( "%^[%T] %n: %v%$" );
+							sinkVector.emplace_back( console_logger );
+						}
+						break;
+					default:
+						{
+						}
+						break;
+				}
+			}
+
+		      private:
+			SinkType m_sinkType;
+		};
+		// ##############################################################################
+
+		Logger( logger_info &infoStruct );
+		Logger( ) = delete;
+		// Debating If I Want Copying Allowed, But For Now, Leaving Enabled As cache_logger Requires It For GetNewLogger()
+		Logger( const Logger &copy ) = default;
 		~Logger( );
 
-		void                    SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
-		void                    RenameLog( std::string newName );
-		std::string const       GetLoggerName( );
-		void                    UpdateLoggerFileInfo( ) override;
-		void                    SetLogDirPath( file_helper::path logDirPath ) override;
-		file_helper::path const GetLogDirPath( ) override;
-		void                    CloseLog( std::string loggerName );
-		void                    OpenLog( file_helper::path filePath );
-		void                    RefreshCache( );
-		void                    RefreshFromCache( );
-		void                    StopLoggers( );
-		void                    StartLoggers( );
+		void                            SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
+		bool                            RenameLog( std::string newName );
+		std::string const               GetLoggerName( );
+		void                            UpdateLoggerFileInfo( ) override;
+		void                            SetLogDirPath( file_helper::path logDirPath ) override;
+		file_helper::path const         GetLogDirPath( ) override;
+		void                            CloseLog( std::string loggerName );
+		void                            OpenLog( file_helper::path filePath );
+		void                            RefreshCache( );
+		void                            RefreshFromCache( );
+		void                            StopLogger( );
+		void                            StartLogger( );
+		void                            Shutdown( );
+		std::shared_ptr<spdlog::logger> CreateLogger( Sinks::SinkType sink, logger_info &infoStruct, bool internalLogger = false);
 
-		static MappedLevel      MapToMappedLevel( LoggerLevel level );
-		LoggerLevel             MapToLogLevel( MappedLevel level );
-		static void             Init( Logger &logger, LoggerLevel level );
+		static MappedLevel MapToMappedLevel( LoggerLevel level );
+		LoggerLevel        MapToLogLevel( MappedLevel level );
+		static void        Init( Logger &logger, LoggerLevel level );
 
 		static const std::shared_ptr<spdlog::logger> &GetInternalLogger( )
 		{
@@ -83,6 +141,7 @@ namespace serenity
 
 	      public:
 		LogFileHelper *logFileHandle;
+		std::mutex     m_mutex;
 
 	      private:
 		logger_info           initInfo     = { };
@@ -99,7 +158,7 @@ namespace serenity
 
 		cache_logger *                       m_cacheInstance;
 		static std::shared_ptr<cache_logger> cache_handle;
-
+		Sinks                                m_sinks;
 
 		void CacheLogger( );
 		bool prev_func_called { false };

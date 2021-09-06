@@ -123,6 +123,7 @@ namespace serenity
 
 		bool RenameFile( file_helper::path oldFile, file_helper::path newFile )
 		{
+
 			std::error_code ec;
 			// dir_entries are really only neccessary due to file_size comparison and exists()
 			// if std::fs implements this for path objects, this is a candidate for removal
@@ -131,19 +132,21 @@ namespace serenity
 			file_helper::directory_entry newPath { newFile };
 			newPath.status( ).permissions( file_helper::perms::all );
 			
-			std::fstream oldF( oldFile, std::ios_base::app);
-
-			if( oldF.is_open( ) ) {
-				oldF.close( );
-				if( oldF.is_open( ) ) {
-					printf( "Failed To Close File: %s\n", oldFile.filename( ).string( ).c_str( ) );
-				}
-
-			}
-
 			if( newPath.exists( ) ) {
 				return true;
 			}
+			
+			std::fstream oFile(oldPath);
+			if( oFile.is_open( ) ) {
+				try {
+					oFile.close( );
+				}
+				catch( const std::exception &e ) {
+					printf( "File [%s] Was Unable To Be Closed.\nException Caught: %s\n",
+						oldFile.filename( ).string( ).c_str( ), e.what( ) );
+				}
+			}
+
 			try {
 				file_utils::ValidateFileName( newFile.filename( ).string( ) );
 			}
@@ -165,10 +168,10 @@ namespace serenity
 						  "WARNING:\t"
 						  "New File Name: [ %s ] Does Not Have The Same Extension As Old File: [ %s ]\n",
 						  newFile.filename( ).string( ).c_str( ), oldFile.filename( ).string( ).c_str( ) );
-						file_helper::rename( oldPath.path( ), newPath.path( ) );
+						file_helper::rename( oldFile, newFile );
 					}
 					else {
-						file_helper::rename( oldPath.path( ), newPath.path( ));
+						file_helper::rename( oldFile, newFile);
 					}
 				}
 				catch( const file_helper::filesystem_error &err ) {
@@ -176,7 +179,7 @@ namespace serenity
 					return false;
 				}
 			}
-			if( ( oldPath.path( ).filename( ) == newPath.path( ).filename( ) ) &&
+			if( ( oldPath.path( ).filename( ) == newFile.filename()) &&
 			    ( oldPath.file_size( ) == newPath.file_size( ) ) )
 				return true;
 			else {

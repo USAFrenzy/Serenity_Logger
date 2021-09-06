@@ -34,7 +34,7 @@ clang-format on
 
 /*
 	At the moment, I have the cache_logger struct storing a unique_ptr to spdlog::logger for internal and client loggers.
-	The Constructor of cache_logger is supposed to create a unique_ptr of that instance, move that pointer to the shared_ptr 
+	The Constructor of cache_logger is supposed to create a unique_ptr of that instance, move that pointer to the shared_ptr
 	m_instance, to which the Logger class cache_handle can refer to using GetCacheHandle().
 
 */
@@ -44,7 +44,7 @@ namespace serenity
 	std::shared_ptr<spdlog::logger>               Logger::m_clientLogger;
 	std::shared_ptr<spdlog::details::file_helper> Logger::m_FileHelper;
 	Logger *                                      Logger::loggerInstance;
-	std::shared_ptr<serenity::cache_logger> Logger::cache_handle;
+	std::shared_ptr<serenity::cache_logger>       Logger::cache_handle;
 
 	// clang-format off
 /* 
@@ -58,37 +58,59 @@ namespace serenity
 	  : m_loggerName( infoStruct.loggerName ), m_logName( infoStruct.logName ), LogFileHelper( infoStruct.logDir, infoStruct.logName )
 	{
 		loggerInstance = this;
-		initInfo = infoStruct;
+		initInfo       = infoStruct;
 		// Getting Close To Where I Would Want To Abstract Code Into The Respective Class's Init() Functions To
 		// Call Here, However, Should Re-evaluate If It's Neccessary That Logger Strictly Inherits From LogFileHelper
 		// Rather Than Just Having A Handle Or Vice Versa
 		auto                        defaultPath = serenity::file_helper::current_path( );
 		serenity::file_helper::path logDirPath  = infoStruct.logDir.path( );
-		logFileHandle = this->_instance();
+		logFileHandle                           = this->_instance( );
 		auto filePath                           = logDirPath.string( ) + "\\" + infoStruct.logName;
-		cache_handle = std::make_shared<cache_logger>( );
-		m_cacheInstance = cache_handle.get()->instance();
-		m_FileHelper   = std::make_shared<spdlog::details::file_helper>( );
-
+		cache_handle                            = std::make_shared<cache_logger>( );
+		m_cacheInstance                         = cache_handle.get( )->instance( );
+		m_FileHelper                            = std::make_shared<spdlog::details::file_helper>( );
+		m_sinks                                 = *std::make_unique<Sinks>( );  // probably dont need
 		logFileHandle->UpdateFileInfo( filePath );
 		UpdateLoggerFileInfo( );
 		SetLogDirPath( logDirPath );
-		Init( *loggerInstance, infoStruct.level );
+		// Having This Here Allows The flush() and close() To Work Later On,
+		// However, I Still Have Issues With RenameLog() Not Unlocking Its File Lock
+		loggerInstance->GetFileHelperHandle( )->open( filePath );
+		//##########################################################################################################
+		// Commenting Out Init() Causes No Logging To Take Place..
+		// Init( *loggerInstance, infoStruct.level );
+		GetCacheHandle( )->cacheInitInfo = { };
+		GetCacheHandle( )->cacheInitInfo = *&initInfo;
+		// Will Probably Have This Bit Abstracted Away Into The initInfo Struct
+		m_sinks.set_sink_type( Sinks::SinkType::basic_file_mt );
+		m_clientLogger = std::move( loggerInstance->CreateLogger( m_sinks.get_sink_type( ), infoStruct ) );
+		// Above Is Redundant ATM Just Due To No Data Being Passed In For Realistically Setting/Getting Sink Type
+		m_internalLogger = std::move( loggerInstance->CreateLogger( Sinks::SinkType::stdout_color_mt, infoStruct, true ) );
 	}
 
-	void Logger::CloseLog( std::string loggerName)
+	Logger::~Logger( )
+	{
+		loggerInstance->Shutdown( );
+		loggerInstance->GetFileHelperHandle( )->~file_helper( );
+		logFileHandle->~LogFileHelper( );
+	}
+
+	void Logger::CloseLog( std::string loggerName )
 	{
 		loggerInstance->GetFileHelperHandle( )->flush( );
 		loggerInstance->GetFileHelperHandle( )->close( );
-		std::fstream log(loggerInstance->GetLogFilePath().string());
+		// Explicit Checking For File Status
+		std::fstream log( loggerInstance->GetLogFilePath( ).string( ) );
 		if( log.is_open( ) ) {
-			log.close( );
-			if( log.is_open( ) ) {
-				printf( "Failed To Close [%s]", loggerInstance->GetLogFilePath( ).string( ).c_str( ) );
-			} 
+			try {
+				log.close( );
+			}
+			catch( const std::exception &e ) {
+				printf( "Error in CloseLog():\n%s\n", e.what( ) );
+			}
 		}
 	}
-	// As A Simple Function Wrapper That Does Nothing 
+	// As A Simple Function Wrapper That Does Nothing
 	// Else At The Moment, Probably Can Just Get Rid Of This..
 	void Logger::RefreshCache( )
 	{
@@ -98,9 +120,9 @@ namespace serenity
 	void Logger::RefreshFromCache( )
 	{
 		if( !prev_func_called ) {
-		loggerInstance->GetCacheHandle()->cacheLogDirPath = GetLogDirPath( );
+			loggerInstance->GetCacheHandle( )->cacheLogDirPath = GetLogDirPath( );
 		}
-		
+
 		m_logName    = loggerInstance->GetCacheHandle( )->instance( )->cacheLogName;
 		m_loggerName = loggerInstance->GetCacheHandle( )->instance( )->cacheLoggerName;
 		m_level      = loggerInstance->GetCacheHandle( )->instance( )->cacheLevel;
@@ -112,19 +134,19 @@ namespace serenity
 
 	void Logger::CacheLogger( )
 	{
-		m_logName                                                       = initInfo.logName;
-		loggerInstance->GetCacheHandle( )->instance( )->cacheLoggerName = m_loggerName;
-		loggerInstance->GetCacheHandle( )->instance( )->cacheLogName    = m_logName;
-		loggerInstance->GetCacheHandle( )->instance( )->cacheLevel      = m_level;
-		loggerInstance->GetCacheHandle( )->instance( )->cacheLogPath    = logFileHandle->GetLogFilePath( );
-		logFileHandle->UpdateFileInfo( loggerInstance->GetCacheHandle( )->instance( )->cacheLogPath );
+		m_logName                          = initInfo.logName;
+		GetCacheHandle( )->cacheLoggerName = m_loggerName;
+		GetCacheHandle( )->cacheLogName    = m_logName;
+		GetCacheHandle( )->cacheLevel      = m_level;
+		GetCacheHandle( )->cacheLogPath    = logFileHandle->GetLogFilePath( );
+		logFileHandle->UpdateFileInfo( GetCacheHandle( )->cacheLogPath );
 	}
 	void Logger::OpenLog( file_helper::path filePath )
 	{
 		loggerInstance->RefreshFromCache( );
 		SE_DEBUG( "OpenLog(): LogFilePath() = {}", GetLogFilePath( ) );
 		try {
-			spdlogHandle.open( filePath.string( ) );
+			GetFileHelperHandle( )->open( filePath.string( ) );
 		}
 		catch( const std::exception &e ) {
 			printf( "Exception Thrown In OpenLog():\n%s\n", e.what( ) );
@@ -133,7 +155,8 @@ namespace serenity
 	void Logger::SetLogDirPath( file_helper::path logDirPath )
 	{
 		loggerInstance->GetCacheHandle( )->instance( )->cacheLogDirPath = logDirPath;
-		prev_func_called                                                = true;
+
+		prev_func_called = true;
 		RefreshCache( );
 		prev_func_called = false;
 	}
@@ -141,82 +164,125 @@ namespace serenity
 	{
 		return loggerInstance->GetCacheHandle( )->instance( )->cacheLogDirPath;
 	}
-	void Logger::StopLoggers( ) 
-	{ 
-		loggerInstance->CloseLog(m_internalLogger.get()->name());
-		loggerInstance->CloseLog( m_clientLogger.get( )->name( ));
-		spdlog::drop_all( );
-		spdlog::shutdown( );
-
-		loggerInstance->m_internalLogger.reset( );
-		loggerInstance->m_clientLogger.reset( );
+	void Logger::StopLogger( )
+	{
+		loggerInstance->CloseLog( m_clientLogger.get( )->name( ) );
+		// I'm Guessing I'll Only have To Do Internal Reset For As Long
+		// As The Current Init() Is Called...
+		loggerInstance->CloseLog( m_internalLogger.get( )->name( ) );
 	}
 
 	// Starting To Restructure In Favor of Passing In A Struct Here That Will Be Called In Init()
-	void Logger::StartLoggers( ) 
-	{ 
-		auto cache = loggerInstance->GetCacheHandle( )->instance( );
-
-		loggerInstance->m_internalLogger =
-		    std::make_shared<spdlog::logger>( "INTERNAL", begin( cache->cacheSinks ), end( cache->cacheSinks ) );
-
-		cache->cacheInternalLogger.reset( );
-		cache->cacheInternalLogger =
-		  std::make_unique<spdlog::logger>( "INTERNAL", begin( cache->cacheSinks ), end( cache->cacheSinks ) );
-
-		loggerInstance->m_clientLogger =
-		  std::make_shared<spdlog::logger>( cache->cacheLoggerName, begin( cache->cacheSinks ), end( cache->cacheSinks ) );
-		
-		cache->cacheClientLogger.reset( );
-		cache->cacheClientLogger =
-		  std::make_unique<spdlog::logger>( cache->cacheLoggerName, begin( cache->cacheSinks ), end( cache->cacheSinks ) );
-		
-		spdlog::register_logger( m_internalLogger );
-		m_internalLogger->set_level( cache->cacheLevel);
-		m_internalLogger->flush_on( cache->cacheLevel );
-
-		spdlog::register_logger( m_clientLogger );
-		m_clientLogger->set_level( cache->cacheLevel );
-		m_clientLogger->flush_on( cache->cacheLevel );
-	}
-	/* clang-format off
-	##################################################################################################################################
-	# THIS IS A WORK IN PROGRESS FUNCTION AND CURRENTLY DOES NOT WORK AS INTENDED - DROPS SPDLOG HANDLE W/NO WAY TO ATTAIN IT AGAIN  #
-	##################################################################################################################################
-	clang-format on */
-	void Logger::RenameLog( std::string newName )
+	void Logger::StartLogger( )
 	{
-		se_thread::se_mutex_guard fileLock;
-		fileLock.acquire_lock( );
+		loggerInstance->OpenLog( GetCacheHandle( )->cacheLogPath );
+	}
+
+	void Logger::Shutdown( )
+	{
+		spdlog::drop_all( );
+		spdlog::shutdown( );
+		loggerInstance->m_internalLogger.reset( );
+		loggerInstance->m_clientLogger.reset( );
+		GetCacheHandle( )->cacheClientLogger.reset( );
+		GetCacheHandle( )->cacheInternalLogger.reset( );
+	}
+
+	std::shared_ptr<spdlog::logger> Logger::CreateLogger( Sinks::SinkType sink, logger_info &infoStruct, bool internalLogger )
+	{
+		m_sinks.sinkVector.clear( );
+		m_sinks.CreateSink( sink, infoStruct );
+		auto mappedLevel = MapToMappedLevel( infoStruct.level );
+
+		if( internalLogger ) {
+			auto internalLogger =
+			  std::make_shared<spdlog::logger>( "INTERNAL", begin( m_sinks.sinkVector ), end( m_sinks.sinkVector ) );
+			spdlog::register_logger( internalLogger );
+			internalLogger->set_level( mappedLevel );
+			internalLogger->flush_on( mappedLevel );
+
+			GetCacheHandle( )->cacheInternalLogger =
+			  std::make_unique<spdlog::logger>( "INTERNAL", begin( m_sinks.sinkVector ), end( m_sinks.sinkVector ) );
+			GetCacheHandle( )->cacheInternalLogger->set_level( mappedLevel );
+			GetCacheHandle( )->cacheInternalLogger->flush_on( mappedLevel );
+			return internalLogger;
+		}
+		else {
+			std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>(
+			  GetCacheHandle( )->cacheLoggerName, begin( m_sinks.sinkVector ), end( m_sinks.sinkVector ) );
+			spdlog::register_logger( logger );
+			logger->set_level( mappedLevel );
+			logger->flush_on( mappedLevel );
+
+			GetCacheHandle( )->cacheClientLogger = std::make_unique<spdlog::logger>(
+			  GetCacheHandle( )->cacheLoggerName, begin( m_sinks.sinkVector ), end( m_sinks.sinkVector ) );
+			GetCacheHandle( )->cacheClientLogger->set_level( mappedLevel );
+			GetCacheHandle( )->cacheClientLogger->flush_on( mappedLevel );
+
+			return logger;
+		}
+	}
+
+	// Finally Got This Working Properly! Now To See What I Can Do To Clean It Up A Little Bit
+	bool Logger::RenameLog( std::string newName )
+	{
+		std::lock_guard<std::mutex> lock( m_mutex );
+
 		// In Case Path Is Passed In
-		file_helper::path newFilePath = newName;
-		
-		const auto &tmpPath = initInfo.logDir.path();
+		file_helper::path            newFilePath = newName;
+		file_helper::directory_entry file { newFilePath };
+		// Caching To Local Vars Before Deletion Of Loggers
+		const auto &tmpPath = initInfo.logDir.path( );
 		auto        oldPath = tmpPath.string( ).append( "\\" + m_logName );
 		auto        newPath = tmpPath.string( ).append( "\\" + newFilePath.filename( ).string( ) );
-		SE_ERROR( "oldPath: {}", oldPath );
-		SE_ERROR( "newPath: {}", newPath );
-
-		loggerInstance->StopLoggers( );
-
-		// There's A Process Still Locking The File...
-		// Testing The se_thread stuff to see if that helps...
 		try {
+			loggerInstance->StopLogger( );  // Flushes Log And Closes them
+			loggerInstance->Shutdown( );    // Drops spdlog Loggers, shuts down spdlog, and resets pointers
+			if( file.exists( ) ) {
+				// All Of This Can Be Moved To A Copy() In file_utils Namespace
+				SE_INTERNAL_WARN( "File [{}] Already Exists", file.path( ).filename( ) );
+				std::ifstream inputFile( oldPath);
+				std::ofstream outputFile( newPath, std::ios_base::app );
+				std::string   line;
+				if( !( inputFile.peek( ) == std::ifstream::traits_type::eof( ) ) ) {
+					SE_INTERNAL_INFO( "Copying File Contents From [{}] To [{}]...", oldPath, newPath );
+					try {
+						if( inputFile && outputFile ) {
+							while( std::getline( inputFile, line ) ) {
+								outputFile << line << "\n";
+							}
+						}
+					}
+					catch( const std::exception &e ) {
+						SE_INTERNAL_ERROR( "Failed To Copy File Contents:\n{}", e.what( ) );
+						return false;
+					}
+					inputFile.close( );
+					outputFile.close( );
+					file_utils::RemoveEntry( oldPath );
+				}
+			}
 			file_utils::RenameFile( oldPath, newPath );
-		}
-		catch( file_helper::filesystem_error &e ) {
-			printf( "ERROR: %s\n", e.what( ));
-		}
-		initInfo.logName = newFilePath.filename().string();
-		loggerInstance->UpdateFileInfo( newFilePath);
-		RefreshCache( );
 
-		loggerInstance->StartLoggers( );
-		loggerInstance->UpdateLoggerFileInfo( );
+			// Effectively Updating Cache Variables
+			loggerInstance->GetCacheHandle( )->cacheInitInfo.logName = newFilePath.filename( ).string( );
+			logFileHandle->UpdateFileInfo( newFilePath );
+			loggerInstance->UpdateLoggerFileInfo( );
+			loggerInstance->RefreshCache( );
 
-		fileLock.release_lock( );
-		// fileLock isn't currently helping either so its def something else...
+			// Recreates spdlog loggers And registers them with spdlog's registry
+			m_clientLogger = CreateLogger( m_sinks.get_sink_type( ), loggerInstance->GetCacheHandle( )->cacheInitInfo );
+			m_internalLogger =
+			  CreateLogger( Sinks::SinkType::stdout_color_mt, loggerInstance->GetCacheHandle( )->cacheInitInfo, true );
+
+			loggerInstance->StartLogger( );
+			return true;
 		}
+		catch( const std::exception &e ) {
+			SE_INTERNAL_ERROR( "EXCEPTION CAUGHT IN RenameLog():\n{}", e.what( ) );
+			return false;
+		}
+	}
 
 
 	void Logger::UpdateLoggerFileInfo( )
@@ -227,12 +293,6 @@ namespace serenity
 			RefreshCache( );
 		}
 		fileInfoChanged = ( !fileInfoChanged );
-	}
-
-	Logger::~Logger( )
-	{
-		spdlog::shutdown( );
-		logFileHandle->~LogFileHelper( );
 	}
 
 	std::string const Logger::GetLoggerName( )
@@ -246,7 +306,7 @@ namespace serenity
 		// setup in some structs and then just pass in the desired struct into the init function
 		auto                          mappedLevel = MapToMappedLevel( setLevel );
 		std::vector<spdlog::sink_ptr> sinks;
-		auto                          filePath = logger.initInfo.logDir.path( ).string( ).append( "\\" + logger.initInfo.logName );
+		auto filePath = logger.initInfo.logDir.path( ).string( ).append( "\\" + logger.initInfo.logName );
 
 		bool truncate { false };
 		sinks.emplace_back( std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ) );
@@ -257,23 +317,20 @@ namespace serenity
 		logger.GetCacheHandle( )->cacheSinks = sinks;
 		// For both logger types, would like to abstract away the mappedLevel in a way that a flush level doesnt
 		// always have to be the same as what is set
-		int i { 1 };
+		int       i { 1 };
 		const int retries { 5 };
-
-		spdlog::details::file_helper helper;
-		helper.flush( );
-		helper.close( );
-
 		try {
 			if( ( m_internalLogger.get( ) == nullptr ) && ( m_clientLogger.get( ) == nullptr ) ) {
-				cache_handle->cacheInternalLogger = std::make_unique<spdlog::logger>( "INTERNAL", begin( sinks ), end( sinks ) );
+				cache_handle->cacheInternalLogger =
+				  std::make_unique<spdlog::logger>( "INTERNAL", begin( sinks ), end( sinks ) );
 				m_internalLogger = std::make_shared<spdlog::logger>( "INTERNAL", begin( sinks ), end( sinks ) );
 				spdlog::register_logger( m_internalLogger );
 				m_internalLogger->set_level( mappedLevel );
 				m_internalLogger->flush_on( mappedLevel );
 
 				m_clientLogger = std::make_shared<spdlog::logger>( logger.GetLoggerName( ), begin( sinks ), end( sinks ) );
-				cache_handle->cacheClientLogger = std::make_unique<spdlog::logger>( logger.GetLoggerName( ), begin( sinks ), end( sinks ) );
+				cache_handle->cacheClientLogger =
+				  std::make_unique<spdlog::logger>( logger.GetLoggerName( ), begin( sinks ), end( sinks ) );
 				spdlog::register_logger( m_clientLogger );
 				m_clientLogger->set_level( mappedLevel );
 				m_clientLogger->flush_on( mappedLevel );
@@ -289,11 +346,11 @@ namespace serenity
 		catch( const std::exception &e ) {
 			SE_ERROR( "Logger {} Failed To Initialize", logger.GetLoggerName( ) );
 			SE_FATAL( "{}", e.what( ) );
-			for( i; i < retries;  i++) {
+			for( i; i < retries; i++ ) {
 				printf( "Retrying... Attempt %i", i + 1 );
-				logger.CloseLog(logger.GetLoggerName());
+				logger.CloseLog( logger.GetLoggerName( ) );
 				spdlog::drop( "INTERNAL" );
-				spdlog::drop( logger.GetLoggerName( ) ); 
+				spdlog::drop( logger.GetLoggerName( ) );
 				// Might Cause Unending Loop?
 				Init( logger, setLevel );
 			}

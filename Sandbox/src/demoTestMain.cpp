@@ -178,6 +178,7 @@ int main( )
 	logTwo.RenameLog( spdLogDest );
 	// update path and re-cash
 	SE_DEBUG( "BACK IN MAIN!!!!" );
+	SE_INTERNAL_INFO( "JUST PROVING THAT AFTER ALL IS SAID AND DONE, CONSOLE \"INTERNAL\" LOGGER IS WORKING AS WELL" );
 #endif
 }
 /* clang-format off

@@ -30,6 +30,16 @@ namespace serenity
 
 	struct logger_info
 	{
+		bool is_empty( )
+		{
+			if( loggerName.empty( ) && logName.empty( ) && ( level == LoggerLevel::off ) && logDir.path( ).empty( ) ) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+
 		std::string                  loggerName = "Logger";
 		std::string                  logName    = "Log.txt";
 		LoggerLevel                  level      = LoggerLevel::off;
