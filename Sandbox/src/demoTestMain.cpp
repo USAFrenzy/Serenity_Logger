@@ -43,17 +43,16 @@ int main( )
 
 	using namespace serenity;
 
-	file_helper::path const originalPath   = file_helper::current_path();
-	file_helper::path const pathToBuildDir     = file_helper::current_path( ).parent_path( );
-	file_helper::path const relativePath       = file_helper::current_path( ).relative_path( );
-	file_helper::path const pathToSB_txt   = originalPath.string().append("\\Sandbox.txt");
-
+	file_helper::path const originalPath   = file_helper::current_path( );
+	file_helper::path const pathToBuildDir = file_helper::current_path( ).parent_path( );
+	file_helper::path const relativePath   = file_helper::current_path( ).relative_path( );
+	file_helper::path const pathToSB_txt   = originalPath.string( ).append( "\\Sandbox.txt" );
 
 
 	auto logDirPath = originalPath;
 	logDirPath /= "Logs";
 	file_helper::directory_entry logDir { logDirPath };
-	logger_info          initInfo = { };
+	logger_info                  initInfo = { };
 	initInfo.loggerName                   = "Filesystem Logger";
 	initInfo.logName                      = "File_System.txt";
 	initInfo.logDir                       = logDir;

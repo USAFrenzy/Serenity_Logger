@@ -64,7 +64,8 @@ namespace serenity
 		// ChangeDir( defaultFilePath );
 		m_instance = this;
 	}
-	LogFileHelper *LogFileHelper::_instance( ) {
+	LogFileHelper *LogFileHelper::_instance( )
+	{
 		if( m_instance != nullptr ) {
 			return m_instance;
 		}

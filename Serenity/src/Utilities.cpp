@@ -69,6 +69,8 @@ namespace serenity
 
 		bool const ValidateFileName( std::string fileName )
 		{
+			se_thread::se_mutex_guard lock;
+
 			std::smatch match;
 #if WIN32
 			std::regex validateFile(
@@ -93,6 +95,8 @@ namespace serenity
 
 		bool const ValidateExtension( std::string fileName )
 		{
+			se_thread::se_mutex_guard lock;
+
 			std::smatch match;
 			std::regex  validExtension( "^\\.[a-zA-Z]{7}$" );  // making 7 a thing here due to files like .config
 			if( ( std::regex_search( fileName, match, validExtension ) ) ) {
@@ -110,6 +114,8 @@ namespace serenity
 
 		bool const CompareExtensions( std::string oldFile, std::string newFile )
 		{
+			se_thread::se_mutex_guard lock;
+
 			std::string oldExtension, newExtension;
 			// Find The Respective Extensions
 			if( !( oldFile.find_last_of( "." ) != std::string::npos ) ) {
@@ -123,29 +129,30 @@ namespace serenity
 
 		bool RenameFile( file_helper::path oldFile, file_helper::path newFile )
 		{
+			se_thread::se_mutex_guard lock;
 
 			std::error_code ec;
 			// dir_entries are really only neccessary due to file_size comparison and exists()
 			// if std::fs implements this for path objects, this is a candidate for removal
 			file_helper::directory_entry oldPath { oldFile };
-			oldPath.status().permissions(file_helper::perms::all);
+			oldPath.status( ).permissions( file_helper::perms::all );
 			file_helper::directory_entry newPath { newFile };
 			newPath.status( ).permissions( file_helper::perms::all );
-			
+
 			if( newPath.exists( ) ) {
 				return true;
 			}
-			
-			std::fstream oFile(oldPath);
-			if( oFile.is_open( ) ) {
-				try {
-					oFile.close( );
-				}
-				catch( const std::exception &e ) {
-					printf( "File [%s] Was Unable To Be Closed.\nException Caught: %s\n",
-						oldFile.filename( ).string( ).c_str( ), e.what( ) );
-				}
-			}
+
+			// std::fstream oFile( oldPath );
+			// if( oFile.is_open( ) ) {
+			//	try {
+			//		oFile.close( );
+			//	}
+			//	catch( const std::exception &e ) {
+			//		printf( "File [%s] Was Unable To Be Closed.\nException Caught: %s\n",
+			//			oldFile.filename( ).string( ).c_str( ), e.what( ) );
+			//	}
+			//}
 
 			try {
 				file_utils::ValidateFileName( newFile.filename( ).string( ) );
@@ -171,7 +178,7 @@ namespace serenity
 						file_helper::rename( oldFile, newFile );
 					}
 					else {
-						file_helper::rename( oldFile, newFile);
+						file_helper::rename( oldFile, newFile );
 					}
 				}
 				catch( const file_helper::filesystem_error &err ) {
@@ -179,8 +186,7 @@ namespace serenity
 					return false;
 				}
 			}
-			if( ( oldPath.path( ).filename( ) == newFile.filename()) &&
-			    ( oldPath.file_size( ) == newPath.file_size( ) ) )
+			if( ( oldPath.path( ).filename( ) == newFile.filename( ) ) && ( oldPath.file_size( ) == newPath.file_size( ) ) )
 				return true;
 			else {
 				return false;
@@ -189,6 +195,8 @@ namespace serenity
 
 		file_utils_results::retrieve_dir_entries const RetrieveDirEntries( std::filesystem::path &path, bool recursive )
 		{
+			se_thread::se_mutex_guard lock;
+
 			std::vector<std::filesystem::directory_entry> dirEntries;
 			std::size_t                                   pathSize = path.string( ).size( );
 			file_utils_results::retrieve_dir_entries      results;
@@ -199,9 +207,10 @@ namespace serenity
 			int fileCount { 0 };
 
 			if( path.has_extension( ) ) {
-				printf( "ERROR: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: "
-					"%s\n",
-					path.string( ).c_str( ) );
+				printf(
+				  "ERROR: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: "
+				  "%s\n",
+				  path.string( ).c_str( ) );
 				results.retrievedItems = dirEntries;
 				results.success        = false;
 			}
@@ -240,6 +249,8 @@ namespace serenity
 		file_utils_results::search_dir_entries const
 		  SearchDirEntries( std::vector<std::filesystem::directory_entry> &dirEntries, std::string searchString )
 		{
+			se_thread::se_mutex_guard lock;
+
 			std::vector<std::filesystem::directory_entry> matchedResults;
 			bool                                          containsMatch { false };
 			file_utils_results::search_dir_entries        results;
@@ -275,6 +286,8 @@ namespace serenity
 
 		bool CreateDir( std::filesystem::path dirPath )
 		{
+			se_thread::se_mutex_guard lock;
+
 			file_helper::directory_entry entry { dirPath };
 			try {
 				if( entry.exists( ) ) {
@@ -293,6 +306,8 @@ namespace serenity
 
 		bool RemoveEntry( std::filesystem::path entry )
 		{
+			se_thread::se_mutex_guard lock;
+
 			try {
 				if( !file_helper::exists( entry ) ) {
 					return true;
@@ -310,6 +325,8 @@ namespace serenity
 
 		bool ChangeDir( std::filesystem::path dirPath )
 		{
+			se_thread::se_mutex_guard lock;
+
 			std::error_code ec;
 			try {
 				file_helper::current_path( dirPath, ec );
@@ -321,6 +338,35 @@ namespace serenity
 			}
 		}
 
+		bool CopyContents( std::filesystem::path source, std::filesystem::path destination )
+		{
+			se_thread::se_mutex_guard lock;
+
+			std::ifstream inputFile( source );
+			std::ofstream outputFile( destination, std::ios_base::app );
+			std::string   line;
+			if( !( inputFile.peek( ) == std::ifstream::traits_type::eof( ) ) ) {
+				printf( "Copying File Contents From [%s] To [%s]...\n", source.string( ).c_str( ),
+					destination.string( ).c_str( ) );
+				try {
+					if( inputFile && outputFile ) {
+						while( std::getline( inputFile, line ) ) {
+							outputFile << line << "\n";
+						}
+						printf( "Finished Copying File Contents.\n" );
+						inputFile.close( );
+						outputFile.close( );
+					}
+				}
+				catch( const std::exception &e ) {
+					printf( "Failed To Copy File Contents:\n%s\n", e.what( ) );
+					inputFile.close( );
+					outputFile.close( );
+					return false;
+				}
+			}
+			return true;
+		}
 
 	}  // namespace file_utils
 }  // namespace serenity

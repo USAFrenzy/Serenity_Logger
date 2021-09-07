@@ -229,38 +229,19 @@ namespace serenity
 		std::lock_guard<std::mutex> lock( m_mutex );
 
 		// In Case Path Is Passed In
-		file_helper::path            newFilePath = newName;
-		file_helper::directory_entry file { newFilePath };
+		file_helper::path newFilePath = newName;
 		// Caching To Local Vars Before Deletion Of Loggers
-		const auto &tmpPath = initInfo.logDir.path( );
-		auto        oldPath = tmpPath.string( ).append( "\\" + m_logName );
-		auto        newPath = tmpPath.string( ).append( "\\" + newFilePath.filename( ).string( ) );
+		const auto &      tmpPath = initInfo.logDir.path( );
+		file_helper::path oldPath = tmpPath.string( ).append( "\\" + m_logName );
+		file_helper::path newPath = tmpPath.string( ).append( "\\" + newFilePath.filename( ).string( ) );
 		try {
 			loggerInstance->StopLogger( );  // Flushes Log And Closes them
 			loggerInstance->Shutdown( );    // Drops spdlog Loggers, shuts down spdlog, and resets pointers
-			if( file.exists( ) ) {
-				// All Of This Can Be Moved To A Copy() In file_utils Namespace
-				SE_INTERNAL_WARN( "File [{}] Already Exists", file.path( ).filename( ) );
-				std::ifstream inputFile( oldPath);
-				std::ofstream outputFile( newPath, std::ios_base::app );
-				std::string   line;
-				if( !( inputFile.peek( ) == std::ifstream::traits_type::eof( ) ) ) {
-					SE_INTERNAL_INFO( "Copying File Contents From [{}] To [{}]...", oldPath, newPath );
-					try {
-						if( inputFile && outputFile ) {
-							while( std::getline( inputFile, line ) ) {
-								outputFile << line << "\n";
-							}
-						}
-					}
-					catch( const std::exception &e ) {
-						SE_INTERNAL_ERROR( "Failed To Copy File Contents:\n{}", e.what( ) );
-						return false;
-					}
-					inputFile.close( );
-					outputFile.close( );
-					file_utils::RemoveEntry( oldPath );
-				}
+			if( file_helper::exists( newPath ) ) {
+				std::string msg = fmt::format( "File [{}] Already Exists\n", newPath.filename( ) );
+				printf( msg.c_str( ) );
+				file_utils::CopyContents( oldPath, newPath );
+				file_utils::RemoveEntry( oldPath );
 			}
 			file_utils::RenameFile( oldPath, newPath );
 

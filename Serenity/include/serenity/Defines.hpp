@@ -46,7 +46,7 @@ template <template <typename...> class T, typename... Args> T<Args...> se_fwd_ar
 	return T<Args...>( std::forward<Args>( args )... );
 }
 
-#define SE_FORWARD_ARGS(...) se_fwd_args( __VA_ARGS__)
+#define SE_FORWARD_ARGS( ... ) se_fwd_args( __VA_ARGS__ )
 // This Needs Work
 // namespace serenity {
 //	namespace se_exception {

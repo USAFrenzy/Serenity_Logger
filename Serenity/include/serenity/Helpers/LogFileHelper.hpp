@@ -27,10 +27,10 @@ namespace serenity
 		// void ChangeDir( file_helper::path destDir );
 		void SetDir( file_helper::path oldPathDir, file_helper::path destDirPath );
 		void virtual SetLogDirPath( file_helper::path logDirPath );
-		void        SetLogFilePath( file_helper::path logPath );
-		void        StorePathComponents( file_helper::path &pathToStore );
-		void        NotifyLogger( ) override;
-		void        UpdateFileInfo( file_helper::path pathToFile ) override;
+		void SetLogFilePath( file_helper::path logPath );
+		void StorePathComponents( file_helper::path &pathToStore );
+		void NotifyLogger( ) override;
+		void UpdateFileInfo( file_helper::path pathToFile ) override;
 
 		file_helper::path const GetFileName( );
 		file_helper::path const GetLogFilePath( );
@@ -65,6 +65,5 @@ namespace serenity
 
 	      public:
 		static bool fileInfoChanged;
-
 	};
 }  // namespace serenity

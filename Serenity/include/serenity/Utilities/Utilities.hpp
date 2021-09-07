@@ -36,7 +36,7 @@ namespace serenity
 		/// <summary>
 		/// A wrapper for thread sleeping
 		/// </summary>
-		 void SleepFor( time_mode mode, int time );
+		void SleepFor( time_mode mode, int time );
 	}  // namespace se_utils
 
 	namespace file_utils
@@ -109,8 +109,12 @@ namespace serenity
 		bool CreateDir( std::filesystem::path dirPath );
 		/// <returns>Returns True On Success Or If 'entry' Doesn't Exist, False Otherwise</returns>
 		bool RemoveEntry( std::filesystem::path entry );
-
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
+		/// To The Console</returns>
 		bool ChangeDir( std::filesystem::path dirPath );
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
+		/// To The Console</returns>
+		bool CopyContents( std::filesystem::path source, std::filesystem::path destination );
 
 	}  // namespace file_utils
 
@@ -119,6 +123,18 @@ namespace serenity
 	{
 		struct se_mutex_guard
 		{
+			explicit se_mutex_guard( )
+			{
+				acquire_lock( );
+			}
+
+			se_mutex_guard( const se_mutex_guard &mutexGuard )  = delete;
+			se_mutex_guard( const se_mutex_guard &&mutexGuard ) = delete;
+
+			~se_mutex_guard( )
+			{
+				release_lock( );
+			}
 			void acquire_lock( )
 			{
 				std::unique_lock<std::mutex> local_lock( m_mutex );

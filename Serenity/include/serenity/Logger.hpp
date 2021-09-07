@@ -111,7 +111,7 @@ namespace serenity
 		void                            StopLogger( );
 		void                            StartLogger( );
 		void                            Shutdown( );
-		std::shared_ptr<spdlog::logger> CreateLogger( Sinks::SinkType sink, logger_info &infoStruct, bool internalLogger = false);
+		std::shared_ptr<spdlog::logger> CreateLogger( Sinks::SinkType sink, logger_info &infoStruct, bool internalLogger = false );
 
 		static MappedLevel MapToMappedLevel( LoggerLevel level );
 		LoggerLevel        MapToLogLevel( MappedLevel level );
