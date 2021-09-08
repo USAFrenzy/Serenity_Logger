@@ -374,7 +374,7 @@ namespace serenity
 
 			namespace fs = std::filesystem;
 			std::fstream openFile;
-			int          mode;
+			int          mode = std::ios_base::app;
 			// By Default Create A File With Full Permissions If File Doesn't Already Exist
 			if( !fs::exists( file ) ) {
 				try {
@@ -395,9 +395,6 @@ namespace serenity
 			if( truncate ) {
 				mode = std::ios_base::ate;
 			}
-			else {
-				mode = std::ios_base::app;
-			}
 			try {
 				openFile.open( file, mode );
 			}
@@ -411,7 +408,7 @@ namespace serenity
 		bool CloseFile( std::filesystem::path file )
 		{
 			namespace fs = std::filesystem;
-			std::fstream closeFile( file );
+			std::fstream closeFile( file);
 			// By Default, Just Checking That The File Has Some Permission To Close
 			if( fs::status( file ).permissions( ) == fs::perms::none ) {
 				printf( "Error In CloseFile():\nInsufficient Permissions\n" );
@@ -419,8 +416,13 @@ namespace serenity
 			}
 			else {
 				try {
-					closeFile.flush( );
-					closeFile.close( );
+					if( !fs::exists( file ) ) {
+						return true;
+					}
+					else {
+						closeFile.flush( );
+						closeFile.close( );
+					}
 				}
 				catch( const std::exception &e ) {
 					printf( "Error In CloseFile():\n%s\n", e.what( ) );

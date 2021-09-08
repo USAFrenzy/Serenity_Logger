@@ -6,7 +6,6 @@
 #pragma warning( disable : 26812 )
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
-#include <spdlog/details/file_helper.h>
 // Only Here For The Sink Struct - Remove When Struct Moves From Here
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
