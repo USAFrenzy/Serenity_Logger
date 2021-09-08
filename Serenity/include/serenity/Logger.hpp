@@ -91,16 +91,19 @@ namespace serenity
 		};
 		// ##############################################################################
 
-		Logger( logger_info &infoStruct );
+		explicit Logger( logger_info &infoStruct );
 		Logger( ) = delete;
-		// Debating If I Want Copying Allowed, But For Now, Leaving Enabled As cache_logger Requires It For GetNewLogger()
-		Logger( const Logger &copy ) = default;
+		// Debating If I Want Copying And/Or Moving Of Logger Objects Allowed
+		Logger( const Logger &copy ) = delete;
+		Logger( const Logger &&move )    = delete;
+		Logger &operator=( const Logger & ) = delete;
 		~Logger( );
 
 		void                            SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
 		bool                            RenameLog( std::string newName );
 		std::string const               GetLoggerName( );
-		void                            UpdateLoggerFileInfo( ) override;
+		// In The Same Fashion As The Note From LogFileHelper, Just Learned Of CVs Which Seems Perfect For This
+		void                            UpdateFileInfo( ) override;
 		void                            CloseLog( std::string loggerName );
 		void                            OpenLog( file_helper::path filePath );
 		void                            RefreshCache( );
@@ -132,7 +135,7 @@ namespace serenity
 		}
 		inline static void ForwardFileUpdates( )
 		{
-			loggerInstance->UpdateLoggerFileInfo( );
+			loggerInstance->UpdateFileInfo( );
 		}
 
 

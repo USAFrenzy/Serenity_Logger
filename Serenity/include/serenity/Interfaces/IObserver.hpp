@@ -18,5 +18,5 @@ class IFileHelper
 class ILogger
 {
       public:
-	virtual void UpdateLoggerFileInfo( ) = 0;
+	virtual void UpdateFileInfo( ) = 0;
 };

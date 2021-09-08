@@ -40,10 +40,10 @@ clang-format on
 */
 namespace serenity
 {
-	std::shared_ptr<spdlog::logger>               Logger::m_internalLogger;
-	std::shared_ptr<spdlog::logger>               Logger::m_clientLogger;
-	Logger *                                      Logger::loggerInstance;
-	std::shared_ptr<serenity::cache_logger>       Logger::cache_handle;
+	std::shared_ptr<spdlog::logger>         Logger::m_internalLogger;
+	std::shared_ptr<spdlog::logger>         Logger::m_clientLogger;
+	Logger *                                Logger::loggerInstance;
+	std::shared_ptr<serenity::cache_logger> Logger::cache_handle;
 
 	// clang-format off
 /* 
@@ -53,21 +53,20 @@ namespace serenity
 	// clang-format on
 
 
-	Logger::Logger( logger_info &infoStruct )
-	  : m_loggerName( infoStruct.loggerName ), m_logName( infoStruct.logName )
+	Logger::Logger( logger_info &infoStruct ) : m_loggerName( infoStruct.loggerName ), m_logName( infoStruct.logName )
 	{
 		// Might Change If I Go The Singleton Route? Otherwise Will Probs Just Get Rid Of loggerInstance var
-		loggerInstance = this;
-		initInfo       = infoStruct;
-		auto                        defaultPath = serenity::file_helper::current_path( );
-		serenity::file_helper::path logDirPath  = infoStruct.logDir.path( );
-		auto filePath                           = logDirPath.string( ) + "\\" + infoStruct.logName;
+		loggerInstance                = this;
+		loggerInstance->initInfo      = infoStruct;
+		auto              defaultPath = file_helper::current_path( );
+		file_helper::path logDirPath  = infoStruct.logDir.path( );
+		auto              filePath    = logDirPath.string( ) + "\\" + infoStruct.logName;
 
-		loggerInstance->logFileHandle                           = std::make_unique<LogFileHelper>(infoStruct.logDir, infoStruct.logName);
-		loggerInstance->cache_handle                            = std::make_shared<cache_logger>( );
-		loggerInstance->m_sinks                                 = *std::make_unique<Sinks>( );  // probably dont need
+		loggerInstance->logFileHandle = std::make_unique<LogFileHelper>( infoStruct.logDir, infoStruct.logName );
+		loggerInstance->cache_handle  = std::make_shared<cache_logger>( );
+		loggerInstance->m_sinks       = *std::make_unique<Sinks>( );  // probably dont need
 		loggerInstance->GetFileHelperHandle( )->UpdateFileInfo( filePath );
-		loggerInstance->UpdateLoggerFileInfo( );
+		loggerInstance->UpdateFileInfo( );
 		loggerInstance->GetFileHelperHandle( )->SetLogDirPath( logDirPath );
 		//##########################################################################################################
 		loggerInstance->GetCacheHandle( )->cacheInitInfo = { };
@@ -118,7 +117,7 @@ namespace serenity
 		loggerInstance->GetFileHelperHandle( )->SetLogFilePath( loggerInstance->GetCacheHandle( )->instance( )->cacheLogPath );
 		auto refreshedPath = loggerInstance->GetFileHelperHandle( )->GetLogFilePath( );
 		loggerInstance->GetFileHelperHandle( )->UpdateFileInfo( refreshedPath );
-		loggerInstance->UpdateLoggerFileInfo( );
+		loggerInstance->UpdateFileInfo( );
 	}
 
 	void Logger::CacheLogger( )
@@ -136,14 +135,14 @@ namespace serenity
 		SE_DEBUG( "OpenLog(): LogFilePath() = {}", logFileHandle->GetLogFilePath( ) );
 		try {
 			// TODO: Implement A Close/Open File In file_utils Namespace And Wrap In LogFileHelper
-			//loggerInstance->GetFileHelperHandle( )->OpenFile( filePath.string( ) );
+			// loggerInstance->GetFileHelperHandle( )->OpenFile( filePath.string( ) );
 		}
 		catch( const std::exception &e ) {
 			printf( "Exception Thrown In OpenLog():\n%s\n", e.what( ) );
 		}
 	}
-	
-	
+
+
 	void Logger::StopLogger( )
 	{
 		loggerInstance->CloseLog( m_clientLogger.get( )->name( ) );
@@ -175,27 +174,29 @@ namespace serenity
 		auto mappedLevel = loggerInstance->MapToMappedLevel( infoStruct.level );
 
 		if( internalLogger ) {
-			auto internalLogger =
-			  std::make_shared<spdlog::logger>( "INTERNAL", begin( loggerInstance->m_sinks.sinkVector ), end( loggerInstance->m_sinks.sinkVector ) );
+			auto internalLogger = std::make_shared<spdlog::logger>( "INTERNAL", begin( loggerInstance->m_sinks.sinkVector ),
+										end( loggerInstance->m_sinks.sinkVector ) );
 			spdlog::register_logger( internalLogger );
 			internalLogger->set_level( mappedLevel );
 			internalLogger->flush_on( mappedLevel );
 
-			loggerInstance->GetCacheHandle( )->cacheInternalLogger =
-			  std::make_unique<spdlog::logger>( "INTERNAL", begin( loggerInstance->m_sinks.sinkVector ), end( loggerInstance->m_sinks.sinkVector ) );
+			loggerInstance->GetCacheHandle( )->cacheInternalLogger = std::make_unique<spdlog::logger>(
+			  "INTERNAL", begin( loggerInstance->m_sinks.sinkVector ), end( loggerInstance->m_sinks.sinkVector ) );
 			loggerInstance->GetCacheHandle( )->cacheInternalLogger->set_level( mappedLevel );
 			loggerInstance->GetCacheHandle( )->cacheInternalLogger->flush_on( mappedLevel );
 			return internalLogger;
 		}
 		else {
 			std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>(
-			  loggerInstance->GetCacheHandle( )->cacheLoggerName, begin( loggerInstance->m_sinks.sinkVector ), end( loggerInstance->m_sinks.sinkVector ) );
+			  loggerInstance->GetCacheHandle( )->cacheLoggerName, begin( loggerInstance->m_sinks.sinkVector ),
+			  end( loggerInstance->m_sinks.sinkVector ) );
 			spdlog::register_logger( logger );
 			logger->set_level( mappedLevel );
 			logger->flush_on( mappedLevel );
 
 			loggerInstance->GetCacheHandle( )->cacheClientLogger = std::make_unique<spdlog::logger>(
-			  loggerInstance->GetCacheHandle( )->cacheLoggerName, begin( loggerInstance->m_sinks.sinkVector ), end( loggerInstance->m_sinks.sinkVector ) );
+			  loggerInstance->GetCacheHandle( )->cacheLoggerName, begin( loggerInstance->m_sinks.sinkVector ),
+			  end( loggerInstance->m_sinks.sinkVector ) );
 			loggerInstance->GetCacheHandle( )->cacheClientLogger->set_level( mappedLevel );
 			loggerInstance->GetCacheHandle( )->cacheClientLogger->flush_on( mappedLevel );
 
@@ -219,7 +220,7 @@ namespace serenity
 			loggerInstance->Shutdown( );    // Drops spdlog Loggers, shuts down spdlog, and resets pointers
 			if( file_helper::exists( newPath ) ) {
 				std::string msg = fmt::format( "File [{}] Already Exists\n", newPath.filename( ) );
-				fmt::print(msg);
+				fmt::print( msg );
 				file_utils::CopyContents( oldPath, newPath );
 				file_utils::RemoveEntry( oldPath );
 			}
@@ -228,13 +229,14 @@ namespace serenity
 			// Effectively Updating Cache Variables
 			loggerInstance->GetCacheHandle( )->cacheInitInfo.logName = newFilePath.filename( ).string( );
 			loggerInstance->GetFileHelperHandle( )->UpdateFileInfo( newFilePath );
-			loggerInstance->UpdateLoggerFileInfo( );
+			loggerInstance->UpdateFileInfo( );
 			loggerInstance->RefreshCache( );
 
 			// Recreates spdlog loggers And registers them with spdlog's registry
-			loggerInstance->m_clientLogger = CreateLogger( loggerInstance->m_sinks.get_sink_type( ), loggerInstance->GetCacheHandle( )->cacheInitInfo );
-			loggerInstance->m_internalLogger =
-			  loggerInstance->CreateLogger(Sinks::SinkType::stdout_color_mt, loggerInstance->GetCacheHandle( )->cacheInitInfo, true );
+			loggerInstance->m_clientLogger =
+			  CreateLogger( loggerInstance->m_sinks.get_sink_type( ), loggerInstance->GetCacheHandle( )->cacheInitInfo );
+			loggerInstance->m_internalLogger = loggerInstance->CreateLogger(
+			  Sinks::SinkType::stdout_color_mt, loggerInstance->GetCacheHandle( )->cacheInitInfo, true );
 
 			loggerInstance->StartLogger( );
 			return true;
@@ -246,9 +248,9 @@ namespace serenity
 	}
 
 
-	void Logger::UpdateLoggerFileInfo( )
+	void Logger::UpdateFileInfo( )
 	{
-		if( loggerInstance->GetFileHelperHandle()->fileInfoChanged ) {
+		if( loggerInstance->GetFileHelperHandle( )->fileInfoChanged ) {
 			// Sometimes is called already by caller, however, ensures the cache variables are up to date
 			loggerInstance->GetFileHelperHandle( )->UpdateFileInfo( loggerInstance->GetFileHelperHandle( )->GetLogFilePath( ) );
 			loggerInstance->RefreshCache( );

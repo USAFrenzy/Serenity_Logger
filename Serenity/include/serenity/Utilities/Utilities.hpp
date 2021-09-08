@@ -51,10 +51,10 @@ namespace serenity
 			};
 			struct retrieve_dir_entries
 			{
-				int                                           fileCount { 0 };
-				bool                                          success { false };
-				std::vector<std::filesystem::directory_entry> retrievedItems;
-				float                                         elapsedTime { 0.f };
+				int                                                  fileCount { 0 };
+				bool                                                 success { false };
+				static std::vector<std::filesystem::directory_entry> retrievedItems;
+				float                                                elapsedTime { 0.f };
 			};
 		}  // namespace file_utils_results
 
@@ -77,10 +77,10 @@ namespace serenity
 		/* clang-format on */
 		/* clang-format off */
 		/// <summary>
-		/// Not Yet Implemented
+		/// (Not Fully Implemented Yet) RetrieveDirEntries() Must Be Called Before This Function. Searches The 
+		/// Result Vector Of RetrieveDirEntries() For A Match Against The Param entry.
 		/// </summary>
-		/// <param name="entry"></param>
-		/// <returns></returns>
+		/// <returns>If Entry Has Been Found, Returns The Entry Object, Otherwise, Returns Empty Entry Object</returns>
 		std::filesystem::directory_entry const RetrieveDirObject( std::filesystem::directory_entry &entry );
 		/* clang-format on */
 		/* clang-format off */
