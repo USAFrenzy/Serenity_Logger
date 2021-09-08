@@ -38,7 +38,7 @@ clang-format on                                                                 
 
 namespace serenity
 {
-	class Logger : public serenity::LogFileHelper, public ILogger
+	class Logger : public ILogger
 	{
 	      public:
 		// ##############################################################################
@@ -102,8 +102,6 @@ namespace serenity
 		bool                            RenameLog( std::string newName );
 		std::string const               GetLoggerName( );
 		void                            UpdateLoggerFileInfo( ) override;
-		void                            SetLogDirPath( file_helper::path logDirPath ) override;
-		file_helper::path const         GetLogDirPath( ) override;
 		void                            CloseLog( std::string loggerName );
 		void                            OpenLog( file_helper::path filePath );
 		void                            RefreshCache( );
@@ -125,9 +123,9 @@ namespace serenity
 		{
 			return m_clientLogger;
 		}
-		static const std::shared_ptr<spdlog::details::file_helper> &GetFileHelperHandle( )
+		const std::unique_ptr<LogFileHelper> &GetFileHelperHandle( )
 		{
-			return m_FileHelper;
+			return logFileHandle;
 		}
 		static const std::shared_ptr<cache_logger> &GetCacheHandle( )
 		{
@@ -140,7 +138,6 @@ namespace serenity
 
 
 	      public:
-		LogFileHelper *logFileHandle;
 		std::mutex     m_mutex;
 
 	      private:
@@ -151,9 +148,10 @@ namespace serenity
 
 		static std::shared_ptr<spdlog::logger>               m_internalLogger;
 		static std::shared_ptr<spdlog::logger>               m_clientLogger;
-		static std::shared_ptr<spdlog::details::file_helper> m_FileHelper;
-		spdlog::details::file_helper                         spdlogHandle;
+		std::unique_ptr<LogFileHelper>                       logFileHandle;
+
 		// Thinking Of Somehow Manipulating Multiple Instances Of Loggers Using Something As A Pointer To Other Instances Here
+		// More So If I Go With This Being A Singleton Type Deal And Flush Out The Usage Of CreateLogger()
 		static Logger *loggerInstance;
 
 		cache_logger *                       m_cacheInstance;

@@ -115,6 +115,15 @@ namespace serenity
 		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
 		/// To The Console</returns>
 		bool CopyContents( std::filesystem::path source, std::filesystem::path destination );
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
+		/// To The Console. By Default, Creates A File With Full Permissions If It Doesn't Exist And Opens It In Append
+		/// Mode</returns>
+		bool OpenFile( std::filesystem::path file, bool truncate = false );
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
+		/// To The Console</returns>
+		bool CloseFile( std::filesystem::path file );
+		/// <summary> Mutex Used To Lock Functions In file_utils Namespace </summary>
+		static std::mutex utils_mutex;
 
 	}  // namespace file_utils
 

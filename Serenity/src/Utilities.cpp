@@ -69,7 +69,7 @@ namespace serenity
 
 		bool const ValidateFileName( std::string fileName )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::smatch match;
 #if WIN32
@@ -95,7 +95,7 @@ namespace serenity
 
 		bool const ValidateExtension( std::string fileName )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::smatch match;
 			std::regex  validExtension( "^\\.[a-zA-Z]{7}$" );  // making 7 a thing here due to files like .config
@@ -114,7 +114,7 @@ namespace serenity
 
 		bool const CompareExtensions( std::string oldFile, std::string newFile )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::string oldExtension, newExtension;
 			// Find The Respective Extensions
@@ -129,7 +129,7 @@ namespace serenity
 
 		bool RenameFile( file_helper::path oldFile, file_helper::path newFile )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::error_code ec;
 			// dir_entries are really only neccessary due to file_size comparison and exists()
@@ -195,7 +195,7 @@ namespace serenity
 
 		file_utils_results::retrieve_dir_entries const RetrieveDirEntries( std::filesystem::path &path, bool recursive )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::vector<std::filesystem::directory_entry> dirEntries;
 			std::size_t                                   pathSize = path.string( ).size( );
@@ -249,7 +249,7 @@ namespace serenity
 		file_utils_results::search_dir_entries const
 		  SearchDirEntries( std::vector<std::filesystem::directory_entry> &dirEntries, std::string searchString )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::vector<std::filesystem::directory_entry> matchedResults;
 			bool                                          containsMatch { false };
@@ -286,7 +286,7 @@ namespace serenity
 
 		bool CreateDir( std::filesystem::path dirPath )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			file_helper::directory_entry entry { dirPath };
 			try {
@@ -306,7 +306,7 @@ namespace serenity
 
 		bool RemoveEntry( std::filesystem::path entry )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			try {
 				if( !file_helper::exists( entry ) ) {
@@ -325,7 +325,7 @@ namespace serenity
 
 		bool ChangeDir( std::filesystem::path dirPath )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::error_code ec;
 			try {
@@ -340,7 +340,7 @@ namespace serenity
 
 		bool CopyContents( std::filesystem::path source, std::filesystem::path destination )
 		{
-			se_thread::se_mutex_guard lock;
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::ifstream inputFile( source );
 			std::ofstream outputFile( destination, std::ios_base::app );
@@ -362,6 +362,68 @@ namespace serenity
 					printf( "Failed To Copy File Contents:\n%s\n", e.what( ) );
 					inputFile.close( );
 					outputFile.close( );
+					return false;
+				}
+			}
+			return true;
+		}
+
+		bool OpenFile( std::filesystem::path file, bool truncate )
+		{
+			std::lock_guard<std::mutex> funcLock( utils_mutex );
+
+			namespace fs = std::filesystem;
+			std::fstream openFile;
+			int          mode;
+			// By Default Create A File With Full Permissions If File Doesn't Already Exist
+			if( !fs::exists( file ) ) {
+				try {
+					fs::permissions( file, fs::perms::all, fs::perm_options::add );
+				}
+				catch( const fs::filesystem_error &e ) {
+					printf( "Permissions Error In OpenFile():\n%s\n", e.what( ) );
+					return false;
+				}
+			}
+			else {
+				// By Default, Only Checking If The File Has Any Permissions To Open (Could Use Work Here)
+				if( fs::status( file ).permissions( ) == ( fs::perms::none ) ) {
+					printf( "Error In OpenFile():\nUnable To Open File Due To Insufficient Permissions." );
+					return false;
+				}
+			}
+			if( truncate ) {
+				mode = std::ios_base::ate;
+			}
+			else {
+				mode = std::ios_base::app;
+			}
+			try {
+				openFile.open( file, mode );
+			}
+			catch( const std::exception &e ) {
+				printf( "Exception Caught In OpenFile():\n%s\n", e.what( ) );
+				return false;
+			}
+			return true;
+		}
+
+		bool CloseFile( std::filesystem::path file )
+		{
+			namespace fs = std::filesystem;
+			std::fstream closeFile( file );
+			// By Default, Just Checking That The File Has Some Permission To Close
+			if( fs::status( file ).permissions( ) == fs::perms::none ) {
+				printf( "Error In CloseFile():\nInsufficient Permissions\n" );
+				return false;
+			}
+			else {
+				try {
+					closeFile.flush( );
+					closeFile.close( );
+				}
+				catch( const std::exception &e ) {
+					printf( "Error In CloseFile():\n%s\n", e.what( ) );
 					return false;
 				}
 			}
