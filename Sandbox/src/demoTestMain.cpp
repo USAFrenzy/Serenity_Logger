@@ -1,7 +1,7 @@
 
-#include <serenity/Logger.hpp>
-#include <serenity/Utilities/Utilities.hpp>
-#include <fstream> 
+#include <serenity/Logger.h>
+#include <serenity/Utilities/Utilities.h>
+#include <fstream>
 
 #define LOGGER_MESSAGES_SB   0
 #define TEST_ASSERT          0
@@ -175,7 +175,7 @@ int main( )
 	SE_DEBUG( "spdDir: {}", spdLogDest );
 	logTwo.RenameLog( spdLogDest );
 	// update path and re-cash
-	SE_DEBUG( "BACK IN MAIN!!!!" );
+	SE_DEBUG( "BACK IN MAIN!!!!\n" );
 	SE_INTERNAL_INFO( "JUST PROVING THAT AFTER ALL IS SAID AND DONE, CONSOLE \"INTERNAL\" LOGGER IS WORKING AS WELL" );
 #endif
 }

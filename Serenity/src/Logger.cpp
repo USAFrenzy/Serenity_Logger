@@ -1,6 +1,6 @@
 
-#include <serenity/Logger.hpp>
-#include <serenity/Utilities/Utilities.hpp>
+#include <serenity/Logger.h>
+#include <serenity/Utilities/Utilities.h>
 
 #include <map>
 #include <fstream>
@@ -59,18 +59,18 @@ namespace serenity
 		auto              filePath    = logDirPath.string( ) + "\\" + infoStruct.logName;
 
 		loggerInstance->logFileHandle = std::make_unique<LogFileHelper>( infoStruct.logDir, infoStruct.logName );
-		loggerInstance->m_sinks       = *std::make_unique<Sinks>( );  // probably dont need
+		loggerInstance->m_sinks       = *std::make_unique<Sink>( );  // probably dont need
 		loggerInstance->GetFileHelperHandle( )->UpdateFileInfo( filePath );
 		loggerInstance->UpdateFileInfo( );
 		loggerInstance->GetFileHelperHandle( )->SetLogDirPath( logDirPath );
 		//##########################################################################################################
 		// Will Probably Have This Bit Abstracted Away Into The initInfo Struct
-		loggerInstance->m_sinks.set_sink_type( Sinks::SinkType::basic_file_mt );
+		loggerInstance->m_sinks.set_sink_type( Sink::SinkType::basic_file_mt );
 		loggerInstance->m_clientLogger =
 		  std::move( loggerInstance->CreateLogger( loggerInstance->m_sinks.get_sink_type( ), infoStruct ) );
 		// Above Is Redundant ATM Just Due To No Data Being Passed In For Realistically Setting/Getting Sink Type
 		loggerInstance->m_internalLogger =
-		  std::move( loggerInstance->CreateLogger( Sinks::SinkType::stdout_color_mt, infoStruct, true ) );
+		  std::move( loggerInstance->CreateLogger( Sink::SinkType::stdout_color_mt, infoStruct, true ) );
 	}
 
 	Logger::~Logger( )
@@ -127,9 +127,8 @@ namespace serenity
 		loggerInstance->m_clientLogger.reset( );
 	}
 
-	std::shared_ptr<spdlog::logger> Logger::CreateLogger( Sinks::SinkType sink, logger_info &infoStruct, bool internalLogger )
+	std::shared_ptr<spdlog::logger> Logger::CreateLogger( Sink::SinkType sink, logger_info &infoStruct, bool internalLogger )
 	{
-		loggerInstance->m_sinks.sinkVector.clear( );
 		loggerInstance->m_sinks.CreateSink( sink, infoStruct );
 		auto mappedLevel = loggerInstance->MapToMappedLevel( infoStruct.level );
 
@@ -183,7 +182,7 @@ namespace serenity
 			loggerInstance->m_clientLogger =
 			  CreateLogger( loggerInstance->m_sinks.get_sink_type( ), loggerInstance->initInfo );
 			loggerInstance->m_internalLogger =
-			  loggerInstance->CreateLogger( Sinks::SinkType::stdout_color_mt, loggerInstance->initInfo, true );
+			  loggerInstance->CreateLogger( Sink::SinkType::stdout_color_mt, loggerInstance->initInfo, true );
 
 			loggerInstance->StartLogger( );
 			return true;

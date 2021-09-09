@@ -1,4 +1,4 @@
-#include "serenity/Helpers/LogFileHelper.hpp"
+#include "serenity/Helpers/LogFileHelper.h"
 
 
 namespace serenity

@@ -5,16 +5,18 @@ set (
     "src/Logger.cpp"
     "src/LogFileHelper.cpp"
     "src/Utilities.cpp"
+    "src/Sinks.cpp"
 )
 
 set (
     SERENITY_HEADER_FILES
-    "include/serenity/Logger.hpp"
-    "include/serenity/Defines.hpp"
-    "include/serenity/Common.hpp"
-    "include/serenity/Helpers/LogFileHelper.hpp"
-    "include/serenity/Interfaces/IObserver.hpp"
-    "include/serenity/Utilities/Utilities.hpp"
+    "include/serenity/Logger.h"
+    "include/serenity/Defines.h"
+    "include/serenity/Common.h"
+    "include/serenity/Helpers/LogFileHelper.h"
+    "include/serenity/Interfaces/IObserver.h"
+    "include/serenity/Utilities/Utilities.h"
+    "include/serenity/Sinks/Sinks.h"
 )
 
 set (SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})

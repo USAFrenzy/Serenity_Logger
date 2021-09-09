@@ -1,5 +1,5 @@
 
-#include <serenity/Utilities/Utilities.hpp>
+#include <serenity/Utilities/Utilities.h>
 
 #include <regex>
 #include <fstream>
@@ -352,7 +352,7 @@ namespace serenity
 			std::string                 line;
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
 			if( !( inputFile.peek( ) == std::ifstream::traits_type::eof( ) ) ) {
-				printf( "Copying File Contents From [%s] To [%s]...\n", source.string( ).c_str( ),
+				printf( "Copying File Contents: \n\tFrom:\t[%s] \n\tTo:\t[%s]\n", source.string( ).c_str( ),
 					destination.string( ).c_str( ) );
 				try {
 					if( inputFile && outputFile ) {

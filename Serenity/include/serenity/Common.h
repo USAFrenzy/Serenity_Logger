@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <filesystem>
 
-#include "serenity/Defines.hpp"
+#include "serenity/Defines.h"
 
 enum class LoggerLevel
 {
@@ -40,7 +40,7 @@ namespace serenity
 
 		std::string                  loggerName = "Logger";
 		std::string                  logName    = "Log.txt";
-		LoggerLevel                  level      = LoggerLevel::off;
+		LoggerLevel                  level      = LoggerLevel::trace;
 		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
 	};
 

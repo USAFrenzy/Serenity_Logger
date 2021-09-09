@@ -3,7 +3,7 @@
 
 #include <filesystem>
 #include <spdlog/details/file_helper.h>
-#include <serenity/Interfaces/IObserver.hpp>
+#include <serenity/Interfaces/IObserver.h>
 
 namespace serenity
 {

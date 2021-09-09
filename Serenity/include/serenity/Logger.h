@@ -10,9 +10,10 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #pragma warning( pop )
 
-#include <serenity/Common.hpp>
-#include <serenity/Helpers/LogFileHelper.hpp>
-#include <serenity/Interfaces/IObserver.hpp>
+#include <serenity/Common.h>
+#include <serenity/Helpers/LogFileHelper.h>
+#include <serenity/Interfaces/IObserver.h>
+#include <serenity/Sinks/Sinks.h>
 
 
 /* clang-format off
@@ -35,57 +36,6 @@ namespace serenity
 	class Logger : public ILogger
 	{
 	      public:
-		// ##############################################################################
-		struct Sinks  // Will Be A Separate Class Later On
-		{
-			std::vector<spdlog::sink_ptr> sinkVector;
-
-			// testing before flushing out the rest
-			enum class SinkType
-			{
-				stdout_color_mt,
-				basic_file_mt,
-			};
-
-			void set_sink_type( SinkType sinkType )
-			{
-				m_sinkType = sinkType;
-			}
-			SinkType get_sink_type( )
-			{
-				return m_sinkType;
-			}
-
-			void CreateSink( SinkType sink, logger_info &infoStruct )
-			{
-				switch( sink ) {
-					case SinkType::basic_file_mt:
-						{
-							auto basic_logger = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-							  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ), false );
-							basic_logger->set_pattern( "[%T] [%l] %n: %v" );
-							sinkVector.emplace_back( basic_logger );
-						}
-						break;
-					case SinkType::stdout_color_mt:
-						{
-							auto console_logger = std::make_shared<spdlog::sinks::stdout_color_sink_mt>( );
-							console_logger->set_pattern( "%^[%T] %n: %v%$" );
-							sinkVector.emplace_back( console_logger );
-						}
-						break;
-					default:
-						{
-						}
-						break;
-				}
-			}
-
-		      private:
-			SinkType m_sinkType;
-		};
-		// ##############################################################################
-
 		explicit Logger( logger_info &infoStruct );
 		Logger( ) = delete;
 		// Debating If I Want Copying And/Or Moving Of Logger Objects Allowed
@@ -104,7 +54,7 @@ namespace serenity
 		void                            StopLogger( );
 		void                            StartLogger( );
 		void                            Shutdown( );
-		std::shared_ptr<spdlog::logger> CreateLogger( Sinks::SinkType sink, logger_info &infoStruct, bool internalLogger = false );
+		std::shared_ptr<spdlog::logger> CreateLogger( Sink::SinkType sink, logger_info &infoStruct, bool internalLogger = false );
 
 		static MappedLevel MapToMappedLevel( LoggerLevel level );
 		LoggerLevel        MapToLogLevel( MappedLevel level );
@@ -144,9 +94,7 @@ namespace serenity
 		// Thinking Of Somehow Manipulating Multiple Instances Of Loggers Using Something As A Pointer To Other Instances Here
 		// More So If I Go With This Being A Singleton Type Deal And Flush Out The Usage Of CreateLogger()
 		static Logger *loggerInstance;
-		Sinks          m_sinks;
-
-		bool prev_func_called { false };
+		Sink           m_sinks;
 	};
 
 }  // namespace serenity
