@@ -107,7 +107,7 @@ namespace serenity
 		UpdateFileInfo( m_cachePath );
 	}
 
-	file_helper::path const LogFileHelper::GetFileName( )
+	file_helper::path const LogFileHelper::FileName( )
 	{
 		if( m_fileName.has_extension( ) )  // i.e Not A Directory
 		{
@@ -117,11 +117,11 @@ namespace serenity
 			return "";
 		}
 	}
-	file_helper::path const LogFileHelper::GetLogFilePath( )
+	file_helper::path const LogFileHelper::LogFilePath( )
 	{
 		return m_filePath;
 	}
-	file_helper::path const LogFileHelper::GetLogDirPath( )
+	file_helper::path const LogFileHelper::LogDirPath( )
 	{
 		return m_logDirPath;
 	}
@@ -131,7 +131,7 @@ namespace serenity
 		m_filePath      = logPath;
 		fileInfoChanged = true;
 	}
-	file_helper::path const LogFileHelper::GetCurrentDir( )
+	file_helper::path const LogFileHelper::CurrentDir( )
 	{
 		return m_currentDir;
 	}

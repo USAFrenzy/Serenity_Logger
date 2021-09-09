@@ -105,16 +105,16 @@ int main( )
 
 	std::string const sbPath = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
 	file_utils::ChangeDir( sbPath );
-	SE_DEBUG( "Current Dir: {}", logTwo.GetFileHelperHandle( )->GetCurrentDir( ) );
+	SE_DEBUG( "Current Dir: {}", logTwo.FileHelperHandle( )->CurrentDir( ) );
 
 	const auto re_logDir = initInfo.logDir;
 	SE_DEBUG( "initInfo.logDir: {}", initInfo.logDir.path( ).string( ) );
 	SE_DEBUG( "re_logDir: {}", re_logDir.path( ).string( ) );
-	SE_DEBUG( "GetLogDirPath(): {}", logTwo.GetFileHelperHandle( )->GetLogDirPath( ) );
+	SE_DEBUG( "GetLogDirPath(): {}", logTwo.FileHelperHandle( )->LogDirPath( ) );
 
-	logTwo.GetFileHelperHandle( )->SetLogDirPath( re_logDir );
+	logTwo.FileHelperHandle( )->SetLogDirPath( re_logDir );
 	// poorly named but meh, testing shit
-	auto renamePath = logTwo.GetFileHelperHandle( )->GetLogDirPath( ).string( ) + "\\Rename_Test";
+	auto renamePath = logTwo.FileHelperHandle( )->LogDirPath( ).string( ) + "\\Rename_Test";
 	file_utils::CreateDir( renamePath );
 
 	const file_helper::path aPath = renamePath + "\\a.txt";
@@ -128,8 +128,8 @@ int main( )
 
 	// logTwo.ChangeDir( rnPath);
 	file_utils::ChangeDir( renamePath );
-	SE_DEBUG( "Current Dir: {}", logTwo.GetFileHelperHandle( )->GetCurrentDir( ) );
-	const auto cwd = logTwo.GetFileHelperHandle( )->GetCurrentDir( );
+	SE_DEBUG( "Current Dir: {}", logTwo.FileHelperHandle( )->CurrentDir( ) );
+	const auto cwd = logTwo.FileHelperHandle( )->CurrentDir( );
 
 	// Effectively Delete If Already Exists Just To Prove The Rename Process
 	auto finalFile = cwd.string( ) + "\\LastRename.txt";
@@ -169,7 +169,7 @@ int main( )
 	// Time To Work On The Logger Portion
 
 	// spdloglog Rename
-	SE_DEBUG( "LogName: {}", logTwo.GetFileHelperHandle( )->GetLogFilePath( ) );
+	SE_DEBUG( "LogName: {}", logTwo.FileHelperHandle( )->LogFilePath( ) );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
 	SE_DEBUG( "spdDir: {}", spdLogDest );

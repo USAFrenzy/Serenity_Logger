@@ -3,11 +3,7 @@
 
 #pragma warning( push )
 #pragma warning( disable : 26812 )
-#include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
-// Only Here For The Sink Struct - Remove When Struct Moves From Here
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 #pragma warning( pop )
 
 #include <serenity/Common.h>
@@ -44,31 +40,28 @@ namespace serenity
 		Logger &operator=( const Logger & ) = delete;
 		~Logger( );
 
-		void              SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
-		bool              RenameLog( std::string newName );
-		std::string const GetLoggerName( );
-		// In The Same Fashion As The Note From LogFileHelper, Just Learned Of CVs Which Seems Perfect For This
-		void                            UpdateFileInfo( ) override;
-		void                            CloseLog( std::string loggerName );
-		void                            OpenLog( file_helper::path filePath );
-		void                            StopLogger( );
-		void                            StartLogger( );
-		void                            Shutdown( );
 		std::shared_ptr<spdlog::logger> CreateLogger( Sink::SinkType sink, logger_info &infoStruct, bool internalLogger = false );
+		void                            StartLogger( );
+		void                            StopLogger( );
+		void                            Shutdown( );
+		void                            SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
+		std::string const               LoggerName( );
+		bool                            RenameLog( std::string newName );
+		// In The Same Fashion As The Note From LogFileHelper, Just Learned Of CVs Which Seems Perfect For This
+		void UpdateFileInfo( ) override;
+		void OpenLog( file_helper::path filePath );
+		void CloseLog( std::string loggerName );
 
-		static MappedLevel MapToMappedLevel( LoggerLevel level );
-		LoggerLevel        MapToLogLevel( MappedLevel level );
-		static void        Init( Logger &logger, LoggerLevel level );
 
-		static const std::shared_ptr<spdlog::logger> &GetInternalLogger( )
+		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
 		{
 			return m_internalLogger;
 		}
-		static const std::shared_ptr<spdlog::logger> &GetClientSideLogger( )
+		static const std::shared_ptr<spdlog::logger> &ClientSideLogger( )
 		{
 			return m_clientLogger;
 		}
-		const std::unique_ptr<LogFileHelper> &GetFileHelperHandle( )
+		const std::unique_ptr<LogFileHelper> &FileHelperHandle( )
 		{
 			return logFileHandle;
 		}
@@ -77,10 +70,10 @@ namespace serenity
 		std::mutex m_mutex;
 
 	      private:
-		logger_info           initInfo     = { };
-		std::string           m_loggerName = initInfo.loggerName;
-		std::string           m_logName    = initInfo.logName;
-		serenity::MappedLevel m_level      = MapToMappedLevel( initInfo.level );
+		logger_info initInfo     = { };
+		std::string m_loggerName = initInfo.loggerName;
+		std::string m_logName    = initInfo.logName;
+		MappedLevel m_level;
 
 		static std::shared_ptr<spdlog::logger> m_internalLogger;
 		static std::shared_ptr<spdlog::logger> m_clientLogger;
@@ -98,28 +91,28 @@ namespace serenity
 
 // Internal or "non-user" side macros
 #define SE_INTERNAL_TRACE( ... )                                                                                                      \
-	if( Logger::GetInternalLogger( ) != nullptr ) {                                                                               \
-		Logger::GetInternalLogger( )->trace( __VA_ARGS__ );                                                                   \
+	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
+		Logger::InternalLogger( )->trace( __VA_ARGS__ );                                                                      \
 	}
 #define SE_INTERNAL_DEBUG( ... )                                                                                                      \
-	if( Logger::GetInternalLogger( ) != nullptr ) {                                                                               \
-		Logger::GetInternalLogger( )->debug( __VA_ARGS__ );                                                                   \
+	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
+		Logger::InternalLogger( )->debug( __VA_ARGS__ );                                                                      \
 	}
 #define SE_INTERNAL_INFO( ... )                                                                                                       \
-	if( Logger::GetInternalLogger( ) != nullptr ) {                                                                               \
-		Logger::GetInternalLogger( )->info( __VA_ARGS__ );                                                                    \
+	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
+		Logger::InternalLogger( )->info( __VA_ARGS__ );                                                                       \
 	}
 #define SE_INTERNAL_WARN( ... )                                                                                                       \
-	if( Logger::GetInternalLogger( ) != nullptr ) {                                                                               \
-		Logger::GetInternalLogger( )->warn( __VA_ARGS__ );                                                                    \
+	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
+		Logger::InternalLogger( )->warn( __VA_ARGS__ );                                                                       \
 	}
 #define SE_INTERNAL_ERROR( ... )                                                                                                      \
-	if( Logger::GetInternalLogger( ) != nullptr ) {                                                                               \
-		Logger::GetInternalLogger( )->error( __VA_ARGS__ );                                                                   \
+	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
+		Logger::InternalLogger( )->error( __VA_ARGS__ );                                                                      \
 	}
 #define SE_INTERNAL_FATAL( ... )                                                                                                      \
-	if( Logger::GetInternalLogger( ) != nullptr ) {                                                                               \
-		Logger::GetInternalLogger( )->critical( __VA_ARGS__ );                                                                \
+	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
+		Logger::InternalLogger( )->critical( __VA_ARGS__ );                                                                   \
 	}
 #define SE_INTERNAL_ASSERT( condition, message, ... )                                                                                 \
 	if( !( condition ) ) {                                                                                                        \
@@ -132,28 +125,28 @@ namespace serenity
 #if defined( SERENITY_TEST_RUN ) || !defined( NDEBUG )
    // Client side macros
 	#define SE_TRACE( ... )                                                                                                       \
-		if( Logger::GetClientSideLogger( ) != nullptr ) {                                                                     \
-			Logger::GetClientSideLogger( )->trace( __VA_ARGS__ );                                                         \
+		if( Logger::ClientSideLogger( ) != nullptr ) {                                                                        \
+			Logger::ClientSideLogger( )->trace( __VA_ARGS__ );                                                            \
 		}
 	#define SE_DEBUG( ... )                                                                                                       \
-		if( Logger::GetClientSideLogger( ) != nullptr ) {                                                                     \
-			Logger::GetClientSideLogger( )->debug( __VA_ARGS__ );                                                         \
+		if( Logger::ClientSideLogger( ) != nullptr ) {                                                                        \
+			Logger::ClientSideLogger( )->debug( __VA_ARGS__ );                                                            \
 		}
 	#define SE_INFO( ... )                                                                                                        \
-		if( Logger::GetClientSideLogger( ) != nullptr ) {                                                                     \
-			Logger::GetClientSideLogger( )->info( __VA_ARGS__ );                                                          \
+		if( Logger::ClientSideLogger( ) != nullptr ) {                                                                        \
+			Logger::ClientSideLogger( )->info( __VA_ARGS__ );                                                             \
 		}
 	#define SE_WARN( ... )                                                                                                        \
-		if( Logger::GetClientSideLogger( ) != nullptr ) {                                                                     \
-			Logger::GetClientSideLogger( )->warn( __VA_ARGS__ );                                                          \
+		if( Logger::ClientSideLogger( ) != nullptr ) {                                                                        \
+			Logger::ClientSideLogger( )->warn( __VA_ARGS__ );                                                             \
 		}
 	#define SE_ERROR( ... )                                                                                                       \
-		if( Logger::GetClientSideLogger( ) != nullptr ) {                                                                     \
-			Logger::GetClientSideLogger( )->error( __VA_ARGS__ );                                                         \
+		if( Logger::ClientSideLogger( ) != nullptr ) {                                                                        \
+			Logger::ClientSideLogger( )->error( __VA_ARGS__ );                                                            \
 		}
 	#define SE_FATAL( ... )                                                                                                       \
-		if( Logger::GetClientSideLogger( ) != nullptr ) {                                                                     \
-			Logger::GetClientSideLogger( )->critical( __VA_ARGS__ );                                                      \
+		if( Logger::ClientSideLogger( ) != nullptr ) {                                                                        \
+			Logger::ClientSideLogger( )->critical( __VA_ARGS__ );                                                         \
 		}
 	#define SE_ASSERT( condition, message, ... )                                                                                  \
 		if( !( condition ) ) {                                                                                                \

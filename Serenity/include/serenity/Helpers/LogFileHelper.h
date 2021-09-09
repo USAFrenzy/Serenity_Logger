@@ -25,10 +25,10 @@ namespace serenity
 		void NotifyLogger( ) override;
 		void UpdateFileInfo( file_helper::path pathToFile ) override;
 
-		file_helper::path const GetFileName( );
-		file_helper::path const GetLogFilePath( );
-		file_helper::path virtual const GetLogDirPath( );
-		file_helper::path virtual const GetCurrentDir( );
+		file_helper::path const FileName( );
+		file_helper::path const LogFilePath( );
+		file_helper::path virtual const LogDirPath( );
+		file_helper::path virtual const CurrentDir( );
 
 
 		// Testing Functions

@@ -48,6 +48,36 @@ namespace serenity
 	// clang-format on
 
 
+	namespace map_helper
+	{
+		LoggerLevel MapToLogLevel( MappedLevel level )
+		{
+			std::map<MappedLevel, LoggerLevel> levelMap = {
+			  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
+			  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
+			  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
+			LoggerLevel result   = LoggerLevel::off;
+			auto        iterator = levelMap.find( level );
+			if( iterator != levelMap.end( ) ) {
+				result = iterator->second;
+			}
+			return result;
+		}
+		serenity::MappedLevel MapToMappedLevel( LoggerLevel level )
+		{
+			std::map<LoggerLevel, MappedLevel> levelMap = {
+			  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
+			  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
+			  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
+			MappedLevel result   = MappedLevel::off;
+			auto        iterator = levelMap.find( level );
+			if( iterator != levelMap.end( ) ) {
+				result = iterator->second;
+			}
+			return result;
+		}
+	}  // namespace map_helper
+
 	Logger::Logger( logger_info &infoStruct ) : m_loggerName( infoStruct.loggerName ), m_logName( infoStruct.logName )
 	{
 		// Might Change If I Go The Singleton Route? Otherwise Will Probs Just Get Rid Of loggerInstance var
@@ -58,9 +88,9 @@ namespace serenity
 
 		logFileHandle = std::make_unique<LogFileHelper>( infoStruct.logDir, infoStruct.logName );
 		m_sinks       = *std::make_unique<Sink>( );  // probably dont need
-		GetFileHelperHandle( )->UpdateFileInfo( filePath );
+		FileHelperHandle( )->UpdateFileInfo( filePath );
 		UpdateFileInfo( );
-		GetFileHelperHandle( )->SetLogDirPath( logDirPath );
+		FileHelperHandle( )->SetLogDirPath( logDirPath );
 		//##########################################################################################################
 		// Will Probably Have This Bit Abstracted Away Into The initInfo Struct
 		m_sinks.set_sink_type( Sink::SinkType::basic_file_mt );
@@ -77,7 +107,7 @@ namespace serenity
 	void Logger::CloseLog( std::string loggerName )
 	{
 		// Explicit Checking For File Status
-		std::fstream log( logFileHandle->GetLogFilePath( ).string( ) );
+		std::fstream log( logFileHandle->LogFilePath( ).string( ) );
 		if( log.is_open( ) ) {
 			try {
 				log.close( );
@@ -90,7 +120,7 @@ namespace serenity
 
 	void Logger::OpenLog( file_helper::path filePath )
 	{
-		SE_DEBUG( "OpenLog(): LogFilePath() = {}", logFileHandle->GetLogFilePath( ) );
+		SE_DEBUG( "OpenLog(): LogFilePath() = {}", logFileHandle->LogFilePath( ) );
 		try {
 			// TODO: Implement A Close/Open File In file_utils Namespace And Wrap In LogFileHelper
 			// GetFileHelperHandle( )->OpenFile( filePath.string( ) );
@@ -112,7 +142,7 @@ namespace serenity
 	// Starting To Restructure In Favor of Passing In A Struct Here That Will Be Called In Init()
 	void Logger::StartLogger( )
 	{
-		OpenLog( GetFileHelperHandle( )->GetLogFilePath( ) );
+		OpenLog( FileHelperHandle( )->LogFilePath( ) );
 	}
 
 	void Logger::Shutdown( )
@@ -126,7 +156,7 @@ namespace serenity
 	std::shared_ptr<spdlog::logger> Logger::CreateLogger( Sink::SinkType sink, logger_info &infoStruct, bool internalLogger )
 	{
 		m_sinks.CreateSink( sink, infoStruct );
-		auto mappedLevel = MapToMappedLevel( infoStruct.level );
+		auto mappedLevel = map_helper::MapToMappedLevel( infoStruct.level );
 
 		if( internalLogger ) {
 			auto internalLogger =
@@ -138,7 +168,7 @@ namespace serenity
 		}
 		else {
 			std::shared_ptr<spdlog::logger> logger =
-			  std::make_shared<spdlog::logger>( GetLoggerName( ), begin( m_sinks.sinkVector ), end( m_sinks.sinkVector ) );
+			  std::make_shared<spdlog::logger>( LoggerName( ), begin( m_sinks.sinkVector ), end( m_sinks.sinkVector ) );
 			spdlog::register_logger( logger );
 			logger->set_level( mappedLevel );
 			logger->flush_on( mappedLevel );
@@ -146,7 +176,6 @@ namespace serenity
 		}
 	}
 
-	// Finally Got This Working Properly! Now To See What I Can Do To Clean It Up A Little Bit
 	bool Logger::RenameLog( std::string newName )
 	{
 		std::lock_guard<std::mutex> lock( m_mutex );
@@ -158,8 +187,19 @@ namespace serenity
 		file_helper::path oldPath = tmpPath.string( ).append( "\\" + m_logName );
 		file_helper::path newPath = tmpPath.string( ).append( "\\" + newFilePath.filename( ).string( ) );
 		try {
-			StopLogger( );  // Flushes Log And Closes them
-			Shutdown( );    // Drops spdlog Loggers, shuts down spdlog, and resets pointers
+			StopLogger( );  // Flush and close logs
+			/*
+			 * Needed To Release Spdlog Handle To File And shared_ptrs Referencing Files (had issues with spdlog's rename
+			 * for some reason) If I can figure out what the issue was before, I'll drop the Shutdown() and recreation of
+			 * sinks and simplify this function more.
+			 * In theory, should just be able to check if file exists, copy contents from old to new target, remove the old
+			 * target, rename old target to new target, and update file paths
+			 *  - spdlog's method of renaming removes the new target if it exists and renames the old target to the new one
+			 *    though, so if re-implemented, will have to take that into consideration
+			 *  - I wanted to copy contents so as not to lose any log info, but in certain cases, I guess this could lead
+			 *    to mixed logs from other loggers resulting in wierd and confusing logs...
+			 */
+			Shutdown( );  // Drops spdlog Loggers, shuts down spdlog, and resets pointers
 			if( file_helper::exists( newPath ) ) {
 				std::string msg = fmt::format( "File [{}] Already Exists\n", newPath.filename( ) );
 				fmt::print( msg );
@@ -170,7 +210,7 @@ namespace serenity
 
 			// Effectively Updating Variables
 			initInfo.logName = newFilePath.filename( ).string( );
-			GetFileHelperHandle( )->UpdateFileInfo( newFilePath );
+			FileHelperHandle( )->UpdateFileInfo( newFilePath );
 			UpdateFileInfo( );
 
 			// Recreates spdlog loggers And registers them with spdlog's registry
@@ -189,88 +229,22 @@ namespace serenity
 
 	void Logger::UpdateFileInfo( )
 	{
-		if( GetFileHelperHandle( )->fileInfoChanged ) {
+		if( FileHelperHandle( )->fileInfoChanged ) {
 			// Sometimes is called already by caller, however, ensures the cache variables are up to date
-			GetFileHelperHandle( )->UpdateFileInfo( GetFileHelperHandle( )->GetLogFilePath( ) );
+			FileHelperHandle( )->UpdateFileInfo( FileHelperHandle( )->LogFilePath( ) );
 		}
-		GetFileHelperHandle( )->fileInfoChanged = false;
+		FileHelperHandle( )->fileInfoChanged = false;
 	}
 
-	std::string const Logger::GetLoggerName( )
+	std::string const Logger::LoggerName( )
 	{
 		return m_loggerName;
 	}
 
-	void Logger::Init( Logger &logger, LoggerLevel setLevel )
-	{
-		// Keeping this pretty simple before deviating too hard core - end goal would be to abstract some of the
-		// setup in some structs and then just pass in the desired struct into the init function
-		auto                          mappedLevel = MapToMappedLevel( setLevel );
-		std::vector<spdlog::sink_ptr> sinks;
-		auto filePath = logger.initInfo.logDir.path( ).string( ).append( "\\" + logger.initInfo.logName );
-
-		bool truncate { false };
-		sinks.emplace_back( std::make_shared<spdlog::sinks::stdout_color_sink_mt>( ) );
-		sinks.emplace_back( std::make_shared<spdlog::sinks::basic_file_sink_mt>( filePath, truncate ) );
-		// Would Like To Format this in a more personalized and absstracted manner
-		sinks[ 0 ]->set_pattern( "%^[%T] %n: %v%$" );
-		sinks[ 1 ]->set_pattern( "[%T] [%l] %n: %v" );
-		// For both logger types, would like to abstract away the mappedLevel in a way that a flush level doesnt
-		// always have to be the same as what is set
-		int       i { 1 };
-		const int retries { 5 };
-		try {
-			if( ( m_internalLogger.get( ) == nullptr ) && ( m_clientLogger.get( ) == nullptr ) ) {
-				m_internalLogger = std::make_shared<spdlog::logger>( "INTERNAL", begin( sinks ), end( sinks ) );
-				spdlog::register_logger( m_internalLogger );
-				m_internalLogger->set_level( mappedLevel );
-				m_internalLogger->flush_on( mappedLevel );
-
-				m_clientLogger = std::make_shared<spdlog::logger>( logger.GetLoggerName( ), begin( sinks ), end( sinks ) );
-				spdlog::register_logger( m_clientLogger );
-				m_clientLogger->set_level( mappedLevel );
-				m_clientLogger->flush_on( mappedLevel );
-				SE_INFO( "Logger: \"{}\" Successfully Initialized", logger.GetLoggerName( ) );
-			}
-			else {
-				if( i == 0 ) {
-					SE_WARN( "Warning: Trying To Initialize A Logger Of Same Name: {}", logger.GetLoggerName( ) );
-					i++;
-				}
-			}
-		}
-		catch( const std::exception &e ) {
-			SE_ERROR( "Logger {} Failed To Initialize", logger.GetLoggerName( ) );
-			SE_FATAL( "{}", e.what( ) );
-			for( i; i < retries; i++ ) {
-				printf( "Retrying... Attempt %i", i + 1 );
-				logger.CloseLog( logger.GetLoggerName( ) );
-				spdlog::drop( "INTERNAL" );
-				spdlog::drop( logger.GetLoggerName( ) );
-				// Might Cause Unending Loop?
-				Init( logger, setLevel );
-			}
-		}
-	}
-
-	using MappedLevel = serenity::MappedLevel;
-	LoggerLevel Logger::MapToLogLevel( MappedLevel level )
-	{
-		std::map<MappedLevel, LoggerLevel> levelMap = {
-		  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
-		  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
-		  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
-		LoggerLevel result   = LoggerLevel::off;
-		auto        iterator = levelMap.find( level );
-		if( iterator != levelMap.end( ) ) {
-			result = iterator->second;
-		}
-		return result;
-	}
 
 	void Logger::SetLoggerLevel( LoggerLevel level, LoggerInterface logInterface )
 	{
-		m_level = MapToMappedLevel( level );
+		m_level = map_helper::MapToMappedLevel( level );
 		if( !m_level ) {
 			throw std::runtime_error( "Log Level Was Not A Valid Value" );
 		}
@@ -295,17 +269,5 @@ namespace serenity
 		}
 	}
 
-	serenity::MappedLevel Logger::MapToMappedLevel( LoggerLevel level )
-	{
-		std::map<LoggerLevel, MappedLevel> levelMap = {
-		  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
-		  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
-		  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
-		MappedLevel result   = MappedLevel::off;
-		auto        iterator = levelMap.find( level );
-		if( iterator != levelMap.end( ) ) {
-			result = iterator->second;
-		}
-		return result;
-	}
+
 }  // namespace serenity

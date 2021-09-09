@@ -11,10 +11,13 @@ namespace serenity
 	class Sink
 	{
 	      public:
+		// mt designated in case I add support for the single thread versions later on
 		enum class SinkType
 		{
 			stdout_color_mt,
 			basic_file_mt,
+			rotating_mt,
+			daily_file_sink_mt,
 			unknown
 		};
 		// Default Just For The Time being
