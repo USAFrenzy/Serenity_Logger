@@ -53,23 +53,10 @@ namespace serenity
 				printf( "Exception Caught In LogFileHelper():\n%s", er.what( ) );
 			}
 		}
-
 		logDirPath = logDir.path( );
 		SetLogDirPath( logDirPath );
 		auto defaultFilePath = logDirPath /= fileName;
-
 		StorePathComponents( defaultPath );
-		// ChangeDir( defaultFilePath );
-		m_instance = this;
-	}
-	LogFileHelper *LogFileHelper::_instance( )
-	{
-		if( m_instance != nullptr ) {
-			return m_instance;
-		}
-		else {
-			throw std::runtime_error( "Error: LogFileHelper Instance Was Null." );
-		}
 	}
 
 

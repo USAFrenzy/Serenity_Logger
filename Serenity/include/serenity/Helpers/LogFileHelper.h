@@ -29,7 +29,6 @@ namespace serenity
 		file_helper::path const GetLogFilePath( );
 		file_helper::path virtual const GetLogDirPath( );
 		file_helper::path virtual const GetCurrentDir( );
-		LogFileHelper *_instance( );
 
 
 		// Testing Functions
@@ -49,7 +48,6 @@ namespace serenity
 		file_helper::path m_parentPath = m_currentDir.parent_path( );
 		file_helper::path m_pathStem   = m_currentDir.stem( );
 		file_helper::path m_fileName   = m_filePath.filename( );
-		LogFileHelper *   m_instance;  // probs uneccessary?
 
 
 	      private:
