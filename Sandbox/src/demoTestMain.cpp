@@ -106,14 +106,14 @@ int main( )
 
 	std::string const sbPath = "C:\\Users\\mccul\\Desktop\\Logging Project\\build\\Sandbox";
 	file_utils::ChangeDir( sbPath );
-	SE_DEBUG( "Current Dir: {}", logTwo.GetFileHelperHandle()->GetCurrentDir());
+	SE_DEBUG( "Current Dir: {}", logTwo.GetFileHelperHandle( )->GetCurrentDir( ) );
 
 	const auto re_logDir = initInfo.logDir;
 	SE_DEBUG( "initInfo.logDir: {}", initInfo.logDir.path( ).string( ) );
 	SE_DEBUG( "re_logDir: {}", re_logDir.path( ).string( ) );
 	SE_DEBUG( "GetLogDirPath(): {}", logTwo.GetFileHelperHandle( )->GetLogDirPath( ) );
 
-	logTwo.GetFileHelperHandle()->SetLogDirPath( re_logDir );
+	logTwo.GetFileHelperHandle( )->SetLogDirPath( re_logDir );
 	// poorly named but meh, testing shit
 	auto renamePath = logTwo.GetFileHelperHandle( )->GetLogDirPath( ).string( ) + "\\Rename_Test";
 	file_utils::CreateDir( renamePath );

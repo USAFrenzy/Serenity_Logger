@@ -56,7 +56,6 @@ namespace serenity
 	}  // namespace se_utils
 	namespace file_utils
 	{
-
 		namespace file_utils_results
 		{
 			std::vector<std::filesystem::directory_entry> retrieve_dir_entries::retrievedItems;
@@ -75,8 +74,6 @@ namespace serenity
 
 		bool const ValidateFileName( std::string fileName )
 		{
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
-
 			std::smatch match;
 #if WIN32
 			std::regex validateFile(
@@ -101,8 +98,6 @@ namespace serenity
 
 		bool const ValidateExtension( std::string fileName )
 		{
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
-
 			std::smatch match;
 			std::regex  validExtension( "^\\.[a-zA-Z]{7}$" );  // making 7 a thing here due to files like .config
 			if( ( std::regex_search( fileName, match, validExtension ) ) ) {
@@ -120,8 +115,6 @@ namespace serenity
 
 		bool const CompareExtensions( std::string oldFile, std::string newFile )
 		{
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
-
 			std::string oldExtension, newExtension;
 			// Find The Respective Extensions
 			if( !( oldFile.find_last_of( "." ) != std::string::npos ) ) {
@@ -164,12 +157,12 @@ namespace serenity
 				file_utils::ValidateFileName( newFile.filename( ).string( ) );
 			}
 			catch( std::exception &fileName_err ) {
-				printf( "Could Not Rename %s To %s\nReason: %s", oldFile.filename( ).string( ).c_str( ),
+				printf( "Could Not Rename %s To %s\nReason: %s\n", oldFile.filename( ).string( ).c_str( ),
 					newFile.filename( ).string( ).c_str( ), fileName_err.what( ) );
 				return false;
 			}
 			if( !file_utils::ValidateExtension( newFile.extension( ).string( ) ) ) {
-				printf( "Could Not Rename %s To %s\tReason: Not A Valid Extension String",
+				printf( "Could Not Rename %s To %s\tReason: Not A Valid Extension String\n",
 					oldFile.filename( ).string( ).c_str( ), newFile.filename( ).string( ).c_str( ) );
 				return false;
 			}

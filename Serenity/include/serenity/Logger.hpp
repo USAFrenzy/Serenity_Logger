@@ -16,7 +16,6 @@
 #include <serenity/Common.hpp>
 #include <serenity/Helpers/LogFileHelper.hpp>
 #include <serenity/Interfaces/IObserver.hpp>
-#include <serenity/Cache/LoggerCache.hpp>
 #include <serenity/Utilities/Utilities.hpp>
 
 
@@ -94,20 +93,18 @@ namespace serenity
 		explicit Logger( logger_info &infoStruct );
 		Logger( ) = delete;
 		// Debating If I Want Copying And/Or Moving Of Logger Objects Allowed
-		Logger( const Logger &copy ) = delete;
-		Logger( const Logger &&move )    = delete;
+		Logger( const Logger &copy )  = delete;
+		Logger( const Logger &&move ) = delete;
 		Logger &operator=( const Logger & ) = delete;
 		~Logger( );
 
-		void                            SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
-		bool                            RenameLog( std::string newName );
-		std::string const               GetLoggerName( );
+		void              SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
+		bool              RenameLog( std::string newName );
+		std::string const GetLoggerName( );
 		// In The Same Fashion As The Note From LogFileHelper, Just Learned Of CVs Which Seems Perfect For This
 		void                            UpdateFileInfo( ) override;
 		void                            CloseLog( std::string loggerName );
 		void                            OpenLog( file_helper::path filePath );
-		void                            RefreshCache( );
-		void                            RefreshFromCache( );
 		void                            StopLogger( );
 		void                            StartLogger( );
 		void                            Shutdown( );
@@ -129,10 +126,6 @@ namespace serenity
 		{
 			return logFileHandle;
 		}
-		static const std::shared_ptr<cache_logger> &GetCacheHandle( )
-		{
-			return cache_handle;
-		}
 		inline static void ForwardFileUpdates( )
 		{
 			loggerInstance->UpdateFileInfo( );
@@ -140,7 +133,7 @@ namespace serenity
 
 
 	      public:
-		std::mutex     m_mutex;
+		std::mutex m_mutex;
 
 	      private:
 		logger_info           initInfo     = { };
@@ -148,19 +141,15 @@ namespace serenity
 		std::string           m_logName    = initInfo.logName;
 		serenity::MappedLevel m_level      = MapToMappedLevel( initInfo.level );
 
-		static std::shared_ptr<spdlog::logger>               m_internalLogger;
-		static std::shared_ptr<spdlog::logger>               m_clientLogger;
-		std::unique_ptr<LogFileHelper>                       logFileHandle;
+		static std::shared_ptr<spdlog::logger> m_internalLogger;
+		static std::shared_ptr<spdlog::logger> m_clientLogger;
+		std::unique_ptr<LogFileHelper>         logFileHandle;
 
 		// Thinking Of Somehow Manipulating Multiple Instances Of Loggers Using Something As A Pointer To Other Instances Here
 		// More So If I Go With This Being A Singleton Type Deal And Flush Out The Usage Of CreateLogger()
 		static Logger *loggerInstance;
+		Sinks          m_sinks;
 
-		cache_logger *                       m_cacheInstance;
-		static std::shared_ptr<cache_logger> cache_handle;
-		Sinks                                m_sinks;
-
-		void CacheLogger( );
 		bool prev_func_called { false };
 	};
 

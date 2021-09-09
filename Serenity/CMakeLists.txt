@@ -5,7 +5,6 @@ set (
     "src/Logger.cpp"
     "src/LogFileHelper.cpp"
     "src/Utilities.cpp"
-    "src/LoggerCache.cpp"
 )
 
 set (
@@ -16,8 +15,6 @@ set (
     "include/serenity/Helpers/LogFileHelper.hpp"
     "include/serenity/Interfaces/IObserver.hpp"
     "include/serenity/Utilities/Utilities.hpp"
-    "include/serenity/Cache/LoggerCache.hpp"
-
 )
 
 set (SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})
