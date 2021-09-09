@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 
 #pragma warning( push )
 #pragma warning( disable : 26812 )
@@ -9,14 +8,11 @@
 // Only Here For The Sink Struct - Remove When Struct Moves From Here
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-
 #pragma warning( pop )
 
-#include <serenity/Defines.hpp>
 #include <serenity/Common.hpp>
 #include <serenity/Helpers/LogFileHelper.hpp>
 #include <serenity/Interfaces/IObserver.hpp>
-#include <serenity/Utilities/Utilities.hpp>
 
 
 /* clang-format off

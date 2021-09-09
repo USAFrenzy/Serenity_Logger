@@ -1,6 +1,4 @@
 #include "serenity/Helpers/LogFileHelper.hpp"
-#include <serenity/Defines.hpp>
-#include <serenity/Logger.hpp>
 
 
 namespace serenity

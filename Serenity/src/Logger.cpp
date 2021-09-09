@@ -3,13 +3,11 @@
 #include <serenity/Utilities/Utilities.hpp>
 
 #include <map>
-#include <string>
 #include <fstream>
 
 #pragma warning( push, 0 )
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/details/os.h>
 #pragma warning( pop )
 
 

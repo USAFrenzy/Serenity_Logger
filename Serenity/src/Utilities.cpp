@@ -1,8 +1,10 @@
-#include "serenity/Utilities/Utilities.hpp"
+
+#include <serenity/Utilities/Utilities.hpp>
 
 #include <regex>
 #include <fstream>
-#include <serenity/Logger.hpp>
+#include <thread>
+
 
 #define INSTRUMENTATION_ENABLED 1
 
@@ -126,17 +128,17 @@ namespace serenity
 			return ( newExtension == oldExtension ) ? true : false;
 		}
 
-		bool RenameFile( file_helper::path oldFile, file_helper::path newFile )
+		bool RenameFile( std::filesystem::path oldFile, std::filesystem::path newFile )
 		{
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
 			std::error_code ec;
 			// dir_entries are really only neccessary due to file_size comparison and exists()
 			// if std::fs implements this for path objects, this is a candidate for removal
-			file_helper::directory_entry oldPath { oldFile };
-			oldPath.status( ).permissions( file_helper::perms::all );
-			file_helper::directory_entry newPath { newFile };
-			newPath.status( ).permissions( file_helper::perms::all );
+			std::filesystem::directory_entry oldPath { oldFile };
+			oldPath.status( ).permissions( std::filesystem::perms::all );
+			std::filesystem::directory_entry newPath { newFile };
+			newPath.status( ).permissions( std::filesystem::perms::all );
 
 			if( newPath.exists( ) ) {
 				return true;
@@ -174,13 +176,13 @@ namespace serenity
 						  "WARNING:\t"
 						  "New File Name: [ %s ] Does Not Have The Same Extension As Old File: [ %s ]\n",
 						  newFile.filename( ).string( ).c_str( ), oldFile.filename( ).string( ).c_str( ) );
-						file_helper::rename( oldFile, newFile );
+						std::filesystem::rename( oldFile, newFile );
 					}
 					else {
-						file_helper::rename( oldFile, newFile );
+						std::filesystem::rename( oldFile, newFile );
 					}
 				}
-				catch( const file_helper::filesystem_error &err ) {
+				catch( const std::filesystem::filesystem_error &err ) {
 					printf( "\nException Caught In RenameFile():\n%s\n", err.what( ) );
 					return false;
 				}
@@ -294,14 +296,14 @@ namespace serenity
 
 		bool CreateDir( std::filesystem::path dirPath )
 		{
-			file_helper::directory_entry entry { dirPath };
-			std::lock_guard<std::mutex>  funcLock( utils_mutex );
+			std::filesystem::directory_entry entry { dirPath };
+			std::lock_guard<std::mutex>      funcLock( utils_mutex );
 			try {
 				if( entry.exists( ) ) {
 					return true;
 				}
 				else {
-					file_helper::create_directories( entry );
+					std::filesystem::create_directories( entry );
 					return true;
 				}
 			}
@@ -315,11 +317,11 @@ namespace serenity
 		{
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
 			try {
-				if( !file_helper::exists( entry ) ) {
+				if( !std::filesystem::exists( entry ) ) {
 					return true;
 				}
 				else {
-					file_helper::remove( entry );
+					std::filesystem::remove( entry );
 					return true;
 				}
 			}
@@ -334,7 +336,7 @@ namespace serenity
 			std::error_code             ec;
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
 			try {
-				file_helper::current_path( dirPath, ec );
+				std::filesystem::current_path( dirPath, ec );
 				return true;
 			}
 			catch( std::filesystem::filesystem_error &e ) {

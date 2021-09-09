@@ -1,7 +1,7 @@
 
 #include <serenity/Logger.hpp>
-#include <serenity/Helpers/LogFileHelper.hpp>
 #include <serenity/Utilities/Utilities.hpp>
+#include <fstream> 
 
 #define LOGGER_MESSAGES_SB   0
 #define TEST_ASSERT          0
@@ -12,7 +12,6 @@
 #define WANT_TO_SEE_MSGS 0
 #define TEST_NEW_RENAME  1
 
-#include <fstream>  // tmp
 
 int main( )
 {
