@@ -51,7 +51,6 @@ namespace serenity
 
 
 	      private:
-		void                         ForceUpdate( );
 		spdlog::details::file_helper spdLogFilehandle;
 
 	      public:

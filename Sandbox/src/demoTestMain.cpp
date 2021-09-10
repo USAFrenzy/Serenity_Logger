@@ -113,7 +113,6 @@ int main( )
 	SE_DEBUG( "GetLogDirPath(): {}", logTwo.FileHelperHandle( )->LogDirPath( ) );
 
 	logTwo.FileHelperHandle( )->SetLogDirPath( re_logDir );
-	// poorly named but meh, testing shit
 	auto renamePath = logTwo.FileHelperHandle( )->LogDirPath( ).string( ) + "\\Rename_Test";
 	file_utils::CreateDir( renamePath );
 
@@ -126,7 +125,6 @@ int main( )
 
 	SE_DEBUG( "renamePath After string additions for other file paths: {}", renamePath );
 
-	// logTwo.ChangeDir( rnPath);
 	file_utils::ChangeDir( renamePath );
 	SE_DEBUG( "Current Dir: {}", logTwo.FileHelperHandle( )->CurrentDir( ) );
 	const auto cwd = logTwo.FileHelperHandle( )->CurrentDir( );
@@ -165,54 +163,13 @@ int main( )
 	catch( const std::filesystem::filesystem_error &fs_err ) {
 		SE_FATAL( "FS EXCEPTION CAUGHT:\n{}", fs_err.what( ) );
 	}
-	// Now That Things Above Have Been Seemingly Fixed...
-	// Time To Work On The Logger Portion
 
-	// spdloglog Rename
 	SE_DEBUG( "LogName: {}", logTwo.FileHelperHandle( )->LogFilePath( ) );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
 	SE_DEBUG( "spdDir: {}", spdLogDest );
 	logTwo.RenameLog( spdLogDest );
-	// update path and re-cash
 	SE_DEBUG( "BACK IN MAIN!!!!\n" );
 	SE_INTERNAL_INFO( "JUST PROVING THAT AFTER ALL IS SAID AND DONE, CONSOLE \"INTERNAL\" LOGGER IS WORKING AS WELL" );
 #endif
 }
-/* clang-format off
-######################################################################################################################################################
-#                                                               General Notees
-######################################################################################################################################################
-- Currently, even if changing directories (or at least setting what should be a change in directories), no directories are actually created or checked
-  - Possibly need to actually use filesystem::create_directories file_utilsnction for this but checks for if that directory already exists would then need to
-    occur. I believe it's probably the same thing for files? I may need to explicitly create a file with a filesystem file_utilsnction using a passed in name.
-	Although, checks for if that file already exists and how to write to it would then need to be in place.
-- Also, Definitely NEEEEEEED more exception handling.. just the one in ChangerDir() caught so many once I took away the error code and logged what it 
-  threw. I had missed those exceptions using the non-throwing version of std::filesystem::path(&path, error_code) before that.
-- EDIT: Looking at cppreference, the above DOES seem the way to go:
-- For creating a directory, looks like all that is needed is to ChangeDir() to where ever creation is wanted and then add the bit of code:
-	- std::filesystem::create_directory("dirToCreate"); for one directory and std::filesystem::create_directories("dir1/dir2/dir3") for mulitple
-	- Also looks like I can set the permissions on these directories using std::filesystem::permissions::enum and std::filesystem::perm_options::enum
-	- Added bonus, looks like a recursive deletion can be used with std::filesystem::remove_all("rootDirToRemove") or just the singular form of
-	  std::filesystem::remove("dirOrFile")
-	- Looks like a symbolic link for shortcuts can be created as well, the reference states:
-	  create_directory_symlink(const std::filesystem::path& target, const std::filesystem::path& link) with the optional 3rd param (error code param)
-	  as the preferred way to do this.
-	- For Debugging the symlinks or just being able to refer to them, the status can be read with:
-	  std::filesystem::path read_symlink(const std::filesystem::path& p);
-- For creating a file with the named parameter, it seems I have to resort to:  std::ofstream("dirName/fileName"); In Order To Create A Regular File
-  - In Particular, I had a misunderstanding of where I was going wrong.. filesystem ONLY deals with *cough* the filesystem and its attributes.
-    - ofstream, ifstream, iofstream objects are still needed to create files where directory entries can then refer to them, their paths, and their
-	  attributes/status
-######################################################################################################################################################
-clang-format on */
-
-/*
-	ideas:
-
-
-
-
-
-
-*/

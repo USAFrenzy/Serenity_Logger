@@ -11,22 +11,6 @@
 #include <serenity/Interfaces/IObserver.h>
 #include <serenity/Sinks/Sinks.h>
 
-
-/* clang-format off
- 
-	I believe what I'll end up doing is having the logger class have instance handles to the inherited classes
-   and in the constructor, ill go ahead and call those inherited classes move constructors(?) to go ahead and move
-   in the data thats passed into the logger construction to those handles. The question really becomes how best to
-   move the data around from user side to internally for correct variable values. Might create respective structs
-   to initialize values and use those values by reference in the logger construction
-   i.e.
-   struct LogFileInfo     fileInfo = {};           AND/OR    Have a default construction that initializes these values
-   struct LogggerSinkInfo loggerSinks = {};                             Logger defaultLogger;                
-   struct LoggerInfo      loggerInfo = {};								** Logger(){ defaultInit(); }
-   Logger myLogger(loggerInfo, loggerSinkInfo, fileInfo);
-
-clang-format on                                                                                                     */
-
 namespace serenity
 {
 	class Logger : public ILogger
@@ -51,7 +35,7 @@ namespace serenity
 		void UpdateFileInfo( ) override;
 		void OpenLog( file_helper::path filePath );
 		void CloseLog( std::string loggerName );
-
+		
 
 		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
 		{

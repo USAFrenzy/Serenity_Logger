@@ -10,43 +10,10 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #pragma warning( pop )
 
-
-/* clang-format off
-                  NOTE FOR FUTURE, SINCE DOING OBSERVER-LIKE PATTERNS ARE STILL NEW FOR ME RIGHT NOW
-###########################################################################################################################
-	Used as a psuedo call-back in a mock observer pattern. There is most likely a better way to implement
-   something like this, however, this will only do work: calling UpdateFileInfo() if and only if a function has
-   changed a file info property (currently only paths). There's a NotifyLogger() function that simply sets
-   fileInfoChanged to true which then will allow the poll for updated info to populate. The rest is really
-   straight-forward: toggle the bool to "reset" and only allow a function that changes the fields to change this
-   value.
-   - To Ensure Bool Stays Safe To Use:
-		- I believe by always having NotifyLogger() simply set fileInfoChanged = true, then multiple calls
-          that change file info fields won't run the risk of inadverdantly blocking the UpdateLoggerFileInfo() function
-		- In The Same Regard, by always waiting for fileInfoChanged to be true, UpdateLoggeFileInfo() will
-          never execute code uneccessarily (although it does always perform a condition check).
-###########################################################################################################################
-clang-format on
-*/
-
-/*
-	At the moment, I have the cache_logger struct storing a unique_ptr to spdlog::logger for internal and client loggers.
-	The Constructor of cache_logger is supposed to create a unique_ptr of that instance, move that pointer to the shared_ptr
-	m_instance, to which the Logger class cache_handle can refer to using GetCacheHandle().
-
-*/
 namespace serenity
 {
 	std::shared_ptr<spdlog::logger> Logger::m_internalLogger;
 	std::shared_ptr<spdlog::logger> Logger::m_clientLogger;
-
-	// clang-format off
-/* 
-	In The Near Future, Would like to be able to just do 
-	- Logger(LoggerInfo loggerInfoStruct, LogFileInfo logInfoStruct, LogSink sinkInfo);
-*/
-	// clang-format on
-
 
 	namespace map_helper
 	{
@@ -134,12 +101,9 @@ namespace serenity
 	void Logger::StopLogger( )
 	{
 		CloseLog( m_clientLogger.get( )->name( ) );
-		// I'm Guessing I'll Only have To Do Internal Reset For As Long
-		// As The Current Init() Is Called...
 		CloseLog( m_internalLogger.get( )->name( ) );
 	}
 
-	// Starting To Restructure In Favor of Passing In A Struct Here That Will Be Called In Init()
 	void Logger::StartLogger( )
 	{
 		OpenLog( FileHelperHandle( )->LogFilePath( ) );

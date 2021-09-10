@@ -37,37 +37,4 @@
 #endif  // NDEBUG
 
 #define SE_NULL_PTR     nullptr
-#define SE_OPT_NULL_PTR ( std::filesystem::path ) nullptr
-#define SE_NULL_OPTION  std::nullopt
 
-
-template <template <typename...> class T, typename... Args> T<Args...> se_fwd_args( Args &&...args )
-{
-	return T<Args...>( std::forward<Args>( args )... );
-}
-
-#define SE_FORWARD_ARGS( ... ) se_fwd_args( __VA_ARGS__ )
-// This Needs Work
-// namespace serenity {
-//	namespace se_exception {
-//#include <exception>
-//#include <stdexcept>
-//
-//#define SE_EXCEPTION(code)  code
-//#define SE_THROW(exception) throw(SE_EXCEPTION(exception))
-//#define SE_NESTED_CATCH(ex) se_nested_catch(ex)
-//
-//		static std::exception_ptr eptr;
-//
-//		void se_nested_catch(std::exception_ptr ex_ptr)
-//		{
-//			try {
-//				if(ex_ptr) {
-//					std::rethrow_exception(ex_ptr);
-//				}
-//			} catch(const std::exception& e) {
-//				fmt::format("EXCEPTION CAUGHT: {}", e.what( ));
-//			}
-//		}
-//	} // namespace se_exception
-//} // namespace serenity

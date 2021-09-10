@@ -62,17 +62,17 @@ namespace serenity
 		{
 			std::vector<std::filesystem::directory_entry> retrieve_dir_entries::retrievedItems;
 		}
-
+		// clang-format off
 		/*
-		This Regex Pattern will allow any filename other than those that contain these in their name:
-		-/	-|	-<	->	-:	-\	-?	-*	-" // Invalid Windows File Name
-	   Characters -CON, PRN, AUX, NUL, COM1, COM2, COM3, COM4, COM5, COM6, COM7, COM8, COM9, LPT1, LPT2, LPT3,
-	   LPT4, LPT5, LPT6, LPT7, LPT8, LPT9 // Windows Reserved File Names
-
-		Otherwise The Only Banned Characters Are:
-		-\	-NUL	-:   -/                      // Only Restrictions On Linux/Unix And Forcing ':' And '/'
-	   To Be Restricted For MacOS And Sanity Respectively
-	*/
+		 * This Regex Pattern will allow any filename other than those that contain these in their name:
+		 * -/	-|	-<	->	-:	-\	-?	-*	-"                                                       // Invalid Windows File Name Characters 
+		 * -CON, PRN, AUX, NUL, COM1, COM2, COM3, COM4, COM5, COM6, COM7, COM8, COM9, LPT1, LPT2, LPT3,  // ------------------------------------>
+		 * LPT4, LPT5, LPT6, LPT7, LPT8, LPT9                                                           // Windows Reserved File Names
+		 *
+		 * Otherwise The Only Banned Characters Are:
+		 * -\	-NUL	-:   -/    // Only Restrictions On Linux/Unix And Forcing ':' And '/' To Be Restricted For MacOS And Sanity Respectively
+	     */
+		// clang-format on
 
 		bool const ValidateFileName( std::string fileName )
 		{
@@ -131,30 +131,11 @@ namespace serenity
 		bool RenameFile( std::filesystem::path oldFile, std::filesystem::path newFile )
 		{
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
+			std::error_code             ec;
 
-			std::error_code ec;
-			// dir_entries are really only neccessary due to file_size comparison and exists()
-			// if std::fs implements this for path objects, this is a candidate for removal
-			std::filesystem::directory_entry oldPath { oldFile };
-			oldPath.status( ).permissions( std::filesystem::perms::all );
-			std::filesystem::directory_entry newPath { newFile };
-			newPath.status( ).permissions( std::filesystem::perms::all );
-
-			if( newPath.exists( ) ) {
+			if( std::filesystem::exists( newFile ) ) {
 				return true;
 			}
-
-			// std::fstream oFile( oldPath );
-			// if( oFile.is_open( ) ) {
-			//	try {
-			//		oFile.close( );
-			//	}
-			//	catch( const std::exception &e ) {
-			//		printf( "File [%s] Was Unable To Be Closed.\nException Caught: %s\n",
-			//			oldFile.filename( ).string( ).c_str( ), e.what( ) );
-			//	}
-			//}
-
 			try {
 				file_utils::ValidateFileName( newFile.filename( ).string( ) );
 			}
@@ -163,6 +144,7 @@ namespace serenity
 					newFile.filename( ).string( ).c_str( ), fileName_err.what( ) );
 				return false;
 			}
+
 			if( !file_utils::ValidateExtension( newFile.extension( ).string( ) ) ) {
 				printf( "Could Not Rename %s To %s\tReason: Not A Valid Extension String\n",
 					oldFile.filename( ).string( ).c_str( ), newFile.filename( ).string( ).c_str( ) );
@@ -187,8 +169,12 @@ namespace serenity
 					return false;
 				}
 			}
-			if( ( oldPath.path( ).filename( ) == newFile.filename( ) ) && ( oldPath.file_size( ) == newPath.file_size( ) ) )
+
+			if( ( oldFile.filename( ) == newFile.filename( ) ) &&
+			    ( std::filesystem::file_size( oldFile ) == std::filesystem::file_size( newFile ) ) )
+			{
 				return true;
+			}
 			else {
 				return false;
 			}
