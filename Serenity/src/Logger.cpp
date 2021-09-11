@@ -47,7 +47,6 @@ namespace serenity
 
 	Logger::Logger( logger_info &infoStruct ) : m_loggerName( infoStruct.loggerName ), m_logName( infoStruct.logName )
 	{
-		// Might Change If I Go The Singleton Route? Otherwise Will Probs Just Get Rid Of loggerInstance var
 		initInfo                      = infoStruct;
 		auto              defaultPath = file_helper::current_path( );
 		file_helper::path logDirPath  = infoStruct.logDir.path( );

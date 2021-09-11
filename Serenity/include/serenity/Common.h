@@ -28,7 +28,6 @@ namespace serenity
 
 	struct rotating_sink_info
 	{
-		// taken from example
 		int  maxFileSize { 1024 * 1024 * 5 };
 		int  maxFileNum { 5 };
 		bool rotateWhenOpened { false };
@@ -40,18 +39,9 @@ namespace serenity
 		bool     truncate { false };
 		uint16_t maxFiles { 0 };
 	};
+	// Similar To The Above, Might Be Beneficial To Use A sink_info
 	struct logger_info
 	{
-		bool is_empty( )
-		{
-			if( loggerName.empty( ) && logName.empty( ) && ( level == LoggerLevel::off ) && logDir.path( ).empty( ) ) {
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-
 		std::string                  loggerName = "Logger";
 		std::string                  logName    = "Log.txt";
 		LoggerLevel                  level      = LoggerLevel::trace;

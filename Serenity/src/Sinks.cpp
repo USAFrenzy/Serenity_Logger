@@ -54,11 +54,10 @@ namespace serenity
 					sinkVector.emplace_back( std::move(console_logger ));
 				}
 				break;
-				// Literally No Idea Why THIS is now throwing a compiling error where it wasn't before..
 			case SinkType::rotating_mt:
 				{
 					auto rotating_logger = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-					  infoStruct.loggerName, infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ),
+					  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ),
 					  infoStruct.rotate_sink->maxFileNum, infoStruct.rotate_sink->maxFileSize,
 					  infoStruct.rotate_sink->rotateWhenOpened );
 					rotating_logger->set_pattern( "[%T][%l]%n:%v" );
