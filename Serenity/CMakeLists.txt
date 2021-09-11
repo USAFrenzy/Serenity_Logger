@@ -6,6 +6,7 @@ set (
     "src/LogFileHelper.cpp"
     "src/Utilities.cpp"
     "src/Sinks.cpp"
+    "src/Common.cpp"
 )
 
 set (

@@ -3,8 +3,8 @@
 #include <spdlog/spdlog.h>
 #include <filesystem>
 
-#include "serenity/Defines.h"
-
+#include <serenity/Defines.h>
+#include <serenity/Sinks/Sinks.h>
 enum class LoggerLevel
 {
 	trace,
@@ -39,7 +39,10 @@ namespace serenity
 		bool     truncate { false };
 		uint16_t maxFiles { 0 };
 	};
+
+	enum class SinkType;
 	// Similar To The Above, Might Be Beneficial To Use A sink_info
+
 	struct logger_info
 	{
 		std::string                  loggerName = "Logger";
@@ -56,7 +59,6 @@ namespace serenity
 		 */
 		rotating_sink_info *rotate_sink = nullptr;
 		daily_sink_info *   daily_sink  = nullptr;
+		base_sink_info      sink_info   = { };
 	};
-
-
 }  // namespace serenity
