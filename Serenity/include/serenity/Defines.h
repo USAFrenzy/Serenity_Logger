@@ -10,8 +10,6 @@
 #endif
 
 #define LOGGER_DEFAULT_NAME                             "SERENITY"
-#define INTERFACE_INTERNAL                              50
-#define INTERFACE_CLIENT                                51
 #define SERENITY_MAJOR                                  0
 #define SERENITY_MINOR                                  1
 #define SERENITY_REV                                    0
@@ -32,9 +30,8 @@
 	#endif  // Platform Debug Break Defines
 
 	// Formatting of Message to be used by both
-	#define SE_ASSERT_VAR_MSG( message, ... ) fmt::format( message, __VA_ARGS__ )
+	#define SE_VAR_MSG( message, ... ) fmt::format( message, __VA_ARGS__ )
 
 #endif  // NDEBUG
 
-#define SE_NULL_PTR     nullptr
-
+#define SE_NULL_PTR nullptr

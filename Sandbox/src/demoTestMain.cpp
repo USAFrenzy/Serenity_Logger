@@ -56,8 +56,8 @@ int main( )
 	initInfo.logName                      = "File_System.txt";
 	initInfo.logDir                       = logDir;
 	initInfo.level                        = LoggerLevel::trace;
-	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
 	initInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
+	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
 
 	Logger logTwo( initInfo );
 
@@ -119,11 +119,11 @@ int main( )
 	file_utils::CreateDir( renamePath );
 
 	const file_helper::path aPath = renamePath + "\\a.txt";
-	SE_DEBUG( "aPath {}\n", aPath );
+	SE_DEBUG( "aPath {}", aPath );
 	const file_helper::path bPath = renamePath + "\\b.txt";
-	SE_DEBUG( "bPath {}\n", bPath );
+	SE_DEBUG( "bPath {}", bPath );
 	const file_helper::path fPath = renamePath + "\\LastRename.txt";
-	SE_DEBUG( "fPath {}\n", fPath );
+	SE_DEBUG( "fPath {}", fPath );
 
 	SE_DEBUG( "renamePath After string additions for other file paths: {}", renamePath );
 
@@ -166,12 +166,11 @@ int main( )
 		SE_FATAL( "FS EXCEPTION CAUGHT:\n{}", fs_err.what( ) );
 	}
 
-	SE_DEBUG( "LogName: {}\n", logTwo.FileHelperHandle( )->LogFilePath( ) );
+	SE_DEBUG( "LogName: {}", logTwo.FileHelperHandle( )->LogFilePath( ) );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
-	SE_DEBUG( "spdDir: {}\n", spdLogDest );
+	SE_DEBUG( "spdDir: {}", spdLogDest );
 	logTwo.RenameLog( spdLogDest );
 	SE_DEBUG( "BACK IN MAIN!!!!\n" );
-	SE_INTERNAL_INFO( "JUST PROVING THAT AFTER ALL IS SAID AND DONE, CONSOLE \"INTERNAL\" LOGGER IS WORKING AS WELL" );
 #endif
 }

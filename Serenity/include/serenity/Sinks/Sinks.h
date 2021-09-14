@@ -18,6 +18,7 @@ namespace serenity
 		basic_file_mt,
 		rotating_mt,
 		daily_file_sink_mt,
+		multiple_sinks,
 		unknown
 	};
 
@@ -40,11 +41,9 @@ namespace serenity
 		void                  CreateSink( logger_info &infoStruct );
 
 
-
-
 	      private:
 		base_sink_info m_sinkInfo;
-		SinkType m_sinkType = SinkType::unknown;
+		SinkType       m_sinkType = SinkType::unknown;
 
 	      public:
 		std::vector<spdlog::sink_ptr> sinkVector;

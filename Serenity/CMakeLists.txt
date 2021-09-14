@@ -4,9 +4,9 @@ set (
     SERENITY_SOURCE_FILES 
     "src/Logger.cpp"
     "src/LogFileHelper.cpp"
+    "src/LibLogger.cpp"
     "src/Utilities.cpp"
     "src/Sinks.cpp"
-    "src/Common.cpp"
 )
 
 set (
@@ -15,6 +15,7 @@ set (
     "include/serenity/Defines.h"
     "include/serenity/Common.h"
     "include/serenity/Helpers/LogFileHelper.h"
+    "include/serenity/Helpers/LibLogger.h"
     "include/serenity/Interfaces/IObserver.h"
     "include/serenity/Utilities/Utilities.h"
     "include/serenity/Sinks/Sinks.h"

@@ -4,7 +4,7 @@
 #include <regex>
 #include <fstream>
 #include <thread>
-
+#include <serenity/Defines.h>
 
 #define INSTRUMENTATION_ENABLED 1
 
@@ -54,6 +54,11 @@ namespace serenity
 				case time_mode::min: std::this_thread::sleep_for( std::chrono::minutes( time ) ); break;
 				case time_mode::hr: std::this_thread::sleep_for( std::chrono::hours( time ) ); break;
 			}
+		}
+		std::string GetSerenityVerStr( )
+		{
+			auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
+			return version;
 		}
 	}  // namespace se_utils
 	namespace file_utils

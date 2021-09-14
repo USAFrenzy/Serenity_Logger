@@ -8,12 +8,11 @@
 
 namespace serenity
 {
-	std::vector<SinkType> base_sink_info::sinks { SinkType::stdout_color_mt };
+	std::vector<SinkType> base_sink_info::sinks;
 
 	Sink::Sink( )
 	{
 		m_sinkInfo = { };
-		m_sinkType = SinkType::stdout_color_mt;
 	}
 
 	Sink::Sink( const Sink &sink )
@@ -25,6 +24,12 @@ namespace serenity
 
 	void Sink::set_sinks( std::vector<SinkType> sinks )
 	{
+		if( sinks.size( ) > 1 ) {
+			m_sinkType = SinkType::multiple_sinks;
+		}
+		else {
+			m_sinkType = sinks[ 0 ];
+		}
 		m_sinkInfo.sinks = sinks;
 	}
 
@@ -50,49 +55,57 @@ namespace serenity
 	void Sink::CreateSink( logger_info &infoStruct )
 	{
 		sinkVector.clear( );
-		for( auto const &sink : infoStruct.sink_info.sinks ) {
-			switch( sink ) {
-				case SinkType::basic_file_mt:
-					{
-						auto basic_logger = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-						  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ), false );
-						basic_logger->set_pattern( infoStruct.sink_info.formatStr );
-						sinkVector.emplace_back( std::move( basic_logger ) );
-					}
-					break;
-				case SinkType::stdout_color_mt:
-					{
-						auto console_logger = std::make_shared<spdlog::sinks::stdout_color_sink_mt>( );
-						console_logger->set_pattern( infoStruct.sink_info.formatStr );
-						sinkVector.emplace_back( std::move( console_logger ) );
-					}
-					break;
-				case SinkType::rotating_mt:
-					{
-						auto rotating_logger = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-						  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ),
-						  infoStruct.rotate_sink->maxFileNum, infoStruct.rotate_sink->maxFileSize,
-						  infoStruct.rotate_sink->rotateWhenOpened );
-						rotating_logger->set_pattern( infoStruct.sink_info.formatStr );
-						sinkVector.emplace_back( std::move( rotating_logger ) );
-					}
-					break;
-				case SinkType::daily_file_sink_mt:
-					{
-						auto daily_logger = std::make_shared<spdlog::sinks::daily_file_sink_mt>(
-						  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ),
-						  infoStruct.daily_sink->hour, infoStruct.daily_sink->min,
-						  infoStruct.daily_sink->truncate, infoStruct.daily_sink->truncate );
-						daily_logger->set_pattern( infoStruct.sink_info.formatStr );
-						sinkVector.emplace_back( std::move( daily_logger ) );
-					}
-					break;
-				default:
-					{
-						throw std::runtime_error( "Invalid Sink Type\n" );
-					}
-					break;
+		auto sinks = infoStruct.sink_info.sinks;
+		if( !infoStruct.sink_info.sinks.empty( ) ) {
+			for( auto const &sink : infoStruct.sink_info.sinks ) {
+				switch( sink ) {
+					case SinkType::basic_file_mt:
+						{
+							auto basic_logger = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+							  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ), false );
+							basic_logger->set_pattern( infoStruct.sink_info.formatStr );
+							sinkVector.emplace_back( std::move( basic_logger ) );
+						}
+						break;
+					case SinkType::stdout_color_mt:
+						{
+							auto console_logger = std::make_shared<spdlog::sinks::stdout_color_sink_mt>( );
+							console_logger->set_pattern( infoStruct.sink_info.formatStr );
+							sinkVector.emplace_back( std::move( console_logger ) );
+						}
+						break;
+					case SinkType::rotating_mt:
+						{
+							auto rotating_logger = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+							  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ),
+							  infoStruct.rotate_sink->maxFileNum, infoStruct.rotate_sink->maxFileSize,
+							  infoStruct.rotate_sink->rotateWhenOpened );
+							rotating_logger->set_pattern( infoStruct.sink_info.formatStr );
+							sinkVector.emplace_back( std::move( rotating_logger ) );
+						}
+						break;
+					case SinkType::daily_file_sink_mt:
+						{
+							auto daily_logger = std::make_shared<spdlog::sinks::daily_file_sink_mt>(
+							  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ),
+							  infoStruct.daily_sink->hour, infoStruct.daily_sink->min,
+							  infoStruct.daily_sink->truncate, infoStruct.daily_sink->truncate );
+							daily_logger->set_pattern( infoStruct.sink_info.formatStr );
+							sinkVector.emplace_back( std::move( daily_logger ) );
+						}
+						break;
+					default:
+						{
+							throw std::runtime_error( "Invalid Sink Type\n" );
+						}
+						break;
+				}
 			}
+		}
+		else {
+			std::string msg = fmt::format( "Error In CreateSink(): Sinks Field Passed In Is Empty For Logger [{}]\n",
+						       infoStruct.loggerName );
+			printf( msg.c_str( ) );
 		}
 	}
 
