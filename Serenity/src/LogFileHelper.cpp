@@ -1,5 +1,5 @@
-#include <serenity/Helpers/LogFileHelper.h>
-#include <serenity/Utilities/Utilities.h>
+#include "serenity/Helpers/LogFileHelper.h"
+
 
 namespace serenity
 {
@@ -115,30 +115,6 @@ namespace serenity
 		m_cacheDir     = m_pathStem;
 		m_fileName     = pathToStore.filename( );
 	}
-
-	void LogFileHelper::OpenFile( file_helper::path file, bool truncate )
-	{
-		try {
-			file_utils::OpenFile( file, truncate );
-		}
-		catch( const std::exception &e ) {
-			auto msg = fmt::format( "Error In LogFileHelper::OpenFile() For File [{}]:\nReason: {}",
-						file.filename( ).string( ), e.what( ) );
-			printf( msg.c_str( ) );
-		}
-	}
-
-	void LogFileHelper::CloseFile( file_helper::path file )
-	{
-		try {
-			file_utils::CloseFile( file );
-		}
-		catch( const std::exception &e ) {
-			auto msg = fmt::format( "Error In LogFileHelper::CloseFile() For File [{}]:\nReason: {}",
-						file.filename( ).string( ), e.what( ) );
-			printf( msg.c_str( ) );
-		}
-	}
 	// clang-format off
 	// ############################################################################### Testing Functions  ###############################################################################
 	// clang-format on
@@ -156,4 +132,16 @@ namespace serenity
 		       rootPath + "\n\tRoot Name:\t" + rootName + "\n\tRoot Dir:\t" + rootDir + "\n\tRelative Path:\t" + relativePath +
 		       "\n\tParent Path:\t" + parentPath + "\n\tPath Stem:\t" + pathStem;
 	}
+}  // namespace serenity
+
+
+// MISC Functions
+namespace serenity
+{
+	std::string GetSerenityVerStr( )
+	{
+		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
+		return version;
+	}
+
 }  // namespace serenity

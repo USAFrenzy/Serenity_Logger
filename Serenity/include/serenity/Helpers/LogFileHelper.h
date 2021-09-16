@@ -19,8 +19,6 @@ namespace serenity
 		void virtual SetLogDirPath( file_helper::path logDirPath );
 		void SetLogFilePath( file_helper::path logPath );
 		void StorePathComponents( file_helper::path &pathToStore );
-		void OpenFile( file_helper::path file, bool truncate = false );
-		void CloseFile( file_helper::path file );
 		// Just Learned Of The Existence Of CVs, Looks Hella Promising For Notifying A System Of Changes And Will Definitely
 		// Have To Look Into It More As I Feel it Fits In Here Quite Well, Especially Since The Default Of This Library Is To
 		// Be Multi-threaded

@@ -5,20 +5,24 @@
 
 #include <serenity/Defines.h>
 #include <serenity/Sinks/Sinks.h>
-#include <map>
+enum class LoggerLevel
+{
+	trace,
+	debug,
+	info,
+	warning,
+	error,
+	fatal,
+	off
+};
+enum class LoggerInterface
+{
+	internal = INTERFACE_INTERNAL,
+	client   = INTERFACE_CLIENT
+};
 
 namespace serenity
 {
-	enum class LoggerLevel
-	{
-		trace,
-		debug,
-		info,
-		warning,
-		error,
-		fatal,
-		off
-	};
 	using MappedLevel     = spdlog::level::level_enum;
 	namespace file_helper = std::filesystem;
 
@@ -57,34 +61,4 @@ namespace serenity
 		daily_sink_info *   daily_sink  = nullptr;
 		base_sink_info      sink_info   = { };
 	};
-
-	namespace map_helper
-	{
-		static LoggerLevel MapToLogLevel( MappedLevel level )
-		{
-			std::map<MappedLevel, LoggerLevel> levelMap = {
-			  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
-			  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
-			  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
-			LoggerLevel result   = LoggerLevel::off;
-			auto        iterator = levelMap.find( level );
-			if( iterator != levelMap.end( ) ) {
-				result = iterator->second;
-			}
-			return result;
-		}
-		static serenity::MappedLevel MapToMappedLevel( LoggerLevel level )
-		{
-			std::map<LoggerLevel, MappedLevel> levelMap = {
-			  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
-			  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
-			  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
-			MappedLevel result   = MappedLevel::off;
-			auto        iterator = levelMap.find( level );
-			if( iterator != levelMap.end( ) ) {
-				result = iterator->second;
-			}
-			return result;
-		}
-	}  // namespace map_helper
 }  // namespace serenity
