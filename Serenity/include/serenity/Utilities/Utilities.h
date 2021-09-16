@@ -34,8 +34,7 @@ namespace serenity
 		/// <summary>
 		/// A wrapper for thread sleeping
 		/// </summary>
-		void        SleepFor( time_mode mode, int time );
-		std::string GetSerenityVerStr( );
+		void SleepFor( time_mode mode, int time );
 	}  // namespace se_utils
 
 	namespace file_utils
