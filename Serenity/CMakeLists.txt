@@ -11,6 +11,7 @@ set (
 set (
     SERENITY_HEADER_FILES
     "include/serenity/Logger.h"
+    "include/serenity/Logger.tpp"
     "include/serenity/Defines.h"
     "include/serenity/Common.h"
     "include/serenity/Helpers/LogFileHelper.h"

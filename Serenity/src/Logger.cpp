@@ -14,6 +14,8 @@ namespace serenity
 {
 	std::shared_ptr<spdlog::logger> Logger::m_internalLogger;
 	std::shared_ptr<spdlog::logger> Logger::m_clientLogger;
+	std::unique_ptr<LogFileHelper>  Logger::logFileHandle;
+
 
 	namespace map_helper
 	{
@@ -30,7 +32,7 @@ namespace serenity
 			}
 			return result;
 		}
-		serenity::MappedLevel MapToMappedLevel( LoggerLevel level )
+		MappedLevel MapToMappedLevel( LoggerLevel level )
 		{
 			std::map<LoggerLevel, MappedLevel> levelMap = {
 			  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },

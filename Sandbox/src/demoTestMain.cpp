@@ -25,10 +25,10 @@ int main( )
 
 	Logger logTwo( initInfo );
 
-	SE_INFO( "RenameLog() Section:" );
+	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
-	SE_DEBUG( "spdLogDest: {}\n", spdLogDest );
+	logTwo.se_debug( "spdLogDest: {}\n", spdLogDest );
 	logTwo.RenameLog( spdLogDest );
-	SE_DEBUG( "BACK IN MAIN!\n" );
+	logTwo.se_debug( "BACK IN MAIN!\n" );
 }
