@@ -23,8 +23,8 @@ namespace serenity
 
 	struct base_sink_info
 	{
-		std::string                  formatStr = "%^[%T]%n:%v%$";
-		static std::vector<SinkType> sinks;
+		std::string           formatStr = "%^[%T]%n:%v%$";
+		std::vector<SinkType> sinks;
 	};
 
 	class Sink
@@ -38,13 +38,12 @@ namespace serenity
 		void                  set_sinks( std::vector<SinkType> sinks );
 		std::vector<SinkType> get_sinks( );
 		void                  CreateSink( logger_info &infoStruct );
-
-
+		void                  clear_sinks( );
 
 
 	      private:
 		base_sink_info m_sinkInfo;
-		SinkType m_sinkType = SinkType::unknown;
+		SinkType       m_sinkType = SinkType::unknown;
 
 	      public:
 		std::vector<spdlog::sink_ptr> sinkVector;

@@ -25,7 +25,7 @@ int main( )
 
 	Logger logTwo( initInfo );
 
-	SE_INFO( "RenameLog() Section:");
+	SE_INFO( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
 	SE_DEBUG( "spdLogDest: {}\n", spdLogDest );

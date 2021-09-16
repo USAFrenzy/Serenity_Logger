@@ -52,25 +52,36 @@ namespace serenity
 		auto              filePath    = logDirPath.string( ) + "\\" + initInfo.logName;
 
 		logFileHandle = std::make_unique<LogFileHelper>( initInfo.logDir, initInfo.logName );
-		FileHelperHandle( )->UpdateFileInfo( filePath );
-		UpdateFileInfo( );
-		FileHelperHandle( )->SetLogDirPath( logDirPath );
+		m_sinks       = std::make_unique<Sink>( );
 		//##########################################################################################################
-		// Client Logger
-		m_sinks.get_sinks( ).clear( );
-		m_sinks.set_sinks( initInfo.sink_info.sinks );
-		m_clientLogger = std::move( CreateLogger( initInfo ) );
-		SE_INTERNAL_INFO( "Logger [{}] Successfully Initialized", initInfo.loggerName );
-
+		/*
+		  Some possible features to add:
+		  - The ability to enable internal logging support independantly of client logger
+		  - Ties in with the above point, but also have the ability to turn off internal logging when in release
+		  - The ability to customize the internal logger? I mean, I'm using stdout sink here, but hey, who knows?
+		*/
+		//##########################################################################################################
 		// Creating Internal Logger
 		internalLoggerInfo.level      = LoggerLevel::trace;  // after testing -> LoggerLevel::warning
-		internalLoggerInfo.loggerName = "INTERNAL_LOGGER";
-		internalLoggerInfo.logDir     = initInfo.logDir;
-		internalLoggerInfo.logName    = "Internal_Log.txt";
+		internalLoggerInfo.loggerName = "SERENITY";
+		file_helper::directory_entry internalDir { logDirPath };
+		internalLoggerInfo.logDir  = internalDir;
+		internalLoggerInfo.logName = "Internal_Log.txt";
 		internalLoggerInfo.sink_info.sinks.clear( );
 		internalLoggerInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
+		m_sinks->clear_sinks( );
+		m_sinks->set_sinks( internalLoggerInfo.sink_info.sinks );
 		m_internalLogger = std::move( CreateLogger( internalLoggerInfo, true ) );
 		SE_INTERNAL_INFO( "Logger [{}] Successfully Initialized", internalLoggerInfo.loggerName );
+		// Set The Paths
+		FileHelperHandle( )->SetLogDirPath( logDirPath );
+		FileHelperHandle( )->UpdateFileInfo( filePath );
+		this->UpdateFileInfo( );
+		// Creating Client Logger
+		m_sinks->clear_sinks( );
+		m_sinks->set_sinks( initInfo.sink_info.sinks );
+		m_clientLogger = std::move( CreateLogger( initInfo ) );
+		SE_INTERNAL_INFO( "Logger [{}] Successfully Initialized", initInfo.loggerName );
 	}
 
 	Logger::~Logger( )
@@ -110,12 +121,19 @@ namespace serenity
 
 	void Logger::StartLogger( )
 	{
-		// Recreates spdlog loggers And registers them with spdlog's registry if they were previously unregistered/destroyed
-		if( m_clientLogger = nullptr ) {
-			m_clientLogger = CreateLogger( initInfo );
+		// DropLogger() resets m_sinks ptr -> have to recreate CreateLogger()
+		if( m_sinks == nullptr ) {
+			m_sinks = std::make_unique<Sink>( );
+			m_sinks->clear_sinks( );
 		}
-		if( m_internalLogger = nullptr ) {
+		// Recreates spdlog loggers And registers them with spdlog's registry if they were previously unregistered/destroyed
+		if( m_internalLogger == nullptr ) {
+			m_sinks->set_sinks( internalLoggerInfo.sink_info.sinks );
 			m_internalLogger = CreateLogger( internalLoggerInfo, true );
+		}
+		if( m_clientLogger == nullptr ) {
+			m_sinks->set_sinks( initInfo.sink_info.sinks );
+			m_clientLogger = CreateLogger( initInfo );
 		}
 		OpenLog( FileHelperHandle( )->LogFilePath( ) );
 	}
@@ -124,6 +142,8 @@ namespace serenity
 	{
 		spdlog::drop_all( );
 		spdlog::shutdown( );
+		m_sinks->clear_sinks( );
+		m_sinks.reset( );
 		m_internalLogger.reset( );
 		m_clientLogger.reset( );
 	}
@@ -132,18 +152,20 @@ namespace serenity
 	{
 		spdlog::drop( m_internalLogger->name( ) );
 		spdlog::drop( m_clientLogger->name( ) );
+		m_sinks->clear_sinks( );
+		m_sinks.reset( );
 		m_internalLogger.reset( );
 		m_clientLogger.reset( );
 	}
 
 	std::shared_ptr<spdlog::logger> Logger::CreateLogger( logger_info &infoStruct, bool internalLogger )
 	{
-		m_sinks.sinkVector.clear( );
-		m_sinks.CreateSink( infoStruct );
+		m_sinks->sinkVector.clear( );
+		m_sinks->CreateSink( infoStruct );
 		auto mappedLevel = map_helper::MapToMappedLevel( infoStruct.level );
 		if( internalLogger ) {
-			auto internalLogger = std::make_shared<spdlog::logger>( infoStruct.loggerName, begin( m_sinks.sinkVector ),
-										end( m_sinks.sinkVector ) );
+			auto internalLogger = std::make_shared<spdlog::logger>( infoStruct.loggerName, begin( m_sinks->sinkVector ),
+										end( m_sinks->sinkVector ) );
 			spdlog::register_logger( internalLogger );
 			internalLogger->set_level( mappedLevel );
 			internalLogger->flush_on( mappedLevel );
@@ -151,7 +173,7 @@ namespace serenity
 		}
 		else {
 			std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>(
-			  infoStruct.loggerName, begin( m_sinks.sinkVector ), end( m_sinks.sinkVector ) );
+			  infoStruct.loggerName, begin( m_sinks->sinkVector ), end( m_sinks->sinkVector ) );
 			spdlog::register_logger( logger );
 			logger->set_level( mappedLevel );
 			logger->flush_on( mappedLevel );
@@ -161,13 +183,11 @@ namespace serenity
 
 	bool Logger::RenameLog( std::string newName )
 	{
-		std::lock_guard<std::mutex> lock( m_mutex );
-
 		// In Case Path Is Passed In
 		file_helper::path newFilePath = newName;
 		// Caching To Local Vars Before Deletion Of Loggers
 		const auto &      tmpPath = initInfo.logDir.path( );
-		file_helper::path oldPath = tmpPath.string( ).append( "\\" + m_logName );
+		file_helper::path oldPath = tmpPath.string( ).append( "\\" + initInfo.logName );
 		file_helper::path newPath = tmpPath.string( ).append( "\\" + newFilePath.filename( ).string( ) );
 		try {
 			StopLogger( );  // Flush and close logs
@@ -206,13 +226,13 @@ namespace serenity
 
 	std::string const Logger::LoggerName( )
 	{
-		return m_loggerName;
+		return initInfo.loggerName;
 	}
 
 
 	void Logger::SetLoggerLevel( LoggerLevel level, LoggerInterface logInterface )
 	{
-		m_level = map_helper::MapToMappedLevel( level );
+		auto m_level = map_helper::MapToMappedLevel( level );
 		if( !m_level ) {
 			SE_INTERNAL_FATAL( "Log Level Was Not A Valid Value" );
 		}

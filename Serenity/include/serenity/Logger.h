@@ -24,15 +24,14 @@ namespace serenity
 		Logger &operator=( const Logger & ) = delete;
 		~Logger( );
 
-		std::shared_ptr<spdlog::logger>
-				  CreateLogger(logger_info &infoStruct, bool internalLogger = false );
-		void              StartLogger( );
-		void              StopLogger( );
-		void              DropLogger( ); 
-		void              Shutdown( );
-		void              SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
-		std::string const LoggerName( );
-		bool              RenameLog( std::string newName );
+		std::shared_ptr<spdlog::logger> CreateLogger( logger_info &infoStruct, bool internalLogger = false );
+		void                            StartLogger( );
+		void                            StopLogger( );
+		void                            DropLogger( );
+		void                            Shutdown( );
+		void                            SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
+		std::string const               LoggerName( );
+		bool                            RenameLog( std::string newName );
 		// In The Same Fashion As The Note From LogFileHelper, Just Learned Of CVs Which Seems Perfect For This
 		void UpdateFileInfo( ) override;
 		void OpenLog( file_helper::path filePath );
@@ -52,21 +51,13 @@ namespace serenity
 			return logFileHandle;
 		}
 
-	      public:
-		std::mutex m_mutex;
-
 	      private:
-		logger_info initInfo           = { };
-		// due to the logger_info initInfo struct, could possibly reduce class size by removing these?
-		std::string m_loggerName = initInfo.loggerName;
-		std::string m_logName    = initInfo.logName;
-		MappedLevel m_level;
-		logger_info internalLoggerInfo = { };
-		// ##########################################################################################
+		logger_info                            initInfo           = { };
+		logger_info                            internalLoggerInfo = { };
 		static std::shared_ptr<spdlog::logger> m_internalLogger;
 		static std::shared_ptr<spdlog::logger> m_clientLogger;
 		std::unique_ptr<LogFileHelper>         logFileHandle;
-		Sink                                   m_sinks;
+		std::unique_ptr<Sink>                  m_sinks;
 	};
 
 }  // namespace serenity

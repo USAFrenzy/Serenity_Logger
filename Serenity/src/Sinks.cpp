@@ -8,8 +8,6 @@
 
 namespace serenity
 {
-	std::vector<SinkType> base_sink_info::sinks { SinkType::stdout_color_mt };
-
 	Sink::Sink( )
 	{
 		m_sinkInfo = { };
@@ -95,5 +93,12 @@ namespace serenity
 			}
 		}
 	}
+
+	void Sink::clear_sinks( )
+	{
+		sinkVector.clear( );
+		m_sinkInfo.sinks.clear( );
+	}
+
 
 }  // namespace serenity
