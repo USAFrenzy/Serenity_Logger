@@ -119,6 +119,7 @@ namespace serenity
 	void Logger::StopLogger( )
 	{
 		CloseLog( FileHelperHandle( )->LogFilePath( ) );
+		DropLogger( );  // Drop client/internal loggers w/o shutting spdlog down
 	}
 
 	void Logger::StartLogger( )
@@ -152,11 +153,11 @@ namespace serenity
 
 	void Logger::DropLogger( )
 	{
-		spdlog::drop( m_internalLogger->name( ) );
+		// spdlog::drop( m_internalLogger->name( ) );
 		spdlog::drop( m_clientLogger->name( ) );
-		m_sinks->clear_sinks( );
+		// m_sinks->clear_sinks( );
 		m_sinks.reset( );
-		m_internalLogger.reset( );
+		// m_internalLogger.reset( );
 		m_clientLogger.reset( );
 	}
 
@@ -183,7 +184,7 @@ namespace serenity
 		}
 	}
 
-	bool Logger::RenameLog( std::string newName )
+	bool Logger::RenameLog( std::string newName, bool replaceIfExists )
 	{
 		// In Case Path Is Passed In
 		file_helper::path newFilePath = newName;
@@ -192,16 +193,30 @@ namespace serenity
 		file_helper::path oldPath = tmpPath.string( ).append( "\\" + initInfo.logName );
 		file_helper::path newPath = tmpPath.string( ).append( "\\" + newFilePath.filename( ).string( ) );
 		try {
-			StopLogger( );  // Flush and close logs
-			DropLogger( );  // Drop client/internal loggers w/o shutting spdlog down
+			// Flush and close logs, Drop Loggers From spdlog's registry so sinks ref to files are dropped, and reset the
+			// logger pointers
+			StopLogger( );
 			if( file_helper::exists( newPath ) ) {
-				std::string msg = fmt::format( "File [{}] Already Exists\n", newPath.filename( ) );
-				fmt::print( msg );
-				file_utils::CopyContents( oldPath, newPath );
-				file_utils::RemoveEntry( oldPath );
+				SE_INTERNAL_WARN( "File [{}] Already Exists", newPath.filename( ) );
+				if( replaceIfExists ) {
+					SE_INTERNAL_TRACE( "Parameter \"replaceIfExists\" = true." );
+					SE_INTERNAL_TRACE( "Removing [{}] Before Renaming [{}] To [{}].", newPath.filename( ),
+							   oldPath.filename( ), newPath.filename( ) );
+					file_utils::RemoveEntry( newPath );
+					SE_INTERNAL_TRACE( "Removed File [{}]", newPath.filename( ) );
+				}
+				else {
+					SE_INTERNAL_TRACE(
+					  "Parameter \"replaceIfExists\" = false.");
+					file_utils::CopyContents( oldPath, newPath );
+					SE_INTERNAL_TRACE( "Copying Contents Finished. Removing File [{}]", oldPath.filename( ) );
+					file_utils::RemoveEntry( oldPath );
+					SE_INTERNAL_TRACE( "Removed File Link From [{}]", oldPath.filename( ) );
+				}
 			}
+			SE_INTERNAL_TRACE( "Renaming File [{}] To [{}]", oldPath.filename( ), newPath.filename( ) );
 			file_utils::RenameFile( oldPath, newPath );
-
+			SE_INTERNAL_INFO( "Renaming [{}] To [{}] Was Successful.\n", oldPath.filename( ), newPath.filename( ) );
 			// Effectively Updating Variables
 			initInfo.logName = newPath.filename( ).string( );
 			FileHelperHandle( )->UpdateFileInfo( newPath );
@@ -211,7 +226,8 @@ namespace serenity
 			return true;
 		}
 		catch( const std::exception &e ) {
-			SE_INTERNAL_ERROR( "EXCEPTION CAUGHT IN RenameLog():\n{}", e.what( ) );
+			SE_INTERNAL_ERROR( "Renaming Failed." );
+			SE_INTERNAL_ERROR( "EXCEPTION CAUGHT IN RenameLog():\n{}\n", e.what( ) );
 			return false;
 		}
 	}

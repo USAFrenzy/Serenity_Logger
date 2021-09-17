@@ -29,6 +29,7 @@ int main( )
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
 	logTwo.se_debug( "spdLogDest: {}\n", spdLogDest );
-	logTwo.RenameLog( spdLogDest );
+
+	logTwo.RenameLog( spdLogDest, false);
 	logTwo.se_debug( "BACK IN MAIN!\n" );
 }

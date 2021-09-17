@@ -18,7 +18,6 @@ namespace serenity
 	      public:
 		explicit Logger( logger_info &infoStruct );
 		Logger( ) = delete;
-		// Debating If I Want Copying And/Or Moving Of Logger Objects Allowed
 		Logger( const Logger &copy )  = delete;
 		Logger( const Logger &&move ) = delete;
 		Logger &operator=( const Logger & ) = delete;
@@ -40,7 +39,7 @@ namespace serenity
 		void                                         Shutdown( );
 		void                                         SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
 		std::string const                            LoggerName( );
-		bool                                         RenameLog( std::string newName );
+		bool                                         RenameLog( std::string newName, bool replaceIfExists = true);
 		void                                         UpdateFileInfo( ) override;
 		void                                         OpenLog( file_helper::path filePath );
 		void                                         CloseLog( file_helper::path filePath );
@@ -65,7 +64,7 @@ namespace serenity
 			return m_internalLogger;
 		}
 	};
-#include <serenity/Logger.tpp>
+#include <serenity/Logger-impl.h>
 
 }  // namespace serenity
 
@@ -83,7 +82,6 @@ namespace serenity
 				  ( SE_ASSERT_VAR_MSG( message, __VA_ARGS__ ) ) );                                                    \
 			SE_DEBUG_BREAK( );                                                                                            \
 		}
-
 // Internal macros
 	#define SE_INTERNAL_TRACE( ... )                                                                                              \
 		if( Logger::InternalLogger( ) != nullptr ) {                                                                          \
