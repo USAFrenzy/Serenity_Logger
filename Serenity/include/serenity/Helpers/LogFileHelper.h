@@ -54,6 +54,6 @@ namespace serenity
 		spdlog::details::file_helper spdLogFilehandle;
 
 	      public:
-		static bool fileInfoChanged;
+		std::atomic<bool> fileInfoChanged;
 	};
 }  // namespace serenity

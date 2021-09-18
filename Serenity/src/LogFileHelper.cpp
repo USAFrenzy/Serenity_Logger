@@ -3,7 +3,6 @@
 
 namespace serenity
 {
-	bool LogFileHelper::fileInfoChanged = false;
 	// clang-format off
 	/*
 		For The Constuctors, would be helpful to take in a path, search for the root, find the whole path

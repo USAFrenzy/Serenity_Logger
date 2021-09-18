@@ -77,7 +77,9 @@ namespace serenity
 		SE_INTERNAL_INFO( "Logger [{}] Successfully Initialized", internalLoggerInfo.loggerName );
 		// Set The Paths
 		FileHelperHandle( )->SetLogDirPath( logDirPath );
+		SE_INTERNAL_TRACE( "Set Log Directory Path To [{}]", logDirPath );
 		FileHelperHandle( )->UpdateFileInfo( filePath );
+		SE_INTERNAL_TRACE( "Updated File Info For Path [{}]", filePath );
 		this->UpdateFileInfo( );
 		// Creating Client Logger
 		m_sinks->clear_sinks( );
@@ -96,6 +98,7 @@ namespace serenity
 		if( file_helper::exists( filePath ) ) {
 			try {
 				file_utils::CloseFile( filePath );
+				SE_INTERNAL_TRACE( "Closed File [{}]", filePath.filename());
 			}
 			catch( const std::exception &e ) {
 				SE_INTERNAL_ERROR( "Exception Thrown In CloseLog():\n%s\n", e.what( ) );
@@ -108,6 +111,7 @@ namespace serenity
 		if( file_helper::exists( filePath ) ) {
 			try {
 				file_utils::OpenFile( filePath );
+				SE_INTERNAL_TRACE( "Opened File [{}]", filePath.filename() );
 			}
 			catch( const std::exception &e ) {
 				SE_INTERNAL_ERROR( "Exception Thrown In OpenLog():\n%s\n", e.what( ) );
@@ -120,6 +124,7 @@ namespace serenity
 	{
 		CloseLog( FileHelperHandle( )->LogFilePath( ) );
 		DropLogger( );  // Drop client/internal loggers w/o shutting spdlog down
+		SE_INTERNAL_TRACE( "Logger Has Been Stopped" );		
 	}
 
 	void Logger::StartLogger( )
@@ -128,24 +133,29 @@ namespace serenity
 		if( m_sinks == nullptr ) {
 			m_sinks = std::make_unique<Sink>( );
 			m_sinks->clear_sinks( );
+			SE_INTERNAL_TRACE( "Sinks Handle Has Been Successfully Recreated" );		
 		}
 		// Recreates spdlog loggers And registers them with spdlog's registry if they were previously unregistered/destroyed
 		if( m_internalLogger == nullptr ) {
 			m_sinks->set_sinks( internalLoggerInfo.sink_info.sinks );
 			m_internalLogger = CreateLogger( internalLoggerInfo, true );
+			SE_INTERNAL_TRACE( "Internal Logger Has Been Successfully Recreated" );		
 		}
 		if( m_clientLogger == nullptr ) {
 			m_sinks->set_sinks( initInfo.sink_info.sinks );
 			m_clientLogger = CreateLogger( initInfo );
+			SE_INTERNAL_TRACE( "Client Logger Has Been Successfully Recreated" );
 		}
 		OpenLog( FileHelperHandle( )->LogFilePath( ) );
+		SE_INTERNAL_TRACE( "Logger Has Been Started" );
 	}
 
 	void Logger::Shutdown( )
 	{
+		StopLogger( );
+		SE_INTERNAL_TRACE( "Now Shutting Down And Resetting Handles" );		
 		spdlog::drop_all( );
 		spdlog::shutdown( );
-		m_sinks->clear_sinks( );
 		m_sinks.reset( );
 		m_internalLogger.reset( );
 		m_clientLogger.reset( );
@@ -155,31 +165,45 @@ namespace serenity
 	{
 		// spdlog::drop( m_internalLogger->name( ) );
 		spdlog::drop( m_clientLogger->name( ) );
+		SE_INTERNAL_TRACE( "Logger [{}] Has Been Dropped", m_clientLogger->name() );		
 		// m_sinks->clear_sinks( );
 		m_sinks.reset( );
+		SE_INTERNAL_TRACE( "Sinks Handle For Logger Has Been Reset" );		
 		// m_internalLogger.reset( );
 		m_clientLogger.reset( );
+		SE_INTERNAL_TRACE( "Logger Handle Has Been Reset" );		
 	}
 
 	std::shared_ptr<spdlog::logger> Logger::CreateLogger( logger_info &infoStruct, bool internalLogger )
 	{
 		m_sinks->sinkVector.clear( );
 		m_sinks->CreateSink( infoStruct );
+		if( m_internalLogger != nullptr ) {
+			SE_INTERNAL_TRACE( "Sinks For Logger [{}] Have Been Succesfully Created", infoStruct.loggerName );		
+		}
 		auto mappedLevel = map_helper::MapToMappedLevel( infoStruct.level );
 		if( internalLogger ) {
 			auto internalLogger = std::make_shared<spdlog::logger>( infoStruct.loggerName, begin( m_sinks->sinkVector ),
 										end( m_sinks->sinkVector ) );
 			spdlog::register_logger( internalLogger );
+			SE_INTERNAL_TRACE( "Logger [{}] Has Been Successfully Created" , infoStruct.loggerName);		
+			SE_INTERNAL_TRACE( "Logger [{}] Has Been Registered", infoStruct.loggerName );
 			internalLogger->set_level( mappedLevel );
+			SE_INTERNAL_TRACE( "Logger [{}] Level Has Been Set To: {}", infoStruct.loggerName, infoStruct.level );		
 			internalLogger->flush_on( mappedLevel );
+			SE_INTERNAL_TRACE( "Logger [{}] Flush Level Has Been Set To: {}", infoStruct.loggerName, infoStruct.level );		
 			return internalLogger;
 		}
 		else {
 			std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>(
 			  infoStruct.loggerName, begin( m_sinks->sinkVector ), end( m_sinks->sinkVector ) );
+			SE_INTERNAL_TRACE( "Logger [{}] Has Been Successfully Created", infoStruct.loggerName );		
 			spdlog::register_logger( logger );
+			SE_INTERNAL_TRACE( "Logger [{}] Has Been Registered", infoStruct.loggerName );
 			logger->set_level( mappedLevel );
+			SE_INTERNAL_TRACE( "Logger [{}] Level Has Been Set To: {}", infoStruct.loggerName, infoStruct.level );		
 			logger->flush_on( mappedLevel );
+			SE_INTERNAL_TRACE( "Logger [{}] Flush Level Has Been Set To: {}", infoStruct.loggerName, infoStruct.level );		
 			return logger;
 		}
 	}
@@ -219,9 +243,11 @@ namespace serenity
 			SE_INTERNAL_INFO( "Renaming [{}] To [{}] Was Successful.\n", oldPath.filename( ), newPath.filename( ) );
 			// Effectively Updating Variables
 			initInfo.logName = newPath.filename( ).string( );
+			SE_INTERNAL_TRACE( "Log File Name Has Been Updated To Reflect Rename To [{}]", newPath.filename());		
 			FileHelperHandle( )->UpdateFileInfo( newPath );
+			SE_INTERNAL_TRACE( "File Info Has Been Updated Based On Path:\n{}", newPath );		
 			UpdateFileInfo( );
-
+			SE_INTERNAL_TRACE( "Logger Has Been Updated For File Path Changes" );		
 			StartLogger( );
 			return true;
 		}
@@ -236,8 +262,10 @@ namespace serenity
 	void Logger::UpdateFileInfo( )
 	{
 		if( FileHelperHandle( )->fileInfoChanged ) {
+			SE_INTERNAL_TRACE( "File Info Has Changed. Updating File Info Handles" );		
 			// Sometimes is called already by caller, however, ensures the cache variables are up to date
 			FileHelperHandle( )->UpdateFileInfo( FileHelperHandle( )->LogFilePath( ) );
+			SE_INTERNAL_TRACE( "File Info Handles Have Been Updated" );		
 		}
 		FileHelperHandle( )->fileInfoChanged = false;
 	}

@@ -17,7 +17,7 @@ namespace serenity
 	{
 	      public:
 		explicit Logger( logger_info &infoStruct );
-		Logger( ) = delete;
+		Logger( )                     = delete;
 		Logger( const Logger &copy )  = delete;
 		Logger( const Logger &&move ) = delete;
 		Logger &operator=( const Logger & ) = delete;
@@ -31,7 +31,8 @@ namespace serenity
 		{
 			return logFileHandle;
 		}
-
+		// Not Sure If I Want "CreateLogger()" As A Public Function.. Kinda Just Using It As An Internal Function And Would
+		// Rather Have One Logger Per Logger Class Object So I Very Well May Move This As Private Or Protected
 		std::shared_ptr<spdlog::logger>              CreateLogger( logger_info &infoStruct, bool internalLogger = false );
 		void                                         StartLogger( );
 		void                                         StopLogger( );
@@ -39,7 +40,7 @@ namespace serenity
 		void                                         Shutdown( );
 		void                                         SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
 		std::string const                            LoggerName( );
-		bool                                         RenameLog( std::string newName, bool replaceIfExists = true);
+		bool                                         RenameLog( std::string newName, bool replaceIfExists = true );
 		void                                         UpdateFileInfo( ) override;
 		void                                         OpenLog( file_helper::path filePath );
 		void                                         CloseLog( file_helper::path filePath );
