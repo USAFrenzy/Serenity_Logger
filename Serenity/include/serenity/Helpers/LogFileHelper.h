@@ -5,7 +5,10 @@
 #include <serenity/Interfaces/IObserver.h>
 
 #include <filesystem>
+
+#pragma warning( push, 0 )
 #include <spdlog/details/file_helper.h>
+#pragma warning( pop )
 
 namespace serenity
 {

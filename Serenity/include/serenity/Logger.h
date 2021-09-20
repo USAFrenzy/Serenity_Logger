@@ -5,8 +5,7 @@
 #include <serenity/Interfaces/IObserver.h>
 #include <serenity/Sinks/Sinks.h>
 
-#pragma warning( push )
-#pragma warning( disable : 26812 )
+#pragma warning( push, 0 )
 #include <spdlog/fmt/ostr.h>
 #pragma warning( pop )
 
@@ -56,7 +55,18 @@ namespace serenity
 		template <typename T, typename... Args> void se_warn( T &message, Args &&...args );
 		template <typename T, typename... Args> void se_error( T message, Args &&...args );
 		template <typename T, typename... Args> void se_fatal( T message, Args &&...args );
-
+		/*
+			------------------------------------ Work In Progress ------------------------------------
+		*/
+		// Plan Is To Work On These Type Functions, Abstract Away To LibLogger Class, And Have A 
+		// LibLogger Handle In The Logger Class. Doing So Will Also Allow Other Files To Use LibLogger
+		// As I Plan On Making LibLogger A Singleton Class With The Handles Pointing To The Same Instance
+		void CustomizeInternalLogger( internal_logger_info &infoStruct ) { }
+		void CreateInternalLogger( logger_info &infoStruct );
+		void EnableInternalLogging( ) { }
+		void DisableInternalLogging( ) { }
+		bool InternalShouldLog( );
+		// -----------------------------------------------------------------------------------------
 	      private:
 		logger_info                            initInfo           = { };
 		logger_info                            internalLoggerInfo = { };
@@ -74,10 +84,6 @@ namespace serenity
 		{
 			return m_internalLogger;
 		}
-		bool InternalShouldLog( )
-		{
-			return ( ToLogLevel( InternalLogger( )->level( ) ) <= GetGlobalLevel( ) ) ? true : false;
-		}
 	};
 #include <serenity/Logger-impl.h>
 }  // namespace serenity
@@ -87,35 +93,47 @@ namespace serenity
 // Client Side
 	#define SE_ASSERT( condition, message, ... )                                                                                  \
 		if( !( condition ) ) {                                                                                                \
-			SE_FATAL( "ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}", SE_MACRO_STRING( condition ),                  \
-				  std::filesystem::path( __FILE__ ).filename( ).string( ), ( __LINE__ ),                              \
-				  ( SE_ASSERT_VAR_MSG( message, __VA_ARGS__ ) ) );                                                    \
+			Logger::se_fatal( "ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}", SE_MACRO_STRING( condition ),          \
+					  std::filesystem::path( __FILE__ ).filename( ).string( ), ( __LINE__ ),                      \
+					  ( SE_ASSERT_VAR_MSG( message, __VA_ARGS__ ) ) );                                            \
 			SE_DEBUG_BREAK( );                                                                                            \
 		}
 // Internal macros
 	#define SE_INTERNAL_TRACE( ... )                                                                                              \
 		if( Logger::InternalLogger( ) != nullptr ) {                                                                          \
-			Logger::InternalLogger( )->trace( __VA_ARGS__ );                                                              \
+			if( Logger::InternalShouldLog( ) ) {                                                                          \
+				Logger::InternalLogger( )->trace( __VA_ARGS__ );                                                      \
+			}                                                                                                             \
 		}
 	#define SE_INTERNAL_DEBUG( ... )                                                                                              \
 		if( Logger::InternalLogger( ) != nullptr ) {                                                                          \
-			Logger::InternalLogger( )->debug( __VA_ARGS__ );                                                              \
+			if( Logger::InternalShouldLog( ) ) {                                                                          \
+				Logger::InternalLogger( )->debug( __VA_ARGS__ );                                                      \
+			}                                                                                                             \
 		}
 	#define SE_INTERNAL_INFO( ... )                                                                                               \
 		if( Logger::InternalLogger( ) != nullptr ) {                                                                          \
-			Logger::InternalLogger( )->info( __VA_ARGS__ );                                                               \
+			if( Logger::InternalShouldLog( ) ) {                                                                          \
+				Logger::InternalLogger( )->info( __VA_ARGS__ );                                                       \
+			}                                                                                                             \
 		}
 	#define SE_INTERNAL_WARN( ... )                                                                                               \
 		if( Logger::InternalLogger( ) != nullptr ) {                                                                          \
-			Logger::InternalLogger( )->warn( __VA_ARGS__ );                                                               \
+			if( Logger::InternalShouldLog( ) ) {                                                                          \
+				Logger::InternalLogger( )->warn( __VA_ARGS__ );                                                       \
+			}                                                                                                             \
 		}
 	#define SE_INTERNAL_ERROR( ... )                                                                                              \
 		if( Logger::InternalLogger( ) != nullptr ) {                                                                          \
-			Logger::InternalLogger( )->error( __VA_ARGS__ );                                                              \
+			if( Logger::InternalShouldLog( ) ) {                                                                          \
+				Logger::InternalLogger( )->error( __VA_ARGS__ );                                                      \
+			}                                                                                                             \
 		}
 	#define SE_INTERNAL_FATAL( ... )                                                                                              \
 		if( Logger::InternalLogger( ) != nullptr ) {                                                                          \
-			Logger::InternalLogger( )->critical( __VA_ARGS__ );                                                           \
+			if( Logger::InternalShouldLog( ) ) {                                                                          \
+				Logger::InternalLogger( )->critical( __VA_ARGS__ );                                                   \
+			}                                                                                                             \
 		}
 	#define SE_INTERNAL_ASSERT( condition, message, ... )                                                                         \
 		if( !( condition ) ) {                                                                                                \

@@ -1,5 +1,7 @@
 #pragma once
 #include <serenity/Common.h>
+#pragma warning( push, 0 )
+
 template <typename T, typename... Args> void Logger::se_trace( T message, Args &&...args )
 {
 	if( Logger::ClientSideLogger( ) != nullptr ) {
@@ -53,3 +55,4 @@ template <typename T, typename... Args> void Logger::se_fatal( T message, Args &
 		}
 	}
 }
+#pragma warning( pop )

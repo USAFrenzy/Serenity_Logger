@@ -5,7 +5,7 @@
 int main( )
 {
 	using namespace serenity;
-
+	printf( "Library Version: %s\n", GetSerenityVerStr( ).c_str( ) );
 	file_helper::path const originalPath   = file_helper::current_path( );
 	file_helper::path const pathToBuildDir = file_helper::current_path( ).parent_path( );
 	file_helper::path const relativePath   = file_helper::current_path( ).relative_path( );
@@ -21,9 +21,9 @@ int main( )
 	initInfo.level                        = LoggerLevel::trace;
 	initInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
 	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
-	SetGlobalLevel( LoggerLevel::warning );
 
-	Logger logTwo( initInfo );
+	SetGlobalLevel( LoggerLevel::warning); // Works As Intended 
+	Logger logTwo( initInfo);
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );

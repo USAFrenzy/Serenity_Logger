@@ -2,8 +2,9 @@
 
 #include <serenity/Defines.h>
 #include <serenity/Sinks/Sinks.h>
-
+#pragma warning( push, 0 )
 #include <spdlog/spdlog.h>
+#pragma warning( pop )
 #include <filesystem>
 #include <map>
 
@@ -43,7 +44,6 @@ namespace serenity
 	};
 
 	enum class SinkType;
-	// Similar To The Above, Might Be Beneficial To Use A sink_info
 
 	struct logger_info
 	{
@@ -62,5 +62,14 @@ namespace serenity
 		rotating_sink_info *rotate_sink = nullptr;
 		daily_sink_info *   daily_sink  = nullptr;
 		base_sink_info      sink_info   = { };
+	};
+
+	struct internal_logger_info
+	{
+		std::string                  loggerName = "SERENITY";
+		std::string                  logName    = "Internal_Log.txt";
+		LoggerLevel                  level      = LoggerLevel::trace;
+		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
+		base_sink_info               sink_info = { };
 	};
 }  // namespace serenity
