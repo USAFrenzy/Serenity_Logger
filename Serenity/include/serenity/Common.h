@@ -1,10 +1,12 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
-#include <filesystem>
-
 #include <serenity/Defines.h>
 #include <serenity/Sinks/Sinks.h>
+
+#include <spdlog/spdlog.h>
+#include <filesystem>
+#include <map>
+
 enum class LoggerLevel
 {
 	trace,

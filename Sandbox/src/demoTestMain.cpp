@@ -1,4 +1,3 @@
-
 #include <serenity/Logger.h>
 #include <serenity/Utilities/Utilities.h>
 
@@ -22,14 +21,17 @@ int main( )
 	initInfo.level                        = LoggerLevel::trace;
 	initInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
 	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
+	SetGlobalLevel( LoggerLevel::warning );
 
 	Logger logTwo( initInfo );
-
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
 	logTwo.se_debug( "spdLogDest: {}\n", spdLogDest );
 
-	logTwo.RenameLog( spdLogDest, false);
+	logTwo.RenameLog( spdLogDest, false );
 	logTwo.se_debug( "BACK IN MAIN!\n" );
+
+	// Next Step Now Is To Add More Sink Support, Wrap The Explicit Utilities Functions Into LogFileHelper Class Functions, And
+	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P
 }

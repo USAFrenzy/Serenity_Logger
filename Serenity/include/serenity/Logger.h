@@ -1,18 +1,25 @@
 #pragma once
 
+#include <serenity/Common.h>
+#include <serenity/Helpers/LogFileHelper.h>
+#include <serenity/Interfaces/IObserver.h>
+#include <serenity/Sinks/Sinks.h>
 
 #pragma warning( push )
 #pragma warning( disable : 26812 )
 #include <spdlog/fmt/ostr.h>
 #pragma warning( pop )
 
-#include <serenity/Common.h>
-#include <serenity/Helpers/LogFileHelper.h>
-#include <serenity/Interfaces/IObserver.h>
-#include <serenity/Sinks/Sinks.h>
-
 namespace serenity
 {
+	static LoggerLevel  global_level { LoggerLevel::trace };
+	std::string         GetSerenityVerStr( );
+	void                SetGlobalLevel( LoggerLevel level );
+	static LoggerLevel &GetGlobalLevel( )
+	{
+		return global_level;
+	}
+
 	class Logger : public ILogger
 	{
 	      public:
@@ -31,14 +38,13 @@ namespace serenity
 		{
 			return logFileHandle;
 		}
-		// Not Sure If I Want "CreateLogger()" As A Public Function.. Kinda Just Using It As An Internal Function And Would
-		// Rather Have One Logger Per Logger Class Object So I Very Well May Move This As Private Or Protected
-		std::shared_ptr<spdlog::logger>              CreateLogger( logger_info &infoStruct, bool internalLogger = false );
 		void                                         StartLogger( );
 		void                                         StopLogger( );
 		void                                         DropLogger( );
 		void                                         Shutdown( );
-		void                                         SetLoggerLevel( LoggerLevel logLevel, LoggerInterface logInterface );
+		void                                         SetLogLevel( LoggerLevel logLevel, LoggerInterface logInterface );
+		const LoggerLevel                            GetLogLevel( );
+		std::string                                  LogLevelToStr( LoggerLevel level );
 		std::string const                            LoggerName( );
 		bool                                         RenameLog( std::string newName, bool replaceIfExists = true );
 		void                                         UpdateFileInfo( ) override;
@@ -59,20 +65,23 @@ namespace serenity
 		static std::unique_ptr<LogFileHelper>  logFileHandle;
 		std::unique_ptr<Sink>                  m_sinks;
 
+
 	      private:
+		std::shared_ptr<spdlog::logger>               CreateLogger( logger_info &infoStruct, bool internalLogger = false );
+		MappedLevel                                   ToMappedLevel( LoggerLevel level );
+		LoggerLevel                                   ToLogLevel( MappedLevel level );
 		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
 		{
 			return m_internalLogger;
 		}
+		bool InternalShouldLog( )
+		{
+			return ( ToLogLevel( InternalLogger( )->level( ) ) <= GetGlobalLevel( ) ) ? true : false;
+		}
 	};
 #include <serenity/Logger-impl.h>
-
 }  // namespace serenity
 
-namespace serenity
-{
-	std::string GetSerenityVerStr( );
-}  // namespace serenity
 
 #if defined( SERENITY_TEST_RUN ) || !defined( NDEBUG )
 // Client Side

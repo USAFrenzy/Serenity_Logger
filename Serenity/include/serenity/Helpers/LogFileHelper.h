@@ -1,9 +1,11 @@
 #pragma once
 
 
+#include <serenity/Common.h>
+#include <serenity/Interfaces/IObserver.h>
+
 #include <filesystem>
 #include <spdlog/details/file_helper.h>
-#include <serenity/Interfaces/IObserver.h>
 
 namespace serenity
 {

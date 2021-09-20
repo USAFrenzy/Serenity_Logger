@@ -1,7 +1,6 @@
 #pragma once
 
 #include <filesystem>
-#include "serenity/Common.h"
 
 class IFileHelper
 {

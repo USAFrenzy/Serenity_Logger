@@ -132,15 +132,3 @@ namespace serenity
 		       "\n\tParent Path:\t" + parentPath + "\n\tPath Stem:\t" + pathStem;
 	}
 }  // namespace serenity
-
-
-// MISC Functions
-namespace serenity
-{
-	std::string GetSerenityVerStr( )
-	{
-		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
-		return version;
-	}
-
-}  // namespace serenity
