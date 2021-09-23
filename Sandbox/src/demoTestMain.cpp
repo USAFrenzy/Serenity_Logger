@@ -11,6 +11,7 @@ int main( )
 	file_helper::path const relativePath   = file_helper::current_path( ).relative_path( );
 	file_helper::path const pathToSB_txt   = originalPath.string( ).append( "\\Sandbox.txt" );
 
+
 	auto logDirPath = originalPath;
 	logDirPath /= "Logs";
 	file_helper::directory_entry logDir { logDirPath };
@@ -21,7 +22,6 @@ int main( )
 	initInfo.level                        = LoggerLevel::trace;
 	initInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
 	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
-
 
 
 	SetGlobalLevel( LoggerLevel::warning );  // Works As Intended [X]

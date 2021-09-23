@@ -2,7 +2,6 @@
 #include <serenity/Logger.h>
 #include <serenity/Utilities/Utilities.h>
 
-#include <map>
 #include <fstream>
 
 #pragma warning( push, 0 )
@@ -29,6 +28,8 @@ namespace serenity
 		}
 		return result;
 	}
+
+
 	Logger::Logger( logger_info &infoStruct ) : initInfo( std::move( infoStruct ) )
 	{
 		auto              defaultPath = file_helper::current_path( );
@@ -273,7 +274,7 @@ namespace serenity
 
 	std::string const Logger::LoggerName( )
 	{
-		return m_loggerName;
+		return initInfo.loggerName;
 	}
 
 	const LoggerLevel Logger::GetLogLevel( )
