@@ -11,6 +11,7 @@ int main( )
 	file_helper::path const relativePath   = file_helper::current_path( ).relative_path( );
 	file_helper::path const pathToSB_txt   = originalPath.string( ).append( "\\Sandbox.txt" );
 
+
 	auto logDirPath = originalPath;
 	logDirPath /= "Logs";
 	file_helper::directory_entry logDir { logDirPath };
@@ -22,8 +23,11 @@ int main( )
 	initInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
 	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
 
-	SetGlobalLevel( LoggerLevel::warning); // Works As Intended 
-	Logger logTwo( initInfo);
+
+	SetGlobalLevel( LoggerLevel::warning );  // Works As Intended [X]
+	Logger logTwo( initInfo );
+	SetGlobalLevel( LoggerLevel::trace );  // Subsequent Calls Will Set Logger && Global Levels
+
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );

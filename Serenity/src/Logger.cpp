@@ -15,32 +15,7 @@ namespace serenity
 	std::shared_ptr<spdlog::logger> Logger::m_clientLogger;
 	std::unique_ptr<LogFileHelper>  Logger::logFileHandle;
 
-	LoggerLevel Logger::ToLogLevel( MappedLevel level )
-	{
-		std::map<MappedLevel, LoggerLevel> levelMap = {
-		  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
-		  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
-		  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
-		LoggerLevel result   = LoggerLevel::off;
-		auto        iterator = levelMap.find( level );
-		if( iterator != levelMap.end( ) ) {
-			result = iterator->second;
-		}
-		return result;
-	}
-	MappedLevel Logger::ToMappedLevel( LoggerLevel level )
-	{
-		std::map<LoggerLevel, MappedLevel> levelMap = {
-		  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
-		  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
-		  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
-		MappedLevel result   = MappedLevel::off;
-		auto        iterator = levelMap.find( level );
-		if( iterator != levelMap.end( ) ) {
-			result = iterator->second;
-		}
-		return result;
-	}
+
 	std::string Logger::LogLevelToStr( LoggerLevel level )
 	{
 		std::map<LoggerLevel, std::string> levelMap = { { LoggerLevel::trace, "[trace]" }, { LoggerLevel::info, "[info]" },
@@ -71,7 +46,7 @@ namespace serenity
 		  - The ability to customize the internal logger? I mean, I'm using stdout sink here, but hey, who knows? [ ]
 		*/
 		//##########################################################################################################
-		CreateInternalLogger(internalLoggerInfo);
+		CreateInternalLogger( internalLoggerInfo );
 		// Set The Paths
 		FileHelperHandle( )->SetLogDirPath( logDirPath );
 		SE_INTERNAL_TRACE( "Setting Log Directory Path To [{}]", logDirPath );
@@ -89,12 +64,12 @@ namespace serenity
 	{
 		Shutdown( );
 	}
-	void Logger::CreateInternalLogger( logger_info &infoStruct ) 
-	{ 
-			// Creating Internal Logger
+	void Logger::CreateInternalLogger( logger_info &infoStruct )
+	{
+		// Creating Internal Logger
 		internalLoggerInfo.level      = LoggerLevel::trace;  // after testing -> LoggerLevel::warning
 		internalLoggerInfo.loggerName = "SERENITY";
-		file_helper::directory_entry internalDir { initInfo.logDir.path() };
+		file_helper::directory_entry internalDir { initInfo.logDir.path( ) };
 		internalLoggerInfo.logDir  = internalDir;
 		internalLoggerInfo.logName = "Internal_Log.txt";
 		internalLoggerInfo.sink_info.sinks.clear( );
@@ -196,11 +171,11 @@ namespace serenity
 			SE_INTERNAL_TRACE( "Sinks For Logger [{}] Have Been Succesfully Created", infoStruct.loggerName );
 		}
 		auto mappedLevel = ToMappedLevel( infoStruct.level );
+
 		if( internalLogger ) {
 			if( GetGlobalLevel( ) != internalLoggerInfo.level ) {
 				mappedLevel = ToMappedLevel( GetGlobalLevel( ) );
 			}
-
 			auto internalLogger = std::make_shared<spdlog::logger>( infoStruct.loggerName, begin( m_sinks->sinkVector ),
 										end( m_sinks->sinkVector ) );
 			spdlog::register_logger( internalLogger );
@@ -215,6 +190,9 @@ namespace serenity
 			return internalLogger;
 		}
 		else {
+			if( GetGlobalLevel( ) != infoStruct.level ) {
+				mappedLevel = ToMappedLevel( GetGlobalLevel( ) );
+			}
 			std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>(
 			  infoStruct.loggerName, begin( m_sinks->sinkVector ), end( m_sinks->sinkVector ) );
 			SE_INTERNAL_TRACE( "Logger [{}] Has Been Successfully Created", infoStruct.loggerName );
@@ -333,6 +311,12 @@ namespace serenity
 				break;
 		}
 	}
+
+	bool Logger::ClientShouldLog( )
+	{
+		return ( GetLogLevel( ) <= GetGlobalLevel( ) ) ? true : false;
+	}
+
 	bool Logger::InternalShouldLog( )
 	{
 		return ( ToLogLevel( InternalLogger( )->level( ) ) <= GetGlobalLevel( ) ) ? true : false;
@@ -351,6 +335,11 @@ namespace serenity
 	void SetGlobalLevel( LoggerLevel level )
 	{
 		global_level = level;
+		if( Logger::ClientSideLogger( ) != nullptr ) {
+			Logger::ClientSideLogger( )->set_level( ToMappedLevel( level ) );
+		}
+		if( Logger::InternalLogger( ) != nullptr ) {
+			Logger::InternalLogger( )->set_level( ToMappedLevel( level ) );
+		}
 	}
-
 }  // namespace serenity

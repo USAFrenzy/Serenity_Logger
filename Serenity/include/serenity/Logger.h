@@ -58,14 +58,21 @@ namespace serenity
 		/*
 			------------------------------------ Work In Progress ------------------------------------
 		*/
-		// Plan Is To Work On These Type Functions, Abstract Away To LibLogger Class, And Have A 
+		// Plan Is To Work On These Type Functions, Abstract Away To LibLogger Class, And Have A
 		// LibLogger Handle In The Logger Class. Doing So Will Also Allow Other Files To Use LibLogger
 		// As I Plan On Making LibLogger A Singleton Class With The Handles Pointing To The Same Instance
-		void CustomizeInternalLogger( internal_logger_info &infoStruct ) { }
-		void CreateInternalLogger( logger_info &infoStruct );
-		void EnableInternalLogging( ) { }
-		void DisableInternalLogging( ) { }
-		bool InternalShouldLog( );
+		void                                          CustomizeInternalLogger( internal_logger_info &infoStruct ) { }
+		void                                          CreateInternalLogger( logger_info &infoStruct );
+		void                                          EnableInternalLogging( ) { }
+		void                                          DisableInternalLogging( ) { }
+		bool                                          InternalShouldLog( );
+		bool                                          ClientShouldLog( );
+		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
+		{
+			return m_internalLogger;
+		}
+		// MappedLevel                                   ToMappedLevel( LoggerLevel level );
+		// LoggerLevel                                   ToLogLevel( MappedLevel level );
 		// -----------------------------------------------------------------------------------------
 	      private:
 		logger_info                            initInfo           = { };
@@ -77,13 +84,7 @@ namespace serenity
 
 
 	      private:
-		std::shared_ptr<spdlog::logger>               CreateLogger( logger_info &infoStruct, bool internalLogger = false );
-		MappedLevel                                   ToMappedLevel( LoggerLevel level );
-		LoggerLevel                                   ToLogLevel( MappedLevel level );
-		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
-		{
-			return m_internalLogger;
-		}
+		std::shared_ptr<spdlog::logger> CreateLogger( logger_info &infoStruct, bool internalLogger = false );
 	};
 #include <serenity/Logger-impl.h>
 }  // namespace serenity

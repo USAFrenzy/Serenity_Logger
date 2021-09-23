@@ -1,7 +1,7 @@
 set (PROJECT_NAME Serenity)
 
 set (
-    SERENITY_SOURCE_FILES 
+    SERENITY_SOURCE_FILES
     "src/Logger.cpp"
     "src/LogFileHelper.cpp"
     "src/Utilities.cpp"
