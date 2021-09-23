@@ -3,7 +3,9 @@
 #include <vector>
 #include <memory>
 
+#pragma warning( push, 0 )
 #include <spdlog/spdlog.h>
+#pragma warning( pop )
 
 namespace serenity
 {
@@ -23,8 +25,8 @@ namespace serenity
 
 	struct base_sink_info
 	{
-		std::string                  formatStr = "%^[%T]%n:%v%$";
-		static std::vector<SinkType> sinks;
+		std::string           formatStr = "%^[%T]%n:%v%$";
+		std::vector<SinkType> sinks;
 	};
 
 	class Sink
@@ -38,6 +40,7 @@ namespace serenity
 		void                  set_sinks( std::vector<SinkType> sinks );
 		std::vector<SinkType> get_sinks( );
 		void                  CreateSink( logger_info &infoStruct );
+		void                  clear_sinks( );
 
 
 

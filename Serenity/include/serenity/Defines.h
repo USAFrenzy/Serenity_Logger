@@ -22,11 +22,11 @@
 
 #ifndef NDEBUG
 	#if defined( WIN32 ) || defined( __WIN32 ) || defined( __WIN32__ )
-		#define SE_DEBUG_BREAK __debugbreak( );
+		#define SE_DEBUG_BREAK __debugbreak
 	#elif __APPLE__
-		#define SE_DEBUG_BREAK __builtin_debugtrap( );
+		#define SE_DEBUG_BREAK __builtin_debugtrap
 	#elif __linux__
-		#define SE_DEBUG_BREAK __builtin_trap( );
+		#define SE_DEBUG_BREAK __builtin_trap
 	#else
 		#define SE_DEBUG_BREAK ( void ) 0
 	#endif  // Platform Debug Break Defines

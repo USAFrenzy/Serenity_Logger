@@ -1,15 +1,15 @@
 #include <serenity/Sinks/Sinks.h>
 #include <serenity/Common.h>
 
+#pragma warning( push, 0 )
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
+#pragma warning( pop )
 
 namespace serenity
 {
-	std::vector<SinkType> base_sink_info::sinks { SinkType::stdout_color_mt };
-
 	Sink::Sink( )
 	{
 		m_sinkInfo = { };
@@ -95,5 +95,12 @@ namespace serenity
 			}
 		}
 	}
+
+	void Sink::clear_sinks( )
+	{
+		sinkVector.clear( );
+		m_sinkInfo.sinks.clear( );
+	}
+
 
 }  // namespace serenity

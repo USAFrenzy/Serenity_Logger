@@ -338,14 +338,11 @@ namespace serenity
 			std::string                 line;
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
 			if( !( inputFile.peek( ) == std::ifstream::traits_type::eof( ) ) ) {
-				printf( "Copying File Contents: \n\tFrom:\t[%s] \n\tTo:\t[%s]\n", source.string( ).c_str( ),
-					destination.string( ).c_str( ) );
 				try {
 					if( inputFile && outputFile ) {
 						while( std::getline( inputFile, line ) ) {
 							outputFile << line << "\n";
 						}
-						printf( "Finished Copying File Contents.\n" );
 						inputFile.close( );
 						outputFile.close( );
 					}

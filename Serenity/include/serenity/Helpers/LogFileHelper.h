@@ -1,9 +1,14 @@
 #pragma once
 
 
-#include <filesystem>
-#include <spdlog/details/file_helper.h>
+#include <serenity/Common.h>
 #include <serenity/Interfaces/IObserver.h>
+
+#include <filesystem>
+
+#pragma warning( push, 0 )
+#include <spdlog/details/file_helper.h>
+#pragma warning( pop )
 
 namespace serenity
 {
@@ -54,6 +59,6 @@ namespace serenity
 		spdlog::details::file_helper spdLogFilehandle;
 
 	      public:
-		static bool fileInfoChanged;
+		std::atomic<bool> fileInfoChanged;
 	};
 }  // namespace serenity

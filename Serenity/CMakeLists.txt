@@ -1,7 +1,7 @@
 set (PROJECT_NAME Serenity)
 
 set (
-    SERENITY_SOURCE_FILES 
+    SERENITY_SOURCE_FILES
     "src/Logger.cpp"
     "src/LogFileHelper.cpp"
     "src/Utilities.cpp"
@@ -11,6 +11,7 @@ set (
 set (
     SERENITY_HEADER_FILES
     "include/serenity/Logger.h"
+    "include/serenity/Logger-impl.h"
     "include/serenity/Defines.h"
     "include/serenity/Common.h"
     "include/serenity/Helpers/LogFileHelper.h"
