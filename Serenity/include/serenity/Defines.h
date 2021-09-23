@@ -36,4 +36,5 @@
 
 #endif  // NDEBUG
 
-#define SE_NULL_PTR nullptr
+#define SE_NULL_PTR     nullptr
+

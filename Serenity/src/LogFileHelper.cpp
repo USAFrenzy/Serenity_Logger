@@ -1,6 +1,5 @@
 #include <serenity/Helpers/LogFileHelper.h>
 
-
 namespace serenity
 {
 	// clang-format off
@@ -131,4 +130,16 @@ namespace serenity
 		       rootPath + "\n\tRoot Name:\t" + rootName + "\n\tRoot Dir:\t" + rootDir + "\n\tRelative Path:\t" + relativePath +
 		       "\n\tParent Path:\t" + parentPath + "\n\tPath Stem:\t" + pathStem;
 	}
+}  // namespace serenity
+
+
+// MISC Functions
+namespace serenity
+{
+	std::string GetSerenityVerStr( )
+	{
+		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
+		return version;
+	}
+
 }  // namespace serenity

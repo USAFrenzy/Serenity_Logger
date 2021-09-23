@@ -2,6 +2,7 @@
 
 #include <serenity/Defines.h>
 #include <serenity/Sinks/Sinks.h>
+
 #pragma warning( push, 0 )
 #include <spdlog/spdlog.h>
 #pragma warning( pop )
@@ -9,10 +10,12 @@
 #include <map>
 
 
+
 namespace serenity
 {
 	using MappedLevel     = spdlog::level::level_enum;
 	namespace file_helper = std::filesystem;
+
 
 	enum class LoggerLevel
 	{
