@@ -1,16 +1,25 @@
 #pragma once
 
+#include <serenity/Common.h>
+
 #include <filesystem>
 
-class IFileHelper
-{
-      protected:
-	virtual void UpdateFileInfo( std::filesystem::path pathToFile ) = 0;
-	virtual void NotifyLogger( )                                    = 0;
-};
 
-class ILogger
+namespace serenity
 {
-      public:
-	virtual void UpdateFileInfo( ) = 0;
-};
+	class IFileHelper
+	{
+	      protected:
+		virtual void UpdateFileInfo( std::filesystem::path pathToFile ) = 0;
+		virtual void NotifyLogger( )                                    = 0;
+	};
+
+	class ILogger
+	{
+	      public:
+		virtual void        UpdateFileInfo( )                  = 0;
+		virtual bool        ShouldLog( )                       = 0;
+		virtual std::string LogLevelToStr( LoggerLevel level ) = 0;
+	};
+
+}  // namespace serenity

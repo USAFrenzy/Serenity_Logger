@@ -6,10 +6,7 @@ int main( )
 {
 	using namespace serenity;
 	printf( "Library Version: %s\n", GetSerenityVerStr( ).c_str( ) );
-	file_helper::path const originalPath   = file_helper::current_path( );
-	file_helper::path const pathToBuildDir = file_helper::current_path( ).parent_path( );
-	file_helper::path const relativePath   = file_helper::current_path( ).relative_path( );
-	file_helper::path const pathToSB_txt   = originalPath.string( ).append( "\\Sandbox.txt" );
+	file_helper::path const originalPath = file_helper::current_path( );
 
 	auto logDirPath = originalPath;
 	logDirPath /= "Logs";
@@ -23,10 +20,11 @@ int main( )
 	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
 
 
-
-	SetGlobalLevel( LoggerLevel::warning );  // Works As Intended [X]
+	// Works As Intended [X]
+	SetGlobalLevel( LoggerLevel::trace );
 	Logger logTwo( initInfo );
-	SetGlobalLevel( LoggerLevel::trace );  // Subsequent Calls Will Set Logger && Global Levels
+	SetGlobalLevel( LoggerLevel::warning );                             // Subsequent Calls Will Set Logger && Global Levels
+	logTwo.SetLogLevel( LoggerLevel::trace, LoggerInterface::client );  // Still Can Set Level On A Logger-To-Logger Basis
 
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;

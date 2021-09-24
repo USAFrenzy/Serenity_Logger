@@ -2,7 +2,6 @@
 #include <serenity/Logger.h>
 #include <serenity/Utilities/Utilities.h>
 
-#include <map>
 #include <fstream>
 
 #pragma warning( push, 0 )
@@ -29,6 +28,8 @@ namespace serenity
 		}
 		return result;
 	}
+
+
 	Logger::Logger( logger_info &infoStruct ) : initInfo( std::move( infoStruct ) )
 	{
 		auto              defaultPath = file_helper::current_path( );
@@ -273,7 +274,7 @@ namespace serenity
 
 	std::string const Logger::LoggerName( )
 	{
-		return m_loggerName;
+		return initInfo.loggerName;
 	}
 
 	const LoggerLevel Logger::GetLogLevel( )
@@ -285,7 +286,7 @@ namespace serenity
 	{
 		SE_INTERNAL_TRACE( "Setting Logger Level..." );
 		auto m_level = ToMappedLevel( level );
-		if( !m_level ) {
+		if( m_level == MappedLevel::n_levels ) {
 			SE_INTERNAL_FATAL( "Log Level Was Not A Valid Value" );
 		}
 		switch( logInterface ) {
@@ -311,7 +312,7 @@ namespace serenity
 		}
 	}
 
-	bool Logger::ClientShouldLog( )
+	bool Logger::ShouldLog( )
 	{
 		return ( GetLogLevel( ) <= GetGlobalLevel( ) ) ? true : false;
 	}
@@ -321,16 +322,8 @@ namespace serenity
 		return ( ToLogLevel( InternalLogger( )->level( ) ) <= GetGlobalLevel( ) ) ? true : false;
 	}
 
-}  // namespace serenity
 
-// MISC Functions
-namespace serenity
-{
-	std::string GetSerenityVerStr( )
-	{
-		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
-		return version;
-	}
+	// MISC Functions
 	void SetGlobalLevel( LoggerLevel level )
 	{
 		global_level = level;

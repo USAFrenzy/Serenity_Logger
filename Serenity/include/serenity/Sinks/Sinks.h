@@ -43,11 +43,9 @@ namespace serenity
 		void                  clear_sinks( );
 
 
-
-
 	      private:
 		base_sink_info m_sinkInfo;
-		SinkType m_sinkType = SinkType::unknown;
+		SinkType       m_sinkType = SinkType::unknown;
 
 	      public:
 		std::vector<spdlog::sink_ptr> sinkVector;

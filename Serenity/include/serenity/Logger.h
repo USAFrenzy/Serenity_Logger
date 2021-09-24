@@ -11,14 +11,6 @@
 
 namespace serenity
 {
-	static LoggerLevel  global_level { LoggerLevel::trace };
-	std::string         GetSerenityVerStr( );
-	void                SetGlobalLevel( LoggerLevel level );
-	static LoggerLevel &GetGlobalLevel( )
-	{
-		return global_level;
-	}
-  
 	class Logger : public ILogger
 	{
 	      public:
@@ -28,6 +20,7 @@ namespace serenity
 		Logger( const Logger &&move ) = delete;
 		Logger &operator=( const Logger & ) = delete;
 		~Logger( );
+
 		static const std::shared_ptr<spdlog::logger> &ClientSideLogger( )
 		{
 			return m_clientLogger;
@@ -42,7 +35,7 @@ namespace serenity
 		void                                         Shutdown( );
 		void                                         SetLogLevel( LoggerLevel logLevel, LoggerInterface logInterface );
 		const LoggerLevel                            GetLogLevel( );
-		std::string                                  LogLevelToStr( LoggerLevel level );
+		std::string                                  LogLevelToStr( LoggerLevel level ) override;
 		std::string const                            LoggerName( );
 		bool                                         RenameLog( std::string newName, bool replaceIfExists = true );
 		void                                         UpdateFileInfo( ) override;
@@ -65,13 +58,11 @@ namespace serenity
 		void                                          EnableInternalLogging( ) { }
 		void                                          DisableInternalLogging( ) { }
 		bool                                          InternalShouldLog( );
-		bool                                          ClientShouldLog( );
+		bool                                          ShouldLog( ) override;
 		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
 		{
 			return m_internalLogger;
 		}
-		// MappedLevel                                   ToMappedLevel( LoggerLevel level );
-		// LoggerLevel                                   ToLogLevel( MappedLevel level );
 		// -----------------------------------------------------------------------------------------
 	      private:
 		logger_info                            initInfo           = { };
@@ -85,47 +76,16 @@ namespace serenity
 	      private:
 		std::shared_ptr<spdlog::logger> CreateLogger( logger_info &infoStruct, bool internalLogger = false );
 	};
+
+	static LoggerLevel  global_level;
+	void                SetGlobalLevel( LoggerLevel level );
+	static LoggerLevel &GetGlobalLevel( )
+	{
+		return global_level;
+	}
+
 #include <serenity/Logger-impl.h>
 }  // namespace serenity
-
-namespace serenity
-{
-	std::string GetSerenityVerStr( );
-}  // namespace serenity
-
-
-// Internal or "non-user" side macros
-#define SE_INTERNAL_TRACE( ... )                                                                                                      \
-	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
-		Logger::InternalLogger( )->trace( __VA_ARGS__ );                                                                      \
-	}
-#define SE_INTERNAL_DEBUG( ... )                                                                                                      \
-	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
-		Logger::InternalLogger( )->debug( __VA_ARGS__ );                                                                      \
-	}
-#define SE_INTERNAL_INFO( ... )                                                                                                       \
-	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
-		Logger::InternalLogger( )->info( __VA_ARGS__ );                                                                       \
-	}
-#define SE_INTERNAL_WARN( ... )                                                                                                       \
-	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
-		Logger::InternalLogger( )->warn( __VA_ARGS__ );                                                                       \
-	}
-#define SE_INTERNAL_ERROR( ... )                                                                                                      \
-	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
-		Logger::InternalLogger( )->error( __VA_ARGS__ );                                                                      \
-	}
-#define SE_INTERNAL_FATAL( ... )                                                                                                      \
-	if( Logger::InternalLogger( ) != nullptr ) {                                                                                  \
-		Logger::InternalLogger( )->critical( __VA_ARGS__ );                                                                   \
-	}
-#define SE_INTERNAL_ASSERT( condition, message, ... )                                                                                 \
-	if( !( condition ) ) {                                                                                                        \
-		SE_INTERNAL_FATAL( "ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}", SE_MACRO_STRING( condition ),                 \
-				   std::filesystem::path( __FILE__ ).filename( ).string( ), ( __LINE__ ),                             \
-				   ( SE_ASSERT_VAR_MSG( message, __VA_ARGS__ ) ) );                                                   \
-		SE_DEBUG_BREAK                                                                                                        \
-	}
 
 #if defined( SERENITY_TEST_RUN ) || !defined( NDEBUG )
 // Client Side
@@ -166,7 +126,6 @@ namespace serenity
 			if( Logger::InternalShouldLog( ) ) {                                                                          \
 				Logger::InternalLogger( )->error( __VA_ARGS__ );                                                      \
 			}                                                                                                             \
-
 		}
 	#define SE_INTERNAL_FATAL( ... )                                                                                              \
 		if( Logger::InternalLogger( ) != nullptr ) {                                                                          \
@@ -183,7 +142,6 @@ namespace serenity
 		}
 #else
 	#define SE_ASSERT_VAR_MSG( message, ... )             ( void ) 0
-
 	#define SE_INTERNAL_TRACE( ... )                      ( void ) 0
 	#define SE_INTERNAL_DEBUG( ... )                      ( void ) 0
 	#define SE_INTERNAL_INFO( ... )                       ( void ) 0
