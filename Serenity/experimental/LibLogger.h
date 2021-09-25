@@ -19,72 +19,101 @@ namespace serenity
 	class InternalLibLogger : public ILogger
 	{
 	      public:
-		explicit InternalLibLogger( internal_logger_info infoStruct = { } );
+		static InternalLibLogger &GetInstance( )
+		{
+			internalLoggerInfo = { };
+			static InternalLibLogger instance( internalLoggerInfo );
+			return instance;
+		}
 		InternalLibLogger( )                                = delete;
 		InternalLibLogger( const InternalLibLogger &copy )  = delete;
 		InternalLibLogger( const InternalLibLogger &&move ) = delete;
-		InternalLibLogger &operator=( const InternalLibLogger & ) = delete;
-		~InternalLibLogger( )                                     = default;
+		InternalLibLogger &operator=( const InternalLibLogger &ref ) = delete;
+		~InternalLibLogger( )                                        = default;
 
 		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
 		{
+			GetInstance( ).UpdateInfo( );
 			return m_internalLogger;
 		}
 		std::string LogLevelToStr( LoggerLevel level ) override;
-		void        CreateInternalLogger( );
 		void        EnableInternalLogging( );
 		void        DisableInternalLogging( );
-		bool        ShouldLog( ) override;
+		void        SetLogLevel( LoggerLevel logLevel ) override;
+		void        CustomizeInternalLogger( se_internal::internal_logger_info infoStruct );
+		// Specifically Using This To Just Update The Internal Logger If Customized
+		void UpdateInfo( ) override;
+
+		template <typename T, typename... Args> void trace( T message, Args &&...args )
+		{
+			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
+				if( ShouldLog() ) {
+					InternalLogger( )->trace( message, std::forward<Args>( args )... );
+				}
+			}
+		}
+
+		template <typename T, typename... Args> void debug( T message, Args &&...args )
+		{
+			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
+				if( ShouldLog( ) ) {
+					InternalLogger( )->debug( message, std::forward<Args>( args )... );
+				}
+			}
+		}
+
+		template <typename T, typename... Args> void info( T message, Args &&...args )
+		{
+			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
+				if( ShouldLog( ) ) {
+					InternalLogger( )->info( message, std::forward<Args>( args )... );
+				}
+			}
+		}
+
+		template <typename T, typename... Args> void warn( T &message, Args &&...args )
+		{
+			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
+				if( ShouldLog( ) ) {
+					InternalLogger( )->warn( message, std::forward<Args>( args )... );
+				}
+			}
+		}
+
+		template <typename T, typename... Args> void error( T message, Args &&...args )
+		{
+			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
+				if( ShouldLog( ) ) {
+					InternalLogger( )->error( message, std::forward<Args>( args )... );
+				}
+			}
+		}
+
+		template <typename T, typename... Args> void fatal( T message, Args &&...args )
+		{
+			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
+				if( ShouldLog( ) ) {
+					InternalLogger( )->critical( message, std::forward<Args>( args )... );
+				}
+			}
+		}
 
 	      private:
-		void CustomizeInternalLogger( internal_logger_info infoStruct );
+		explicit InternalLibLogger( se_internal::internal_logger_info infoStruct = { } );
+		bool ShouldLog( ) override;
+		void CreateInternalLogger( );
 
 	      private:
+		bool                                   internalCustomized { false };
 		std::atomic<bool>                      loggingEnabled { false };
 		std::unique_ptr<Sink>                  m_sinks;
-		internal_logger_info                   internalLoggerInfo = { };
+		static se_internal::internal_logger_info            internalLoggerInfo;
 		static std::shared_ptr<spdlog::logger> m_internalLogger;
 	};
 
 }  // namespace serenity
 
 #if defined( SERENITY_TEST_RUN ) || !defined( NDEBUG )
-	#define SE_INTERNAL_TRACE( ... )                                                                                              \
-		if( InternalLibLogger::InternalLogger( ) != nullptr ) {                                                               \
-			if( InternalLibLogger::ShouldLog( ) ) {                                                                       \
-				InternalLibLogger::InternalLogger( )->trace( __VA_ARGS__ );                                           \
-			}                                                                                                             \
-		}
-	#define SE_INTERNAL_DEBUG( ... )                                                                                              \
-		if( InternalLibLogger::InternalLogger( ) != nullptr ) {                                                               \
-			if( InternalLibLogger::ShouldLog( ) ) {                                                                       \
-				InternalLibLogger::InternalLogger( )->debug( __VA_ARGS__ );                                           \
-			}                                                                                                             \
-		}
-	#define SE_INTERNAL_INFO( ... )                                                                                               \
-		if( InternalLibLogger::InternalLogger( ) != nullptr ) {                                                               \
-			if( InternalLibLogger::ShouldLog( ) ) {                                                                       \
-				InternalLibLogger::InternalLogger( )->info( __VA_ARGS__ );                                            \
-			}                                                                                                             \
-		}
-	#define SE_INTERNAL_WARN( ... )                                                                                               \
-		if( InternalLibLogger::InternalLogger( ) != nullptr ) {                                                               \
-			if( InternalLibLogger::ShouldLog( ) ) {                                                                       \
-				InternalLibLogger::InternalLogger( )->warn( __VA_ARGS__ );                                            \
-			}                                                                                                             \
-		}
-	#define SE_INTERNAL_ERROR( ... )                                                                                              \
-		if( InternalLibLogger::InternalLogger( ) != nullptr ) {                                                               \
-			if( InternalLibLogger::ShouldLog( ) ) {                                                                       \
-				InternalLibLogger::InternalLogger( )->error( __VA_ARGS__ );                                           \
-			}                                                                                                             \
-		}
-	#define SE_INTERNAL_FATAL( ... )                                                                                              \
-		if( InternalLibLogger::InternalLogger( ) != nullptr ) {                                                               \
-			if( InternalLibLogger::ShouldLog( ) ) {                                                                       \
-				InternalLibLogger::InternalLogger( )->critical( __VA_ARGS__ );                                        \
-			}                                                                                                             \
-		}
 	#define SE_INTERNAL_ASSERT( condition, message, ... )                                                                         \
 		if( !( condition ) ) {                                                                                                \
 			SE_INTERNAL_FATAL( "ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}", SE_MACRO_STRING( condition ),         \
@@ -93,11 +122,5 @@ namespace serenity
 			SE_DEBUG_BREAK( );                                                                                            \
 		}
 #else
-	#define SE_INTERNAL_TRACE( ... )                      ( void ) 0
-	#define SE_INTERNAL_DEBUG( ... )                      ( void ) 0
-	#define SE_INTERNAL_INFO( ... )                       ( void ) 0
-	#define SE_INTERNAL_WARN( ... )                       ( void ) 0
-	#define SE_INTERNAL_ERROR( ... )                      ( void ) 0
-	#define SE_INTERNAL_FATAL( ... )                      ( void ) 0
 	#define SE_INTERNAL_ASSERT( condition, message, ... ) ( void ) 0
 #endif  // SERENITY_TEST_RUN || !NDEBUG

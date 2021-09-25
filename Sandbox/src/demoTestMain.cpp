@@ -2,6 +2,7 @@
 #include <serenity/Utilities/Utilities.h>
 
 
+
 int main( )
 {
 	using namespace serenity;
@@ -23,8 +24,9 @@ int main( )
 	// Works As Intended [X]
 	SetGlobalLevel( LoggerLevel::trace );
 	Logger logTwo( initInfo );
-	SetGlobalLevel( LoggerLevel::warning );                             // Subsequent Calls Will Set Logger && Global Levels
-	logTwo.SetLogLevel( LoggerLevel::trace, LoggerInterface::client );  // Still Can Set Level On A Logger-To-Logger Basis
+	
+	SetGlobalLevel( LoggerLevel::warning );    // Subsequent Calls Will Set Logger && Global Levels
+	logTwo.SetLogLevel( LoggerLevel::trace );  // Still Can Set Level On A Logger-To-Logger Basis
 
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;

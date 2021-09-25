@@ -1,9 +1,12 @@
 #pragma once
 
+#include "../experimental/LibLogger.h"
+
+#include <serenity/Interfaces/IObserver.h>
 #include <serenity/Common.h>
 #include <serenity/Helpers/LogFileHelper.h>
-#include <serenity/Interfaces/IObserver.h>
 #include <serenity/Sinks/Sinks.h>
+
 
 #pragma warning( push, 0 )
 #include <spdlog/fmt/ostr.h>
@@ -33,12 +36,12 @@ namespace serenity
 		void                                         StopLogger( );
 		void                                         DropLogger( );
 		void                                         Shutdown( );
-		void                                         SetLogLevel( LoggerLevel logLevel, LoggerInterface logInterface );
+		void                                         SetLogLevel( LoggerLevel logLevel ) override;
 		const LoggerLevel                            GetLogLevel( );
 		std::string                                  LogLevelToStr( LoggerLevel level ) override;
 		std::string const                            LoggerName( );
 		bool                                         RenameLog( std::string newName, bool replaceIfExists = true );
-		void                                         UpdateFileInfo( ) override;
+		void                                         UpdateInfo( ) override;
 		void                                         OpenLog( file_helper::path filePath );
 		void                                         CloseLog( file_helper::path filePath );
 		template <typename T, typename... Args> void se_trace( T message, Args &&...args );
@@ -53,28 +56,31 @@ namespace serenity
 		// Plan Is To Work On These Type Functions, Abstract Away To LibLogger Class, And Have A
 		// LibLogger Handle In The Logger Class. Doing So Will Also Allow Other Files To Use LibLogger
 		// As I Plan On Making LibLogger A Singleton Class With The Handles Pointing To The Same Instance
-		void                                          CustomizeInternalLogger( internal_logger_info &infoStruct ) { }
-		void                                          CreateInternalLogger( logger_info &infoStruct );
-		void                                          EnableInternalLogging( ) { }
-		void                                          DisableInternalLogging( ) { }
-		bool                                          InternalShouldLog( );
-		bool                                          ShouldLog( ) override;
-		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
-		{
-			return m_internalLogger;
-		}
+		// void                                          CustomizeInternalLogger( internal_logger_info &infoStruct ) { }
+		// void                                          CreateInternalLogger( logger_info &infoStruct );
+		// void                                          EnableInternalLogging( ) { }
+		// void                                          DisableInternalLogging( ) { }
+		// bool                                          InternalShouldLog( );
+		// static const std::shared_ptr<spdlog::logger> &InternalLogger( )
+		//{
+		//	return m_internalLogger;
+		//}
 		// -----------------------------------------------------------------------------------------
-	      private:
-		logger_info                            initInfo           = { };
-		logger_info                            internalLoggerInfo = { };
-		static std::shared_ptr<spdlog::logger> m_internalLogger;
+
+		static std::unique_ptr<InternalLibLogger>               internalLogger;
+	    
+  private:
+		logger_info                        initInfo = { };
+		// logger_info                            internalLoggerInfo = { };
+		// static std::shared_ptr<spdlog::logger> m_internalLogger;
 		static std::shared_ptr<spdlog::logger> m_clientLogger;
 		static std::unique_ptr<LogFileHelper>  logFileHandle;
 		std::unique_ptr<Sink>                  m_sinks;
 
 
 	      private:
-		std::shared_ptr<spdlog::logger> CreateLogger( logger_info &infoStruct, bool internalLogger = false );
+		std::shared_ptr<spdlog::logger> CreateLogger( logger_info &infoStruct);
+		bool                                          ShouldLog( ) override;
 	};
 
 	static LoggerLevel  global_level;
