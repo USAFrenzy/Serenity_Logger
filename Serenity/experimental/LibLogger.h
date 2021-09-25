@@ -47,7 +47,7 @@ namespace serenity
 		template <typename T, typename... Args> void trace( T message, Args &&...args )
 		{
 			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-				if( ShouldLog() ) {
+				if( ShouldLog( ) ) {
 					InternalLogger( )->trace( message, std::forward<Args>( args )... );
 				}
 			}
@@ -104,11 +104,11 @@ namespace serenity
 		void CreateInternalLogger( );
 
 	      private:
-		bool                                   internalCustomized { false };
-		std::atomic<bool>                      loggingEnabled { false };
-		std::unique_ptr<Sink>                  m_sinks;
-		static se_internal::internal_logger_info            internalLoggerInfo;
-		static std::shared_ptr<spdlog::logger> m_internalLogger;
+		bool                                     internalCustomized { false };
+		std::atomic<bool>                        loggingEnabled { true };
+		std::unique_ptr<Sink>                    m_sinks;
+		static se_internal::internal_logger_info internalLoggerInfo;
+		static std::shared_ptr<spdlog::logger>   m_internalLogger;
 	};
 
 }  // namespace serenity

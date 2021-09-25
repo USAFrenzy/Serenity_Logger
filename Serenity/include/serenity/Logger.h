@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../experimental/LibLogger.h"
 
 #include <serenity/Interfaces/IObserver.h>
 #include <serenity/Common.h>
 #include <serenity/Helpers/LogFileHelper.h>
 #include <serenity/Sinks/Sinks.h>
 
+#include "../experimental/LibLogger.h"
 
 #pragma warning( push, 0 )
 #include <spdlog/fmt/ostr.h>
@@ -67,7 +67,7 @@ namespace serenity
 		//}
 		// -----------------------------------------------------------------------------------------
 
-		static std::unique_ptr<InternalLibLogger>               internalLogger;
+		InternalLibLogger               &internalLogger = internalLogger.GetInstance();
 	    
   private:
 		logger_info                        initInfo = { };

@@ -1,15 +1,10 @@
 #include "LibLogger.h"
 
+#include <serenity/Logger.h>// For The GetGlobal()
+
 namespace serenity
 {
 	using namespace se_internal;
-
-	// Just So It Can Compile For Now.. -----------------------------------------------------------------------------------------
-	static LoggerLevel GetGlobalLevel( )
-	{
-		return LoggerLevel::warning;
-	}
-	// Delete Above When Fleshed Out    -----------------------------------------------------------------------------------------
 
 	std::shared_ptr<spdlog::logger> InternalLibLogger::m_internalLogger;
 	internal_logger_info     InternalLibLogger::internalLoggerInfo = { };
