@@ -33,7 +33,8 @@
 
 	// Formatting of Message to be used by both
 	#define SE_ASSERT_VAR_MSG( message, ... ) fmt::format( message, __VA_ARGS__ )
-
+	#else
+	#define SE_ASSERT_VAR_MSG( message, ... ) ( void ) 0
 #endif  // NDEBUG
 
 #define SE_NULL_PTR nullptr

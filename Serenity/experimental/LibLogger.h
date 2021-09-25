@@ -19,31 +19,32 @@ namespace serenity
 	class InternalLibLogger : public ILogger
 	{
 	      public:
-		static InternalLibLogger &GetInstance( )
-		{
-			internalLoggerInfo = { };
-			static InternalLibLogger instance( internalLoggerInfo );
-			return instance;
-		}
+		explicit InternalLibLogger( se_internal::internal_logger_info infoStruct = { } );
 		InternalLibLogger( )                                = delete;
 		InternalLibLogger( const InternalLibLogger &copy )  = delete;
 		InternalLibLogger( const InternalLibLogger &&move ) = delete;
 		InternalLibLogger &operator=( const InternalLibLogger &ref ) = delete;
 		~InternalLibLogger( )                                        = default;
 
-		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
-		{
-			GetInstance( ).UpdateInfo( );
-			return m_internalLogger;
-		}
+		void        CreateInternalLogger( );
 		std::string LogLevelToStr( LoggerLevel level ) override;
-		void        EnableInternalLogging( );
-		void        DisableInternalLogging( );
 		void        SetLogLevel( LoggerLevel logLevel ) override;
 		void        CustomizeInternalLogger( se_internal::internal_logger_info infoStruct );
 		// Specifically Using This To Just Update The Internal Logger If Customized
 		void UpdateInfo( ) override;
 
+		static void EnableInternalLogging( )
+		{
+			loggingEnabled = true;
+		}
+		static void DisableInternalLogging( )
+		{
+			loggingEnabled = false;
+		}
+		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
+		{
+			return m_internalLogger;
+		}
 		template <typename T, typename... Args> void trace( T message, Args &&...args )
 		{
 			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
@@ -52,7 +53,6 @@ namespace serenity
 				}
 			}
 		}
-
 		template <typename T, typename... Args> void debug( T message, Args &&...args )
 		{
 			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
@@ -61,7 +61,6 @@ namespace serenity
 				}
 			}
 		}
-
 		template <typename T, typename... Args> void info( T message, Args &&...args )
 		{
 			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
@@ -70,7 +69,6 @@ namespace serenity
 				}
 			}
 		}
-
 		template <typename T, typename... Args> void warn( T &message, Args &&...args )
 		{
 			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
@@ -79,7 +77,6 @@ namespace serenity
 				}
 			}
 		}
-
 		template <typename T, typename... Args> void error( T message, Args &&...args )
 		{
 			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
@@ -88,7 +85,6 @@ namespace serenity
 				}
 			}
 		}
-
 		template <typename T, typename... Args> void fatal( T message, Args &&...args )
 		{
 			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
@@ -99,21 +95,19 @@ namespace serenity
 		}
 
 	      private:
-		explicit InternalLibLogger( se_internal::internal_logger_info infoStruct = { } );
 		bool ShouldLog( ) override;
-		void CreateInternalLogger( );
+
 
 	      private:
-		bool                                     internalCustomized { false };
-		std::atomic<bool>                        loggingEnabled { true };
-		std::unique_ptr<Sink>                    m_sinks;
-		static se_internal::internal_logger_info internalLoggerInfo;
-		static std::shared_ptr<spdlog::logger>   m_internalLogger;
+		static bool                            loggingEnabled;
+		bool                                   internalCustomized { false };
+		std::unique_ptr<Sink>                  m_sinks;
+		se_internal::internal_logger_info      internalLoggerInfo = { };
+		static std::shared_ptr<spdlog::logger> m_internalLogger;
 	};
-
 }  // namespace serenity
 
-#if defined( SERENITY_TEST_RUN ) || !defined( NDEBUG )
+#ifndef NDEBUG
 	#define SE_INTERNAL_ASSERT( condition, message, ... )                                                                         \
 		if( !( condition ) ) {                                                                                                \
 			SE_INTERNAL_FATAL( "ASSERTION FAILED: {}\nIn File: {} On Line: {}\n{}", SE_MACRO_STRING( condition ),         \
@@ -123,4 +117,4 @@ namespace serenity
 		}
 #else
 	#define SE_INTERNAL_ASSERT( condition, message, ... ) ( void ) 0
-#endif  // SERENITY_TEST_RUN || !NDEBUG
+#endif  // !NDEBUG

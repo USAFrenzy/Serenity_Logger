@@ -24,11 +24,7 @@ namespace serenity
 		fatal   = spdlog::level::critical,
 		off     = spdlog::level::off,
 	};
-	enum class LoggerInterface
-	{
-		internal = INTERFACE_INTERNAL,
-		client   = INTERFACE_CLIENT
-	};
+
 	static LoggerLevel ToLogLevel( MappedLevel level )
 	{
 		std::map<MappedLevel, LoggerLevel> levelMap = {
