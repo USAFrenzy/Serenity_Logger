@@ -97,6 +97,7 @@ namespace serenity
 	{
 		internalLogger->trace( "Stopping Logger..." );
 		CloseLog( FileHelperHandle( )->LogFilePath( ) );
+		CloseLog( internalLoggerInfo.logDir.path( ).string( ).append( "\\" + internalLoggerInfo.logName ) );
 		DropLogger( );  // Drop client/internal loggers w/o shutting spdlog down
 		internalLogger->trace( "Logger Has Been Stopped" );
 	}
@@ -111,8 +112,9 @@ namespace serenity
 			internalLogger->trace( "Sinks Handle Has Been Successfully Re-Initialized" );
 		}
 		if( internalLogger->InternalLogger( ) == nullptr ) {
+			// CustomizeInternalLogger() sets up the struct fields, resets the pointer, creates the new sink(s), creates
+			// the new logger, and registers that logger with the pointer pointing to that logger
 			internalLogger->CustomizeInternalLogger( internalLoggerInfo );
-			internalLogger->CreateInternalLogger( );
 			internalLogger->trace( "Internal Logger Has Been Successfully Re-Initialized" );
 		}
 		if( m_clientLogger == nullptr ) {
@@ -121,6 +123,7 @@ namespace serenity
 			internalLogger->trace( "Client Logger Has Been Successfully Re-Initialized" );
 		}
 		OpenLog( FileHelperHandle( )->LogFilePath( ) );
+		OpenLog( internalLoggerInfo.logDir.path( ).string( ).append( "\\" + internalLoggerInfo.logName ) );
 		internalLogger->trace( "Logger Has Been Successfully Restarted" );
 	}
 

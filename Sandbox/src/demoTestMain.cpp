@@ -7,7 +7,13 @@ void Test( );  // quick and dirty prototype for simple test
 int main( )
 {
 	using namespace serenity;
-	printf( "Library Version: %s\n", GetSerenityVerStr( ).c_str( ) );
+	printf( "\n####################################################################################\n" );
+	printf( "# Reminder To Myself To Start Incrementing Version Number Or Find Automated Method #\n" );
+	printf( "####################################################################################" );
+	printf( "\n\t\t\t#############################\n" );
+	printf( "\t\t\t#  Library Version: %s   #\n", GetSerenityVerStr( ).c_str( ) );
+	printf( "\t\t\t#############################\n\n" );
+
 	file_helper::path const originalPath = file_helper::current_path( );
 
 	auto logDirPath = originalPath;
@@ -26,8 +32,7 @@ int main( )
 	SetGlobalLevel( LoggerLevel::trace );
 	Logger logTwo( initInfo );
 
-	// This Section Also Seems To Work As Intended, However, There Is The Same Double Printing Issue From A While Back When Working
-	// On RenameLog() - Probably A Handle That Needs To Be Reset Like In RenameLog()
+	// This Section Also Seems To Work As Intended
 	se_internal::internal_logger_info changeOptions = { };
 	changeOptions.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
 	logTwo.ChangeInternalLoggerOptions( changeOptions );
@@ -45,6 +50,7 @@ int main( )
 	logTwo.RenameLog( spdLogDest, false );
 	SetGlobalLevel( LoggerLevel::trace );
 	logTwo.se_debug( "BACK IN MAIN!\n" );
+
 
 	// Next Step Now Is To Add More Sink Support, Wrap The Explicit Utilities Functions Into LogFileHelper Class Functions, And
 	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P

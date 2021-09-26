@@ -26,13 +26,9 @@ namespace serenity
 		InternalLibLogger &operator=( const InternalLibLogger &ref ) = delete;
 		~InternalLibLogger( )                                        = default;
 
-		void        CreateInternalLogger( );
 		std::string LogLevelToStr( LoggerLevel level ) override;
 		void        SetLogLevel( LoggerLevel logLevel ) override;
 		void        CustomizeInternalLogger( se_internal::internal_logger_info infoStruct );
-		// Specifically Using This To Just Update The Internal Logger If Customized
-		void UpdateInfo( ) override;
-
 		static void EnableInternalLogging( )
 		{
 			loggingEnabled = true;
@@ -41,10 +37,12 @@ namespace serenity
 		{
 			loggingEnabled = false;
 		}
+
 		static const std::shared_ptr<spdlog::logger> &InternalLogger( )
 		{
 			return m_internalLogger;
 		}
+
 		template <typename T, typename... Args> void trace( T message, Args &&...args )
 		{
 			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
@@ -95,6 +93,9 @@ namespace serenity
 		}
 
 	      private:
+		void CreateInternalLogger( );  // Funtionality Offered Via Call To CustomizeInternalLogger()
+		// Specifically Using This To Just Update The Internal Logger If Customized
+		void UpdateInfo( ) override;
 		bool ShouldLog( ) override;
 
 

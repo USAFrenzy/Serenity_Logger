@@ -4,9 +4,9 @@
 #include <serenity/Interfaces/IObserver.h>
 #include <serenity/Common.h>
 #include <serenity/Helpers/LogFileHelper.h>
+#include <serenity/Helpers/LibLogger.h>
 #include <serenity/Sinks/Sinks.h>
 
-#include "../experimental/LibLogger.h"
 
 #pragma warning( push, 0 )
 #include <spdlog/fmt/ostr.h>
@@ -38,6 +38,7 @@ namespace serenity
 		void                                         Shutdown( );
 		void                                         SetLogLevel( LoggerLevel logLevel ) override;
 		const LoggerLevel                            GetLogLevel( );
+		bool                                         ShouldLog( ) override;
 		std::string                                  LogLevelToStr( LoggerLevel level ) override;
 		std::string const                            LoggerName( );
 		bool                                         RenameLog( std::string newName, bool replaceIfExists = true );
@@ -62,10 +63,9 @@ namespace serenity
 
 	      private:
 		std::shared_ptr<spdlog::logger> CreateLogger( logger_info &infoStruct );
-		bool                            ShouldLog( ) override;
 	};
 
-	static LoggerLevel  global_level { LoggerLevel::trace };
+	static LoggerLevel global_level { LoggerLevel::trace };
 
 	void                SetGlobalLevel( LoggerLevel level );
 	static LoggerLevel &GetGlobalLevel( )
