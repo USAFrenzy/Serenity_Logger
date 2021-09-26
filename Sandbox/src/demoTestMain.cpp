@@ -60,7 +60,8 @@ void Test( )
 {
 	serenity::InternalLibLogger::EnableInternalLogging( );
 	serenity::se_internal::internal_logger_info tmpInfo = { };
-	tmpInfo.loggerName                                  = "Testing Logger";
+
+	tmpInfo.loggerName = "Testing Logger";
 	printf( "\n" );
 	serenity::InternalLibLogger tmp( tmpInfo );
 	tmp.trace( "Testing That The Disable Setting Works..." );

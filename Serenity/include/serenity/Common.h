@@ -107,21 +107,20 @@ namespace serenity
 			LoggerLevel                  level      = LoggerLevel::trace;
 			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
 			base_sink_info               sink_info = { };
-
 		};
 		static logger_info tmp = { };
 
-		static logger_info toLoggerInfo(internal_logger_info convertFrom)
+		static logger_info toLoggerInfo( internal_logger_info convertFrom )
 		{
-			tmp              = { };
+			tmp             = { };
 			tmp.rotate_sink = nullptr;
 			tmp.daily_sink  = nullptr;
-			tmp.loggerName = convertFrom.loggerName;
-			tmp.loggerName = convertFrom.loggerName;
-			tmp.logName    = convertFrom.logName;
-			tmp.logDir     = convertFrom.logDir;
-			tmp.level      = convertFrom.level;
-			tmp.sink_info  = convertFrom.sink_info;
+			tmp.loggerName  = convertFrom.loggerName;
+			tmp.loggerName  = convertFrom.loggerName;
+			tmp.logName     = convertFrom.logName;
+			tmp.logDir      = convertFrom.logDir;
+			tmp.level       = convertFrom.level;
+			tmp.sink_info   = convertFrom.sink_info;
 			return tmp;
 		}
 	}  // namespace se_internal
