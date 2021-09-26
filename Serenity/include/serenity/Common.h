@@ -24,11 +24,7 @@ namespace serenity
 		fatal   = spdlog::level::critical,
 		off     = spdlog::level::off,
 	};
-	enum class LoggerInterface
-	{
-		internal = INTERFACE_INTERNAL,
-		client   = INTERFACE_CLIENT
-	};
+
 	static LoggerLevel ToLogLevel( MappedLevel level )
 	{
 		std::map<MappedLevel, LoggerLevel> levelMap = {
@@ -102,13 +98,46 @@ namespace serenity
 		daily_sink_info *   daily_sink  = nullptr;
 		base_sink_info      sink_info   = { };
 	};
-
-	struct internal_logger_info
+	namespace se_internal
 	{
-		std::string                  loggerName = "SERENITY";
-		std::string                  logName    = "Internal_Log.txt";
-		LoggerLevel                  level      = LoggerLevel::trace;
-		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
-		base_sink_info               sink_info = { };
-	};
+		struct internal_logger_info
+		{
+			std::string                  loggerName = "SERENITY";
+			std::string                  logName    = "Internal_Log.txt";
+			LoggerLevel                  level      = LoggerLevel::trace;
+			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
+			base_sink_info               sink_info = { };
+
+		};
+		static logger_info tmp = { };
+
+		static logger_info toLoggerInfo(internal_logger_info convertFrom)
+		{
+			tmp              = { };
+			tmp.rotate_sink = nullptr;
+			tmp.daily_sink  = nullptr;
+			tmp.loggerName = convertFrom.loggerName;
+			tmp.loggerName = convertFrom.loggerName;
+			tmp.logName    = convertFrom.logName;
+			tmp.logDir     = convertFrom.logDir;
+			tmp.level      = convertFrom.level;
+			tmp.sink_info  = convertFrom.sink_info;
+			return tmp;
+		}
+	}  // namespace se_internal
 }  // namespace serenity
+   /*
+   class Y {
+  int b;
+public:
+  operator int();
+};
+Y::operator int() {
+  return b;
+}
+void f(Y obj) {
+  int i = int(obj);
+  int j = (int)obj;
+  int k = i + obj;
+}
+   */
