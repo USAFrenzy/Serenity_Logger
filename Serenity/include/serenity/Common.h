@@ -58,7 +58,17 @@ namespace serenity
 		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
 		return version;
 	}
+	static LoggerLevel global_level { LoggerLevel::trace };
 
+	// Honestly Kind Of Confused On How This Is Correctly Finding The Definition In Logger.cpp
+	// And On How LibLogger.cpp Is Correctly Finding The Definition From Only Common.h ???
+	// But I Mean, I Guess If It Works, It Works (Likely That This Might Be A Future Bug?)
+	void SetGlobalLevel( LoggerLevel level );
+
+	static LoggerLevel &GetGlobalLevel( )
+	{
+		return global_level;
+	}
 }  // namespace serenity
 
 
@@ -82,8 +92,8 @@ namespace serenity
 
 	struct logger_info
 	{
-		std::string                  loggerName = "Logger";
-		std::string                  logName    = "Log.txt";
+		std::string                  loggerName = DEFAULT_LOGGER_NAME;
+		std::string                  logName    = DEFAULT_LOG;
 		LoggerLevel                  level      = LoggerLevel::trace;
 		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
 		// These Fields Are Default nullptr Unless The Corresponding Struct Is Passed In ( For Use With CreateLogger() )
@@ -102,10 +112,10 @@ namespace serenity
 	{
 		struct internal_logger_info
 		{
-			std::string                  loggerName = "SERENITY";
-			std::string                  logName    = "Internal_Log.txt";
+			std::string                  loggerName = INTERNAL_DEFAULT_NAME;
+			std::string                  logName    = INTERNAL_DEFAULT_LOG;
 			LoggerLevel                  level      = LoggerLevel::trace;
-			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
+			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
 			base_sink_info               sink_info = { };
 		};
 		static logger_info tmp = { };
@@ -125,18 +135,3 @@ namespace serenity
 		}
 	}  // namespace se_internal
 }  // namespace serenity
-   /*
-   class Y {
-  int b;
-public:
-  operator int();
-};
-Y::operator int() {
-  return b;
-}
-void f(Y obj) {
-  int i = int(obj);
-  int j = (int)obj;
-  int k = i + obj;
-}
-   */

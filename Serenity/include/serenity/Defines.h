@@ -1,10 +1,13 @@
 #pragma once
-#include <filesystem>
 
-#define LOGGER_DEFAULT_NAME                             "SERENITY"
+#define INTERNAL_DEFAULT_NAME "SERENITY"
+#define INTERNAL_DEFAULT_LOG  "Internal_Log.txt"
+#define DEFAULT_LOGGER_NAME   "Logger"
+#define DEFAULT_LOG           "Log.txt"
+
 #define SERENITY_MAJOR                                  0
 #define SERENITY_MINOR                                  2
-#define SERENITY_REV                                    0
+#define SERENITY_REV                                    1
 #define VERSION_STRING_FORMAT( major, minor, revision ) #major "." #minor "." #revision
 #define VERSION_NUMBER( maj, min, rev )                 VERSION_STRING_FORMAT( maj, min, rev )
 #define SE_EXPAND_MACRO( x )                            x

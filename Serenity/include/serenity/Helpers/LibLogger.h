@@ -2,7 +2,6 @@
 
 #include <serenity/Common.h>
 #include <serenity/Interfaces/IObserver.h>
-#include <serenity/Sinks/Sinks.h>
 
 #pragma warning( push, 0 )
 #include <spdlog/spdlog.h>
@@ -16,6 +15,9 @@
 
 namespace serenity
 {
+	// FWD Decl
+	class Sink;
+
 	class InternalLibLogger : public ILogger
 	{
 	      public:
@@ -93,7 +95,8 @@ namespace serenity
 		}
 
 	      private:
-		void CreateInternalLogger( );  // Funtionality Offered Via Call To CustomizeInternalLogger()
+		// Funtionality Offered Via Call To CustomizeInternalLogger()
+		void CreateInternalLogger( );
 		// Specifically Using This To Just Update The Internal Logger If Customized
 		void UpdateInfo( ) override;
 		bool ShouldLog( ) override;

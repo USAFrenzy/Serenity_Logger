@@ -40,7 +40,8 @@ namespace serenity
 		const LoggerLevel                            GetLogLevel( );
 		bool                                         ShouldLog( ) override;
 		std::string                                  LogLevelToStr( LoggerLevel level ) override;
-		std::string const                            LoggerName( );
+		const std::string                            LoggerName( );
+		const std::string                            LogName( );
 		bool                                         RenameLog( std::string newName, bool replaceIfExists = true );
 		void                                         UpdateInfo( ) override;
 		void                                         OpenLog( file_helper::path filePath );
@@ -64,14 +65,6 @@ namespace serenity
 	      private:
 		std::shared_ptr<spdlog::logger> CreateLogger( logger_info &infoStruct );
 	};
-
-	static LoggerLevel global_level { LoggerLevel::trace };
-
-	void                SetGlobalLevel( LoggerLevel level );
-	static LoggerLevel &GetGlobalLevel( )
-	{
-		return global_level;
-	}
 
 #include <serenity/Logger-impl.h>
 }  // namespace serenity

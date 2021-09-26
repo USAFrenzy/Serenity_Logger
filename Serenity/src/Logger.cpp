@@ -246,6 +246,11 @@ namespace serenity
 		return initInfo.loggerName;
 	}
 
+	const std::string Logger::LogName( )
+	{
+		return initInfo.logName;
+	}
+
 	const LoggerLevel Logger::GetLogLevel( )
 	{
 		return ToLogLevel( m_clientLogger->level( ) );

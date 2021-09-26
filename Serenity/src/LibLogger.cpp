@@ -1,6 +1,5 @@
 
 #include <serenity/Helpers/LibLogger.h>
-#include <serenity/Logger.h>  // For The GetGlobal()
 
 namespace serenity
 {

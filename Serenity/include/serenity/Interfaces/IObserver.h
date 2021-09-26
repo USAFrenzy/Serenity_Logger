@@ -2,9 +2,6 @@
 
 #include <serenity/Common.h>
 
-#include <filesystem>
-
-
 namespace serenity
 {
 	class IFileHelper

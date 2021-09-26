@@ -3,16 +3,13 @@
 
 
 void Test( );  // quick and dirty prototype for simple test
+void PrintReminder( );
 
 int main( )
 {
+	PrintReminder( );
 	using namespace serenity;
-	printf( "\n####################################################################################\n" );
-	printf( "# Reminder To Myself To Start Incrementing Version Number Or Find Automated Method #\n" );
-	printf( "####################################################################################" );
-	printf( "\n\t\t\t#############################\n" );
-	printf( "\t\t\t#  Library Version: %s   #\n", GetSerenityVerStr( ).c_str( ) );
-	printf( "\t\t\t#############################\n\n" );
+
 
 	file_helper::path const originalPath = file_helper::current_path( );
 
@@ -56,6 +53,7 @@ int main( )
 	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P
 }
 
+
 void Test( )
 {
 	serenity::InternalLibLogger::EnableInternalLogging( );
@@ -71,4 +69,14 @@ void Test( )
 	tmp.trace( "Internal Logging Re-enabled..." );
 	spdlog::drop( "Testing Logger" );
 	printf( "\n" );
+}
+
+void PrintReminder( )
+{
+	printf( "\n####################################################################################\n" );
+	printf( "# Reminder To Myself To Start Incrementing Version Number Or Find Automated Method #\n" );
+	printf( "####################################################################################" );
+	printf( "\n\t\t\t#############################\n" );
+	printf( "\t\t\t#  Library Version: %s   #\n", serenity::GetSerenityVerStr( ).c_str( ) );
+	printf( "\t\t\t#############################\n\n" );
 }
