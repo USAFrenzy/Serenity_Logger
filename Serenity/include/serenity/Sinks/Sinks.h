@@ -25,8 +25,11 @@ namespace serenity
 
 	struct base_sink_info
 	{
-		std::string           formatStr = "%^[%T]%n:%v%$";
+		std::string           formatStr         = "%^[%T] %n: %v%$";
+		std::string           internalFormatStr = "%^[%L][%T] %n:%v%$";
 		std::vector<SinkType> sinks;
+		bool                  truncateFile { false };
+		bool                  hasFileHandle { false };
 	};
 
 	class Sink
@@ -37,10 +40,12 @@ namespace serenity
 		~Sink( ) = default;
 		Sink( const Sink &sink );
 
-		void                  set_sinks( std::vector<SinkType> sinks );
-		std::vector<SinkType> get_sinks( );
-		void                  CreateSink( logger_info &infoStruct );
-		void                  clear_sinks( );
+		void                        set_sinks( std::vector<SinkType> sinks );
+		const std::vector<SinkType> get_sinks( );
+		void                        CreateSink( logger_info &infoStruct );
+		void                        clear_sinks( );
+		const SinkType              sink_type( );
+		const base_sink_info        basic_info( );
 
 
 	      private:

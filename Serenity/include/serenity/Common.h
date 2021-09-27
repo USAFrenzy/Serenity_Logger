@@ -27,7 +27,7 @@ namespace serenity
 
 	static LoggerLevel ToLogLevel( MappedLevel level )
 	{
-		std::map<MappedLevel, LoggerLevel> levelMap = {
+		std::unordered_map<MappedLevel, LoggerLevel> levelMap = {
 		  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
 		  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
 		  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
@@ -41,7 +41,7 @@ namespace serenity
 
 	static MappedLevel ToMappedLevel( LoggerLevel level )
 	{
-		std::map<LoggerLevel, MappedLevel> levelMap = {
+		std::unordered_map<LoggerLevel, MappedLevel> levelMap = {
 		  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
 		  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
 		  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
@@ -84,7 +84,6 @@ namespace serenity
 	{
 		int      hour { 0 };
 		int      min { 0 };
-		bool     truncate { false };
 		uint16_t maxFiles { 0 };
 	};
 
@@ -131,6 +130,9 @@ namespace serenity
 			tmp.logDir      = convertFrom.logDir;
 			tmp.level       = convertFrom.level;
 			tmp.sink_info   = convertFrom.sink_info;
+			// Since CreateSink() uses formatStr And Not internalFormatStr
+			// -> This Is A Work Around/Hack So As To Not Change How CreateSink() Works
+			tmp.sink_info.formatStr = std::move( tmp.sink_info.internalFormatStr );
 			return tmp;
 		}
 	}  // namespace se_internal

@@ -32,6 +32,11 @@ namespace serenity
 		{
 			return logFileHandle;
 		}
+		static const std::shared_ptr<InternalLibLogger> &InternalLogger( )
+		{
+			return internalLogger;
+		}
+
 		void                                         StartLogger( );
 		void                                         StopLogger( );
 		void                                         DropLogger( );
@@ -55,12 +60,12 @@ namespace serenity
 		void                                         ChangeInternalLoggerOptions( se_internal::internal_logger_info options );
 
 	      private:
-		logger_info                            initInfo           = { };
-		se_internal::internal_logger_info      internalLoggerInfo = { };
-		static std::shared_ptr<spdlog::logger> m_clientLogger;
-		static std::unique_ptr<LogFileHelper>  logFileHandle;
-		std::unique_ptr<Sink>                  m_sinks;
-		std::unique_ptr<InternalLibLogger>     internalLogger;
+		logger_info                               initInfo           = { };
+		se_internal::internal_logger_info         internalLoggerInfo = { };
+		static std::shared_ptr<spdlog::logger>    m_clientLogger;
+		static std::unique_ptr<LogFileHelper>     logFileHandle;
+		std::unique_ptr<Sink>                     m_sinks;
+		static std::shared_ptr<InternalLibLogger> internalLogger;
 
 	      private:
 		std::shared_ptr<spdlog::logger> CreateLogger( logger_info &infoStruct );

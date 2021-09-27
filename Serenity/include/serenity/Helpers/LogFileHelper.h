@@ -3,12 +3,10 @@
 
 #include <serenity/Common.h>
 #include <serenity/Interfaces/IObserver.h>
+#include <serenity/Helpers/LibLogger.h>
 
 #include <filesystem>
 
-#pragma warning( push, 0 )
-#include <spdlog/details/file_helper.h>
-#pragma warning( pop )
 
 /*
 			Restructuring And Rescoping The LogFileHelper Class
@@ -37,6 +35,10 @@ namespace serenity
 		LogFileHelper &operator=( const LogFileHelper & ) = delete;
 		~LogFileHelper( )                                 = default;
 
+
+		bool OpenFile( file_helper::path filePath );
+		bool CloseFile( file_helper::path filePath );
+
 		void virtual SetLogDirPath( file_helper::path logDirPath );
 		void SetLogFilePath( file_helper::path logPath );
 		void StorePathComponents( file_helper::path &pathToStore );
@@ -46,9 +48,10 @@ namespace serenity
 		file_helper::path const LogFilePath( );
 
 	      private:
-		file_helper::path m_logDirPath;
-		file_helper::path m_filePath = m_logDirPath;
-		file_helper::path m_fileName = m_filePath.filename( );
+		static std::shared_ptr<InternalLibLogger> internalLogger;
+		file_helper::path                               m_logDirPath;
+		file_helper::path                               m_filePath = m_logDirPath;
+		file_helper::path                               m_fileName = m_filePath.filename( );
 
 	      public:
 		std::atomic<bool> fileInfoChanged;

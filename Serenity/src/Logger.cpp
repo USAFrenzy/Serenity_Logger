@@ -11,8 +11,9 @@
 
 namespace serenity
 {
-	std::shared_ptr<spdlog::logger> Logger::m_clientLogger;
-	std::unique_ptr<LogFileHelper>  Logger::logFileHandle;
+	std::shared_ptr<spdlog::logger>    Logger::m_clientLogger;
+	std::unique_ptr<LogFileHelper>     Logger::logFileHandle;
+	std::shared_ptr<InternalLibLogger> Logger::internalLogger;
 
 	std::string Logger::LogLevelToStr( LoggerLevel level )
 	{
@@ -34,8 +35,8 @@ namespace serenity
 		file_helper::path logDirPath  = initInfo.logDir.path( );
 		auto              filePath    = logDirPath.string( ) + "\\" + initInfo.logName;
 
+		internalLogger = std::make_shared<InternalLibLogger>( internalLoggerInfo );
 		logFileHandle  = std::make_unique<LogFileHelper>( initInfo.logDir, initInfo.logName );
-		internalLogger = std::make_unique<InternalLibLogger>( internalLoggerInfo );
 		m_sinks        = std::make_unique<Sink>( );
 		//##########################################################################################################
 		/*
@@ -45,13 +46,6 @@ namespace serenity
 		  - The ability to customize the internal logger? I mean, I'm using stdout sink here, but hey, who knows? [ ]
 		*/
 		//##########################################################################################################
-		// Set The Paths
-		FileHelperHandle( )->SetLogDirPath( logDirPath );
-
-		internalLogger->trace( "Setting Log Directory Path To [{}]", logDirPath );
-		FileHelperHandle( )->UpdateFileInfo( filePath );
-		internalLogger->trace( "Updated File Info For Path [{}]", filePath );
-		this->UpdateInfo( );
 		// Creating Client Logger
 		m_sinks->clear_sinks( );
 		m_sinks->set_sinks( initInfo.sink_info.sinks );
@@ -66,30 +60,16 @@ namespace serenity
 
 	void Logger::CloseLog( file_helper::path filePath )
 	{
-		if( file_helper::exists( filePath ) ) {
-			try {
-				internalLogger->trace( "Closing File [{}]...", filePath.filename( ) );
-				file_utils::CloseFile( filePath );
-				internalLogger->trace( "File [{}] Successfully Closed", filePath.filename( ) );
-			}
-			catch( const std::exception &e ) {
-				internalLogger->error( "Exception Thrown In CloseLog():\n%s\n", e.what( ) );
-			}
-		}
+		internalLogger->trace( "Closing File [{}]...", filePath.filename( ) );
+		FileHelperHandle( )->CloseFile( filePath );
+		internalLogger->trace( "File [{}] Successfully Closed", filePath.filename( ) );
 	}
 
 	void Logger::OpenLog( file_helper::path filePath )
 	{
-		if( file_helper::exists( filePath ) ) {
-			try {
-				internalLogger->trace( "Opening File [{}]...", filePath.filename( ) );
-				file_utils::OpenFile( filePath );
-				internalLogger->trace( "File [{}] Successfully Opened", filePath.filename( ) );
-			}
-			catch( const std::exception &e ) {
-				internalLogger->error( "Exception Thrown In OpenLog():\n%s\n", e.what( ) );
-			}
-		}
+		internalLogger->trace( "Opening File [{}]...", filePath.filename( ) );
+		FileHelperHandle( )->OpenFile( filePath );
+		internalLogger->trace( "File [{}] Successfully Opened", filePath.filename( ) );
 	}
 
 
@@ -97,7 +77,6 @@ namespace serenity
 	{
 		internalLogger->trace( "Stopping Logger..." );
 		CloseLog( FileHelperHandle( )->LogFilePath( ) );
-		CloseLog( internalLoggerInfo.logDir.path( ).string( ).append( "\\" + internalLoggerInfo.logName ) );
 		DropLogger( );  // Drop client/internal loggers w/o shutting spdlog down
 		internalLogger->trace( "Logger Has Been Stopped" );
 	}
@@ -123,7 +102,6 @@ namespace serenity
 			internalLogger->trace( "Client Logger Has Been Successfully Re-Initialized" );
 		}
 		OpenLog( FileHelperHandle( )->LogFilePath( ) );
-		OpenLog( internalLoggerInfo.logDir.path( ).string( ).append( "\\" + internalLoggerInfo.logName ) );
 		internalLogger->trace( "Logger Has Been Successfully Restarted" );
 	}
 
@@ -272,14 +250,19 @@ namespace serenity
 
 	bool Logger::ShouldLog( )
 	{
-		return ( GetGlobalLevel( ) <= GetLogLevel( ) ) ? true : false;
+		if( m_clientLogger != nullptr ) {
+			return ( GetGlobalLevel( ) <= GetLogLevel( ) ) ? true : false;
+		}
+		else {
+			return false;
+		}
 	}
 
 	void Logger::ChangeInternalLoggerOptions( se_internal::internal_logger_info options )
 	{
 		internalLogger->trace( "Updating Internal Logger Options" );
 		internalLogger->CustomizeInternalLogger( options );
-		internalLogger->trace( "Successfully Updated Internal Logger Options" );
+		internalLogger->info( "Successfully Updated Internal Logger Options" );
 	}
 
 	// MISC Functions
