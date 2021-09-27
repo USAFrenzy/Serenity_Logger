@@ -28,30 +28,28 @@ namespace serenity
 	class LogFileHelper : protected IFileHelper
 	{
 	      public:
-		explicit LogFileHelper( file_helper::directory_entry &pathToFileDir, std::string &fileName );
+		explicit LogFileHelper( const file_helper::path pathToFile );
 		LogFileHelper( )                        = delete;
 		LogFileHelper( const LogFileHelper & )  = delete;
 		LogFileHelper( const LogFileHelper && ) = delete;
 		LogFileHelper &operator=( const LogFileHelper & ) = delete;
 		~LogFileHelper( )                                 = default;
 
-
-		bool OpenFile( file_helper::path filePath );
-		bool CloseFile( file_helper::path filePath );
-
-		void virtual SetLogDirPath( file_helper::path logDirPath );
-		void SetLogFilePath( file_helper::path logPath );
-		void StorePathComponents( file_helper::path &pathToStore );
-		void NotifyLogger( ) override;
-		void UpdateFileInfo( file_helper::path pathToFile ) override;
-
-		file_helper::path const LogFilePath( );
+		const file_helper::path            LogFilePath( );
+		const file_helper::directory_entry LogDir( );
+		void                               SetLogFilePath( const file_helper::path logPath );
+		void                               SetLogDirPath( const file_helper::path logDirPath );
+		void                               StorePathComponents( const file_helper::path &pathToStore );
+		void                               NotifyLogger( ) override;
+		void                               UpdateFileInfo( const file_helper::path pathToFile ) override;
+		bool                               OpenFile( const file_helper::path filePath );
+		bool                               CloseFile( const file_helper::path filePath );
 
 	      private:
 		static std::shared_ptr<InternalLibLogger> internalLogger;
-		file_helper::path                               m_logDirPath;
-		file_helper::path                               m_filePath = m_logDirPath;
-		file_helper::path                               m_fileName = m_filePath.filename( );
+		file_helper::path                         m_logDirPath;
+		file_helper::path                         m_filePath = m_logDirPath;
+		file_helper::path                         m_fileName;
 
 	      public:
 		std::atomic<bool> fileInfoChanged;

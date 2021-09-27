@@ -67,9 +67,8 @@ namespace serenity
 						auto console_logger = std::make_shared<spdlog::sinks::stdout_color_sink_mt>( );
 						console_logger->set_pattern( infoStruct.sink_info.formatStr );
 						sinkVector.emplace_back( std::move( console_logger ) );
-						// Temporary Hack For Checking If Another Sink Has A File Handle (Will Need To
-						// ACTUALLY Put Logic Here In The Future
-						if( !sinkVector.empty( ) ) {
+						// sink vector contains more than stdout_color -> has a file handle
+						if( sinkVector.size( ) > 1 ) {
 							m_sinkInfo.hasFileHandle = true;
 						}
 					}
@@ -78,8 +77,9 @@ namespace serenity
 					{
 						auto rotating_logger = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
 						  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ),
-						  infoStruct.rotate_sink->maxFileNum, infoStruct.rotate_sink->maxFileSize,
-						  infoStruct.rotate_sink->rotateWhenOpened );
+						  infoStruct.sink_info.rotate_sink->maxFileNum,
+						  infoStruct.sink_info.rotate_sink->maxFileSize,
+						  infoStruct.sink_info.rotate_sink->rotateWhenOpened );
 						rotating_logger->set_pattern( infoStruct.sink_info.formatStr );
 						sinkVector.emplace_back( std::move( rotating_logger ) );
 						m_sinkInfo.hasFileHandle = true;
@@ -89,7 +89,7 @@ namespace serenity
 					{
 						auto daily_logger = std::make_shared<spdlog::sinks::daily_file_sink_mt>(
 						  infoStruct.logDir.path( ).string( ).append( "\\" + infoStruct.logName ),
-						  infoStruct.daily_sink->hour, infoStruct.daily_sink->min,
+						  infoStruct.sink_info.daily_sink->hour, infoStruct.sink_info.daily_sink->min,
 						  infoStruct.sink_info.truncateFile );
 						daily_logger->set_pattern( infoStruct.sink_info.formatStr );
 						sinkVector.emplace_back( std::move( daily_logger ) );

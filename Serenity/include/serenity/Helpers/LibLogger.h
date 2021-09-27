@@ -25,8 +25,7 @@ namespace serenity
 		InternalLibLogger &operator=( const InternalLibLogger &ref ) = delete;
 		~InternalLibLogger( )                                        = default;
 
-		std::string LogLevelToStr( LoggerLevel level ) override;
-		void        SetLogLevel( LoggerLevel logLevel ) override;
+
 		/// <summary>
 		///  For Setting Internal Format String -> internalFormatStr Will Overwrite formatStr
 		/// </summary>
@@ -34,6 +33,9 @@ namespace serenity
 		const std::shared_ptr<Sink>             sink_info( );
 		const std::string                       name( );
 		const se_internal::internal_logger_info internal_info( );
+		std::string                             LogLevelToStr( LoggerLevel level ) override;
+		void                                    SetLogLevel( LoggerLevel logLevel ) override;
+		void                                    SetFlushLevel( LoggerLevel flushLevel ) override;
 
 		static void EnableInternalLogging( )
 		{
@@ -48,7 +50,6 @@ namespace serenity
 		{
 			return m_internalLogger;
 		}
-
 		template <typename T, typename... Args> void trace( T message, Args &&...args )
 		{
 			if( ShouldLog( ) ) {

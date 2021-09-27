@@ -2,7 +2,6 @@
 #include <serenity/Utilities/Utilities.h>
 
 
-void Test( std::string originalLoggerName );  // quick and dirty prototype for simple test
 void PrintReminder( );
 
 int main( )
@@ -35,19 +34,15 @@ int main( )
 	changeOptions.sink_info.truncateFile = true;
 	logTwo.ChangeInternalLoggerOptions( changeOptions );
 
-	Test( logTwo.InternalLogger( )->name( ) );  // Disable/Enable Internal Logging
-
-	InternalLibLogger::EnableInternalLogging( );
 	// SetGlobalLevel( LoggerLevel::warning );    // Subsequent Calls Will Set Logger && Global Levels
 	logTwo.SetLogLevel( LoggerLevel::trace );  // Still Can Set Level On A Logger-To-Logger Basis
-
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
 	logTwo.se_debug( "spdLogDest: {}\n", spdLogDest );
-
+	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::info );
 	logTwo.RenameLog( spdLogDest, false );
-	// SetGlobalLevel( LoggerLevel::trace );
+	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::trace );
 	logTwo.se_debug( "BACK IN MAIN!\n" );
 
 
@@ -56,33 +51,9 @@ int main( )
 }
 
 
-void Test( std::string originalLoggerName )
-{
-	serenity::InternalLibLogger::EnableInternalLogging( );
-	serenity::se_internal::internal_logger_info tmpInfo = { };
-
-	tmpInfo.loggerName = "Testing Logger";
-	printf( "\n" );
-	serenity::InternalLibLogger tmp( tmpInfo );
-	tmp.trace( "Testing That The Disable Setting Works..." );
-	serenity::InternalLibLogger::DisableInternalLogging( );
-	tmp.trace( "Internal Logging Disabled..." );
-	serenity::InternalLibLogger::EnableInternalLogging( );
-	tmp.trace( "Internal Logging Re-enabled..." );
-	spdlog::drop( "Testing Logger" );
-	serenity::InternalLibLogger::DisableInternalLogging( );
-	// Reset For The Shared Pointer From Calling Scope
-	tmpInfo                        = serenity::Logger::InternalLogger( )->internal_info( );
-	tmpInfo.sink_info.truncateFile = false;
-	tmp.SetLogLevel( serenity::LoggerLevel::off );
-	tmp.CustomizeInternalLogger( tmpInfo );
-	tmp.SetLogLevel( serenity::GetGlobalLevel( ) );
-	printf( "\n" );
-}
-
 void PrintReminder( )
 {
-	auto day   = "26";
+	auto day   = "27";
 	auto month = "SEP";
 	auto year  = "21";
 
