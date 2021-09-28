@@ -24,14 +24,10 @@ namespace serenity
 		fatal   = spdlog::level::critical,
 		off     = spdlog::level::off,
 	};
-	enum class LoggerInterface
-	{
-		internal = INTERFACE_INTERNAL,
-		client   = INTERFACE_CLIENT
-	};
+
 	static LoggerLevel ToLogLevel( MappedLevel level )
 	{
-		std::map<MappedLevel, LoggerLevel> levelMap = {
+		std::unordered_map<MappedLevel, LoggerLevel> levelMap = {
 		  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
 		  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
 		  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
@@ -45,7 +41,7 @@ namespace serenity
 
 	static MappedLevel ToMappedLevel( LoggerLevel level )
 	{
-		std::map<LoggerLevel, MappedLevel> levelMap = {
+		std::unordered_map<LoggerLevel, MappedLevel> levelMap = {
 		  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
 		  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
 		  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
@@ -56,52 +52,66 @@ namespace serenity
 		}
 		return result;
 	}
-}  // namespace serenity
 
+	static std::string GetSerenityVerStr( )
+	{
+		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
+		return version;
+	}
+	static LoggerLevel global_level { LoggerLevel::trace };
+
+	// Honestly Kind Of Confused On How This Is Correctly Finding The Definition In Logger.cpp
+	// And On How LibLogger.cpp Is Correctly Finding The Definition From Only Common.h ???
+	// But I Mean, I Guess If It Works, It Works (Likely That This Might Be A Future Bug?)
+	void SetGlobalLevel( LoggerLevel level );
+
+	static LoggerLevel &GetGlobalLevel( )
+	{
+		return global_level;
+	}
+}  // namespace serenity
 
 namespace serenity
 {
-	struct rotating_sink_info
-	{
-		int  maxFileSize { 1024 * 1024 * 5 };
-		int  maxFileNum { 5 };
-		bool rotateWhenOpened { false };
-	};
-	struct daily_sink_info
-	{
-		int      hour { 0 };
-		int      min { 0 };
-		bool     truncate { false };
-		uint16_t maxFiles { 0 };
-	};
-
-	enum class SinkType;
-
 	struct logger_info
 	{
-		std::string                  loggerName = "Logger";
-		std::string                  logName    = "Log.txt";
-		LoggerLevel                  level      = LoggerLevel::trace;
-		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
-		// These Fields Are Default nullptr Unless The Corresponding Struct Is Passed In ( For Use With CreateLogger() )
-		/*  logger_info a = {};
-		 *  rotating_sink_info b = {};
-		 *  a.rotate_sink = &b;
-		 *  auto sink = SinkType::rotating_file_sink;
-		 *  CreateLogger(sink, a); -> creates <spdlog::sinks::rotating_file_sink>( a.loggerName, a.logName, a.b->maxFileSize,
-		 *  a.b->maxFileNum, a.b->rotateWhenOpened);
-		 */
-		rotating_sink_info *rotate_sink = nullptr;
-		daily_sink_info *   daily_sink  = nullptr;
-		base_sink_info      sink_info   = { };
-	};
+		std::string loggerName = DEFAULT_LOGGER_NAME;
+		std::string logName    = DEFAULT_LOG;
+		LoggerLevel level      = LoggerLevel::trace;
+		LoggerLevel flushLevel = LoggerLevel::trace;
 
-	struct internal_logger_info
-	{
-		std::string                  loggerName = "SERENITY";
-		std::string                  logName    = "Internal_Log.txt";
-		LoggerLevel                  level      = LoggerLevel::trace;
 		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
 		base_sink_info               sink_info = { };
 	};
+	namespace se_internal
+	{
+		struct internal_logger_info
+		{
+			std::string                  loggerName = INTERNAL_DEFAULT_NAME;
+			std::string                  logName    = INTERNAL_DEFAULT_LOG;
+			LoggerLevel                  level      = LoggerLevel::trace;
+			LoggerLevel                  flushLevel = LoggerLevel::trace;
+			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
+			base_sink_info               sink_info = { };
+		};
+		static logger_info tmp = { };
+
+		static logger_info toLoggerInfo( internal_logger_info convertFrom )
+		{
+			tmp                       = { };
+			tmp.sink_info.rotate_sink = nullptr;
+			tmp.sink_info.daily_sink  = nullptr;
+			tmp.loggerName            = convertFrom.loggerName;
+			tmp.loggerName            = convertFrom.loggerName;
+			tmp.logName               = convertFrom.logName;
+			tmp.logDir                = convertFrom.logDir;
+			tmp.level                 = convertFrom.level;
+			tmp.flushLevel            = convertFrom.flushLevel;
+			tmp.sink_info             = convertFrom.sink_info;
+			// Since CreateSink() uses formatStr And Not internalFormatStr
+			// -> This Is A Work Around/Hack So As To Not Change How CreateSink() Works
+			tmp.sink_info.formatStr = std::move( tmp.sink_info.internalFormatStr );
+			return tmp;
+		}
+	}  // namespace se_internal
 }  // namespace serenity

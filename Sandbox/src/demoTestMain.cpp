@@ -2,14 +2,16 @@
 #include <serenity/Utilities/Utilities.h>
 
 
+void PrintReminder( );
+
 int main( )
 {
+	PrintReminder( );
 	using namespace serenity;
-	printf( "Library Version: %s\n", GetSerenityVerStr( ).c_str( ) );
-	file_helper::path const originalPath   = file_helper::current_path( );
-	file_helper::path const pathToBuildDir = file_helper::current_path( ).parent_path( );
-	file_helper::path const relativePath   = file_helper::current_path( ).relative_path( );
-	file_helper::path const pathToSB_txt   = originalPath.string( ).append( "\\Sandbox.txt" );
+
+  
+	file_helper::path const originalPath = file_helper::current_path( );
+
 
 
 	auto logDirPath = originalPath;
@@ -23,19 +25,53 @@ int main( )
 	initInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
 	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
 
-
-	SetGlobalLevel( LoggerLevel::warning );  // Works As Intended [X]
+	InternalLibLogger::EnableInternalLogging( );
+	// Works As Intended [X]
+	SetGlobalLevel( LoggerLevel::trace );
 	Logger logTwo( initInfo );
 	SetGlobalLevel( LoggerLevel::trace );  // Subsequent Calls Will Set Logger && Global Levels
+
+	// This Section Also Seems To Work As Intended
+	se_internal::internal_logger_info changeOptions = logTwo.InternalLogger( )->internal_info( );
+	changeOptions.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
+	changeOptions.sink_info.truncateFile = true;
+	logTwo.ChangeInternalLoggerOptions( changeOptions );
+
+	// SetGlobalLevel( LoggerLevel::warning );    // Subsequent Calls Will Set Logger && Global Levels
+	logTwo.SetLogLevel( LoggerLevel::trace );  // Still Can Set Level On A Logger-To-Logger Basis
 
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
 	logTwo.se_debug( "spdLogDest: {}\n", spdLogDest );
-
+	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::info );
 	logTwo.RenameLog( spdLogDest, false );
+	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::trace );
 	logTwo.se_debug( "BACK IN MAIN!\n" );
+
+	logTwo.se_info( "Testing Swapping To New Log Instead Of Renaming..." );
+	logTwo.WriteToNewLog( "CreateNewLog.txt" );
+	logTwo.se_debug( "File Path: [{}]", logTwo.FileHelperHandle( )->LogFilePath( ) );
+	logTwo.se_debug( "Relative File Path: [{}]", logTwo.FileHelperHandle( )->RelativePathToLog( ) );
+	logTwo.se_debug( "Log Directory: [{}]", logTwo.FileHelperHandle( )->LogDir( ).path( ) );
+	logTwo.se_debug( "File Name: [{}]", logTwo.FileHelperHandle( )->LogName( ) );
 
 	// Next Step Now Is To Add More Sink Support, Wrap The Explicit Utilities Functions Into LogFileHelper Class Functions, And
 	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P
+}
+
+
+void PrintReminder( )
+{
+	auto day   = "27";
+	auto month = "SEP";
+	auto year  = "21";
+
+	printf( "\n####################################################################################\n" );
+	printf( "# Reminder To Myself To Start Incrementing Version Number Or Find Automated Method #\n" );
+	printf( "####################################################################################" );
+	printf( "\n\t\t\t#############################\n" );
+	printf( "\t\t\t#  Library Version: %s   #\n", serenity::GetSerenityVerStr( ).c_str( ) );
+	printf( "\t\t\t#  Date: %s%s%s            #\n", day, month, year );
+	printf( "\t\t\t#############################\n\n" );
 }

@@ -6,6 +6,7 @@ set (
     "src/LogFileHelper.cpp"
     "src/Utilities.cpp"
     "src/Sinks.cpp"
+    "src/LibLogger.cpp"
 )
 
 set (
@@ -18,6 +19,7 @@ set (
     "include/serenity/Interfaces/IObserver.h"
     "include/serenity/Utilities/Utilities.h"
     "include/serenity/Sinks/Sinks.h"
+    "include/serenity/Helpers/LibLogger.h"
 )
 
 set (SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})

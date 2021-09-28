@@ -1,62 +1,85 @@
 #include <serenity/Helpers/LogFileHelper.h>
-
+#include <serenity/Utilities/Utilities.h>
+#include <serenity/Logger.h>
 
 namespace serenity
 {
-	// clang-format off
-	/*
-		For The Constuctors, would be helpful to take in a path, search for the root, find the whole path
-		from root to end of input path, then break into component paths and set the member vairables
-		respective of those paths
-		
-		- Also Would Like To Just Have The Constructors Look Like:
-		
-		LogFileHelper::LogFileHelper()
-		: m_logDir("Logs"), m_logName("Log.txt")
-		{
-			StorePathComponents();
-		}
-	*/
-	// clang-format on
+	std::shared_ptr<InternalLibLogger> LogFileHelper::internalLogger;
 
-	LogFileHelper::LogFileHelper( file_helper::directory_entry &logDir, std::string &fileName )
+	LogFileHelper::LogFileHelper( const file_helper::path pathToFile )
 	{
-		serenity::file_helper::path logDirPath, logPathToFile;
-		auto                        defaultPath = file_helper::current_path( );
+		internalLogger = Logger::InternalLogger( );
 
+		file_helper::path logEntry = pathToFile;
+		logEntry._Remove_filename_and_separator( );
+		file_helper::directory_entry logDir { logEntry };
 		if( !logDir.exists( ) ) {
 			try {
-				serenity::file_helper::create_directories( logDir );
+				internalLogger->trace( "Directory [{}] Not Found - Creating Directory Entry...",
+						       logDir.path( ).filename( ) );
+				file_helper::create_directories( logDir );
+				internalLogger->info( "Successfully Created Directory At [{}]", logDir.path( ) );
 			}
 			catch( const std::exception &er ) {
-				printf( "Exception Caught In LogFileHelper():\n%s", er.what( ) );
+				internalLogger->fatal( "Exception Caught In LogFileHelper():\n{}", er.what( ) );
 			}
 		}
-		logDirPath = logDir.path( );
-		SetLogDirPath( logDirPath );
-		auto defaultFilePath = logDirPath /= fileName;
-		StorePathComponents( defaultPath );
+		SetLogDirPath( logDir.path( ) );
+		StorePathComponents( pathToFile );
 	}
 
-
-	void LogFileHelper::SetLogDirPath( file_helper::path logDirPath )
+	bool LogFileHelper::OpenFile( const file_helper::path filePath )
 	{
+		if( file_helper::exists( filePath ) ) {
+			try {
+				file_utils::OpenFile( filePath );
+			}
+			catch( const std::exception &e ) {
+				internalLogger->fatal( "Exception Caught In OpenLog():\n%s\n", e.what( ) );
+				return false;
+			}
+		}
+		return true;
+	}
+
+	void LogFileHelper::Flush( )
+	{
+		file_utils::Flush( LogFilePath( ) );
+	}
+
+	bool LogFileHelper::CloseFile( const file_helper::path filePath )
+	{
+		if( file_helper::exists( filePath ) ) {
+			try {
+				file_utils::CloseFile( filePath );
+			}
+			catch( const std::exception &e ) {
+				internalLogger->fatal( "Exception Caught In CloseLog():\n%s\n", e.what( ) );
+				return false;
+			}
+		}
+		return true;
+	}
+
+	void LogFileHelper::SetLogDirPath( const file_helper::path logDirPath )
+	{
+		internalLogger->trace( "Setting Log Directory Path To [{}]", logDirPath );
 		m_logDirPath    = logDirPath;
 		fileInfoChanged = true;
+		internalLogger->trace( "Log Directory Path Successfully Set To [{}]", logDirPath );
 	}
 
 
-	void LogFileHelper::UpdateFileInfo( file_helper::path pathToFile )
+	void LogFileHelper::UpdateFileInfo( const file_helper::path pathToFile )
 	{
+		internalLogger->trace( "Updating File Info..." );
+		internalLogger->trace( "Storing Path Components..." );
 		StorePathComponents( pathToFile );
+		internalLogger->info( "Path Components Successfully Stored" );
+		internalLogger->trace( "Notifying Logger Of Changes..." );
 		NotifyLogger( );
-	}
-	LogFileHelper::~LogFileHelper( )
-	{
-		m_fileName.clear( );
-		m_logDirPath.clear( );
-		m_filePath.clear( );
-		UpdateFileInfo( m_filePath );
+		internalLogger->info( "Logger Successfully Notified Of Changes" );
+		internalLogger->info( "File Info Successfully Updated" );
 	}
 
 	void LogFileHelper::NotifyLogger( )
@@ -64,71 +87,42 @@ namespace serenity
 		fileInfoChanged = true;
 	}
 
-	file_helper::path const LogFileHelper::FileName( )
-	{
-		if( m_fileName.has_extension( ) )  // i.e Not A Directory
-		{
-			return m_fileName;
-		}
-		else {
-			return "";
-		}
-	}
-	file_helper::path const LogFileHelper::LogFilePath( )
+	const file_helper::path serenity::LogFileHelper::LogFilePath( )
 	{
 		return m_filePath;
 	}
-	file_helper::path const LogFileHelper::LogDirPath( )
+	const std::string LogFileHelper::LogName( )
 	{
-		return m_logDirPath;
+		return m_fileName.string( );
 	}
 
-	void LogFileHelper::SetLogFilePath( file_helper::path logPath )
+	const file_helper::path LogFileHelper::RelativePathToLog( )
+	{
+		return LogFilePath( ).relative_path( );
+	}
+
+	const file_helper::directory_entry LogFileHelper::LogDir( )
+	{
+		return file_helper::directory_entry { m_logDirPath };
+	}
+
+
+	void LogFileHelper::SetLogFilePath( const file_helper::path logPath )
 	{
 		m_filePath      = logPath;
 		fileInfoChanged = true;
 	}
-	file_helper::path const LogFileHelper::CurrentDir( )
+
+	// Since I'm No Longer Storing Every Component Of A Path - This Might Be A Little Extra...
+	// Really Just Keeping This At The Moment If, later On, I Decide To Add Some Relative
+	// Pathing Type Of Functions And The Like
+	void LogFileHelper::StorePathComponents( const file_helper::path &pathToStore )
 	{
-		return m_currentDir;
-	}
-	void LogFileHelper::SetDir( file_helper::path oldPathDir, file_helper::path destDirPath )
-	{
-		oldPathDir      = destDirPath;
-		m_cachePath     = destDirPath;
-		m_cacheDir      = m_cachePath.stem( );
+		auto logEntry { pathToStore };
+		logEntry._Remove_filename_and_separator( );
+		m_logDirPath    = logEntry;
+		m_filePath      = pathToStore;
+		m_fileName      = pathToStore.filename( );
 		fileInfoChanged = true;
-	}
-
-	void LogFileHelper::StorePathComponents( file_helper::path &pathToStore )
-	{
-		m_filePath     = pathToStore;
-		m_currentDir   = file_helper::current_path( );
-		m_cachePath    = pathToStore;
-		m_rootPath     = pathToStore.root_path( );
-		m_rootDir      = pathToStore.root_directory( );
-		m_rootName     = pathToStore.root_name( );
-		m_parentPath   = pathToStore.parent_path( );
-		m_relativePath = pathToStore.relative_path( );
-		m_pathStem     = pathToStore.stem( );
-		m_cacheDir     = m_pathStem;
-		m_fileName     = pathToStore.filename( );
-	}
-	// clang-format off
-	// ############################################################################### Testing Functions  ###############################################################################
-	// clang-format on
-
-	std::string const LogFileHelper::PathComponents_Str( file_helper::path path )
-	{
-		auto pPath        = path.string( );
-		auto rootPath     = path.root_path( ).string( );
-		auto rootDir      = path.root_directory( ).string( );
-		auto rootName     = path.root_name( ).string( );
-		auto parentPath   = path.parent_path( ).string( );
-		auto relativePath = path.relative_path( ).string( );
-		auto pathStem     = path.stem( ).string( );
-		return "\nFor The Path: " + pPath + "\n\t#################### Path Components ####################\n\tRoot Path:\t" +
-		       rootPath + "\n\tRoot Name:\t" + rootName + "\n\tRoot Dir:\t" + rootDir + "\n\tRelative Path:\t" + relativePath +
-		       "\n\tParent Path:\t" + parentPath + "\n\tPath Stem:\t" + pathStem;
 	}
 }  // namespace serenity

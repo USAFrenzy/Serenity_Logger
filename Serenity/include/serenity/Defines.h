@@ -1,20 +1,13 @@
 #pragma once
-#include <filesystem>
 
-// Toggle For Logger Macros In Release Mode
-#define TESTS 1
-#if TESTS
-	#define SERENITY_TEST_RUN
-#else
-	#undef SERENITY_TEST_RUN
-#endif
+#define INTERNAL_DEFAULT_NAME "SERENITY"
+#define INTERNAL_DEFAULT_LOG  "Internal_Log.txt"
+#define DEFAULT_LOGGER_NAME   "Logger"
+#define DEFAULT_LOG           "Log.txt"
 
-#define LOGGER_DEFAULT_NAME                             "SERENITY"
-#define INTERFACE_INTERNAL                              50
-#define INTERFACE_CLIENT                                51
 #define SERENITY_MAJOR                                  0
-#define SERENITY_MINOR                                  1
-#define SERENITY_REV                                    0
+#define SERENITY_MINOR                                  2
+#define SERENITY_REV                                    4
 #define VERSION_STRING_FORMAT( major, minor, revision ) #major "." #minor "." #revision
 #define VERSION_NUMBER( maj, min, rev )                 VERSION_STRING_FORMAT( maj, min, rev )
 #define SE_EXPAND_MACRO( x )                            x
@@ -33,7 +26,8 @@
 
 	// Formatting of Message to be used by both
 	#define SE_ASSERT_VAR_MSG( message, ... ) fmt::format( message, __VA_ARGS__ )
-
+#else
+	#define SE_ASSERT_VAR_MSG( message, ... ) ( void ) 0
 #endif  // NDEBUG
 
 #define SE_NULL_PTR nullptr
