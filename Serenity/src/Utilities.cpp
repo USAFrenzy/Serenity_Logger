@@ -393,6 +393,16 @@ namespace serenity
 			return true;
 		}
 
+		void Flush( std::filesystem::path file )
+		{
+			std::fstream fFile { file };
+			if( std::filesystem::exists( file ) ) {
+				OpenFile( file, false );
+				std::flush( fFile );
+				CloseFile( file );
+			}
+		}
+
 		bool CloseFile( std::filesystem::path file )
 		{
 			namespace fs = std::filesystem;

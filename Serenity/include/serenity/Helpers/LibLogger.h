@@ -15,22 +15,28 @@
 
 namespace serenity
 {
-	// FWD Decl
-	class Sink;
-
 	class InternalLibLogger : public ILogger
 	{
 	      public:
 		explicit InternalLibLogger( se_internal::internal_logger_info infoStruct = { } );
-		InternalLibLogger( )                                = delete;
-		InternalLibLogger( const InternalLibLogger &copy )  = delete;
+		InternalLibLogger( ) = delete;
+		InternalLibLogger( const InternalLibLogger &copy );
 		InternalLibLogger( const InternalLibLogger &&move ) = delete;
 		InternalLibLogger &operator=( const InternalLibLogger &ref ) = delete;
 		~InternalLibLogger( )                                        = default;
 
-		std::string LogLevelToStr( LoggerLevel level ) override;
-		void        SetLogLevel( LoggerLevel logLevel ) override;
-		void        CustomizeInternalLogger( se_internal::internal_logger_info infoStruct );
+
+		/// <summary>
+		///  For Setting Internal Format String -> internalFormatStr Will Overwrite formatStr
+		/// </summary>
+		void                                    CustomizeInternalLogger( se_internal::internal_logger_info infoStruct );
+		const std::shared_ptr<Sink>             sink_info( );
+		const std::string                       name( );
+		const se_internal::internal_logger_info internal_info( );
+		std::string                             LogLevelToStr( LoggerLevel level ) override;
+		void                                    SetLogLevel( LoggerLevel logLevel ) override;
+		void                                    SetFlushLevel( LoggerLevel flushLevel ) override;
+
 		static void EnableInternalLogging( )
 		{
 			loggingEnabled = true;
@@ -44,53 +50,40 @@ namespace serenity
 		{
 			return m_internalLogger;
 		}
-
 		template <typename T, typename... Args> void trace( T message, Args &&...args )
 		{
-			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-				if( ShouldLog( ) ) {
-					InternalLogger( )->trace( message, std::forward<Args>( args )... );
-				}
+			if( ShouldLog( ) ) {
+				InternalLogger( )->trace( message, std::forward<Args>( args )... );
 			}
 		}
 		template <typename T, typename... Args> void debug( T message, Args &&...args )
 		{
-			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-				if( ShouldLog( ) ) {
-					InternalLogger( )->debug( message, std::forward<Args>( args )... );
-				}
+			if( ShouldLog( ) ) {
+				InternalLogger( )->debug( message, std::forward<Args>( args )... );
 			}
 		}
 		template <typename T, typename... Args> void info( T message, Args &&...args )
 		{
-			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-				if( ShouldLog( ) ) {
-					InternalLogger( )->info( message, std::forward<Args>( args )... );
-				}
+			if( ShouldLog( ) ) {
+				InternalLogger( )->info( message, std::forward<Args>( args )... );
 			}
 		}
 		template <typename T, typename... Args> void warn( T &message, Args &&...args )
 		{
-			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-				if( ShouldLog( ) ) {
-					InternalLogger( )->warn( message, std::forward<Args>( args )... );
-				}
+			if( ShouldLog( ) ) {
+				InternalLogger( )->warn( message, std::forward<Args>( args )... );
 			}
 		}
 		template <typename T, typename... Args> void error( T message, Args &&...args )
 		{
-			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-				if( ShouldLog( ) ) {
-					InternalLogger( )->error( message, std::forward<Args>( args )... );
-				}
+			if( ShouldLog( ) ) {
+				InternalLogger( )->error( message, std::forward<Args>( args )... );
 			}
 		}
 		template <typename T, typename... Args> void fatal( T message, Args &&...args )
 		{
-			if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-				if( ShouldLog( ) ) {
-					InternalLogger( )->critical( message, std::forward<Args>( args )... );
-				}
+			if( ShouldLog( ) ) {
+				InternalLogger( )->critical( message, std::forward<Args>( args )... );
 			}
 		}
 
@@ -105,7 +98,7 @@ namespace serenity
 	      private:
 		static bool                            loggingEnabled;
 		bool                                   internalCustomized { false };
-		std::unique_ptr<Sink>                  m_sinks;
+		std::shared_ptr<Sink>                  m_sinks;
 		se_internal::internal_logger_info      internalLoggerInfo = { };
 		static std::shared_ptr<spdlog::logger> m_internalLogger;
 	};

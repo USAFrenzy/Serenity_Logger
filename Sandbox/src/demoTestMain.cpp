@@ -2,7 +2,6 @@
 #include <serenity/Utilities/Utilities.h>
 
 
-void Test( );  // quick and dirty prototype for simple test
 void PrintReminder( );
 
 int main( )
@@ -30,53 +29,45 @@ int main( )
 	Logger logTwo( initInfo );
 
 	// This Section Also Seems To Work As Intended
-	se_internal::internal_logger_info changeOptions = { };
+	se_internal::internal_logger_info changeOptions = logTwo.InternalLogger( )->internal_info( );
 	changeOptions.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
+	changeOptions.sink_info.truncateFile = true;
 	logTwo.ChangeInternalLoggerOptions( changeOptions );
 
-	Test( );  // Disable/Enable Internal Logging
-
-	SetGlobalLevel( LoggerLevel::warning );    // Subsequent Calls Will Set Logger && Global Levels
+	// SetGlobalLevel( LoggerLevel::warning );    // Subsequent Calls Will Set Logger && Global Levels
 	logTwo.SetLogLevel( LoggerLevel::trace );  // Still Can Set Level On A Logger-To-Logger Basis
-
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
 	logTwo.se_debug( "spdLogDest: {}\n", spdLogDest );
-
+	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::info );
 	logTwo.RenameLog( spdLogDest, false );
-	SetGlobalLevel( LoggerLevel::trace );
+	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::trace );
 	logTwo.se_debug( "BACK IN MAIN!\n" );
 
+	logTwo.se_info( "Testing Swapping To New Log Instead Of Renaming..." );
+	logTwo.WriteToNewLog( "CreateNewLog.txt" );
+	logTwo.se_debug( "File Path: [{}]", logTwo.FileHelperHandle( )->LogFilePath( ) );
+	logTwo.se_debug( "Relative File Path: [{}]", logTwo.FileHelperHandle( )->RelativePathToLog( ) );
+	logTwo.se_debug( "Log Directory: [{}]", logTwo.FileHelperHandle( )->LogDir( ).path( ) );
+	logTwo.se_debug( "File Name: [{}]", logTwo.FileHelperHandle( )->LogName( ) );
 
 	// Next Step Now Is To Add More Sink Support, Wrap The Explicit Utilities Functions Into LogFileHelper Class Functions, And
 	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P
 }
 
 
-void Test( )
-{
-	serenity::InternalLibLogger::EnableInternalLogging( );
-	serenity::se_internal::internal_logger_info tmpInfo = { };
-
-	tmpInfo.loggerName = "Testing Logger";
-	printf( "\n" );
-	serenity::InternalLibLogger tmp( tmpInfo );
-	tmp.trace( "Testing That The Disable Setting Works..." );
-	serenity::InternalLibLogger::DisableInternalLogging( );
-	tmp.trace( "Internal Logging Disabled..." );
-	serenity::InternalLibLogger::EnableInternalLogging( );
-	tmp.trace( "Internal Logging Re-enabled..." );
-	spdlog::drop( "Testing Logger" );
-	printf( "\n" );
-}
-
 void PrintReminder( )
 {
+	auto day   = "27";
+	auto month = "SEP";
+	auto year  = "21";
+
 	printf( "\n####################################################################################\n" );
 	printf( "# Reminder To Myself To Start Incrementing Version Number Or Find Automated Method #\n" );
 	printf( "####################################################################################" );
 	printf( "\n\t\t\t#############################\n" );
 	printf( "\t\t\t#  Library Version: %s   #\n", serenity::GetSerenityVerStr( ).c_str( ) );
+	printf( "\t\t\t#  Date: %s%s%s            #\n", day, month, year );
 	printf( "\t\t\t#############################\n\n" );
 }
