@@ -107,6 +107,7 @@ namespace serenity
 	void Logger::Shutdown( )
 	{
 		StopLogger( );
+
 		internalLogger->trace( "Shutting Down..." );
 		spdlog::drop_all( );
 		spdlog::shutdown( );
@@ -117,6 +118,7 @@ namespace serenity
 
 	void Logger::DropLogger( )
 	{
+
 		internalLogger->trace( "Dropping Logger And Resetting Handles...", m_clientLogger->name( ) );
 		spdlog::drop( m_clientLogger->name( ) );
 		internalLogger->trace( "Logger [{}] Has Been Dropped", m_clientLogger->name( ) );
@@ -208,7 +210,6 @@ namespace serenity
 		}
 		return true;
 	}
-
 
 	void Logger::UpdateInfo( )
 	{

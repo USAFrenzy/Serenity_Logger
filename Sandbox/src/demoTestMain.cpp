@@ -9,8 +9,10 @@ int main( )
 	PrintReminder( );
 	using namespace serenity;
 
-
+  
 	file_helper::path const originalPath = file_helper::current_path( );
+
+
 
 	auto logDirPath = originalPath;
 	logDirPath /= "Logs";
@@ -27,6 +29,7 @@ int main( )
 	// Works As Intended [X]
 	SetGlobalLevel( LoggerLevel::trace );
 	Logger logTwo( initInfo );
+	SetGlobalLevel( LoggerLevel::trace );  // Subsequent Calls Will Set Logger && Global Levels
 
 	// This Section Also Seems To Work As Intended
 	se_internal::internal_logger_info changeOptions = logTwo.InternalLogger( )->internal_info( );
@@ -36,6 +39,7 @@ int main( )
 
 	// SetGlobalLevel( LoggerLevel::warning );    // Subsequent Calls Will Set Logger && Global Levels
 	logTwo.SetLogLevel( LoggerLevel::trace );  // Still Can Set Level On A Logger-To-Logger Basis
+
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
 	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );

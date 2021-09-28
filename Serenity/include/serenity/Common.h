@@ -71,7 +71,6 @@ namespace serenity
 	}
 }  // namespace serenity
 
-
 namespace serenity
 {
 	struct logger_info
