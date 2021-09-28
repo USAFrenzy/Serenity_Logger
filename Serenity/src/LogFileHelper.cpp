@@ -125,4 +125,5 @@ namespace serenity
 		m_fileName      = pathToStore.filename( );
 		fileInfoChanged = true;
 	}
+
 }  // namespace serenity

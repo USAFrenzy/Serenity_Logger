@@ -7,20 +7,13 @@
 #include <serenity/Helpers/LibLogger.h>
 #include <serenity/Sinks/Sinks.h>
 
+
 #pragma warning( push, 0 )
 #include <spdlog/fmt/ostr.h>
 #pragma warning( pop )
 
 namespace serenity
 {
-	static LoggerLevel  global_level { LoggerLevel::trace };
-	std::string         GetSerenityVerStr( );
-	void                SetGlobalLevel( LoggerLevel level );
-	static LoggerLevel &GetGlobalLevel( )
-	{
-		return global_level;
-	}
-
 	class Logger : public ILogger
 	{
 	      public:
