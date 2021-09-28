@@ -34,11 +34,13 @@ int main( )
 	changeOptions.sink_info.truncateFile = true;
 	logTwo.ChangeInternalLoggerOptions( changeOptions );
 
-	// SetGlobalLevel( LoggerLevel::warning );    // Subsequent Calls Will Set Logger && Global Levels
+	SetGlobalLevel( LoggerLevel::warning );  // Subsequent Calls Will Set Logger && Global Levels
+
 	logTwo.SetLogLevel( LoggerLevel::trace );  // Still Can Set Level On A Logger-To-Logger Basis
+
 	logTwo.se_info( "RenameLog() Section:" );
 	auto spdDir     = logDirPath;
-	auto spdLogDest = spdDir.string( ).append( "\\RenamedSpdlogLog.txt" );
+	auto spdLogDest = spdDir.string( ).append( "/RenamedSpdlogLog.txt" );
 	logTwo.se_debug( "spdLogDest: {}\n", spdLogDest );
 	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::info );
 	logTwo.RenameLog( spdLogDest, false );
@@ -46,7 +48,7 @@ int main( )
 	logTwo.se_debug( "BACK IN MAIN!\n" );
 
 	logTwo.se_info( "Testing Swapping To New Log Instead Of Renaming..." );
-	logTwo.WriteToNewLog( "CreateNewLog.txt" );
+	logTwo.WriteToNewLog( "/WriteToNewLog/CreateNewLog.txt" );
 	logTwo.se_debug( "File Path: [{}]", logTwo.FileHelperHandle( )->LogFilePath( ) );
 	logTwo.se_debug( "Relative File Path: [{}]", logTwo.FileHelperHandle( )->RelativePathToLog( ) );
 	logTwo.se_debug( "Log Directory: [{}]", logTwo.FileHelperHandle( )->LogDir( ).path( ) );
@@ -59,7 +61,7 @@ int main( )
 
 void PrintReminder( )
 {
-	auto day   = "27";
+	auto day   = "28";
 	auto month = "SEP";
 	auto year  = "21";
 

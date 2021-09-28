@@ -28,7 +28,7 @@ namespace serenity
 		void                               StorePathComponents( const file_helper::path &pathToStore );
 		void                               NotifyLogger( ) override;
 		void                               UpdateFileInfo( const file_helper::path pathToFile ) override;
-		bool                               OpenFile( const file_helper::path filePath );
+		bool                               OpenFile( const file_helper::path filePath, bool truncate = false );
 		void                               Flush( );
 		bool                               CloseFile( const file_helper::path filePath );
 

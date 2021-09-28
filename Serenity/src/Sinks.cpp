@@ -8,20 +8,19 @@
 #include <spdlog/sinks/daily_file_sink.h>
 #pragma warning( pop )
 
+#include <algorithm>
+
 namespace serenity
 {
 	Sink::Sink( )
 	{
 		m_sinkInfo = { };
-		m_sinkType = SinkType::stdout_color_mt;
 	}
 
 	Sink::Sink( const Sink &sink )
 	{
-		m_sinkType = sink.m_sinkType;
 		sinkVector = sink.sinkVector;
 	}
-
 
 	void Sink::set_sinks( std::vector<SinkType> sinks )
 	{
@@ -33,23 +32,17 @@ namespace serenity
 		return m_sinkInfo.sinks;
 	}
 
-	/*
-	 * Currently Hard-coding the format...
-	 * Would Be Better To Use A Default Format And Just Call A Formatter Function, Possibly Similar To What spdlog Does, But Just
-	 * Validates The Format (Maybe? Parsing Is A Royal Pain...) And Sets The Format Given Whether One Was Passed In Or Not:
-	 * i.e. CreateLogger(sink, loggerInfo, stampFmt, isInternal);
-	 *      CreateSink(sink, infoStruct, stampFmt); -> Check if empty, use default if so, otherwise possibly validate and then use
-	 *      fmt passed in?
-	 * std::optional is one route I could take, was trying that out on other functions early on and it seemed flexible enough
-	 * EDIT: Accomplished this, more or less, by just having a sink_info type of struct with a format string and sink field
-	 * - To Be honest, it's a bit more streamlined this route with the whole:
-	 *	- CreateLogger(loggerInfo, isInternal) -> CreateSink(loggerInfo)->loggerInfo.sink_info->formatStr for the format stamp
-	 * Still debating on the validation parsing deal (Should check to see if spdlog does this already anyways)
-	 */
-
 	void Sink::CreateSink( logger_info &infoStruct )
 	{
-		sinkVector.clear( );
+		// sink vector doesn't contain console sinks -> has a file handle
+		// Still set hasFileHandle = true in individual file sinks if it happens to contain a console sink & file sink
+		// Kind Of Easier To Do This Than Explicity Search For Sinks That Have A File Handle In The Console Sinks
+		if( !( ( find_sink( m_sinkInfo.sinks.begin( ), m_sinkInfo.sinks.begin( ), SinkType::stdout_color_mt ) ) &&
+		       ( find_sink( m_sinkInfo.sinks.begin( ), m_sinkInfo.sinks.begin( ), SinkType::stderr_color_mt ) ) ) )
+		{
+			m_sinkInfo.hasFileHandle = true;
+		}
+
 		for( auto const &sink : infoStruct.sink_info.sinks ) {
 			switch( sink ) {
 				case SinkType::basic_file_mt:
@@ -67,10 +60,18 @@ namespace serenity
 						auto console_logger = std::make_shared<spdlog::sinks::stdout_color_sink_mt>( );
 						console_logger->set_pattern( infoStruct.sink_info.formatStr );
 						sinkVector.emplace_back( std::move( console_logger ) );
-						// sink vector contains more than stdout_color -> has a file handle
-						if( sinkVector.size( ) > 1 ) {
-							m_sinkInfo.hasFileHandle = true;
-						}
+					}
+					break;
+				case SinkType::stderr_color_mt:
+					{
+						auto console_logger = std::make_shared<spdlog::sinks::stderr_color_sink_mt>( );
+						console_logger->set_pattern( infoStruct.sink_info.formatStr );
+						sinkVector.emplace_back( std::move( console_logger ) );
+					}
+					break;
+				case SinkType::std_split_mt:
+					{
+						// To Be implemented in derived sink class
 					}
 					break;
 				case SinkType::rotating_mt:
@@ -111,15 +112,19 @@ namespace serenity
 		m_sinkInfo.sinks.clear( );
 	}
 
-	const SinkType Sink::sink_type( )
-	{
-		return m_sinkType;
-	}
-
 	const base_sink_info Sink::basic_info( )
 	{
 		return m_sinkInfo;
 	}
 
-
+	bool Sink::find_sink( SinkIterator first, SinkIterator last, const SinkType &value )
+	{
+		while( first != last ) {
+			if( *first == value ) {
+				return false;
+			}
+			++first;
+		}
+		return true;
+	}
 }  // namespace serenity

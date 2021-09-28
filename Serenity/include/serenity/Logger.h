@@ -37,23 +37,24 @@ namespace serenity
 			return internalLogger;
 		}
 
-		void                                         StartLogger( );
-		void                                         StopLogger( );
-		void                                         DropLogger( );
-		void                                         Shutdown( );
-		void                                         SetLogLevel( LoggerLevel logLevel ) override;
-		void                                         SetFlushLevel( LoggerLevel flushLevel ) override;
-		const LoggerLevel                            GetFlushLevel( );
-		const LoggerLevel                            GetLogLevel( );
-		bool                                         ShouldLog( ) override;
-		std::string                                  LogLevelToStr( LoggerLevel level ) override;
-		const std::string                            LoggerName( );
-		const std::string                            LogName( );
-		bool                                         RenameLog( const std::string newName, bool replaceIfExists = true );
-		bool                                         WriteToNewLog( const std::string newLogName );
-		void                                         UpdateInfo( ) override;
-		void                                         OpenLog( const file_helper::path filePath );
-		void                                         CloseLog( const file_helper::path filePath );
+		void              StartLogger( );
+		void              StopLogger( );
+		void              DropLogger( );
+		void              Shutdown( );
+		void              SetGlobalLevel( LoggerLevel globalLevel );
+		void              SetLogLevel( LoggerLevel logLevel ) override;
+		void              SetFlushLevel( LoggerLevel flushLevel ) override;
+		const LoggerLevel GetFlushLevel( );
+		const LoggerLevel GetLogLevel( );
+		bool              ShouldLog( ) override;
+		std::string       LogLevelToStr( LoggerLevel level ) override;
+		const std::string LoggerName( );
+		const std::string LogName( );
+		bool              RenameLog( const std::string newName, bool overwriteIfExists = true );
+		bool              WriteToNewLog( const std::string newLogName, bool truncateIfExists = false );
+		void              UpdateInfo( ) override;
+		void              OpenLog( const file_helper::path filePath, bool truncate = false );
+		void              CloseLog( const file_helper::path filePath );
 		template <typename T, typename... Args> void se_trace( T message, Args &&...args );
 		template <typename T, typename... Args> void se_debug( T message, Args &&...args );
 		template <typename T, typename... Args> void se_info( T message, Args &&...args );
@@ -87,6 +88,21 @@ namespace serenity
 		void CreateLogger( logger_info &infoStruct );
 	};
 
+	static LoggerLevel  global_level { LoggerLevel::trace };
+	static LoggerLevel &GetGlobalLevel( )
+	{
+		return global_level;
+	}
+	static void SetGlobalLevel( LoggerLevel level )
+	{
+		global_level = level;
+		if( Logger::ClientSideLogger( ) != nullptr ) {
+			Logger::ClientSideLogger( )->set_level( ToMappedLevel( level ) );
+		}
+		if( InternalLibLogger::InternalLogger( ) != nullptr ) {
+			InternalLibLogger::InternalLogger( )->set_level( ToMappedLevel( level ) );
+		}
+	}
 #include <serenity/Logger-impl.h>
 }  // namespace serenity
 

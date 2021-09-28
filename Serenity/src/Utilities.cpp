@@ -361,7 +361,7 @@ namespace serenity
 		{
 			namespace fs = std::filesystem;
 			std::fstream                openFile;
-			int                         mode = std::ios_base::app;
+			int                         mode;
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
 			// By Default Create A File With Full Permissions If File Doesn't Already Exist
 			if( !fs::exists( file ) ) {
@@ -381,7 +381,10 @@ namespace serenity
 				}
 			}
 			if( truncate ) {
-				mode = std::ios_base::ate;
+				mode = std::ios_base::trunc | std::ios_base::out;
+			}
+			else {
+				mode = std::ios_base::app;
 			}
 			try {
 				openFile.open( file, mode );

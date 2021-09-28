@@ -28,11 +28,11 @@ namespace serenity
 		StorePathComponents( pathToFile );
 	}
 
-	bool LogFileHelper::OpenFile( const file_helper::path filePath )
+	bool LogFileHelper::OpenFile( const file_helper::path filePath, bool truncate )
 	{
 		if( file_helper::exists( filePath ) ) {
 			try {
-				file_utils::OpenFile( filePath );
+				file_utils::OpenFile( filePath, truncate );
 			}
 			catch( const std::exception &e ) {
 				internalLogger->fatal( "Exception Caught In OpenLog():\n%s\n", e.what( ) );

@@ -64,10 +64,10 @@ namespace serenity
 		internalLogger->trace( "File [{}] Successfully Closed", filePath.filename( ) );
 	}
 
-	void Logger::OpenLog( const file_helper::path filePath )
+	void Logger::OpenLog( const file_helper::path filePath, bool truncate )
 	{
 		internalLogger->trace( "Opening File [{}]...", filePath.filename( ) );
-		FileHelperHandle( )->OpenFile( filePath );
+		FileHelperHandle( )->OpenFile( filePath, truncate );
 		internalLogger->trace( "File [{}] Successfully Opened", filePath.filename( ) );
 	}
 
@@ -100,7 +100,7 @@ namespace serenity
 			CreateLogger( initInfo );
 			internalLogger->trace( "Client Logger Has Been Successfully Re-Initialized" );
 		}
-		OpenLog( FileHelperHandle( )->LogFilePath( ) );
+		OpenLog( FileHelperHandle( )->LogFilePath( ), false );
 		internalLogger->info( "Logger Has Been Successfully Restarted" );
 	}
 
@@ -140,7 +140,7 @@ namespace serenity
 		SetFlushLevel( initInfo.flushLevel );
 	}
 
-	bool Logger::RenameLog( const std::string newName, bool replaceIfExists )
+	bool Logger::RenameLog( const std::string newName, bool overwriteIfExists )
 	{
 		// In Case Path Is Passed In
 		file_helper::path newFilePath = newName;
@@ -154,15 +154,15 @@ namespace serenity
 			StopLogger( );
 			if( file_helper::exists( newPath ) ) {
 				internalLogger->warn( "File [{}] Already Exists", newPath.filename( ) );
-				if( replaceIfExists ) {
-					internalLogger->trace( "Parameter \"replaceIfExists\" = true." );
+				if( overwriteIfExists ) {
+					internalLogger->trace( "Parameter \"overwriteIfExists\" = true." );
 					internalLogger->trace( "Removing [{}] Before Renaming [{}] To [{}].", newPath.filename( ),
 							       oldPath.filename( ), newPath.filename( ) );
 					file_utils::RemoveEntry( newPath );
 					internalLogger->trace( "Removed File [{}]", newPath.filename( ) );
 				}
 				else {
-					internalLogger->trace( "Parameter \"replaceIfExists\" = false." );
+					internalLogger->trace( "Parameter \"overwriteIfExists\" = false." );
 					internalLogger->trace( "Copying File Contents: \n- From:\t[{}] \n- To:\t[{}]", oldPath, newPath );
 					file_utils::CopyContents( oldPath, newPath );
 					internalLogger->trace( "Copying Contents Finished. Removing File [{}]", oldPath.filename( ) );
@@ -171,7 +171,16 @@ namespace serenity
 				}
 			}
 			file_utils::RenameFile( oldPath, newPath );
-			internalLogger->info( "Renaming [{}] To [{}] Was Successful.", oldPath.filename( ), newPath.filename( ) );
+			if( overwriteIfExists ) {
+				internalLogger->info( "Renaming [{0}] To [{1}], By First Removing [{0}], Was Successful",
+						      oldPath.filename( ), newPath.filename( ) );
+			}
+			else {
+				internalLogger->info(
+				  "Renaming [{0}] To [{1}], By First Copying Contents From [{0}] To [{1}] And Then Removing [{0}], "
+				  "Was Successful",
+				  oldPath.filename( ), newPath.filename( ) );
+			}
 			// Effectively Updating Variables
 			initInfo.logName = newPath.filename( ).string( );
 			internalLogger->trace( "Log File Name Has Been Updated To Reflect Rename To [{}]", newPath.filename( ) );
@@ -180,6 +189,7 @@ namespace serenity
 			UpdateInfo( );
 			internalLogger->info( "Logger Has Been Updated For File Path Changes" );
 			StartLogger( );
+
 			return true;
 		}
 		catch( const std::exception &e ) {
@@ -189,7 +199,7 @@ namespace serenity
 		}
 	}
 
-	bool Logger::WriteToNewLog( const std::string newLogName )
+	bool Logger::WriteToNewLog( const std::string newLogName, bool truncateIfExists )
 	{
 		const auto &            tmpPath     = initInfo.logDir.path( );
 		file_helper::path       oldPath     = tmpPath.string( ).append( "\\" + initInfo.logName );
@@ -199,6 +209,10 @@ namespace serenity
 			internalLogger->trace( "Setting New Log Path To Point To [{}]", newFilePath );
 			FileHelperHandle( )->StorePathComponents( newFilePath );
 			UpdateInfo( );
+			if( std::filesystem::exists( newFilePath ) && truncateIfExists ) {
+				FileHelperHandle( )->OpenFile( newFilePath, truncateIfExists );
+				FileHelperHandle( )->CloseFile( newFilePath );
+			}
 			StartLogger( );
 			internalLogger->info( "Successfully Changed To New Log [{}]", initInfo.logName );
 		}
@@ -279,7 +293,7 @@ namespace serenity
 	bool Logger::ShouldLog( )
 	{
 		if( m_clientLogger != nullptr ) {
-			return ( GetGlobalLevel( ) <= GetLogLevel( ) ) ? true : false;
+			return ( GetLogLevel( ) <= GetGlobalLevel( ) ) ? true : false;
 		}
 		else {
 			return false;
@@ -291,17 +305,5 @@ namespace serenity
 		internalLogger->trace( "Updating Internal Logger Options" );
 		internalLogger->CustomizeInternalLogger( options );
 		internalLogger->info( "Successfully Updated Internal Logger Options" );
-	}
-
-	// MISC Functions
-	void SetGlobalLevel( LoggerLevel level )
-	{
-		global_level = level;
-		if( Logger::ClientSideLogger( ) != nullptr ) {
-			Logger::ClientSideLogger( )->set_level( ToMappedLevel( level ) );
-		}
-		if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-			InternalLibLogger::InternalLogger( )->set_level( ToMappedLevel( level ) );
-		}
 	}
 }  // namespace serenity

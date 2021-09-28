@@ -3,19 +3,16 @@
 #include <vector>
 #include <memory>
 
-#pragma warning( push, 0 )
-#include <spdlog/spdlog.h>
-#pragma warning( pop )
+#include <spdlog/sinks/sink.h>
 
 namespace serenity
 {
-	// forward declaration
-	struct logger_info;
-
 	// mt designated in case I add support for the single thread versions later on
 	enum class SinkType
 	{
 		stdout_color_mt,
+		stderr_color_mt,
+		std_split_mt,  // error/fatal to stderr, else stdout -> to be implemented
 		basic_file_mt,
 		rotating_mt,
 		daily_file_sink_mt,
@@ -46,9 +43,14 @@ namespace serenity
 		daily_sink_info *     daily_sink  = nullptr;
 	};
 
+	// forward declaration
+	struct logger_info;
+
 	class Sink
 	{
 	      public:
+		using SinkIterator = std::vector<SinkType>::iterator;
+
 		Sink( );
 		~Sink( ) = default;
 		Sink( const Sink &sink );
@@ -57,15 +59,16 @@ namespace serenity
 		const std::vector<SinkType> get_sinks( );
 		void                        CreateSink( logger_info &infoStruct );
 		void                        clear_sinks( );
-		const SinkType              sink_type( );
 		const base_sink_info        basic_info( );
+		bool                        find_sink( SinkIterator first, SinkIterator last, const SinkType &value );
 
 
 	      private:
 		base_sink_info m_sinkInfo;
-		SinkType       m_sinkType = SinkType::unknown;
 
 	      public:
 		std::vector<spdlog::sink_ptr> sinkVector;
 	};
+
+
 }  // namespace serenity

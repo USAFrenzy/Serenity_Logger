@@ -116,7 +116,7 @@ namespace serenity
 		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
 		/// To The Console. By Default, Creates A File With Full Permissions If It Doesn't Exist And Opens It In Append
 		/// Mode</returns>
-		bool OpenFile( std::filesystem::path file, bool truncate = false );
+		bool OpenFile( std::filesystem::path file, bool truncate );
 		/// <summary>Opens The File Specified In "file" Parameter, Flushes Contents To File, And Then Closes The File</summary>
 		void Flush( std::filesystem::path file );  // Not Neccessarily Fully Implemented
 		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,

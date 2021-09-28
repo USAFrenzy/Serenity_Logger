@@ -58,17 +58,6 @@ namespace serenity
 		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
 		return version;
 	}
-	static LoggerLevel global_level { LoggerLevel::trace };
-
-	// Honestly Kind Of Confused On How This Is Correctly Finding The Definition In Logger.cpp
-	// And On How LibLogger.cpp Is Correctly Finding The Definition From Only Common.h ???
-	// But I Mean, I Guess If It Works, It Works (Likely That This Might Be A Future Bug?)
-	void SetGlobalLevel( LoggerLevel level );
-
-	static LoggerLevel &GetGlobalLevel( )
-	{
-		return global_level;
-	}
 }  // namespace serenity
 
 

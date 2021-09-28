@@ -1,5 +1,6 @@
 
 #include <serenity/Helpers/LibLogger.h>
+#include <serenity/Logger.h>
 
 namespace serenity
 {
