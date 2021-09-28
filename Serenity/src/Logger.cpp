@@ -189,6 +189,27 @@ namespace serenity
 		}
 	}
 
+	bool Logger::WriteToNewLog( const std::string newLogName )
+	{
+		const auto &            tmpPath     = initInfo.logDir.path( );
+		file_helper::path       oldPath     = tmpPath.string( ).append( "\\" + initInfo.logName );
+		const file_helper::path newFilePath = tmpPath.string( ).append( "\\" + newLogName );
+		try {
+			StopLogger( );
+			internalLogger->trace( "Setting New Log Path To Point To [{}]", newFilePath );
+			FileHelperHandle( )->StorePathComponents( newFilePath );
+			UpdateInfo( );
+			StartLogger( );
+			internalLogger->info( "Successfully Changed To New Log [{}]", initInfo.logName );
+		}
+		catch( const std::exception &e ) {
+			internalLogger->fatal( "Failed Change To New Log [{}] Due To:\n{}", newLogName, e.what( ) );
+			return false;
+		}
+		return true;
+	}
+
+
 	void Logger::UpdateInfo( )
 	{
 		internalLogger->trace( "Checking For File Info Changes..." );
@@ -198,9 +219,9 @@ namespace serenity
 		else {
 			internalLogger->trace( "File Info Has Changed. Updating File Info" );
 			initInfo.logDir = FileHelperHandle( )->LogDir( );
-			internalLogger->trace( "Logger Log Directory Set To [{}]", initInfo.logDir.path( ).filename( ) );
-			initInfo.logName = FileHelperHandle( )->LogFilePath( ).filename( ).string( );
-			internalLogger->trace( "Logger LogName Set To [{}]", initInfo.logName );
+			internalLogger->trace( "Logger's Log Directory Set To [{}]", initInfo.logDir.path( ).filename( ) );
+			initInfo.logName = FileHelperHandle( )->LogName( );
+			internalLogger->trace( "Logger's Log Name Set To [{}]", initInfo.logName );
 			internalLogger->info( "File Info Has Been Updated" );
 			FileHelperHandle( )->fileInfoChanged = false;
 		}

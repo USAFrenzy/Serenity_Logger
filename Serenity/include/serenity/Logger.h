@@ -50,6 +50,7 @@ namespace serenity
 		const std::string                            LoggerName( );
 		const std::string                            LogName( );
 		bool                                         RenameLog( const std::string newName, bool replaceIfExists = true );
+		bool                                         WriteToNewLog( const std::string newLogName );
 		void                                         UpdateInfo( ) override;
 		void                                         OpenLog( const file_helper::path filePath );
 		void                                         CloseLog( const file_helper::path filePath );

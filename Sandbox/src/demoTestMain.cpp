@@ -45,6 +45,12 @@ int main( )
 	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::trace );
 	logTwo.se_debug( "BACK IN MAIN!\n" );
 
+	logTwo.se_info( "Testing Swapping To New Log Instead Of Renaming..." );
+	logTwo.WriteToNewLog( "CreateNewLog.txt" );
+	logTwo.se_debug( "File Path: [{}]", logTwo.FileHelperHandle( )->LogFilePath( ) );
+	logTwo.se_debug( "Relative File Path: [{}]", logTwo.FileHelperHandle( )->RelativePathToLog( ) );
+	logTwo.se_debug( "Log Directory: [{}]", logTwo.FileHelperHandle( )->LogDir( ).path( ) );
+	logTwo.se_debug( "File Name: [{}]", logTwo.FileHelperHandle( )->LogName( ) );
 
 	// Next Step Now Is To Add More Sink Support, Wrap The Explicit Utilities Functions Into LogFileHelper Class Functions, And
 	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P

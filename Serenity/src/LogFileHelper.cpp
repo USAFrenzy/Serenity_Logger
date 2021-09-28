@@ -42,6 +42,11 @@ namespace serenity
 		return true;
 	}
 
+	void LogFileHelper::Flush( )
+	{
+		file_utils::Flush( LogFilePath( ) );
+	}
+
 	bool LogFileHelper::CloseFile( const file_helper::path filePath )
 	{
 		if( file_helper::exists( filePath ) ) {
@@ -86,6 +91,15 @@ namespace serenity
 	{
 		return m_filePath;
 	}
+	const std::string LogFileHelper::LogName( )
+	{
+		return m_fileName.string( );
+	}
+
+	const file_helper::path LogFileHelper::RelativePathToLog( )
+	{
+		return LogFilePath( ).relative_path( );
+	}
 
 	const file_helper::directory_entry LogFileHelper::LogDir( )
 	{
@@ -104,8 +118,12 @@ namespace serenity
 	// Pathing Type Of Functions And The Like
 	void LogFileHelper::StorePathComponents( const file_helper::path &pathToStore )
 	{
-		m_filePath = pathToStore;
-		m_fileName = pathToStore.filename( );
+		auto logEntry { pathToStore };
+		logEntry._Remove_filename_and_separator( );
+		m_logDirPath    = logEntry;
+		m_filePath      = pathToStore;
+		m_fileName      = pathToStore.filename( );
+		fileInfoChanged = true;
 	}
 
 }  // namespace serenity
