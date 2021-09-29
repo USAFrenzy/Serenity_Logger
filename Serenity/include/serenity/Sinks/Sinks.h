@@ -49,8 +49,6 @@ namespace serenity
 		rotating_sink_info *  rotate_sink = { };
 		daily_sink_info *     daily_sink  = { };
 		dist_sink_info *      dist_sink   = { };
-
-		logger_info dist_to_logger_info( dist_sink_info *convertFrom );
 	};
 
 

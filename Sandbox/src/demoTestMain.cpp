@@ -34,7 +34,7 @@ int main( )
 
 	logTwo.se_trace( "Message Before Changing Shit In Internal Logger" );
 
-	// Recent Changes Mean That The Internal Logger From This Section No Longer Has A File Handle When Recreated.
+	// TODO: Recent Changes Mean That The Internal Logger From This Section No Longer Has A File Handle When Recreated.
 	// When Recreating The Logger, base_info Seemed To Remain null (RED FLAG) -> Look Into This
 	se_internal::internal_logger_info changeOptions = logTwo.InternalLogger( )->internal_info( );
 	changeOptions.sink_info.sinks.emplace_back( SinkType::basic_file_mt );

@@ -74,16 +74,6 @@ namespace serenity
 		Sink                              m_sinkHandle;
 	};
 
-
-	logger_info base_sink_info::dist_to_logger_info( dist_sink_info *convertFrom )
-	{
-		logger_info tmp = { };
-		tmp.flushLevel  = LoggerLevel::trace;
-		tmp.level       = LoggerLevel::trace;
-		return tmp;
-	}
-
-
 	// ###################################################################################################################################################
 
 	void Sink::CreateSink( base_sink_info &infoStruct )
@@ -108,6 +98,12 @@ namespace serenity
 			// - ignore dist_sink in infostruct vector when creating sinks initially
 			// - then set the dist sink's vector = to sinkVector and create the sink
 
+			// TODO: Second Idea (MUCH MORE PROMISING I THINK)
+			// ############################################################################################################
+			// if SinkType::dist_sink_mt is found, create sinks found in the SinkType vector in
+			// m_sinkInfo.dist_sink using a new CreateDistSink() function and emplacing those sinks into their own sink_ptr
+			// vector AND THEN calling the make_shared part currently below and add the sinks from the sink_ptr vector to
+			// the dist_sink
 			if( m_sinkInfo.dist_sink != nullptr ) {
 			}
 		}
@@ -143,7 +139,7 @@ namespace serenity
 					break;
 				case SinkType::std_split_mt:
 					{
-						// To Be implemented in derived sink class
+						// TODO: To Be implemented in derived sink class
 					}
 					break;
 				case SinkType::rotating_mt:
@@ -178,7 +174,7 @@ namespace serenity
 					{
 						if( ( infoStruct.dist_sink != nullptr ) && ( infoStruct.base_info != nullptr ) ) {
 							auto dist_sink = std::make_shared<spdlog::sinks::dist_sink_mt>( );
-							// Implement A Way To Add Sinks To spdlog's version
+							// TODO: Implement A Way To Add Sinks To spdlog's version
 							// - Initial Thoughts Are This:
 							//	- Convert Sinks From SinkType To spdlog::sink_ptr
 							//	- Create Sinks From Those
@@ -220,7 +216,5 @@ namespace serenity
 		return true;
 	}
 
-
-	// void dist_sink_info::add_sink( ) { }
 
 }  // namespace serenity

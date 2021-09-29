@@ -39,7 +39,7 @@ namespace serenity
 		m_sinks        = std::make_unique<Sink>( );
 		//##########################################################################################################
 		/*
-		  Some possible features to add:
+			NOTE: Some possible features to add:
 		  - The ability to enable internal logging support independantly of client logger [X]
 		  - Ties in with the above point, but also have the ability to turn off internal logging when in release [X]
 		  - The ability to customize the internal logger? I mean, I'm using stdout sink here, but hey, who knows? [ ]
@@ -56,14 +56,13 @@ namespace serenity
 	{
 		Shutdown( );
 	}
-	void Logger::PreInit( ) 
-	{ 
-		initInfo.base_info = { };
-		initInfo.daily_sink = { };
-		initInfo.dist_sink  = { };
+	void Logger::PreInit( )
+	{
+		initInfo.base_info   = { };
+		initInfo.daily_sink  = { };
+		initInfo.dist_sink   = { };
 		initInfo.rotate_sink = { };
 	}
-
 
 
 	void Logger::CloseLog( const file_helper::path filePath )
@@ -140,8 +139,8 @@ namespace serenity
 		m_sinks->sinkVector.clear( );
 		m_sinks->CreateSink( infoStruct );
 		internalLogger->trace( "Sinks For Logger [{}] Have Been Succesfully Created", infoStruct.base_info->loggerName );
-		m_clientLogger =
-		  std::make_shared<spdlog::logger>( infoStruct.base_info->loggerName, begin( m_sinks->sinkVector ), end( m_sinks->sinkVector ) );
+		m_clientLogger = std::make_shared<spdlog::logger>( infoStruct.base_info->loggerName, begin( m_sinks->sinkVector ),
+								   end( m_sinks->sinkVector ) );
 		internalLogger->trace( "Logger [{}] Has Been Successfully Created", infoStruct.base_info->loggerName );
 		spdlog::register_logger( m_clientLogger );
 		internalLogger->trace( "Logger [{}] Has Been Registered", infoStruct.base_info->loggerName );
@@ -270,7 +269,8 @@ namespace serenity
 		internalLogger->trace( "Setting Logger Level..." );
 		if( ToMappedLevel( level ) == MappedLevel::n_levels ) {
 			initInfo.base_info->level = LoggerLevel::off;
-			internalLogger->warn( "Log Level Was Not A Valid Value - Log Level Set To {}", LogLevelToStr( initInfo.base_info->level ) );
+			internalLogger->warn( "Log Level Was Not A Valid Value - Log Level Set To {}",
+					      LogLevelToStr( initInfo.base_info->level ) );
 			m_clientLogger->set_level( ToMappedLevel( initInfo.base_info->level ) );
 		}
 		initInfo.base_info->level = level;
