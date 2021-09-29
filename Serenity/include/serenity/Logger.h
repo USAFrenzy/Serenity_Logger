@@ -17,7 +17,7 @@ namespace serenity
 	class Logger : public ILogger
 	{
 	      public:
-		explicit Logger( logger_info &infoStruct );
+		explicit Logger( base_sink_info &infoStruct );
 		Logger( )                     = delete;
 		Logger( const Logger &copy )  = delete;
 		Logger( const Logger &&move ) = delete;
@@ -41,7 +41,6 @@ namespace serenity
 		void              StopLogger( );
 		void              DropLogger( );
 		void              Shutdown( );
-		void              SetGlobalLevel( LoggerLevel globalLevel );
 		void              SetLogLevel( LoggerLevel logLevel ) override;
 		void              SetFlushLevel( LoggerLevel flushLevel ) override;
 		const LoggerLevel GetFlushLevel( );
@@ -77,15 +76,16 @@ namespace serenity
 		// clang-format on
 
 	      private:
-		logger_info                               initInfo           = { };
-		se_internal::internal_logger_info         internalLoggerInfo = { };
+		base_sink_info                            initInfo;
+		se_internal::internal_logger_info         internalLoggerInfo;
 		static std::shared_ptr<spdlog::logger>    m_clientLogger;
 		static std::unique_ptr<LogFileHelper>     logFileHandle;
 		std::unique_ptr<Sink>                     m_sinks;
 		static std::shared_ptr<InternalLibLogger> internalLogger;
 
 	      private:
-		void CreateLogger( logger_info &infoStruct );
+		void PreInit( );
+		void CreateLogger( base_sink_info &infoStruct );
 	};
 
 	static LoggerLevel  global_level { LoggerLevel::trace };

@@ -29,10 +29,10 @@ namespace serenity
 	}
 
 
-	Logger::Logger( logger_info &infoStruct ) : initInfo( std::move( infoStruct ) )
+	Logger::Logger( base_sink_info &infoStruct ) : initInfo( std::move( infoStruct ) )
 	{
-		file_helper::path logDirPath = initInfo.logDir.path( );
-		auto              filePath   = logDirPath.string( ) + "\\" + initInfo.logName;
+		file_helper::path logDirPath = initInfo.base_info->logDir.path( );
+		auto              filePath   = logDirPath.string( ) + "\\" + initInfo.base_info->logName;
 
 		internalLogger = std::make_shared<InternalLibLogger>( internalLoggerInfo );
 		logFileHandle  = std::make_unique<LogFileHelper>( filePath );
@@ -47,15 +47,24 @@ namespace serenity
 		//##########################################################################################################
 		// Creating Client Logger
 		m_sinks->clear_sinks( );
-		m_sinks->set_sinks( initInfo.sink_info.sinks );
+		m_sinks->set_sinks( initInfo.sinks );
 		CreateLogger( initInfo );
-		internalLogger->trace( "Logger [{}] Successfully Initialized", initInfo.loggerName );
+		internalLogger->trace( "Logger [{}] Successfully Initialized", initInfo.base_info->loggerName );
 	}
 
 	Logger::~Logger( )
 	{
 		Shutdown( );
 	}
+	void Logger::PreInit( ) 
+	{ 
+		initInfo.base_info = { };
+		initInfo.daily_sink = { };
+		initInfo.dist_sink  = { };
+		initInfo.rotate_sink = { };
+	}
+
+
 
 	void Logger::CloseLog( const file_helper::path filePath )
 	{
@@ -96,7 +105,7 @@ namespace serenity
 			internalLogger->trace( "Internal Logger Has Been Successfully Re-Initialized" );
 		}
 		if( m_clientLogger == nullptr ) {
-			m_sinks->set_sinks( initInfo.sink_info.sinks );
+			m_sinks->set_sinks( initInfo.sinks );
 			CreateLogger( initInfo );
 			internalLogger->trace( "Client Logger Has Been Successfully Re-Initialized" );
 		}
@@ -126,26 +135,26 @@ namespace serenity
 		internalLogger->trace( "Logger Handle Has Been Reset" );
 	}
 
-	void Logger::CreateLogger( logger_info &infoStruct )
+	void Logger::CreateLogger( base_sink_info &infoStruct )
 	{
 		m_sinks->sinkVector.clear( );
 		m_sinks->CreateSink( infoStruct );
-		internalLogger->trace( "Sinks For Logger [{}] Have Been Succesfully Created", infoStruct.loggerName );
+		internalLogger->trace( "Sinks For Logger [{}] Have Been Succesfully Created", infoStruct.base_info->loggerName );
 		m_clientLogger =
-		  std::make_shared<spdlog::logger>( infoStruct.loggerName, begin( m_sinks->sinkVector ), end( m_sinks->sinkVector ) );
-		internalLogger->trace( "Logger [{}] Has Been Successfully Created", infoStruct.loggerName );
+		  std::make_shared<spdlog::logger>( infoStruct.base_info->loggerName, begin( m_sinks->sinkVector ), end( m_sinks->sinkVector ) );
+		internalLogger->trace( "Logger [{}] Has Been Successfully Created", infoStruct.base_info->loggerName );
 		spdlog::register_logger( m_clientLogger );
-		internalLogger->trace( "Logger [{}] Has Been Registered", infoStruct.loggerName );
-		SetLogLevel( initInfo.level );
-		SetFlushLevel( initInfo.flushLevel );
+		internalLogger->trace( "Logger [{}] Has Been Registered", infoStruct.base_info->loggerName );
+		SetLogLevel( initInfo.base_info->level );
+		SetFlushLevel( initInfo.base_info->flushLevel );
 	}
 
 	bool Logger::RenameLog( const std::string newName, bool overwriteIfExists )
 	{
 		// In Case Path Is Passed In
 		file_helper::path newFilePath = newName;
-		const auto &      tmpPath     = initInfo.logDir.path( );
-		file_helper::path oldPath     = tmpPath.string( ).append( "\\" + initInfo.logName );
+		const auto &      tmpPath     = initInfo.base_info->logDir.path( );
+		file_helper::path oldPath     = tmpPath.string( ).append( "\\" + initInfo.base_info->logName );
 		file_helper::path newPath     = tmpPath.string( ).append( "\\" + newFilePath.filename( ).string( ) );
 		internalLogger->trace( "Renaming Log File [{}] To [{}]", oldPath.filename( ), newPath.filename( ) );
 		try {
@@ -182,7 +191,7 @@ namespace serenity
 				  oldPath.filename( ), newPath.filename( ) );
 			}
 			// Effectively Updating Variables
-			initInfo.logName = newPath.filename( ).string( );
+			initInfo.base_info->logName = newPath.filename( ).string( );
 			internalLogger->trace( "Log File Name Has Been Updated To Reflect Rename To [{}]", newPath.filename( ) );
 			internalLogger->trace( "File Info Updating Based On Path:{}", newPath );
 			FileHelperHandle( )->UpdateFileInfo( newPath );
@@ -201,8 +210,8 @@ namespace serenity
 
 	bool Logger::WriteToNewLog( const std::string newLogName, bool truncateIfExists )
 	{
-		const auto &            tmpPath     = initInfo.logDir.path( );
-		file_helper::path       oldPath     = tmpPath.string( ).append( "\\" + initInfo.logName );
+		const auto &            tmpPath     = initInfo.base_info->logDir.path( );
+		file_helper::path       oldPath     = tmpPath.string( ).append( "\\" + initInfo.base_info->logName );
 		const file_helper::path newFilePath = tmpPath.string( ).append( "\\" + newLogName );
 		try {
 			StopLogger( );
@@ -214,7 +223,7 @@ namespace serenity
 				FileHelperHandle( )->CloseFile( newFilePath );
 			}
 			StartLogger( );
-			internalLogger->info( "Successfully Changed To New Log [{}]", initInfo.logName );
+			internalLogger->info( "Successfully Changed To New Log [{}]", initInfo.base_info->logName );
 		}
 		catch( const std::exception &e ) {
 			internalLogger->fatal( "Failed Change To New Log [{}] Due To:\n{}", newLogName, e.what( ) );
@@ -232,10 +241,10 @@ namespace serenity
 		}
 		else {
 			internalLogger->trace( "File Info Has Changed. Updating File Info" );
-			initInfo.logDir = FileHelperHandle( )->LogDir( );
-			internalLogger->trace( "Logger's Log Directory Set To [{}]", initInfo.logDir.path( ).filename( ) );
-			initInfo.logName = FileHelperHandle( )->LogName( );
-			internalLogger->trace( "Logger's Log Name Set To [{}]", initInfo.logName );
+			initInfo.base_info->logDir = FileHelperHandle( )->LogDir( );
+			internalLogger->trace( "Logger's Log Directory Set To [{}]", initInfo.base_info->logDir.path( ).filename( ) );
+			initInfo.base_info->logName = FileHelperHandle( )->LogName( );
+			internalLogger->trace( "Logger's Log Name Set To [{}]", initInfo.base_info->logName );
 			internalLogger->info( "File Info Has Been Updated" );
 			FileHelperHandle( )->fileInfoChanged = false;
 		}
@@ -243,12 +252,12 @@ namespace serenity
 
 	std::string const Logger::LoggerName( )
 	{
-		return initInfo.loggerName;
+		return initInfo.base_info->loggerName;
 	}
 
 	const std::string Logger::LogName( )
 	{
-		return initInfo.logName;
+		return initInfo.base_info->logName;
 	}
 
 	const LoggerLevel Logger::GetLogLevel( )
@@ -260,27 +269,27 @@ namespace serenity
 	{
 		internalLogger->trace( "Setting Logger Level..." );
 		if( ToMappedLevel( level ) == MappedLevel::n_levels ) {
-			initInfo.level = LoggerLevel::off;
-			internalLogger->warn( "Log Level Was Not A Valid Value - Log Level Set To {}", LogLevelToStr( initInfo.level ) );
-			m_clientLogger->set_level( ToMappedLevel( initInfo.level ) );
+			initInfo.base_info->level = LoggerLevel::off;
+			internalLogger->warn( "Log Level Was Not A Valid Value - Log Level Set To {}", LogLevelToStr( initInfo.base_info->level ) );
+			m_clientLogger->set_level( ToMappedLevel( initInfo.base_info->level ) );
 		}
-		initInfo.level = level;
+		initInfo.base_info->level = level;
 		m_clientLogger->set_level( ToMappedLevel( level ) );
-		internalLogger->trace( "Log Level Successfully Set To: {}", LogLevelToStr( initInfo.level ) );
+		internalLogger->trace( "Log Level Successfully Set To: {}", LogLevelToStr( initInfo.base_info->level ) );
 	}
 
 	void Logger::SetFlushLevel( LoggerLevel flushLevel )
 	{
 		internalLogger->trace( "Setting Logger Flush Level..." );
 		if( ToMappedLevel( flushLevel ) == MappedLevel::n_levels ) {
-			initInfo.flushLevel = LoggerLevel::trace;
-			m_clientLogger->flush_on( ToMappedLevel( initInfo.flushLevel ) );
+			initInfo.base_info->flushLevel = LoggerLevel::trace;
+			m_clientLogger->flush_on( ToMappedLevel( initInfo.base_info->flushLevel ) );
 			internalLogger->warn( "Log Level Was Not A Valid Value - Logger Flush Level Set To {}",
-					      LogLevelToStr( initInfo.flushLevel ) );
+					      LogLevelToStr( initInfo.base_info->flushLevel ) );
 		}
 		else {
-			initInfo.flushLevel = flushLevel;
-			m_clientLogger->flush_on( ToMappedLevel( initInfo.flushLevel ) );
+			initInfo.base_info->flushLevel = flushLevel;
+			m_clientLogger->flush_on( ToMappedLevel( initInfo.base_info->flushLevel ) );
 			internalLogger->trace( "Log Flush Level Successfully Set To: {}", LogLevelToStr( flushLevel ) );
 		}
 	}

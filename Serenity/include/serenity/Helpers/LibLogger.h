@@ -18,7 +18,7 @@ namespace serenity
 	class InternalLibLogger : public ILogger
 	{
 	      public:
-		explicit InternalLibLogger( se_internal::internal_logger_info infoStruct = { } );
+		explicit InternalLibLogger( se_internal::internal_logger_info infoStruct );
 		InternalLibLogger( ) = delete;
 		InternalLibLogger( const InternalLibLogger &copy );
 		InternalLibLogger( const InternalLibLogger &&move ) = delete;
@@ -99,7 +99,7 @@ namespace serenity
 		static bool                            loggingEnabled;
 		bool                                   internalCustomized { false };
 		std::shared_ptr<Sink>                  m_sinks;
-		se_internal::internal_logger_info      internalLoggerInfo = { };
+		se_internal::internal_logger_info      internalLoggerInfo;
 		static std::shared_ptr<spdlog::logger> m_internalLogger;
 	};
 }  // namespace serenity

@@ -15,24 +15,31 @@ int main( )
 	auto logDirPath = originalPath;
 	logDirPath /= "Logs";
 	file_helper::directory_entry logDir { logDirPath };
-	logger_info                  initInfo = { };
-	initInfo.loggerName                   = "Filesystem Logger";
-	initInfo.logName                      = "File_System.txt";
-	initInfo.logDir                       = logDir;
-	initInfo.level                        = LoggerLevel::trace;
-	initInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
-	initInfo.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
+
+
+	logger_info initInfo     = { };
+	initInfo.loggerName      = "Filesystem Logger";
+	initInfo.logName         = "File_System.txt";
+	initInfo.logDir          = logDir;
+	base_sink_info sink_info = { };
+	sink_info.base_info      = &initInfo;
+	sink_info.sinks.emplace_back( SinkType::basic_file_mt );
+	sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
+
 
 	InternalLibLogger::EnableInternalLogging( );
 	// Works As Intended [X]
 	SetGlobalLevel( LoggerLevel::trace );
-	Logger logTwo( initInfo );
+	Logger logTwo( sink_info );
 
-	// This Section Also Seems To Work As Intended
+	logTwo.se_trace( "Message Before Changing Shit In Internal Logger" );
+
+	// Recent Changes Mean That The Internal Logger From This Section No Longer Has A File Handle When Recreated.
+	// When Recreating The Logger, base_info Seemed To Remain null (RED FLAG) -> Look Into This
 	se_internal::internal_logger_info changeOptions = logTwo.InternalLogger( )->internal_info( );
 	changeOptions.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
 	changeOptions.sink_info.truncateFile = true;
-	logTwo.ChangeInternalLoggerOptions( changeOptions );
+	logTwo.ChangeInternalLoggerOptions( *&changeOptions );
 
 	SetGlobalLevel( LoggerLevel::warning );  // Subsequent Calls Will Set Logger && Global Levels
 

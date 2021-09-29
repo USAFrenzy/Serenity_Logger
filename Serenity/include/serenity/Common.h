@@ -71,12 +71,24 @@ namespace serenity
 		LoggerLevel flushLevel = LoggerLevel::trace;
 
 		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
-		base_sink_info               sink_info = { };
+		// base_sink_info               sink_info = { };
 	};
 	namespace se_internal
 	{
 		struct internal_logger_info
 		{
+			explicit internal_logger_info( )
+			{
+				sink_info.base_info = { };
+				if( sink_info.base_info != nullptr ) {
+					sink_info.base_info->loggerName = *&loggerName;
+					sink_info.base_info->logName    = *&logName;
+					sink_info.base_info->level      = *&level;
+					sink_info.base_info->flushLevel = *&flushLevel;
+					sink_info.base_info->logDir     = *&logDir;
+				}
+			}
+
 			std::string                  loggerName = INTERNAL_DEFAULT_NAME;
 			std::string                  logName    = INTERNAL_DEFAULT_LOG;
 			LoggerLevel                  level      = LoggerLevel::trace;
@@ -84,24 +96,5 @@ namespace serenity
 			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
 			base_sink_info               sink_info = { };
 		};
-		static logger_info tmp = { };
-
-		static logger_info toLoggerInfo( internal_logger_info convertFrom )
-		{
-			tmp                       = { };
-			tmp.sink_info.rotate_sink = nullptr;
-			tmp.sink_info.daily_sink  = nullptr;
-			tmp.loggerName            = convertFrom.loggerName;
-			tmp.loggerName            = convertFrom.loggerName;
-			tmp.logName               = convertFrom.logName;
-			tmp.logDir                = convertFrom.logDir;
-			tmp.level                 = convertFrom.level;
-			tmp.flushLevel            = convertFrom.flushLevel;
-			tmp.sink_info             = convertFrom.sink_info;
-			// Since CreateSink() uses formatStr And Not internalFormatStr
-			// -> This Is A Work Around/Hack So As To Not Change How CreateSink() Works
-			tmp.sink_info.formatStr = std::move( tmp.sink_info.internalFormatStr );
-			return tmp;
-		}
 	}  // namespace se_internal
 }  // namespace serenity

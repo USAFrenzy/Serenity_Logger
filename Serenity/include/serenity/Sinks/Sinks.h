@@ -7,7 +7,7 @@
 
 namespace serenity
 {
-	// mt designated in case I add support for the single thread versions later on
+	// mt designated in case I add wrapper support for the single thread versions later on
 	enum class SinkType
 	{
 		stdout_color_mt,
@@ -16,6 +16,7 @@ namespace serenity
 		basic_file_mt,
 		rotating_mt,
 		daily_file_sink_mt,
+		dist_sink_mt,
 		unknown
 	};
 
@@ -32,6 +33,11 @@ namespace serenity
 		uint16_t maxFiles { 0 };
 	};
 
+	// fwd decl until worked out
+	struct dist_sink_info;
+	// forward declaration
+	struct logger_info;
+
 	struct base_sink_info
 	{
 		std::string           formatStr         = "%^[%T] %n: %v%$";
@@ -39,12 +45,14 @@ namespace serenity
 		std::vector<SinkType> sinks;
 		bool                  truncateFile { false };
 		bool                  hasFileHandle { false };
-		rotating_sink_info *  rotate_sink = nullptr;
-		daily_sink_info *     daily_sink  = nullptr;
+		logger_info *         base_info   = { };
+		rotating_sink_info *  rotate_sink = { };
+		daily_sink_info *     daily_sink  = { };
+		dist_sink_info *      dist_sink   = { };
+
+		logger_info dist_to_logger_info( dist_sink_info *convertFrom );
 	};
 
-	// forward declaration
-	struct logger_info;
 
 	class Sink
 	{
@@ -57,7 +65,7 @@ namespace serenity
 
 		void                        set_sinks( std::vector<SinkType> sinks );
 		const std::vector<SinkType> get_sinks( );
-		void                        CreateSink( logger_info &infoStruct );
+		void                        CreateSink( base_sink_info &infoStruct );
 		void                        clear_sinks( );
 		const base_sink_info        basic_info( );
 		bool                        find_sink( SinkIterator first, SinkIterator last, const SinkType &value );

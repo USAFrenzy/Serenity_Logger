@@ -125,8 +125,7 @@ namespace serenity
 			internalLoggerInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
 		}
 		m_sinks->set_sinks( internalLoggerInfo.sink_info.sinks );
-		auto tmp = toLoggerInfo( internalLoggerInfo );
-		m_sinks->CreateSink( tmp );
+		m_sinks->CreateSink( internalLoggerInfo.sink_info );
 		m_internalLogger = std::make_shared<spdlog::logger>( internalLoggerInfo.loggerName, begin( m_sinks->sinkVector ),
 								     end( m_sinks->sinkVector ) );
 		spdlog::register_logger( m_internalLogger );
