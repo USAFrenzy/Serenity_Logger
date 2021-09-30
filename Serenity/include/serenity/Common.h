@@ -1,7 +1,7 @@
 #pragma once
 
 #include <serenity/Defines.h>
-#include <serenity/Sinks/Sinks.h>
+// #include <serenity/Sinks/Sinks.h>
 #pragma warning( push, 0 )
 #include <spdlog/spdlog.h>
 #pragma warning( pop )
@@ -58,43 +58,4 @@ namespace serenity
 		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
 		return version;
 	}
-}  // namespace serenity
-
-
-namespace serenity
-{
-	struct logger_info
-	{
-		std::string loggerName = DEFAULT_LOGGER_NAME;
-		std::string logName    = DEFAULT_LOG;
-		LoggerLevel level      = LoggerLevel::trace;
-		LoggerLevel flushLevel = LoggerLevel::trace;
-
-		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
-		// base_sink_info               sink_info = { };
-	};
-	namespace se_internal
-	{
-		struct internal_logger_info
-		{
-			explicit internal_logger_info( )
-			{
-				sink_info.base_info = { };
-				if( sink_info.base_info != nullptr ) {
-					sink_info.base_info->loggerName = *&loggerName;
-					sink_info.base_info->logName    = *&logName;
-					sink_info.base_info->level      = *&level;
-					sink_info.base_info->flushLevel = *&flushLevel;
-					sink_info.base_info->logDir     = *&logDir;
-				}
-			}
-
-			std::string                  loggerName = INTERNAL_DEFAULT_NAME;
-			std::string                  logName    = INTERNAL_DEFAULT_LOG;
-			LoggerLevel                  level      = LoggerLevel::trace;
-			LoggerLevel                  flushLevel = LoggerLevel::trace;
-			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
-			base_sink_info               sink_info = { };
-		};
-	}  // namespace se_internal
 }  // namespace serenity

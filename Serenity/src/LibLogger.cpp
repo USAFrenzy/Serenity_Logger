@@ -4,13 +4,11 @@
 
 namespace serenity
 {
-	using namespace se_internal;
-
 	std::shared_ptr<spdlog::logger> InternalLibLogger::m_internalLogger;
 	bool                            InternalLibLogger::loggingEnabled { false };
 
 
-	InternalLibLogger::InternalLibLogger( se_internal::internal_logger_info infoStruct )
+	InternalLibLogger::InternalLibLogger( internal_logger_info infoStruct )
 	{
 		m_sinks = std::make_unique<Sink>( );
 		// If Default, Should Just Populate With Defaults, Otherwise, Move The Struct Parameter To The internalLoggerInfo
@@ -36,7 +34,7 @@ namespace serenity
 	{
 		return internalLoggerInfo.loggerName;
 	}
-	const se_internal::internal_logger_info InternalLibLogger::internal_info( )
+	const internal_logger_info InternalLibLogger::internal_info( )
 	{
 		return internalLoggerInfo;
 	}
@@ -78,8 +76,12 @@ namespace serenity
 				m_internalLogger->trace( "Replacing Old Logger With New Options..." );
 				spdlog::drop( m_internalLogger->name( ) );
 			}
-			m_sinks->clear_sinks( );
-			m_internalLogger.reset( );
+			if( m_sinks != nullptr ) {
+				m_sinks->ClearSinks( );
+			}
+			if( m_internalLogger != nullptr ) {
+				m_internalLogger.reset( );
+			}
 			CreateInternalLogger( );
 		}
 	}
@@ -98,12 +100,12 @@ namespace serenity
 		return result;
 	}
 
-	void InternalLibLogger::CustomizeInternalLogger( internal_logger_info infoStruct )
+	void InternalLibLogger::CustomizeInternalLogger( internal_logger_info &infoStruct )
 	{
 		if( ShouldLog( ) ) {
 			m_internalLogger->trace( "Clearing Sinks..." );
 		}
-		m_sinks->sinkVector.clear( );
+		m_sinks->GetSinkHandles( ).clear( );
 		if( ShouldLog( ) ) {
 			m_internalLogger->info( "Sinks Successfully Cleared" );
 		}
@@ -120,14 +122,14 @@ namespace serenity
 
 	void InternalLibLogger::CreateInternalLogger( )
 	{
-		m_sinks->clear_sinks( );
+		m_sinks->ClearSinks( );
 		if( internalLoggerInfo.sink_info.sinks.empty( ) ) {
 			internalLoggerInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
 		}
-		m_sinks->set_sinks( internalLoggerInfo.sink_info.sinks );
+		m_sinks->SetSinks( internalLoggerInfo.sink_info.sinks );
 		m_sinks->CreateSink( internalLoggerInfo.sink_info );
-		m_internalLogger = std::make_shared<spdlog::logger>( internalLoggerInfo.loggerName, begin( m_sinks->sinkVector ),
-								     end( m_sinks->sinkVector ) );
+		auto sinks       = m_sinks->GetSinkHandles( );
+		m_internalLogger = std::make_shared<spdlog::logger>( internalLoggerInfo.loggerName, begin( sinks ), end( sinks ) );
 		spdlog::register_logger( m_internalLogger );
 		SetLogLevel( internalLoggerInfo.level );
 		trace( "Logger [{}] Has Been Registered", internalLoggerInfo.loggerName );
@@ -143,6 +145,15 @@ namespace serenity
 		else {
 			return false;
 		}
+	}
+
+	internal_logger_info::internal_logger_info( )
+	{
+		sink_info.base_info.flushLevel = flushLevel;
+		sink_info.base_info.level      = level;
+		sink_info.base_info.logDir     = logDir;
+		sink_info.base_info.loggerName = loggerName;
+		sink_info.base_info.logName    = logName;
 	}
 
 }  // namespace serenity

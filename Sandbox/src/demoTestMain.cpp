@@ -17,14 +17,20 @@ int main( )
 	file_helper::directory_entry logDir { logDirPath };
 
 
-	logger_info initInfo     = { };
-	initInfo.loggerName      = "Filesystem Logger";
-	initInfo.logName         = "File_System.txt";
-	initInfo.logDir          = logDir;
+	logger_info initInfo = { };
+	initInfo.loggerName  = "Filesystem Logger";
+	initInfo.logName     = "File_System.txt";
+	initInfo.logDir      = logDir;
+
+	std::vector<SinkType> dist_sink_handles;
+	dist_sink_handles.emplace_back( SinkType::basic_file_mt );
+	dist_sink_handles.emplace_back( SinkType::stdout_color_mt );
+	dist_sink_info dist_sink( dist_sink_handles );
+
 	base_sink_info sink_info = { };
-	sink_info.base_info      = &initInfo;
-	sink_info.sinks.emplace_back( SinkType::basic_file_mt );
-	sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
+	sink_info.base_info      = initInfo;
+	sink_info.sinks.emplace_back( SinkType::dist_sink_mt );
+	sink_info.dist_sink = &dist_sink;
 
 
 	InternalLibLogger::EnableInternalLogging( );
@@ -32,14 +38,12 @@ int main( )
 	SetGlobalLevel( LoggerLevel::trace );
 	Logger logTwo( sink_info );
 
-	logTwo.se_trace( "Message Before Changing Shit In Internal Logger" );
+	logTwo.se_trace( "Message Before Changing Stuff In Internal Logger" );
 
-	// TODO: Recent Changes Mean That The Internal Logger From This Section No Longer Has A File Handle When Recreated.
-	// When Recreating The Logger, base_info Seemed To Remain null (RED FLAG) -> Look Into This
-	se_internal::internal_logger_info changeOptions = logTwo.InternalLogger( )->internal_info( );
+	internal_logger_info changeOptions = { };
 	changeOptions.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
 	changeOptions.sink_info.truncateFile = true;
-	logTwo.ChangeInternalLoggerOptions( *&changeOptions );
+	logTwo.ChangeInternalLoggerOptions( changeOptions );
 
 	SetGlobalLevel( LoggerLevel::warning );  // Subsequent Calls Will Set Logger && Global Levels
 
@@ -54,12 +58,13 @@ int main( )
 	logTwo.InternalLogger( )->SetLogLevel( LoggerLevel::trace );
 	logTwo.se_debug( "BACK IN MAIN!\n" );
 
-	logTwo.se_info( "Testing Swapping To New Log Instead Of Renaming..." );
+	logTwo.se_info( "Testing Swapping To New Log Instead Of Renaming...\n" );
 	logTwo.WriteToNewLog( "/WriteToNewLog/CreateNewLog.txt" );
 	logTwo.se_debug( "File Path: [{}]", logTwo.FileHelperHandle( )->LogFilePath( ) );
 	logTwo.se_debug( "Relative File Path: [{}]", logTwo.FileHelperHandle( )->RelativePathToLog( ) );
 	logTwo.se_debug( "Log Directory: [{}]", logTwo.FileHelperHandle( )->LogDir( ).path( ) );
-	logTwo.se_debug( "File Name: [{}]", logTwo.FileHelperHandle( )->LogName( ) );
+	logTwo.se_debug( "File Name: [{}]\n", logTwo.FileHelperHandle( )->LogName( ) );
+
 
 	// Next Step Now Is To Add More Sink Support, Wrap The Explicit Utilities Functions Into LogFileHelper Class Functions, And
 	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P
@@ -68,7 +73,7 @@ int main( )
 
 void PrintReminder( )
 {
-	auto day   = "28";
+	auto day   = "30";
 	auto month = "SEP";
 	auto year  = "21";
 

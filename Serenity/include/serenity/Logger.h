@@ -1,8 +1,8 @@
 #pragma once
 
-
-#include <serenity/Interfaces/IObserver.h>
+#include <serenity/Defines.h>
 #include <serenity/Common.h>
+#include <serenity/Interfaces/IObserver.h>
 #include <serenity/Helpers/LogFileHelper.h>
 #include <serenity/Helpers/LibLogger.h>
 #include <serenity/Sinks/Sinks.h>
@@ -17,7 +17,7 @@ namespace serenity
 	class Logger : public ILogger
 	{
 	      public:
-		explicit Logger( base_sink_info &infoStruct );
+		explicit Logger( base_sink_info infoStruct );
 		Logger( )                     = delete;
 		Logger( const Logger &copy )  = delete;
 		Logger( const Logger &&move ) = delete;
@@ -72,12 +72,12 @@ namespace serenity
 		 *	Option 2) Logger log(infoStruct);
 		 *		->   log.InternalLogger()->EnableInternalLogging();	// Object Based
 		 **************************************************************************************************************************/
-		void ChangeInternalLoggerOptions( se_internal::internal_logger_info options );
+		void ChangeInternalLoggerOptions(internal_logger_info &options );
 		// clang-format on
 
 	      private:
 		base_sink_info                            initInfo;
-		se_internal::internal_logger_info         internalLoggerInfo;
+		internal_logger_info                      internalLoggerInfo;
 		static std::shared_ptr<spdlog::logger>    m_clientLogger;
 		static std::unique_ptr<LogFileHelper>     logFileHandle;
 		std::unique_ptr<Sink>                     m_sinks;

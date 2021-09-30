@@ -10,9 +10,11 @@ namespace serenity
 	{
 		internalLogger = Logger::InternalLogger( );
 
-		file_helper::path logEntry = pathToFile;
-		logEntry._Remove_filename_and_separator( );
-		file_helper::directory_entry logDir { logEntry };
+		file_helper::path prefPath = pathToFile;
+		prefPath.make_preferred( );
+
+		prefPath._Remove_filename_and_separator( );
+		file_helper::directory_entry logDir { prefPath };
 		if( !logDir.exists( ) ) {
 			try {
 				internalLogger->trace( "Directory [{}] Not Found - Creating Directory Entry...",
@@ -25,14 +27,17 @@ namespace serenity
 			}
 		}
 		SetLogDirPath( logDir.path( ) );
-		StorePathComponents( pathToFile );
+		StorePathComponents( prefPath /= pathToFile.filename( ) );
 	}
 
 	bool LogFileHelper::OpenFile( const file_helper::path filePath, bool truncate )
 	{
-		if( file_helper::exists( filePath ) ) {
+		auto path = filePath;
+		path.make_preferred( );
+
+		if( file_helper::exists( path ) ) {
 			try {
-				file_utils::OpenFile( filePath, truncate );
+				file_utils::OpenFile( path, truncate );
 			}
 			catch( const std::exception &e ) {
 				internalLogger->fatal( "Exception Caught In OpenLog():\n%s\n", e.what( ) );
@@ -49,9 +54,12 @@ namespace serenity
 
 	bool LogFileHelper::CloseFile( const file_helper::path filePath )
 	{
-		if( file_helper::exists( filePath ) ) {
+		auto path = filePath;
+		path.make_preferred( );
+
+		if( file_helper::exists( path ) ) {
 			try {
-				file_utils::CloseFile( filePath );
+				file_utils::CloseFile( path );
 			}
 			catch( const std::exception &e ) {
 				internalLogger->fatal( "Exception Caught In CloseLog():\n%s\n", e.what( ) );
@@ -63,10 +71,13 @@ namespace serenity
 
 	void LogFileHelper::SetLogDirPath( const file_helper::path logDirPath )
 	{
-		internalLogger->trace( "Setting Log Directory Path To [{}]", logDirPath );
-		m_logDirPath    = logDirPath;
+		auto path = logDirPath;
+		path.make_preferred( );
+
+		internalLogger->trace( "Setting Log Directory Path To [{}]", path );
+		m_logDirPath    = path;
 		fileInfoChanged = true;
-		internalLogger->trace( "Log Directory Path Successfully Set To [{}]", logDirPath );
+		internalLogger->trace( "Log Directory Path Successfully Set To [{}]", path );
 	}
 
 
@@ -118,11 +129,14 @@ namespace serenity
 	// Pathing Type Of Functions And The Like
 	void LogFileHelper::StorePathComponents( const file_helper::path &pathToStore )
 	{
-		auto logEntry { pathToStore };
+		auto path = pathToStore;
+		path.make_preferred( );
+
+		auto logEntry { path };
 		logEntry._Remove_filename_and_separator( );
 		m_logDirPath    = logEntry;
-		m_filePath      = pathToStore;
-		m_fileName      = pathToStore.filename( );
+		m_filePath      = path;
+		m_fileName      = path.filename( );
 		fileInfoChanged = true;
 	}
 

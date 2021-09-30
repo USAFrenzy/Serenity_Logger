@@ -1,6 +1,8 @@
 #pragma once
 
+#include <serenity/Defines.h>
 #include <serenity/Common.h>
+#include <serenity/Sinks/Sinks.h>
 #include <serenity/Interfaces/IObserver.h>
 
 #pragma warning( push, 0 )
@@ -15,10 +17,21 @@
 
 namespace serenity
 {
+	struct internal_logger_info
+	{
+		internal_logger_info( );
+		std::string                  loggerName = INTERNAL_DEFAULT_NAME;
+		std::string                  logName    = INTERNAL_DEFAULT_LOG;
+		LoggerLevel                  level      = LoggerLevel::trace;
+		LoggerLevel                  flushLevel = LoggerLevel::trace;
+		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
+		base_sink_info               sink_info = { };
+	};
+
 	class InternalLibLogger : public ILogger
 	{
 	      public:
-		explicit InternalLibLogger( se_internal::internal_logger_info infoStruct );
+		explicit InternalLibLogger( internal_logger_info infoStruct );
 		InternalLibLogger( ) = delete;
 		InternalLibLogger( const InternalLibLogger &copy );
 		InternalLibLogger( const InternalLibLogger &&move ) = delete;
@@ -29,13 +42,13 @@ namespace serenity
 		/// <summary>
 		///  For Setting Internal Format String -> internalFormatStr Will Overwrite formatStr
 		/// </summary>
-		void                                    CustomizeInternalLogger( se_internal::internal_logger_info infoStruct );
-		const std::shared_ptr<Sink>             sink_info( );
-		const std::string                       name( );
-		const se_internal::internal_logger_info internal_info( );
-		std::string                             LogLevelToStr( LoggerLevel level ) override;
-		void                                    SetLogLevel( LoggerLevel logLevel ) override;
-		void                                    SetFlushLevel( LoggerLevel flushLevel ) override;
+		void                        CustomizeInternalLogger( internal_logger_info &infoStruct );
+		const std::shared_ptr<Sink> sink_info( );
+		const std::string           name( );
+		const internal_logger_info  internal_info( );
+		std::string                 LogLevelToStr( LoggerLevel level ) override;
+		void                        SetLogLevel( LoggerLevel logLevel ) override;
+		void                        SetFlushLevel( LoggerLevel flushLevel ) override;
 
 		static void EnableInternalLogging( )
 		{
@@ -99,7 +112,7 @@ namespace serenity
 		static bool                            loggingEnabled;
 		bool                                   internalCustomized { false };
 		std::shared_ptr<Sink>                  m_sinks;
-		se_internal::internal_logger_info      internalLoggerInfo;
+		internal_logger_info                   internalLoggerInfo;
 		static std::shared_ptr<spdlog::logger> m_internalLogger;
 	};
 }  // namespace serenity
