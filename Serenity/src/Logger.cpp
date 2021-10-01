@@ -14,6 +14,7 @@ namespace serenity
 	std::shared_ptr<spdlog::logger>    Logger::m_clientLogger;
 	std::unique_ptr<LogFileHelper>     Logger::logFileHandle;
 	std::shared_ptr<InternalLibLogger> Logger::internalLogger;
+	LoggerLevel                        Logger::global_level { LoggerLevel::trace };
 
 	std::string Logger::LogLevelToStr( LoggerLevel level )
 	{
@@ -29,7 +30,7 @@ namespace serenity
 	}
 
 
-	Logger::Logger( base_sink_info infoStruct ) : initInfo( std::move( infoStruct ) )
+	Logger::Logger( sinks::base_sink_info infoStruct ) : initInfo( std::move( infoStruct ) )
 	{
 		file_helper::path logDirPath = initInfo.base_info.logDir.path( );
 		file_helper::path filePath   = logDirPath.string( ) + "/" + initInfo.base_info.logName;
@@ -37,15 +38,7 @@ namespace serenity
 
 		internalLogger = std::make_shared<InternalLibLogger>( internalLoggerInfo );
 		logFileHandle  = std::make_unique<LogFileHelper>( filePath );
-		m_sinks        = std::make_unique<Sink>( );
-		//##########################################################################################################
-		/*
-			NOTE: Some possible features to add:
-		  - The ability to enable internal logging support independantly of client logger [X]
-		  - Ties in with the above point, but also have the ability to turn off internal logging when in release [X]
-		  - The ability to customize the internal logger? I mean, I'm using stdout sink here, but hey, who knows? [ ]
-		*/
-		//##########################################################################################################
+		m_sinks        = std::make_unique<sinks::Sink>( );
 		// Creating Client Logger
 		m_sinks->ClearSinks( );
 		m_sinks->SetSinks( initInfo.sinks );
@@ -57,14 +50,6 @@ namespace serenity
 	{
 		Shutdown( );
 	}
-	void Logger::PreInit( )
-	{
-		initInfo.base_info   = { };
-		initInfo.daily_sink  = { };
-		initInfo.dist_sink   = { };
-		initInfo.rotate_sink = { };
-	}
-
 
 	void Logger::CloseLog( const file_helper::path filePath )
 	{
@@ -100,7 +85,7 @@ namespace serenity
 		internalLogger->trace( "Starting Logger(s)..." );
 		// DropLogger() resets m_sinks ptr -> have to recreate sink handle for CreateLogger()
 		if( m_sinks == nullptr ) {
-			m_sinks = std::make_unique<Sink>( );
+			m_sinks = std::make_unique<sinks::Sink>( );
 			m_sinks->ClearSinks( );
 			internalLogger->trace( "Sinks Handle Has Been Successfully Re-Initialized" );
 		}
@@ -141,7 +126,7 @@ namespace serenity
 		internalLogger->trace( "Logger Handle Has Been Reset" );
 	}
 
-	void Logger::CreateLogger( base_sink_info &infoStruct )
+	void Logger::CreateLogger( sinks::base_sink_info &infoStruct )
 	{
 		m_sinks->GetSinkHandles( ).clear( );
 		m_sinks->CreateSink( infoStruct );
@@ -153,6 +138,37 @@ namespace serenity
 		internalLogger->trace( "Logger [{}] Has Been Registered", infoStruct.base_info.loggerName );
 		SetLogLevel( initInfo.base_info.level );
 		SetFlushLevel( initInfo.base_info.flushLevel );
+	}
+
+	const std::shared_ptr<spdlog::logger> &Logger::ClientSideLogger( )
+	{
+		return m_clientLogger;
+	}
+
+	const std::unique_ptr<LogFileHelper> &Logger::FileHelperHandle( )
+	{
+		return logFileHandle;
+	}
+
+	const std::shared_ptr<InternalLibLogger> &Logger::InternalLogger( )
+	{
+		return internalLogger;
+	}
+
+	const LoggerLevel &Logger::GetGlobalLevel( )
+	{
+		return global_level;
+	}
+
+	void Logger::SetGlobalLevel( LoggerLevel level )
+	{
+		global_level = level;
+		if( Logger::ClientSideLogger( ) != nullptr ) {
+			Logger::ClientSideLogger( )->set_level( se_utils::ToMappedLevel( level ) );
+		}
+		if( InternalLibLogger::InternalLogger( ) != nullptr ) {
+			InternalLibLogger::InternalLogger( )->set_level( se_utils::ToMappedLevel( level ) );
+		}
 	}
 
 	bool Logger::RenameLog( const std::string newName, bool overwriteIfExists )
@@ -207,7 +223,6 @@ namespace serenity
 			UpdateInfo( );
 			internalLogger->info( "Logger Has Been Updated For File Path Changes" );
 			StartLogger( );
-
 			return true;
 		}
 		catch( const std::exception &e ) {
@@ -273,55 +288,55 @@ namespace serenity
 
 	const LoggerLevel Logger::GetLogLevel( )
 	{
-		return ToLogLevel( m_clientLogger->level( ) );
+		return se_utils::ToLogLevel( m_clientLogger->level( ) );
 	}
 
 	void Logger::SetLogLevel( LoggerLevel level )
 	{
 		internalLogger->trace( "Setting Logger Level..." );
-		if( ToMappedLevel( level ) == MappedLevel::n_levels ) {
+		if( se_utils::ToMappedLevel( level ) == MappedLevel::n_levels ) {
 			initInfo.base_info.level = LoggerLevel::off;
 			internalLogger->warn( "Log Level Was Not A Valid Value - Log Level Set To {}",
 					      LogLevelToStr( initInfo.base_info.level ) );
-			m_clientLogger->set_level( ToMappedLevel( initInfo.base_info.level ) );
+			m_clientLogger->set_level( se_utils::ToMappedLevel( initInfo.base_info.level ) );
 		}
 		initInfo.base_info.level = level;
-		m_clientLogger->set_level( ToMappedLevel( level ) );
+		m_clientLogger->set_level( se_utils::ToMappedLevel( level ) );
 		internalLogger->trace( "Log Level Successfully Set To: {}", LogLevelToStr( initInfo.base_info.level ) );
 	}
 
 	void Logger::SetFlushLevel( LoggerLevel flushLevel )
 	{
 		internalLogger->trace( "Setting Logger Flush Level..." );
-		if( ToMappedLevel( flushLevel ) == MappedLevel::n_levels ) {
+		if( se_utils::ToMappedLevel( flushLevel ) == MappedLevel::n_levels ) {
 			initInfo.base_info.flushLevel = LoggerLevel::trace;
-			m_clientLogger->flush_on( ToMappedLevel( initInfo.base_info.flushLevel ) );
+			m_clientLogger->flush_on( se_utils::ToMappedLevel( initInfo.base_info.flushLevel ) );
 			internalLogger->warn( "Log Level Was Not A Valid Value - Logger Flush Level Set To {}",
 					      LogLevelToStr( initInfo.base_info.flushLevel ) );
 		}
 		else {
 			initInfo.base_info.flushLevel = flushLevel;
-			m_clientLogger->flush_on( ToMappedLevel( initInfo.base_info.flushLevel ) );
+			m_clientLogger->flush_on( se_utils::ToMappedLevel( initInfo.base_info.flushLevel ) );
 			internalLogger->trace( "Log Flush Level Successfully Set To: {}", LogLevelToStr( flushLevel ) );
 		}
 	}
 
 	const LoggerLevel Logger::GetFlushLevel( )
 	{
-		return ToLogLevel( m_clientLogger->flush_level( ) );
+		return se_utils::ToLogLevel( m_clientLogger->flush_level( ) );
 	}
 
 	bool Logger::ShouldLog( )
 	{
 		if( m_clientLogger != nullptr ) {
-			return ( GetLogLevel( ) <= GetGlobalLevel( ) ) ? true : false;
+			return ( GetLogLevel( ) <= se_globals::GetGlobalLevel( ) ) ? true : false;
 		}
 		else {
 			return false;
 		}
 	}
 
-	void Logger::ChangeInternalLoggerOptions( internal_logger_info &options )
+	void Logger::ChangeInternalLoggerOptions( sinks::internal_logger_info &options )
 	{
 		internalLogger->trace( "Updating Internal Logger Options" );
 		internalLogger->CustomizeInternalLogger( options );

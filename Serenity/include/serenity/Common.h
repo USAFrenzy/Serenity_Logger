@@ -25,37 +25,40 @@ namespace serenity
 		off     = spdlog::level::off,
 	};
 
-	static LoggerLevel ToLogLevel( MappedLevel level )
+	namespace se_utils
 	{
-		std::unordered_map<MappedLevel, LoggerLevel> levelMap = {
-		  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
-		  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
-		  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
-		LoggerLevel result   = LoggerLevel::off;
-		auto        iterator = levelMap.find( level );
-		if( iterator != levelMap.end( ) ) {
-			result = iterator->second;
+		static LoggerLevel ToLogLevel( MappedLevel level )
+		{
+			std::unordered_map<MappedLevel, LoggerLevel> levelMap = {
+			  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
+			  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
+			  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
+			LoggerLevel result   = LoggerLevel::off;
+			auto        iterator = levelMap.find( level );
+			if( iterator != levelMap.end( ) ) {
+				result = iterator->second;
+			}
+			return result;
 		}
-		return result;
-	}
 
-	static MappedLevel ToMappedLevel( LoggerLevel level )
-	{
-		std::unordered_map<LoggerLevel, MappedLevel> levelMap = {
-		  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
-		  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
-		  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
-		MappedLevel result   = MappedLevel::off;
-		auto        iterator = levelMap.find( level );
-		if( iterator != levelMap.end( ) ) {
-			result = iterator->second;
+		static MappedLevel ToMappedLevel( LoggerLevel level )
+		{
+			std::unordered_map<LoggerLevel, MappedLevel> levelMap = {
+			  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
+			  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
+			  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
+			MappedLevel result   = MappedLevel::off;
+			auto        iterator = levelMap.find( level );
+			if( iterator != levelMap.end( ) ) {
+				result = iterator->second;
+			}
+			return result;
 		}
-		return result;
-	}
 
-	static std::string GetSerenityVerStr( )
-	{
-		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
-		return version;
-	}
+		static std::string GetSerenityVerStr( )
+		{
+			auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
+			return version;
+		}
+	}  // namespace se_utils
 }  // namespace serenity

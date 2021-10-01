@@ -17,35 +17,35 @@ int main( )
 	file_helper::directory_entry logDir { logDirPath };
 
 
-	logger_info initInfo = { };
-	initInfo.loggerName  = "Filesystem Logger";
-	initInfo.logName     = "File_System.txt";
-	initInfo.logDir      = logDir;
+	sinks::logger_info initInfo = { };
+	initInfo.loggerName         = "Filesystem Logger";
+	initInfo.logName            = "File_System.txt";
+	initInfo.logDir             = logDir;
 
-	std::vector<SinkType> dist_sink_handles;
-	dist_sink_handles.emplace_back( SinkType::basic_file_mt );
-	dist_sink_handles.emplace_back( SinkType::stdout_color_mt );
-	dist_sink_info dist_sink( dist_sink_handles );
+	std::vector<sinks::SinkType> dist_sink_handles;
+	dist_sink_handles.emplace_back( sinks::SinkType::basic_file_mt );
+	dist_sink_handles.emplace_back( sinks::SinkType::stdout_color_mt );
+	sinks::dist_sink_info dist_sink( dist_sink_handles );
 
-	base_sink_info sink_info = { };
-	sink_info.base_info      = initInfo;
-	sink_info.sinks.emplace_back( SinkType::dist_sink_mt );
+	sinks::base_sink_info sink_info = { };
+	sink_info.base_info             = initInfo;
+	sink_info.sinks.emplace_back( sinks::SinkType::dist_sink_mt );
 	sink_info.dist_sink = &dist_sink;
 
 
 	InternalLibLogger::EnableInternalLogging( );
 	// Works As Intended [X]
-	SetGlobalLevel( LoggerLevel::trace );
+	se_globals::SetGlobalLevel( LoggerLevel::trace );
 	Logger logTwo( sink_info );
-
+	
 	logTwo.se_trace( "Message Before Changing Stuff In Internal Logger" );
 
-	internal_logger_info changeOptions = { };
-	changeOptions.sink_info.sinks.emplace_back( SinkType::basic_file_mt );
+	sinks::internal_logger_info changeOptions = { };
+	changeOptions.sink_info.sinks.emplace_back( sinks::SinkType::basic_file_mt );
 	changeOptions.sink_info.truncateFile = true;
 	logTwo.ChangeInternalLoggerOptions( changeOptions );
 
-	SetGlobalLevel( LoggerLevel::warning );  // Subsequent Calls Will Set Logger && Global Levels
+	// se_globals::SetGlobalLevel( LoggerLevel::warning );  // Subsequent Calls Will Set Logger && Global Levels
 
 	logTwo.SetLogLevel( LoggerLevel::trace );  // Still Can Set Level On A Logger-To-Logger Basis
 
@@ -73,15 +73,11 @@ int main( )
 
 void PrintReminder( )
 {
-	auto day   = "30";
-	auto month = "SEP";
+	auto day   = "01";
+	auto month = "OCT";
 	auto year  = "21";
-
-	printf( "\n####################################################################################\n" );
-	printf( "# Reminder To Myself To Start Incrementing Version Number Or Find Automated Method #\n" );
-	printf( "####################################################################################" );
 	printf( "\n\t\t\t#############################\n" );
-	printf( "\t\t\t#  Library Version: %s   #\n", serenity::GetSerenityVerStr( ).c_str( ) );
-	printf( "\t\t\t#  Date: %s%s%s            #\n", day, month, year );
+	printf( "\t\t\t#  Library Version: %s   #\n", serenity::se_utils::GetSerenityVerStr( ).c_str( ) );
+	printf( "\t\t\t#  Date: %s %s %s          #\n", day, month, year );
 	printf( "\t\t\t#############################\n\n" );
 }

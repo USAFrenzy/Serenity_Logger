@@ -98,7 +98,7 @@ namespace serenity
 		fileInfoChanged = true;
 	}
 
-	const file_helper::path serenity::LogFileHelper::LogFilePath( )
+	const file_helper::path LogFileHelper::LogFilePath( )
 	{
 		return m_filePath;
 	}

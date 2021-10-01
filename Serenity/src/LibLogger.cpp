@@ -8,12 +8,11 @@ namespace serenity
 	bool                            InternalLibLogger::loggingEnabled { false };
 
 
-	InternalLibLogger::InternalLibLogger( internal_logger_info infoStruct )
+	InternalLibLogger::InternalLibLogger( sinks::internal_logger_info infoStruct )
 	{
-		m_sinks = std::make_unique<Sink>( );
+		m_sinks = std::make_unique<sinks::Sink>( );
 		// If Default, Should Just Populate With Defaults, Otherwise, Move The Struct Parameter To The internalLoggerInfo
 		// Variable
-
 		CustomizeInternalLogger( infoStruct );
 	}
 	InternalLibLogger::InternalLibLogger( const InternalLibLogger &copy )
@@ -25,16 +24,16 @@ namespace serenity
 		m_sinks            = copy.m_sinks;
 	}
 
-	const std::shared_ptr<Sink> InternalLibLogger::sink_info( )
+	const std::shared_ptr<sinks::Sink> InternalLibLogger::SinkInfo( )
 	{
 		return m_sinks;
 	}
 
-	const std::string InternalLibLogger::name( )
+	const std::string InternalLibLogger::GetName( )
 	{
 		return internalLoggerInfo.loggerName;
 	}
-	const internal_logger_info InternalLibLogger::internal_info( )
+	const sinks::internal_logger_info InternalLibLogger::InternalInfo( )
 	{
 		return internalLoggerInfo;
 	}
@@ -43,27 +42,27 @@ namespace serenity
 	void InternalLibLogger::SetLogLevel( LoggerLevel logLevel )
 	{
 		trace( "Setting Logger Level..." );
-		if( ToMappedLevel( logLevel ) == MappedLevel::n_levels ) {
+		if( se_utils::ToMappedLevel( logLevel ) == MappedLevel::n_levels ) {
 			internalLoggerInfo.level = LoggerLevel::off;
-			m_internalLogger->set_level( ToMappedLevel( internalLoggerInfo.level ) );
+			m_internalLogger->set_level( se_utils::ToMappedLevel( internalLoggerInfo.level ) );
 			warn( "Log Level Was Not A Valid Value - Log Level Set To {}", LogLevelToStr( internalLoggerInfo.level ) );
 		}
 		internalLoggerInfo.level = logLevel;
-		m_internalLogger->set_level( ToMappedLevel( internalLoggerInfo.level ) );
+		m_internalLogger->set_level( se_utils::ToMappedLevel( internalLoggerInfo.level ) );
 		trace( "Log Level Successfully Set To: {}", LogLevelToStr( logLevel ) );
 	}
 
 	void InternalLibLogger::SetFlushLevel( LoggerLevel flushLevel )
 	{
 		trace( "Setting Logger Flush Level..." );
-		if( ToMappedLevel( flushLevel ) == MappedLevel::n_levels ) {
+		if( se_utils::ToMappedLevel( flushLevel ) == MappedLevel::n_levels ) {
 			internalLoggerInfo.flushLevel = LoggerLevel::trace;
-			m_internalLogger->flush_on( ToMappedLevel( internalLoggerInfo.level ) );
+			m_internalLogger->flush_on( se_utils::ToMappedLevel( internalLoggerInfo.level ) );
 			warn( "Log Level Was Not A Valid Value - Log Flush Level Set To {}", LogLevelToStr( internalLoggerInfo.level ) );
 		}
 		else {
 			internalLoggerInfo.flushLevel = flushLevel;
-			m_internalLogger->flush_on( ToMappedLevel( internalLoggerInfo.flushLevel ) );
+			m_internalLogger->flush_on( se_utils::ToMappedLevel( internalLoggerInfo.flushLevel ) );
 			trace( "Log Flush Level Successfully Set To: {}", LogLevelToStr( flushLevel ) );
 		}
 	}
@@ -100,7 +99,7 @@ namespace serenity
 		return result;
 	}
 
-	void InternalLibLogger::CustomizeInternalLogger( internal_logger_info &infoStruct )
+	void InternalLibLogger::CustomizeInternalLogger( sinks::internal_logger_info &infoStruct )
 	{
 		if( ShouldLog( ) ) {
 			m_internalLogger->trace( "Clearing Sinks..." );
@@ -124,7 +123,7 @@ namespace serenity
 	{
 		m_sinks->ClearSinks( );
 		if( internalLoggerInfo.sink_info.sinks.empty( ) ) {
-			internalLoggerInfo.sink_info.sinks.emplace_back( SinkType::stdout_color_mt );
+			internalLoggerInfo.sink_info.sinks.emplace_back( sinks::SinkType::stdout_color_mt );
 		}
 		m_sinks->SetSinks( internalLoggerInfo.sink_info.sinks );
 		m_sinks->CreateSink( internalLoggerInfo.sink_info );
@@ -140,14 +139,16 @@ namespace serenity
 	bool InternalLibLogger::ShouldLog( )
 	{
 		if( m_internalLogger != nullptr ) {
-			return ( ( GetGlobalLevel( ) <= ToLogLevel( InternalLogger( )->level( ) ) ) && ( loggingEnabled ) ) ? true : false;
+			return ( ( se_globals::GetGlobalLevel( ) <= se_utils::ToLogLevel( InternalLogger( )->level( ) ) ) && ( loggingEnabled ) )
+			       ? true
+			       : false;
 		}
 		else {
 			return false;
 		}
 	}
 
-	internal_logger_info::internal_logger_info( )
+	sinks::internal_logger_info::internal_logger_info( )
 	{
 		sink_info.base_info.flushLevel = flushLevel;
 		sink_info.base_info.level      = level;

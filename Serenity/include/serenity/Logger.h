@@ -17,25 +17,18 @@ namespace serenity
 	class Logger : public ILogger
 	{
 	      public:
-		explicit Logger( base_sink_info infoStruct );
+		explicit Logger( sinks::base_sink_info infoStruct );
 		Logger( )                     = delete;
 		Logger( const Logger &copy )  = delete;
 		Logger( const Logger &&move ) = delete;
 		Logger &operator=( const Logger & ) = delete;
 		~Logger( );
 
-		static const std::shared_ptr<spdlog::logger> &ClientSideLogger( )
-		{
-			return m_clientLogger;
-		}
-		static const std::unique_ptr<LogFileHelper> &FileHelperHandle( )
-		{
-			return logFileHandle;
-		}
-		static const std::shared_ptr<InternalLibLogger> &InternalLogger( )
-		{
-			return internalLogger;
-		}
+		static const LoggerLevel &                       GetGlobalLevel( );
+		static void                                      SetGlobalLevel( LoggerLevel level );
+		static const std::shared_ptr<spdlog::logger> &   ClientSideLogger( );
+		static const std::shared_ptr<InternalLibLogger> &InternalLogger( );
+		static const std::unique_ptr<LogFileHelper> &    FileHelperHandle( );
 
 		void              StartLogger( );
 		void              StopLogger( );
@@ -72,37 +65,34 @@ namespace serenity
 		 *	Option 2) Logger log(infoStruct);
 		 *		->   log.InternalLogger()->EnableInternalLogging();	// Object Based
 		 **************************************************************************************************************************/
-		void ChangeInternalLoggerOptions(internal_logger_info &options );
+		void ChangeInternalLoggerOptions(sinks::internal_logger_info &options );
 		// clang-format on
 
 	      private:
-		base_sink_info                            initInfo;
-		internal_logger_info                      internalLoggerInfo;
+		sinks::base_sink_info                     initInfo;
+		sinks::internal_logger_info               internalLoggerInfo;
 		static std::shared_ptr<spdlog::logger>    m_clientLogger;
 		static std::unique_ptr<LogFileHelper>     logFileHandle;
-		std::unique_ptr<Sink>                     m_sinks;
+		std::unique_ptr<sinks::Sink>              m_sinks;
 		static std::shared_ptr<InternalLibLogger> internalLogger;
+		static LoggerLevel                        global_level;
 
 	      private:
-		void PreInit( );
-		void CreateLogger( base_sink_info &infoStruct );
+		void CreateLogger( sinks::base_sink_info &infoStruct );
 	};
 
-	static LoggerLevel  global_level { LoggerLevel::trace };
-	static LoggerLevel &GetGlobalLevel( )
+	namespace se_globals
 	{
-		return global_level;
-	}
-	static void SetGlobalLevel( LoggerLevel level )
-	{
-		global_level = level;
-		if( Logger::ClientSideLogger( ) != nullptr ) {
-			Logger::ClientSideLogger( )->set_level( ToMappedLevel( level ) );
+		static LoggerLevel GetGlobalLevel( )
+		{
+			return Logger::GetGlobalLevel( );
 		}
-		if( InternalLibLogger::InternalLogger( ) != nullptr ) {
-			InternalLibLogger::InternalLogger( )->set_level( ToMappedLevel( level ) );
+		static void SetGlobalLevel( LoggerLevel level )
+		{
+			Logger::SetGlobalLevel( level );
 		}
-	}
+	}  // namespace se_globals
+
 #include <serenity/Logger-impl.h>
 }  // namespace serenity
 
