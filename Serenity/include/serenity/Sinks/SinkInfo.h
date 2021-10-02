@@ -48,6 +48,7 @@ namespace serenity
 			std::vector<SinkType> m_sinks;
 		};
 
+
 		struct logger_info
 		{
 			std::string                  loggerName = DEFAULT_LOGGER_NAME;
@@ -70,5 +71,15 @@ namespace serenity
 			dist_sink_info *      dist_sink;
 		};
 
+		struct internal_logger_info
+		{
+			internal_logger_info( );
+			std::string                  loggerName = INTERNAL_DEFAULT_NAME;
+			std::string                  logName    = INTERNAL_DEFAULT_LOG;
+			LoggerLevel                  level      = LoggerLevel::trace;
+			LoggerLevel                  flushLevel = LoggerLevel::trace;
+			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
+			sinks::base_sink_info        sink_info = { };
+		};
 	}  // namespace sinks
 }  // namespace serenity

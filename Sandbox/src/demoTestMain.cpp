@@ -37,7 +37,7 @@ int main( )
 	// Works As Intended [X]
 	se_globals::SetGlobalLevel( LoggerLevel::trace );
 	Logger logTwo( sink_info );
-	
+
 	logTwo.se_trace( "Message Before Changing Stuff In Internal Logger" );
 
 	sinks::internal_logger_info changeOptions = { };

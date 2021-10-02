@@ -3,7 +3,6 @@
 #pragma warning( push, 0 )
 
 
-
 template <typename T, typename... Args> void Logger::se_trace( T message, Args &&...args )
 {
 	if( ( se_utils::ToMappedLevel( GetLogLevel( ) ) <= MappedLevel::trace ) && ( ShouldLog( ) ) ) {

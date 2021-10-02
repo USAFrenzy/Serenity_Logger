@@ -2,7 +2,7 @@
 
 #include <serenity/Defines.h>
 #include <serenity/Common.h>
-#include <serenity/Sinks/Sinks.h>
+#include <serenity/Sinks/SinkInfo.h>
 #include <serenity/Interfaces/IObserver.h>
 
 #pragma warning( push, 0 )
@@ -17,20 +17,11 @@
 
 namespace serenity
 {
+	// forward declaration
 	namespace sinks
 	{
-		struct internal_logger_info
-		{
-			internal_logger_info( );
-			std::string                  loggerName = INTERNAL_DEFAULT_NAME;
-			std::string                  logName    = INTERNAL_DEFAULT_LOG;
-			LoggerLevel                  level      = LoggerLevel::trace;
-			LoggerLevel                  flushLevel = LoggerLevel::trace;
-			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
-			sinks::base_sink_info        sink_info = { };
-		};
-	}  // namespace sinks
-
+		class Sink;
+	}
 
 	class InternalLibLogger : public ILogger
 	{
@@ -39,7 +30,7 @@ namespace serenity
 		InternalLibLogger( ) = delete;
 		InternalLibLogger( const InternalLibLogger &copy );
 		InternalLibLogger( const InternalLibLogger &&move ) = delete;
-		InternalLibLogger &operator=( const InternalLibLogger &ref ) = delete;
+		InternalLibLogger &operator=( const InternalLibLogger &ref ) = default;
 		~InternalLibLogger( )                                        = default;
 
 

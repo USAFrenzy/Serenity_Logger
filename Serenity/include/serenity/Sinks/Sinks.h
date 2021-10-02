@@ -3,6 +3,8 @@
 #include <serenity/Defines.h>
 #include <serenity/Common.h>
 #include <serenity/Sinks/SinkInfo.h>
+#include <serenity/Helpers/LibLogger.h>
+
 
 #include <vector>
 #include <memory>
@@ -31,9 +33,10 @@ namespace serenity
 
 
 		      private:
-			base_sink_info                m_sinkInfo;
-			std::vector<spdlog::sink_ptr> dist_sink_sinks;
-			std::vector<spdlog::sink_ptr> sinkVector;
+			base_sink_info                            m_sinkInfo;
+			std::vector<spdlog::sink_ptr>             dist_sink_sinks;
+			std::vector<spdlog::sink_ptr>             sinkVector;
+			static std::shared_ptr<InternalLibLogger> sinksLogger;
 		};
 	}  // namespace sinks
 }  // namespace serenity

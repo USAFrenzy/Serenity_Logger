@@ -1,5 +1,6 @@
 
 #include <serenity/Helpers/LibLogger.h>
+#include <serenity/Sinks/Sinks.h>
 #include <serenity/Logger.h>
 
 namespace serenity
@@ -139,7 +140,8 @@ namespace serenity
 	bool InternalLibLogger::ShouldLog( )
 	{
 		if( m_internalLogger != nullptr ) {
-			return ( ( se_globals::GetGlobalLevel( ) <= se_utils::ToLogLevel( InternalLogger( )->level( ) ) ) && ( loggingEnabled ) )
+			return ( ( se_globals::GetGlobalLevel( ) <= se_utils::ToLogLevel( InternalLogger( )->level( ) ) ) &&
+				 ( loggingEnabled ) )
 			       ? true
 			       : false;
 		}
