@@ -112,7 +112,9 @@ namespace serenity
 		if( m_internalLogger != nullptr ) {
 			m_internalLogger->trace( "Setting New Options For Internal Logger..." );
 		}
-		internalLoggerInfo = std::move( infoStruct );
+		// override formatStr with internalFormatStr For CreateSink() called later on
+		infoStruct.sink_info.formatStr = infoStruct.internalFormatStr;
+		internalLoggerInfo             = std::move( infoStruct );
 		if( ShouldLog( ) ) {
 			m_internalLogger->info( "New Options Successfully Set" );
 		}

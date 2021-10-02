@@ -361,8 +361,8 @@ namespace serenity
 		std::vector<spdlog::sink_ptr> Sink::GetSinkHandles( )
 		{
 			if( sinksLogger != nullptr ) {
-				sinksLogger->trace( "Retrieving Sink Handles" );
-				sinksLogger->trace( "Sink Handles Contain [{}] Sinks", sinkVector.size( ) );
+				sinksLogger->trace( "Retrieving Sink List" );
+				sinksLogger->trace( "Sink List Contains [{}] Sinks", sinkVector.size( ) );
 			}
 			return sinkVector;
 		}

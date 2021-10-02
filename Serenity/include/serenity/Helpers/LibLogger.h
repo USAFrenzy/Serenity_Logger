@@ -26,7 +26,7 @@ namespace serenity
 	class InternalLibLogger : public ILogger
 	{
 	      public:
-		explicit InternalLibLogger( sinks::internal_logger_info infoStruct );
+		explicit InternalLibLogger( sinks::internal_logger_info infoStruct = { } );
 		InternalLibLogger( ) = delete;
 		InternalLibLogger( const InternalLibLogger &copy );
 		InternalLibLogger( const InternalLibLogger &&move ) = delete;

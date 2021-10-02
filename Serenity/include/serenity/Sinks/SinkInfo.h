@@ -60,8 +60,7 @@ namespace serenity
 
 		struct base_sink_info
 		{
-			std::string           formatStr         = "%^[%T] %n: %v%$";
-			std::string           internalFormatStr = "%^[%L][%T] %n:%v%$";
+			std::string           formatStr = "%^[%T] %n: %v%$";
 			std::vector<SinkType> sinks;
 			bool                  truncateFile { false };
 			bool                  hasFileHandle { false };
@@ -79,7 +78,8 @@ namespace serenity
 			LoggerLevel                  level      = LoggerLevel::trace;
 			LoggerLevel                  flushLevel = LoggerLevel::trace;
 			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
-			sinks::base_sink_info        sink_info = { };
+			std::string                  internalFormatStr = "%^[%L][%T] %n:%v%$";
+			sinks::base_sink_info        sink_info         = { };
 		};
 	}  // namespace sinks
 }  // namespace serenity
