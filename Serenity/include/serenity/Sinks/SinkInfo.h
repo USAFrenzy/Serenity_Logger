@@ -6,6 +6,8 @@
 
 #include <spdlog/sinks/dist_sink.h>
 
+#include <iostream>
+
 namespace serenity
 {
 	namespace sinks
@@ -35,6 +37,36 @@ namespace serenity
 			int      min { 0 };
 			uint16_t maxFiles { 0 };
 		};
+
+		// class that separates it's messages based on message log level
+		template <typename Mutex> class std_split : public spdlog::sinks::base_sink<Mutex>
+		{
+		      protected:
+			void sink_it_( const spdlog::details::log_msg &msg ) override
+			{
+				if( msg.level > se_utils::ToMappedLevel( LoggerLevel::warning ) ) {
+					// TODO: logic for warn, err, fatal to stderr
+				}
+				else {
+					// TODO: logic for trace, info, debug to stdout
+				}
+				// If needed (very likely but not mandatory), the sink formats the message before sending it to its
+				// final destination:
+				spdlog::memory_buf_t formatted;
+				spdlog::sinks::base_sink<Mutex>::formatter_->format( msg, formatted );
+				std::cout << fmt::to_string( formatted );
+			}
+
+			void flush_( ) override
+			{
+				std::cout << std::flush;
+			}
+		};
+#include <spdlog/details/null_mutex.h>
+#include <mutex>
+		using std_split_sink_mt = std_split<std::mutex>;
+		using std_split_sink_st = std_split<spdlog::details::null_mutex>;
+
 
 		struct dist_sink_info : private spdlog::sinks::dist_sink_mt
 		{
@@ -77,7 +109,7 @@ namespace serenity
 			std::string                  logName    = INTERNAL_DEFAULT_LOG;
 			LoggerLevel                  level      = LoggerLevel::trace;
 			LoggerLevel                  flushLevel = LoggerLevel::trace;
-			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
+			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs/Internal" };
 			std::string                  internalFormatStr = "%^[%L][%T] %n:%v%$";
 			sinks::base_sink_info        sink_info         = { };
 		};

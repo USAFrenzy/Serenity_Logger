@@ -19,6 +19,7 @@ set (
     "include/serenity/Interfaces/IObserver.h"
     "include/serenity/Utilities/Utilities.h"
     "include/serenity/Sinks/Sinks.h"
+    "include/serenity/Sinks/SinkInfo.h"
     "include/serenity/Helpers/LibLogger.h"
 )
 

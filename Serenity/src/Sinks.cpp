@@ -83,7 +83,7 @@ namespace serenity
 			{
 				m_sinkInfo.hasFileHandle = true;
 			}
-
+			
 			for( auto const &sink : infoStruct.sinks ) {
 				switch( sink ) {
 					case SinkType::basic_file_mt:

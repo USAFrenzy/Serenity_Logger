@@ -232,10 +232,13 @@ namespace serenity
 		}
 	}
 
-	bool Logger::WriteToNewLog( const std::string newLogName, bool truncateIfExists )
+	bool Logger::WriteToNewLog( std::string newLogName, bool truncateIfExists )
 	{
+		// if path with leading dir separators passed in, remove them and standardize path
+		if( ( newLogName.front( ) == ( '/' ) ) || ( newLogName.front( ) == ( '\\' ) ) ) {
+			newLogName.erase( newLogName.begin( ), newLogName.begin( ) + 1 );
+		}
 		const auto &      tmpPath     = initInfo.base_info.logDir.path( );
-		file_helper::path oldPath     = tmpPath.string( ).append( "/" + initInfo.base_info.logName );
 		file_helper::path newPath     = tmpPath.string( ).append( "/" + newLogName );
 		auto              newFilePath = newPath.make_preferred( );
 

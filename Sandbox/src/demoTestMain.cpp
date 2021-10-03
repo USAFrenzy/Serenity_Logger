@@ -59,7 +59,7 @@ int main( )
 	logTwo.se_debug( "BACK IN MAIN!\n" );
 
 	logTwo.se_info( "Testing Swapping To New Log Instead Of Renaming...\n" );
-	logTwo.WriteToNewLog( "/WriteToNewLog/CreateNewLog.txt" );
+	logTwo.WriteToNewLog( "\\WriteToNewLog/CreateNewLog.txt" );
 	logTwo.se_debug( "File Path: [{}]", logTwo.FileHelperHandle( )->LogFilePath( ) );
 	logTwo.se_debug( "Relative File Path: [{}]", logTwo.FileHelperHandle( )->RelativePathToLog( ) );
 	logTwo.se_debug( "Log Directory: [{}]", logTwo.FileHelperHandle( )->LogDir( ).path( ) );
