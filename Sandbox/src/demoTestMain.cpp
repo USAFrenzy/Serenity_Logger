@@ -24,7 +24,7 @@ int main( )
 
 	std::vector<sinks::SinkType> dist_sink_handles;
 	dist_sink_handles.emplace_back( sinks::SinkType::basic_file_mt );
-	dist_sink_handles.emplace_back( sinks::SinkType::stdout_color_mt );
+	dist_sink_handles.emplace_back( sinks::SinkType::stdout_color_mt);
 	sinks::dist_sink_info dist_sink( dist_sink_handles );
 
 	sinks::base_sink_info sink_info = { };
@@ -73,11 +73,11 @@ int main( )
 
 void PrintReminder( )
 {
-	auto day   = "02";
+	auto day   = "04";
 	auto month = "OCT";
 	auto year  = "21";
 	printf( "\n\t\t\t#############################\n" );
-	printf( "\t\t\t#  Library Version: %s   #\n", serenity::se_utils::GetSerenityVerStr( ).c_str( ) );
+	printf( "\t\t\t#  Library Version: %s  #\n", serenity::se_utils::GetSerenityVerStr( ).c_str( ) );
 	printf( "\t\t\t#  Date: %s %s %s          #\n", day, month, year );
 	printf( "\t\t\t#############################\n\n" );
 }

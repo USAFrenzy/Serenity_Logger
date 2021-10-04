@@ -1,5 +1,6 @@
 
 #include <serenity/Sinks/Sinks.h>
+#include <serenity/Sinks/StdSplitSink.h>
 #include <serenity/Logger.h>  // For Setting The sinksLogger to the logger's instance of the internal logger
 
 #pragma warning( push, 0 )
@@ -75,15 +76,6 @@ namespace serenity
 
 		void Sink::CreateSink( base_sink_info &infoStruct )
 		{
-			// sink vector doesn't contain console sinks -> has a file handle
-			// Still set hasFileHandle = true in individual file sinks if it happens to contain a console sink & file sink
-			// Kind Of Easier To Do This Than Explicity Search For Sinks That Have A File Handle In The Console Sinks
-			if( !( ( FindSink( m_sinkInfo.sinks.begin( ), m_sinkInfo.sinks.begin( ), SinkType::stdout_color_mt ) ) &&
-			       ( FindSink( m_sinkInfo.sinks.begin( ), m_sinkInfo.sinks.begin( ), SinkType::stderr_color_mt ) ) ) )
-			{
-				m_sinkInfo.hasFileHandle = true;
-			}
-			
 			for( auto const &sink : infoStruct.sinks ) {
 				switch( sink ) {
 					case SinkType::basic_file_mt:
@@ -91,7 +83,6 @@ namespace serenity
 							if( sinksLogger != nullptr )
 								sinksLogger->trace( "Creating \"basic_file_mt\" Sink..." );
 
-							// For Readability
 							auto              logDirPath = infoStruct.base_info.logDir.path( ).string( );
 							auto              logName    = infoStruct.base_info.logName;
 							file_helper::path filePath   = logDirPath + "/" + logName;
@@ -106,27 +97,21 @@ namespace serenity
 								  "\"basic_file_mt\" Sink's Truncate Value Has Been Set To: [{}]",
 								  infoStruct.truncateFile );
 							}
-							m_sinkInfo.hasFileHandle = true;
-							if( sinksLogger != nullptr )
-								sinksLogger->trace(
-								  "\"basic_file_mt\" Sink File Handle Value Has been Set To: [{}]",
-								  m_sinkInfo.hasFileHandle );
-
-							auto basic_logger = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+							auto basic_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
 							  filePath.string( ), infoStruct.truncateFile );
 
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"basic_file_mt\" Sink Has Been Successfully Created" );
 
-							basic_logger->set_pattern( infoStruct.formatStr );
+							basic_sink->set_pattern( infoStruct.formatStr );
 
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"basic_file_mt\" Sink's Format String has Been Set To: [{}]",
 								  infoStruct.formatStr );
 
-							sinkVector.emplace_back( std::move( basic_logger ) );
+							sinkVector.emplace_back( std::move( basic_sink ) );
 
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
@@ -135,16 +120,16 @@ namespace serenity
 						break;
 					case SinkType::stdout_color_mt:
 						{
-							auto console_logger = std::make_shared<spdlog::sinks::stdout_color_sink_mt>( );
+							auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>( );
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"stdout_color_mt\" Sink Has Been Successfully Created " );
-							console_logger->set_pattern( infoStruct.formatStr );
+							console_sink->set_pattern( infoStruct.formatStr );
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"stdout_color_mt\" Sinks' Format Pattern Has Been Set To: [{}]",
 								  infoStruct.formatStr );
-							sinkVector.emplace_back( std::move( console_logger ) );
+							sinkVector.emplace_back( std::move( console_sink ) );
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"stdout_color_mt\" Sink Has Been Moved To Sinks List" );
@@ -152,16 +137,16 @@ namespace serenity
 						break;
 					case SinkType::stderr_color_mt:
 						{
-							auto console_logger = std::make_shared<spdlog::sinks::stderr_color_sink_mt>( );
+							auto err_console_sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>( );
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"stderr_color_mt\" Sink Has Been Successfully Created " );
-							console_logger->set_pattern( infoStruct.formatStr );
+							err_console_sink->set_pattern( infoStruct.formatStr );
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"stderr_color_mt\" Sinks' Format Pattern Has Been Set To: [{}]",
 								  infoStruct.formatStr );
-							sinkVector.emplace_back( std::move( console_logger ) );
+							sinkVector.emplace_back( std::move( err_console_sink ) );
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"stderr_color_mt\" Sink Has Been Moved To Sinks List" );
@@ -169,7 +154,19 @@ namespace serenity
 						break;
 					case SinkType::std_split_mt:
 						{
-							// TODO: To Be implemented in derived sink class
+							auto std_split_sink = std::make_shared<serenity::sinks::std_split_sink_mt>( );
+							if( sinksLogger != nullptr )
+								sinksLogger->info(
+								  "\"std_split_mt\" Sink Has Been Successfully Created " );
+							std_split_sink->set_pattern( infoStruct.formatStr );
+							if( sinksLogger != nullptr )
+								sinksLogger->trace(
+								  "\"std_split_mt\" Sinks' Format Pattern Has Been Set To: [{}]",
+								  infoStruct.formatStr );
+							sinkVector.emplace_back( std::move( std_split_sink ) );
+							if( sinksLogger != nullptr )
+								sinksLogger->trace(
+								  "\"std_split_mt\" Sink Has Been Moved To Sinks List" );
 						}
 						break;
 					case SinkType::rotating_mt:
@@ -178,7 +175,6 @@ namespace serenity
 							auto              fileName = infoStruct.base_info.logName;
 							file_helper::path filePath = logPath + "/" + fileName;
 							filePath.make_preferred( );
-							m_sinkInfo.hasFileHandle = true;
 
 							if( sinksLogger != nullptr ) {
 								sinksLogger->trace(
@@ -195,23 +191,19 @@ namespace serenity
 								  "\"rotating_mt\" Sink's Rotate When Opened Value Has Been Set To: "
 								  "[{}]",
 								  infoStruct.rotate_sink.rotateWhenOpened );
-								sinksLogger->trace(
-								  "\"rotating_mt\" Sink's File Handle Value Has Been Set To: "
-								  "[{}]",
-								  infoStruct.hasFileHandle );
 							}
-							auto rotating_logger = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+							auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
 							  filePath.string( ), infoStruct.rotate_sink.maxFileNum,
 							  infoStruct.rotate_sink.maxFileSize, infoStruct.rotate_sink.rotateWhenOpened );
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"rotating_mt\" Sink Has Been Successfully Created" );
-							rotating_logger->set_pattern( infoStruct.formatStr );
+							rotating_sink->set_pattern( infoStruct.formatStr );
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"rotating_mt\" Sink's Format Pattern Has Been Set To: [{}]",
 								  infoStruct.formatStr );
-							sinkVector.emplace_back( std::move( rotating_logger ) );
+							sinkVector.emplace_back( std::move( rotating_sink ) );
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"rotating_mt\" Sink Has Been Moved To Sinks List" );
@@ -223,7 +215,6 @@ namespace serenity
 							auto              fileName = infoStruct.base_info.logName;
 							file_helper::path filePath = logPath + "/" + fileName;
 							filePath.make_preferred( );
-							m_sinkInfo.hasFileHandle = true;
 
 							if( sinksLogger != nullptr ) {
 								sinksLogger->trace(
@@ -236,25 +227,20 @@ namespace serenity
 								sinksLogger->trace(
 								  "\"daily_file_sink_mt\" Sink's Truncate Value Has Been Set To: [{}]",
 								  infoStruct.truncateFile );
-								sinksLogger->trace(
-								  "\"daily_file_sink_mt\" Sink's File Handle Value Has Been Set To: "
-								  "[{}]",
-								  infoStruct.hasFileHandle );
 							}
-
-							auto daily_logger = std::make_shared<spdlog::sinks::daily_file_sink_mt>(
+							auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(
 							  filePath.string( ), infoStruct.daily_sink.hour, infoStruct.daily_sink.min,
 							  infoStruct.truncateFile );
 
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"daily_file_sink_mt\" Sink Has Been Successfully Created" );
-							daily_logger->set_pattern( infoStruct.formatStr );
+							daily_sink->set_pattern( infoStruct.formatStr );
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"daily_file_sink_mt\" Sink's Format Pattern Has Been Set To: [{}]",
 								  infoStruct.formatStr );
-							sinkVector.emplace_back( std::move( daily_logger ) );
+							sinkVector.emplace_back( std::move( daily_sink ) );
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"daily_file_sink_mt\" Sink Has Been Moved To Sinks List" );
