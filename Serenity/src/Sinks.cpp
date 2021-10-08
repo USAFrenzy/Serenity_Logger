@@ -73,7 +73,8 @@ namespace serenity
 		}
 		// ###################################################################################################################################################
 
-
+		// This Is Getting Rather Large For One Function... in the future, might as well separate these out into their own
+		// separate functions and call those functions (Just for readability and such)
 		void Sink::CreateSink( base_sink_info &infoStruct )
 		{
 			for( auto const &sink : infoStruct.sinks ) {

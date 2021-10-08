@@ -6,8 +6,6 @@
 
 #include <spdlog/sinks/dist_sink.h>
 
-#include <iostream>
-
 namespace serenity
 {
 	namespace sinks
@@ -17,7 +15,7 @@ namespace serenity
 		{
 			stdout_color_mt,
 			stderr_color_mt,
-			std_split_mt,  // error/fatal to stderr, else stdout -> to be implemented
+			std_split_mt,  // warning/error/fatal to stderr, else stdout (No Color)
 			basic_file_mt,
 			rotating_mt,
 			daily_file_sink_mt,

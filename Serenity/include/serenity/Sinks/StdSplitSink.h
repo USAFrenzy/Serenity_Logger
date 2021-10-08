@@ -2,12 +2,16 @@
 
 #include <spdlog/sinks/base_sink.h>
 
+#include <iostream>
+
+// TODO: Add Color Support (Probably Just Need To Inherit From Those Respective Sinks Instead Or Implement A Color Range)
+// Lazy Implementation: could just create a std_out and std_err sink on creation of this sink and call them in the respective condition
+// checks...loads of overhead with that idea though sooooo probably not going that route lol
 namespace serenity
 {
 	namespace sinks
 	{
-		// class that separates it's messages based on message log level
-		// TODO: Add Color Support (Probably Just Need To Inherit From Those Respective Sinks Instead)
+		// class that separates it's messages based on message log level (Useful For Piping Based On Level)
 		template <typename Mutex> class std_split : public spdlog::sinks::base_sink<Mutex>
 		{
 		      protected:
