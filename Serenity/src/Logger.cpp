@@ -36,7 +36,9 @@ namespace serenity
 		file_helper::path filePath   = logDirPath.string( ) + "/" + initInfo.base_info.logName;
 		filePath.make_preferred( );
 
+		if( internalLogger == nullptr ) {
 		internalLogger = std::make_shared<InternalLibLogger>( internalLoggerInfo );
+		}
 		logFileHandle  = std::make_unique<LogFileHelper>( filePath );
 		m_sinks        = std::make_unique<sinks::Sink>( );
 		// Creating Client Logger
@@ -234,6 +236,7 @@ namespace serenity
 
 	bool Logger::WriteToNewLog( std::string newLogName, bool truncateIfExists )
 	{
+		StopLogger( );
 		// if path with leading dir separators passed in, remove them and standardize path
 		if( ( newLogName.front( ) == ( '/' ) ) || ( newLogName.front( ) == ( '\\' ) ) ) {
 			newLogName.erase( newLogName.begin( ), newLogName.begin( ) + 1 );
@@ -241,9 +244,8 @@ namespace serenity
 		const auto &      tmpPath     = initInfo.base_info.logDir.path( );
 		file_helper::path newPath     = tmpPath.string( ).append( "/" + newLogName );
 		auto              newFilePath = newPath.make_preferred( );
-
+		FileHelperHandle( )->CloseFile( newFilePath ); // ensure that new file is closed
 		try {
-			StopLogger( );
 			internalLogger->trace( "Setting New Log Path To Point To [{}]", newFilePath );
 			FileHelperHandle( )->StorePathComponents( newFilePath );
 			UpdateInfo( );

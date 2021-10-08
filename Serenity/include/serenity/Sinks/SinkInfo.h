@@ -10,16 +10,22 @@ namespace serenity
 {
 	namespace sinks
 	{
-		// mt designated in case I add wrapper support for the single thread versions later on
 		enum class SinkType
 		{
 			stdout_color_mt,
+			stdout_color_st,
 			stderr_color_mt,
-			std_split_mt,  // warning/error/fatal to stderr, else stdout (No Color)
+			stderr_color_st,
+			std_split_mt,  //   warning/error/fatal to stderr, else stdout (No Color)
+			std_split_st,  // ^-------------------------------------------------------^
 			basic_file_mt,
+			basic_file_st,
 			rotating_mt,
-			daily_file_sink_mt,
+			rotating_st,
+			daily_file_mt,
+			daily_file_st,
 			dist_sink_mt,
+			dist_sink_st,
 			unknown
 		};
 
