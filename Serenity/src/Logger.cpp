@@ -39,7 +39,9 @@ namespace serenity
 		if( internalLogger == nullptr ) {
 		internalLogger = std::make_shared<InternalLibLogger>( internalLoggerInfo );
 		}
+		if( logFileHandle == nullptr ) {
 		logFileHandle  = std::make_unique<LogFileHelper>( filePath );
+		}
 		m_sinks        = std::make_unique<sinks::Sink>( );
 		// Creating Client Logger
 		m_sinks->ClearSinks( );
@@ -50,7 +52,9 @@ namespace serenity
 
 	Logger::~Logger( )
 	{
-		Shutdown( );
+		if( m_clientLogger != nullptr ) {
+			Shutdown( );
+		}
 	}
 
 	void Logger::CloseLog( const file_helper::path filePath )
@@ -109,12 +113,11 @@ namespace serenity
 	void Logger::Shutdown( )
 	{
 		StopLogger( );
-		internalLogger->trace( "Shutting Down..." );
+		if( InternalLogger != nullptr ) {
+			internalLogger->trace( "Shutting Down..." );
+		}
 		spdlog::drop_all( );
 		spdlog::shutdown( );
-		m_sinks.reset( );
-		m_clientLogger.reset( );
-		internalLogger.reset( );
 	}
 
 	void Logger::DropLogger( )

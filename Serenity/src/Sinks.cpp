@@ -8,6 +8,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/sinks/win_eventlog_sink.h>
 #pragma warning( pop )
 
 #include <algorithm>
@@ -536,6 +537,17 @@ namespace serenity
 								sinksLogger->trace(
 								  "\"dist_sink_st\" Sink Has Been Moved To Sinks List" );
 						}break;
+					case SinkType::win_event_mt:
+						{
+							HANDLE proc;
+							auto source = GetProcessId(proc);
+							auto win_event_sink = std::make_shared<spdlog::sinks::win_eventlog_sink_mt>(source);
+						}
+						break;
+					case SinkType::win_event_st:
+						{
+						}
+						break;
 					default:
 						{
 							sinksLogger->error( "Invalid Sink Type\n" );

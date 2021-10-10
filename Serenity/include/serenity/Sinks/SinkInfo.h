@@ -26,6 +26,8 @@ namespace serenity
 			daily_file_st,
 			dist_sink_mt,
 			dist_sink_st,
+			win_event_mt,
+			win_event_st,
 			unknown
 		};
 

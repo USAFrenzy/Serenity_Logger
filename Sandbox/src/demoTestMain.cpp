@@ -1,6 +1,7 @@
 #include <serenity/Logger.h>
 #include <serenity/Utilities/Utilities.h>
 
+#include <fstream>
 
 void PrintReminder( );
 
@@ -69,15 +70,30 @@ int main( )
 	// Simple issue highlighted by second logger creation:
 	/*
 		Once the end of main is hit, tries to shutdown secondary instance of internal logger created from the second logger but
-		it's already been destroyed -> null context error occurs
+		it's already been destroyed -> null context error occurs (fixed crash just by doing a nullptr check but unsure if that
+	   actually resolved the issue)
 	*/
 	sinks::base_sink_info secondSink = { };
 	secondSink.base_info             = initInfo;
 	secondSink.base_info.loggerName  = "Second_Logger";
-	secondSink.base_info.logName     = "Secondary_Logger_Text.txt";
+	secondSink.base_info.logName     = "Secondary_Logger_Text.html";
 	secondSink.sinks.emplace_back( sinks::SinkType::basic_file_st );
 	secondSink.sinks.emplace_back( sinks::SinkType::stdout_color_st );
 	Logger second_logger( secondSink );
+
+#if 1
+	// Just For Fun - Possibly Have A HTML Logger? Might Make A Sink For That =P
+	std::fstream file;
+	file.open( second_logger.FileHelperHandle( )->LogFilePath( ) );
+	file << "<!DOCTYPE html>\n<html>\n<body>\n";
+	file.close( );
+	for( int i = 0; i < 100; i++ ) {
+		second_logger.se_info( "Test Message Number {} </br>", i + 1 );
+	}
+	file.open( second_logger.FileHelperHandle( )->LogFilePath( ) );
+	file << "</body>\n</html>";
+	file.close( );
+#endif
 
 	// Next Step Now Is To Add More Sink Support, Wrap The Explicit Utilities Functions Into LogFileHelper Class Functions, And
 	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P
@@ -86,7 +102,7 @@ int main( )
 
 void PrintReminder( )
 {
-	auto day   = "08";
+	auto day   = "09";
 	auto month = "OCT";
 	auto year  = "21";
 	printf( "\n\t\t\t#############################\n" );
