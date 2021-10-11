@@ -20,6 +20,7 @@ set (
     "include/serenity/Utilities/Utilities.h"
     "include/serenity/Sinks/Sinks.h"
     "include/serenity/Sinks/SinkInfo.h"
+    "include/serenity/Sinks/StdSplitSink.h"
     "include/serenity/Helpers/LibLogger.h"
 )
 

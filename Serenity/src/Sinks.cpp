@@ -230,7 +230,8 @@ namespace serenity
 						break;
 					case SinkType::std_split_mt:
 						{
-							auto std_split_sink = std::make_shared<serenity::sinks::std_split_sink_mt>( );
+							auto std_split_sink =
+							  std::make_shared<serenity::sinks::std_split_sink_mt>();
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"std_split_mt\" Sink Has Been Successfully Created " );
@@ -247,7 +248,8 @@ namespace serenity
 						break;
 					case SinkType::std_split_st:
 						{
-							auto std_split_sink = std::make_shared<serenity::sinks::std_split_sink_st>( );
+							auto std_split_sink =
+							  std::make_shared<serenity::sinks::std_split_sink_st>( );
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"std_split_st\" Sink Has Been Successfully Created " );
@@ -424,7 +426,8 @@ namespace serenity
 							// temporary storage of sinks/sink types
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
-								  "Storing Old Sink List And Sink Types In Temp Variables For Multi-Threaded Distributed Sink Creation" );
+								  "Storing Old Sink List And Sink Types In Temp Variables For "
+								  "Multi-Threaded Distributed Sink Creation" );
 							auto prevSinkHandles = sinkVector;
 							auto prevSinkTypes   = infoStruct.sinks;
 							// temporary storage of sinks/sink types
@@ -485,7 +488,8 @@ namespace serenity
 							// temporary storage of sinks/sink types
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
-								  "Storing Old Sink List And Sink Types In Temp Variables For Single Threaded Distributed Sink Creation" );
+								  "Storing Old Sink List And Sink Types In Temp Variables For Single "
+								  "Threaded Distributed Sink Creation" );
 							auto prevSinkHandles = sinkVector;
 							auto prevSinkTypes   = infoStruct.sinks;
 							// temporary storage of sinks/sink types
@@ -536,16 +540,6 @@ namespace serenity
 							if( sinksLogger != nullptr )
 								sinksLogger->trace(
 								  "\"dist_sink_st\" Sink Has Been Moved To Sinks List" );
-						}break;
-					case SinkType::win_event_mt:
-						{
-							HANDLE proc;
-							auto source = GetProcessId(proc);
-							auto win_event_sink = std::make_shared<spdlog::sinks::win_eventlog_sink_mt>(source);
-						}
-						break;
-					case SinkType::win_event_st:
-						{
 						}
 						break;
 					default:

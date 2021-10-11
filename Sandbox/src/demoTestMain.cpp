@@ -67,12 +67,9 @@ int main( )
 	logTwo.se_debug( "Log Directory: [{}]", logTwo.FileHelperHandle( )->LogDir( ).path( ) );
 	logTwo.se_debug( "File Name: [{}]\n", logTwo.FileHelperHandle( )->LogName( ) );
 
-	// Simple issue highlighted by second logger creation:
-	/*
-		Once the end of main is hit, tries to shutdown secondary instance of internal logger created from the second logger but
-		it's already been destroyed -> null context error occurs (fixed crash just by doing a nullptr check but unsure if that
-	   actually resolved the issue)
-	*/
+
+#if 0
+	// Just For Fun - Possibly Have A HTML Logger? Might Make A Sink For That =P
 	sinks::base_sink_info secondSink = { };
 	secondSink.base_info             = initInfo;
 	secondSink.base_info.loggerName  = "Second_Logger";
@@ -81,8 +78,6 @@ int main( )
 	secondSink.sinks.emplace_back( sinks::SinkType::stdout_color_st );
 	Logger second_logger( secondSink );
 
-#if 1
-	// Just For Fun - Possibly Have A HTML Logger? Might Make A Sink For That =P
 	std::fstream file;
 	file.open( second_logger.FileHelperHandle( )->LogFilePath( ) );
 	file << "<!DOCTYPE html>\n<html>\n<body>\n";
@@ -95,6 +90,14 @@ int main( )
 	file.close( );
 #endif
 
+	sinks::base_sink_info std_split = { };
+	std_split.base_info             = initInfo;
+	std_split.base_info.loggerName  = "Split_Console_Logger";
+	std_split.sinks.emplace_back( sinks::SinkType::std_split_mt );
+	Logger console( std_split );
+	console.se_fatal( "Fatal" );
+	console.se_info( "Info" );
+
 	// Next Step Now Is To Add More Sink Support, Wrap The Explicit Utilities Functions Into LogFileHelper Class Functions, And
 	// Clean Up Any Messy Code. Then Write A Test Suite For Each Funtion And Call It Done =P
 }
@@ -102,7 +105,7 @@ int main( )
 
 void PrintReminder( )
 {
-	auto day   = "09";
+	auto day   = "11";
 	auto month = "OCT";
 	auto year  = "21";
 	printf( "\n\t\t\t#############################\n" );
