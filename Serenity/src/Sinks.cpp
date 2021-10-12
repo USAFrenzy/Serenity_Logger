@@ -8,7 +8,6 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
-#include <spdlog/sinks/win_eventlog_sink.h>
 #pragma warning( pop )
 
 #include <algorithm>
@@ -230,8 +229,7 @@ namespace serenity
 						break;
 					case SinkType::std_split_mt:
 						{
-							auto std_split_sink =
-							  std::make_shared<serenity::sinks::std_split_sink_mt>();
+							auto std_split_sink = std::make_shared<serenity::sinks::std_split_sink_mt>( );
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"std_split_mt\" Sink Has Been Successfully Created " );
@@ -248,8 +246,7 @@ namespace serenity
 						break;
 					case SinkType::std_split_st:
 						{
-							auto std_split_sink =
-							  std::make_shared<serenity::sinks::std_split_sink_st>( );
+							auto std_split_sink = std::make_shared<serenity::sinks::std_split_sink_st>( );
 							if( sinksLogger != nullptr )
 								sinksLogger->info(
 								  "\"std_split_st\" Sink Has Been Successfully Created " );

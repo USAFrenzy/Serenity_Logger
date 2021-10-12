@@ -1,5 +1,13 @@
 #pragma once
 
+// Very Simple And Basic Platform Detection
+#if defined( WIN32 ) || defined( _WIN32 ) || defined( __WIN32__ ) || defined( __NT__ )
+	#define PLATFORM_WINDOWS
+#elif __linux__
+	#define PLATFORM_LINUX
+#endif
+
+
 #define INTERNAL_DEFAULT_NAME "SERENITY"
 #define INTERNAL_DEFAULT_LOG  "Internal_Log.txt"
 #define DEFAULT_LOGGER_NAME   "Logger"
@@ -7,7 +15,7 @@
 
 #define SERENITY_MAJOR                                  0
 #define SERENITY_MINOR                                  2
-#define SERENITY_REV                                    15
+#define SERENITY_REV                                    16
 #define VERSION_STRING_FORMAT( major, minor, revision ) #major "." #minor "." #revision
 #define VERSION_NUMBER( maj, min, rev )                 VERSION_STRING_FORMAT( maj, min, rev )
 #define SE_EXPAND_MACRO( x )                            x
@@ -24,7 +32,7 @@
 		#define SE_DEBUG_BREAK ( void ) 0
 	#endif  // Platform Debug Break Defines
 
-	// Formatting of Message to be used by both
+// Formatting of Message to be used by both
 	#define SE_ASSERT_VAR_MSG( message, ... ) fmt::format( message, __VA_ARGS__ )
 #else
 	#define SE_ASSERT_VAR_MSG( message, ... ) ( void ) 0
