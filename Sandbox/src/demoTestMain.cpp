@@ -170,7 +170,7 @@ int main( )
 
 void PrintReminder( )
 {
-	auto day   = "14";
+	auto day   = "15";
 	auto month = "OCT";
 	auto year  = "21";
 	printf( "\n\t\t\t#############################\n" );
