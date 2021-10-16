@@ -74,48 +74,56 @@ namespace se_colors
 			return std::string( stringView.data( ), stringView.size( ) );
 		}
 
+		template <typename T> std::string toColorCode( T msgOption )
+		{
+			return mapMsgOption( msgOption );
+		}
+
 	      private:
-		std::string toColorCode( format fmt )
+		template <typename T> std::string mapMsgOption( T msgOption )
 		{
-			std::map<format, std::string_view> formatCode = {
-			  { format::blink, "\033[5m" },     { format::bold, "\033[1m" },      { format::clear_line, "\033[K" },
-			  { format::concealed, "\033[8m" }, { format::dark, "\033[2m" },      { format::reset, "\033[0m" },
-			  { format::reverse, "\033[7m" },   { format::underline, "\033[4m" }, { format::no_change, "" } };
-			std::string_view result;
-			auto             iterator = formatCode.find( fmt );
-			if( iterator != formatCode.end( ) ) {
-				result = iterator->second;
+			if constexpr( std::is_same_v<T, format> ) {
+				std::map<format, std::string_view> formatCode = {
+				  { format::blink, "\033[5m" },     { format::bold, "\033[1m" },      { format::clear_line, "\033[K" },
+				  { format::concealed, "\033[8m" }, { format::dark, "\033[2m" },      { format::reset, "\033[0m" },
+				  { format::reverse, "\033[7m" },   { format::underline, "\033[4m" }, { format::no_change, "" } };
+				std::string_view result;
+				auto             iterator = formatCode.find( msgOption );
+				if( iterator != formatCode.end( ) ) {
+					result = iterator->second;
+				}
+				return toString( result );
 			}
-			return toString( result );
+			if constexpr( std::is_same_v<T, fg_colors> ) {
+				std::map<fg_colors, std::string_view> colorCode = {
+				  { fg_colors::black, "\033[30m" }, { fg_colors::red, "\033[31m" },
+				  { fg_colors::green, "\033[32m" }, { fg_colors::yellow, "\033[33m" },
+				  { fg_colors::blue, "\033[34m" },  { fg_colors::magenta, "\033[35m" },
+				  { fg_colors::cyan, "\033[36m" },  { fg_colors::white, "\033[37m" },
+				  { fg_colors::no_change, "" } };
+				std::string_view result;
+				auto             iterator = colorCode.find( msgOption );
+				if( iterator != colorCode.end( ) ) {
+					result = iterator->second;
+				}
+				return toString( result );
+			}
+			if constexpr( std::is_same_v<T, bg_colors> ) {
+				std::map<bg_colors, std::string_view> colorCode = {
+				  { bg_colors::black, "\033[40m" }, { bg_colors::red, "\033[41m" },
+				  { bg_colors::green, "\033[42m" }, { bg_colors::yellow, "\033[43m" },
+				  { bg_colors::blue, "\033[44m" },  { bg_colors::magenta, "\033[45m" },
+				  { bg_colors::cyan, "\033[46m" },  { bg_colors::white, "\033[47m" },
+				  { bg_colors::no_change, "" } };
+				std::string_view result;
+				auto             iterator = colorCode.find( msgOption );
+				if( iterator != colorCode.end( ) ) {
+					result = iterator->second;
+				}
+				return toString( result );
+			}
 		}
 
-		std::string toColorCode( fg_colors color )
-		{
-			std::map<fg_colors, std::string_view> colorCode = {
-			  { fg_colors::black, "\033[30m" },  { fg_colors::red, "\033[31m" },   { fg_colors::green, "\033[32m" },
-			  { fg_colors::yellow, "\033[33m" }, { fg_colors::blue, "\033[34m" },  { fg_colors::magenta, "\033[35m" },
-			  { fg_colors::cyan, "\033[36m" },   { fg_colors::white, "\033[37m" }, { fg_colors::no_change, "" } };
-			std::string_view result;
-			auto             iterator = colorCode.find( color );
-			if( iterator != colorCode.end( ) ) {
-				result = iterator->second;
-			}
-			return toString( result );
-		}
-
-		std::string toColorCode( bg_colors color )
-		{
-			std::map<bg_colors, std::string_view> colorCode = {
-			  { bg_colors::black, "\033[40m" },  { bg_colors::red, "\033[41m" },   { bg_colors::green, "\033[42m" },
-			  { bg_colors::yellow, "\033[43m" }, { bg_colors::blue, "\033[44m" },  { bg_colors::magenta, "\033[45m" },
-			  { bg_colors::cyan, "\033[46m" },   { bg_colors::white, "\033[47m" }, { bg_colors::no_change, "" } };
-			std::string_view result;
-			auto             iterator = colorCode.find( color );
-			if( iterator != colorCode.end( ) ) {
-				result = iterator->second;
-			}
-			return toString( result );
-		}
 
 	};  // struct ConsoleColors
 
