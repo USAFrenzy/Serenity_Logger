@@ -3,6 +3,13 @@
 #include <iostream>
 #include <map>
 
+
+#define PLATFORM_WINDOWS
+#ifdef PLATFORM_WINDOWS
+	#include <Windows.h>
+#endif
+
+
 namespace se_colors
 {
 	// Format
@@ -132,79 +139,138 @@ namespace se_colors
 
 	};  // struct ConsoleColors
 
-	namespace CTag
+
+	namespace Tag
 	{
+#ifdef PLATFORM_WINDOWS
+		void enableVirCon( )
+		{
+			HANDLE handleOut = GetStdHandle( STD_OUTPUT_HANDLE );
+			DWORD  consoleMode;
+			GetConsoleMode( handleOut, &consoleMode );
+			consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+			consoleMode |= DISABLE_NEWLINE_AUTO_RETURN;
+			SetConsoleMode( handleOut, consoleMode );
+		}
+#endif  // PLATFORM_WINDOWS
+
+		// TODO: void return types not the way to go - fix when looking at again!
+
+		std::string toString( const std::string_view s )
+		{
+			return std::string( s.data( ), s.size( ) );
+		}
+		void Flush( std::ostream &os )
+		{
+			os.flush( );
+		}
 		std::ostream &reset( std::ostream &os )
 		{
+			Flush( os );
 			return os << "\033[0m";
 		}
-
-		std::ostream &black( std::ostream &os )
+		std::ostream &tagIt( std::string_view s, void color( std::ostream &os ), std::ostream &os = std::cout )
 		{
-			return os << reset << "\033[30m ";
-		}
-		std::ostream &blue( std::ostream &os )
-		{
-			return os << "\033[34m";
-		}
-		std::ostream &green( std::ostream &os )
-		{
-			return os << "\033[32m";
-		}
-		std::ostream &cyan( std::ostream &os )
-		{
-			return os << "\033[36m";
-		}
-		std::ostream &red( std::ostream &os )
-		{
-			return os << "\033[31";
-		}
-		std::ostream &magenta( std::ostream &os )
-		{
-			return os << "\033[35";
-		}
-		std::ostream &yellow( std::ostream &os )
-		{
-			return os << "\033[33";
-		}
-		std::ostream &white( std::ostream &os )
-		{
-			return os << "\033[37";
-		}
-		std::ostream &grey( std::ostream &os )
-		{
-			return os << "\033[90";
-		}
-		std::ostream &light_blue( std::ostream &os )
-		{
-			return os << "\033[94";
-		}
-		std::ostream &light_green( std::ostream &os )
-		{
-			return os << "\033[92";
-		}
-		std::ostream &light_cyan( std::ostream &os )
-		{
-			return os << "\033[96";
-		}
-		std::ostream &light_red( std::ostream &os )
-		{
-			return os << "\033[91";
-		}
-		std::ostream &light_magenta( std::ostream &os )
-		{
-			return os << "\033[95";
-		}
-		std::ostream &light_yellow( std::ostream &os )
-		{
-			return os << "\033[93";
-		}
-		std::ostream &bright_white( std::ostream &os )
-		{
-			return os << "\033[97";
+			Flush( os );
+			return os << color << toString( s ) << reset;
 		}
 
-	}  // namespace CTag
+		void black( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[30m ";
+		}
+		void blue( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[34m";
+		}
+		void green( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[32m";
+		}
+		void cyan( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[36m";
+		}
+		void red( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[31";
+		}
+		void magenta( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[35";
+		}
+		void yellow( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[33";
+		}
+		void white( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[37";
+		}
+		void grey( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[90";
+		}
+		void light_blue( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[94";
+		}
+		void light_green( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[92";
+		}
+		void light_cyan( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[96";
+		}
+		void light_red( std::ostream &os )
+		{
+			Flush( os );
+			os << "\033[91";
+		}
+		void light_magenta( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[95";
+		}
+		void light_yellow( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[93";
+		}
+		void bright_white( std::ostream &os )
+		{
+			Flush( os );
+
+			os << "\033[97";
+		}
+	}  // namespace Tag
 }  // namespace se_colors
 
 
@@ -251,9 +317,17 @@ int main( )
 	 *  ColorPrint("This Would Be ^CT A Color &CT Tagged ^CT Section &CT", msgColor, tagColor1, tagColor2);
 	 *  Where The Tag Colors Are Optional And Variadic.. Honestly Might Be More Difficult Then I Initially Thought =/
 	 ****************************************************************************************************************************/
-	auto r = CTag::reset;
-	std::cout << CTag::green << "Specifc " << r << CTag::bright_white << "Word " << r << CTag::cyan << "Choice " << r
-		  << CTag::yellow << "Color " << r << CTag::magenta << "Tagging " << r << CTag::light_red << "Examples\n " << r;
+
+	std::cout << "Some Examples Of ";
+	Tag::tagIt( "Color", Tag::blue );
+	Tag::tagIt( " Tagging\n", Tag::green );
+	Tag::tagIt( "Magenta", Tag::magenta );
+	Tag::tagIt( "Cyan", Tag::cyan );
+	Tag::tagIt( "Yellow", Tag::yellow );
+	Tag::tagIt( "Red\n", Tag::red );
+
+	// Kinda Works So Far? Need To overload "<<" or change return types so using std::cout/cerr can be streamlined..
+	// EDIT: Some weird stuff happening with some of the color choices in regards to cutting off chars...
 
 	/******************************************************************************************************************************
 	 * Have Some Basic Tagging Set (Rough Draft Idea Anyways), But Still No Way Of Setting Up A Message Parser For Substitution Yet
