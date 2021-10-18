@@ -170,6 +170,15 @@ namespace se_colors
 			return tag_helper::Reset( );
 		}
 
+		// This Does Far Less Aloocation Than The Original Red_On_Blue()
+		// 56 bytes for this version Vs. 1936 bytes for the original...
+		constexpr const char *r_on_b = "\033[31m\033[44m";
+		std::string           red_on_blue( std::string_view s )
+		{
+			return r_on_b + tag_helper::toString( s ) + Reset( );
+		}
+
+
 		std::string Blue( std::string_view s )
 		{
 			return tag_helper::tagIt( s, fg_colors::blue );
@@ -657,10 +666,40 @@ namespace se_colors
 #######################################################################################################################################################################################################################################################*/
 // clang-format on
 
+#define ALLOC_TEST 0
+
+#if ALLOC_TEST  // Testing Allocations
+size_t total_bytes = 0;
+void * operator new( std::size_t n )
+{
+	std::cout << "[Allocating " << n << " bytes]";
+	total_bytes += n;
+	return malloc( n );
+}
+void operator delete( void *p ) throw( )
+{
+	total_bytes -= sizeof( p );
+	free( p );
+}
+#endif
+
 
 int main( )
 {
 	using namespace se_colors;
+
+#if ALLOC_TEST
+	size_t bytes = 0;
+	std::cout << Tag::red_on_blue( "\n\nTotal Bytes: " );
+	bytes = total_bytes;
+	std::cout << total_bytes << "\n\n";
+	std::cout << Tag::Red_On_Blue( "\n\nTotal Bytes: " );
+	auto new_total = total_bytes - bytes;
+	std::cout << new_total << "\n\n";
+// 56 bytes for new version Vs. 1936 bytes for the original...
+// Pretty sure that just with that test, I'd much rather go the constexpr route than the indirection I had with mapping and the
+// like... Less allocation obviously means faster so it seems like the right way to go I believe
+#else
 
 
 	ConsoleColors            C;
@@ -763,7 +802,10 @@ int main( )
 
 
 	/******************************************************************************************************************************
-	 * Have Some Basic Tagging Set (Rough Draft Idea Anyways), But Still No Way Of Setting Up A Message Parser For Substitution Yet
+	 * Have Some Basic Tagging Set (Rough Draft Idea Anyways), But Still No Way Of Setting Up A Message Parser For Substitution
+	 *Yet
 	 * - Currently ColorPrint() and tagIt() Accomplish A Very Similar Function -> Hopefully Will Differentiate Soon Though
 	 *******************************************************************************************************************************/
+
+#endif
 }
