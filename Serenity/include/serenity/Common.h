@@ -1,6 +1,7 @@
 #pragma once
 
 #include <serenity/Defines.h>
+#include <serenity/Version.h>
 
 #pragma warning( push, 0 )
 #include <spdlog/spdlog.h>
@@ -55,7 +56,6 @@ namespace serenity
 			}
 			return result;
 		}
-
 		static std::string GetSerenityVerStr( )
 		{
 			auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );

@@ -12,14 +12,8 @@
 #define INTERNAL_DEFAULT_LOG  "Internal_Log.txt"
 #define DEFAULT_LOGGER_NAME   "Logger"
 #define DEFAULT_LOG           "Log.txt"
-
-#define SERENITY_MAJOR                                  0
-#define SERENITY_MINOR                                  2
-#define SERENITY_REV                                    22
-#define VERSION_STRING_FORMAT( major, minor, revision ) #major "." #minor "." #revision
-#define VERSION_NUMBER( maj, min, rev )                 VERSION_STRING_FORMAT( maj, min, rev )
-#define SE_EXPAND_MACRO( x )                            x
-#define SE_MACRO_STRING( x )                            #x
+#define SE_EXPAND_MACRO( x )  x
+#define SE_MACRO_STRING( x )  #x
 
 #ifndef NDEBUG
 	#if defined( WIN32 ) || defined( __WIN32 ) || defined( __WIN32__ )

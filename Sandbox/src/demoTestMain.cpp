@@ -129,7 +129,7 @@ int main( )
 	logTwo.se_debug( "File Name: [{}]\n", logTwo.FileHelperHandle( )->LogName( ) );
 
 
-#if 1
+#if 0
 	// Just For Fun - Possibly Have A HTML Logger? Might Make A Sink For That =P
 	sinks::base_sink_info secondSink = { };
 	secondSink.base_info             = initInfo;
@@ -170,11 +170,8 @@ int main( )
 
 void PrintReminder( )
 {
-	auto day   = "16";
-	auto month = "OCT";
-	auto year  = "21";
 	printf( "\n\t\t\t#############################\n" );
 	printf( "\t\t\t#  Library Version: %s  #\n", serenity::se_utils::GetSerenityVerStr( ).c_str( ) );
-	printf( "\t\t\t#  Date: %s %s %s          #\n", day, month, year );
+	printf( "\t\t\t#  Date: %s %s %s          #\n", SE_DAY, SE_MONTH, SE_YEAR );
 	printf( "\t\t\t#############################\n\n" );
 }
