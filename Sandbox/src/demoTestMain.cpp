@@ -3,7 +3,7 @@
 
 #include <fstream>
 
-void PrintReminder( );
+void PrettyPrintLibVersion( );
 
 /*
    After Dabbling With The std_split Sink, I've Noticed How Fun This Project Has Been - I Kind Of Would Like To See If I Can
@@ -68,7 +68,7 @@ void PrintReminder( );
 */
 int main( )
 {
-	PrintReminder( );
+	PrettyPrintLibVersion( );
 	using namespace serenity;
 
 
@@ -168,10 +168,13 @@ int main( )
 }
 
 
-void PrintReminder( )
+void PrettyPrintLibVersion( )
 {
-	printf( "\n\t\t\t#############################\n" );
-	printf( "\t\t\t#  Library Version: %s  #\n", serenity::se_utils::GetSerenityVerStr( ).c_str( ) );
-	printf( "\t\t\t#  Date: %s %s %s          #\n", SE_DAY, SE_MONTH, SE_YEAR );
-	printf( "\t\t\t#############################\n\n" );
+	printf( "\n\t\t\t#########################################################################################\n" );
+	printf( "\t\t\t#\t\tThank You For Checking Out The Serenity Logging Library!\t\t#\n" );
+	printf( "\t\t\t#\t\t\tLibrary Version: %s\t\t\t\t\t\t#\n", serenity::se_utils::GetSerenityVerStr( ).c_str( ) );
+	printf( "\t\t\t#\t\t\tLast Built:\t\t\t\t\t\t\t#\n" );
+	printf( "\t\t\t#\t\t\t  - Date: %i/%i/%i\t\t\t\t\t\t#\n", SE_MONTH, SE_DAY, SE_YEAR );
+	printf( "\t\t\t#\t\t\t  - Time: %s\t\t\t\t\t\t#\n", SE_LAST_BUILT );
+	printf( "\t\t\t#########################################################################################\n\n" );
 }

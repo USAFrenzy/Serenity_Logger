@@ -58,7 +58,7 @@ namespace serenity
 		}
 		static std::string GetSerenityVerStr( )
 		{
-			auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
+			auto version = VERSION_NUMBER( SERENITY_VERSION_MAJOR, SERENITY_VERSION_MINOR, SERENITY_VERSION_REVISION );
 			return version;
 		}
 	}  // namespace se_utils
