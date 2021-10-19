@@ -169,442 +169,517 @@ namespace se_colors
 		{
 			return tag_helper::Reset( );
 		}
-
-		// This Does Far Less Aloocation Than The Original Red_On_Blue()
-		// 56 bytes for this version Vs. 1936 bytes for the original...
-		constexpr const char *r_on_b = "\033[31m\033[44m";
-		std::string           red_on_blue( std::string_view s )
-		{
-			return r_on_b + tag_helper::toString( s ) + Reset( );
-		}
-
-
+		const char *blue = "\033[34m";
 		std::string Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue );
+			return blue + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *bright_blue = "\033[94m";
 		std::string Bright_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue );
+			return bright_blue + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *on_blue = "\033[44m";
 		std::string On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, bg_colors::blue );
+			return on_blue + tag_helper::toString( s ) + Reset( );
 		}
 
 		// Regular Blue Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		const char *blue_on_black = "\033[34m\033[40m";
 		std::string Blue_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue, bg_colors::black );
+			return blue_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *blue_on_blue = "\033[34m\033[044m";
 		std::string Blue_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue, bg_colors::blue );
+			return blue_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *blue_on_cyan = "\033[34m\033[46m";
 		std::string Blue_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue, bg_colors::cyan );
+			return blue_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *blue_on_green = "\033[34m\033[42m";
 		std::string Blue_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue, bg_colors::green );
+			return blue_on_green + tag_helper::toString( s ) + Reset( );
 		}
+		const char *blue_on_magenta = "\033[34m\033[45m";
 		std::string Blue_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue, bg_colors::magenta );
+			return blue_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *blue_on_red = "\033[34m\033[41m";
 		std::string Blue_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue, bg_colors::red );
+			return blue_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *blue_on_white = "\033[34m\033[47m";
 		std::string Blue_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue, bg_colors::white );
+			return blue_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *blue_on_yellow = "\033[34m\033[43m";
 		std::string Blue_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::blue, bg_colors::yellow );
+			return blue_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
 		// Light Blue Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		const char *bright_blue_on_black = "\033[94m\033[40m";
 		std::string Bright_Blue_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue, bg_colors::black );
+			return bright_blue_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *bright_blue_on_blue = "\033[94m\033[44m";
 		std::string Bright_Blue_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue, bg_colors::blue );
+			return bright_blue_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *bright_blue_on_cyan = "\033[94m\033[46m";
 		std::string Bright_Blue_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue, bg_colors::cyan );
+			return bright_blue_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *bright_blue_on_green = "\033[94m\033[42m";
 		std::string Bright_Blue_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue, bg_colors::green );
+			return bright_blue_on_green + tag_helper::toString( s ) + Reset( );
 		}
+		const char *bright_blue_on_magenta = "\033[94m\033[45m";
 		std::string Bright_Blue_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue, bg_colors::magenta );
+			return bright_blue_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *bright_blue_on_red = "\033[94m\033[41m";
 		std::string Bright_Blue_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue, bg_colors::red );
+			return bright_blue_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *bright_blue_on_white = "\033[94m\033[47m";
 		std::string Bright_Blue_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue, bg_colors::white );
+			return bright_blue_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *bright_blue_on_yellow = "\033[94m\033[43m";
 		std::string Bright_Blue_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_blue, bg_colors::yellow );
+			return bright_blue_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
+		const char *green = "\033[32m";
 		std::string Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green );
+			return green + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *bright_green = "\033[92m";
 		std::string Bright_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_green );
+			return bright_green + tag_helper::toString( s ) + Reset( );
 		}
 
+		const char *on_green = "\033[42m";
 		std::string On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, bg_colors::green );
+			return on_green + tag_helper::toString( s ) + Reset( );
 		}
 		// Regular Green Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		//######################################################################################################################################################################################################################################################################################
+		const char *green_on_black = "\033[32m\033[40m";
 		std::string Green_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green, bg_colors::black );
+			return green_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *green_on_blue = "\033[32m\033[44m";
 		std::string Green_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green, bg_colors::blue );
+			return green_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *green_on_cyan = "\033[32m\033[46m";
 		std::string Green_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green, bg_colors::cyan );
+			return green_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *green_on_green = "\033[32m\033[42m";
 		std::string Green_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green, bg_colors::green );
+			return green_on_green + tag_helper::toString( s ) + Reset( );
 		}
+		const char *green_on_magenta = "\033[32m\033[45m";
 		std::string Green_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green, bg_colors::magenta );
+			return green_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *green_on_red = "\033[32m\033[41m";
 		std::string Green_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green, bg_colors::red );
+			return green_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *green_on_white = "\033[32m\033[47m";
 		std::string Green_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green, bg_colors::white );
+			return green_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *green_on_yellow = "\033[32m\033[43m";
 		std::string Green_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::green, bg_colors::yellow );
+			return green_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
+		const char *cyan = "\033[36m";
 		std::string Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan );
+			return cyan + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *bright_cyan = "\033[96m";
 		std::string Bright_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_cyan );
+			return bright_cyan + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *on_cyan = "\033[46m";
 		std::string On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, bg_colors::cyan );
+			return on_cyan + tag_helper::toString( s ) + Reset( );
 		}
 		// Regular Cyan Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		const char *cyan_on_black = "\033[36m\033[40m";
 		std::string Cyan_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan, bg_colors::black );
+			return cyan_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *cyan_on_blue = "\033[36m\033[44m";
 		std::string Cyan_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan, bg_colors::blue );
+			return cyan_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *cyan_on_cyan = "\033[36m\033[46m";
 		std::string Cyan_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan, bg_colors::cyan );
+			return cyan_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *cyan_on_green = "\033[36m\033[42m";
 		std::string Cyan_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan, bg_colors::green );
+			return cyan_on_green + tag_helper::toString( s ) + Reset( );
 		}
+		const char *cyan_on_magenta = "\033[36m\033[45m";
 		std::string Cyan_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan, bg_colors::magenta );
+			return cyan_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *cyan_on_red = "\033[36m\033[41m";
 		std::string Cyan_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan, bg_colors::red );
+			return cyan_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *cyan_on_white = "\033[36m\033[47m";
 		std::string Cyan_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan, bg_colors::white );
+			return cyan_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *cyan_on_yellow = "\033[36m\033[43m";
 		std::string Cyan_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::cyan, bg_colors::yellow );
+			return cyan_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
+		const char *black = "\033[30m";
 		std::string Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black );
+			return black + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *grey = "\033[90m";
 		std::string Grey( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::grey );
+			return grey + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *on_black = "\033[40m";
 		std::string On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, bg_colors::black );
+			return on_black + tag_helper::toString( s ) + Reset( );
 		}
 		// Regular Black Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		const char *black_on_black = "\033[30m\033[40m";
 		std::string Black_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black, bg_colors::black );
+			return black_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *black_on_blue = "\033[30m\033[44m";
 		std::string Black_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black, bg_colors::blue );
+			return black_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *black_on_cyan = "\033[30m\033[46m";
 		std::string Black_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black, bg_colors::cyan );
+			return black_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *black_on_green = "\033[30m\033[42m";
 		std::string Black_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black, bg_colors::green );
+			return black_on_green + tag_helper::toString( s ) + Reset( );
 		}
+		const char *black_on_magenta = "\033[30m\033[45m";
 		std::string Black_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black, bg_colors::magenta );
+			return black_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *black_on_red = "\033[30m\033[41m";
 		std::string Black_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black, bg_colors::red );
+			return black_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *black_on_white = "\033[30m\033[47m";
 		std::string Black_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black, bg_colors::white );
+			return black_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *black_on_yellow = "\033[30m\033[43m";
 		std::string Black_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::black, bg_colors::yellow );
+			return black_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
+		const char *magenta = "\033[35m";
 		std::string Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta );
+			return magenta + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *bright_magenta = "\033[95m";
 		std::string Bright_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_magenta );
+			return bright_magenta + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *on_magenta = "\033[45m";
 		std::string On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, bg_colors::magenta );
+			return on_magenta + tag_helper::toString( s ) + Reset( );
 		}
 		// Regular Magenta Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		const char *magenta_on_black = "\033[35m\033[40m";
 		std::string Magenta_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta, bg_colors::black );
+			return magenta_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *magenta_on_blue = "\033[35m\033[44m";
 		std::string Magenta_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta, bg_colors::blue );
+			return magenta_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *magenta_on_cyan = "\033[35m\033[46m";
 		std::string Magenta_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta, bg_colors::cyan );
+			return magenta_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *magenta_on_green = "\033[35m\033[42m";
 		std::string Magenta_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta, bg_colors::green );
+			return magenta_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *magenta_on_magenta = "\033[35m\033[45m";
 		std::string Magenta_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta, bg_colors::magenta );
+			return magenta_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *magenta_on_red = "\033[35m\033[41m";
 		std::string Magenta_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta, bg_colors::red );
+			return magenta_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *magenta_on_white = "\033[35m\033[47m";
 		std::string Magenta_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta, bg_colors::white );
+			return magenta_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *magenta_on_yellow = "\033[35m\033[43m";
 		std::string Magenta_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::magenta, bg_colors::yellow );
+			return magenta_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
+		const char *red = "\033[31m";
 		std::string Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red );
+			return red + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *bright_red = "\033[91m";
 		std::string Bright_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_red );
+			return bright_red + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *on_red = "\033[41m";
 		std::string On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, bg_colors::red );
+			return on_red + tag_helper::toString( s ) + Reset( );
 		}
 		// Regular Red Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		const char *red_on_black = "\033[31m\033[40m";
 		std::string Red_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red, bg_colors::black );
+			return red_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *red_on_blue = "\033[31m\033[44m";
 		std::string Red_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red, bg_colors::blue );
+			return red_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *red_on_cyan = "\033[31m\033[46m";
 		std::string Red_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red, bg_colors::cyan );
+			return red_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *red_on_green = "\033[31m\033[42m";
 		std::string Red_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red, bg_colors::green );
+			return red_on_green + tag_helper::toString( s ) + Reset( );
 		}
+		const char *red_on_magenta = "\033[31m\033[45m";
 		std::string Red_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red, bg_colors::magenta );
+			return red_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *red_on_red = "\033[31m\033[41m";
 		std::string Red_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red, bg_colors::red );
+			return red_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *red_on_white = "\033[31m\033[47m";
 		std::string Red_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red, bg_colors::white );
+			return red_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *red_on_yellow = "\033[31m\033[43m";
 		std::string Red_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::red, bg_colors::yellow );
+			return red_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
+		const char *white = "\033[37m";
 		std::string White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white );
+			return white + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *bright_white = "\033[37m";
 		std::string Bright_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_white );
+			return bright_white + tag_helper::toString( s ) + Reset( );
 		}
-
+		const char *on_white = "\033[47m";
 		std::string On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, bg_colors::white );
+			return on_white + tag_helper::toString( s ) + Reset( );
 		}
 		// Regular White Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		const char *white_on_black = "\033[37m\033[40m";
 		std::string White_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white, bg_colors::black );
+			return white_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *white_on_blue = "\033[37m\033[44m";
 		std::string White_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white, bg_colors::blue );
+			return white_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *white_on_cyan = "\033[37m\033[46m";
 		std::string White_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white, bg_colors::cyan );
+			return white_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *white_on_green = "\033[37m\033[42m";
 		std::string White_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white, bg_colors::green );
+			return white_on_green + tag_helper::toString( s ) + Reset( );
 		}
+		const char *white_on_magenta = "\033[37m\033[45m";
 		std::string White_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white, bg_colors::magenta );
+			return white_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *white_on_red = "\033[37m\033[41m";
 		std::string White_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white, bg_colors::red );
+			return white_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *white_on_white = "\033[37m\033[47m";
 		std::string White_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white, bg_colors::white );
+			return white_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *white_on_yellow = "\033[37m\033[43m";
 		std::string White_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::white, bg_colors::yellow );
+			return white_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
+		const char *yellow = "\033[33m";
+
 		std::string Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow );
+			return yellow + tag_helper::toString( s ) + Reset( );
 		}
+		const char *bright_yellow = "\033[93m";
 
 		std::string Bright_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::bright_yellow );
+			return bright_yellow + tag_helper::toString( s ) + Reset( );
 		}
+		const char *on_yellow = "\033[43m";
 
 		std::string On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, bg_colors::yellow );
+			return on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// Regular Yellow Foreground On Regular [X] Color Background
 		// ****************************************************************************************
+		const char *yellow_on_black = "\033[33m\033[40m";
 		std::string Yellow_On_Black( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow, bg_colors::black );
+			return yellow_on_black + tag_helper::toString( s ) + Reset( );
 		}
+		const char *yellow_on_blue = "\033[33m\033[44m";
 		std::string Yellow_On_Blue( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow, bg_colors::blue );
+			return yellow_on_blue + tag_helper::toString( s ) + Reset( );
 		}
+		const char *yellow_on_cyan = "\033[33m\033[46m";
 		std::string Yellow_On_Cyan( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow, bg_colors::cyan );
+			return yellow_on_cyan + tag_helper::toString( s ) + Reset( );
 		}
+		const char *yellow_on_green = "\033[33m\033[42m";
 		std::string Yellow_On_Green( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow, bg_colors::green );
+			return yellow_on_green + tag_helper::toString( s ) + Reset( );
 		}
+		const char *yellow_on_magenta = "\033[33m\033[45m";
 		std::string Yellow_On_Magenta( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow, bg_colors::magenta );
+			return yellow_on_magenta + tag_helper::toString( s ) + Reset( );
 		}
+		const char *yellow_on_red = "\033[33m\033[41m";
 		std::string Yellow_On_Red( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow, bg_colors::red );
+			return yellow_on_red + tag_helper::toString( s ) + Reset( );
 		}
+		const char *yellow_on_white = "\033[33m\033[47m";
 		std::string Yellow_On_White( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow, bg_colors::white );
+			return yellow_on_white + tag_helper::toString( s ) + Reset( );
 		}
+		const char *yellow_on_yellow = "\033[33m\033[43m";
 		std::string Yellow_On_Yellow( std::string_view s )
 		{
-			return tag_helper::tagIt( s, fg_colors::yellow, bg_colors::yellow );
+			return yellow_on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
 
@@ -666,13 +741,13 @@ namespace se_colors
 #######################################################################################################################################################################################################################################################*/
 // clang-format on
 
-#define ALLOC_TEST 0
+#define ALLOC_TEST 1
 
 #if ALLOC_TEST  // Testing Allocations
 size_t total_bytes = 0;
 void * operator new( std::size_t n )
 {
-	std::cout << "[Allocating " << n << " bytes]";
+	// std::cout << "[Allocating " << n << " bytes]";
 	total_bytes += n;
 	return malloc( n );
 }
@@ -688,52 +763,38 @@ int main( )
 {
 	using namespace se_colors;
 
-#if ALLOC_TEST
-	size_t bytes = 0;
-	std::cout << Tag::red_on_blue( "\n\nTotal Bytes: " );
-	bytes = total_bytes;
-	std::cout << total_bytes << "\n\n";
-	std::cout << Tag::Red_On_Blue( "\n\nTotal Bytes: " );
-	auto new_total = total_bytes - bytes;
-	std::cout << new_total << "\n\n";
-// 56 bytes for new version Vs. 1936 bytes for the original...
-// Pretty sure that just with that test, I'd much rather go the constexpr route than the indirection I had with mapping and the
-// like... Less allocation obviously means faster so it seems like the right way to go I believe
-#else
+	// ConsoleColors            C;
+	// ConsoleColors::msg_color msgColor;
 
+	//// Trace Is Deafult Color
+	// msgColor.fg  = fg_colors::white;
+	// msgColor.bg  = bg_colors::black;
+	// msgColor.fmt = format::reset;
+	// C.ColorPrint( "[Trace]: White", msgColor );
+	//// Info Is Light Green
+	// msgColor.fg  = fg_colors::green;
+	// msgColor.bg  = bg_colors::black;
+	// msgColor.fmt = format::bold;
+	// C.ColorPrint( "[Info]: Green", msgColor );
+	//// Warning Is Light Yellow
+	// msgColor.fg  = fg_colors::yellow;
+	// msgColor.bg  = bg_colors::black;
+	// msgColor.fmt = format::bold;
 
-	ConsoleColors            C;
-	ConsoleColors::msg_color msgColor;
-
-	// Trace Is Deafult Color
-	msgColor.fg  = fg_colors::white;
-	msgColor.bg  = bg_colors::black;
-	msgColor.fmt = format::reset;
-	C.ColorPrint( "[Trace]: White", msgColor );
-	// Info Is Light Green
-	msgColor.fg  = fg_colors::green;
-	msgColor.bg  = bg_colors::black;
-	msgColor.fmt = format::bold;
-	C.ColorPrint( "[Info]: Green", msgColor );
-	// Warning Is Light Yellow
-	msgColor.fg  = fg_colors::yellow;
-	msgColor.bg  = bg_colors::black;
-	msgColor.fmt = format::bold;
-
-	C.ColorPrint( "[Warning]: Yellow", msgColor );
-	// Error Is Dark Red
-	msgColor.fg  = fg_colors::red;
-	msgColor.bg  = bg_colors::black;
-	msgColor.fmt = format::no_change;
-	C.ColorPrint( "[Error]: Red", msgColor );
-	// Fatal Is Light Yellow On Dark Red
-	msgColor.fg  = fg_colors::yellow;
-	msgColor.bg  = bg_colors::red;
-	msgColor.fmt = format::bold;
-	C.ColorPrint( "[Fatal]: Light Yellow On Red", msgColor );
-	// Above Are The Settings For Logging Message Colors (Influenced by spdlog message level colors)
-	// - "fatal" changed to something I personally thought was more visually appealing as a default.
-	//  (spdlog does offer changes to default colors via set_color() either way)
+	// C.ColorPrint( "[Warning]: Yellow", msgColor );
+	//// Error Is Dark Red
+	// msgColor.fg  = fg_colors::red;
+	// msgColor.bg  = bg_colors::black;
+	// msgColor.fmt = format::no_change;
+	// C.ColorPrint( "[Error]: Red", msgColor );
+	//// Fatal Is Light Yellow On Dark Red
+	// msgColor.fg  = fg_colors::yellow;
+	// msgColor.bg  = bg_colors::red;
+	// msgColor.fmt = format::bold;
+	// C.ColorPrint( "[Fatal]: Light Yellow On Red", msgColor );
+	//// Above Are The Settings For Logging Message Colors (Influenced by spdlog message level colors)
+	//// - "fatal" changed to something I personally thought was more visually appealing as a default.
+	////  (spdlog does offer changes to default colors via set_color() either way)
 
 	/*****************************************************************************************************************************
 	 *	Would Like To See If Possible To Add Tagging In Messages, Something Like:
@@ -799,13 +860,20 @@ int main( )
 		  << Tag::Bright_Blue_On_Cyan( "Br_Blue On Cyan\t" ) << Tag::Bright_Blue_On_Green( "Br_Blue On Green" )
 		  << Tag::Bright_Blue_On_Magenta( "Br_Blue On Magenta" ) << Tag::Bright_Blue_On_Red( "Br_Blue On Red" )
 		  << Tag::Bright_Blue_On_Yellow( "Br_Blue On Yellow\n" ) << Tag::Reset( );
-
-
+#if ALLOC_TEST
+	// Original Debug Mode Total Memory Allocated:   [115032 bytes] OR [0.115032 MB]
+	// Original Release Mode Total Memory Allocated: [108816 bytes] OR [0.108816 MB]
+	// New Debug Mode Total Memory Allocated:        [5128 bytes]   OR [0.005128 MB]
+	// New Release Mode Total Memory Allocated:      [2112 bytes]   OR [0.002112 MB
+	std::cout << "Total Memory Allocated: [ " << total_bytes << " bytes] "
+		  << "OR [" << total_bytes / 1000000.0 << " MB]";
+	// With The Above Statistics for this section of code, definitely well worth changing to const char* for color tags (some
+	// color tags >15 chars, so small string optimization wasn't going to occur if they were std::strings instead - opted for const
+	// char* for consistency throughout)
+#endif
 	/******************************************************************************************************************************
 	 * Have Some Basic Tagging Set (Rough Draft Idea Anyways), But Still No Way Of Setting Up A Message Parser For Substitution
 	 *Yet
 	 * - Currently ColorPrint() and tagIt() Accomplish A Very Similar Function -> Hopefully Will Differentiate Soon Though
 	 *******************************************************************************************************************************/
-
-#endif
 }
