@@ -7,10 +7,6 @@
 // where when resizing the console window, the last color used line wraps..
 // (https://github.com/microsoft/terminal/issues/32)
 
-// for both the basic/bright variants, still need to implement their inverses:
-// for basic_colors  -> basic_colors::red::on_bright_white for an example
-// for bright_colors -> bright_colors::red::on_basic_white for an example
-
 namespace se_colors
 {
 	// Note: According to the ansi wiki, formats can be appended together as long as they're separated by a semi-colon
@@ -61,98 +57,162 @@ namespace se_colors
 		{
 			namespace black
 			{
-				const char *on_black   = "\033[30m\033[40m";
-				const char *on_red     = "\033[30m\033[41m";
-				const char *on_green   = "\033[30m\033[42m";
-				const char *on_yellow  = "\033[30m\033[43m";
-				const char *on_blue    = "\033[30m\033[44m";
-				const char *on_magenta = "\033[30m\033[45m";
-				const char *on_cyan    = "\033[30m\033[46m";
-				const char *on_white   = "\033[30m\033[47m";
+				const char *on_black          = "\033[30m\033[40m";
+				const char *on_red            = "\033[30m\033[41m";
+				const char *on_green          = "\033[30m\033[42m";
+				const char *on_yellow         = "\033[30m\033[43m";
+				const char *on_blue           = "\033[30m\033[44m";
+				const char *on_magenta        = "\033[30m\033[45m";
+				const char *on_cyan           = "\033[30m\033[46m";
+				const char *on_white          = "\033[30m\033[47m";
+				const char *on_grey           = "\033[30m\033[100m";
+				const char *on_bright_red     = "\033[30m\033[101m";
+				const char *on_bright_green   = "\033[30m\033[102m";
+				const char *on_bright_yellow  = "\033[30m\033[103m";
+				const char *on_bright_blue    = "\033[30m\033[104m";
+				const char *on_bright_magenta = "\033[30m\033[105m";
+				const char *on_bright_cyan    = "\033[30m\033[106m";
+				const char *on_bright_white   = "\033[30m\033[107m";
 			}  // namespace black
 
 			namespace red
 			{
-				const char *on_black   = "\033[31m\033[40m";
-				const char *on_red     = "\033[31m\033[41m";
-				const char *on_green   = "\033[31m\033[42m";
-				const char *on_yellow  = "\033[31m\033[43m";
-				const char *on_blue    = "\033[31m\033[44m";
-				const char *on_magenta = "\033[31m\033[45m";
-				const char *on_cyan    = "\033[31m\033[46m";
-				const char *on_white   = "\033[31m\033[47m";
+				const char *on_black          = "\033[31m\033[40m";
+				const char *on_red            = "\033[31m\033[41m";
+				const char *on_green          = "\033[31m\033[42m";
+				const char *on_yellow         = "\033[31m\033[43m";
+				const char *on_blue           = "\033[31m\033[44m";
+				const char *on_magenta        = "\033[31m\033[45m";
+				const char *on_cyan           = "\033[31m\033[46m";
+				const char *on_white          = "\033[31m\033[47m";
+				const char *on_grey           = "\033[31m\033[100m";
+				const char *on_bright_red     = "\033[31m\033[101m";
+				const char *on_bright_green   = "\033[31m\033[102m";
+				const char *on_bright_yellow  = "\033[31m\033[103m";
+				const char *on_bright_blue    = "\033[31m\033[104m";
+				const char *on_bright_magenta = "\033[31m\033[105m";
+				const char *on_bright_cyan    = "\033[31m\033[106m";
+				const char *on_bright_white   = "\033[31m\033[107m";
 			}  // namespace red
 
 			namespace green
 			{
-				const char *on_black   = "\033[32m\033[40m";
-				const char *on_red     = "\033[32m\033[41m";
-				const char *on_green   = "\033[32m\033[42m";
-				const char *on_yellow  = "\033[32m\033[43m";
-				const char *on_blue    = "\033[32m\033[44m";
-				const char *on_magenta = "\033[32m\033[45m";
-				const char *on_cyan    = "\033[32m\033[46m";
-				const char *on_white   = "\033[32m\033[47m";
+				const char *on_black          = "\033[32m\033[40m";
+				const char *on_red            = "\033[32m\033[41m";
+				const char *on_green          = "\033[32m\033[42m";
+				const char *on_yellow         = "\033[32m\033[43m";
+				const char *on_blue           = "\033[32m\033[44m";
+				const char *on_magenta        = "\033[32m\033[45m";
+				const char *on_cyan           = "\033[32m\033[46m";
+				const char *on_white          = "\033[32m\033[47m";
+				const char *on_grey           = "\033[32m\033[100m";
+				const char *on_bright_red     = "\033[32m\033[101m";
+				const char *on_bright_green   = "\033[32m\033[102m";
+				const char *on_bright_yellow  = "\033[32m\033[103m";
+				const char *on_bright_blue    = "\033[32m\033[104m";
+				const char *on_bright_magenta = "\033[32m\033[105m";
+				const char *on_bright_cyan    = "\033[32m\033[106m";
+				const char *on_bright_white   = "\033[32m\033[107m";
 			}  // namespace green
 
 			namespace yellow
 			{
-				const char *on_black   = "\033[33m\033[40m";
-				const char *on_red     = "\033[33m\033[41m";
-				const char *on_green   = "\033[33m\033[42m";
-				const char *on_yellow  = "\033[33m\033[43m";
-				const char *on_blue    = "\033[33m\033[44m";
-				const char *on_magenta = "\033[33m\033[45m";
-				const char *on_cyan    = "\033[33m\033[46m";
-				const char *on_white   = "\033[33m\033[47m";
+				const char *on_black          = "\033[33m\033[40m";
+				const char *on_red            = "\033[33m\033[41m";
+				const char *on_green          = "\033[33m\033[42m";
+				const char *on_yellow         = "\033[33m\033[43m";
+				const char *on_blue           = "\033[33m\033[44m";
+				const char *on_magenta        = "\033[33m\033[45m";
+				const char *on_cyan           = "\033[33m\033[46m";
+				const char *on_white          = "\033[33m\033[47m";
+				const char *on_grey           = "\033[33m\033[100m";
+				const char *on_bright_red     = "\033[33m\033[101m";
+				const char *on_bright_green   = "\033[33m\033[102m";
+				const char *on_bright_yellow  = "\033[33m\033[103m";
+				const char *on_bright_blue    = "\033[33m\033[104m";
+				const char *on_bright_magenta = "\033[33m\033[105m";
+				const char *on_bright_cyan    = "\033[33m\033[106m";
+				const char *on_bright_white   = "\033[33m\033[107m";
 			}  // namespace yellow
 
 			namespace blue
 			{
-				const char *on_black   = "\033[34m\033[40m";
-				const char *on_red     = "\033[34m\033[41m";
-				const char *on_green   = "\033[34m\033[42m";
-				const char *on_yellow  = "\033[34m\033[43m";
-				const char *on_blue    = "\033[34m\033[044m";
-				const char *on_magenta = "\033[34m\033[45m";
-				const char *on_cyan    = "\033[34m\033[46m";
-				const char *on_white   = "\033[34m\033[47m";
+				const char *on_black          = "\033[34m\033[40m";
+				const char *on_red            = "\033[34m\033[41m";
+				const char *on_green          = "\033[34m\033[42m";
+				const char *on_yellow         = "\033[34m\033[43m";
+				const char *on_blue           = "\033[34m\033[044m";
+				const char *on_magenta        = "\033[34m\033[45m";
+				const char *on_cyan           = "\033[34m\033[46m";
+				const char *on_white          = "\033[34m\033[47m";
+				const char *on_grey           = "\033[34m\033[100m";
+				const char *on_bright_red     = "\033[34m\033[101m";
+				const char *on_bright_green   = "\033[34m\033[102m";
+				const char *on_bright_yellow  = "\033[34m\033[103m";
+				const char *on_bright_blue    = "\033[34m\033[104m";
+				const char *on_bright_magenta = "\033[34m\033[105m";
+				const char *on_bright_cyan    = "\033[34m\033[106m";
+				const char *on_bright_white   = "\033[34m\033[107m";
 			}  // namespace blue
 
 			namespace magenta
 			{
-				const char *on_black   = "\033[35m\033[40m";
-				const char *on_red     = "\033[35m\033[41m";
-				const char *on_green   = "\033[35m\033[42m";
-				const char *on_yellow  = "\033[35m\033[43m";
-				const char *on_blue    = "\033[35m\033[44m";
-				const char *on_magenta = "\033[35m\033[45m";
-				const char *on_cyan    = "\033[35m\033[46m";
-				const char *on_white   = "\033[35m\033[47m";
+				const char *on_black          = "\033[35m\033[40m";
+				const char *on_red            = "\033[35m\033[41m";
+				const char *on_green          = "\033[35m\033[42m";
+				const char *on_yellow         = "\033[35m\033[43m";
+				const char *on_blue           = "\033[35m\033[44m";
+				const char *on_magenta        = "\033[35m\033[45m";
+				const char *on_cyan           = "\033[35m\033[46m";
+				const char *on_white          = "\033[35m\033[47m";
+				const char *on_grey           = "\033[35m\033[100m";
+				const char *on_bright_red     = "\033[35m\033[101m";
+				const char *on_bright_green   = "\033[35m\033[102m";
+				const char *on_bright_yellow  = "\033[35m\033[103m";
+				const char *on_bright_blue    = "\033[35m\033[104m";
+				const char *on_bright_magenta = "\033[35m\033[105m";
+				const char *on_bright_cyan    = "\033[35m\033[106m";
+				const char *on_bright_white   = "\033[35m\033[107m";
 			}  // namespace magenta
 
 			namespace cyan
 			{
-				const char *on_black   = "\033[36m\033[40m";
-				const char *on_red     = "\033[36m\033[41m";
-				const char *on_green   = "\033[36m\033[42m";
-				const char *on_yellow  = "\033[36m\033[43m";
-				const char *on_blue    = "\033[36m\033[44m";
-				const char *on_magenta = "\033[36m\033[45m";
-				const char *on_cyan    = "\033[36m\033[46m";
-				const char *on_white   = "\033[36m\033[47m";
+				const char *on_black          = "\033[36m\033[40m";
+				const char *on_red            = "\033[36m\033[41m";
+				const char *on_green          = "\033[36m\033[42m";
+				const char *on_yellow         = "\033[36m\033[43m";
+				const char *on_blue           = "\033[36m\033[44m";
+				const char *on_magenta        = "\033[36m\033[45m";
+				const char *on_cyan           = "\033[36m\033[46m";
+				const char *on_white          = "\033[36m\033[47m";
+				const char *on_grey           = "\033[36m\033[100m";
+				const char *on_bright_red     = "\033[36m\033[101m";
+				const char *on_bright_green   = "\033[36m\033[102m";
+				const char *on_bright_yellow  = "\033[36m\033[103m";
+				const char *on_bright_blue    = "\033[36m\033[104m";
+				const char *on_bright_magenta = "\033[36m\033[105m";
+				const char *on_bright_cyan    = "\033[36m\033[106m";
+				const char *on_bright_white   = "\033[36m\033[107m";
 			}  // namespace cyan
 
 			namespace white
 			{
-				const char *on_black   = "\033[37m\033[40m";
-				const char *on_red     = "\033[37m\033[41m";
-				const char *on_green   = "\033[37m\033[42m";
-				const char *on_yellow  = "\033[37m\033[43m";
-				const char *on_blue    = "\033[37m\033[44m";
-				const char *on_magenta = "\033[37m\033[45m";
-				const char *on_cyan    = "\033[37m\033[46m";
-				const char *on_white   = "\033[37m\033[47m";
+				const char *on_black          = "\033[37m\033[40m";
+				const char *on_red            = "\033[37m\033[41m";
+				const char *on_green          = "\033[37m\033[42m";
+				const char *on_yellow         = "\033[37m\033[43m";
+				const char *on_blue           = "\033[37m\033[44m";
+				const char *on_magenta        = "\033[37m\033[45m";
+				const char *on_cyan           = "\033[37m\033[46m";
+				const char *on_white          = "\033[37m\033[47m";
+				const char *on_grey           = "\033[37m\033[100m";
+				const char *on_bright_red     = "\033[37m\033[101m";
+				const char *on_bright_green   = "\033[37m\033[102m";
+				const char *on_bright_yellow  = "\033[37m\033[103m";
+				const char *on_bright_blue    = "\033[37m\033[104m";
+				const char *on_bright_magenta = "\033[37m\033[105m";
+				const char *on_bright_cyan    = "\033[37m\033[106m";
+				const char *on_bright_white   = "\033[37m\033[107m";
 			}  // namespace white
 
 		}  // namespace combos
@@ -174,37 +234,173 @@ namespace se_colors
 		}  // namespace foreground
 
 		namespace background
-		{ }
+		{
+			const char *grey    = "\033[100m";
+			const char *red     = "\033[101m";
+			const char *green   = "\033[102m";
+			const char *yellow  = "\033[103m";
+			const char *blue    = "\033[104m";
+			const char *magenta = "\033[105m";
+			const char *cyan    = "\033[106m";
+			const char *white   = "\033[107m";
+		}  // namespace background
 
 		namespace combos
 		{
 			namespace grey
-			{ }
+			{
+				const char *on_black          = "\033[90m\033[40m";
+				const char *on_red            = "\033[90m\033[41m";
+				const char *on_green          = "\033[90m\033[42m";
+				const char *on_yellow         = "\033[90m\033[43m";
+				const char *on_blue           = "\033[90m\033[44m";
+				const char *on_magenta        = "\033[90m\033[45m";
+				const char *on_cyan           = "\033[90m\033[46m";
+				const char *on_white          = "\033[90m\033[47m";
+				const char *on_grey           = "\033[90m\033[100m";
+				const char *on_bright_red     = "\033[90m\033[101m";
+				const char *on_bright_green   = "\033[90m\033[102m";
+				const char *on_bright_yellow  = "\033[90m\033[103m";
+				const char *on_bright_blue    = "\033[90m\033[104m";
+				const char *on_bright_magenta = "\033[90m\033[105m";
+				const char *on_bright_cyan    = "\033[90m\033[106m";
+				const char *on_bright_white   = "\033[90m\033[107m";
+			}  // namespace grey
 			namespace red
-			{ }
+			{
+				const char *on_black          = "\033[91m\033[40m";
+				const char *on_red            = "\033[91m\033[41m";
+				const char *on_green          = "\033[91m\033[42m";
+				const char *on_yellow         = "\033[91m\033[43m";
+				const char *on_blue           = "\033[91m\033[44m";
+				const char *on_magenta        = "\033[91m\033[45m";
+				const char *on_cyan           = "\033[91m\033[46m";
+				const char *on_white          = "\033[91m\033[47m";
+				const char *on_grey           = "\033[91m\033[100m";
+				const char *on_bright_red     = "\033[91m\033[101m";
+				const char *on_bright_green   = "\033[91m\033[102m";
+				const char *on_bright_yellow  = "\033[91m\033[103m";
+				const char *on_bright_blue    = "\033[91m\033[104m";
+				const char *on_bright_magenta = "\033[91m\033[105m";
+				const char *on_bright_cyan    = "\033[91m\033[106m";
+				const char *on_bright_white   = "\033[91m\033[107m";
+			}  // namespace red
 			namespace green
-			{ }
+			{
+				const char *on_black          = "\033[92m\033[40m";
+				const char *on_red            = "\033[92m\033[41m";
+				const char *on_green          = "\033[92m\033[42m";
+				const char *on_yellow         = "\033[92m\033[43m";
+				const char *on_blue           = "\033[92m\033[44m";
+				const char *on_magenta        = "\033[92m\033[45m";
+				const char *on_cyan           = "\033[92m\033[46m";
+				const char *on_white          = "\033[92m\033[47m";
+				const char *on_grey           = "\033[92m\033[100m";
+				const char *on_bright_red     = "\033[92m\033[101m";
+				const char *on_bright_green   = "\033[92m\033[102m";
+				const char *on_bright_yellow  = "\033[92m\033[103m";
+				const char *on_bright_blue    = "\033[92m\033[104m";
+				const char *on_bright_magenta = "\033[92m\033[105m";
+				const char *on_bright_cyan    = "\033[92m\033[106m";
+				const char *on_bright_white   = "\033[92m\033[107m";
+			}  // namespace green
 			namespace yellow
-			{ }
+			{
+				const char *on_black          = "\033[93m\033[40m";
+				const char *on_red            = "\033[93m\033[41m";
+				const char *on_green          = "\033[93m\033[42m";
+				const char *on_yellow         = "\033[93m\033[43m";
+				const char *on_blue           = "\033[93m\033[44m";
+				const char *on_magenta        = "\033[93m\033[45m";
+				const char *on_cyan           = "\033[93m\033[46m";
+				const char *on_white          = "\033[93m\033[47m";
+				const char *on_grey           = "\033[93m\033[100m";
+				const char *on_bright_red     = "\033[93m\033[101m";
+				const char *on_bright_green   = "\033[93m\033[102m";
+				const char *on_bright_yellow  = "\033[93m\033[103m";
+				const char *on_bright_blue    = "\033[93m\033[104m";
+				const char *on_bright_magenta = "\033[93m\033[105m";
+				const char *on_bright_cyan    = "\033[93m\033[106m";
+				const char *on_bright_white   = "\033[93m\033[107m";
+			}  // namespace yellow
 			namespace blue
 			{
-				const char *on_black   = "\033[94m\033[40m";
-				const char *on_red     = "\033[94m\033[41m";
-				const char *on_green   = "\033[94m\033[42m";
-				const char *on_yellow  = "\033[94m\033[43m";
-				const char *on_blue    = "\033[94m\033[44m";
-				const char *on_magenta = "\033[94m\033[45m";
-				const char *on_cyan    = "\033[94m\033[46m";
-				const char *on_white   = "\033[94m\033[47m";
+				const char *on_black          = "\033[94m\033[40m";
+				const char *on_red            = "\033[94m\033[41m";
+				const char *on_green          = "\033[94m\033[42m";
+				const char *on_yellow         = "\033[94m\033[43m";
+				const char *on_blue           = "\033[94m\033[44m";
+				const char *on_magenta        = "\033[94m\033[45m";
+				const char *on_cyan           = "\033[94m\033[46m";
+				const char *on_white          = "\033[94m\033[47m";
+				const char *on_grey           = "\033[94m\033[100m";
+				const char *on_bright_red     = "\033[94m\033[101m";
+				const char *on_bright_green   = "\033[94m\033[102m";
+				const char *on_bright_yellow  = "\033[94m\033[103m";
+				const char *on_bright_blue    = "\033[94m\033[104m";
+				const char *on_bright_magenta = "\033[94m\033[105m";
+				const char *on_bright_cyan    = "\033[94m\033[106m";
+				const char *on_bright_white   = "\033[94m\033[107m";
 			}  // namespace blue
 			namespace magenta
-			{ }
+			{
+				const char *on_black          = "\033[95m\033[40m";
+				const char *on_red            = "\033[95m\033[41m";
+				const char *on_green          = "\033[95m\033[42m";
+				const char *on_yellow         = "\033[95m\033[43m";
+				const char *on_blue           = "\033[95m\033[44m";
+				const char *on_magenta        = "\033[95m\033[45m";
+				const char *on_cyan           = "\033[95m\033[46m";
+				const char *on_white          = "\033[95m\033[47m";
+				const char *on_grey           = "\033[95m\033[100m";
+				const char *on_bright_red     = "\033[95m\033[101m";
+				const char *on_bright_green   = "\033[95m\033[102m";
+				const char *on_bright_yellow  = "\033[95m\033[103m";
+				const char *on_bright_blue    = "\033[95m\033[104m";
+				const char *on_bright_magenta = "\033[95m\033[105m";
+				const char *on_bright_cyan    = "\033[95m\033[106m";
+				const char *on_bright_white   = "\033[95m\033[107m";
+			}  // namespace magenta
 			namespace cyan
-			{ }
+			{
+				const char *on_black          = "\033[94m\033[40m";
+				const char *on_red            = "\033[96m\033[41m";
+				const char *on_green          = "\033[96m\033[42m";
+				const char *on_yellow         = "\033[96m\033[43m";
+				const char *on_blue           = "\033[96m\033[44m";
+				const char *on_magenta        = "\033[96m\033[45m";
+				const char *on_cyan           = "\033[96m\033[46m";
+				const char *on_white          = "\033[96m\033[47m";
+				const char *on_grey           = "\033[96m\033[100m";
+				const char *on_bright_red     = "\033[96m\033[101m";
+				const char *on_bright_green   = "\033[96m\033[102m";
+				const char *on_bright_yellow  = "\033[96m\033[103m";
+				const char *on_bright_blue    = "\033[96m\033[104m";
+				const char *on_bright_magenta = "\033[96m\033[105m";
+				const char *on_bright_cyan    = "\033[96m\033[106m";
+				const char *on_bright_white   = "\033[96m\033[107m";
+			}  // namespace cyan
 			namespace white
-			{ }
-		}  // namespace combos
-	}          // namespace bright_colors
+			{
+				const char *on_black          = "\033[97m\033[40m";
+				const char *on_red            = "\033[97m\033[41m";
+				const char *on_green          = "\033[97m\033[42m";
+				const char *on_yellow         = "\033[97m\033[43m";
+				const char *on_blue           = "\033[97m\033[44m";
+				const char *on_magenta        = "\033[97m\033[45m";
+				const char *on_cyan           = "\033[97m\033[46m";
+				const char *on_white          = "\033[97m\033[47m";
+				const char *on_grey           = "\033[97m\033[100m";
+				const char *on_bright_red     = "\033[97m\033[101m";
+				const char *on_bright_green   = "\033[97m\033[102m";
+				const char *on_bright_yellow  = "\033[97m\033[103m";
+				const char *on_bright_blue    = "\033[97m\033[104m";
+				const char *on_bright_magenta = "\033[97m\033[105m";
+				const char *on_bright_cyan    = "\033[97m\033[106m";
+				const char *on_bright_white   = "\033[97m\033[107m";
+			}  // namespace white
+		}          // namespace combos
+	}                  // namespace bright_colors
 
 	// clang-format off
 /*#######################################################################################################################################################################################################################################################
