@@ -16,6 +16,8 @@ namespace se_colors
 	// Note: According to the ansi wiki, formats can be appended together as long as they're separated by a semi-colon
 	namespace formats
 	{
+		const char *crlf               = "\033[\033[";
+		const char *clearToEol = "\033[k";
 		const char *reset              = "\033[0m";
 		const char *bold               = "\033[1m";
 		const char *dim                = "\033[2m";
@@ -469,46 +471,6 @@ namespace se_colors
 		std::string White( std::string_view s )
 		{
 			return basic_colors::foreground::white + tag_helper::toString( s ) + Reset( );
-		}
-		// *************************************************************************************************************
-		std::string Grey( std::string_view s )
-		{
-			return bright_colors::foreground::grey + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Red( std::string_view s )
-		{
-			return bright_colors::foreground::red + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Green( std::string_view s )
-		{
-			return bright_colors::foreground::green + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Yellow( std::string_view s )
-		{
-			return bright_colors::foreground::yellow + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Blue( std::string_view s )
-		{
-			return bright_colors::foreground::blue + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Magenta( std::string_view s )
-		{
-			return bright_colors::foreground::magenta + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Cyan( std::string_view s )
-		{
-			return bright_colors::foreground::cyan + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_White( std::string_view s )
-		{
-			return bright_colors::foreground::white + tag_helper::toString( s ) + Reset( );
 		}
 		// *************************************************************************************************************
 		std::string On_Black( std::string_view s )
@@ -1193,12 +1155,70 @@ namespace se_colors
 			return basic_colors::combos::white::on_bright_white + tag_helper::toString( s ) + Reset( );
 		}
 		// *************************************************************************************************************
-		/*
-
-			PlaceHolder For Bright Foreground And Bright Background Solor Color Functions
-
-		*/
-
+		std::string Grey( std::string_view s )
+		{
+			return bright_colors::foreground::grey + tag_helper::toString( s ) + Reset( );
+		}
+		std::string Bright_Red( std::string_view s )
+		{
+			return bright_colors::foreground::red + tag_helper::toString( s ) + Reset( );
+		}
+		std::string Bright_Green( std::string_view s )
+		{
+			return bright_colors::foreground::green + tag_helper::toString( s ) + Reset( );
+		}
+		std::string Bright_Yellow( std::string_view s )
+		{
+			return bright_colors::foreground::yellow + tag_helper::toString( s ) + Reset( );
+		}
+		std::string Bright_Blue( std::string_view s )
+		{
+			return bright_colors::foreground::blue + tag_helper::toString( s ) + Reset( );
+		}
+		std::string Bright_Magenta( std::string_view s )
+		{
+			return bright_colors::foreground::magenta + tag_helper::toString( s ) + Reset( );
+		}
+		std::string Bright_Cyan( std::string_view s )
+		{
+			return bright_colors::foreground::cyan + tag_helper::toString( s ) + Reset( );
+		}
+		std::string Bright_White( std::string_view s )
+		{
+			return bright_colors::foreground::white + tag_helper::toString( s ) + Reset( );
+		}
+		std::string On_Grey( std::string_view s )
+		{
+			return bright_colors::background::grey + tag_helper::toString( s ) + Reset( );
+		}
+		std::string On_Bright_Red( std::string_view s )
+		{
+			return bright_colors::background ::red + tag_helper::toString( s ) + Reset( );
+		}
+		std::string On_Bright_Green( std::string_view s )
+		{
+			return bright_colors::background::green + tag_helper::toString( s ) + Reset( );
+		}
+		std::string On_Bright_Yellow( std::string_view s )
+		{
+			return bright_colors::background::yellow + tag_helper::toString( s ) + Reset( );
+		}
+		std::string On_Bright_Blue( std::string_view s )
+		{
+			return bright_colors::background::blue + tag_helper::toString( s ) + Reset( );
+		}
+		std::string On_Bright_Magenta( std::string_view s )
+		{
+			return bright_colors::background::magenta + tag_helper::toString( s ) + Reset( );
+		}
+		std::string On_Bright_Cyan( std::string_view s )
+		{
+			return bright_colors::background::cyan + tag_helper::toString( s ) + Reset( );
+		}
+		std::string On_Bright_White( std::string_view s )
+		{
+			return bright_colors::background::white + tag_helper::toString( s ) + Reset( );
+		}
 
 		// clang-format off
 		// TODO######################################################################################################################## COOOOLLLLOOORRRRSSS (NOTE: Delete this comment separater when done reorganizing)#################################################################################################
