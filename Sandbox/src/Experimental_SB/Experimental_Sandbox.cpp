@@ -4,7 +4,11 @@
 
 
 // So Far, Only Real Issue I've Encountered Seems To Be The Very Common Issue Of Windows Terminal Issue #32
-// where when resizing the console window, the last color used line wraps..
+// where when resizing the console window, the last color used fills in empty cells in that row
+// Not going to lie, kinda frustrating.. I'm no msdn wiz (faaar from it) but I would imagine this could be
+// solved with something similar to just indexing the parser that outputs to the buffer and keeping track of where
+// the empty cells and where control sequences (such as a VERY simple "\n") were and essentially copying this data
+// into the new resized buffer.. terminal already isn't perf friendly to a degree anyways...
 // (https://github.com/microsoft/terminal/issues/32)
 
 namespace se_colors
@@ -402,12 +406,6 @@ namespace se_colors
 		}          // namespace combos
 	}                  // namespace bright_colors
 
-	// clang-format off
-/*#######################################################################################################################################################################################################################################################
-################################################################################################### Just A Visual Separator Since This Is All In One File ATM ###########################################################################################
-#######################################################################################################################################################################################################################################################*/
-	// clang-format on
-
 	namespace tag_helper
 	{
 		std::string toString( const std::string_view s )
@@ -425,10 +423,32 @@ namespace se_colors
 	namespace Tag
 	{
 		using namespace se_colors;
-
+		// *************************************************************************************************************
 		std::string Reset( )
 		{
 			return formats::reset;
+		}
+		// clang-format off
+		// TODO######################################################################################################################## COOOOLLLLOOORRRRSSS (NOTE: Delete this comment separater when done reorganizing)#################################################################################################
+		// clang-format on
+		std::string Black( std::string_view s )
+		{
+			return basic_colors::foreground::black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red( std::string_view s )
+		{
+			return basic_colors::foreground::red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green( std::string_view s )
+		{
+			return basic_colors::foreground::green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow( std::string_view s )
+		{
+			return basic_colors::foreground::yellow + tag_helper::toString( s ) + Reset( );
 		}
 
 		std::string Blue( std::string_view s )
@@ -436,51 +456,754 @@ namespace se_colors
 			return basic_colors::foreground::blue + tag_helper::toString( s ) + Reset( );
 		}
 
+		std::string Magenta( std::string_view s )
+		{
+			return basic_colors::foreground::magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan( std::string_view s )
+		{
+			return basic_colors::foreground::cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White( std::string_view s )
+		{
+			return basic_colors::foreground::white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string Grey( std::string_view s )
+		{
+			return bright_colors::foreground::grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Bright_Red( std::string_view s )
+		{
+			return bright_colors::foreground::red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Bright_Green( std::string_view s )
+		{
+			return bright_colors::foreground::green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Bright_Yellow( std::string_view s )
+		{
+			return bright_colors::foreground::yellow + tag_helper::toString( s ) + Reset( );
+		}
+
 		std::string Bright_Blue( std::string_view s )
 		{
 			return bright_colors::foreground::blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Bright_Magenta( std::string_view s )
+		{
+			return bright_colors::foreground::magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Bright_Cyan( std::string_view s )
+		{
+			return bright_colors::foreground::cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Bright_White( std::string_view s )
+		{
+			return bright_colors::foreground::white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string On_Black( std::string_view s )
+		{
+			return basic_colors::background::black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string On_Red( std::string_view s )
+		{
+			return basic_colors::background::red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string On_Green( std::string_view s )
+		{
+			return basic_colors::background::green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string On_Yellow( std::string_view s )
+		{
+			return basic_colors::background::yellow + tag_helper::toString( s ) + Reset( );
 		}
 
 		std::string On_Blue( std::string_view s )
 		{
 			return basic_colors::background::blue + tag_helper::toString( s ) + Reset( );
 		}
-		// Regular Blue Foreground On Regular [X] Color Background
-		// ****************************************************************************************
+
+		std::string On_Magenta( std::string_view s )
+		{
+			return basic_colors::background::magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string On_Cyan( std::string_view s )
+		{
+			return basic_colors::background::cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string On_White( std::string_view s )
+		{
+			return basic_colors::background::white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string Black_On_Black( std::string_view s )
+		{
+			return basic_colors::combos::black::on_black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Red( std::string_view s )
+		{
+			return basic_colors::combos::black::on_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Green( std::string_view s )
+		{
+			return basic_colors::combos::black::on_green + tag_helper::toString( s ) + Reset( );
+		}
+
+
+		std::string Black_On_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::black::on_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Blue( std::string_view s )
+		{
+			return basic_colors::combos::black::on_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::black::on_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::black::on_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_White( std::string_view s )
+		{
+			return basic_colors::combos::black::on_white + tag_helper::toString( s ) + Reset( );
+		}
+
+
+		std::string Black_On_Grey( std::string_view s )
+		{
+			return basic_colors::combos::black::on_grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Bright_Red( std::string_view s )
+		{
+			return basic_colors::combos::black::on_bright_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Bright_Green( std::string_view s )
+		{
+			return basic_colors::combos::black::on_bright_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Bright_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::black::on_bright_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Bright_Blue( std::string_view s )
+		{
+			return basic_colors::combos::black::on_bright_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Bright_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::black::on_bright_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Bright_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::black::on_bright_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Black_On_Bright_White( std::string_view s )
+		{
+			return basic_colors::combos::black::on_bright_white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string Red_On_Black( std::string_view s )
+		{
+			return basic_colors::combos::red::on_black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Red( std::string_view s )
+		{
+			return basic_colors::combos::red::on_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Green( std::string_view s )
+		{
+			return basic_colors::combos::red::on_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::red::on_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Blue( std::string_view s )
+		{
+			return basic_colors::combos::red::on_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::red::on_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::red::on_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_White( std::string_view s )
+		{
+			return basic_colors::combos::red::on_white + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Grey( std::string_view s )
+		{
+			return basic_colors::combos::red::on_grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Bright_Red( std::string_view s )
+		{
+			return basic_colors::combos::red::on_bright_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Bright_Green( std::string_view s )
+		{
+			return basic_colors::combos::red::on_bright_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Bright_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::red::on_bright_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Bright_Blue( std::string_view s )
+		{
+			return basic_colors::combos::red::on_bright_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Bright_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::red::on_bright_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Bright_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::red::on_bright_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Red_On_Bright_White( std::string_view s )
+		{
+			return basic_colors::combos::red::on_bright_white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string Green_On_Black( std::string_view s )
+		{
+			return basic_colors::combos::green::on_black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Red( std::string_view s )
+		{
+			return basic_colors::combos::green::on_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Green( std::string_view s )
+		{
+			return basic_colors::combos::green::on_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::green::on_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Blue( std::string_view s )
+		{
+			return basic_colors::combos::green::on_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::green::on_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::green::on_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_White( std::string_view s )
+		{
+			return basic_colors::combos::green::on_white + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Grey( std::string_view s )
+		{
+			return basic_colors::combos::green::on_grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Bright_Red( std::string_view s )
+		{
+			return basic_colors::combos::green::on_bright_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Bright_Green( std::string_view s )
+		{
+			return basic_colors::combos::green::on_bright_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Bright_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::green::on_bright_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Bright_Blue( std::string_view s )
+		{
+			return basic_colors::combos::green::on_bright_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Bright_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::green::on_bright_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Bright_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::green::on_bright_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Green_On_Bright_White( std::string_view s )
+		{
+			return basic_colors::combos::green::on_bright_white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string Yellow_On_Black( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Red( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Green( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Blue( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_White( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_white + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Grey( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Bright_Red( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_bright_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Bright_Green( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_bright_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Bright_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_bright_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Bright_Blue( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_bright_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Bright_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_bright_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Bright_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_bright_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Yellow_On_Bright_White( std::string_view s )
+		{
+			return basic_colors::combos::yellow::on_bright_white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
 		std::string Blue_On_Black( std::string_view s )
 		{
 			return basic_colors::combos::blue::on_black + tag_helper::toString( s ) + Reset( );
 		}
-		std::string Blue_On_Blue( std::string_view s )
-		{
-			return basic_colors::combos::blue::on_blue + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Blue_On_Cyan( std::string_view s )
-		{
-			return basic_colors::combos::blue::on_cyan + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Blue_On_Green( std::string_view s )
-		{
-			return basic_colors::combos::blue::on_green + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Blue_On_Magenta( std::string_view s )
-		{
-			return basic_colors::combos::blue::on_magenta + tag_helper::toString( s ) + Reset( );
-		}
+
 		std::string Blue_On_Red( std::string_view s )
 		{
 			return basic_colors::combos::blue::on_red + tag_helper::toString( s ) + Reset( );
 		}
-		std::string Blue_On_White( std::string_view s )
+
+		std::string Blue_On_Green( std::string_view s )
 		{
-			return basic_colors::combos::blue::on_white + tag_helper::toString( s ) + Reset( );
+			return basic_colors::combos::blue::on_green + tag_helper::toString( s ) + Reset( );
 		}
+
 		std::string Blue_On_Yellow( std::string_view s )
 		{
 			return basic_colors::combos::blue::on_yellow + tag_helper::toString( s ) + Reset( );
 		}
-		// ****************************************************************************************
-		// Light Blue Foreground On Regular [X] Color Background
+
+		std::string Blue_On_Blue( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_White( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_white + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Grey( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Bright_Red( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_bright_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Bright_Green( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_bright_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Bright_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_bright_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Bright_Blue( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_bright_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Bright_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_bright_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Bright_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_bright_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Blue_On_Bright_White( std::string_view s )
+		{
+			return basic_colors::combos::blue::on_bright_white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string Magenta_On_Black( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Red( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Green( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Blue( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_White( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_white + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Grey( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Bright_Red( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_bright_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Bright_Green( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_bright_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Bright_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_bright_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Bright_Blue( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_bright_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Bright_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_bright_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Bright_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_bright_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Magenta_On_Bright_White( std::string_view s )
+		{
+			return basic_colors::combos::magenta::on_bright_white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string Cyan_On_Black( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Red( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Green( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Blue( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_White( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_white + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Grey( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Bright_Red( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_bright_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Bright_Green( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_bright_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Bright_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_bright_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Bright_Blue( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_bright_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Bright_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_bright_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Bright_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_bright_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string Cyan_On_Bright_White( std::string_view s )
+		{
+			return basic_colors::combos::cyan::on_bright_white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		std::string White_On_Black( std::string_view s )
+		{
+			return basic_colors::combos::white::on_black + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Red( std::string_view s )
+		{
+			return basic_colors::combos::white::on_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Green( std::string_view s )
+		{
+			return basic_colors::combos::white::on_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::white::on_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Blue( std::string_view s )
+		{
+			return basic_colors::combos::white::on_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::white::on_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::white::on_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_White( std::string_view s )
+		{
+			return basic_colors::combos::white::on_white + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Grey( std::string_view s )
+		{
+			return basic_colors::combos::white::on_grey + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Bright_Red( std::string_view s )
+		{
+			return basic_colors::combos::white::on_bright_red + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Bright_Green( std::string_view s )
+		{
+			return basic_colors::combos::white::on_bright_green + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Bright_Yellow( std::string_view s )
+		{
+			return basic_colors::combos::white::on_bright_yellow + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Bright_Blue( std::string_view s )
+		{
+			return basic_colors::combos::white::on_bright_blue + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Bright_Magenta( std::string_view s )
+		{
+			return basic_colors::combos::white::on_bright_magenta + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Bright_Cyan( std::string_view s )
+		{
+			return basic_colors::combos::white::on_bright_cyan + tag_helper::toString( s ) + Reset( );
+		}
+
+		std::string White_On_Bright_White( std::string_view s )
+		{
+			return basic_colors::combos::white::on_bright_white + tag_helper::toString( s ) + Reset( );
+		}
+		// *************************************************************************************************************
+		/*
+
+			PlaceHolder For Bright Foreground And Bright Background Solor Color Functions
+
+		*/
+
+
+		// clang-format off
+		// TODO######################################################################################################################## COOOOLLLLOOORRRRSSS (NOTE: Delete this comment separater when done reorganizing)#################################################################################################
+		// clang-format on
+
 		// ****************************************************************************************
 		std::string Bright_Blue_On_Black( std::string_view s )
 		{
@@ -515,357 +1238,8 @@ namespace se_colors
 			return bright_colors::combos::blue::on_yellow + tag_helper::toString( s ) + Reset( );
 		}
 		// ****************************************************************************************
-		std::string Green( std::string_view s )
-		{
-			return basic_colors::foreground::green + tag_helper::toString( s ) + Reset( );
-		}
 
-		std::string Bright_Green( std::string_view s )
-		{
-			return bright_colors::foreground::green + tag_helper::toString( s ) + Reset( );
-		}
 
-		std::string On_Green( std::string_view s )
-		{
-			return basic_colors::background::green + tag_helper::toString( s ) + Reset( );
-		}
-		// Regular Green Foreground On Regular [X] Color Background
-		// ****************************************************************************************
-		//######################################################################################################################################################################################################################################################################################
-		std::string Green_On_Black( std::string_view s )
-		{
-			return basic_colors::combos::green::on_black + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Green_On_Blue( std::string_view s )
-		{
-			return basic_colors::combos::green::on_blue + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Green_On_Cyan( std::string_view s )
-		{
-			return basic_colors::combos::green::on_cyan + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Green_On_Green( std::string_view s )
-		{
-			return basic_colors::combos::green::on_green + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Green_On_Magenta( std::string_view s )
-		{
-			return basic_colors::combos::green::on_magenta + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Green_On_Red( std::string_view s )
-		{
-			return basic_colors::combos::green::on_red + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Green_On_White( std::string_view s )
-		{
-			return basic_colors::combos::green::on_white + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Green_On_Yellow( std::string_view s )
-		{
-			return basic_colors::combos::green::on_yellow + tag_helper::toString( s ) + Reset( );
-		}
-		// ****************************************************************************************
-		std::string Cyan( std::string_view s )
-		{
-			return basic_colors::foreground::cyan + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Cyan( std::string_view s )
-		{
-			return bright_colors::foreground::cyan + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string On_Cyan( std::string_view s )
-		{
-			return basic_colors::background::cyan + tag_helper::toString( s ) + Reset( );
-		}
-		// Regular Cyan Foreground On Regular [X] Color Background
-		// ****************************************************************************************
-		std::string Cyan_On_Black( std::string_view s )
-		{
-			return basic_colors::combos::cyan::on_black + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Cyan_On_Blue( std::string_view s )
-		{
-			return basic_colors::combos::cyan::on_blue + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Cyan_On_Cyan( std::string_view s )
-		{
-			return basic_colors::combos::cyan::on_cyan + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Cyan_On_Green( std::string_view s )
-		{
-			return basic_colors::combos::cyan::on_green + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Cyan_On_Magenta( std::string_view s )
-		{
-			return basic_colors::combos::cyan::on_magenta + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Cyan_On_Red( std::string_view s )
-		{
-			return basic_colors::combos::cyan::on_red + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Cyan_On_White( std::string_view s )
-		{
-			return basic_colors::combos::cyan::on_white + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Cyan_On_Yellow( std::string_view s )
-		{
-			return basic_colors::combos::cyan::on_yellow + tag_helper::toString( s ) + Reset( );
-		}
-		// ****************************************************************************************
-		std::string Black( std::string_view s )
-		{
-			return basic_colors::foreground::black + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Grey( std::string_view s )
-		{
-			return bright_colors::foreground::grey + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string On_Black( std::string_view s )
-		{
-			return basic_colors::background::black + tag_helper::toString( s ) + Reset( );
-		}
-		// Regular Black Foreground On Regular [X] Color Background
-		// ****************************************************************************************
-		std::string Black_On_Black( std::string_view s )
-		{
-			return basic_colors::combos::black::on_black + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Black_On_Blue( std::string_view s )
-		{
-			return basic_colors::combos::black::on_blue + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Black_On_Cyan( std::string_view s )
-		{
-			return basic_colors::combos::black::on_cyan + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Black_On_Green( std::string_view s )
-		{
-			return basic_colors::combos::black::on_green + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Black_On_Magenta( std::string_view s )
-		{
-			return basic_colors::combos::black::on_magenta + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Black_On_Red( std::string_view s )
-		{
-			return basic_colors::combos::black::on_red + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Black_On_White( std::string_view s )
-		{
-			return basic_colors::combos::black::on_white + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Black_On_Yellow( std::string_view s )
-		{
-			return basic_colors::combos::black::on_yellow + tag_helper::toString( s ) + Reset( );
-		}
-		// ****************************************************************************************
-		std::string Magenta( std::string_view s )
-		{
-			return basic_colors::foreground::magenta + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Magenta( std::string_view s )
-		{
-			return bright_colors::foreground::magenta + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string On_Magenta( std::string_view s )
-		{
-			return basic_colors::background::magenta + tag_helper::toString( s ) + Reset( );
-		}
-		// Regular Magenta Foreground On Regular [X] Color Background
-		// ****************************************************************************************
-		std::string Magenta_On_Black( std::string_view s )
-		{
-			return basic_colors::combos::magenta::on_black + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Magenta_On_Blue( std::string_view s )
-		{
-			return basic_colors::combos::magenta::on_blue + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Magenta_On_Cyan( std::string_view s )
-		{
-			return basic_colors::combos::magenta::on_cyan + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Magenta_On_Green( std::string_view s )
-		{
-			return basic_colors::combos::magenta::on_green + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Magenta_On_Magenta( std::string_view s )
-		{
-			return basic_colors::combos::magenta::on_magenta + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Magenta_On_Red( std::string_view s )
-		{
-			return basic_colors::combos::magenta::on_red + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Magenta_On_White( std::string_view s )
-		{
-			return basic_colors::combos::magenta::on_white + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Magenta_On_Yellow( std::string_view s )
-		{
-			return basic_colors::combos::magenta::on_yellow + tag_helper::toString( s ) + Reset( );
-		}
-		// ****************************************************************************************
-		std::string Red( std::string_view s )
-		{
-			return basic_colors::foreground::red + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Red( std::string_view s )
-		{
-			return bright_colors::foreground::red + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string On_Red( std::string_view s )
-		{
-			return basic_colors::background::red + tag_helper::toString( s ) + Reset( );
-		}
-		// Regular Red Foreground On Regular [X] Color Background
-		// ****************************************************************************************
-		std::string Red_On_Black( std::string_view s )
-		{
-			return basic_colors::combos::red::on_black + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Red_On_Blue( std::string_view s )
-		{
-			return basic_colors::combos::red::on_blue + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Red_On_Cyan( std::string_view s )
-		{
-			return basic_colors::combos::red::on_cyan + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Red_On_Green( std::string_view s )
-		{
-			return basic_colors::combos::red::on_green + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Red_On_Magenta( std::string_view s )
-		{
-			return basic_colors::combos::red::on_magenta + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Red_On_Red( std::string_view s )
-		{
-			return basic_colors::combos::red::on_red + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Red_On_White( std::string_view s )
-		{
-			return basic_colors::combos::red::on_white + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Red_On_Yellow( std::string_view s )
-		{
-			return basic_colors::combos::red::on_yellow + tag_helper::toString( s ) + Reset( );
-		}
-		// ****************************************************************************************
-		std::string White( std::string_view s )
-		{
-			return basic_colors::foreground::white + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_White( std::string_view s )
-		{
-			return bright_colors::foreground::white + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string On_White( std::string_view s )
-		{
-			return basic_colors::background::white + tag_helper::toString( s ) + Reset( );
-		}
-		// Regular White Foreground On Regular [X] Color Background
-		// ****************************************************************************************
-		std::string White_On_Black( std::string_view s )
-		{
-			return basic_colors::combos::white::on_black + tag_helper::toString( s ) + Reset( );
-		}
-		std::string White_On_Blue( std::string_view s )
-		{
-			return basic_colors::combos::white::on_blue + tag_helper::toString( s ) + Reset( );
-		}
-		std::string White_On_Cyan( std::string_view s )
-		{
-			return basic_colors::combos::white::on_cyan + tag_helper::toString( s ) + Reset( );
-		}
-		std::string White_On_Green( std::string_view s )
-		{
-			return basic_colors::combos::white::on_green + tag_helper::toString( s ) + Reset( );
-		}
-		std::string White_On_Magenta( std::string_view s )
-		{
-			return basic_colors::combos::white::on_magenta + tag_helper::toString( s ) + Reset( );
-		}
-		std::string White_On_Red( std::string_view s )
-		{
-			return basic_colors::combos::white::on_red + tag_helper::toString( s ) + Reset( );
-		}
-		std::string White_On_White( std::string_view s )
-		{
-			return basic_colors::combos::white::on_white + tag_helper::toString( s ) + Reset( );
-		}
-		std::string White_On_Yellow( std::string_view s )
-		{
-			return basic_colors::combos::white::on_yellow + tag_helper::toString( s ) + Reset( );
-		}
-		// ****************************************************************************************
-		std::string Yellow( std::string_view s )
-		{
-			return basic_colors::foreground::yellow + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string Bright_Yellow( std::string_view s )
-		{
-			return bright_colors::foreground::yellow + tag_helper::toString( s ) + Reset( );
-		}
-
-		std::string On_Yellow( std::string_view s )
-		{
-			return basic_colors::background::yellow + tag_helper::toString( s ) + Reset( );
-		}
-		// Regular Yellow Foreground On Regular [X] Color Background
-		// ****************************************************************************************
-		std::string Yellow_On_Black( std::string_view s )
-		{
-			return basic_colors::combos::yellow::on_black + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Yellow_On_Blue( std::string_view s )
-		{
-			return basic_colors::combos::yellow::on_blue + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Yellow_On_Cyan( std::string_view s )
-		{
-			return basic_colors::combos::yellow::on_cyan + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Yellow_On_Green( std::string_view s )
-		{
-			return basic_colors::combos::yellow::on_green + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Yellow_On_Magenta( std::string_view s )
-		{
-			return basic_colors::combos::yellow::on_magenta + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Yellow_On_Red( std::string_view s )
-		{
-			return basic_colors::combos::yellow::on_red + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Yellow_On_White( std::string_view s )
-		{
-			return basic_colors::combos::yellow::on_white + tag_helper::toString( s ) + Reset( );
-		}
-		std::string Yellow_On_Yellow( std::string_view s )
-		{
-			return basic_colors::combos::yellow::on_yellow + tag_helper::toString( s ) + Reset( );
-		}
-		// ****************************************************************************************
 	};  // namespace Tag
 
 
