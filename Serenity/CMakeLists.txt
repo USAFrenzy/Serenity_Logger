@@ -7,6 +7,7 @@ set (
     "src/Utilities.cpp"
     "src/Sinks.cpp"
     "src/LibLogger.cpp"
+    "src/Color/Color.cpp"
 )
 
 set (
@@ -23,6 +24,7 @@ set (
     "include/serenity/Sinks/SinkInfo.h"
     "include/serenity/Sinks/StdSplitSink.h"
     "include/serenity/Helpers/LibLogger.h"
+    "include/serenity/Color/Color.h"
 )
 
 set (SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})
