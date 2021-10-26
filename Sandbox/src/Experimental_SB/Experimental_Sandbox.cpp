@@ -51,11 +51,25 @@ static std::string_view MsgLevelToIcon( LoggerLevel level )
 	}
 }
 // ***************************************************************************
+/*
+	Might Be Worth Seeing If It's Viable And Low Enough Overhead To Set Up All The Formatters In Each Respective
+   Struct That's Applicable And Then Just Set Up The Formatted Pre Message String Based Off Of Each Individual
+   Formatter Specification? Issue Though, Is I Have No Idea How To Tell Where A Particular Flag Would Rest In Relation
+   To The Other Flags In The Top-level Format String Passed In...
+*/
+
 
 struct Message_Time
 {
-	/* std::chrono time stuff here */
+	Message_Time( )
+	{
+		using namespace std::chrono;
+		const std::chrono::zoned_time currentTime { current_zone( ), floor<seconds>( system_clock::now( ) ) };
+		current_time = currentTime;
+	}
+	std::chrono::zoned_seconds current_time;
 };
+
 struct Message_Pattern
 {
 	Message_Pattern( ) { }                           // what to set if no pattern passed in
@@ -63,19 +77,27 @@ struct Message_Pattern
 
 	void SetMsgPattern( std::string_view pattern ) { }
 	/* Pattern Parsing, Setting, Getting, Etc Done Here*/
+
+	std::formatter<std::chrono::sys_time<std::chrono::seconds>> timeStampFormatter;
 };
 
 struct Message_Info
 {
-	Message_Info( ) = default;
+	Message_Info( ) { }
 	Message_Info( LoggerLevel messageLevel, Message_Pattern formatPattern, std::string_view message, Message_Time messageTime )
 	  : msgLevel( messageLevel ), fmtPattern( formatPattern ), msg( message ), msgTime( messageTime )
 	{
 	}
+
+	auto GetMsgTime( )
+	{
+		return std::format( "{:%T}", msgTime.current_time );
+	}
+
 	LoggerLevel      msgLevel { LoggerLevel::trace };
 	std::string_view msg;
-	Message_Pattern  fmtPattern;
-	Message_Time     msgTime;
+	Message_Pattern  fmtPattern = { };
+	Message_Time     msgTime    = { };
 };
 
 // ansi color codes supported in Win 10+, therefore, targetting Win 10+ due to what the timeframe of the project I'll
@@ -126,8 +148,9 @@ class ColorConsole
 		else {
 			msgColor = "";
 		}
-		std::cout << msgColor << MsgLevelToIcon( level ) << " [" << loggerName
-			  << "]: " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\r\n";
+		std::cout << msgColor << MsgLevelToIcon( level ) << " " << message.GetMsgTime( ) << " "
+			  << "[" << loggerName << "]:"
+			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\r\n";
 	}
 
 	// Not Apart Of This Class - Just Here For Testing (Part Of Logger Class)
@@ -195,7 +218,6 @@ class ColorConsole
 int main( )
 {
 	using namespace se_colors;
-
 	ColorConsole C;
 
 	// Formatting Works With Latest Standard Flag
@@ -212,15 +234,6 @@ int main( )
 	C.error( "Error Will Be Red" );
 	// Fatal Is Light Yellow On Dark Red
 	C.fatal( "Fatal Will Be Bright Yellow On Red" );
-
-	std::cout << "\n\n";
-
-	C.info( "This Is A Decimal Substitution: [{}]", 10 );
-	C.info( "This Is A Float Substitution: [{}]", 10.5f );
-	double a = 10.55;
-	C.info( "This Is A Double Substitution: [{}]", a );
-	C.info( "This Is A String Substitution: [{}]", "STRING!" );
-	int b = 3;
 
 
 	// Above Are The Settings For Logging Message Colors (Influenced by spdlog
