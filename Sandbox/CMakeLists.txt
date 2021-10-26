@@ -20,7 +20,7 @@ set (EXPERIMENTAL_SB_SOURCE_FILES "src/Experimental_SB/Experimental_Sandbox.cpp"
 set (EXPERIMENTAL_SB_ALL_FILES ${EXPERIMENTAL_SB_HEADER_FILES} ${EXPERIMENTAL_SB_SOURCE_FILES})
 
 add_executable (${PROJECT_NAME} ${EXPERIMENTAL_SB_ALL_FILES})
-set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
+set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 23)
 target_link_libraries (
     ${PROJECT_NAME}
     LINK_PUBLIC

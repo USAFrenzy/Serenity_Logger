@@ -58,15 +58,26 @@ static std::string_view MsgLevelToIcon( LoggerLevel level )
    To The Other Flags In The Top-level Format String Passed In...
 */
 
+enum class time_mode
+{
+	local,
+	uct,
+};
 
 struct Message_Time
 {
-	Message_Time( )
+	Message_Time( time_mode tm )
 	{
 		using namespace std::chrono;
-		const std::chrono::zoned_time currentTime { current_zone( ), floor<seconds>( system_clock::now( ) ) };
+		mode = tm;
+		const zoned_time currentTime { current_zone( ), floor<seconds>( system_clock::now( ) ) };
 		current_time = currentTime;
+		if( mode == time_mode::uct ) {
+			current_time = currentTime.get_sys_time( );
+		}
 	}
+
+	time_mode                  mode;
 	std::chrono::zoned_seconds current_time;
 };
 
@@ -97,7 +108,7 @@ struct Message_Info
 	LoggerLevel      msgLevel { LoggerLevel::trace };
 	std::string_view msg;
 	Message_Pattern  fmtPattern = { };
-	Message_Time     msgTime    = { };
+	Message_Time     msgTime    = { time_mode::local };
 };
 
 // ansi color codes supported in Win 10+, therefore, targetting Win 10+ due to what the timeframe of the project I'll
@@ -105,8 +116,9 @@ struct Message_Info
 class ColorConsole
 {
       public:
-	ColorConsole( )
+	ColorConsole( std::string_view name )
 	{
+		loggerName     = std::move( name );
 		msgLevelColors = {
 		  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 		  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -150,7 +162,7 @@ class ColorConsole
 		}
 		std::cout << msgColor << MsgLevelToIcon( level ) << " " << message.GetMsgTime( ) << " "
 			  << "[" << loggerName << "]:"
-			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\r\n";
+			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\n";
 	}
 
 	// Not Apart Of This Class - Just Here For Testing (Part Of Logger Class)
@@ -218,7 +230,7 @@ class ColorConsole
 int main( )
 {
 	using namespace se_colors;
-	ColorConsole C;
+	ColorConsole C( "Experimental Logger" );
 
 	// Formatting Works With Latest Standard Flag
 	auto s = "White";
