@@ -3,6 +3,8 @@
 #include <serenity/Color/Color.h>
 
 #include <unordered_map>
+#include <format>
+#include <chrono>
 
 #define ALLOC_TEST 1
 
@@ -31,48 +33,58 @@ enum class LoggerLevel
 	warning,
 	error,
 	fatal,
+	off,
 	undefined
 };
 
-static std::string_view msgLevelToStr( LoggerLevel level )
+static std::string_view MsgLevelToIcon( LoggerLevel level )
 {
 	switch( level ) {
-		case LoggerLevel::info: return "[Info]"; break;
-		case LoggerLevel::trace: return "[Trace]"; break;
-		case LoggerLevel::debug: return "[Debug]"; break;
-		case LoggerLevel::warning: return "[Warning]"; break;
-		case LoggerLevel::error: return "[Error]"; break;
-		case LoggerLevel::fatal: return "[Fatal]"; break;
-		case LoggerLevel::undefined: return "[Undefined]"; break;
-		default: return "";
+		case LoggerLevel::info: return "[I]"; break;
+		case LoggerLevel::trace: return "[T]"; break;
+		case LoggerLevel::debug: return "[D]"; break;
+		case LoggerLevel::warning: return "[W]"; break;
+		case LoggerLevel::error: return "[E]"; break;
+		case LoggerLevel::fatal: return "[F]"; break;
+		case LoggerLevel::undefined: return "[U]"; break;
+		default: return ""; break;
 	}
 }
 // ***************************************************************************
+
 struct Message_Time
 {
+	/* std::chrono time stuff here */
+};
+struct Message_Pattern
+{
+	Message_Pattern( ) { }                           // what to set if no pattern passed in
+	Message_Pattern( std::string_view pattern ) { }  // use user's pattern
+
+	void SetMsgPattern( std::string_view pattern ) { }
+	/* Pattern Parsing, Setting, Getting, Etc Done Here*/
 };
 
 struct Message_Info
 {
 	Message_Info( ) = default;
-	Message_Info( LoggerLevel messageLevel, std::string_view formatPattern, std::string_view message, void *messageTime )
+	Message_Info( LoggerLevel messageLevel, Message_Pattern formatPattern, std::string_view message, Message_Time messageTime )
 	  : msgLevel( messageLevel ), fmtPattern( formatPattern ), msg( message ), msgTime( messageTime )
 	{
 	}
 	LoggerLevel      msgLevel { LoggerLevel::trace };
 	std::string_view msg;
-	std::string_view fmtPattern;
-	void *           msgTime /* std::chrono time stuff here */;
+	Message_Pattern  fmtPattern;
+	Message_Time     msgTime;
 };
 
 // ansi color codes supported in Win 10+, therefore, targetting Win 10+ due to what the timeframe of the project I'll
 // be using this in (< win 8.1 EOL).
-class ConsoleColors
+class ColorConsole
 {
       public:
-	ConsoleColors( )
+	ColorConsole( )
 	{
-		flush_level    = LoggerLevel::trace;
 		msgLevelColors = {
 		  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 		  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -80,28 +92,83 @@ class ConsoleColors
 		  { LoggerLevel::warning, se_colors::bright_colors::foreground::yellow },
 		  { LoggerLevel::error, se_colors::basic_colors::foreground::red },
 		  { LoggerLevel::fatal, se_colors::bright_colors::combos::yellow::on_red },
-		  { LoggerLevel::undefined, se_colors::basic_colors::combos::white::on_black },
+		  { LoggerLevel::off, se_colors::formats::reset },
+		  { LoggerLevel::undefined, "" },  // if undefined, do nothing (add no codes)
 		};
 	}
 
-	void SetMsgColor( const char *color )
+	void SetMsgColor( LoggerLevel level, const char *color )
 	{
-		msgLevelColors[ message.msgLevel ] = color;
-	}
-	const char *GetMsgColor( )
-	{
-		return msgLevelColors[ message.msgLevel ];
+		msgLevelColors[ level ] = color;
 	}
 
-	bool ShouldLog( )
+	const char *GetMsgColor( LoggerLevel level )
 	{
-		return ( message.msgLevel <= flush_level ) ? true : false;
+		return msgLevelColors[ level ];
 	}
-	void PrintWithColor( const std::string_view msg )
+
+	bool ColorizeOutput( bool colorize )
 	{
-		std::cout << GetMsgColor( ) << msgLevelToStr( message.msgLevel ) << " [" << loggerName << "]: " << toString( msg )
-			  << Reset( ) << "\n";
+		coloredOutput = colorize;
 	}
+
+	bool ShouldLog( LoggerLevel level )
+	{
+		return ( message.msgLevel <= level ) ? true : false;
+	}
+
+	template <typename... Args> void PrintMessage( LoggerLevel level, const std::string_view msg, Args &&...args )
+	{
+		const char *msgColor;
+		if( coloredOutput ) {
+			msgColor = GetMsgColor( level );
+		}
+		else {
+			msgColor = "";
+		}
+		std::cout << msgColor << MsgLevelToIcon( level ) << " [" << loggerName
+			  << "]: " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\r\n";
+	}
+
+	// Not Apart Of This Class - Just Here For Testing (Part Of Logger Class)
+	// ##########################################################################
+	template <typename... Args> void trace( std::string_view s, Args &&...args )
+	{
+		if( ShouldLog( LoggerLevel::trace ) ) {
+			PrintMessage( LoggerLevel::trace, s, std::forward<Args>( args )... );
+		}
+	}
+	template <typename... Args> void info( std::string_view s, Args &&...args )
+	{
+		if( ShouldLog( LoggerLevel::info ) ) {
+			PrintMessage( LoggerLevel::info, s, std::forward<Args>( args )... );
+		}
+	}
+	template <typename... Args> void debug( std::string_view s, Args &&...args )
+	{
+		if( ShouldLog( LoggerLevel::debug ) ) {
+			PrintMessage( LoggerLevel::debug, s, std::forward<Args>( args )... );
+		}
+	}
+	template <typename... Args> void warn( std::string_view s, Args &&...args )
+	{
+		if( ShouldLog( LoggerLevel::warning ) ) {
+			PrintMessage( LoggerLevel::warning, s, std::forward<Args>( args )... );
+		}
+	}
+	template <typename... Args> void error( std::string_view s, Args &&...args )
+	{
+		if( ShouldLog( LoggerLevel::error ) ) {
+			PrintMessage( LoggerLevel::error, s, std::forward<Args>( args )... );
+		}
+	}
+	template <typename... Args> void fatal( std::string_view s, Args &&...args )
+	{
+		if( ShouldLog( LoggerLevel::fatal ) ) {
+			PrintMessage( LoggerLevel::fatal, s, std::forward<Args>( args )... );
+		}
+	}
+	// ##########################################################################
 
 	std::string toString( const std::string_view s )
 	{
@@ -118,39 +185,49 @@ class ConsoleColors
 	Message_Info     message;
 	LoggerLevel      flush_level;
 	std::string_view loggerName = "Default_Console";
-	// This Setup influenced by the hasher that spdlog uses to set colors for msg lvl
+	bool             coloredOutput { true };
+	// This Setup influenced by the hasher that spdlog uses to set colors for msg
+	// lvl
 	std::unordered_map<LoggerLevel, const char *> msgLevelColors;
-};  // struct ConsoleColors
+};  // struct ColorConsole
 
 
 int main( )
 {
 	using namespace se_colors;
 
-	ConsoleColors C;
+	ColorConsole C;
 
+	// Formatting Works With Latest Standard Flag
+	auto s = "White";
 	// Trace Is Deafult Color
-	C.SetMsgColor( bright_colors::combos::white::on_black );
-	C.PrintWithColor( "Trace Will Be Bright White" );
+	C.trace( "Trace Will Be Bright {}", s );
 	// Info Is Light Green
-	C.SetMsgColor( bright_colors::foreground::green );
-	C.PrintWithColor( "Info Will Be Bright Green" );
+	C.info( "Info Will Be Bright Green" );
 	// Debug Is Light Cyan
-	C.SetMsgColor( bright_colors::foreground::cyan );
-	C.PrintWithColor( "Debug Will Be Bright Cyan" );
+	C.debug( "Debug Will Be Bright Cyan" );
 	// Warning Is Light Yellow
-	C.SetMsgColor( bright_colors::foreground::yellow );
-	C.PrintWithColor( "Warning Will Be Bright Yellow" );
+	C.warn( "Warning Will Be Bright Yellow" );
 	// Error Is Dark Red
-	C.SetMsgColor( basic_colors::foreground::red );
-	C.PrintWithColor( "Error Will Be Red" );
+	C.error( "Error Will Be Red" );
 	// Fatal Is Light Yellow On Dark Red
-	C.SetMsgColor( bright_colors::combos::yellow::on_red );
-	C.PrintWithColor( "Fatal Will Be Bright Yellow On Red" );
+	C.fatal( "Fatal Will Be Bright Yellow On Red" );
 
-	// Above Are The Settings For Logging Message Colors (Influenced by spdlog message level colors)
-	// - "fatal" changed to something I personally thought was more visually appealing as a default.
-	// (spdlog does offer changes to default colors via set_color() either way)
+	std::cout << "\n\n";
+
+	C.info( "This Is A Decimal Substitution: [{}]", 10 );
+	C.info( "This Is A Float Substitution: [{}]", 10.5f );
+	double a = 10.55;
+	C.info( "This Is A Double Substitution: [{}]", a );
+	C.info( "This Is A String Substitution: [{}]", "STRING!" );
+	int b = 3;
+
+
+	// Above Are The Settings For Logging Message Colors (Influenced by spdlog
+	// message level colors)
+	// - "fatal" changed to something I personally thought was more visually
+	// appealing as a default. (spdlog does offer changes to default colors via
+	// set_color() either way)
 
 	// Currently 48 bytes
 	// std::cout << "Size of Message_Info: " << sizeof( Message_Info );
