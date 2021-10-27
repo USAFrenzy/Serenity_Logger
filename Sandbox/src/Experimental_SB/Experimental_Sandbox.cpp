@@ -34,7 +34,6 @@ enum class LoggerLevel
 	error,
 	fatal,
 	off,
-	undefined
 };
 
 static std::string_view MsgLevelToIcon( LoggerLevel level )
@@ -46,7 +45,6 @@ static std::string_view MsgLevelToIcon( LoggerLevel level )
 		case LoggerLevel::warning: return "[W]"; break;
 		case LoggerLevel::error: return "[E]"; break;
 		case LoggerLevel::fatal: return "[F]"; break;
-		case LoggerLevel::undefined: return "[U]"; break;
 		default: return ""; break;
 	}
 }
@@ -58,58 +56,151 @@ static std::string_view MsgLevelToIcon( LoggerLevel level )
    To The Other Flags In The Top-level Format String Passed In...
 */
 
-enum class time_mode
+// originally had UTC here as well but not really implemented - going to flesh out what I would like to see first before adding
+// something I may not even use
+class Message_Time
 {
-	local,
-	uct,
-};
-
-struct Message_Time
-{
-	Message_Time( time_mode tm )
+      public:
+	Message_Time( )
+	{
+		time = std::chrono::system_clock::now( );
+	}
+	// Leaving As LocalTimeCLock in case I add Other Clocks Later?
+	auto LocalTimeClock( std::string fmt )
 	{
 		using namespace std::chrono;
-		mode = tm;
-		const zoned_time currentTime { current_zone( ), floor<seconds>( system_clock::now( ) ) };
-		current_time = currentTime;
-		if( mode == time_mode::uct ) {
-			current_time = currentTime.get_sys_time( );
-		}
+		std::chrono::zoned_seconds m = { current_zone( ), floor<seconds>( system_clock::now( ) ) };
+
+		std::string buffer;
+
+		std::format_to( std::back_inserter( buffer ), fmt, m );
+		return buffer;
 	}
 
-	time_mode                  mode;
-	std::chrono::zoned_seconds current_time;
+	auto UTCTimeClock( std::string_view fmt )
+	{
+		std::string buffer;
+		std::format_to( std::back_inserter( buffer ), fmt, time );
+		return buffer;
+	}
+
+      private:
+	std::chrono::system_clock::time_point time;
 };
 
-struct Message_Pattern
+// This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
+// *************************************************************************
+_Enum_is_bitflag_ enum class Flags : uint8_t {
+	none = 0,       // no flags set
+	time = 1 << 0,  // Mapping To %H:%M:%S Time Format (Honestly Would Like A Way To Parallel strftime Substitution For This)
+	name = 1 << 1,  // Mapping To Logger Name
+	a    = 1 << 2,  // placeholder
+	b    = 1 << 3,  // placeholder
+	c    = 1 << 4,  // placeholder
+	d    = 1 << 5,  // placeholder
+	e    = 1 << 6,  // placeholder
+	f    = 1 << 7,  // placeholder
+
+	// More to possible come..(obviously would have to change type attr)
+};
+
+inline Flags operator|( Flags a, Flags b )
 {
+	return static_cast<Flags>( static_cast<uint16_t>( a ) | static_cast<uint16_t>( b ) );
+}
+
+class Msg_Fmt_Flags
+{
+      public:
+	Msg_Fmt_Flags( )
+	{
+		flagHasher = {
+		  { "", Flags::none },
+		  { "%T", Flags::time },
+		  { "%N", Flags::name }, /* From What I Can Tell, %N isn't Used In Any Formatters So Far */
+		};
+	}
+
+      private:
+	std::unordered_map<const char *, Flags> flagHasher;
+};
+// *************************************************************************
+class Message_Pattern
+{
+      public:
 	Message_Pattern( ) { }                           // what to set if no pattern passed in
 	Message_Pattern( std::string_view pattern ) { }  // use user's pattern
 
-	void SetMsgPattern( std::string_view pattern ) { }
-	/* Pattern Parsing, Setting, Getting, Etc Done Here*/
+	void SetMsgPattern( std::string_view pattern )
+	{
+		std::basic_format_parse_context fmt { pattern };
+		// I honestly have no idea about the std::formatter usage yet..
+		/*
+			Initial thoughts are to just roll a manual parser that checks for certain flags (yet to be implemented),
+			substitute those explicit values in for those flags in a string or buffer, then format the values based on the
+			pattern. From my basic understanding, std::formatter should pretty much have me covered here if i can figure
+			out how to implement it
 
-	std::formatter<std::chrono::sys_time<std::chrono::seconds>> timeStampFormatter;
+			EDIT: I May just need both std::formatter<std::chrono::zoned_time> and  std::formatter<std::chrono::utc_time>
+			instead of just one formatter and then pass the basic_parse_context and time to the appropriate formatter?
+		*/
+	}
+
+	std::string GetTimeFmt( )
+	{
+		return time_format;
+	}
+
+      private:
+	// NOTE: probably wrong
+	std::string                          time_format = ":%T";  // currently forcing
+	std::formatter<std::chrono::seconds> timeStampFormatter;
 };
 
-struct Message_Info
+class Message_Info
 {
+      public:
 	Message_Info( ) { }
 	Message_Info( LoggerLevel messageLevel, Message_Pattern formatPattern, std::string_view message, Message_Time messageTime )
-	  : msgLevel( messageLevel ), fmtPattern( formatPattern ), msg( message ), msgTime( messageTime )
+	  : msgLevel( messageLevel ), formats( formatPattern ), msg( message ), msgTime( messageTime )
 	{
 	}
 
-	auto GetMsgTime( )
+	std::string GetMsgTime( std::string fmt )
 	{
-		return std::format( "{:%T}", msgTime.current_time );
+		std::string pattern = "{" + fmt + "}";
+		return msgTime.LocalTimeClock( pattern );
 	}
 
+	LoggerLevel MsgLevel( )
+	{
+		return msgLevel;
+	}
+
+	Message_Pattern GetFormatPatterns( )
+	{
+		return formats;
+	}
+
+      private:
 	LoggerLevel      msgLevel { LoggerLevel::trace };
 	std::string_view msg;
-	Message_Pattern  fmtPattern = { };
-	Message_Time     msgTime    = { time_mode::local };
+	Message_Pattern  formats { };
+	Message_Time     msgTime;
 };
+
+// clang-format off
+//! ############################################################# NOTE: Just So I Don't Lose The Pathing So Far #############################################################
+/*
+	For Time Formatting (Only Local Tested So Far):
+	- GetMsgTime() Called With User Time Format Parameter (Currently Hard-coded)
+	- Get The Time Format Pattern From The Parameter
+	- Get The Current Date Time
+	- Format Current Date Time Into A Buffer Based On Time Format Pattern
+	- Return Buffer String To GetMsgTime()
+*/
+//! #########################################################################################################################################################################
+// clang-format on
 
 // ansi color codes supported in Win 10+, therefore, targetting Win 10+ due to what the timeframe of the project I'll
 // be using this in (< win 8.1 EOL).
@@ -127,13 +218,13 @@ class ColorConsole
 		  { LoggerLevel::error, se_colors::basic_colors::foreground::red },
 		  { LoggerLevel::fatal, se_colors::bright_colors::combos::yellow::on_red },
 		  { LoggerLevel::off, se_colors::formats::reset },
-		  { LoggerLevel::undefined, "" },  // if undefined, do nothing (add no codes)
 		};
 	}
 
 	void SetMsgColor( LoggerLevel level, const char *color )
 	{
-		msgLevelColors[ level ] = color;
+		msgLevelColors.at( level ) = color;
+		msgLevelColors[ level ]    = color;
 	}
 
 	const char *GetMsgColor( LoggerLevel level )
@@ -148,7 +239,7 @@ class ColorConsole
 
 	bool ShouldLog( LoggerLevel level )
 	{
-		return ( message.msgLevel <= level ) ? true : false;
+		return ( message.MsgLevel( ) <= level ) ? true : false;
 	}
 
 	template <typename... Args> void PrintMessage( LoggerLevel level, const std::string_view msg, Args &&...args )
@@ -160,7 +251,8 @@ class ColorConsole
 		else {
 			msgColor = "";
 		}
-		std::cout << msgColor << MsgLevelToIcon( level ) << " " << message.GetMsgTime( ) << " "
+		std::cout << msgColor << MsgLevelToIcon( level ) << " "
+			  << message.GetMsgTime( message.GetFormatPatterns( ).GetTimeFmt( ) ) << " "
 			  << "[" << loggerName << "]:"
 			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\n";
 	}
