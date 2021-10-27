@@ -166,9 +166,9 @@ class Message_Info
 	{
 	}
 
-	std::string GetMsgTime( std::string fmt )
+	std::string GetMsgTime( )
 	{
-		std::string pattern = "{" + fmt + "}";
+		std::string pattern = "{" + formats.GetTimeFmt( ) + "}";
 		return msgTime.LocalTimeClock( pattern );
 	}
 
@@ -252,7 +252,7 @@ class ColorConsole
 			msgColor = "";
 		}
 		std::cout << msgColor << MsgLevelToIcon( level ) << " "
-			  << message.GetMsgTime( message.GetFormatPatterns( ).GetTimeFmt( ) ) << " "
+			  << message.GetMsgTime( ) << " "
 			  << "[" << loggerName << "]:"
 			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\n";
 	}
