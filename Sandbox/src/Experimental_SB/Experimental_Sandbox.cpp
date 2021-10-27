@@ -48,6 +48,11 @@ static std::string_view MsgLevelToIcon( LoggerLevel level )
 		default: return ""; break;
 	}
 }
+
+static std::string toString( std::string_view s )
+{
+	return std::string( s.data( ), s.size( ) );
+}
 // ***************************************************************************
 /*
 	Might Be Worth Seeing If It's Viable And Low Enough Overhead To Set Up All The Formatters In Each Respective
@@ -56,8 +61,13 @@ static std::string_view MsgLevelToIcon( LoggerLevel level )
    To The Other Flags In The Top-level Format String Passed In...
 */
 
-// originally had UTC here as well but not really implemented - going to flesh out what I would like to see first before adding
-// something I may not even use
+
+enum class time_mode
+{
+	local,
+	utc
+};
+
 class Message_Time
 {
       public:
@@ -65,19 +75,17 @@ class Message_Time
 	{
 		time = std::chrono::system_clock::now( );
 	}
-	// Leaving As LocalTimeCLock in case I add Other Clocks Later?
-	auto LocalTimeClock( std::string fmt )
+
+	std::string LocalTimeClock( std::string fmt )
 	{
 		using namespace std::chrono;
 		std::chrono::zoned_seconds m = { current_zone( ), floor<seconds>( system_clock::now( ) ) };
-
-		std::string buffer;
-
+		std::string                buffer;
 		std::format_to( std::back_inserter( buffer ), fmt, m );
 		return buffer;
 	}
 
-	auto UTCTimeClock( std::string_view fmt )
+	std::string UTCTimeClock( std::string_view fmt )
 	{
 		std::string buffer;
 		std::format_to( std::back_inserter( buffer ), fmt, time );
@@ -101,7 +109,7 @@ _Enum_is_bitflag_ enum class Flags : uint8_t {
 	e    = 1 << 6,  // placeholder
 	f    = 1 << 7,  // placeholder
 
-	// More to possible come..(obviously would have to change type attr)
+	// More to possibly come..(obviously would have to change type attr)
 };
 
 inline Flags operator|( Flags a, Flags b )
@@ -138,11 +146,10 @@ class Message_Pattern
 		/*
 			Initial thoughts are to just roll a manual parser that checks for certain flags (yet to be implemented),
 			substitute those explicit values in for those flags in a string or buffer, then format the values based on the
-			pattern. From my basic understanding, std::formatter should pretty much have me covered here if i can figure
-			out how to implement it
-
-			EDIT: I May just need both std::formatter<std::chrono::zoned_time> and  std::formatter<std::chrono::utc_time>
-			instead of just one formatter and then pass the basic_parse_context and time to the appropriate formatter?
+			pattern.
+			EDIT: If I flesh out the Flags enum and Msg_Fmt_Flags class, I could possibly use these to separately format
+		   and store each format unit (time, logger, date, message, color if console, etc) into a message pattern string that
+		   would be passed to a print or log type function
 		*/
 	}
 
@@ -152,8 +159,9 @@ class Message_Pattern
 	}
 
       private:
-	// NOTE: probably wrong
-	std::string                          time_format = ":%T";  // currently forcing
+	// currently forcing
+	std::string time_format = ":%T";
+	//! NOTE: probably wrong!!!
 	std::formatter<std::chrono::seconds> timeStampFormatter;
 };
 
@@ -193,8 +201,8 @@ class Message_Info
 //! ############################################################# NOTE: Just So I Don't Lose The Pathing So Far #############################################################
 /*
 	For Time Formatting (Only Local Tested So Far):
-	- GetMsgTime() Called With User Time Format Parameter (Currently Hard-coded)
-	- Get The Time Format Pattern From The Parameter
+	- GetMsgTime() Called 
+	- Get The Time Format From The User's Provided Format (Currently Hard-Coded The Time Format)
 	- Get The Current Date Time
 	- Format Current Date Time Into A Buffer Based On Time Format Pattern
 	- Return Buffer String To GetMsgTime()
@@ -251,8 +259,7 @@ class ColorConsole
 		else {
 			msgColor = "";
 		}
-		std::cout << msgColor << MsgLevelToIcon( level ) << " "
-			  << message.GetMsgTime( ) << " "
+		std::cout << msgColor << MsgLevelToIcon( level ) << " " << message.GetMsgTime( ) << " "
 			  << "[" << loggerName << "]:"
 			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\n";
 	}
