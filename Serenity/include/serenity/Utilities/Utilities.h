@@ -31,7 +31,6 @@ namespace serenity
 			{
 				uint64_t Allocated { 0 };
 				uint64_t Freed { 0 };
-				uint64_t Memory_Usage( );
 			};
 
 		      public:
@@ -41,8 +40,10 @@ namespace serenity
 			void  StopWatch_Stop( );
 			float Elapsed_In( time_mode mode );
 
-			void *operator new( std::size_t n );
-			void  operator delete( void *p ) throw( );
+
+			uint64_t Memory_Usage( );
+			void *   operator new( std::size_t n );
+			void     operator delete( void *p ) throw( );
 
 			~Instrumentator( );
 

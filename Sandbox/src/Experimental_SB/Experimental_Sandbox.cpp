@@ -20,16 +20,17 @@
 
 #if ALLOC_TEST  // Testing Allocations
 	#ifdef INSTRUMENTATION_ENABLED
-uint64_t total_bytes { 0 };
-void *   operator new( std::size_t n )
+uint64_t total_allocated_bytes { 0 };
+
+void *operator new( std::size_t n )
 {
-	total_bytes += n;
+	total_allocated_bytes += n;
 	serenity::se_utils::Instrumentator::mem_tracker.Allocated += n;
 	return malloc( n );
 }
 void operator delete( void *p, size_t n ) throw( )
 {
-	total_bytes -= n;
+	total_allocated_bytes -= n;
 	serenity::se_utils::Instrumentator::mem_tracker.Freed += ( n );
 	free( p );
 }
@@ -393,14 +394,21 @@ int main( )
 
 #ifdef INSTRUMENTATION_ENABLED
 	#if ALLOC_TEST
+	// setting up for the current usage and allocations so no variation in conversions
+	auto current_mem_bytes = macroTester.Memory_Usage( );
+	auto current_mem_kb    = ( current_mem_bytes / 1000.0 );
+	auto total_mem_bytes   = total_allocated_bytes;
+	auto total_mem_kb      = ( total_mem_bytes / 1000.0 );
+
 	std::cout << Tag::Bright_Yellow( "Total Memory Allocated:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( total_bytes ) + " bytes]\n" )
+		  << Tag::Bright_Green( "[ " + std::to_string( total_mem_bytes ) + " bytes]\n" )
 		  << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( total_bytes / 1000.0 ) + " KB]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( total_mem_kb ) + " KB]\n" );
+
 	std::cout << Tag::Bright_Yellow( "Total Memory Used:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( macroTester.mem_tracker.Memory_Usage( ) ) + " bytes]\n" )
+		  << Tag::Bright_Green( "[ " + std::to_string( current_mem_bytes ) + " bytes]\n" )
 		  << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( macroTester.mem_tracker.Memory_Usage( ) / 1000.0 ) + " KB]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( current_mem_kb ) + " KB]\n" );
 	#endif  // ALLOC_TEST
 #endif          // INSTRUMENTATION_ENABLED
 
