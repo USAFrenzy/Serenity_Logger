@@ -12,11 +12,10 @@ namespace serenity
 {
 	namespace se_utils
 	{
-		Instrumentator::Allocation_Statistics Instrumentator::mem_tracker;
+		Allocation_Statistics Instrumentator::mem_tracker = { };
 		Instrumentator::Instrumentator( )
 		{
-			mem_tracker = { };
-			m_Start     = std::chrono::steady_clock::now( );
+			m_Start = std::chrono::steady_clock::now( );
 		}
 		void Instrumentator::StopWatch_Reset( )
 		{
@@ -62,9 +61,9 @@ namespace serenity
 			free( p );
 		}
 
-		uint64_t Instrumentator::Memory_Usage( )
+		uint64_t Allocation_Statistics::Memory_Usage( )
 		{
-			return ( mem_tracker.Allocated - mem_tracker.Freed );
+			return ( Allocated - Freed );
 		}
 
 		Instrumentator::~Instrumentator( ) { }

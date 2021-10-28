@@ -25,14 +25,15 @@ namespace serenity
 		template <class T> using pMin   = std::chrono::duration<T, std::ratio<1, 60>>;
 		template <class T> using pHour  = std::chrono::duration<T, std::ratio<1, 3600>>;
 
+		struct Allocation_Statistics
+		{
+			uint64_t Allocated { 0 };
+			uint64_t Freed { 0 };
+			uint64_t Memory_Usage( );
+		};
+
 		class Instrumentator
 		{
-			struct Allocation_Statistics
-			{
-				uint64_t Allocated { 0 };
-				uint64_t Freed { 0 };
-			};
-
 		      public:
 			Instrumentator( );
 
@@ -41,9 +42,8 @@ namespace serenity
 			float Elapsed_In( time_mode mode );
 
 
-			uint64_t Memory_Usage( );
-			void *   operator new( std::size_t n );
-			void     operator delete( void *p ) throw( );
+			void *operator new( std::size_t n );
+			void  operator delete( void *p ) throw( );
 
 			~Instrumentator( );
 

@@ -6,6 +6,8 @@
 #include <format>
 #include <chrono>
 
+#include <ctime>
+#include <time.h>
 
 #include <serenity/Utilities/Utilities.h>
 
@@ -31,7 +33,7 @@ void *operator new( std::size_t n )
 void operator delete( void *p, size_t n ) throw( )
 {
 	total_allocated_bytes -= n;
-	serenity::se_utils::Instrumentator::mem_tracker.Freed += ( n );
+	serenity::se_utils::Instrumentator::mem_tracker.Freed += n;
 	free( p );
 }
 	#endif  // ALLOC_TEST
@@ -82,32 +84,60 @@ enum class message_time_mode
 	utc
 };
 
+static std::array<const char *, 7>  weekdays = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+static std::array<const char *, 12> Months   = { "January", "February", "March",     "April",   "May",      "Jun",
+                                               "July",    "August",   "September", "October", "November", "December" };
+
+
 class Message_Time
 {
       public:
-	Message_Time( )
+	Message_Time( message_time_mode mode ) : m_Mode( mode )
 	{
-		time = std::chrono::system_clock::now( );
+		UpdateTimeInfo( mode );
 	}
 
-	std::string LocalTimeClock( std::string fmt )
+	void UpdateTimeInfo( message_time_mode mode )
 	{
-		using namespace std::chrono;
-		static std::chrono::zoned_seconds m = { current_zone( ), floor<seconds>( system_clock::now( ) ) };
-		std::string                       buffer;
-		std::format_to( std::back_inserter( buffer ), fmt, m );
-		return buffer;
+		time = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now( ) );
+		if( mode == message_time_mode::local ) {
+			t_struct = std::localtime( &time );
+		}
+		else {
+			t_struct = std::gmtime( &time );
+		}
 	}
 
-	std::string UTCTimeClock( std::string_view fmt )
+	//  Pretty Much Putting This Here For The Time Being So I Can Sit On How I Want To Implement A Formatter
+	/**********************************************************************************************************
+	***********************************************************************************************************
+		auto        weekday     = weekdays[ t_struct->tm_wday ];
+		auto        hour        = t_struct->tm_hour;
+		auto        min         = t_struct->tm_min;
+		auto        sec         = t_struct->tm_sec;
+		auto        year        = ( 1900 + t_struct->tm_year );
+		auto        month       = Months[ t_struct->tm_mon ];
+		auto day = t_struct->tm_mday;
+		return std::format( "{} {}/{}/{} {}:{}:{}", weekday, month, day, year, hour, min, sec );
+		***********************************************************************************************************
+		**********************************************************************************************************/
+	std::string FormatTime( std::string_view fmt, message_time_mode mode )
 	{
-		std::string buffer;
-		std::format_to( std::back_inserter( buffer ), fmt, time );
-		return buffer;
+		UpdateTimeInfo( mode );
+		char buffer[ 80 ];
+		auto formatted = strftime( buffer, sizeof( buffer ), toString( fmt ).c_str( ), t_struct );
+		return std::string( buffer );
+	}
+
+	inline message_time_mode Mode( )
+	{
+		return m_Mode;
 	}
 
       private:
-	std::chrono::system_clock::time_point time;
+	message_time_mode m_Mode;
+	std::time_t       time;
+	std::tm *         t_struct = { };
 };
 
 // This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
@@ -174,7 +204,7 @@ class Message_Pattern
 
       private:
 	// currently forcing
-	std::string time_format = ":%T";
+	std::string time_format = "%H:%M:%S";
 	//! NOTE: probably wrong!!!
 	std::formatter<std::chrono::seconds> timeStampFormatter;
 };
@@ -182,7 +212,7 @@ class Message_Pattern
 class Message_Info
 {
       public:
-	Message_Info( ) { }
+	Message_Info( ) = default;
 	Message_Info( LoggerLevel messageLevel, Message_Pattern formatPattern, std::string_view message, Message_Time messageTime )
 	  : msgLevel( messageLevel ), formats( formatPattern ), msg( message ), msgTime( messageTime )
 	{
@@ -190,8 +220,7 @@ class Message_Info
 
 	std::string GetMsgTime( )
 	{
-		std::string pattern = "{" + formats.GetTimeFmt( ) + "}";
-		return msgTime.LocalTimeClock( pattern );
+		return msgTime.FormatTime( formats.GetTimeFmt( ), msgTime.Mode( ) );
 	}
 
 	LoggerLevel MsgLevel( )
@@ -208,7 +237,7 @@ class Message_Info
 	LoggerLevel      msgLevel { LoggerLevel::trace };
 	std::string_view msg;
 	Message_Pattern  formats { };
-	Message_Time     msgTime;
+	Message_Time     msgTime { message_time_mode::local };
 };
 
 // clang-format off
@@ -383,7 +412,10 @@ int main( )
 
 #ifdef INSTRUMENTATION_ENABLED
 	macroTester.StopWatch_Stop( );
-	std::cout << Tag::Yellow( "\n\nInstrumentation Data:\n" );
+
+	std::cout << Tag::Yellow(
+	  "\n\n***************************************************************\n******************** Instrumentation Data: "
+	  "********************\n***************************************************************\n" );
 	std::cout << Tag::Bright_Yellow( "Total Elapsed Time:\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t" )
 		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) ) + " us\n" )
 		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t" )
@@ -395,20 +427,10 @@ int main( )
 #ifdef INSTRUMENTATION_ENABLED
 	#if ALLOC_TEST
 	// setting up for the current usage and allocations so no variation in conversions
-	auto current_mem_bytes = macroTester.Memory_Usage( );
-	auto current_mem_kb    = ( current_mem_bytes / 1000.0 );
-	auto total_mem_bytes   = total_allocated_bytes;
-	auto total_mem_kb      = ( total_mem_bytes / 1000.0 );
-
-	std::cout << Tag::Bright_Yellow( "Total Memory Allocated:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( total_mem_bytes ) + " bytes]\n" )
-		  << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( total_mem_kb ) + " KB]\n" );
-
+	auto mem_used = macroTester.mem_tracker.Memory_Usage( );
 	std::cout << Tag::Bright_Yellow( "Total Memory Used:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( current_mem_bytes ) + " bytes]\n" )
-		  << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( current_mem_kb ) + " KB]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( mem_used ) + " bytes]\n" ) << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( mem_used / 1000.0 ) + " KB]\n" );
 	#endif  // ALLOC_TEST
 #endif          // INSTRUMENTATION_ENABLED
 
@@ -416,5 +438,10 @@ int main( )
 	// Currently 128 bytes
 	std::cout << Tag::Bright_Yellow( "Size of Message_Info Struct:\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Message_Info ) ) + " bytes]\n" );
+
+	std::cout << Tag::Yellow( "***************************************************************\n" );
+	std::cout << Tag::Yellow( "***************************************************************\n" );
+	std::cout << Tag::Yellow( "***************************************************************\n\n" );
+
 #endif  // INSTRUMENTATION_ENABLED
 }
