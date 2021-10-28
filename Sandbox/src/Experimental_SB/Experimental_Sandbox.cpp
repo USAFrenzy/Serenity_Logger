@@ -6,22 +6,35 @@
 #include <format>
 #include <chrono>
 
+
+#include <serenity/Utilities/Utilities.h>
+
+#define INSTRUMENT
 #define ALLOC_TEST 1
 
+
+#ifdef INSTRUMENT
+	#define INSTRUMENTATION_ENABLED
+#endif
+
+
 #if ALLOC_TEST  // Testing Allocations
-size_t total_bytes = 0;
-void * operator new( std::size_t n )
+	#ifdef INSTRUMENTATION_ENABLED
+uint64_t total_bytes { 0 };
+void *   operator new( std::size_t n )
 {
-	// std::cout << "[Allocating " << n << " bytes]";
 	total_bytes += n;
+	serenity::se_utils::Instrumentator::mem_tracker.Allocated += n;
 	return malloc( n );
 }
-void operator delete( void *p ) throw( )
+void operator delete( void *p, size_t n ) throw( )
 {
-	total_bytes -= sizeof( p );
+	total_bytes -= n;
+	serenity::se_utils::Instrumentator::mem_tracker.Freed += ( n );
 	free( p );
 }
-#endif
+	#endif  // ALLOC_TEST
+#endif          // INSTRUMENTATION_ENABLED
 
 // Just throwing these here for testing this case
 // ***************************************************************************
@@ -62,7 +75,7 @@ static std::string toString( std::string_view s )
 */
 
 
-enum class time_mode
+enum class message_time_mode
 {
 	local,
 	utc
@@ -79,8 +92,8 @@ class Message_Time
 	std::string LocalTimeClock( std::string fmt )
 	{
 		using namespace std::chrono;
-		std::chrono::zoned_seconds m = { current_zone( ), floor<seconds>( system_clock::now( ) ) };
-		std::string                buffer;
+		static std::chrono::zoned_seconds m = { current_zone( ), floor<seconds>( system_clock::now( ) ) };
+		std::string                       buffer;
 		std::format_to( std::back_inserter( buffer ), fmt, m );
 		return buffer;
 	}
@@ -252,6 +265,9 @@ class ColorConsole
 
 	template <typename... Args> void PrintMessage( LoggerLevel level, const std::string_view msg, Args &&...args )
 	{
+#ifdef INSTRUMENTATION_ENABLED
+		timer.StopWatch_Reset( );
+#endif  // INSTRUMENTATION_ENABLED
 		const char *msgColor;
 		if( coloredOutput ) {
 			msgColor = GetMsgColor( level );
@@ -262,6 +278,10 @@ class ColorConsole
 		std::cout << msgColor << MsgLevelToIcon( level ) << " " << message.GetMsgTime( ) << " "
 			  << "[" << loggerName << "]:"
 			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\n";
+#ifdef INSTRUMENTATION_ENABLED
+		timer.StopWatch_Stop( );
+		std::cout << "Elapsed In: " << timer.Elapsed_In( serenity::se_utils::time_mode::us ) << "us\n";
+#endif  // INSTRUMENTATION_ENABLED
 	}
 
 	// Not Apart Of This Class - Just Here For Testing (Part Of Logger Class)
@@ -316,23 +336,37 @@ class ColorConsole
 	}
 
       private:
-	Message_Info     message;
+	Message_Info     message = { };
 	LoggerLevel      flush_level;
 	std::string_view loggerName = "Default_Console";
 	bool             coloredOutput { true };
 	// This Setup influenced by the hasher that spdlog uses to set colors for msg
 	// lvl
 	std::unordered_map<LoggerLevel, const char *> msgLevelColors;
-};  // struct ColorConsole
-
+	// for internal instrumentation
+#ifdef INSTRUMENTATION_ENABLED
+	serenity::se_utils::Instrumentator timer;
+#endif  // INSTRUMENTAION_ENABLED
+};      // struct ColorConsole
 
 int main( )
 {
 	using namespace se_colors;
+	using namespace serenity::se_utils;
 	ColorConsole C( "Experimental Logger" );
-
 	// Formatting Works With Latest Standard Flag
 	auto s = "White";
+#ifdef INSTRUMENTATION_ENABLED
+	Instrumentator macroTester;
+	/*
+		First Iteration Takes Waaaaayyyy Too Long..
+		My guess so far, without full instrumentation, is that it has to do with the initial setup of the local time zone data?
+		I'm not even 50% sure if that's the case, but definitely want to flesh out the message details before mucking with
+		timing optimizations. Good to know there's a slight optimization issue this early on though I guess.
+	*/
+	macroTester.StopWatch_Reset( );
+#endif  // INSTRUMENTATION_ENABLED
+
 	// Trace Is Deafult Color
 	C.trace( "Trace Will Be Bright {}", s );
 	// Info Is Light Green
@@ -346,19 +380,33 @@ int main( )
 	// Fatal Is Light Yellow On Dark Red
 	C.fatal( "Fatal Will Be Bright Yellow On Red" );
 
+#ifdef INSTRUMENTATION_ENABLED
+	macroTester.StopWatch_Stop( );
+	std::cout << Tag::Yellow( "\n\nInstrumentation Data:\n" );
+	std::cout << Tag::Bright_Yellow( "Total Elapsed Time:\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t" )
+		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) ) + " us\n" )
+		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t" )
+		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::ms ) ) + " ms\n" )
+		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t" )
+		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::sec ) ) + " s\n" );
+#endif  // INSTRUMENTATION_ENABLED
 
-	// Above Are The Settings For Logging Message Colors (Influenced by spdlog
-	// message level colors)
-	// - "fatal" changed to something I personally thought was more visually
-	// appealing as a default. (spdlog does offer changes to default colors via
-	// set_color() either way)
+#ifdef INSTRUMENTATION_ENABLED
+	#if ALLOC_TEST
+	std::cout << Tag::Bright_Yellow( "Total Memory Allocated:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( total_bytes ) + " bytes]\n" )
+		  << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( total_bytes / 1000.0 ) + " KB]\n" );
+	std::cout << Tag::Bright_Yellow( "Total Memory Used:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( macroTester.mem_tracker.Memory_Usage( ) ) + " bytes]\n" )
+		  << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( macroTester.mem_tracker.Memory_Usage( ) / 1000.0 ) + " KB]\n" );
+	#endif  // ALLOC_TEST
+#endif          // INSTRUMENTATION_ENABLED
 
-	// Currently 48 bytes
-	// std::cout << "Size of Message_Info: " << sizeof( Message_Info );
-
-#if ALLOC_TEST
-
-	std::cout << "\n\nTotal Memory Allocated: [ " << total_bytes << " bytes] "
-		  << "OR [" << total_bytes / 1000.0 << " KB]\n\n";
-#endif
+#ifdef INSTRUMENTATION_ENABLED
+	// Currently 128 bytes
+	std::cout << Tag::Bright_Yellow( "Size of Message_Info Struct:\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Message_Info ) ) + " bytes]\n" );
+#endif  // INSTRUMENTATION_ENABLED
 }

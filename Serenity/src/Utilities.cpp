@@ -12,39 +12,53 @@ namespace serenity
 {
 	namespace se_utils
 	{
-		Instrumentor::Instrumentor( ) { }
-		void Instrumentor::StopWatch_Start( )
+		Instrumentator::Allocation_Statistics Instrumentator::mem_tracker;
+		Instrumentator::Instrumentator( )
 		{
-			m_Start = std::chrono::high_resolution_clock::now( );
+			mem_tracker = { };
+			m_Start     = std::chrono::steady_clock::now( );
 		}
-		void Instrumentor::StopWatch_Stop( )
+		void Instrumentator::StopWatch_Reset( )
 		{
-			m_End = std::chrono::high_resolution_clock::now( );
+			m_Start = std::chrono::steady_clock::now( );
+		}
+		void Instrumentator::StopWatch_Stop( )
+		{
+			m_End = std::chrono::steady_clock::now( );
 		}
 
-		float Instrumentor::Elapsed_In( time_mode mode )
+		float Instrumentator::Elapsed_In( time_mode mode )
 		{
 			switch( mode ) {
+				case time_mode::us:
+					return std::chrono::duration_cast<pMicro<float>>( m_End - m_Start ).count( );
+					break;
 				case time_mode::ms:
-					return static_cast<float_t>(
-					  std::chrono::duration_cast<std::chrono::milliseconds>( m_End - m_Start ).count( ) );
+					return std::chrono::duration_cast<pMilli<float>>( m_End - m_Start ).count( );
 					break;
-				case time_mode::sec:
-					return static_cast<float_t>(
-					  std::chrono::duration_cast<std::chrono::seconds>( m_End - m_Start ).count( ) );
-					break;
-				case time_mode::min:
-					return static_cast<float_t>(
-					  std::chrono::duration_cast<std::chrono::minutes>( m_End - m_Start ).count( ) );
-					break;
-				case time_mode::hr:
-					return static_cast<float_t>(
-					  std::chrono::duration_cast<std::chrono::hours>( m_End - m_Start ).count( ) );
-					break;
-				default: return 0.f; break;
+				case time_mode::sec: return std::chrono::duration_cast<pSec<float>>( m_End - m_Start ).count( ); break;
+				case time_mode::min: return std::chrono::duration_cast<pMin<float>>( m_End - m_Start ).count( ); break;
+				case time_mode::hr: return std::chrono::duration_cast<pHour<float>>( m_End - m_Start ).count( ); break;
+				default: return 0; break;
 			}
 		}
-		Instrumentor::~Instrumentor( ) { }
+		void *Instrumentator::operator new( std::size_t n )
+		{
+			mem_tracker.Allocated += n;
+			return malloc( n );
+		}
+		void Instrumentator::operator delete( void *p ) throw( )
+		{
+			mem_tracker.Freed -= sizeof( p );
+			free( p );
+		}
+
+		uint64_t Instrumentator::Allocation_Statistics::Memory_Usage( )
+		{
+			return ( mem_tracker.Allocated - mem_tracker.Freed );
+		}
+
+		Instrumentator::~Instrumentator( ) { }
 
 		void SleepFor( time_mode mode, int time )
 		{
@@ -188,7 +202,7 @@ namespace serenity
 			std::size_t                                   pathSize = path.string( ).size( );
 			file_utils_results::retrieve_dir_entries      results;
 #if INSTRUMENTATION_ENABLED
-			se_utils::Instrumentor timer;
+			se_utils::Instrumentator timer;
 #endif
 			dirEntries.clear( );
 			int fileCount { 0 };
@@ -203,7 +217,7 @@ namespace serenity
 			}
 #if INSTRUMENTATION_ENABLED
 
-			timer.StopWatch_Start( );
+			timer.StopWatch_Reset( );
 #endif
 			if( recursive ) {
 				for( const std::filesystem::directory_entry &entry :
@@ -242,8 +256,8 @@ namespace serenity
 			bool                                          containsMatch { false };
 			file_utils_results::search_dir_entries        results;
 #if INSTRUMENTATION_ENABLED
-			se_utils::Instrumentor timer;
-			timer.StopWatch_Start( );
+			se_utils::Instrumentator timer;
+			timer.StopWatch_Reset( );
 #endif
 			for( const auto &entry : dirEntries ) {
 				auto entryStr = entry.path( ).filename( ).string( );

@@ -11,25 +11,46 @@ namespace serenity
 	{
 		enum class time_mode
 		{
+			us,
 			ms,
 			sec,
 			min,
 			hr,
 		};
 
-		class Instrumentor
-		{
-		      public:
-			Instrumentor( );
+		// for more precision
+		template <class T> using pMicro = std::chrono::duration<T, std::micro>;
+		template <class T> using pMilli = std::chrono::duration<T, std::milli>;
+		template <class T> using pSec   = std::chrono::duration<T, std::ratio<1, 1>>;
+		template <class T> using pMin   = std::chrono::duration<T, std::ratio<1, 60>>;
+		template <class T> using pHour  = std::chrono::duration<T, std::ratio<1, 3600>>;
 
-			void  StopWatch_Start( );
+		class Instrumentator
+		{
+			struct Allocation_Statistics
+			{
+				uint64_t Allocated { 0 };
+				uint64_t Freed { 0 };
+				uint64_t Memory_Usage( );
+			};
+
+		      public:
+			Instrumentator( );
+
+			void  StopWatch_Reset( );
 			void  StopWatch_Stop( );
 			float Elapsed_In( time_mode mode );
 
-			~Instrumentor( );
+			void *operator new( std::size_t n );
+			void  operator delete( void *p ) throw( );
+
+			~Instrumentator( );
+
+		      public:
+			static Allocation_Statistics mem_tracker;
 
 		      private:
-			std::chrono::time_point<std::chrono::high_resolution_clock> m_Start, m_End;
+			std::chrono::time_point<std::chrono::steady_clock> m_Start, m_End;
 		};
 		/// <summary>
 		/// A wrapper for thread sleeping
@@ -45,14 +66,14 @@ namespace serenity
 			{
 				std::vector<std::filesystem::directory_entry> matchedResults;
 				bool                                          fileFound { false };
-				float                                         elapsedTime { 0.f };
+				float                                         elapsedTime { 0 };
 			};
 			struct retrieve_dir_entries
 			{
 				int                                                  fileCount { 0 };
 				bool                                                 success { false };
 				static std::vector<std::filesystem::directory_entry> retrievedItems;
-				float                                                elapsedTime { 0.f };
+				float                                                elapsedTime { 0 };
 			};
 		}  // namespace file_utils_results
 
