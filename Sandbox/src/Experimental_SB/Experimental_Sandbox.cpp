@@ -83,6 +83,7 @@ enum class message_time_mode
 	local,
 	utc
 };
+
 static const std::array<const char *, 7> short_weekdays = { "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat" };
 
 static const std::array<const char *, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
@@ -94,34 +95,94 @@ static const std::array<const char *, 12> short_months = { "Jan", "Feb", "Mar", 
 static const std::array<const char *, 12> long_months = { "January", "February", "March",     "April",   "May",      "June",
 							  "July",    "August",   "September", "October", "November", "December" };
 
-// TODO: Filter what strftime flags I decided to use here and see how i can get some to overlap one another
+/***********************************************************************************************************
+*	                                            29/10/21 NOTE:	                                            *
+*					 How I am approaching the flag parsing and setting is as follows                     *
+************************************************************************************************************
+*      For The Initial Caching Of Those Pattern Variables So That It's Inexpensive To Parse The Format     *
+************************************************************************************************************
+* 0)  Copy Message_Info pattern string passed in at construction into Message_Time pattern string variable
+* 1)  Using validFlags array, find each instance a valid flag appears in pattern format
+* 2a) When flag is found, capture the flag character and forward to a flag handler function
+* 2b) Map the flag character to the Flags enum bitfield value and set that field
+* 2c) Repeat this until end of pattern is reached
+* 3)  In a caching function that evaulates which bit fields are set, set the appropriate member tm struct
+*     variables.
+//! Note: The Above Requires That A Pattern Is Present For Message_Time And That The Current Caching Function
+//! Is Altered To Reflect The Thoughts Above 
+//! Step 0: Subject To Change Based On How Logging Targets Are Created And How These Fields Get Passed Around
+************************************************************************************************************
+*                   For The Actual Printing/Logging Using The Prepended Pattern:                           *
+************************************************************************************************************
+* 1)  Similar to above, using validFlags array, find each instance a valid flag appears in pattern format
+* 2a) When flag is found, append all characters found up until that flag to an internal buffer
+* 2b) In a separate flag handler function that deals with cached variables from above, pass in the flag
+      captured, return the value and append to buffer
+* 2c) Continue this until end of pattern string is reached and return the pattern buffer
+* 3)  In the printing function, append the message to the buffer that was returned and print message
+*************************************************************************************************************/
+
 /************************************************************************************************************
-								custom flags
-					************************************
+									custom flags
+						************************************
 	- %N (Name)			- %L (Full Message Level)		- %l (Short Message Level)
 
 							The rest are strftime equivalents
 						******************************************
-	- %a (Abbrev Weekday Name)		- %d (Day Of Month)			- %T (HH:MM:SS Time format)
-	- %A (Full Weekday Name)		- %D (MM/DD/YY Date)		- %w (weekday as decimal 0-6)
-	- %b (Abbrev Month Name)		- %F (YYYY-MM-DD Date)		- %Y (Year XXXX)
-	- %B (Full Month Name)			- %H (24hr Hour format)		- %z (UTC offset)
-	- %M (Minute)					- %C (year XX Format)		- %S (Seconds)
+	- %d (Day Of Month)			- %T (HH:MM:SS Time format)		- %S (Seconds)
+	- %D (MM/DD/YY Date)			- %w (weekday as decimal 0-6)	- %z (UTC offset)
+	- %b (Abbrev Month Name)		- %F (YYYY-MM-DD Date)			- %Y (Year XXXX)
+	- %B (Full Month Name)			- %H (24hr Hour format)
+	- %M (Minute)					- %y (year XX Format)
 ************************************************************************************************************/
-static const std::array<const char *, 16> flags = { "%N", "%a", "%A", "%b", "%B", "%C", "%d", "%D",
-						    "%F", "%H", "%M", "%S", "%T", "%w", "%Y", "%z" };
+static const std::array<const char *, 16> validFlags = { "%N", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
+							 "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%z" };
+// This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
+// *************************************************************************
+_Enum_is_bitflag_ enum class Flags : uint16_t {
+	name       = 0,        // Mapping To %N
+	f_msg_lvl  = 1 << 1,   // Mapping To %L
+	s_msg_lvl  = 1 << 2,   // Mapping To %l
+	d_wkday    = 1 << 3,   // Mapping To %w
+	l_month    = 1 << 4,   // Mapping To %B
+	s_month    = 1 << 5,   // Mapping To %b
+	m_day      = 1 << 6,   // Mapping To %d
+	l_year     = 1 << 7,   // Mapping To %Y
+	s_year     = 1 << 8,   // Mapping To %y
+	utc_offset = 1 << 9,   // Mapping To %z
+	mdy_date   = 1 << 10,  // Mapping To %D
+	ymd_date   = 1 << 11,  // Mapping To %F
+	full_time  = 1 << 12,  // Mapping To %T
+	mil_hour   = 1 << 13,  // Mapping To %H
+	min        = 1 << 14,  // Mapping To %M
+	sec        = 1 << 15,  // Mapping To %S
+// More to possibly come..(obviously would have to change inherited type attr if additions made)
+};
+
+inline Flags operator|( Flags a, Flags b )
+{
+	return static_cast<Flags>( static_cast<uint16_t>( a ) | static_cast<uint16_t>( b ) );
+}
+
+static const std::unordered_map<const char *, Flags> flagMapper = {
+  { "%N", Flags::name },      { "%L", Flags::f_msg_lvl },  { "%l", Flags::s_msg_lvl }, { "%w", Flags::d_wkday },
+  { "%B", Flags::l_month },   { "%b", Flags::s_month },    { "%d", Flags::m_day },     { "%Y", Flags::l_year },
+  { "%y", Flags::s_year },    { "%z", Flags::utc_offset }, { "%D", Flags::mdy_date },  { "%F", Flags::ymd_date },
+  { "%T", Flags::full_time }, { "%H", Flags::mil_hour },   { "%M", Flags::min },       { "%S", Flags::sec },
+};
+
 
 struct Cached_Date_Time
 {
-	const char *long_weekday;  // String representation mapped from DayString()
-	const char *short_weekday;
+	const char *long_weekday;   // Long Weekday Name String representation mapped from DayString()
+	const char *short_weekday;  // Short Weekday Name String representation mapped from DayString()
 	int         hour { 0 };
 	int         min { 0 };
 	int         sec { 0 };
-	int         long_year { 0 };  // XXXX Year representation mapped from GetCurrentYear();
-	int         short_year { 0 };
-	const char *long_month;  // String representation mapped from MonthString()
-	const char *short_month;
+	int         long_year { 0 };   // Full Year representation mapped from GetCurrentYear();
+	int         short_year { 0 };  // Short Year representation mapped from GetCurrentYear();
+	const char *long_month;        // Long Month Name String representation mapped from MonthString()
+	const char *short_month;       // Short Month Name String representation mapped from MonthString()
 	int         day { 0 };
 	bool        initialized { false };
 };
@@ -133,7 +194,7 @@ class Message_Time
 	{
 		UpdateTimeInfo( mode );
 	}
-	const char *WeekDayString( int weekdayIndex, bool shortened = false )
+	const char *WeekdayString( int weekdayIndex, bool shortened = false )
 	{
 		if( !shortened ) {
 			return long_weekdays.at( weekdayIndex );
@@ -167,8 +228,8 @@ class Message_Time
 		m_cache.short_year    = GetCurrentYear( t->tm_year, true );
 		m_cache.long_month    = MonthString( t->tm_mon );
 		m_cache.short_month   = MonthString( t->tm_mon, true );
-		m_cache.long_weekday  = WeekDayString( t->tm_wday );
-		m_cache.short_weekday = WeekDayString( t->tm_wday, true );
+		m_cache.long_weekday  = WeekdayString( t->tm_wday );
+		m_cache.short_weekday = WeekdayString( t->tm_wday, true );
 		m_cache.day           = t->tm_mday;
 		m_cache.hour          = t->tm_hour;
 		m_cache.min           = t->tm_min;
@@ -227,39 +288,10 @@ class Message_Time
 	Cached_Date_Time  m_cache  = { };
 };
 
-// This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
-// *************************************************************************
-_Enum_is_bitflag_ enum class Flags : uint8_t {
-	none = 0,       // no flags set
-	time = 1 << 0,  // Mapping To %H:%M:%S Time Format (Honestly Would Like A Way To Parallel strftime Substitution For
-			// This)
-	name = 1 << 1,  // Mapping To Logger Name
-	a    = 1 << 2,  // placeholder
-	b    = 1 << 3,  // placeholder
-	c    = 1 << 4,  // placeholder
-	d    = 1 << 5,  // placeholder
-	e    = 1 << 6,  // placeholder
-	f    = 1 << 7,  // placeholder
-
-	// More to possibly come..(obviously would have to change type attr)
-};
-
-inline Flags operator|( Flags a, Flags b )
-{
-	return static_cast<Flags>( static_cast<uint16_t>( a ) | static_cast<uint16_t>( b ) );
-}
-
 class Msg_Fmt_Flags
 {
       public:
-	Msg_Fmt_Flags( )
-	{
-		flagHasher = {
-		  { "%0", Flags::none },
-		  { "%T", Flags::time },
-		  { "%N", Flags::name }, /* From What I Can Tell, %N isn't Used In Any Formatters So Far */
-		};
-	}
+	Msg_Fmt_Flags( ) { }
 
       private:
 	std::unordered_map<const char *, Flags> flagHasher;
@@ -277,7 +309,7 @@ class Message_Pattern
 
       private:
 	// Weekday Day Month Year HH::MM::SS -UTC Offset
-	std::string time_format = "%a %Od %b %Oy %T%Ez";
+	std::string time_format = "%a %Od %b %Oy %T%Ez %Y %y";
 };
 
 class Message_Info
