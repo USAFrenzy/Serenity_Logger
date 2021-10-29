@@ -12,7 +12,7 @@
 #include <serenity/Utilities/Utilities.h>
 
 #define INSTRUMENT
-#define ALLOC_TEST 1
+#define ALLOC_TEST 0
 
 
 #ifdef INSTRUMENT
@@ -64,6 +64,18 @@ static std::string_view MsgLevelToIcon( LoggerLevel level )
 		default: return ""; break;
 	}
 }
+static std::string_view MsgLevelToString( LoggerLevel level )
+{
+	switch( level ) {
+		case LoggerLevel::info: return "Info"; break;
+		case LoggerLevel::trace: return "Trace"; break;
+		case LoggerLevel::debug: return "Debug"; break;
+		case LoggerLevel::warning: return "Warning"; break;
+		case LoggerLevel::error: return "Error"; break;
+		case LoggerLevel::fatal: return "Fatal"; break;
+		default: return ""; break;
+	}
+}
 
 static std::string toString( std::string_view s )
 {
@@ -84,16 +96,16 @@ enum class message_time_mode
 	utc
 };
 
-static const std::array<const char *, 7> short_weekdays = { "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat" };
+static const std::array<std::string_view, 7> short_weekdays = { "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat" };
 
-static const std::array<const char *, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
-							   "Thursday", "Friday", "Saturday" };
+static const std::array<std::string_view, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
+							       "Thursday", "Friday", "Saturday" };
 
-static const std::array<const char *, 12> short_months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-							   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+static const std::array<std::string_view, 12> short_months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+							       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-static const std::array<const char *, 12> long_months = { "January", "February", "March",     "April",   "May",      "June",
-							  "July",    "August",   "September", "October", "November", "December" };
+static const std::array<std::string_view, 12> long_months = { "January", "February", "March",     "April",   "May",      "June",
+							      "July",    "August",   "September", "October", "November", "December" };
 
 /***********************************************************************************************************
 *	                                            29/10/21 NOTE:	                                            *
@@ -109,7 +121,7 @@ static const std::array<const char *, 12> long_months = { "January", "February",
 * 3)  In a caching function that evaulates which bit fields are set, set the appropriate member tm struct
 *     variables.
 //! Note: The Above Requires That A Pattern Is Present For Message_Time And That The Current Caching Function
-//! Is Altered To Reflect The Thoughts Above 
+//! Is Altered To Reflect The Thoughts Above
 //! Step 0: Subject To Change Based On How Logging Targets Are Created And How These Fields Get Passed Around
 ************************************************************************************************************
 *                   For The Actual Printing/Logging Using The Prepended Pattern:                           *
@@ -156,15 +168,16 @@ _Enum_is_bitflag_ enum class Flags : uint16_t {
 	mil_hour   = 1 << 13,  // Mapping To %H
 	min        = 1 << 14,  // Mapping To %M
 	sec        = 1 << 15,  // Mapping To %S
-// More to possibly come..(obviously would have to change inherited type attr if additions made)
+			       // More to possibly come..(obviously would have to change inherited type attr if additions made)
 };
+
 
 inline Flags operator|( Flags a, Flags b )
 {
 	return static_cast<Flags>( static_cast<uint16_t>( a ) | static_cast<uint16_t>( b ) );
 }
 
-static const std::unordered_map<const char *, Flags> flagMapper = {
+static const std::unordered_map<std::string_view, Flags> flagMapper = {
   { "%N", Flags::name },      { "%L", Flags::f_msg_lvl },  { "%l", Flags::s_msg_lvl }, { "%w", Flags::d_wkday },
   { "%B", Flags::l_month },   { "%b", Flags::s_month },    { "%d", Flags::m_day },     { "%Y", Flags::l_year },
   { "%y", Flags::s_year },    { "%z", Flags::utc_offset }, { "%D", Flags::mdy_date },  { "%F", Flags::ymd_date },
@@ -174,17 +187,18 @@ static const std::unordered_map<const char *, Flags> flagMapper = {
 
 struct Cached_Date_Time
 {
-	const char *long_weekday;   // Long Weekday Name String representation mapped from DayString()
-	const char *short_weekday;  // Short Weekday Name String representation mapped from DayString()
-	int         hour { 0 };
-	int         min { 0 };
-	int         sec { 0 };
-	int         long_year { 0 };   // Full Year representation mapped from GetCurrentYear();
-	int         short_year { 0 };  // Short Year representation mapped from GetCurrentYear();
-	const char *long_month;        // Long Month Name String representation mapped from MonthString()
-	const char *short_month;       // Short Month Name String representation mapped from MonthString()
-	int         day { 0 };
-	bool        initialized { false };
+	std::string_view long_weekday;   // Long Weekday Name String representation mapped from DayString()
+	std::string_view short_weekday;  // Short Weekday Name String representation mapped from DayString()
+	int              hour { 0 };
+	int              min { 0 };
+	int              sec { 0 };
+	int              long_year { 0 };   // Full Year representation mapped from GetCurrentYear();
+	int              short_year { 0 };  // Short Year representation mapped from GetCurrentYear();
+	std::string_view long_month;        // Long Month Name String representation mapped from MonthString()
+	std::string_view short_month;       // Short Month Name String representation mapped from MonthString()
+	std::string_view dec_month;         // zero-padded string representation of decimal month
+	int              day { 0 };
+	bool             initialized { false };
 };
 
 class Message_Time
@@ -194,7 +208,7 @@ class Message_Time
 	{
 		UpdateTimeInfo( mode );
 	}
-	const char *WeekdayString( int weekdayIndex, bool shortened = false )
+	std::string_view WeekdayString( int weekdayIndex, bool shortened = false )
 	{
 		if( !shortened ) {
 			return long_weekdays.at( weekdayIndex );
@@ -206,13 +220,13 @@ class Message_Time
 	int GetCurrentYear( int yearOffset, bool shortened = false )
 	{
 		if( !shortened ) {
-			return 1900 + yearOffset;  // XXXX Format
+			return 1900 + yearOffset;  //  Format XXXX, same as %Y strftime
 		}
 		else {
-			return std::floor( yearOffset / 100 );  // XX Format Same as %C strftime
+			return yearOffset - 100;  //  Format XX, Same as %y strftime
 		}
 	}
-	const char *MonthString( int monthIndex, bool shortened = false )
+	std::string_view MonthString( int monthIndex, bool shortened = false )
 	{
 		if( !shortened ) {
 			return long_months.at( monthIndex );
@@ -222,14 +236,20 @@ class Message_Time
 		}
 	}
 
+	std::string_view ZeroPadDecimal( int dec )
+	{
+		return ( dec >= 10 ) ? std::format( "{}", dec ) : std::format( "0{}", dec );
+	}
+
 	void InitializeCache( std::tm *t )
 	{
-		m_cache.long_year     = GetCurrentYear( t->tm_year );
-		m_cache.short_year    = GetCurrentYear( t->tm_year, true );
-		m_cache.long_month    = MonthString( t->tm_mon );
-		m_cache.short_month   = MonthString( t->tm_mon, true );
-		m_cache.long_weekday  = WeekdayString( t->tm_wday );
-		m_cache.short_weekday = WeekdayString( t->tm_wday, true );
+		m_cache.long_year     = std::move( GetCurrentYear( t->tm_year ) );
+		m_cache.short_year    = std::move( GetCurrentYear( t->tm_year, true ) );
+		m_cache.long_month    = std::move( MonthString( t->tm_mon ) );
+		m_cache.dec_month     = ( ZeroPadDecimal( t->tm_mon + 1 ) );
+		m_cache.short_month   = std::move( MonthString( t->tm_mon, true ) );
+		m_cache.long_weekday  = std::move( WeekdayString( t->tm_wday ) );
+		m_cache.short_weekday = std::move( WeekdayString( t->tm_wday, true ) );
 		m_cache.day           = t->tm_mday;
 		m_cache.hour          = t->tm_hour;
 		m_cache.min           = t->tm_min;
@@ -241,7 +261,7 @@ class Message_Time
 	{
 		m_time = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now( ) );
 		// For both modes, check if the cache has been initialized, if so, then just update time variables. If not, then
-		// populate t_struct with time variables and initialize cache
+		// populate t_struct with time date variables and initialize cache
 		if( mode == message_time_mode::local ) {
 			if( m_cache.initialized ) {
 				auto tmp          = std::localtime( &m_time );
@@ -268,17 +288,15 @@ class Message_Time
 		}  // mode == utc
 	}
 
-	std::string FormatTime( std::string_view fmt, message_time_mode mode )
-	{
-		UpdateTimeInfo( mode );
-		char buffer[ 80 ];
-		auto formatted = strftime( buffer, sizeof( buffer ), toString( fmt ).c_str( ), t_struct );
-		return std::string( buffer );
-	}
 
-	inline message_time_mode Mode( )
+	inline const message_time_mode Mode( )
 	{
 		return m_Mode;
+	}
+
+	const Cached_Date_Time Cache( )
+	{
+		return m_cache;
 	}
 
       private:
@@ -288,56 +306,135 @@ class Message_Time
 	Cached_Date_Time  m_cache  = { };
 };
 
-class Msg_Fmt_Flags
+class Message_Info
 {
       public:
-	Msg_Fmt_Flags( ) { }
+	Message_Info( ) : m_name( "Default Logger" ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local ) { }
+
+	Message_Info( std::string_view name, LoggerLevel messageLevel, std::string_view message, Message_Time messageTime )
+	  : m_name( name ), msgLevel( messageLevel ), msg( message ), msgTime( messageTime )
+	{
+	}
+
+	const LoggerLevel MsgLevel( )
+	{
+		return msgLevel;
+	}
+	const std::string_view Name( )
+	{
+		return m_name;
+	}
+
+	Message_Time TimeDetails( )
+	{
+		return msgTime;
+	}
 
       private:
-	std::unordered_map<const char *, Flags> flagHasher;
+	std::string_view   m_name;
+	LoggerLevel        msgLevel;
+	std::string_view   msg;
+	const Message_Time msgTime;
 };
+
 // *************************************************************************
 class Message_Pattern
 {
       public:
-	Message_Pattern( std::string_view pattern ) { }  // use user's pattern
+	// Weekday Day Month Year HH::MM::SS -UTC Offset Default If No User Pattern Set
+	Message_Pattern( ) : fmtPattern( "[DEFAULT FORMAT PLACEHOLDER]" ), msgInfo( ) { }
+	Message_Pattern( std::string formatPattern, Message_Info *msgDetails ) : fmtPattern( formatPattern ), msgInfo( msgDetails ) { }
 
-	std::string GetTimeFmt( )
+	std::string GetMsgFmt( )
 	{
-		return time_format;
+		return fmtPattern;
+	}
+
+	// TODO: Finish Working On This And Test For Flags
+	std::string_view FormatMessage( std::string_view message )
+	{
+		if( fmtPattern.find( std::any_of( validFlags.begin( ), validFlags.end( ), []( const char * ) { return true; } ) ) ) {
+			// flags were found - make a copy of format so as not to alter original
+			auto fmt = fmtPattern;
+
+			size_t position { 0 };
+			// while searching for flag positions, append each char to buffer
+			while( ( position = fmt.find( "%" ) ) != std::string::npos ) {
+				std::string token = fmt.substr( 0, position );
+				buffer.append( token );
+				// after appending everything up until the "%", erase that subsection (+1 for % length), handle the
+				// flag, and continue iterating until the end of format pattern is reached
+				fmt.erase( 0, position + 1 );
+				buffer.append( FlagFormatter( fmt.front( ) ) );
+			}
+			// Formatting Finished, return the message with the prepended formatted text
+			return buffer.append( message );
+		}
+		else {
+			// No flags were found, so just exit
+		}
 	}
 
       private:
-	// Weekday Day Month Year HH::MM::SS -UTC Offset
-	std::string time_format = "%a %Od %b %Oy %T%Ez %Y %y";
-};
-
-class Message_Info
-{
-      public:
-	Message_Info( ) : msgLevel( LoggerLevel::trace ), formats( "%T %N:" ), msg( ), msgTime( message_time_mode::local ) { }
-
-	Message_Info( LoggerLevel messageLevel, Message_Pattern formatPattern, std::string_view message, Message_Time messageTime )
-	  : msgLevel( messageLevel ), formats( formatPattern ), msg( message ), msgTime( messageTime )
+	// Copy Paste As Reference While Implementing Flag Formatter Formatter Arg Functions
+	/***************************************************************************************************************
+		- %N (Name)			- %L (Full Level)			- %l (Short Message Level)
+	- %d (Day Of Month)
+		- %T (HH:MM:SS )		- %S (Seconds)			- %D (MM/DD/YY Date)
+	- %w (weekday 0-6)
+		- %z (UTC offset)		- %b (Abbrev Month Name)	- %F (YYYY-MM-DD Date) - %Y (Year XXXX)
+		- %B (Full Month Name)	- %H (24hr Hour format)	- %M (Minute) - %y (year XX Format)
+	****************************************************************************************************************/
+	// TODO: Finish FlagFormatter Case Statements
+	std::string FlagFormatter( char flag )
 	{
+		switch( flag ) {
+			case 'N': return Format_Arg_N( ); break;
+			case 'L': return Format_Arg_L( ); break;
+			case 'l': return Format_Arg_l( ); break;
+			case 'd': return Format_Arg_d( ); break;
+		}
+		return "";  // placeholder until fully implemented
 	}
 
-	std::string GetMsgTime( )
+	// TODO: Finish Flag Argument Formatters
+	std::string Format_Arg_N( )
 	{
-		return msgTime.FormatTime( formats.GetTimeFmt( ), msgTime.Mode( ) );
+		return toString( msgInfo->Name( ) );
 	}
 
-	LoggerLevel MsgLevel( )
+	std::string Format_Arg_l( )
 	{
-		return msgLevel;
+		return toString( MsgLevelToIcon( msgInfo->MsgLevel( ) ) );
+	}
+
+	std::string Format_Arg_L( )
+	{
+		return toString( MsgLevelToString( msgInfo->MsgLevel( ) ) );
+	}
+
+	std::string Format_Arg_d( )
+	{
+		return toString( msgInfo->TimeDetails( ).Cache( ).dec_month );
+	}
+
+	std::string Format_Arg_H( std::tm *t )
+	{
+		//! NOTE: should test later to see if mil time is used when populating tm_hour
+		if( t->tm_hour < 10 ) {
+			return toString( msgInfo->TimeDetails( ).ZeroPadDecimal( t->tm_hour ) );
+		}
+		else {
+			return std::format( "{}", t->tm_hour );
+		}
 	}
 
       private:
-	LoggerLevel      msgLevel;
-	Message_Pattern  formats;  // not currently used/implemented
-	std::string_view msg;
-	Message_Time     msgTime;
+	std::string   fmtPattern;
+	Message_Info *msgInfo;
+	std::string   buffer;
 };
+
 
 // clang-format off
 //! ############################################################# NOTE: Just So I Don't Lose The Pathing So Far #############################################################
@@ -371,12 +468,12 @@ class ColorConsole
 		};
 	}
 
-	void SetMsgColor( LoggerLevel level, const char *color )
+	void SetMsgColor( LoggerLevel level, std::string_view color )
 	{
-		msgLevelColors.at( level ) = std::move( color );
+		msgLevelColors.at( level ) = color;
 	}
 
-	const char *GetMsgColor( LoggerLevel level )
+	std::string_view GetMsgColor( LoggerLevel level )
 	{
 		return msgLevelColors.at( level );
 	}
@@ -388,19 +485,16 @@ class ColorConsole
 
 	bool ShouldLog( LoggerLevel level )
 	{
-		return ( message.MsgLevel( ) <= level ) ? true : false;
+		return ( msgDetails.MsgLevel( ) <= level ) ? true : false;
 	}
 
 	template <typename... Args> void PrintMessage( LoggerLevel level, const std::string_view msg, Args &&...args )
 	{
-		const char *msgColor;
+		std::string_view msgColor;
 		if( coloredOutput ) {
 			msgColor = GetMsgColor( level );
 		}
-		else {
-			msgColor = "";
-		}
-		std::cout << msgColor << MsgLevelToIcon( level ) << " " << message.GetMsgTime( ) << " "
+		std::cout << msgColor << MsgLevelToIcon( level ) << " " << msgPattern.GetMsgFmt( ) << " "
 			  << "[" << loggerName << "]:"
 			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\n";
 	}
@@ -457,10 +551,11 @@ class ColorConsole
 	}
 
       private:
-	std::string_view                              loggerName = "Default_Console";
-	Message_Info                                  message    = { };
-	bool                                          coloredOutput { true };
-	std::unordered_map<LoggerLevel, const char *> msgLevelColors;
+	std::string_view                                  loggerName = "Default_Console";
+	Message_Info                                      msgDetails = { };
+	Message_Pattern                                   msgPattern = { };
+	bool                                              coloredOutput { true };
+	std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 };  // class ColorConsole
 
 int main( )
@@ -470,14 +565,9 @@ int main( )
 	ColorConsole C( "Experimental Logger" );
 	// Formatting Works With Latest Standard Flag
 	auto s = "White";
+
 #ifdef INSTRUMENTATION_ENABLED
 	Instrumentator macroTester;
-	/*
-		First Iteration Takes Waaaaayyyy Too Long..
-		My guess so far, without full instrumentation, is that it has to do with the initial setup of the local time
-	   zone data? I'm not even 50% sure if that's the case, but definitely want to flesh out the message details before
-	   mucking with timing optimizations. Good to know there's a slight optimization issue this early on though I guess.
-	*/
 	macroTester.StopWatch_Reset( );
 #endif  // INSTRUMENTATION_ENABLED
 
@@ -520,15 +610,21 @@ int main( )
 #endif          // INSTRUMENTATION_ENABLED
 
 #ifdef INSTRUMENTATION_ENABLED
-	// Currently 144 bytes
-	std::cout << Tag::Bright_Yellow( "Size of Message_Info Struct:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Message_Info ) ) + " bytes]\n" );
-	// Currentyly 64 bytes
-	std::cout << Tag::Bright_Yellow( "Size of Cached_Date_Time Struct:\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Cached_Date_Time ) ) + " bytes]\n" );
-
 	std::cout << Tag::Bright_Yellow( "Size of ColorConsole Class:\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( ColorConsole ) ) + " bytes]\n" );
+
+	std::cout << Tag::Bright_Yellow( "Size of Message_Info Struct:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Message_Info ) ) + " bytes]\n" );
+
+
+	std::cout << Tag::Bright_Yellow( "Size of Message_Pattern Struct:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Message_Pattern ) ) + " bytes]\n" );
+
+	std::cout << Tag::Bright_Yellow( "Size of Message_Time Struct:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Message_Time ) ) + " bytes]\n" );
+
+	std::cout << Tag::Bright_Yellow( "Size of Cached_Date_Time Struct:\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Cached_Date_Time ) ) + " bytes]\n" );
 
 	std::cout << Tag::Yellow( "***************************************************************\n" );
 	std::cout << Tag::Yellow( "***************************************************************\n" );
