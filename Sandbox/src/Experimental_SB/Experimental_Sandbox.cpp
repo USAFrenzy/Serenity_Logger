@@ -147,8 +147,8 @@ static const std::array<std::string_view, 12> long_months = { "January", "Februa
 	- %B (Full Month Name)			- %H (24hr Hour format)
 	- %M (Minute)					- %y (year XX Format)
 ************************************************************************************************************/
-static const std::array<const char *, 16> validFlags = { "%N", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
-							 "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%z" };
+static const std::vector<const char *> validFlags = { "%N", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
+						      "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%z" };
 // This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
 // *************************************************************************
 _Enum_is_bitflag_ enum class Flags : uint16_t {
@@ -309,18 +309,33 @@ class Message_Time
 class Message_Info
 {
       public:
+	Message_Info( std::string name ) : m_name( name ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local )
+	{
+	}
+
 	Message_Info( ) : m_name( "Default Logger" ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local ) { }
 
 	Message_Info( std::string_view name, LoggerLevel messageLevel, std::string_view message, Message_Time messageTime )
 	  : m_name( name ), msgLevel( messageLevel ), msg( message ), msgTime( messageTime )
 	{
 	}
-
-	const LoggerLevel MsgLevel( )
+	Message_Info &operator=( const Message_Info &t )
+	{
+		msg      = t.msg;
+		msgLevel = t.msgLevel;
+		msgTime  = t.msgTime;
+		m_name   = t.m_name;
+		return *this;
+	}
+	LoggerLevel MsgLevel( )
 	{
 		return msgLevel;
 	}
-	const std::string_view Name( )
+	void SetName( std::string name )
+	{
+		m_name = name;
+	}
+	std::string Name( )
 	{
 		return m_name;
 	}
@@ -330,11 +345,12 @@ class Message_Info
 		return msgTime;
 	}
 
+
       private:
-	std::string_view   m_name;
-	LoggerLevel        msgLevel;
-	std::string_view   msg;
-	const Message_Time msgTime;
+	std::string      m_name;
+	LoggerLevel      msgLevel;
+	std::string_view msg;
+	Message_Time     msgTime;
 };
 
 // *************************************************************************
@@ -342,18 +358,34 @@ class Message_Pattern
 {
       public:
 	// Weekday Day Month Year HH::MM::SS -UTC Offset Default If No User Pattern Set
-	Message_Pattern( ) : fmtPattern( "[DEFAULT FORMAT PLACEHOLDER]" ), msgInfo( ) { }
-	Message_Pattern( std::string formatPattern, Message_Info *msgDetails ) : fmtPattern( formatPattern ), msgInfo( msgDetails ) { }
-
+	Message_Pattern( ) : fmtPattern( "[DEFAULT PATTERN PLACEHOLDER] " ), msgInfo( ) { }
+	Message_Pattern( std::string formatPattern, Message_Info msgDetails ) : fmtPattern( formatPattern ), msgInfo( msgDetails ) { }
+	Message_Pattern &operator=( const Message_Pattern &t )
+	{
+		buffer     = t.buffer;
+		fmtPattern = t.fmtPattern;
+		msgInfo    = t.msgInfo;
+		return *this;
+	}
 	std::string GetMsgFmt( )
 	{
 		return fmtPattern;
 	}
 
-	// TODO: Finish Working On This And Test For Flags
-	std::string_view FormatMessage( std::string_view message )
+	// Quarter Way There!! FInds The Flag, Handles The Flag, And Appends Formatted Message To Pre Mesage String
+	// However, Drops All Other Characters After Returning From Flag Handle
+	// TODO: Finish Working On This And Test For Flags As Well As Fix Dropping Characters After Flag Argument Returns Value
+	template <typename... Args> std::string_view FormatMessage( std::string message, Args &&...args )
 	{
-		if( fmtPattern.find( std::any_of( validFlags.begin( ), validFlags.end( ), []( const char * ) { return true; } ) ) ) {
+		buffer.clear( );
+		std::cout << "\nSearching For Flags\n";
+		size_t pos { 0 };
+		if( ( pos = fmtPattern.find( "%" ) ) != std::string::npos ) {
+			auto potentialFlag = fmtPattern.substr( pos, pos + 1 );
+			if( std::any_of( validFlags.begin( ), validFlags.end( ), [ = ]( const char *m ) { return potentialFlag == m; } ) )
+			{
+				std::cout << "Flag Was Found!\n";
+			}
 			// flags were found - make a copy of format so as not to alter original
 			auto fmt = fmtPattern;
 
@@ -361,6 +393,7 @@ class Message_Pattern
 			// while searching for flag positions, append each char to buffer
 			while( ( position = fmt.find( "%" ) ) != std::string::npos ) {
 				std::string token = fmt.substr( 0, position );
+				std::cout << token << "\n";
 				buffer.append( token );
 				// after appending everything up until the "%", erase that subsection (+1 for % length), handle the
 				// flag, and continue iterating until the end of format pattern is reached
@@ -368,10 +401,11 @@ class Message_Pattern
 				buffer.append( FlagFormatter( fmt.front( ) ) );
 			}
 			// Formatting Finished, return the message with the prepended formatted text
-			return buffer.append( message );
+
+			return buffer += std::format( message, std::forward<Args>( args )... );
 		}
 		else {
-			// No flags were found, so just exit
+			return buffer = std::format( message, std::forward<Args>( args )... );
 		}
 	}
 
@@ -400,29 +434,29 @@ class Message_Pattern
 	// TODO: Finish Flag Argument Formatters
 	std::string Format_Arg_N( )
 	{
-		return toString( msgInfo->Name( ) );
+		return toString( msgInfo.Name( ) );
 	}
 
 	std::string Format_Arg_l( )
 	{
-		return toString( MsgLevelToIcon( msgInfo->MsgLevel( ) ) );
+		return toString( MsgLevelToIcon( msgInfo.MsgLevel( ) ) );
 	}
 
 	std::string Format_Arg_L( )
 	{
-		return toString( MsgLevelToString( msgInfo->MsgLevel( ) ) );
+		return toString( MsgLevelToString( msgInfo.MsgLevel( ) ) );
 	}
 
 	std::string Format_Arg_d( )
 	{
-		return toString( msgInfo->TimeDetails( ).Cache( ).dec_month );
+		return toString( msgInfo.TimeDetails( ).Cache( ).dec_month );
 	}
 
 	std::string Format_Arg_H( std::tm *t )
 	{
 		//! NOTE: should test later to see if mil time is used when populating tm_hour
 		if( t->tm_hour < 10 ) {
-			return toString( msgInfo->TimeDetails( ).ZeroPadDecimal( t->tm_hour ) );
+			return toString( msgInfo.TimeDetails( ).ZeroPadDecimal( t->tm_hour ) );
 		}
 		else {
 			return std::format( "{}", t->tm_hour );
@@ -430,9 +464,9 @@ class Message_Pattern
 	}
 
       private:
-	std::string   fmtPattern;
-	Message_Info *msgInfo;
-	std::string   buffer;
+	std::string  fmtPattern;
+	Message_Info msgInfo;
+	std::string  buffer;
 };
 
 
@@ -454,9 +488,12 @@ class Message_Pattern
 class ColorConsole
 {
       public:
-	ColorConsole( std::string_view name )
+	ColorConsole( std::string name )
 	{
-		loggerName     = std::move( name );
+		loggerName = std::move( name );
+		msgDetails.SetName( loggerName );
+		pattern        = "[%N]: ";  // hardcoding atm
+		msgPattern     = { pattern, msgDetails };
 		msgLevelColors = {
 		  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 		  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -488,50 +525,48 @@ class ColorConsole
 		return ( msgDetails.MsgLevel( ) <= level ) ? true : false;
 	}
 
-	template <typename... Args> void PrintMessage( LoggerLevel level, const std::string_view msg, Args &&...args )
+	template <typename... Args> void PrintMessage( LoggerLevel level, const std::string msg, Args... args )
 	{
 		std::string_view msgColor;
 		if( coloredOutput ) {
 			msgColor = GetMsgColor( level );
 		}
-		std::cout << msgColor << MsgLevelToIcon( level ) << " " << msgPattern.GetMsgFmt( ) << " "
-			  << "[" << loggerName << "]:"
-			  << " " << std::format( msg, std::forward<Args>( args )... ) << Reset( ) << "\n";
+		std::cout << msgColor << msgPattern.FormatMessage( msg, std::forward<Args>( args )... ) << Reset( ) << "\n";
 	}
 
 	// Not Apart Of This Class - Just Here For Testing (Part Of Logger Class)
 	// ##########################################################################
-	template <typename... Args> void trace( std::string_view s, Args &&...args )
+	template <typename... Args> void trace( std::string s, Args &&...args )
 	{
 		if( ShouldLog( LoggerLevel::trace ) ) {
 			PrintMessage( LoggerLevel::trace, s, std::forward<Args>( args )... );
 		}
 	}
-	template <typename... Args> void info( std::string_view s, Args &&...args )
+	template <typename... Args> void info( std::string s, Args &&...args )
 	{
 		if( ShouldLog( LoggerLevel::info ) ) {
 			PrintMessage( LoggerLevel::info, s, std::forward<Args>( args )... );
 		}
 	}
-	template <typename... Args> void debug( std::string_view s, Args &&...args )
+	template <typename... Args> void debug( std::string s, Args &&...args )
 	{
 		if( ShouldLog( LoggerLevel::debug ) ) {
 			PrintMessage( LoggerLevel::debug, s, std::forward<Args>( args )... );
 		}
 	}
-	template <typename... Args> void warn( std::string_view s, Args &&...args )
+	template <typename... Args> void warn( std::string s, Args &&...args )
 	{
 		if( ShouldLog( LoggerLevel::warning ) ) {
 			PrintMessage( LoggerLevel::warning, s, std::forward<Args>( args )... );
 		}
 	}
-	template <typename... Args> void error( std::string_view s, Args &&...args )
+	template <typename... Args> void error( std::string s, Args &&...args )
 	{
 		if( ShouldLog( LoggerLevel::error ) ) {
 			PrintMessage( LoggerLevel::error, s, std::forward<Args>( args )... );
 		}
 	}
-	template <typename... Args> void fatal( std::string_view s, Args &&...args )
+	template <typename... Args> void fatal( std::string s, Args &&...args )
 	{
 		if( ShouldLog( LoggerLevel::fatal ) ) {
 			PrintMessage( LoggerLevel::fatal, s, std::forward<Args>( args )... );
@@ -551,9 +586,10 @@ class ColorConsole
 	}
 
       private:
-	std::string_view                                  loggerName = "Default_Console";
+	std::string                                       loggerName = "Default_Console";
+	std::string                                       pattern;
 	Message_Info                                      msgDetails = { };
-	Message_Pattern                                   msgPattern = { };
+	Message_Pattern                                   msgPattern = { pattern, msgDetails };
 	bool                                              coloredOutput { true };
 	std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 };  // class ColorConsole
