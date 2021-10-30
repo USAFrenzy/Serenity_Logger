@@ -378,35 +378,65 @@ class Message_Pattern
 	template <typename... Args> std::string_view FormatMessage( std::string message, Args &&...args )
 	{
 		buffer.clear( );
-		std::cout << "\nSearching For Flags\n";
-		size_t pos { 0 };
-		if( ( pos = fmtPattern.find( "%" ) ) != std::string::npos ) {
-			auto potentialFlag = fmtPattern.substr( pos, pos + 1 );
-			if( std::any_of( validFlags.begin( ), validFlags.end( ), [ = ]( const char *m ) { return potentialFlag == m; } ) )
-			{
-				std::cout << "Flag Was Found!\n";
-			}
-			// flags were found - make a copy of format so as not to alter original
-			auto fmt = fmtPattern;
+		size_t it { 0 }, position { 0 };
+		auto   fmt = fmtPattern;
+		//! DELETE THIS PRINT STATEMENT WHEN DONE
+		// std::cout << "\n";
+		for( it; it != fmt.size( ); it++ ) {
+			// std::cout << "Searching For Flags\n";
+			size_t pos { 0 };
 
-			size_t position { 0 };
-			// while searching for flag positions, append each char to buffer
-			while( ( position = fmt.find( "%" ) ) != std::string::npos ) {
-				std::string token = fmt.substr( 0, position );
-				std::cout << token << "\n";
-				buffer.append( token );
-				// after appending everything up until the "%", erase that subsection (+1 for % length), handle the
-				// flag, and continue iterating until the end of format pattern is reached
-				fmt.erase( 0, position + 1 );
-				buffer.append( FlagFormatter( fmt.front( ) ) );
-			}
-			// Formatting Finished, return the message with the prepended formatted text
+			if( ( pos = fmt.find( "%" ) ) != std::string::npos ) {
+				auto potentialFlag = fmt.substr( pos, pos + 1 );
+				//! DELETE THIS PRINT STATEMENT WHEN DONE
+				// std::cout << std::format( "Potential Flag Found: \"{}\"\n", potentialFlag );
 
-			return buffer += std::format( message, std::forward<Args>( args )... );
+				if( std::any_of( validFlags.begin( ), validFlags.end( ), [ = ]( const char *m ) {
+					    //! DELETE THIS CHECK WHEN DONE -> JUST RETURN THE BOOLEAN CHECK DIRECTLY
+					    if( potentialFlag == m ) {
+						    //! DELETE THIS PRINT STATEMENT WHEN DONE
+						    // std::cout << std::format( "Flag \"{}\" Is A Valid Flag\n", potentialFlag );
+						    return true;
+					    }
+					    else {
+						    //! DELETE THIS PRINT STATEMENT WHEN DONE
+						    // std::cout << std::format( "Flag \"{}\" Is Not A Valid Flag\n", potentialFlag );
+						    return false;
+					    }
+				    } ) )
+				{
+					std::string token;
+					// while searching for flag positions, append each char to buffer
+					if( ( ( position = fmt.find( "%" ) ) != std::string::npos ) ) {
+						token = fmt.substr( 0, position );
+						//! DELETE THIS PRINT STATEMENT WHEN DONE
+						// std::cout << "Token SubString Before Flag Reached: " << token << "\n";
+						buffer.append( token );
+						// after appending everything up until the "%", erase that subsection (+1 for %
+						// length), handle the flag, and continue iterating until the end of format pattern is
+						// reached
+						fmt.erase( 0, position + 1 );
+						//! DELETE THIS PRINT STATEMENT WHEN DONE
+						// std::cout << "String Before Flag Token Deleted: " << fmt.front( ) << "\n";
+						buffer.append( FlagFormatter( fmt.front( ) ) );
+						fmt.erase( 0, position );  // Erase the Flag Token
+									   //! DELETE THIS PRINT STATEMENT WHEN DONE
+						// std::cout << "String After Flag Token Deleted: " << fmt << "\n";
+					}
+				}
+			}
+			else {
+				if( fmtPattern.size( ) == 0 ) {
+					//! DELETE THIS PRINT STATEMENT WHEN DONE
+					// std::cout << "Found No Flags\n";
+					return buffer;
+				}
+				//! DELETE THIS PRINT STATEMENT WHEN DONE
+				// std::cout << "Found No More Flags\n\n";
+				return buffer.append( fmt + std::move( std::format( message, std::forward<Args>( args )... ) ) );
+			}
 		}
-		else {
-			return buffer = std::format( message, std::forward<Args>( args )... );
-		}
+		return buffer;
 	}
 
       private:
@@ -492,7 +522,6 @@ class ColorConsole
 	{
 		loggerName = std::move( name );
 		msgDetails.SetName( loggerName );
-		pattern        = "[%N]: ";  // hardcoding atm
 		msgPattern     = { pattern, msgDetails };
 		msgLevelColors = {
 		  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
@@ -587,7 +616,7 @@ class ColorConsole
 
       private:
 	std::string                                       loggerName = "Default_Console";
-	std::string                                       pattern;
+	std::string                                       pattern = "[%N]: ";  // hardcoding default atm to test Parse/Format functions
 	Message_Info                                      msgDetails = { };
 	Message_Pattern                                   msgPattern = { pattern, msgDetails };
 	bool                                              coloredOutput { true };
@@ -607,31 +636,40 @@ int main( )
 	macroTester.StopWatch_Reset( );
 #endif  // INSTRUMENTATION_ENABLED
 
-	// Trace Is Deafult Color
-	C.trace( "Trace Will Be Bright {}", s );
-	// Info Is Light Green
-	C.info( "Info Will Be Bright Green" );
-	// Debug Is Light Cyan
-	C.debug( "Debug Will Be Bright Cyan" );
-	// Warning Is Light Yellow
-	C.warn( "Warning Will Be Bright Yellow" );
-	// Error Is Dark Red
-	C.error( "Error Will Be Red" );
-	// Fatal Is Light Yellow On Dark Red
-	C.fatal( "Fatal Will Be Bright Yellow On Red" );
+	int i { 0 }, iterations { 1000000 };
+	for( i; i < iterations; i++ ) {
+		C.trace( "Iteration: {}", i );
+		// Trace Is Default Color
+		C.trace( "Iteration: {}", i );
+		// Info Is Light Green
+		C.info( "Iteration: {}", i );
+		// Debug Is Light Cyan
+		C.debug( "Iteration: {}", i );
+		// Warning Is Light Yellow
+		C.warn( "Iteration: {}", i );
+		// Error Is Dark Red
+		C.error( "Iteration: {}", i );
+		// Fatal Is Light Yellow On Dark Red
+		C.fatal( "Iteration: {}", i );
+	}
 
 #ifdef INSTRUMENTATION_ENABLED
 	macroTester.StopWatch_Stop( );
 
+	// Currently avereages ~  0.526761 ms over 1,000,000 iterations -> Not a bad start =D (Granted Not Apples to apples given this
+	// is testing a console target that has nowhere near as many features and safety nets in place, but as a reference, spdlog's
+	// null sink benches at ~160ms taken from the GH repo bench stats -> No idea how they benched that number so this is just a
+	// reference not a comparison as these aren't benched with the same code input)
 	std::cout << Tag::Yellow(
 	  "\n\n***************************************************************\n******************** Instrumentation Data: "
 	  "********************\n***************************************************************\n" );
-	std::cout << Tag::Bright_Yellow( "Total Elapsed Time:\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) ) + " us\n" )
+	std::cout << Tag::Bright_Yellow( "Averaged Total Elapsed Time (Averaged Over 1,000,000 Iterations):\n" )
+		  << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
+		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
 		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::ms ) ) + " ms\n" )
+		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
 		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::sec ) ) + " s\n" );
+		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
 #endif  // INSTRUMENTATION_ENABLED
 
 #ifdef INSTRUMENTATION_ENABLED
