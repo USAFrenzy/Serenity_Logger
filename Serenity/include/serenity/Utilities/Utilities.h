@@ -21,7 +21,7 @@ namespace serenity
 		// for more precision
 		template <class T> using pMicro = std::chrono::duration<T, std::micro>;
 		template <class T> using pMilli = std::chrono::duration<T, std::milli>;
-		template <class T> using pSec   = std::chrono::duration<T, std::ratio<1, 1>>;
+		template <class T> using pSec   = std::chrono::duration<T, std::ratio<1>>;
 		template <class T> using pMin   = std::chrono::duration<T, std::ratio<1, 60>>;
 		template <class T> using pHour  = std::chrono::duration<T, std::ratio<1, 3600>>;
 

@@ -11,11 +11,11 @@
 
 #include <serenity/Utilities/Utilities.h>
 
-#define INSTRUMENT
+#define INSTRUMENT 1
 #define ALLOC_TEST 0
 
 
-#ifdef INSTRUMENT
+#if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
 #endif
 
@@ -75,6 +75,12 @@ static std::string_view MsgLevelToString( LoggerLevel level )
 		case LoggerLevel::fatal: return "Fatal"; break;
 		default: return ""; break;
 	}
+}
+
+// Probably Just A Pointless wrapper ~~
+static std::string toString( int value )
+{
+	return std::to_string( value );
 }
 
 static std::string toString( std::string_view s )
@@ -142,33 +148,31 @@ static const std::array<std::string_view, 12> long_months = { "January", "Februa
 							The rest are strftime equivalents
 						******************************************
 	- %d (Day Of Month)			- %T (HH:MM:SS Time format)		- %S (Seconds)
-	- %D (MM/DD/YY Date)			- %w (weekday as decimal 0-6)	- %z (UTC offset)
-	- %b (Abbrev Month Name)		- %F (YYYY-MM-DD Date)			- %Y (Year XXXX)
-	- %B (Full Month Name)			- %H (24hr Hour format)
-	- %M (Minute)					- %y (year XX Format)
+	- %D (MM/DD/YY Date)			- %w (weekday as decimal 0-6)	- %Y (Year XXXX)
+	- %b (Abbrev Month Name)		- %F (YYYY-MM-DD Date)			- %M (Minute)
+	- %B (Full Month Name)			- %H (24hr Hour format)		- %y (year XX Format)
 ************************************************************************************************************/
 static const std::vector<const char *> validFlags = { "%N", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
-						      "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%z" };
+						      "%H", "%M", "%S", "%T", "%w", "%y", "%Y" };
 // This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
 // *************************************************************************
 _Enum_is_bitflag_ enum class Flags : uint16_t {
-	name       = 0,        // Mapping To %N
-	f_msg_lvl  = 1 << 1,   // Mapping To %L
-	s_msg_lvl  = 1 << 2,   // Mapping To %l
-	d_wkday    = 1 << 3,   // Mapping To %w
-	l_month    = 1 << 4,   // Mapping To %B
-	s_month    = 1 << 5,   // Mapping To %b
-	m_day      = 1 << 6,   // Mapping To %d
-	l_year     = 1 << 7,   // Mapping To %Y
-	s_year     = 1 << 8,   // Mapping To %y
-	utc_offset = 1 << 9,   // Mapping To %z
-	mdy_date   = 1 << 10,  // Mapping To %D
-	ymd_date   = 1 << 11,  // Mapping To %F
-	full_time  = 1 << 12,  // Mapping To %T
-	mil_hour   = 1 << 13,  // Mapping To %H
-	min        = 1 << 14,  // Mapping To %M
-	sec        = 1 << 15,  // Mapping To %S
-			       // More to possibly come..(obviously would have to change inherited type attr if additions made)
+	name      = 0,        // Mapping To %N
+	f_msg_lvl = 1 << 1,   // Mapping To %L
+	s_msg_lvl = 1 << 2,   // Mapping To %l
+	d_wkday   = 1 << 3,   // Mapping To %w
+	l_month   = 1 << 4,   // Mapping To %B
+	s_month   = 1 << 5,   // Mapping To %b
+	m_day     = 1 << 6,   // Mapping To %d
+	l_year    = 1 << 7,   // Mapping To %Y
+	s_year    = 1 << 8,   // Mapping To %y
+	mdy_date  = 1 << 9,   // Mapping To %D
+	ymd_date  = 1 << 10,  // Mapping To %F
+	full_time = 1 << 11,  // Mapping To %T
+	mil_hour  = 1 << 12,  // Mapping To %H
+	min       = 1 << 13,  // Mapping To %M
+	sec       = 1 << 14,  // Mapping To %S
+			      // More to possibly come..(obviously would have to change inherited type attr if additions made)
 };
 
 
@@ -178,10 +182,10 @@ inline Flags operator|( Flags a, Flags b )
 }
 
 static const std::unordered_map<std::string_view, Flags> flagMapper = {
-  { "%N", Flags::name },      { "%L", Flags::f_msg_lvl },  { "%l", Flags::s_msg_lvl }, { "%w", Flags::d_wkday },
-  { "%B", Flags::l_month },   { "%b", Flags::s_month },    { "%d", Flags::m_day },     { "%Y", Flags::l_year },
-  { "%y", Flags::s_year },    { "%z", Flags::utc_offset }, { "%D", Flags::mdy_date },  { "%F", Flags::ymd_date },
-  { "%T", Flags::full_time }, { "%H", Flags::mil_hour },   { "%M", Flags::min },       { "%S", Flags::sec },
+  { "%N", Flags::name },     { "%L", Flags::f_msg_lvl }, { "%l", Flags::s_msg_lvl }, { "%w", Flags::d_wkday },
+  { "%B", Flags::l_month },  { "%b", Flags::s_month },   { "%d", Flags::m_day },     { "%Y", Flags::l_year },
+  { "%y", Flags::s_year },   { "%D", Flags::mdy_date },  { "%F", Flags::ymd_date },  { "%T", Flags::full_time },
+  { "%H", Flags::mil_hour }, { "%M", Flags::min },       { "%S", Flags::sec },
 };
 
 
@@ -189,24 +193,25 @@ struct Cached_Date_Time
 {
 	std::string_view long_weekday;   // Long Weekday Name String representation mapped from DayString()
 	std::string_view short_weekday;  // Short Weekday Name String representation mapped from DayString()
-	int              hour { 0 };
-	int              min { 0 };
-	int              sec { 0 };
+	int              dec_wkday;
+	int              hour;
+	int              min;
+	int              sec;
 	int              long_year { 0 };   // Full Year representation mapped from GetCurrentYear();
 	int              short_year { 0 };  // Short Year representation mapped from GetCurrentYear();
 	std::string_view long_month;        // Long Month Name String representation mapped from MonthString()
 	std::string_view short_month;       // Short Month Name String representation mapped from MonthString()
-	std::string_view dec_month;         // zero-padded string representation of decimal month
-	int              day { 0 };
+	int              dec_month;         // zero-padded string representation of decimal month
+	int              day;
 	bool             initialized { false };
 };
 
 class Message_Time
 {
       public:
-	Message_Time( message_time_mode mode ) : m_Mode( mode )
+	Message_Time( message_time_mode mode ) : m_mode( mode )
 	{
-		UpdateTimeInfo( mode );
+		UpdateTimeInfo( );
 	}
 	std::string_view WeekdayString( int weekdayIndex, bool shortened = false )
 	{
@@ -236,9 +241,9 @@ class Message_Time
 		}
 	}
 
-	std::string_view ZeroPadDecimal( int dec )
+	std::string ZeroPadDecimal( int dec )
 	{
-		return ( dec >= 10 ) ? std::format( "{}", dec ) : std::format( "0{}", dec );
+		return ( dec >= 10 ) ? toString( dec ) : "0" + toString( dec );
 	}
 
 	void InitializeCache( std::tm *t )
@@ -246,10 +251,11 @@ class Message_Time
 		m_cache.long_year     = std::move( GetCurrentYear( t->tm_year ) );
 		m_cache.short_year    = std::move( GetCurrentYear( t->tm_year, true ) );
 		m_cache.long_month    = std::move( MonthString( t->tm_mon ) );
-		m_cache.dec_month     = ( ZeroPadDecimal( t->tm_mon + 1 ) );
+		m_cache.dec_month     = std::move( ( t->tm_mon + 1 ) );
 		m_cache.short_month   = std::move( MonthString( t->tm_mon, true ) );
 		m_cache.long_weekday  = std::move( WeekdayString( t->tm_wday ) );
 		m_cache.short_weekday = std::move( WeekdayString( t->tm_wday, true ) );
+		m_cache.dec_wkday     = t->tm_wday;
 		m_cache.day           = t->tm_mday;
 		m_cache.hour          = t->tm_hour;
 		m_cache.min           = t->tm_min;
@@ -257,41 +263,41 @@ class Message_Time
 		m_cache.initialized   = true;
 	}
 
-	void UpdateTimeInfo( message_time_mode mode )
+
+	Cached_Date_Time UpdateCacheTime( )
 	{
-		m_time = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now( ) );
+		time( &m_time );
+		t_struct     = std::localtime( &m_time );
+		m_cache.sec  = t_struct->tm_sec;
+		m_cache.hour = t_struct->tm_hour;
+		m_cache.min  = t_struct->tm_min;
+		return m_cache;
+	}
+
+	void UpdateTimeInfo( )
+	{
 		// For both modes, check if the cache has been initialized, if so, then just update time variables. If not, then
 		// populate t_struct with time date variables and initialize cache
-		if( mode == message_time_mode::local ) {
-			if( m_cache.initialized ) {
-				auto tmp          = std::localtime( &m_time );
-				t_struct->tm_hour = std::move( tmp->tm_hour );
-				t_struct->tm_min  = std::move( tmp->tm_min );
-				t_struct->tm_sec  = std::move( tmp->tm_sec );
-			}
-			else {
+		if( m_cache.initialized ) {
+			UpdateCacheTime( );
+		}
+		else {
+			m_time = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now( ) );
+			if( m_mode == message_time_mode::local ) {
 				t_struct = std::localtime( &m_time );
 				InitializeCache( t_struct );
-			}
-		}  // mode == local
-		else {
-			if( m_cache.initialized ) {
-				auto tmp          = std::gmtime( &m_time );
-				t_struct->tm_hour = std::move( tmp->tm_hour );
-				t_struct->tm_min  = std::move( tmp->tm_min );
-				t_struct->tm_sec  = std::move( tmp->tm_sec );
 			}
 			else {
 				t_struct = std::gmtime( &m_time );
 				InitializeCache( t_struct );
 			}
-		}  // mode == utc
+		}
 	}
 
 
 	inline const message_time_mode Mode( )
 	{
-		return m_Mode;
+		return m_mode;
 	}
 
 	const Cached_Date_Time Cache( )
@@ -300,7 +306,7 @@ class Message_Time
 	}
 
       private:
-	message_time_mode m_Mode;
+	message_time_mode m_mode;
 	std::time_t       m_time;
 	std::tm *         t_struct = { };
 	Cached_Date_Time  m_cache  = { };
@@ -383,88 +389,177 @@ class Message_Pattern
 		//! DELETE THIS PRINT STATEMENT WHEN DONE
 		// std::cout << "\n";
 		for( it; it != fmt.size( ); it++ ) {
-			// std::cout << "Searching For Flags\n";
-			size_t pos { 0 };
-
-			if( ( pos = fmt.find( "%" ) ) != std::string::npos ) {
-				auto potentialFlag = fmt.substr( pos, pos + 1 );
-				//! DELETE THIS PRINT STATEMENT WHEN DONE
-				// std::cout << std::format( "Potential Flag Found: \"{}\"\n", potentialFlag );
-
-				if( std::any_of( validFlags.begin( ), validFlags.end( ), [ = ]( const char *m ) {
-					    //! DELETE THIS CHECK WHEN DONE -> JUST RETURN THE BOOLEAN CHECK DIRECTLY
-					    if( potentialFlag == m ) {
-						    //! DELETE THIS PRINT STATEMENT WHEN DONE
-						    // std::cout << std::format( "Flag \"{}\" Is A Valid Flag\n", potentialFlag );
-						    return true;
-					    }
-					    else {
-						    //! DELETE THIS PRINT STATEMENT WHEN DONE
-						    // std::cout << std::format( "Flag \"{}\" Is Not A Valid Flag\n", potentialFlag );
-						    return false;
-					    }
-				    } ) )
-				{
-					std::string token;
-					// while searching for flag positions, append each char to buffer
-					if( ( ( position = fmt.find( "%" ) ) != std::string::npos ) ) {
-						token = fmt.substr( 0, position );
+			if( ( position != std::string::npos ) && ( !fmt.empty( ) ) ) {
+				if( fmt.front( ) == '%' ) {
+					// std::cout << "Searching For Flags\n";
+					size_t      pos { 0 };
+					std::string potentialFlag;
+					if( ( pos = fmt.find( "%" ) ) != std::string::npos ) {
+						if( fmt.front( ) == '%' ) {
+							potentialFlag = fmt.substr( pos, pos + 2 );
+						}
+						else {
+							potentialFlag = fmt.substr( pos, pos + 1 );
+						}
 						//! DELETE THIS PRINT STATEMENT WHEN DONE
-						// std::cout << "Token SubString Before Flag Reached: " << token << "\n";
-						buffer.append( token );
-						// after appending everything up until the "%", erase that subsection (+1 for %
-						// length), handle the flag, and continue iterating until the end of format pattern is
-						// reached
-						fmt.erase( 0, position + 1 );
-						//! DELETE THIS PRINT STATEMENT WHEN DONE
-						// std::cout << "String Before Flag Token Deleted: " << fmt.front( ) << "\n";
-						buffer.append( FlagFormatter( fmt.front( ) ) );
-						fmt.erase( 0, position );  // Erase the Flag Token
-									   //! DELETE THIS PRINT STATEMENT WHEN DONE
-						// std::cout << "String After Flag Token Deleted: " << fmt << "\n";
+						// std::cout << std::format( "Potential Flag Found: \"{}\"\n", potentialFlag );
+
+						if( std::any_of( validFlags.begin( ), validFlags.end( ), [ = ]( const char *m ) {
+							    //! DELETE THIS CHECK WHEN DONE -> JUST RETURN THE BOOLEAN CHECK DIRECTLY
+							    if( potentialFlag == m ) {
+								    //! DELETE THIS PRINT STATEMENT WHEN DONE
+								    //  std::cout
+								    //   << std::format( "Flag \"{}\" Matches This Flag\n",
+								    //   potentialFlag );
+								    return true;
+							    }
+							    else {
+								    //! DELETE THIS PRINT STATEMENT WHEN DONE
+								    // std::cout << std::format( "Flag \"{}\" Does Not Match This
+								    // Flag\n",
+								    //		      potentialFlag );
+								    return false;
+							    }
+						    } ) )
+						{
+							std::string token;
+							// while searching for flag positions, append each char to buffer
+							if( ( ( position = fmt.find( "%" ) ) != std::string::npos ) ) {
+								token = fmt.substr( 0, position );
+								//! DELETE THIS PRINT STATEMENT WHEN DONE
+								// std::cout << "Token SubString Before Flag Reached: " << token <<
+								// "\n";
+								buffer.append( token );
+								// after appending everything up until the "%", erase that subsection
+								// (+1 for % length), handle the flag, and continue iterating until the
+								// end of format pattern is reached
+								fmt.erase( 0, position + 1 );
+								//! DELETE THIS PRINT STATEMENT WHEN DONE
+								// std::cout << "String Before Flag Token Deleted: " << fmt << "\n";
+								buffer.append( FlagFormatter( fmt.front( ) ) );
+								fmt.erase( 0, position + 1 );  // Erase the Flag Token
+											       //! DELETE THIS PRINT STATEMENT WHEN DONE
+								// std::cout << "String After Flag Token Deleted: " << fmt << "\n";
+							}
+						}
 					}
+				}
+				else {
+					// std::cout << "Format Char To Append: " << fmt.front( ) << "\n";
+					buffer += fmt.at( 0 );
+					// std::cout << "Buffer String So Far: " << buffer << "\n";
+					fmt.erase( fmt.begin( ), fmt.begin( ) + 1 );
 				}
 			}
 			else {
-				if( fmtPattern.size( ) == 0 ) {
-					//! DELETE THIS PRINT STATEMENT WHEN DONE
-					// std::cout << "Found No Flags\n";
-					return buffer;
-				}
-				//! DELETE THIS PRINT STATEMENT WHEN DONE
-				// std::cout << "Found No More Flags\n\n";
-				return buffer.append( fmt + std::move( std::format( message, std::forward<Args>( args )... ) ) );
+				break;  // Reached End Of Format String And No More Flags Found
 			}
 		}
-		return buffer;
+		if( fmtPattern.size( ) == 0 ) {
+			//! DELETE THIS PRINT STATEMENT WHEN DONE
+			// std::cout << "Found No Flags\n";
+			return buffer;
+		}
+		else {
+			//! DELETE THIS PRINT STATEMENT WHEN DONE
+			// std::cout << "Found No More Flags\n\n";
+			return buffer.append( fmt + std::move( std::format( message, std::forward<Args>( args )... ) ) );
+		}
 	}
 
+
       private:
-	// Copy Paste As Reference While Implementing Flag Formatter Formatter Arg Functions
-	/***************************************************************************************************************
-		- %N (Name)			- %L (Full Level)			- %l (Short Message Level)
-	- %d (Day Of Month)
-		- %T (HH:MM:SS )		- %S (Seconds)			- %D (MM/DD/YY Date)
-	- %w (weekday 0-6)
-		- %z (UTC offset)		- %b (Abbrev Month Name)	- %F (YYYY-MM-DD Date) - %Y (Year XXXX)
-		- %B (Full Month Name)	- %H (24hr Hour format)	- %M (Minute) - %y (year XX Format)
-	****************************************************************************************************************/
-	// TODO: Finish FlagFormatter Case Statements
 	std::string FlagFormatter( char flag )
 	{
 		switch( flag ) {
-			case 'N': return Format_Arg_N( ); break;
+			case 'b': return Format_Arg_b( ); break;
+			case 'B': return Format_Arg_B( ); break;
+			case 'd': return Format_Arg_d( ); break;
+			case 'D': return Format_Arg_D( ); break;
+			case 'F': return Format_Arg_F( ); break;
+			case 'H': return Format_Arg_H( ); break;
 			case 'L': return Format_Arg_L( ); break;
 			case 'l': return Format_Arg_l( ); break;
-			case 'd': return Format_Arg_d( ); break;
+			case 'M': return Format_Arg_M( ); break;
+			case 'N': return Format_Arg_N( ); break;
+			case 'S': return Format_Arg_S( ); break;
+			case 'T': return Format_Arg_T( ); break;
+			case 'w': return Format_Arg_w( ); break;
+			case 'y': return Format_Arg_y( ); break;
+			case 'Y': return Format_Arg_Y( ); break;
+			default: return ""; break;
 		}
-		return "";  // placeholder until fully implemented
 	}
 
 	// TODO: Finish Flag Argument Formatters
+	std::string Format_Arg_b( )
+	{
+		return toString( msgInfo.TimeDetails( ).Cache( ).short_month );
+	}
+
+	std::string Format_Arg_B( )
+	{
+		return toString( msgInfo.TimeDetails( ).Cache( ).long_month );
+	}
+
+	std::string Format_Arg_D( )
+	{
+		// MM/DD/YY
+		std::string date;
+		date.append( Format_Arg_d( ) + "/" );
+		date.append( toString( msgInfo.TimeDetails( ).Cache( ).day ) + "/" );
+		return date.append( Format_Arg_y( ) );
+	}
+
+	std::string Format_Arg_F( )
+	{
+		// YYYY-MM-DD
+		std::string date;
+		date.append( Format_Arg_Y( ) + "-" );
+		date.append( Format_Arg_d( ) + "-" );
+		return date.append( toString( msgInfo.TimeDetails( ).Cache( ).day ) );
+	}
+
+	std::string Format_Arg_M( )
+	{
+		return toString( msgInfo.TimeDetails( ).ZeroPadDecimal( msgInfo.TimeDetails( ).Cache( ).min ) );
+	}
+
+	std::string Format_Arg_S( )
+	{
+		return toString( msgInfo.TimeDetails( ).ZeroPadDecimal( msgInfo.TimeDetails( ).Cache( ).sec ) );
+	}
+
+	// Seconds Conter Not Incrementing
+	std::string Format_Arg_T( )
+	{
+		auto cache = msgInfo.TimeDetails( ).UpdateCacheTime( );
+		// HH:MM:SS
+		std::string time;
+		time += toString( msgInfo.TimeDetails( ).ZeroPadDecimal( cache.hour ) ) + ":";
+		time += toString( msgInfo.TimeDetails( ).ZeroPadDecimal( cache.min ) ) + ":";
+		time += toString( msgInfo.TimeDetails( ).ZeroPadDecimal( cache.sec ) );
+		return time;
+	}
+
+	std::string Format_Arg_w( )
+	{
+		return toString( msgInfo.TimeDetails( ).Cache( ).dec_wkday );
+	}
+
+	std::string Format_Arg_y( )
+	{
+		return toString( msgInfo.TimeDetails( ).Cache( ).short_year );
+	}
+
+	std::string Format_Arg_Y( )
+	{
+		return toString( msgInfo.TimeDetails( ).Cache( ).long_year );
+	}
+
 	std::string Format_Arg_N( )
 	{
-		return toString( msgInfo.Name( ) );
+		return msgInfo.Name( );
 	}
 
 	std::string Format_Arg_l( )
@@ -482,16 +577,11 @@ class Message_Pattern
 		return toString( msgInfo.TimeDetails( ).Cache( ).dec_month );
 	}
 
-	std::string Format_Arg_H( std::tm *t )
+	std::string Format_Arg_H( )
 	{
-		//! NOTE: should test later to see if mil time is used when populating tm_hour
-		if( t->tm_hour < 10 ) {
-			return toString( msgInfo.TimeDetails( ).ZeroPadDecimal( t->tm_hour ) );
-		}
-		else {
-			return std::format( "{}", t->tm_hour );
-		}
+		return toString( msgInfo.TimeDetails( ).ZeroPadDecimal( msgInfo.TimeDetails( ).Cache( ).hour ) );
 	}
+
 
       private:
 	std::string  fmtPattern;
@@ -615,11 +705,11 @@ class ColorConsole
 	}
 
       private:
-	std::string                                       loggerName = "Default_Console";
-	std::string                                       pattern = "[%N]: ";  // hardcoding default atm to test Parse/Format functions
-	Message_Info                                      msgDetails = { };
-	Message_Pattern                                   msgPattern = { pattern, msgDetails };
-	bool                                              coloredOutput { true };
+	std::string     loggerName = "Default_Console";
+	std::string     pattern    = "%T [%N]: ";  // hardcoding default atm to test Parse/Format functions
+	Message_Info    msgDetails = { };
+	Message_Pattern msgPattern = { pattern, msgDetails };
+	bool            coloredOutput { true };
 	std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 };  // class ColorConsole
 
@@ -634,32 +724,40 @@ int main( )
 #ifdef INSTRUMENTATION_ENABLED
 	Instrumentator macroTester;
 	macroTester.StopWatch_Reset( );
-#endif  // INSTRUMENTATION_ENABLED
+
+	// test string
+	const char *test;
+	std::string temp;
+	for( int i = 0; i < 399; i++ ) {
+		temp += "a";
+	}  // 400 chars = 400 bytes
+	test = temp.c_str( );
 
 	int i { 0 }, iterations { 1000000 };
 	for( i; i < iterations; i++ ) {
-		C.trace( "Iteration: {}", i );
+#endif  // INSTRUMENTATION_ENABLED
+
 		// Trace Is Default Color
-		C.trace( "Iteration: {}", i );
+		C.trace( "{}", test );
 		// Info Is Light Green
-		C.info( "Iteration: {}", i );
-		// Debug Is Light Cyan
-		C.debug( "Iteration: {}", i );
-		// Warning Is Light Yellow
-		C.warn( "Iteration: {}", i );
-		// Error Is Dark Red
-		C.error( "Iteration: {}", i );
-		// Fatal Is Light Yellow On Dark Red
-		C.fatal( "Iteration: {}", i );
-	}
+		/*C.info( "Info" )*/;
+		//// Debug Is Light Cyan
+		// C.debug( "Debug" );
+		//// Warning Is Light Yellow
+		// C.warn( "Warning" );
+		//// Error Is Dark Red
+		// C.error( "Error" );
+		//// Fatal Is Light Yellow On Dark Red
+		// C.fatal( "Fatal" );
 
 #ifdef INSTRUMENTATION_ENABLED
+	}
 	macroTester.StopWatch_Stop( );
 
-	// Currently avereages ~  0.526761 ms over 1,000,000 iterations -> Not a bad start =D (Granted Not Apples to apples given this
-	// is testing a console target that has nowhere near as many features and safety nets in place, but as a reference, spdlog's
-	// null sink benches at ~160ms taken from the GH repo bench stats -> No idea how they benched that number so this is just a
-	// reference not a comparison as these aren't benched with the same code input)
+	// Currently avereages ~ 0.14ms for a C-Style String Of 400 Bytes Over 1,000,000 iterations -> Not a bad start =D (Granted Not
+	// Apples to apples given this is testing a console target that has nowhere near as many features and safety nets in place, but
+	// as a reference, spdlog's null sink single thread C-Style String of 400 bytes benches at ~40ms taken from their GH repo bench
+	// stats
 	std::cout << Tag::Yellow(
 	  "\n\n***************************************************************\n******************** Instrumentation Data: "
 	  "********************\n***************************************************************\n" );
