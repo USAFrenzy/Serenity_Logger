@@ -11,9 +11,14 @@
 
 #include <serenity/Utilities/Utilities.h>
 
-#define INSTRUMENT 1
+#define INSTRUMENT 0
 #define ALLOC_TEST 0
 
+#ifndef NDEBUG
+	#define DB_PRINT( msg, ... ) ( std::cout << std::format( msg, __VA_ARGS__ ) << "\n" )
+#else
+	#define DB_PRINT( msg, ... )
+#endif  // !NDEBUG
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -21,7 +26,6 @@
 
 
 #if ALLOC_TEST  // Testing Allocations
-	#ifdef INSTRUMENTATION_ENABLED
 uint64_t total_allocated_bytes { 0 };
 
 void *operator new( std::size_t n )
@@ -36,8 +40,7 @@ void operator delete( void *p, size_t n ) throw( )
 	serenity::se_utils::Instrumentator::mem_tracker.Freed += n;
 	free( p );
 }
-	#endif  // ALLOC_TEST
-#endif          // INSTRUMENTATION_ENABLED
+#endif  // ALLOC_TEST
 
 // Just throwing these here for testing this case
 // ***************************************************************************
@@ -52,15 +55,15 @@ enum class LoggerLevel
 	off,
 };
 
-static std::string_view MsgLevelToIcon( LoggerLevel level )
+static std::string_view MsgLevelToShortString( LoggerLevel level )
 {
 	switch( level ) {
-		case LoggerLevel::info: return "[I]"; break;
-		case LoggerLevel::trace: return "[T]"; break;
-		case LoggerLevel::debug: return "[D]"; break;
-		case LoggerLevel::warning: return "[W]"; break;
-		case LoggerLevel::error: return "[E]"; break;
-		case LoggerLevel::fatal: return "[F]"; break;
+		case LoggerLevel::info: return "I"; break;
+		case LoggerLevel::trace: return "T"; break;
+		case LoggerLevel::debug: return "D"; break;
+		case LoggerLevel::warning: return "W"; break;
+		case LoggerLevel::error: return "E"; break;
+		case LoggerLevel::fatal: return "F"; break;
 		default: return ""; break;
 	}
 }
@@ -70,20 +73,14 @@ static std::string_view MsgLevelToString( LoggerLevel level )
 		case LoggerLevel::info: return "Info"; break;
 		case LoggerLevel::trace: return "Trace"; break;
 		case LoggerLevel::debug: return "Debug"; break;
-		case LoggerLevel::warning: return "Warning"; break;
+		case LoggerLevel::warning: return "Warn"; break;
 		case LoggerLevel::error: return "Error"; break;
 		case LoggerLevel::fatal: return "Fatal"; break;
 		default: return ""; break;
 	}
 }
 
-// Probably Just A Pointless wrapper ~~
-static std::string toString( int value )
-{
-	return std::to_string( value );
-}
-
-static std::string toString( std::string_view s )
+static std::string svToString( std::string_view s )
 {
 	return std::string( s.data( ), s.size( ) );
 }
@@ -102,16 +99,16 @@ enum class message_time_mode
 	utc
 };
 
-static const std::array<std::string_view, 7> short_weekdays = { "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat" };
+constexpr std::array<std::string_view, 7> short_weekdays = { "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat" };
 
-static const std::array<std::string_view, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
-							       "Thursday", "Friday", "Saturday" };
+constexpr std::array<std::string_view, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
+							    "Thursday", "Friday", "Saturday" };
 
-static const std::array<std::string_view, 12> short_months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-							       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+constexpr std::array<std::string_view, 12> short_months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+							    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-static const std::array<std::string_view, 12> long_months = { "January", "February", "March",     "April",   "May",      "June",
-							      "July",    "August",   "September", "October", "November", "December" };
+constexpr std::array<std::string_view, 12> long_months = { "January", "February", "March",     "April",   "May",      "June",
+							   "July",    "August",   "September", "October", "November", "December" };
 
 /***********************************************************************************************************
 *	                                            29/10/21 NOTE:	                                            *
@@ -143,7 +140,8 @@ static const std::array<std::string_view, 12> long_months = { "January", "Februa
 /************************************************************************************************************
 									custom flags
 						************************************
-	- %N (Name)			- %L (Full Message Level)		- %l (Short Message Level)
+	- %N (Name)				- %L (Full Message Level)		- %x (Short Weekday String)
+	- %l (Short Message Level)	- %n (DD/MMM/YY Date)			- %X (Long Weekday String)
 
 							The rest are strftime equivalents
 						******************************************
@@ -152,27 +150,30 @@ static const std::array<std::string_view, 12> long_months = { "January", "Februa
 	- %b (Abbrev Month Name)		- %F (YYYY-MM-DD Date)			- %M (Minute)
 	- %B (Full Month Name)			- %H (24hr Hour format)		- %y (year XX Format)
 ************************************************************************************************************/
-static const std::vector<const char *> validFlags = { "%N", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
-						      "%H", "%M", "%S", "%T", "%w", "%y", "%Y" };
+constexpr std::array<const char *, 18> validFlags = { "%N", "%n", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
+						      "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%x", "%X" };
 // This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
 // *************************************************************************
-_Enum_is_bitflag_ enum class Flags : uint16_t {
-	name      = 0,        // Mapping To %N
-	f_msg_lvl = 1 << 1,   // Mapping To %L
-	s_msg_lvl = 1 << 2,   // Mapping To %l
-	d_wkday   = 1 << 3,   // Mapping To %w
-	l_month   = 1 << 4,   // Mapping To %B
-	s_month   = 1 << 5,   // Mapping To %b
-	m_day     = 1 << 6,   // Mapping To %d
-	l_year    = 1 << 7,   // Mapping To %Y
-	s_year    = 1 << 8,   // Mapping To %y
-	mdy_date  = 1 << 9,   // Mapping To %D
-	ymd_date  = 1 << 10,  // Mapping To %F
-	full_time = 1 << 11,  // Mapping To %T
-	mil_hour  = 1 << 12,  // Mapping To %H
-	min       = 1 << 13,  // Mapping To %M
-	sec       = 1 << 14,  // Mapping To %S
-			      // More to possibly come..(obviously would have to change inherited type attr if additions made)
+_Enum_is_bitflag_ enum class Flags : uint32_t {
+	name         = 0,        // Mapping To %N
+	f_msg_lvl    = 1 << 1,   // Mapping To %L
+	s_msg_lvl    = 1 << 2,   // Mapping To %l
+	d_wkday      = 1 << 3,   // Mapping To %w
+	l_month      = 1 << 4,   // Mapping To %B
+	s_month      = 1 << 5,   // Mapping To %b
+	m_day        = 1 << 6,   // Mapping To %d
+	l_year       = 1 << 7,   // Mapping To %Y
+	s_year       = 1 << 8,   // Mapping To %y
+	mdy_date     = 1 << 9,   // Mapping To %D
+	ymd_date     = 1 << 10,  // Mapping To %F
+	full_time    = 1 << 11,  // Mapping To %T
+	mil_hour     = 1 << 12,  // Mapping To %H
+	min          = 1 << 13,  // Mapping To %M
+	sec          = 1 << 14,  // Mapping To %S
+	l_wkday      = 1 << 15,
+	s_wkday      = 1 << 16,
+	ddmmmyy_date = 1 << 17,
+	// More to possibly come..(obviously would have to change inherited type attr if additions made)
 };
 
 
@@ -183,9 +184,10 @@ inline Flags operator|( Flags a, Flags b )
 
 static const std::unordered_map<std::string_view, Flags> flagMapper = {
   { "%N", Flags::name },     { "%L", Flags::f_msg_lvl }, { "%l", Flags::s_msg_lvl }, { "%w", Flags::d_wkday },
-  { "%B", Flags::l_month },  { "%b", Flags::s_month },   { "%d", Flags::m_day },     { "%Y", Flags::l_year },
-  { "%y", Flags::s_year },   { "%D", Flags::mdy_date },  { "%F", Flags::ymd_date },  { "%T", Flags::full_time },
-  { "%H", Flags::mil_hour }, { "%M", Flags::min },       { "%S", Flags::sec },
+  { "%x", Flags::s_wkday },  { "%X", Flags::l_wkday },   { "%B", Flags::l_month },   { "%b", Flags::s_month },
+  { "%d", Flags::m_day },    { "%Y", Flags::l_year },    { "%y", Flags::s_year },    { "%D", Flags::mdy_date },
+  { "%F", Flags::ymd_date }, { "%T", Flags::full_time }, { "%H", Flags::mil_hour },  { "%M", Flags::min },
+  { "%S", Flags::sec },
 };
 
 
@@ -243,7 +245,7 @@ class Message_Time
 
 	std::string ZeroPadDecimal( int dec )
 	{
-		return ( dec >= 10 ) ? toString( dec ) : "0" + toString( dec );
+		return ( dec >= 10 ) ? std::to_string( dec ) : "0" + std::to_string( dec );
 	}
 
 	void InitializeCache( std::tm *t )
@@ -321,7 +323,7 @@ class Message_Info
 
 	Message_Info( ) : m_name( "Default Logger" ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local ) { }
 
-	Message_Info( std::string_view name, LoggerLevel messageLevel, std::string_view message, Message_Time messageTime )
+	Message_Info( std::string name, LoggerLevel messageLevel, std::string_view message, Message_Time messageTime )
 	  : m_name( name ), msgLevel( messageLevel ), msg( message ), msgTime( messageTime )
 	{
 	}
@@ -351,6 +353,11 @@ class Message_Info
 		return msgTime;
 	}
 
+	void SetMessageLevel( LoggerLevel messageLvl )
+	{
+		msgLevel = messageLvl;
+	}
+
 
       private:
 	std::string      m_name;
@@ -365,7 +372,7 @@ class Message_Pattern
       public:
 	// Weekday Day Month Year HH::MM::SS -UTC Offset Default If No User Pattern Set
 	Message_Pattern( ) : fmtPattern( "[DEFAULT PATTERN PLACEHOLDER] " ), msgInfo( ) { }
-	Message_Pattern( std::string formatPattern, Message_Info msgDetails ) : fmtPattern( formatPattern ), msgInfo( msgDetails ) { }
+	Message_Pattern( std::string formatPattern, Message_Info *msgDetails ) : fmtPattern( formatPattern ), msgInfo( msgDetails ) { }
 	Message_Pattern &operator=( const Message_Pattern &t )
 	{
 		buffer     = t.buffer;
@@ -387,8 +394,8 @@ class Message_Pattern
 		size_t it { 0 }, position { 0 };
 		auto   fmt = fmtPattern;
 		//! DELETE THIS PRINT STATEMENT WHEN DONE
-		// std::cout << "\n";
-		for( it; it != fmt.size( ); it++ ) {
+		DB_PRINT( "\n" );
+		while( it != std::string::npos ) {
 			if( ( position != std::string::npos ) && ( !fmt.empty( ) ) ) {
 				if( fmt.front( ) == '%' ) {
 					// std::cout << "Searching For Flags\n";
@@ -402,24 +409,24 @@ class Message_Pattern
 							potentialFlag = fmt.substr( pos, pos + 1 );
 						}
 						//! DELETE THIS PRINT STATEMENT WHEN DONE
-						// std::cout << std::format( "Potential Flag Found: \"{}\"\n", potentialFlag );
+						DB_PRINT( std::format( "Potential Flag Found: \"{}\"", potentialFlag ) );
 
 						if( std::any_of( validFlags.begin( ), validFlags.end( ), [ = ]( const char *m ) {
+#ifndef NDEBUG
 							    //! DELETE THIS CHECK WHEN DONE -> JUST RETURN THE BOOLEAN CHECK DIRECTLY
 							    if( potentialFlag == m ) {
 								    //! DELETE THIS PRINT STATEMENT WHEN DONE
-								    //  std::cout
-								    //   << std::format( "Flag \"{}\" Matches This Flag\n",
-								    //   potentialFlag );
+								    DB_PRINT( "Flag \"{}\" Matches \"{}\" - Valid Flag", potentialFlag, m );
 								    return true;
 							    }
 							    else {
 								    //! DELETE THIS PRINT STATEMENT WHEN DONE
-								    // std::cout << std::format( "Flag \"{}\" Does Not Match This
-								    // Flag\n",
-								    //		      potentialFlag );
+								    DB_PRINT( "Flag \"{}\" Does Not Match \"{}\"", potentialFlag, m );
 								    return false;
 							    }
+#else
+							      return potentialFlag == m;
+#endif  // !NDEBUG
 						    } ) )
 						{
 							std::string token;
@@ -427,27 +434,26 @@ class Message_Pattern
 							if( ( ( position = fmt.find( "%" ) ) != std::string::npos ) ) {
 								token = fmt.substr( 0, position );
 								//! DELETE THIS PRINT STATEMENT WHEN DONE
-								// std::cout << "Token SubString Before Flag Reached: " << token <<
-								// "\n";
+								DB_PRINT( "Token SubString Before Flag Reached: {}", token );
 								buffer.append( token );
 								// after appending everything up until the "%", erase that subsection
 								// (+1 for % length), handle the flag, and continue iterating until the
 								// end of format pattern is reached
 								fmt.erase( 0, position + 1 );
 								//! DELETE THIS PRINT STATEMENT WHEN DONE
-								// std::cout << "String Before Flag Token Deleted: " << fmt << "\n";
+								DB_PRINT( "String Before Flag Token Deleted: {}", fmt );
 								buffer.append( FlagFormatter( fmt.front( ) ) );
 								fmt.erase( 0, position + 1 );  // Erase the Flag Token
 											       //! DELETE THIS PRINT STATEMENT WHEN DONE
-								// std::cout << "String After Flag Token Deleted: " << fmt << "\n";
+								DB_PRINT( "String After Flag Token Deleted: {}", fmt );
 							}
 						}
 					}
 				}
 				else {
-					// std::cout << "Format Char To Append: " << fmt.front( ) << "\n";
+					DB_PRINT( "Format Char To Append: {}", fmt.front( ) );
 					buffer += fmt.at( 0 );
-					// std::cout << "Buffer String So Far: " << buffer << "\n";
+					DB_PRINT( "Buffer String So Far: {}", buffer );
 					fmt.erase( fmt.begin( ), fmt.begin( ) + 1 );
 				}
 			}
@@ -457,12 +463,12 @@ class Message_Pattern
 		}
 		if( fmtPattern.size( ) == 0 ) {
 			//! DELETE THIS PRINT STATEMENT WHEN DONE
-			// std::cout << "Found No Flags\n";
+			DB_PRINT( "Found No Flags" );
 			return buffer;
 		}
 		else {
 			//! DELETE THIS PRINT STATEMENT WHEN DONE
-			// std::cout << "Found No More Flags\n\n";
+			DB_PRINT( "Found No More Flags\n" );
 			return buffer.append( fmt + std::move( std::format( message, std::forward<Args>( args )... ) ) );
 		}
 	}
@@ -481,10 +487,13 @@ class Message_Pattern
 			case 'L': return Format_Arg_L( ); break;
 			case 'l': return Format_Arg_l( ); break;
 			case 'M': return Format_Arg_M( ); break;
+			case 'n': return Format_Arg_n( ); break;
 			case 'N': return Format_Arg_N( ); break;
 			case 'S': return Format_Arg_S( ); break;
 			case 'T': return Format_Arg_T( ); break;
 			case 'w': return Format_Arg_w( ); break;
+			case 'x': return Format_Arg_x( ); break;
+			case 'X': return Format_Arg_X( ); break;
 			case 'y': return Format_Arg_y( ); break;
 			case 'Y': return Format_Arg_Y( ); break;
 			default: return ""; break;
@@ -494,12 +503,12 @@ class Message_Pattern
 	// TODO: Finish Flag Argument Formatters
 	std::string Format_Arg_b( )
 	{
-		return toString( msgInfo.TimeDetails( ).Cache( ).short_month );
+		return svToString( msgInfo->TimeDetails( ).Cache( ).short_month );
 	}
 
 	std::string Format_Arg_B( )
 	{
-		return toString( msgInfo.TimeDetails( ).Cache( ).long_month );
+		return svToString( msgInfo->TimeDetails( ).Cache( ).long_month );
 	}
 
 	std::string Format_Arg_D( )
@@ -507,7 +516,7 @@ class Message_Pattern
 		// MM/DD/YY
 		std::string date;
 		date.append( Format_Arg_d( ) + "/" );
-		date.append( toString( msgInfo.TimeDetails( ).Cache( ).day ) + "/" );
+		date.append( std::to_string( msgInfo->TimeDetails( ).Cache( ).day ) + "/" );
 		return date.append( Format_Arg_y( ) );
 	}
 
@@ -517,76 +526,95 @@ class Message_Pattern
 		std::string date;
 		date.append( Format_Arg_Y( ) + "-" );
 		date.append( Format_Arg_d( ) + "-" );
-		return date.append( toString( msgInfo.TimeDetails( ).Cache( ).day ) );
+		return date.append( std::to_string( msgInfo->TimeDetails( ).Cache( ).day ) );
 	}
 
 	std::string Format_Arg_M( )
 	{
-		return toString( msgInfo.TimeDetails( ).ZeroPadDecimal( msgInfo.TimeDetails( ).Cache( ).min ) );
+		return svToString( msgInfo->TimeDetails( ).ZeroPadDecimal( msgInfo->TimeDetails( ).UpdateCacheTime( ).min ) );
 	}
 
 	std::string Format_Arg_S( )
 	{
-		return toString( msgInfo.TimeDetails( ).ZeroPadDecimal( msgInfo.TimeDetails( ).Cache( ).sec ) );
+		return svToString( msgInfo->TimeDetails( ).ZeroPadDecimal( msgInfo->TimeDetails( ).UpdateCacheTime( ).sec ) );
 	}
 
 	// Seconds Conter Not Incrementing
 	std::string Format_Arg_T( )
 	{
-		auto cache = msgInfo.TimeDetails( ).UpdateCacheTime( );
+		auto cache = msgInfo->TimeDetails( ).UpdateCacheTime( );
 		// HH:MM:SS
 		std::string time;
-		time += toString( msgInfo.TimeDetails( ).ZeroPadDecimal( cache.hour ) ) + ":";
-		time += toString( msgInfo.TimeDetails( ).ZeroPadDecimal( cache.min ) ) + ":";
-		time += toString( msgInfo.TimeDetails( ).ZeroPadDecimal( cache.sec ) );
+		time += svToString( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) ) + ":";
+		time += svToString( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ) ) + ":";
+		time += svToString( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) );
 		return time;
 	}
 
 	std::string Format_Arg_w( )
 	{
-		return toString( msgInfo.TimeDetails( ).Cache( ).dec_wkday );
+		return std::to_string( msgInfo->TimeDetails( ).Cache( ).dec_wkday );
 	}
 
 	std::string Format_Arg_y( )
 	{
-		return toString( msgInfo.TimeDetails( ).Cache( ).short_year );
+		return std::to_string( msgInfo->TimeDetails( ).Cache( ).short_year );
 	}
 
 	std::string Format_Arg_Y( )
 	{
-		return toString( msgInfo.TimeDetails( ).Cache( ).long_year );
+		return std::to_string( msgInfo->TimeDetails( ).Cache( ).long_year );
 	}
 
 	std::string Format_Arg_N( )
 	{
-		return msgInfo.Name( );
+		return msgInfo->Name( );
 	}
 
 	std::string Format_Arg_l( )
 	{
-		return toString( MsgLevelToIcon( msgInfo.MsgLevel( ) ) );
+		return svToString( MsgLevelToShortString( msgInfo->MsgLevel( ) ) );
 	}
 
 	std::string Format_Arg_L( )
 	{
-		return toString( MsgLevelToString( msgInfo.MsgLevel( ) ) );
+		return svToString( MsgLevelToString( msgInfo->MsgLevel( ) ) );
 	}
 
 	std::string Format_Arg_d( )
 	{
-		return toString( msgInfo.TimeDetails( ).Cache( ).dec_month );
+		return svToString( msgInfo->TimeDetails( ).ZeroPadDecimal( msgInfo->TimeDetails( ).Cache( ).day ) );
 	}
 
 	std::string Format_Arg_H( )
 	{
-		return toString( msgInfo.TimeDetails( ).ZeroPadDecimal( msgInfo.TimeDetails( ).Cache( ).hour ) );
+		return svToString( msgInfo->TimeDetails( ).ZeroPadDecimal( msgInfo->TimeDetails( ).UpdateCacheTime( ).hour ) );
 	}
 
 
+	std::string Format_Arg_x( )
+	{
+		return svToString( msgInfo->TimeDetails( ).Cache( ).short_weekday );
+	}
+
+	std::string Format_Arg_X( )
+	{
+		return svToString( msgInfo->TimeDetails( ).Cache( ).long_weekday );
+	}
+
+	std::string Format_Arg_n( )
+	{
+		std::string date;
+		date.append( svToString( msgInfo->TimeDetails( ).ZeroPadDecimal( msgInfo->TimeDetails( ).Cache( ).day ) ) );
+		date.append( svToString( msgInfo->TimeDetails( ).Cache( ).short_month ) );
+		date.append( std::to_string( msgInfo->TimeDetails( ).Cache( ).short_year ) );
+		return date;
+	}
+
       private:
-	std::string  fmtPattern;
-	Message_Info msgInfo;
-	std::string  buffer;
+	std::string   fmtPattern;
+	Message_Info *msgInfo;
+	std::string   buffer;
 };
 
 
@@ -608,11 +636,25 @@ class Message_Pattern
 class ColorConsole
 {
       public:
+	ColorConsole( )
+	{
+		msgDetails.SetName( loggerName );
+		msgPattern     = { pattern, &msgDetails };
+		msgLevelColors = {
+		  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
+		  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
+		  { LoggerLevel::debug, se_colors::bright_colors::foreground::cyan },
+		  { LoggerLevel::warning, se_colors::bright_colors::foreground::yellow },
+		  { LoggerLevel::error, se_colors::basic_colors::foreground::red },
+		  { LoggerLevel::fatal, se_colors::bright_colors::combos::yellow::on_red },
+		  { LoggerLevel::off, se_colors::formats::reset },
+		};
+	}
 	ColorConsole( std::string name )
 	{
 		loggerName = std::move( name );
 		msgDetails.SetName( loggerName );
-		msgPattern     = { pattern, msgDetails };
+		msgPattern     = { pattern, &msgDetails };
 		msgLevelColors = {
 		  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 		  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -641,11 +683,13 @@ class ColorConsole
 
 	bool ShouldLog( LoggerLevel level )
 	{
-		return ( msgDetails.MsgLevel( ) <= level ) ? true : false;
+		return ( logLevel <= msgDetails.MsgLevel( ) ) ? true : false;
 	}
 
 	template <typename... Args> void PrintMessage( LoggerLevel level, const std::string msg, Args... args )
 	{
+		msgDetails.SetMessageLevel( level );
+
 		std::string_view msgColor;
 		if( coloredOutput ) {
 			msgColor = GetMsgColor( level );
@@ -693,7 +737,7 @@ class ColorConsole
 	}
 	// ##########################################################################
 
-	std::string toString( const std::string_view s )
+	std::string svToString( const std::string_view s )
 	{
 		return std::string( s.data( ), s.size( ) );
 	}
@@ -704,12 +748,14 @@ class ColorConsole
 		return se_colors::formats::reset;
 	}
 
+
       private:
-	std::string     loggerName = "Default_Console";
-	std::string     pattern    = "%T [%N]: ";  // hardcoding default atm to test Parse/Format functions
-	Message_Info    msgDetails = { };
-	Message_Pattern msgPattern = { pattern, msgDetails };
-	bool            coloredOutput { true };
+	std::string                                       loggerName = "Console_Logger";
+	std::string                                       pattern    = "|%l| %x %n %T [%N]: ";
+	Message_Info                                      msgDetails = { loggerName };
+	Message_Pattern                                   msgPattern = { pattern, &msgDetails };
+	bool                                              coloredOutput { true };
+	LoggerLevel                                       logLevel { LoggerLevel::trace };
 	std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 };  // class ColorConsole
 
@@ -717,50 +763,52 @@ int main( )
 {
 	using namespace se_colors;
 	using namespace serenity::se_utils;
-	ColorConsole C( "Experimental Logger" );
+	ColorConsole C;
 	// Formatting Works With Latest Standard Flag
 	auto s = "White";
 
-#ifdef INSTRUMENTATION_ENABLED
+	const char *   test;
 	Instrumentator macroTester;
+#ifdef INSTRUMENTATION_ENABLED
 	macroTester.StopWatch_Reset( );
 
 	// test string
-	const char *test;
 	std::string temp;
 	for( int i = 0; i < 399; i++ ) {
 		temp += "a";
 	}  // 400 chars = 400 bytes
 	test = temp.c_str( );
-
 	int i { 0 }, iterations { 1000000 };
 	for( i; i < iterations; i++ ) {
+#else
+	test = "Trace";
 #endif  // INSTRUMENTATION_ENABLED
-
-		// Trace Is Default Color
+	// Trace Is Default Color
 		C.trace( "{}", test );
+#ifndef INSTRUMENTATION_ENABLED
 		// Info Is Light Green
-		/*C.info( "Info" )*/;
-		//// Debug Is Light Cyan
-		// C.debug( "Debug" );
-		//// Warning Is Light Yellow
-		// C.warn( "Warning" );
-		//// Error Is Dark Red
-		// C.error( "Error" );
-		//// Fatal Is Light Yellow On Dark Red
-		// C.fatal( "Fatal" );
+		C.info( "Info" );
+		// Debug Is Light Cyan
+		C.debug( "Debug" );
+		// Warning Is Light Yellow
+		C.warn( "Warning" );
+		// Error Is Dark Red
+		C.error( "Error" );
+		// Fatal Is Light Yellow On Dark Red
+		C.fatal( "Fatal" );
+#endif  // !INSTRUMENTATION_ENABLED
 
 #ifdef INSTRUMENTATION_ENABLED
 	}
 	macroTester.StopWatch_Stop( );
 
-	// Currently avereages ~ 0.14ms for a C-Style String Of 400 Bytes Over 1,000,000 iterations -> Not a bad start =D (Granted Not
-	// Apples to apples given this is testing a console target that has nowhere near as many features and safety nets in place, but
-	// as a reference, spdlog's null sink single thread C-Style String of 400 bytes benches at ~40ms taken from their GH repo bench
-	// stats
+	// Currently avereages ~ 0.14ms for a C-Style String Of 400 Bytes Over 1,000,000 iterations -> Not a bad start =D
+	// (Granted Not Apples to apples given this is testing a console target that has nowhere near as many features and
+	// safety nets in place, but as a reference, spdlog's null sink single thread C-Style String of 400 bytes benches at
+	// ~40ms taken from their GH repo bench stats
 	std::cout << Tag::Yellow(
-	  "\n\n***************************************************************\n******************** Instrumentation Data: "
-	  "********************\n***************************************************************\n" );
+	  "\n\n******************************************************************\n******************** Instrumentation Data: "
+	  "***********************\n******************************************************************\n" );
 	std::cout << Tag::Bright_Yellow( "Averaged Total Elapsed Time (Averaged Over 1,000,000 Iterations):\n" )
 		  << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
@@ -770,16 +818,14 @@ int main( )
 		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
 #endif  // INSTRUMENTATION_ENABLED
 
-#ifdef INSTRUMENTATION_ENABLED
-	#if ALLOC_TEST
-	// setting up for the current usage and allocations so no variation in conversions
+#if ALLOC_TEST
 	auto mem_used = macroTester.mem_tracker.Memory_Usage( );
+	// setting up for the current usage and allocations so no variation in conversions
 	std::cout << Tag::Bright_Yellow( "Total Memory Used:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( mem_used ) + " bytes]\n" )
 		  << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( mem_used / 1000.0 ) + " KB]\n" );
-	#endif  // ALLOC_TEST
-#endif          // INSTRUMENTATION_ENABLED
+#endif  // ALLOC_TEST
 
 #ifdef INSTRUMENTATION_ENABLED
 	std::cout << Tag::Bright_Yellow( "Size of ColorConsole Class:\t\t" )
@@ -798,9 +844,9 @@ int main( )
 	std::cout << Tag::Bright_Yellow( "Size of Cached_Date_Time Struct:\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( Cached_Date_Time ) ) + " bytes]\n" );
 
-	std::cout << Tag::Yellow( "***************************************************************\n" );
-	std::cout << Tag::Yellow( "***************************************************************\n" );
-	std::cout << Tag::Yellow( "***************************************************************\n\n" );
+	std::cout << Tag::Yellow( "******************************************************************\n" );
+	std::cout << Tag::Yellow( "******************************************************************\n" );
+	std::cout << Tag::Yellow( "******************************************************************\n\n" );
 
 #endif  // INSTRUMENTATION_ENABLED
 }
