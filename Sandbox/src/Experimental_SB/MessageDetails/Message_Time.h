@@ -42,6 +42,8 @@ namespace serenity
 				Cached_Date_Time        UpdateTimeInfo( );
 				const message_time_mode Mode( );
 				const Cached_Date_Time  Cache( );
+				void                    SetTimeMode( message_time_mode mode );
+
 
 			      private:
 				message_time_mode m_mode;

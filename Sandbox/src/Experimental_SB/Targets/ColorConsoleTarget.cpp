@@ -7,14 +7,9 @@ namespace serenity
 	{
 		namespace targets
 		{
-			ColorConsole::ColorConsole( )
-			  : loggerName( std::move( svToString( "Console_Logger" ) ) ),
-			    pattern( std::move( svToString( "|%l| %x %n %T [%N]: " ) ) ),
-			    msgDetails( loggerName, logLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails ),
-			    coloredOutput( true ),
-			    logLevel( LoggerLevel::trace )
+			ColorConsole::ColorConsole( ) : coloredOutput( true )
 			{
+				SetLoggerName( "Console Logger" );
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 				  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -25,15 +20,9 @@ namespace serenity
 				  { LoggerLevel::off, se_colors::formats::reset },
 				};
 			}
-			ColorConsole::ColorConsole( std::string_view name )
-			  : loggerName( std::move( svToString( name ) ) ),
-			    pattern( std::move( svToString( "|%l| %x %n %T [%N]: " ) ) ),
-			    msgDetails( loggerName, logLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails ),
-			    coloredOutput( true ),
-			    logLevel( LoggerLevel::trace )
+			ColorConsole::ColorConsole( std::string_view name ) : coloredOutput( true )
 			{
-				loggerName     = std::move( name );
+				SetLoggerName( name );
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 				  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -44,15 +33,9 @@ namespace serenity
 				  { LoggerLevel::off, se_colors::formats::reset },
 				};
 			}
-			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
-			  : loggerName( std::move( svToString( name ) ) ),
-			    pattern( std::move( svToString( msgPattern ) ) ),
-			    msgDetails( loggerName, logLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails ),
-			    coloredOutput( true ),
-			    logLevel( LoggerLevel::trace )
+			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern ) : coloredOutput( true )
 			{
-				loggerName     = std::move( name );
+				SetLoggerName( name );
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 				  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -75,17 +58,18 @@ namespace serenity
 			{
 				coloredOutput = colorize;
 			}
-			bool ColorConsole::ShouldLog( LoggerLevel level )
+
+			void ColorConsole::PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args )
 			{
-				return ( logLevel <= msgDetails.MsgLevel( ) ) ? true : false;
-			}
-			std::string ColorConsole::svToString( const std::string_view s )
-			{
-				return std::string( s.data( ), s.size( ) );
-			}
-			std::string ColorConsole::Reset( )
-			{
-				return se_colors::formats::reset;
+				MsgInfo( )->SetMessageLevel( level );
+
+				buffer = std::vformat( msg, args );
+
+				std::string_view msgColor = { };
+				if( coloredOutput ) {
+					msgColor = GetMsgColor( level );
+				}
+				std::cout << msgColor << MsgFmt( )->FmtMessage( buffer ) << se_colors::formats::reset << "\n";
 			}
 		}  // namespace targets
 	}          // namespace expiremental

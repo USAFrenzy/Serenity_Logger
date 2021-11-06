@@ -27,13 +27,13 @@ namespace serenity
 
 		enum class LoggerLevel
 		{
-			trace,
-			info,
-			debug,
-			warning,
-			error,
-			fatal,
-			off,
+			trace   = 0,
+			info    = 1,
+			debug   = 2,
+			warning = 3,
+			error   = 4,
+			fatal   = 5,
+			off     = 6,
 		};
 
 		static std::string_view MsgLevelToShortString( LoggerLevel level )

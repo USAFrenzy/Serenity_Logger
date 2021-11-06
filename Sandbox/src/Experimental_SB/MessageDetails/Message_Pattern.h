@@ -17,6 +17,9 @@ namespace serenity
 				explicit Message_Pattern( std::string formatPattern, Message_Info *msgDetails );
 				Message_Pattern &operator=( const Message_Pattern &t );
 				std::string      GetMsgFmt( );
+				void             SetPattern( std::string_view pattern );
+				void             SetDetails( Message_Info *details );
+
 
 				// Iterate through the pre-message format pattern in order to find any flags. When a flag is reached,
 				// append everything up until that flag to the buffer, erase the flag qualifier, handle the flag, then
@@ -24,7 +27,7 @@ namespace serenity
 				// reached. If no flag is found, or no more flags are available to handle, just append the rest of the
 				// format pattern to the buffer. Append the formatted message string (using the forwarded arguments to
 				// format from) to the buffer and return the entire thing
-				template <typename... Args> inline std::string_view FmtMessage( std::string message, Args &&...args )
+				template <typename... Args> inline std::string_view FmtMessage( std::string message )
 				{
 					buffer.clear( );
 					size_t it { 0 }, pos { 0 };
@@ -42,7 +45,7 @@ namespace serenity
 							fmt.erase( 0, 1 );
 						}
 					}
-					return buffer.append( fmt + std::move( std::format( message, std::forward<Args>( args )... ) ) );
+					return buffer.append( fmt + std::move( message ) );
 				}
 
 			      private:

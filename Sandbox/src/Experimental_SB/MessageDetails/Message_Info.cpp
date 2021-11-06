@@ -7,6 +7,11 @@ namespace serenity
 	{
 		namespace msg_details
 		{
+			Message_Info::Message_Info( )
+			  : m_name( ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local )
+			{
+			}
+
 			Message_Info::Message_Info( std::string name, LoggerLevel level, message_time_mode mode )
 			  : m_name( name ), msgLevel( level ), msg( ), msgTime( mode )
 			{
@@ -29,6 +34,11 @@ namespace serenity
 			void Message_Info::SetName( std::string name )
 			{
 				m_name = name;
+			}
+
+			void Message_Info::SetMsgLevel( LoggerLevel level )
+			{
+				msgLevel = level;
 			}
 
 			std::string Message_Info::Name( )

@@ -161,6 +161,18 @@ namespace serenity
 				date.append( std::to_string( msgInfo->TimeDetails( ).Cache( ).short_year ) );
 				return date;
 			}
+
+			void Message_Pattern::SetPattern( std::string_view pattern )
+			{
+				fmtPattern = svToString( pattern );
+			}
+
+			void Message_Pattern::SetDetails( Message_Info *details )
+			{
+				msgInfo = details;
+			}
+
+
 		}  // namespace msg_details
 	}          // namespace expiremental
 }  // namespace serenity

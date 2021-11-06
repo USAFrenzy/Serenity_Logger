@@ -13,13 +13,16 @@ namespace serenity
 			class Message_Info
 			{
 			      public:
+				Message_Info( );
 				Message_Info( std::string name, LoggerLevel level, message_time_mode mode );
 				Message_Info &operator=( const Message_Info &t );
 				LoggerLevel   MsgLevel( );
-				void          SetName( std::string name );
 				std::string   Name( );
 				Message_Time  TimeDetails( );
 				void          SetMessageLevel( LoggerLevel messageLvl );
+
+				void SetName( std::string name );
+				void SetMsgLevel( LoggerLevel level );
 
 
 			      private:

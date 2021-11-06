@@ -105,6 +105,13 @@ namespace serenity
 				m_cache.sec           = t->tm_sec;
 				m_cache.initialized   = true;
 			}
+
+			void Message_Time::SetTimeMode( message_time_mode mode )
+			{
+				m_mode = mode;
+			}
+
+
 		}  // namespace msg_details
 	}          // namespace expiremental
 }  // namespace serenity

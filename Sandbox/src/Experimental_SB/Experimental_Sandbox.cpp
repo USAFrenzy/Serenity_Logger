@@ -158,7 +158,7 @@ int main( )
 		temp += "a";
 	}  // 400 chars = 400 bytes
 	test = temp.c_str( );
-	unsigned long int i { 0 }, iterations { 1000000 };
+	unsigned long int i { 0 }, iterations { 5000000 };
 	for( i; i < iterations; i++ ) {
 #else
 	test = "Trace";
@@ -189,7 +189,7 @@ int main( )
 	std::cout << Tag::Yellow(
 	  "\n\n******************************************************************\n******************** Instrumentation Data: "
 	  "***********************\n******************************************************************\n" );
-	std::cout << Tag::Bright_Yellow( "Averaged Total Elapsed Time (Averaged Over " )
+	std::cout << Tag::Bright_Yellow( "Averaged Total Elapsed Time Averaged Over " )
 		  << Tag::Bright_Yellow( std::to_string( iterations ) ) << Tag::Bright_Yellow( " Iterations:\n " )
 		  << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
