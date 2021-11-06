@@ -21,9 +21,18 @@ namespace serenity
 			{
 			}
 
+			TargetBase( std::string_view name )
+			  : pattern( "|%l| %x %n %T [%N]: " ),
+			    msgDetails( std::move( svToString( name ) ), logLevel, message_time_mode::local ),
+			    msgPattern( pattern, &msgDetails ),
+			    logLevel( LoggerLevel::trace )
+			{
+			}
+
+
 			TargetBase( std::string_view name, std::string_view msgPattern )
 			  : pattern( std::move( svToString( msgPattern ) ) ),
-			    msgDetails( svToString( name ), logLevel, message_time_mode::local ),
+			    msgDetails( std::move( svToString( name ) ), logLevel, message_time_mode::local ),
 			    msgPattern( pattern, &msgDetails ),
 			    logLevel( LoggerLevel::trace )
 			{

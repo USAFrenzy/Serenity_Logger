@@ -7,9 +7,8 @@ namespace serenity
 	{
 		namespace targets
 		{
-			ColorConsole::ColorConsole( ) : coloredOutput( true )
+			ColorConsole::ColorConsole( ) : TargetBase( "Console Logger" ), coloredOutput( true )
 			{
-				SetLoggerName( "Console Logger" );
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 				  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -20,9 +19,8 @@ namespace serenity
 				  { LoggerLevel::off, se_colors::formats::reset },
 				};
 			}
-			ColorConsole::ColorConsole( std::string_view name ) : coloredOutput( true )
+			ColorConsole::ColorConsole( std::string_view name ) : TargetBase( name ), coloredOutput( true )
 			{
-				SetLoggerName( name );
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 				  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -33,9 +31,9 @@ namespace serenity
 				  { LoggerLevel::off, se_colors::formats::reset },
 				};
 			}
-			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern ) : coloredOutput( true )
+			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
+			  : TargetBase( name, msgPattern ), coloredOutput( true )
 			{
-				SetLoggerName( name );
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
 				  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
@@ -63,13 +61,12 @@ namespace serenity
 			{
 				MsgInfo( )->SetMessageLevel( level );
 
-				buffer = std::vformat( msg, args );
-
 				std::string_view msgColor = { };
 				if( coloredOutput ) {
 					msgColor = GetMsgColor( level );
 				}
-				std::cout << msgColor << MsgFmt( )->FmtMessage( buffer ) << se_colors::formats::reset << "\n";
+				std::cout << msgColor << MsgFmt( )->FmtMessage( std::vformat( msg, args ) )
+					  << se_colors::formats::reset << "\n";
 			}
 		}  // namespace targets
 	}          // namespace expiremental

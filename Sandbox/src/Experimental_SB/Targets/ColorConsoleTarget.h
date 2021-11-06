@@ -30,9 +30,8 @@ namespace serenity
 				void             ColorizeOutput( bool colorize );
 
 			      private:
-				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
-				std::string                                       buffer;
 				bool                                              coloredOutput;
+				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 			};  // class ColorConsole
 		}           // namespace targets
 	}                   // namespace expiremental
