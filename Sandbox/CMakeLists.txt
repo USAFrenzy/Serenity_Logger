@@ -15,8 +15,23 @@ target_link_libraries (
 
 set (PROJECT_NAME Experimental_Sandbox)
 
-set (EXPERIMENTAL_SB_HEADER_FILES)
-set (EXPERIMENTAL_SB_SOURCE_FILES "src/Experimental_SB/Experimental_Sandbox.cpp")
+set (EXPERIMENTAL_SB_HEADER_FILES
+"src/Experimental_SB/Common.h"
+"src/Experimental_SB/MessageDetails/Message_Info.h"
+"src/Experimental_SB/MessageDetails/Message_Time.h"
+"src/Experimental_SB/MessageDetails/Message_Pattern.h"
+"src/Experimental_SB/Targets/Target.h"
+"src/Experimental_SB/Targets/ColorConsoleTarget.h"
+)
+
+set (EXPERIMENTAL_SB_SOURCE_FILES 
+"src/Experimental_SB/Experimental_Sandbox.cpp"
+"src/Experimental_SB/MessageDetails/Message_Info.cpp"
+"src/Experimental_SB/MessageDetails/Message_Time.cpp"
+"src/Experimental_SB/MessageDetails/Message_Pattern.cpp"
+"src/Experimental_SB/Targets/ColorConsoleTarget.cpp"
+)
+
 set (EXPERIMENTAL_SB_ALL_FILES ${EXPERIMENTAL_SB_HEADER_FILES} ${EXPERIMENTAL_SB_SOURCE_FILES})
 
 add_executable (${PROJECT_NAME} ${EXPERIMENTAL_SB_ALL_FILES})
