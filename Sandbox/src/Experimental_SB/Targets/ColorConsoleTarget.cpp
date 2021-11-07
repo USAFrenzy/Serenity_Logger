@@ -1,5 +1,6 @@
 #include "ColorConsoleTarget.h"
 
+#include "../Common.h"  // DB_PRINT()
 
 namespace serenity
 {
@@ -7,7 +8,8 @@ namespace serenity
 	{
 		namespace targets
 		{
-			ColorConsole::ColorConsole( ) : TargetBase( "Console Logger" ), coloredOutput( true )
+			ColorConsole::ColorConsole( )
+			  : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
@@ -19,7 +21,8 @@ namespace serenity
 				  { LoggerLevel::off, se_colors::formats::reset },
 				};
 			}
-			ColorConsole::ColorConsole( std::string_view name ) : TargetBase( name ), coloredOutput( true )
+			ColorConsole::ColorConsole( std::string_view name )
+			  : TargetBase( name ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
@@ -32,7 +35,7 @@ namespace serenity
 				};
 			}
 			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
-			  : TargetBase( name, msgPattern ), coloredOutput( true )
+			  : TargetBase( name, msgPattern ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				msgLevelColors = {
 				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
@@ -57,16 +60,32 @@ namespace serenity
 				coloredOutput = colorize;
 			}
 
+			void ColorConsole::SetConsoleMode( console_interface mode )
+			{
+				consoleMode = mode;
+			}
+
+			console_interface ColorConsole::GetConsoleMode( )
+			{
+				return consoleMode;
+			}
+
 			void ColorConsole::PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args )
 			{
 				MsgInfo( )->SetMessageLevel( level );
 
-				std::string_view msgColor = { };
+				std::string_view msgColor;
 				if( coloredOutput ) {
 					msgColor = GetMsgColor( level );
 				}
-				std::cout << msgColor << MsgFmt( )->FmtMessage( std::vformat( msg, args ) )
-					  << se_colors::formats::reset << "\n";
+				if( consoleMode == console_interface::std_out ) {
+					std::cout << msgColor << MsgFmt( )->FmtMessage( std::vformat( msg, args ) )
+						  << se_colors::formats::reset << "\n";
+				}
+				else {
+					std::cerr << msgColor << MsgFmt( )->FmtMessage( std::vformat( msg, args ) )
+						  << se_colors::formats::reset << "\n";
+				}
 			}
 		}  // namespace targets
 	}          // namespace expiremental

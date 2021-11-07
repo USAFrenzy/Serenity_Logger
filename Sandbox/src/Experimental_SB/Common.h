@@ -68,3 +68,10 @@ namespace serenity
 		};
 	}  // namespace expiremental
 }  // namespace serenity
+
+
+#ifndef NDEBUG
+	#define DB_PRINT( msg, ... ) ( std::cout << std::format( msg, __VA_ARGS__ ) << "\n" )
+#else
+	#define DB_PRINT( msg, ... )
+#endif  // !NDEBUG

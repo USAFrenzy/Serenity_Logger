@@ -20,11 +20,7 @@
 #define INSTRUMENT 1
 #define ALLOC_TEST 0
 
-#ifndef NDEBUG
-	#define DB_PRINT( msg, ... ) ( std::cout << std::format( msg, __VA_ARGS__ ) << "\n" )
-#else
-	#define DB_PRINT( msg, ... )
-#endif  // !NDEBUG
+
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -144,8 +140,6 @@ int main( )
 	using namespace serenity::se_utils;
 
 	targets::ColorConsole C;
-	// Formatting Works With Latest Standard Flag
-	auto s = "White";
 
 	const char *   test;
 	Instrumentator macroTester;
