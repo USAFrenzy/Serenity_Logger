@@ -9,7 +9,7 @@
 // Experimental
 #include "Common.h"
 #include "MessageDetails/Message_Info.h"
-#include "MessageDetails/Message_Pattern.h"
+#include "MessageDetails/Message_Formatter.h"
 #include "MessageDetails/Message_Time.h"
 
 
@@ -19,7 +19,6 @@
 
 #define INSTRUMENT 1
 #define ALLOC_TEST 0
-
 
 
 #if INSTRUMENT
@@ -44,54 +43,27 @@ void operator delete( void *p, size_t n ) throw( )
 }
 #endif  // ALLOC_TEST
 
-
-/***********************************************************************************************************
-*	                                            29/10/21 NOTE:	                                            *
-*					 How I am approaching the flag parsing and setting is as follows                     *
-************************************************************************************************************
-*      For The Initial Caching Of Those Pattern Variables So That It's Inexpensive To Parse The Format     *
-************************************************************************************************************
-* 0)  Copy Message_Info pattern string passed in at construction into Message_Time pattern string variable
-* 1)  Using validFlags array, find each instance a valid flag appears in pattern format
-* 2a) When flag is found, capture the flag character and forward to a flag handler function
-* 2b) Map the flag character to the Flags enum bitfield value and set that field
-* 2c) Repeat this until end of pattern is reached
-* 3)  In a caching function that evaulates which bit fields are set, set the appropriate member tm struct
-*     variables.
-//! Note: The Above Requires That A Pattern Is Present For Message_Time And That The Current Caching Function
-//! Is Altered To Reflect The Thoughts Above
-//! Step 0: Subject To Change Based On How Logging Targets Are Created And How These Fields Get Passed Around
-************************************************************************************************************
-*                   For The Actual Printing/Logging Using The Prepended Pattern:                           *
-************************************************************************************************************
-* 1)  Similar to above, using validFlags array, find each instance a valid flag appears in pattern format
-* 2a) When flag is found, append all characters found up until that flag to an internal buffer
-* 2b) In a separate flag handler function that deals with cached variables from above, pass in the flag
-      captured, return the value and append to buffer
-* 2c) Continue this until end of pattern string is reached and return the pattern buffer
-* 3)  In the printing function, append the message to the buffer that was returned and print message
-*************************************************************************************************************/
-
 /************************************************************************************************************
 									custom flags
 						************************************
-	- %N (Name)				- %L (Full Message Level)		- %x (Short Weekday String)
+	- %N (Name)					- %L (Full Message Level)		- %x (Short Weekday String)
 	- %l (Short Message Level)	- %n (DD/MMM/YY Date)			- %X (Long Weekday String)
 
 							The rest are strftime equivalents
 						******************************************
-	- %d (Day Of Month)			- %T (HH:MM:SS Time format)		- %S (Seconds)
+	- %d (Day Of Month)				- %T (HH:MM:SS Time format)		- %S (Seconds)
 	- %D (MM/DD/YY Date)			- %w (weekday as decimal 0-6)	- %Y (Year XXXX)
 	- %b (Abbrev Month Name)		- %F (YYYY-MM-DD Date)			- %M (Minute)
-	- %B (Full Month Name)			- %H (24hr Hour format)		- %y (year XX Format)
+	- %B (Full Month Name)			- %H (24hr Hour format)			- %y (year XX Format)
 ************************************************************************************************************/
+
 // clang-format off
 // #####################################################################################################################################################
 // This will probably be used for something more along the lines of just checking if a new flag that isn't default supported is being parsed, in a very 
 // similar fashion to how spdlog allows users to create custom flags and custom flag argument handlers
 // #####################################################################################################################################################
-static constexpr std::array<std::string_view, 18> validFlags = { "%N", "%n", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
-						      "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%x", "%X" };
+static constexpr std::array<std::string_view, 20> validFlags = { "%N", "%n", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
+						      "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%x", "%X" , "%a", "%A"};
 // This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
 // *************************************************************************
 _Enum_is_bitflag_ enum class Flags : uint32_t {
@@ -140,7 +112,6 @@ int main( )
 	using namespace serenity::se_utils;
 
 	targets::ColorConsole C;
-
 	const char *   test;
 	Instrumentator macroTester;
 #ifdef INSTRUMENTATION_ENABLED
@@ -152,14 +123,17 @@ int main( )
 		temp += "a";
 	}  // 400 chars = 400 bytes
 	test = temp.c_str( );
-	unsigned long int i { 0 }, iterations { 5000000 };
+	unsigned long int i { 0 }, iterations { 1000000 };
 	for( i; i < iterations; i++ ) {
 #else
-	test = "Trace";
+	printf( "####################################################################\n" );
+	printf( "# This Will Be The Default Pattern Format And Message Level Colors #\n" );
+	printf( "####################################################################\n" );
 #endif  // INSTRUMENTATION_ENABLED
+		C.info( "{}", test );
 	// Trace Is Default Color
-		C.trace( "{}", test );
 #ifndef INSTRUMENTATION_ENABLED
+		C.trace( "{}", "Trace" );
 		// Info Is Light Green
 		C.info( "Info" );
 		// Debug Is Light Cyan
@@ -170,6 +144,33 @@ int main( )
 		C.error( "Error" );
 		// Fatal Is Light Yellow On Dark Red
 		C.fatal( "Fatal" );
+		printf( "####################################################################\n\n" );
+		printf( "########################################################################\n" );
+		printf( "# Testing Some Basic Functions To Make Sure All Is Working As I Expect #\n" );
+		printf( "########################################################################\n" );
+		C.SetPattern( "%T [%N]: " );
+		C.info( "Pattern String Has Been Changed To \"%T [%N]: \"" );
+		C.ColorizeOutput( false );
+		C.info( "Colorized Output Set To False, Therefore, This Output Should Be The Default Color" );
+		C.error( "This Line Should Also Still Lack Color" );
+		C.ColorizeOutput( true );
+		C.info( "Colorized Output Re-enabled, therefore this line should be colored" );
+		C.info( "Log Level Will Be Set To \"warning\"" );
+		C.SetLogLevel( LoggerLevel::warning );
+		C.info( "Log Level Has Been Set To Warning, So This Line Should Not Print" );
+		C.warn( "However, This Line Should Print" );
+		C.fatal( "And This Line Should Also Print" );
+		C.SetLogLevel( LoggerLevel::trace );
+		C.info( "Log Level Set Back To \"trace\"" );
+		C.ResetPatternToDefault( );
+		C.info( "Pattern String Should Have Been Changed Back To Default Pattern" );
+		C.SetMsgColor( LoggerLevel::warning, se_colors::bright_colors::combos::cyan::on_grey );
+		C.trace( "Warning Level Color Has Been Changed To Cyan On Grey" );
+		C.warn( "So This Line Should Now Be Cyan On Grey" );
+		C.warn( "As Should This Line - Testing For Any One-Off Weirdness Here" );
+		C.SetOriginalColors( );
+		C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
+
 #endif  // !INSTRUMENTATION_ENABLED
 
 #ifdef INSTRUMENTATION_ENABLED
@@ -206,17 +207,17 @@ int main( )
 	std::cout << Tag::Bright_Yellow( "Size of ColorConsole Class:\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::ColorConsole ) ) + " bytes]\n" );
 
-	std::cout << Tag::Bright_Yellow( "Size of Message_Info Struct:\t\t" )
+	std::cout << Tag::Bright_Yellow( "Size of Message_Info Class:\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Info ) ) + " bytes]\n" );
 
 
-	std::cout << Tag::Bright_Yellow( "Size of Message_Pattern Struct:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Pattern ) ) + " bytes]\n" );
+	std::cout << Tag::Bright_Yellow( "Size of Message_Formatter Class:\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Formatter ) ) + " bytes]\n" );
 
-	std::cout << Tag::Bright_Yellow( "Size of Message_Time Struct:\t\t" )
+	std::cout << Tag::Bright_Yellow( "Size of Message_Time Class:\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Time ) ) + " bytes]\n" );
 
-	std::cout << Tag::Bright_Yellow( "Size of Cached_Date_Time Struct:\t" )
+	std::cout << Tag::Bright_Yellow( "Size of Cached_Date_Time Class:\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Cached_Date_Time ) ) + " bytes]\n" );
 
 	std::cout << Tag::Yellow( "******************************************************************\n" );

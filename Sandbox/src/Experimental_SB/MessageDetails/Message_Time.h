@@ -28,7 +28,6 @@ namespace serenity
 				std::string_view short_month;
 				int              dec_month;
 				int              day;
-				bool             initialized { false };
 			};
 
 			class Message_Time
@@ -39,9 +38,9 @@ namespace serenity
 				int                     GetCurrentYear( int yearOffset, bool shortened = false );
 				std::string_view        MonthString( int monthIndex, bool shortened = false );
 				std::string             ZeroPadDecimal( int dec );
-				Cached_Date_Time        UpdateTimeInfo( );
+				Cached_Date_Time        UpdateCache( );
+				std::string_view        DayHalf( int hour );
 				const message_time_mode Mode( );
-				const Cached_Date_Time  Cache( );
 				void                    SetTimeMode( message_time_mode mode );
 
 
@@ -50,8 +49,7 @@ namespace serenity
 				std::time_t       m_time;
 				std::tm *         t_struct = { };
 				Cached_Date_Time  m_cache  = { };
-
-				void InitializeCache( std::tm *t );
+				Cached_Date_Time  InitializeCache( std::tm *t );
 			};
 		}  // namespace msg_details
 	}          // namespace expiremental

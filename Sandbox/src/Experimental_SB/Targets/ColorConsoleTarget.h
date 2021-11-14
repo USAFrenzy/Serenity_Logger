@@ -12,14 +12,14 @@ namespace serenity
 {
 	namespace expiremental
 	{
-		enum class console_interface
-		{
-			std_out,
-			std_err
-		};
-
 		namespace targets
 		{
+			enum class console_interface
+			{
+				std_out,
+				std_err
+			};
+
 			// ansi color codes supported in Win 10+, therefore, targetting Win 10+ due to what the timeframe of the
 			// project I'll be using this in (< win 8.1 EOL).
 			class ColorConsole : public TargetBase
@@ -29,15 +29,18 @@ namespace serenity
 				ColorConsole( std::string_view name );
 				ColorConsole( std::string_view name, std::string_view msgPattern );
 
-				void PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args ) override;
 				std::string_view  GetMsgColor( LoggerLevel level );
 				void              SetMsgColor( LoggerLevel level, std::string_view color );
 				void              SetConsoleMode( console_interface mode );
 				console_interface GetConsoleMode( );
 				void              ColorizeOutput( bool colorize );
+				void              SetLogLevel( LoggerLevel level );
+				void              SetOriginalColors( );
 
 			      private:
-				bool                                              coloredOutput;
+				void        PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args ) override;
+				LoggerLevel logLevel;
+				bool        coloredOutput;
 				console_interface                                 consoleMode;
 				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 			};  // class ColorConsole

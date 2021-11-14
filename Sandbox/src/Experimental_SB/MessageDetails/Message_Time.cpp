@@ -9,7 +9,7 @@ namespace serenity
 		{
 			Message_Time::Message_Time( message_time_mode mode ) : m_mode( mode )
 			{
-				UpdateTimeInfo( );
+				UpdateCache( );
 			}
 
 			std::string_view Message_Time::WeekdayString( int weekdayIndex, bool shortened )
@@ -47,11 +47,8 @@ namespace serenity
 				return ( dec >= 10 ) ? std::to_string( dec ) : "0" + std::to_string( dec );
 			}
 
-			Cached_Date_Time Message_Time::UpdateTimeInfo( )
+			Cached_Date_Time Message_Time::UpdateCache( )
 			{
-				// For both modes, check if the cache has been initialized, if so, then just update time variables. If
-				// not, then populate t_struct with time date variables and initialize cache
-				if( m_cache.initialized ) {
 					time( &m_time );
 					if( m_mode == message_time_mode::local ) {
 						t_struct = std::localtime( &m_time );
@@ -59,24 +56,11 @@ namespace serenity
 					else {
 						t_struct = std::gmtime( &m_time );
 					}
-					m_cache.hour = t_struct->tm_hour;
-					m_cache.min  = t_struct->tm_min;
-					m_cache.sec  = t_struct->tm_sec;
-					return m_cache;
-				}
-				else {
-					m_time = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now( ) );
-					if( m_mode == message_time_mode::local ) {
-						t_struct = std::localtime( &m_time );
-						InitializeCache( t_struct );
-						return m_cache;
-					}
-					else {
-						t_struct = std::gmtime( &m_time );
-						InitializeCache( t_struct );
-						return m_cache;
-					}
-				}
+					return InitializeCache( t_struct );
+			}
+
+			std::string_view  Message_Time::DayHalf( int hour) {
+				return ( hour >= 12 ) ? "PM" : "AM"; 
 			}
 
 			const message_time_mode Message_Time::Mode( )
@@ -84,12 +68,7 @@ namespace serenity
 				return m_mode;
 			}
 
-			const Cached_Date_Time Message_Time::Cache( )
-			{
-				return m_cache;
-			}
-
-			void Message_Time::InitializeCache( std::tm *t )
+			Cached_Date_Time Message_Time::InitializeCache( std::tm *t )
 			{
 				m_cache.long_year     = std::move( GetCurrentYear( t->tm_year ) );
 				m_cache.short_year    = std::move( GetCurrentYear( t->tm_year, true ) );
@@ -103,7 +82,7 @@ namespace serenity
 				m_cache.hour          = t->tm_hour;
 				m_cache.min           = t->tm_min;
 				m_cache.sec           = t->tm_sec;
-				m_cache.initialized   = true;
+				return m_cache;
 			}
 
 			void Message_Time::SetTimeMode( message_time_mode mode )

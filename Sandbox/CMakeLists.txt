@@ -19,17 +19,20 @@ set (EXPERIMENTAL_SB_HEADER_FILES
 "src/Experimental_SB/Common.h"
 "src/Experimental_SB/MessageDetails/Message_Info.h"
 "src/Experimental_SB/MessageDetails/Message_Time.h"
-"src/Experimental_SB/MessageDetails/Message_Pattern.h"
+"src/Experimental_SB/MessageDetails/Message_Formatter.h"
 "src/Experimental_SB/Targets/Target.h"
 "src/Experimental_SB/Targets/ColorConsoleTarget.h"
+"src/Experimental_SB/Targets/FileTarget.h"
 )
 
 set (EXPERIMENTAL_SB_SOURCE_FILES 
 "src/Experimental_SB/Experimental_Sandbox.cpp"
 "src/Experimental_SB/MessageDetails/Message_Info.cpp"
 "src/Experimental_SB/MessageDetails/Message_Time.cpp"
-"src/Experimental_SB/MessageDetails/Message_Pattern.cpp"
+"src/Experimental_SB/MessageDetails/Message_Formatter.cpp"
+"src/Experimental_SB/Targets/Target.cpp"
 "src/Experimental_SB/Targets/ColorConsoleTarget.cpp"
+"src/Experimental_SB/Targets/FileTarget.cpp"
 )
 
 set (EXPERIMENTAL_SB_ALL_FILES ${EXPERIMENTAL_SB_HEADER_FILES} ${EXPERIMENTAL_SB_SOURCE_FILES})
