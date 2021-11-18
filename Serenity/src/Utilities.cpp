@@ -106,34 +106,14 @@ namespace serenity
 #else
 			std::regex validateFile( "^[\\/:]|NUL+$" );
 #endif
-			if( ( std::regex_search( fileName, match, validateFile ) ) ) {
-				printf(
-				  "ERROR:\t"
-				  "File Name [ %s ] Contains Invalid Characters Or Reserved File Names. (If On Linux/Unix, This "
-				  "Includes "
-				  "':' And '\\'\n",
-				  fileName.c_str( ) );
-				return false;
-			}
-			else {
-				return true;
-			}
+			return ( std::regex_search( fileName, match, validateFile ) ) ? false : true;
 		}
 
 		bool const ValidateExtension( std::string fileName )
 		{
 			std::smatch match;
 			std::regex  validExtension( "^\\.[a-zA-Z]{7}$" );  // making 7 a thing here due to files like .config
-			if( ( std::regex_search( fileName, match, validExtension ) ) ) {
-				printf(
-				  "WARNING:\t"
-				  "File Name [ %s ] Extension Is Invalid.\n",
-				  fileName.c_str( ) );
-				return false;
-			}
-			else {
-				return true;
-			}
+			return ( std::regex_search( fileName, match, validExtension ) ) ? false : true;
 		}
 
 

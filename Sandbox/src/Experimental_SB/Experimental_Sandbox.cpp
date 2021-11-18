@@ -16,6 +16,7 @@
 #include <serenity/Utilities/Utilities.h>
 #include <serenity/Common.h>
 #include "Targets/ColorConsoleTarget.h"
+#include "Targets/FileTarget.h"
 
 #define INSTRUMENT 1
 #define ALLOC_TEST 0
@@ -112,8 +113,12 @@ int main( )
 	using namespace serenity::se_utils;
 
 	targets::ColorConsole C;
-	const char *   test;
-	Instrumentator macroTester;
+	targets::FileTarget   testFile;
+
+	const char *          test;
+	Instrumentator        macroTester;
+	Instrumentator        macroTesterFile;
+
 #ifdef INSTRUMENTATION_ENABLED
 	macroTester.StopWatch_Reset( );
 
@@ -123,17 +128,18 @@ int main( )
 		temp += "a";
 	}  // 400 chars = 400 bytes
 	test = temp.c_str( );
-	unsigned long int i { 0 }, iterations { 1000000 };
+	unsigned long int i { 0 }, iterations { 2000000 };
 	for( i; i < iterations; i++ ) {
-#else
-	printf( "####################################################################\n" );
-	printf( "# This Will Be The Default Pattern Format And Message Level Colors #\n" );
-	printf( "####################################################################\n" );
-#endif  // INSTRUMENTATION_ENABLED
 		C.info( "{}", test );
-	// Trace Is Default Color
+
+#endif  // INSTRUMENTATION_ENABLED
+
 #ifndef INSTRUMENTATION_ENABLED
-		C.trace( "{}", "Trace" );
+		printf( "####################################################################\n" );
+		printf( "# This Will Be The Default Pattern Format And Message Level Colors #\n" );
+		printf( "####################################################################\n" );
+		// Trace Is Default Color
+		C.trace( "Trace" );
 		// Info Is Light Green
 		C.info( "Info" );
 		// Debug Is Light Cyan
@@ -170,12 +176,32 @@ int main( )
 		C.warn( "As Should This Line - Testing For Any One-Off Weirdness Here" );
 		C.SetOriginalColors( );
 		C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
+	
+		
+		// This Is Now Fully Working As Well
+		testFile.EraseContents( );
+		testFile.trace( "This Is A Trace Message To The File" );
+		testFile.info( "This Is An Info Message To The File" );
+		testFile.debug( "This Is A Debug Message To The File" );
+		testFile.warn( "This Is A Warning Message To The File" );
+		testFile.error( "This Is An Error Message To The File" );
+		testFile.fatal( "This Is A Fatal Message To The File" );
 
+		// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder
+		// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED
 
 #ifdef INSTRUMENTATION_ENABLED
 	}
 	macroTester.StopWatch_Stop( );
+	i = 0; // reset
+	testFile.EraseContents( );
+	macroTesterFile.StopWatch_Reset( );
+	for( i; i < iterations; i++ ) 
+	{
+		testFile.trace( "{}", test );
+	}
+	macroTesterFile.StopWatch_Stop( );
 
 	// Currently avereages ~ 0.14ms for a C-Style String Of 400 Bytes Over 1,000,000 iterations -> Not a bad start =D
 	// (Granted Not Apples to apples given this is testing a console target that has nowhere near as many features and
@@ -184,15 +210,25 @@ int main( )
 	std::cout << Tag::Yellow(
 	  "\n\n******************************************************************\n******************** Instrumentation Data: "
 	  "***********************\n******************************************************************\n" );
-	std::cout << Tag::Bright_Yellow( "Averaged Total Elapsed Time Averaged Over " )
-		  << Tag::Bright_Yellow( std::to_string( iterations ) ) << Tag::Bright_Yellow( " Iterations:\n " )
+	std::cout << Tag::Bright_Yellow( "Console Target Averaged Total Elapsed Time\t(Averaged Over " )
+		  << Tag::Bright_Yellow( std::to_string( iterations ) ) << Tag::Bright_Yellow( " Iterations):\n " )
 		  << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
 		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
 		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
 		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
 		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+
+		std::cout << Tag::Bright_Yellow( "File Target Averaged Total Elapsed Time\t\t(Averaged Over " )
+		  << Tag::Bright_Yellow( std::to_string( iterations ) ) << Tag::Bright_Yellow( " Iterations):\n " )
+		  << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
+		  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
+		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
+		  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
+		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
+		  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::sec ) / iterations ) + " s\n\n" );
 #endif  // INSTRUMENTATION_ENABLED
+
 
 #if ALLOC_TEST
 	auto mem_used = macroTester.mem_tracker.Memory_Usage( );
@@ -206,6 +242,9 @@ int main( )
 #ifdef INSTRUMENTATION_ENABLED
 	std::cout << Tag::Bright_Yellow( "Size of ColorConsole Class:\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::ColorConsole ) ) + " bytes]\n" );
+
+	std::cout << Tag::Bright_Yellow( "Size of FileTarget Class:\t\t" )
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::FileTarget) ) + " bytes]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Info Class:\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Info ) ) + " bytes]\n" );
