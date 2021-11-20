@@ -7,7 +7,8 @@ namespace serenity
 		namespace targets
 		{
 			TargetBase::TargetBase( )
-			  : pattern( "|%l| %x %n %T [%N]: " ),
+			  : policy( ),
+			    pattern( "|%l| %x %n %T [%N]: " ),
 			    msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
 			    msgPattern( pattern, &msgDetails ),
 			    msgLevel( LoggerLevel::trace )
@@ -15,7 +16,8 @@ namespace serenity
 			}
 
 			TargetBase::TargetBase( std::string_view name )
-			  : pattern( "|%l| %x %n %T [%N]: " ),
+			  : policy( ),
+			    pattern( "|%l| %x %n %T [%N]: " ),
 			    msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
 			    msgPattern( pattern, &msgDetails ),
 			    msgLevel( LoggerLevel::trace )
@@ -23,15 +25,27 @@ namespace serenity
 			}
 
 			TargetBase::TargetBase( std::string_view name, std::string_view msgPattern )
-			  : pattern( std::move( svToString( msgPattern ) ) ),
+			  : policy( ),
+			    pattern( std::move( svToString( msgPattern ) ) ),
 			    msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
 			    msgPattern( pattern, &msgDetails ),
 			    msgLevel( LoggerLevel::trace )
 			{
 			}
+
 			void TargetBase::SetPattern( std::string_view pattern )
 			{
 				msgPattern.SetPattern( pattern );
+			}
+
+			void TargetBase::SetFlushPolicy( Flush_Policy policy )
+			{
+				this->policy = policy;
+			}
+
+			const Flush_Policy TargetBase::FlushPolicy( )
+			{
+				return policy;
 			}
 
 			std::string TargetBase::LoggerName( )

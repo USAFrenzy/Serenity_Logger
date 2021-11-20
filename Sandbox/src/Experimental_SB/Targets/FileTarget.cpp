@@ -13,11 +13,13 @@ namespace serenity
 		{
 			FileTarget::FileTarget( )
 			{
-				std::filesystem::path            file = std::filesystem::current_path( );
-				std::filesystem::directory_entry logDir { file /= "Logs" };
-				file /= logDir;
-				file /= "Generic_Log.txt";
-				filePath = std::move( file.make_preferred( ).string( ) );
+				std::filesystem::path fullFilePath = std::filesystem::current_path( );
+				auto                  logDir { "Logs" };
+				// NOTE: This Appends The Log Dir To The File Path AS WELL AS assigns that path to logDirPath
+				// (Reason: Foregoing const-ness here)
+				auto logDirPath = fullFilePath /= logDir;
+				fullFilePath /= "Generic_Log.txt";
+				filePath = std::move( fullFilePath.make_preferred( ).string( ) );
 				logLevel = LoggerLevel::trace;
 
 				if( !std::filesystem::exists( this->filePath ) ) {
@@ -63,6 +65,10 @@ namespace serenity
 			FileTarget::~FileTarget( )
 			{
 				CloseFile( );
+			}
+			std::string FileTarget::FilePath( )
+			{
+				return filePath;
 			}
 
 			bool FileTarget::OpenFile( bool truncate )
@@ -144,7 +150,28 @@ namespace serenity
 					// Downside To This Idea Is Now I Would Have To Deal With Buffer Sizes And What To Do On Low
 					// Memory..
 					// TODO: #######################################################################################
-					Flush( );
+
+					if( policy.GetFlushSetting( ) == Flush_Policy::Flush::always ) {
+						Flush( );
+					}
+					else {
+						// Logic Based Off Sub-Options For Flush Policy Goes Here
+						switch( policy.GetPeriodicSetting( ) ) {
+							case Flush_Policy::Periodic_Options::mem_usage:
+								{
+								}
+								break;
+							case Flush_Policy::Periodic_Options::time_based:
+								{
+								}
+								break;
+							case Flush_Policy::Periodic_Options::undef:
+								{
+									Flush( );  // if undefined, just default to flushing
+								}
+								break;
+						}
+					}
 				}
 				else {
 					return;

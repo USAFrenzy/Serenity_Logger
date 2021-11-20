@@ -128,7 +128,8 @@ int main( )
 		temp += "a";
 	}  // 400 chars = 400 bytes
 	test = temp.c_str( );
-	unsigned long int i { 0 }, iterations { 2000000 };
+	unsigned long int i { 0 }, iterations { 1000000 };
+	std::cout << "Benching Color Console Target...\n\n";
 	for( i; i < iterations; i++ ) {
 		C.info( "{}", test );
 
@@ -194,6 +195,7 @@ int main( )
 #ifdef INSTRUMENTATION_ENABLED
 	}
 	macroTester.StopWatch_Stop( );
+	std::cout << "\nConsole Bench Finished. Benching File Target...\n";
 	i = 0; // reset
 	testFile.EraseContents( );
 	macroTesterFile.StopWatch_Reset( );
@@ -202,14 +204,15 @@ int main( )
 		testFile.trace( "{}", test );
 	}
 	macroTesterFile.StopWatch_Stop( );
+	std::cout << "\nFile Target Bench Finished.\n\n";
 
 	// Currently avereages ~ 0.14ms for a C-Style String Of 400 Bytes Over 1,000,000 iterations -> Not a bad start =D
 	// (Granted Not Apples to apples given this is testing a console target that has nowhere near as many features and
 	// safety nets in place, but as a reference, spdlog's null sink single thread C-Style String of 400 bytes benches at
 	// ~40ms taken from their GH repo bench stats
 	std::cout << Tag::Yellow(
-	  "\n\n******************************************************************\n******************** Instrumentation Data: "
-	  "***********************\n******************************************************************\n" );
+	  "\n\n***************************************************************************************\n************************************ Instrumentation Data: "
+	  "****************************\n***************************************************************************************\n" );
 	std::cout << Tag::Bright_Yellow( "Console Target Averaged Total Elapsed Time\t(Averaged Over " )
 		  << Tag::Bright_Yellow( std::to_string( iterations ) ) << Tag::Bright_Yellow( " Iterations):\n " )
 		  << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
@@ -241,27 +244,27 @@ int main( )
 
 #ifdef INSTRUMENTATION_ENABLED
 	std::cout << Tag::Bright_Yellow( "Size of ColorConsole Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::ColorConsole ) ) + " bytes]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::ColorConsole ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of FileTarget Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::FileTarget) ) + " bytes]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::FileTarget) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Info Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Info ) ) + " bytes]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Info ) ) + "\tbytes ]\n" );
 
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Formatter Class:\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Formatter ) ) + " bytes]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Formatter ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Time Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Time ) ) + " bytes]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Time ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Cached_Date_Time Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Cached_Date_Time ) ) + " bytes]\n" );
+		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Cached_Date_Time ) ) + "\tbytes ]\n" );
 
-	std::cout << Tag::Yellow( "******************************************************************\n" );
-	std::cout << Tag::Yellow( "******************************************************************\n" );
-	std::cout << Tag::Yellow( "******************************************************************\n\n" );
+	std::cout << Tag::Yellow( "***************************************************************************************\n" );
+	std::cout << Tag::Yellow( "***************************************************************************************\n" );
+	std::cout << Tag::Yellow( "***************************************************************************************\n\n" );
 
 #endif  // INSTRUMENTATION_ENABLED
 }

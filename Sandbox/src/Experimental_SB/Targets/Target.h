@@ -12,6 +12,61 @@ namespace serenity
 	{
 		namespace targets
 		{
+			class Flush_Policy
+			{
+			      public:
+				enum class Flush
+				{
+					always,
+					periodically,
+				};
+				enum class Periodic_Options
+				{
+					mem_usage,
+					time_based,
+					undef,
+				};
+
+			      private:
+				struct Flush_Settings
+				{
+					Flush            policy;
+					Periodic_Options sub_options;
+				};
+
+			      public:
+				Flush_Policy( )
+				{
+					options.policy      = Flush::always;
+					options.sub_options = Periodic_Options::undef;
+				}
+
+				~Flush_Policy( ) = default;
+
+				void SetFlushOptions( Flush_Settings flushOptions )
+				{
+					options = flushOptions;
+				}
+				
+				Flush_Settings GetSettings( )
+				{
+					return options;
+				}
+
+				const Periodic_Options GetPeriodicSetting() {
+					return options.sub_options;
+				}
+
+				const Flush GetFlushSetting( )
+				{
+					return options.policy;
+				}
+
+			      private:
+				Flush_Settings options;
+			};
+
+
 			class TargetBase
 			{
 			      public:
@@ -20,10 +75,12 @@ namespace serenity
 				TargetBase( std::string_view name, std::string_view msgPattern );
 				~TargetBase( ) = default;
 
-				std::string LoggerName( );
-				void        SetPattern( std::string_view pattern );
-				void        ResetPatternToDefault( );
+				void               SetFlushPolicy( Flush_Policy policy );
+				const Flush_Policy FlushPolicy( );
 
+				std::string                      LoggerName( );
+				void                             SetPattern( std::string_view pattern );
+				void                             ResetPatternToDefault( );
 				template <typename... Args> void trace( std::string s, Args &&...args );
 				template <typename... Args> void info( std::string s, Args &&...args );
 				template <typename... Args> void debug( std::string s, Args &&...args );
@@ -38,6 +95,7 @@ namespace serenity
 				msg_details::Message_Info *     MsgInfo( );
 
 			      private:
+				Flush_Policy                   policy;
 				LoggerLevel                    msgLevel;
 				std::string                    pattern;
 				std::string                    loggerName;
