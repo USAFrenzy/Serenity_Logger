@@ -10,63 +10,71 @@ namespace serenity
 {
 	namespace expiremental
 	{
-		namespace targets
+		class Flush_Policy
 		{
-			class Flush_Policy
+		      public:
+			enum class Flush
 			{
-			      public:
-				enum class Flush
-				{
-					always,
-					periodically,
-				};
-				enum class Periodic_Options
-				{
-					mem_usage,
-					time_based,
-					undef,
-				};
-
-			      private:
-				struct Flush_Settings
-				{
-					Flush            policy;
-					Periodic_Options sub_options;
-				};
-
-			      public:
-				Flush_Policy( )
-				{
-					options.policy      = Flush::always;
-					options.sub_options = Periodic_Options::undef;
-				}
-
-				~Flush_Policy( ) = default;
-
-				void SetFlushOptions( Flush_Settings flushOptions )
-				{
-					options = flushOptions;
-				}
-				
-				Flush_Settings GetSettings( )
-				{
-					return options;
-				}
-
-				const Periodic_Options GetPeriodicSetting() {
-					return options.sub_options;
-				}
-
-				const Flush GetFlushSetting( )
-				{
-					return options.policy;
-				}
-
-			      private:
-				Flush_Settings options;
+				always,
+				periodically,
+			};
+			enum class Periodic_Options
+			{
+				mem_usage,
+				time_based,
+				undef,
 			};
 
+		      private:
+			struct Flush_Settings
+			{
+				Flush            policy;
+				Periodic_Options sub_options;
+				float            interval;
+			};
 
+		      public:
+			Flush_Policy( )
+			{
+				options.policy      = Flush::always;
+				options.sub_options = Periodic_Options::undef;
+				options.interval    = 0.0;
+			}
+			Flush_Policy( Flush mode, Periodic_Options sub_options = Periodic_Options::undef, float interval = 0 )
+			{
+				options.policy      = mode;
+				options.sub_options = sub_options;
+				options.interval    = interval;
+			}
+
+			~Flush_Policy( ) = default;
+
+			void SetFlushOptions( Flush_Settings flushOptions )
+			{
+				options = flushOptions;
+			}
+
+			const Flush_Settings GetSettings( )
+			{
+				return options;
+			}
+
+			const Periodic_Options GetPeriodicSetting( )
+			{
+				return options.sub_options;
+			}
+
+			const Flush GetFlushSetting( )
+			{
+				return options.policy;
+			}
+
+		      private:
+			Flush_Settings options;
+		};
+
+		namespace targets
+		{
 			class TargetBase
 			{
 			      public:

@@ -5,14 +5,18 @@
 #include <serenity/Utilities/Utilities.h>
 #include <serenity/Color/Color.h>
 
+#define BUFFER_SIZE 4096
+#define BUFFER_CHECK ( BUFFER_SIZE/2 + BUFFER_SIZE/3)
+
 namespace serenity
 {
 	namespace expiremental
 	{
 		namespace targets
 		{
-			FileTarget::FileTarget( )
+			FileTarget::FileTarget( ) : TargetBase( "File Logger" )
 			{
+				buffer.resize( BUFFER_SIZE );
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
 				auto                  logDir { "Logs" };
 				// NOTE: This Appends The Log Dir To The File Path AS WELL AS assigns that path to logDirPath
@@ -21,7 +25,6 @@ namespace serenity
 				fullFilePath /= "Generic_Log.txt";
 				filePath = std::move( fullFilePath.make_preferred( ).string( ) );
 				logLevel = LoggerLevel::trace;
-
 				if( !std::filesystem::exists( this->filePath ) ) {
 					try {
 						file_utils::CreateDir( logDir );
@@ -35,8 +38,10 @@ namespace serenity
 				}
 			}
 
-			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists )
+
+			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists ) : TargetBase( "File Logger" )
 			{
+				buffer.resize( BUFFER_SIZE );
 				std::filesystem::path file { filePath };
 				this->filePath = std::move( file.relative_path( ).make_preferred( ).string( ) );
 				logLevel       = LoggerLevel::trace;
@@ -132,26 +137,9 @@ namespace serenity
 					if( !fileHandle.is_open( ) ) {
 						OpenFile( );
 					}
-					fileHandle << MsgFmt( )->FormatMessage( msg, args ) << "\n";
-					// TODO: #######################################################################################
-					// Possibly Create A Flush Policy Kind Of Deal Here - Similar To What spdlog Has. Either That,
-					// Or Close The File After Every Write Op? Decisions, Decisions.. Better Performance If File Is
-					// Left Open During App Lifetime And Regular Flushes Would Add Some Safety In The Event Of
-					// Crashes So Not All Data Is Lost, But Resources Are Hogged By Keeping The File Open During
-					// The App's Lifetime. Not Only That, Unless I Mess With std::filesystem Permissions, I Don't
-					// Believe Any Other Processes Would Even Be Able To Read What Is Being Written Concurrently. I
-					// Do Need To Think About How I Want To Approach This In The Future With Multi-Threading As
-					// Well - Obviously, If Multiple Threads Are Writing To The Same File, There NEEDS To Be A
-					// Locking Mechanism (i.e. mutex) Of Sorts Or Some Way To Say "Hey, Currently Writing To File,
-					// Flush To Buffer Until Thread 'A' Finishes". Actually, After Writing That, That Might Be A
-					// Good Idea - Have A Logging Thread That Logs To A Buffer, Use A Flush Policy To Determine How
-					// Often That Buffer Gets Flushed To Disk, And Use A Secondary Thread To Flush That Buffer To
-					// Disk Based Off The Flush Policy So As Not To Hinder The First Thread's Logging. Only
-					// Downside To This Idea Is Now I Would Have To Deal With Buffer Sizes And What To Do On Low
-					// Memory..
-					// TODO: #######################################################################################
 
 					if( policy.GetFlushSetting( ) == Flush_Policy::Flush::always ) {
+						fileHandle << std::move( MsgFmt( )->FormatMessage( msg, args ) );
 						Flush( );
 					}
 					else {
@@ -159,15 +147,28 @@ namespace serenity
 						switch( policy.GetPeriodicSetting( ) ) {
 							case Flush_Policy::Periodic_Options::mem_usage:
 								{
+									if( buffer.size( ) >= BUFFER_CHECK ) {
+										fileHandle << buffer;
+										Flush( );
+										buffer.clear( );
+										buffer = std::move(MsgFmt( )->FormatMessage( msg, args ));
+									}
+									else {
+										buffer += MsgFmt( )->FormatMessage( msg , args );	
+									}
 								}
 								break;
 							case Flush_Policy::Periodic_Options::time_based:
 								{
+									// Would cause re-allocations when buffer creeps past reserved
+									// size but would flush in the time interval given, once i find
+									// a nice way to add a time param
 								}
 								break;
 							case Flush_Policy::Periodic_Options::undef:
 								{
-									Flush( );  // if undefined, just default to flushing
+									fileHandle << std::move( MsgFmt( )->FormatMessage( msg, args ) );
+									Flush( );  // if undefined, just default to flushing as if set to "Always"
 								}
 								break;
 						}

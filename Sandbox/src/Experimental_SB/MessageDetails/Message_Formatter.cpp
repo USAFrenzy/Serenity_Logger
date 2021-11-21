@@ -239,7 +239,7 @@ namespace serenity
 						fmt.erase( 0, 1 );
 					}
 				}
-				return buffer.append( fmt + std::move( std::vformat( message, args ) ) );
+				return buffer.append( fmt + std::move( std::vformat( message, args ) + "\n" ) );
 			}
 
 		}  // namespace msg_details

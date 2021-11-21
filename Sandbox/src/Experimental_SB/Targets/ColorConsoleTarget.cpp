@@ -70,11 +70,11 @@ namespace serenity
 					}
 					if( consoleMode == console_interface::std_out ) {
 						std::cout << msgColor << MsgFmt( )->FormatMessage( msg, args )
-							  << se_colors::formats::reset << "\n";
+							  << se_colors::formats::reset;
 					}
 					else {
 						std::cerr << msgColor << MsgFmt( )->FormatMessage( msg, args )
-							  << se_colors::formats::reset << "\n";
+							  << se_colors::formats::reset;
 					}
 				}
 				else {
