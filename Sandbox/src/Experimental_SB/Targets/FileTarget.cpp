@@ -1,12 +1,7 @@
 #include "FileTarget.h"
 
-#include <filesystem>
-
 #include <serenity/Utilities/Utilities.h>
 #include <serenity/Color/Color.h>
-
-#define BUFFER_SIZE 4096
-#define BUFFER_CHECK ( BUFFER_SIZE/2 + BUFFER_SIZE/3)
 
 namespace serenity
 {
@@ -16,7 +11,8 @@ namespace serenity
 		{
 			FileTarget::FileTarget( ) : TargetBase( "File Logger" )
 			{
-				buffer.resize( BUFFER_SIZE );
+				buffer.reserve( BUFFER_SIZE );
+
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
 				auto                  logDir { "Logs" };
 				// NOTE: This Appends The Log Dir To The File Path AS WELL AS assigns that path to logDirPath
@@ -25,45 +21,49 @@ namespace serenity
 				fullFilePath /= "Generic_Log.txt";
 				filePath = std::move( fullFilePath.make_preferred( ).string( ) );
 				logLevel = LoggerLevel::trace;
-				if( !std::filesystem::exists( this->filePath ) ) {
-					try {
+				try {
+					if( !std::filesystem::exists( this->filePath ) ) {
 						file_utils::CreateDir( logDir );
-						OpenFile( );
+						OpenFile( true );
 					}
-					catch( const std::exception &e ) {
-						printf( "%s\n",
-							( se_colors::Tag::Red( "Unable To Create Default Directory" ) + e.what( ) + "\n" )
-							  .c_str( ) );
+					else {
+						OpenFile( true );
 					}
+				}
+				catch( const std::exception &e ) {
+					CloseFile( );
+					printf( "%s\n", se_colors::Tag::Red( "Unable To Create Default Directory" ).c_str( ) );
 				}
 			}
 
 
 			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists ) : TargetBase( "File Logger" )
 			{
-				buffer.resize( BUFFER_SIZE );
+				buffer.reserve( BUFFER_SIZE );
 				std::filesystem::path file { filePath };
-				this->filePath = std::move( file.relative_path( ).make_preferred( ).string( ) );
+				this->filePath = std::move( file.relative_path( ).make_preferred( ) );
 				logLevel       = LoggerLevel::trace;
 
-				if( file_utils::ValidateFileName( this->filePath ) ) {
-					if( !std::filesystem::exists( this->filePath ) ) {
-						try {
-							file_utils::CreateDir( this->filePath );
-							OpenFile( replaceIfExists );
+				try {
+					if( file_utils::ValidateFileName( this->filePath.filename( ).string( ) ) ) {
+						if( !std::filesystem::exists( this->filePath ) ) {
+							// TODO: Test the code below to ensure it works as intended
+							std::filesystem::path dirPath = filePath;
+							dirPath.replace_filename( "" );
+							file_utils::CreateDir( dirPath );
+							OpenFile( );
 						}
-						catch( const std::exception &e ) {
-							printf( "%s\n", se_colors::Tag::Red( "Unable To Create Directory From File "
-											     "Path "
-											     "Given" )
-									  .c_str( ) );
+						else {
+							OpenFile( );
 						}
 					}
+					else {
+						printf( "%s\n", se_colors::Tag::Red( "Error In File Name" ).c_str( ) );
+					}
 				}
-				else {
-					printf( "%s\n", se_colors::Tag::Red( "Error With File Name - Check That File Name Does Not "
-									     "Contain Invalid Characters" )
-							  .c_str( ) );
+				catch( const std::exception &e ) {
+					CloseFile( );
+					printf( "%s\n", se_colors::Tag::Red( "Unable To Create Directory From Path" ).c_str( ) );
 				}
 			}
 
@@ -71,53 +71,46 @@ namespace serenity
 			{
 				CloseFile( );
 			}
+
 			std::string FileTarget::FilePath( )
 			{
-				return filePath;
+				return filePath.string( );
 			}
 
 			bool FileTarget::OpenFile( bool truncate )
 			{
 				try {
 					if( !truncate ) {
-						fileHandle.open( filePath, std::ios_base::app );
+						fileHandle = std::fopen( filePath.string( ).c_str( ), "a+" );
 					}
 					else {
-						fileHandle.open( filePath, std::ios_base::trunc );
+						fileHandle = std::fopen( filePath.string( ).c_str( ), "w+" );
 					}
 				}
 				catch( const std::exception &e ) {
-					printf( "%s\n", se_colors::Tag::Red( "Error In Opening File:\n" ).c_str( ) );
-					printf( "%s %s %s\n", se_colors::basic_colors::foreground::red, e.what( ),
-						se_colors::formats::reset );
-					return false;
-				}
-				return true;
-			}
-			bool FileTarget::EraseContents( )
-			{
-				try {
-					CloseFile( );
-					OpenFile( true );
-				}
-				catch( const std::exception &e ) {
-					printf( "%s\n",
-						( se_colors::Tag::Red( "Error In Erasing File Contents:\n" ) + e.what( ) ).c_str( ) );
+					printf( "%s\n", se_colors::Tag::Red( "Error In Opening File:" ).c_str( ) );
+					printf( "%s\n", se_colors::Tag::Red( e.what( ) ).c_str( ) );
 					return false;
 				}
 				return true;
 			}
 
+			void FileTarget::EraseContents( )
+			{
+				CloseFile( );
+				OpenFile( true );
+			}
+
 			bool FileTarget::CloseFile( )
 			{
 				try {
-					fileHandle.flush( );
-					fileHandle.close( );
+					Flush( );
+					std::fclose( fileHandle );
+					fileHandle = nullptr;
 				}
 				catch( const std::exception &e ) {
 					printf( "%s\n", se_colors::Tag::Red( "Error In Closing File:" ).c_str( ) );
-					printf( "%s %s %s\n", se_colors::basic_colors::foreground::red, e.what( ),
-						se_colors::formats::reset );
+					printf( "%s\n", se_colors::Tag::Red( e.what( ) ).c_str( ) );
 					return false;
 				}
 				return true;
@@ -130,64 +123,90 @@ namespace serenity
 				return file_utils::RenameFile( filePath, newFile.filename( ) );
 			}
 
-			void FileTarget::PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args )
-			{
-				if( logLevel <= level ) {
-					MsgInfo( )->SetMessageLevel( level );
-					if( !fileHandle.is_open( ) ) {
-						OpenFile( );
-					}
 
-					if( policy.GetFlushSetting( ) == Flush_Policy::Flush::always ) {
-						fileHandle << std::move( MsgFmt( )->FormatMessage( msg, args ) );
-						Flush( );
-					}
-					else {
-						// Logic Based Off Sub-Options For Flush Policy Goes Here
-						switch( policy.GetPeriodicSetting( ) ) {
-							case Flush_Policy::Periodic_Options::mem_usage:
-								{
-									if( buffer.size( ) >= BUFFER_CHECK ) {
-										fileHandle << buffer;
-										Flush( );
-										buffer.clear( );
-										buffer = std::move(MsgFmt( )->FormatMessage( msg, args ));
-									}
-									else {
-										buffer += MsgFmt( )->FormatMessage( msg , args );	
-									}
-								}
-								break;
-							case Flush_Policy::Periodic_Options::time_based:
-								{
-									// Would cause re-allocations when buffer creeps past reserved
-									// size but would flush in the time interval given, once i find
-									// a nice way to add a time param
-								}
-								break;
-							case Flush_Policy::Periodic_Options::undef:
-								{
-									fileHandle << std::move( MsgFmt( )->FormatMessage( msg, args ) );
-									Flush( );  // if undefined, just default to flushing as if set to "Always"
-								}
-								break;
-						}
-					}
+			// clang-format off
+			/*
+				Just mucking around with what I can optimize in this function to make it comparable to spdlog.
+				Currently, spdlog runs ~3x faster than this in the file benchmark (~0.9-1.1 ms vs ~3.3-3.5 ms).
+				Commenting this function out results in the this running ~10% faster (~0.98-1 ms vs 0.8-0.9 ms, so the
+				bottleneck is definitely in this function. Formatting Alone Only Takes about 0.5 ms so that's not the
+				real issue here (Before Doing a quick micro bench, originally thought it was the formatting method).
+
+				EDIT: Commenting out everything but just appending the formatted message to the buffer here took about 
+				the same amount of time -> This is probably where I can optimize this function and why I originally
+				thought the formatting was what was taking so long until the micro benchmark
+			*/
+			// clang-format on
+
+			void FileTarget::PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
+						       std::format_args &&args )
+			{
+				static Flush_Policy p_policy;
+				p_policy = TargetBase::FlushPolicy( );
+				if( !p_policy.ShouldFlush( ) ) {
+					buffer.emplace_back( std::move(MsgFmt( )->FormatMsg( msgInfo.TimeDetails( ).Cache( ), msg, args ) ) );
 				}
 				else {
-					return;
+					this->PolicyFlushOn( p_policy, std::move(MsgFmt( )->FormatMsg(
+									 msgInfo.TimeDetails( ).Cache( ), msg, args ) ) );
 				}
 			}
 
-			bool FileTarget::Flush( )
+			void FileTarget::Flush( )
 			{
-				try {
-					fileHandle.flush( );
+				// buffer already formatted so using fwrite() vs fprintf() here
+				std::unique_ptr<std::string> tmp = std::make_unique<std::string>();
+				tmp->reserve( buffer.size() );
+				tmp->clear( );
+				for( const auto &msg : buffer ) {
+					tmp->append(msg);
 				}
-				catch( std::exception &e ) {
-					return false;
+				fwrite( tmp->data( ), sizeof( char ), tmp->size( ), fileHandle );
+				std::fflush( fileHandle );
+				buffer.clear( );
+			}
+
+			void FileTarget::PolicyFlushOn( Flush_Policy &policy, std::string_view msg )
+			{
+				switch( policy.GetFlushSetting( ) ) {
+					case Flush_Policy::Flush::periodically:
+						{
+							switch( policy.GetPeriodicSetting( ) ) {
+								case Flush_Policy::Periodic_Options::mem_usage:
+									{
+										// Check that the message won't cause
+										// an allocation if larger than
+										// BUFFER_SIZE
+										if( ( ( buffer.size( ) + msg.size( ) ) < BUFFER_SIZE ) ) {
+											buffer.emplace_back( std::move( msg ) );
+										}
+										else {
+											Flush( );
+											buffer.emplace_back( std::move( msg ) );
+										}
+										return;
+									}
+								case Flush_Policy::Periodic_Options::time_based:
+									{
+										// Time Based FLushing Logic Goes Here
+									}
+									return;
+								case Flush_Policy::Periodic_Options::undef:
+									{
+										// Behave As If Flush Setting = Never
+										buffer.emplace_back( std::move( msg ) );
+									}
+									return;
+							}
+						}  // periodic option check
+					case Flush_Policy::Flush::always:
+						{
+							// Always Flush
+							buffer.emplace_back( std::move( msg ) );
+							Flush( );
+						}
+						return;
 				}
-				return true;
 			}
 
 

@@ -17,18 +17,19 @@ namespace serenity
 				Message_Info( std::string name, LoggerLevel level, message_time_mode mode );
 				Message_Info &operator=( const Message_Info &t );
 
-				LoggerLevel   MsgLevel( );
-				std::string   Name( );
-				Message_Time  TimeDetails( );
-				void          SetMessageLevel( LoggerLevel messageLvl );
-				void          SetName( std::string name );
-				void          SetMsgLevel( LoggerLevel level );
+				LoggerLevel                         MsgLevel( );
+				std::string                         Name( );
+				Message_Time                        TimeDetails( );
+				void                                SetName( std::string name );
+				void                                SetMsgLevel( LoggerLevel level );
+				std::chrono::system_clock::duration MessageTimePoint( );
 
 			      private:
-				std::string      m_name;
-				LoggerLevel      msgLevel;
-				std::string_view msg;
-				Message_Time     msgTime;
+				std::chrono::system_clock::duration time;
+				std::string                         m_name;
+				LoggerLevel                         msgLevel;
+				std::string_view                    msg;
+				Message_Time                        msgTime;
 			};
 		}  // namespace msg_details
 	}          // namespace expiremental

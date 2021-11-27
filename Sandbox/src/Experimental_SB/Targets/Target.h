@@ -17,6 +17,7 @@ namespace serenity
 			{
 				always,
 				periodically,
+				never,
 			};
 			enum class Periodic_Options
 			{
@@ -31,23 +32,25 @@ namespace serenity
 				Flush            policy;
 				Periodic_Options sub_options;
 				float            interval;
+				bool             sFlush;
 			};
 
 		      public:
-			Flush_Policy( )
-			{
-				options.policy      = Flush::always;
-				options.sub_options = Periodic_Options::undef;
-				options.interval    = 0.0;
-			}
-			Flush_Policy( Flush mode, Periodic_Options sub_options = Periodic_Options::undef, float interval = 0 )
+			Flush_Policy( Flush mode = Flush::never, Periodic_Options sub_options = Periodic_Options::undef,
+				      float interval = 0.0 )
 			{
 				options.policy      = mode;
 				options.sub_options = sub_options;
 				options.interval    = interval;
+				options.sFlush      = ( mode != Flush::never ) ? true : false;
 			}
 
 			~Flush_Policy( ) = default;
+
+			const bool ShouldFlush( )
+			{
+				return options.sFlush;
+			}
 
 			void SetFlushOptions( Flush_Settings flushOptions )
 			{
@@ -89,21 +92,26 @@ namespace serenity
 				std::string                      LoggerName( );
 				void                             SetPattern( std::string_view pattern );
 				void                             ResetPatternToDefault( );
-				template <typename... Args> void trace( std::string s, Args &&...args );
-				template <typename... Args> void info( std::string s, Args &&...args );
-				template <typename... Args> void debug( std::string s, Args &&...args );
-				template <typename... Args> void warn( std::string s, Args &&...args );
-				template <typename... Args> void error( std::string s, Args &&...args );
-				template <typename... Args> void fatal( std::string s, Args &&...args );
+				void                             SetLogLevel( LoggerLevel level );
+				LoggerLevel                      Level( );
+				template <typename... Args> void trace( std::string_view s, Args &&...args );
+				template <typename... Args> void info( std::string_view s, Args &&...args );
+				template <typename... Args> void debug( std::string_view s, Args &&...args );
+				template <typename... Args> void warn( std::string_view s, Args &&...args );
+				template <typename... Args> void error( std::string_view s, Args &&...args );
+				template <typename... Args> void fatal( std::string_view s, Args &&...args );
 
 
 			      protected:
-				virtual void PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args ) = 0;
+				virtual void PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg, std::format_args &&args ) = 0;
+				virtual void PolicyFlushOn( Flush_Policy &policy, std::string_view msg) { }
+
 				msg_details::Message_Formatter *MsgFmt( );
 				msg_details::Message_Info *     MsgInfo( );
 
 			      private:
 				Flush_Policy                   policy;
+				LoggerLevel                    logLevel;
 				LoggerLevel                    msgLevel;
 				std::string                    pattern;
 				std::string                    loggerName;

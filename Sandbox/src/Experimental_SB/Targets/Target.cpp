@@ -8,28 +8,31 @@ namespace serenity
 		{
 			TargetBase::TargetBase( )
 			  : policy( ),
+			    logLevel( LoggerLevel::trace),
+			    msgLevel( LoggerLevel::trace ),
 			    pattern( "|%l| %x %n %T [%N]: " ),
 			    msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails ),
-			    msgLevel( LoggerLevel::trace )
+			    msgPattern( pattern, &msgDetails )
 			{
 			}
 
 			TargetBase::TargetBase( std::string_view name )
 			  : policy( ),
+			    logLevel( LoggerLevel::trace ),
+			    msgLevel( LoggerLevel::trace ),
 			    pattern( "|%l| %x %n %T [%N]: " ),
 			    msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails ),
-			    msgLevel( LoggerLevel::trace )
+			    msgPattern( pattern, &msgDetails )
 			{
 			}
 
 			TargetBase::TargetBase( std::string_view name, std::string_view msgPattern )
 			  : policy( ),
+			    logLevel( LoggerLevel::trace ),
+			    msgLevel( LoggerLevel::trace ),
 			    pattern( std::move( svToString( msgPattern ) ) ),
 			    msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails ),
-			    msgLevel( LoggerLevel::trace )
+			    msgPattern( pattern, &msgDetails )
 			{
 			}
 
@@ -66,6 +69,13 @@ namespace serenity
 			void TargetBase::ResetPatternToDefault( )
 			{
 				msgPattern.SetPattern( "|%l| %x %n %T [%N]: " );
+			}
+			void TargetBase::SetLogLevel( LoggerLevel level )
+			{
+				logLevel = level;
+			}
+			LoggerLevel TargetBase::Level() {
+				return logLevel;
 			}
 
 		}  // namespace targets

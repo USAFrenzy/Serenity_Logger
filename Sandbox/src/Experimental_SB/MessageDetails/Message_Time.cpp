@@ -1,5 +1,6 @@
 #include "Message_Time.h"
 
+#include <chrono>
 
 namespace serenity
 {
@@ -9,7 +10,7 @@ namespace serenity
 		{
 			Message_Time::Message_Time( message_time_mode mode ) : m_mode( mode )
 			{
-				UpdateCache( );
+				InitializeCache( UpdateTimeDate( ) );
 			}
 
 			std::string_view Message_Time::WeekdayString( int weekdayIndex, bool shortened )
@@ -47,20 +48,26 @@ namespace serenity
 				return ( dec >= 10 ) ? std::to_string( dec ) : "0" + std::to_string( dec );
 			}
 
-			Cached_Date_Time Message_Time::UpdateCache( )
+			std::tm *Message_Time::UpdateTimeDate( )
 			{
-					time( &m_time );
-					if( m_mode == message_time_mode::local ) {
-						t_struct = std::localtime( &m_time );
-					}
-					else {
-						t_struct = std::gmtime( &m_time );
-					}
-					return InitializeCache( t_struct );
+				m_time    = std::chrono::system_clock( ).now( );
+				auto time = std::chrono::system_clock::to_time_t( m_time );
+				if( m_mode == message_time_mode::local ) {
+					return t_struct = std::localtime( &time );
+				}
+				else {
+					return t_struct = std::gmtime( &time );
+				}
 			}
 
-			std::string_view  Message_Time::DayHalf( int hour) {
-				return ( hour >= 12 ) ? "PM" : "AM"; 
+			Cached_Date_Time Message_Time::UpdateCache( std::tm *timeStruct )
+			{
+				return InitializeCache( std::move( timeStruct ) );
+			}
+
+			std::string_view Message_Time::DayHalf( int hour )
+			{
+				return ( hour >= 12 ) ? "PM" : "AM";
 			}
 
 			const message_time_mode Message_Time::Mode( )
@@ -70,18 +77,19 @@ namespace serenity
 
 			Cached_Date_Time Message_Time::InitializeCache( std::tm *t )
 			{
-				m_cache.long_year     = std::move( GetCurrentYear( t->tm_year ) );
-				m_cache.short_year    = std::move( GetCurrentYear( t->tm_year, true ) );
-				m_cache.long_month    = std::move( MonthString( t->tm_mon ) );
-				m_cache.dec_month     = std::move( ( t->tm_mon + 1 ) );
-				m_cache.short_month   = std::move( MonthString( t->tm_mon, true ) );
-				m_cache.long_weekday  = std::move( WeekdayString( t->tm_wday ) );
-				m_cache.short_weekday = std::move( WeekdayString( t->tm_wday, true ) );
-				m_cache.dec_wkday     = t->tm_wday;
-				m_cache.day           = t->tm_mday;
-				m_cache.hour          = t->tm_hour;
-				m_cache.min           = t->tm_min;
-				m_cache.sec           = t->tm_sec;
+				m_cache.long_year         = std::move( GetCurrentYear( t->tm_year ) );
+				m_cache.short_year        = std::move( GetCurrentYear( t->tm_year, true ) );
+				m_cache.long_month        = std::move( MonthString( t->tm_mon ) );
+				m_cache.dec_month         = std::move( ( t->tm_mon + 1 ) );
+				m_cache.short_month       = std::move( MonthString( t->tm_mon, true ) );
+				m_cache.long_weekday      = std::move( WeekdayString( t->tm_wday ) );
+				m_cache.short_weekday     = std::move( WeekdayString( t->tm_wday, true ) );
+				m_cache.dec_wkday         = t->tm_wday;
+				m_cache.day               = t->tm_mday;
+				m_cache.hour              = t->tm_hour;
+				m_cache.min               = t->tm_min;
+				m_cache.sec               = t->tm_sec;
+				m_cache.secondsSinceEpoch = std::chrono::duration_cast<std::chrono::seconds>( m_time.time_since_epoch( ) );
 				return m_cache;
 			}
 
@@ -90,7 +98,10 @@ namespace serenity
 				m_mode = mode;
 			}
 
-
+			Cached_Date_Time Message_Time::Cache( )
+			{
+				return m_cache;
+			}
 		}  // namespace msg_details
 	}          // namespace expiremental
 }  // namespace serenity

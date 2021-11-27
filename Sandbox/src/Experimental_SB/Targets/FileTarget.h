@@ -1,8 +1,15 @@
 #pragma once
 
-
 #include "Target.h"
+
+#include <filesystem>
 #include <fstream>
+
+// Messing with buffer sizes
+#define KB          ( 1024 )
+#define MB          ( 1024 * KB )
+#define GB          ( 1024 * MB )
+#define BUFFER_SIZE static_cast<size_t>(  512 * KB )
 
 namespace serenity
 {
@@ -22,18 +29,19 @@ namespace serenity
 				bool        OpenFile( bool truncate = false );
 				bool        CloseFile( );
 				std::string FilePath( );
-				bool        EraseContents( );
+				void        EraseContents( );
 				bool        RenameFile( std::string_view newFileName );
-				void        PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args ) override;
-				bool        Flush( );
+				void PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg, std::format_args &&args ) override;
+				void Flush( );
 
 			      private:
-				// Contemplating Writing To Buffer And FLushing Buffer On Periodic Settings
-				std::string   buffer; // Not Ideal Setup, Might Change When Implementing
-				Flush_Policy  policy;
-				LoggerLevel   logLevel;
-				std::ofstream fileHandle;
-				std::string   filePath;
+				std::vector<std::string_view> buffer;  // faster than string buffer
+				FILE *                        fileHandle;
+				LoggerLevel                   logLevel;
+				std::filesystem::path         filePath;
+
+			      private:
+				void PolicyFlushOn( Flush_Policy &policy, std::string_view msg ) override;
 			};
 		}  // namespace targets
 	}          // namespace expiremental

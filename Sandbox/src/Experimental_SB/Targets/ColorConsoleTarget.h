@@ -34,13 +34,12 @@ namespace serenity
 				void              SetConsoleMode( console_interface mode );
 				console_interface GetConsoleMode( );
 				void              ColorizeOutput( bool colorize );
-				void              SetLogLevel( LoggerLevel level );
 				void              SetOriginalColors( );
 
 			      private:
-				void        PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args ) override;
-				LoggerLevel logLevel;
-				bool        coloredOutput;
+				void  PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg, std::format_args &&args ) override;
+
+				bool                                              coloredOutput;
 				console_interface                                 consoleMode;
 				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 			};  // class ColorConsole

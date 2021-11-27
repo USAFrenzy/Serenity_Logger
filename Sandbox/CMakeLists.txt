@@ -21,6 +21,7 @@ set (EXPERIMENTAL_SB_HEADER_FILES
 "src/Experimental_SB/MessageDetails/Message_Time.h"
 "src/Experimental_SB/MessageDetails/Message_Formatter.h"
 "src/Experimental_SB/Targets/Target.h"
+"src/Experimental_SB/Targets/Target-impl.h"
 "src/Experimental_SB/Targets/ColorConsoleTarget.h"
 "src/Experimental_SB/Targets/FileTarget.h"
 )

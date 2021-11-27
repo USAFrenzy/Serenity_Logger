@@ -1,5 +1,6 @@
 #include "Message_Formatter.h"
 
+#include <serenity/Utilities/Utilities.h>
 
 namespace serenity
 {
@@ -10,6 +11,8 @@ namespace serenity
 			Message_Formatter::Message_Formatter( std::string formatPattern, Message_Info *msgDetails )
 			  : fmtPattern( formatPattern ), msgInfo( msgDetails )
 			{
+				buffer.reserve( 4096 );
+				StoreFormat( );
 			}
 			Message_Formatter &Message_Formatter::operator=( const Message_Formatter &t )
 			{
@@ -129,10 +132,10 @@ namespace serenity
 			{
 				std::string time;
 				if( cache.hour > 12 ) {
-					time += (msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ) + ":");
+					time += ( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ) + ":" );
 				}
 				else {
-					time += (std::to_string(cache.hour ) + ":");
+					time += ( std::to_string( cache.hour ) + ":" );
 				}
 				time += msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ) + ":";
 				time += msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec );
@@ -211,36 +214,97 @@ namespace serenity
 
 			void Message_Formatter::SetPattern( std::string_view pattern )
 			{
-				fmtPattern = svToString( pattern );
+				fmtPattern = std::move( pattern );
+				StoreFormat( );
 			}
 
-			// Iterate through the pre-message format pattern in order to find any flags. When a flag is reached,
-			// append everything up until that flag to the buffer, erase the flag qualifier, handle the flag, then
-			// erase the flag token at that position and continue iterating until the end of format pattern is
-			// reached. If no flag is found, or no more flags are available to handle, just append the rest of the
-			// format pattern to the buffer. Append the formatted message string (using the forwarded arguments to
-			// format from) to the buffer and return the entire thing
-			std::string_view Message_Formatter::FormatMessage( std::string message, std::format_args args )
+			static constexpr std::array<std::string_view, 17> timeDateFlags = {
+			  "%n", "%b", "%B", "%d", "%D", "%F", "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%x", "%X", "%a", "%A" };
+			static constexpr std::array<std::string_view, 3> otherFlags = { "%N", "%L", "%l" };
+
+			void Message_Formatter::StoreFormat( )
 			{
-				auto cache = msgInfo->TimeDetails( ).UpdateCache( );
+				auto cache = msgInfo->TimeDetails( ).UpdateCache( msgInfo->TimeDetails( ).UpdateTimeDate( ) );
+
 				buffer.clear( );
-				size_t it { 0 }, pos { 0 };
-				auto   fmt = fmtPattern;
+				size_t      it { 0 };
+				auto        fmt = fmtPattern;
+				std::string flag;
 
 				while( it != std::string::npos && ( !fmt.empty( ) ) ) {
 					if( fmt.front( ) == '%' ) {
-						buffer.append( fmt.substr( 0, pos ) );
-						fmt.erase( 0, pos + 1 );
-						buffer.append( FlagFormatter( cache, fmt.front( ) ) );
-						fmt.erase( 0, pos + 1 );  // Erase the Flag Token
+						flag.clear( );
+						flag.append( fmt.substr( it, it + 2 ) );
+						if( std::any_of( timeDateFlags.begin( ), timeDateFlags.end( ),
+								 [ this, &flag ]( const std::string_view sv ) {
+									 return ( sv == flag ) ? true : false;
+								 } ) )
+						{
+							buffer.append( fmt.substr( it, it + 1 ) );
+							fmt.erase( it, it + 1 );
+						}
+						else {
+							if( std::any_of( otherFlags.begin( ), otherFlags.end( ),
+									 [ this, &flag ]( const std::string_view sv ) {
+										 return ( sv == flag ) ? true : false;
+									 } ) )
+							{
+								fmt.erase( it, it + 1 );
+								buffer.append( FlagFormatter( cache, fmt.front( ) ) );
+								fmt.erase( it, it + 1 );
+							}
+						}
 					}
 					else {
-						buffer += fmt.at( 0 );
-						fmt.erase( 0, 1 );
+						buffer += fmt.front( );
+						fmt.erase( it, it + 1 );
 					}
 				}
-				return buffer.append( fmt + std::move( std::vformat( message, args ) + "\n" ) );
+				fmt.clear( );
+				internalFmt = std::move( buffer );
 			}
+
+			std::string &Message_Formatter::UpdateFormatForTime( Cached_Date_Time cache )
+			{
+				buffer.clear( );
+				size_t it { 0 };
+				// Static locals since this func gets called a ton - probs not the best way
+				static std::string fmt;
+				static std::string fleshedOutFmt;
+
+				fmt      = internalFmt;
+				auto now = msgInfo->MessageTimePoint( );
+
+				if( now != cache.secondsSinceEpoch ) {
+					auto updatedCache =
+					  msgInfo->TimeDetails( ).UpdateCache( msgInfo->TimeDetails( ).UpdateTimeDate( ) );
+					while( it != std::string::npos && ( !fmt.empty( ) ) ) {
+						if( fmt.front( ) == '%' ) {
+							buffer.append( fmt.substr( 0, it ) );
+							fmt.erase( 0, it + 1 );
+							buffer.append( FlagFormatter( updatedCache, fmt.front( ) ) );
+							fmt.erase( 0, it + 1 );  // Erase the Flag Token
+						}
+						else {
+							buffer += fmt.at( 0 );
+							fmt.erase( 0, 1 );
+						}
+					}
+					fleshedOutFmt = std::move( buffer );
+				}
+				// if time points are =, return the last pre-format string used instead of re-formatting
+				return fleshedOutFmt;
+			}
+
+			std::string_view
+			  Message_Formatter::FormatMsg( Cached_Date_Time cache, const std::string_view msg, std::format_args args )
+			{
+				buffer.clear( );
+				auto preFmt = std::move( UpdateFormatForTime( cache ) );
+				return std::move( svToString(
+				  buffer.append( std::move( preFmt ) ).append( std::move( std::vformat( msg, args ).append( "\n" ) ) ) ) );
+			}
+
 
 		}  // namespace msg_details
 	}          // namespace expiremental

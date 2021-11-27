@@ -9,28 +9,19 @@ namespace serenity
 		namespace targets
 		{
 			ColorConsole::ColorConsole( )
-			  : logLevel( LoggerLevel::trace ),
-			    TargetBase( "Console Logger" ),
-			    consoleMode( console_interface::std_out ),
-			    coloredOutput( true )
+			  : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				SetOriginalColors( );
 			}
 
 			ColorConsole::ColorConsole( std::string_view name )
-			  : logLevel( LoggerLevel::trace ),
-			    TargetBase( name ),
-			    consoleMode( console_interface::std_out ),
-			    coloredOutput( true )
+			  : TargetBase( name ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				SetOriginalColors( );
 			}
 
 			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
-			  : logLevel( LoggerLevel::trace ),
-			    TargetBase( name, msgPattern ),
-			    consoleMode( console_interface::std_out ),
-			    coloredOutput( true )
+			  : TargetBase( name, msgPattern ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				SetOriginalColors( );
 			}
@@ -60,32 +51,23 @@ namespace serenity
 				return consoleMode;
 			}
 
-			void ColorConsole::PrintMessage( LoggerLevel level, const std::string msg, std::format_args &&args )
+			void ColorConsole::PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
+							 std::format_args &&args )
 			{
-				if( logLevel <= level ) {
-					MsgInfo( )->SetMessageLevel( level );
-					std::string_view msgColor;
-					if( coloredOutput ) {
-						msgColor = GetMsgColor( level );
-					}
-					if( consoleMode == console_interface::std_out ) {
-						std::cout << msgColor << MsgFmt( )->FormatMessage( msg, args )
-							  << se_colors::formats::reset;
-					}
-					else {
-						std::cerr << msgColor << MsgFmt( )->FormatMessage( msg, args )
-							  << se_colors::formats::reset;
-					}
+				static std::string_view msgColor;
+				if( coloredOutput ) {
+					msgColor = GetMsgColor( MsgInfo( )->MsgLevel( ) );
+				}
+				if( consoleMode == console_interface::std_out ) {
+					std::cout << msgColor << MsgFmt( )->FormatMsg( msgInfo.TimeDetails( ).Cache( ), msg, args )
+						  << se_colors::formats::reset;
 				}
 				else {
-					return;
+					std::cerr << msgColor << MsgFmt( )->FormatMsg( msgInfo.TimeDetails( ).Cache( ), msg, args )
+						  << se_colors::formats::reset;
 				}
 			}
 
-			void ColorConsole::SetLogLevel( LoggerLevel level )
-			{
-				logLevel = level;
-			}
 
 			void ColorConsole::SetOriginalColors( )
 			{
@@ -99,6 +81,9 @@ namespace serenity
 				  { LoggerLevel::off, se_colors::formats::reset },
 				};
 			}
+
+			// don't really know yet if console really needs a flush implementation
+
 
 		}  // namespace targets
 	}          // namespace expiremental
