@@ -9,7 +9,7 @@
 #define KB          ( 1024 )
 #define MB          ( 1024 * KB )
 #define GB          ( 1024 * MB )
-#define BUFFER_SIZE static_cast<size_t>(  512 * KB )
+#define BUFFER_SIZE static_cast<size_t>( 512 * KB )
 
 namespace serenity
 {
@@ -17,7 +17,7 @@ namespace serenity
 	{
 		namespace targets
 		{
-			class FileTarget : public TargetBase
+			class FileTarget  : public TargetBase
 			{
 			      public:
 				FileTarget( );  // default that will just write to a "GenericLog.txt"
@@ -31,8 +31,9 @@ namespace serenity
 				std::string FilePath( );
 				void        EraseContents( );
 				bool        RenameFile( std::string_view newFileName );
-				void PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg, std::format_args &&args ) override;
-				void Flush( );
+				void        PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
+							  std::format_args &&args ) final override;
+				void        Flush( );
 
 			      private:
 				std::vector<std::string_view> buffer;  // faster than string buffer
@@ -41,7 +42,7 @@ namespace serenity
 				std::filesystem::path         filePath;
 
 			      private:
-				void PolicyFlushOn( Flush_Policy &policy, std::string_view msg ) override;
+				void PolicyFlushOn( Flush_Policy &policy, std::string_view msg ) final override;
 			};
 		}  // namespace targets
 	}          // namespace expiremental

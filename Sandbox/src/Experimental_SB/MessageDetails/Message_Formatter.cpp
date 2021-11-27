@@ -260,40 +260,35 @@ namespace serenity
 						fmt.erase( it, it + 1 );
 					}
 				}
-				fmt.clear( );
-				internalFmt = std::move( buffer );
+				if( buffer.size( ) != 0 ) {
+					internalFmt = std::move( buffer );
+				}
 			}
 
 			std::string &Message_Formatter::UpdateFormatForTime( Cached_Date_Time cache )
 			{
 				buffer.clear( );
-				size_t it { 0 };
-				// Static locals since this func gets called a ton - probs not the best way
-				static std::string fmt;
-				static std::string fleshedOutFmt;
-
-				fmt      = internalFmt;
-				auto now = msgInfo->MessageTimePoint( );
+				size_t      it { 0 };
+				std::string fmt = internalFmt;
+				auto        now = msgInfo->MessageTimePoint( );
 
 				if( now != cache.secondsSinceEpoch ) {
 					auto updatedCache =
 					  msgInfo->TimeDetails( ).UpdateCache( msgInfo->TimeDetails( ).UpdateTimeDate( ) );
 					while( it != std::string::npos && ( !fmt.empty( ) ) ) {
 						if( fmt.front( ) == '%' ) {
-							buffer.append( fmt.substr( 0, it ) );
+							buffer.append( std::move( fmt.substr( 0, it ) ) );
 							fmt.erase( 0, it + 1 );
-							buffer.append( FlagFormatter( updatedCache, fmt.front( ) ) );
+							buffer.append( std::move( FlagFormatter( updatedCache, fmt.front( ) ) ) );
 							fmt.erase( 0, it + 1 );  // Erase the Flag Token
 						}
 						else {
-							buffer += fmt.at( 0 );
+							buffer += std::move( fmt.at( 0 ) );
 							fmt.erase( 0, 1 );
 						}
 					}
-					fleshedOutFmt = std::move( buffer );
 				}
-				// if time points are =, return the last pre-format string used instead of re-formatting
-				return fleshedOutFmt;
+				return buffer;
 			}
 
 			std::string_view
@@ -301,8 +296,8 @@ namespace serenity
 			{
 				buffer.clear( );
 				auto preFmt = std::move( UpdateFormatForTime( cache ) );
-				return std::move( svToString(
-				  buffer.append( std::move( preFmt ) ).append( std::move( std::vformat( msg, args ).append( "\n" ) ) ) ) );
+				return std::move(
+				  buffer.append( std::move( preFmt ) ).append( std::move( std::vformat( msg, args ) ) ).append( "\n" ) );
 			}
 
 

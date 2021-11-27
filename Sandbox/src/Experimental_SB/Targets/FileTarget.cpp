@@ -155,13 +155,15 @@ namespace serenity
 			void FileTarget::Flush( )
 			{
 				// buffer already formatted so using fwrite() vs fprintf() here
-				std::unique_ptr<std::string> tmp = std::make_unique<std::string>();
-				tmp->reserve( buffer.size() );
-				tmp->clear( );
+				// For Loop Reasoning is that it's more effiecient to write in 
+				// one call rather than writing each message in the loop itself
+				std::string tmp;
+				tmp.reserve( buffer.size() );
+				tmp.clear( );
 				for( const auto &msg : buffer ) {
-					tmp->append(msg);
+					tmp.append(msg);
 				}
-				fwrite( tmp->data( ), sizeof( char ), tmp->size( ), fileHandle );
+				fwrite( tmp.data( ), tmp.size(), 1, fileHandle );
 				std::fflush( fileHandle );
 				buffer.clear( );
 			}

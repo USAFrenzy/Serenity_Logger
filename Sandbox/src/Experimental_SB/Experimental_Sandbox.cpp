@@ -119,8 +119,8 @@ int main( )
 	spdlogConsoleLogger->set_pattern( "%^|%L| %a %d%b%C %T [%n]: %v%$" );  // equivalent to Target's Default Pattern
 
 	// Too lazy to set up paths correctly at the moment, hard-coding paths for desktop/laptop
-	std::string filePath = "C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/build/Sandbox/Logs/Spdlog_File_Bench.txt";
-	// std::string filePath = "C:/Users/mccul/Desktop/Logging Project/build/Sandbox/Logs/Spdlog_File_Bench.txt";
+	//std::string filePath = "C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/build/Sandbox/Logs/Spdlog_File_Bench.txt";
+	 std::string filePath = "C:/Users/mccul/Desktop/Logging Project/build/Sandbox/Logs/Spdlog_File_Bench.txt";
 
 	bool truncate = true;
 	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>( filePath, truncate );
@@ -157,7 +157,7 @@ int main( )
 		temp += "a";
 	}  // 400 chars = 400 bytes
 	test = temp.c_str( );
-	unsigned long int i { 0 }, iterations {10000 };
+	unsigned long int i { 0 }, iterations {1000000 };
 	std::cout << "Benching Color Console Target...\n\n";
 	for( i; i < iterations; i++ ) {
 		C.info( "{}", test );
