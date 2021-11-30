@@ -13,7 +13,7 @@ namespace serenity
 				InitializeCache( UpdateTimeDate( ) );
 			}
 
-			std::string_view Message_Time::WeekdayString( int weekdayIndex, bool shortened )
+			std::string Message_Time::WeekdayString( int weekdayIndex, bool shortened )
 			{
 				if( !shortened ) {
 					return long_weekdays.at( weekdayIndex );
@@ -33,7 +33,7 @@ namespace serenity
 				}
 			}
 
-			std::string_view Message_Time::MonthString( int monthIndex, bool shortened )
+			std::string Message_Time::MonthString( int monthIndex, bool shortened )
 			{
 				if( !shortened ) {
 					return long_months.at( monthIndex );
@@ -65,7 +65,7 @@ namespace serenity
 				return InitializeCache( std::move( timeStruct ) );
 			}
 
-			std::string_view Message_Time::DayHalf( int hour )
+			std::string Message_Time::DayHalf( int hour )
 			{
 				return ( hour >= 12 ) ? "PM" : "AM";
 			}

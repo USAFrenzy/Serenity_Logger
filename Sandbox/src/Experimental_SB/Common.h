@@ -7,16 +7,16 @@ namespace serenity
 {
 	namespace expiremental
 	{
-		static constexpr std::array<std::string_view, 7> short_weekdays = { "Sun",   "Mon", "Tues", "Wed",
+		static constexpr std::array<const char *, 7> short_weekdays = { "Sun",   "Mon", "Tues", "Wed",
 										    "Thurs", "Fri", "Sat" };
 
-		static constexpr std::array<std::string_view, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
-										   "Thursday", "Friday", "Saturday" };
+		static constexpr std::array<const char *, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
+									       "Thursday", "Friday", "Saturday" };
 
-		static constexpr std::array<std::string_view, 12> short_months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-										   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+		static constexpr std::array<const char *, 12> short_months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+									       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-		static constexpr std::array<std::string_view, 12> long_months = { "January",   "February", "March",    "April",
+		static constexpr std::array<const char *, 12> long_months = { "January",   "February", "March",    "April",
 										  "May",       "June",     "July",     "August",
 										  "September", "October",  "November", "December" };
 

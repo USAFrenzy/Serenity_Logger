@@ -62,8 +62,7 @@ void operator delete( void *p, size_t n ) throw( )
 // This will probably be used for something more along the lines of just checking if a new flag that isn't default supported is being parsed, in a very 
 // similar fashion to how spdlog allows users to create custom flags and custom flag argument handlers
 // #####################################################################################################################################################
-static constexpr std::array<std::string_view, 20> validFlags = { "%N", "%n", "%L", "%l", "%b", "%B", "%d", "%D", "%F",
-						      "%H", "%M", "%S", "%T", "%w", "%y", "%Y", "%x", "%X" , "%a", "%A"};
+
 // This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
 // *************************************************************************
 _Enum_is_bitflag_ enum class Flags : uint32_t {
@@ -119,8 +118,8 @@ int main( )
 	spdlogConsoleLogger->set_pattern( "%^|%L| %a %d%b%C %T [%n]: %v%$" );  // equivalent to Target's Default Pattern
 
 	// Too lazy to set up paths correctly at the moment, hard-coding paths for desktop/laptop
-	//std::string filePath = "C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/build/Sandbox/Logs/Spdlog_File_Bench.txt";
-	 std::string filePath = "C:/Users/mccul/Desktop/Logging Project/build/Sandbox/Logs/Spdlog_File_Bench.txt";
+	std::string filePath = "C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/build/Sandbox/Logs/Spdlog_File_Bench.txt";
+	// std::string filePath = "C:/Users/mccul/Desktop/Logging Project/build/Sandbox/Logs/Spdlog_File_Bench.txt";
 
 	bool truncate = true;
 	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>( filePath, truncate );
@@ -157,7 +156,7 @@ int main( )
 		temp += "a";
 	}  // 400 chars = 400 bytes
 	test = temp.c_str( );
-	unsigned long int i { 0 }, iterations {1000000 };
+	unsigned long int i { 0 }, iterations { 1000000 };
 	std::cout << "Benching Color Console Target...\n\n";
 	for( i; i < iterations; i++ ) {
 		C.info( "{}", test );
@@ -255,10 +254,27 @@ int main( )
 	auto totalSpdFileTime = spdlogFileTester.Elapsed_In( time_mode::ms );
 	std::cout << "\nSpdlog Basic File Sink Bench Finished.\n\n";
 
-	// Currently avereages ~ 0.14ms for a C-Style String Of 400 Bytes Over 1,000,000 iterations -> Not a bad start =D
-	// (Granted Not Apples to apples given this is testing a console target that has nowhere near as many features and
-	// safety nets in place, but as a reference, spdlog's null sink single thread C-Style String of 400 bytes benches at
-	// ~40ms taken from their GH repo bench stats
+	
+
+
+	auto percentConsole = (( totalColorTime - totalspdColorTime) / totalspdColorTime) * 100;
+	std::string consolePercent;
+	if( percentConsole > 0 ) {
+		consolePercent = "- " + std::to_string( std::abs(percentConsole ));
+	}
+	else {
+		consolePercent = "+ " + std::to_string( std::abs(percentConsole ));
+	}
+
+	auto percentFile = (( totalFileTime- totalSpdFileTime) / totalSpdFileTime) * 100;
+	std::string filePercent;
+	if( percentFile > 0 ) {
+		filePercent = "-" +  std::to_string( std::abs( percentFile ) );
+	}
+	else {
+		filePercent = "+" + std::to_string( std::abs(percentFile));
+	}
+
 	std::cout << Tag::Yellow(
 		       "\n\n***************************************************************************************\n"
 		       "*************** Instrumentation Data (Averaged Over " )
@@ -279,7 +295,8 @@ int main( )
 		  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
 		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
 		  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
-
+	std::cout
+	  << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n" );
 
 	std::cout << Tag::Bright_Yellow( "File Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 		  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
@@ -293,8 +310,10 @@ int main( )
 		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
 		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
 		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
-
+		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::sec ) / iterations ) +
+					" s"
+					"\n" );
+	std::cout << Tag::Bright_Magenta( "File Target Is " + filePercent + " Percent Of Spdlog's File Sink Speed\n" );
 
 	std::cout << "\n";
 
@@ -332,8 +351,12 @@ int main( )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Cached_Date_Time ) ) + "\tbytes ]\n" );
 
 
-	std::cout << Tag::Yellow( "***************************************************************************************\n" );
-	std::cout << Tag::Yellow( "***************************************************************************************\n" );
+	std::cout << Tag::Yellow(
+	  "***************************************************************************************"
+	  "\n" );
+	std::cout << Tag::Yellow(
+	  "***************************************************************************************"
+	  "\n" );
 	std::cout << Tag::Yellow( "***************************************************************************************\n\n" );
 
 #endif  // INSTRUMENTATION_ENABLED

@@ -123,47 +123,32 @@ namespace serenity
 				return file_utils::RenameFile( filePath, newFile.filename( ) );
 			}
 
-
-			// clang-format off
-			/*
-				Just mucking around with what I can optimize in this function to make it comparable to spdlog.
-				Currently, spdlog runs ~3x faster than this in the file benchmark (~0.9-1.1 ms vs ~3.3-3.5 ms).
-				Commenting this function out results in the this running ~10% faster (~0.98-1 ms vs 0.8-0.9 ms, so the
-				bottleneck is definitely in this function. Formatting Alone Only Takes about 0.5 ms so that's not the
-				real issue here (Before Doing a quick micro bench, originally thought it was the formatting method).
-
-				EDIT: Commenting out everything but just appending the formatted message to the buffer here took about 
-				the same amount of time -> This is probably where I can optimize this function and why I originally
-				thought the formatting was what was taking so long until the micro benchmark
-			*/
-			// clang-format on
-
 			void FileTarget::PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
 						       std::format_args &&args )
 			{
 				static Flush_Policy p_policy;
 				p_policy = TargetBase::FlushPolicy( );
 				if( !p_policy.ShouldFlush( ) ) {
-					buffer.emplace_back( std::move(MsgFmt( )->FormatMsg( msgInfo.TimeDetails( ).Cache( ), msg, args ) ) );
+					buffer.emplace_back( std::move(MsgFmt( )->FormatMsg(  msg, args ) ) );
 				}
 				else {
 					this->PolicyFlushOn( p_policy, std::move(MsgFmt( )->FormatMsg(
-									 msgInfo.TimeDetails( ).Cache( ), msg, args ) ) );
+									  msg, args ) ) );
 				}
 			}
 
 			void FileTarget::Flush( )
 			{
 				// buffer already formatted so using fwrite() vs fprintf() here
-				// For Loop Reasoning is that it's more effiecient to write in 
+				// For Loop Reasoning is that it's more effiecient to write in
 				// one call rather than writing each message in the loop itself
 				std::string tmp;
-				tmp.reserve( buffer.size() );
+				tmp.reserve( buffer.size( ) );
 				tmp.clear( );
 				for( const auto &msg : buffer ) {
-					tmp.append(msg);
+					tmp.append(svToString(msg ));
 				}
-				fwrite( tmp.data( ), tmp.size(), 1, fileHandle );
+				fwrite( tmp.data( ), 1, tmp.size( ),fileHandle );
 				std::fflush( fileHandle );
 				buffer.clear( );
 			}
