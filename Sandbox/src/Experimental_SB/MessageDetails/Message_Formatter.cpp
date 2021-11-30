@@ -29,7 +29,7 @@ namespace serenity
 				return fmtPattern;
 			}
 
-			// Twelve Hour Format (13 -> 1, 14 -> 2, 11 -> 11, 10 -> 10, etc)
+
 			std::string Message_Formatter::Format_Arg_a( Cached_Date_Time &cache )
 			{
 				if( cache.hour > 12 ) {
@@ -40,25 +40,21 @@ namespace serenity
 				}
 			}
 
-			// AM Or PM Specifier
 			std::string Message_Formatter::Format_Arg_A( Cached_Date_Time &cache )
 			{
 				return std::move( msgInfo->TimeDetails( ).DayHalf( cache.hour ) );
 			}
 
-			// Short Month Format (Jan, Feb, Mar, etc)
 			std::string Message_Formatter::Format_Arg_b( Cached_Date_Time &cache )
 			{
 				return std::move( cache.short_month );
 			}
 
-			// Long Month Format (January, February, March, etc)
 			std::string Message_Formatter::Format_Arg_B( Cached_Date_Time &cache )
 			{
 				return std::move( cache.long_month );
 			}
 
-			// MM/DD/YY Format
 			std::string Message_Formatter::Format_Arg_D( Cached_Date_Time &cache )
 			{
 				std::string date;
@@ -67,7 +63,6 @@ namespace serenity
 				return std::move( date.append( std::to_string( cache.short_year ) ) );
 			}
 
-			// YYYY-MM-DD Format
 			std::string Message_Formatter::Format_Arg_F( Cached_Date_Time &cache )
 			{
 				std::string date;
@@ -76,19 +71,16 @@ namespace serenity
 				return std::move( date.append( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) ) );
 			}
 
-			// Padded Minute ( 07, 08, 13, 15, etc)
 			std::string Message_Formatter::Format_Arg_M( Cached_Date_Time &cache )
 			{
 				return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ) );
 			}
 
-			// Padded Second ( 07, 08, 13, 15, etc)
 			std::string Message_Formatter::Format_Arg_S( Cached_Date_Time &cache )
 			{
 				return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) );
 			}
 
-			// HH:MM:SS Format With A 24 Hour Clock Time
 			std::string Message_Formatter::Format_Arg_T( Cached_Date_Time &cache )
 			{
 				std::string time;
@@ -98,7 +90,6 @@ namespace serenity
 				return std::move( time );
 			}
 
-			// HH:MM:SS Format With A 12 Hour Clock Time
 			std::string Message_Formatter::Format_Arg_t( Cached_Date_Time &cache )
 			{
 				std::string time;
@@ -114,67 +105,56 @@ namespace serenity
 				return std::move( time );
 			}
 
-			// Decimal Weekday Format (0-6)
 			std::string Message_Formatter::Format_Arg_w( Cached_Date_Time &cache )
 			{
 				return std::move( std::to_string( cache.dec_wkday ) );
 			}
 
-			// Short Year Format (For 2021 -> 21, For 2022 -> 22)
 			std::string Message_Formatter::Format_Arg_y( Cached_Date_Time &cache )
 			{
 				return std::move( std::to_string( cache.short_year ) );
 			}
 
-			// Long Year Format (2021, 2022)
 			std::string Message_Formatter::Format_Arg_Y( Cached_Date_Time &cache )
 			{
 				return std::move( std::to_string( cache.long_year ) );
 			}
 
-			// Name Passed In To Target Or Default Name If None Specified
 			std::string Message_Formatter::Format_Arg_N( Cached_Date_Time & )
 			{
 				return msgInfo->Name( );
 			}
 
-			// Short Message Level (T, I, D, W, E, F)
 			std::string Message_Formatter::Format_Arg_l( Cached_Date_Time & )
 			{
 				return std::move( svToString( MsgLevelToShortString( msgInfo->MsgLevel( ) ) ) );
 			}
 
-			// Long Message Level (Trace, Info, Debug, Warn, Error, Fatal)
 			std::string Message_Formatter::Format_Arg_L( Cached_Date_Time & )
 			{
 				return std::move( svToString( MsgLevelToString( msgInfo->MsgLevel( ) ) ) );
 			}
 
-			// Padded Day Date (01-31)
 			std::string Message_Formatter::Format_Arg_d( Cached_Date_Time &cache )
 			{
 				return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) );
 			}
 
-			// Padded 24 Hour Format (00-23)
 			std::string Message_Formatter::Format_Arg_H( Cached_Date_Time &cache )
 			{
 				return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) );
 			}
 
-			// Short Weekday Format (Mon, Tues, Wed, Thurs, Fri, Sat, Sun)
 			std::string Message_Formatter::Format_Arg_x( Cached_Date_Time &cache )
 			{
-				return cache.short_weekday;
+				return std::move( cache.short_weekday );
 			}
 
-			// Short Weekday Format (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
 			std::string Message_Formatter::Format_Arg_X( Cached_Date_Time &cache )
 			{
 				return std::move( cache.long_weekday );
 			}
 
-			// Padded DDMMMYY Format (01Nov21, 09Oct22, 12Dec22 etc)
 			std::string Message_Formatter::Format_Arg_n( Cached_Date_Time &cache )
 			{
 				std::string date;
@@ -277,7 +257,6 @@ namespace serenity
 								auto index = std::distance( allValidFlags.begin( ), position );
 								indexStr   = "%" + std::to_string( index ) + "^";
 							}
-
 							if( std::any_of( timeDateFlags.begin( ), timeDateFlags.end( ),
 									 [ this, &flag ]( const std::string_view sv ) {
 										 return ( sv == flag ) ? true : false;

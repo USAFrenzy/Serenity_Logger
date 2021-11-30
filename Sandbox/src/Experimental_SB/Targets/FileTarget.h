@@ -17,7 +17,7 @@ namespace serenity
 	{
 		namespace targets
 		{
-			class FileTarget  : public TargetBase
+			class FileTarget : public TargetBase
 			{
 			      public:
 				FileTarget( );  // default that will just write to a "GenericLog.txt"

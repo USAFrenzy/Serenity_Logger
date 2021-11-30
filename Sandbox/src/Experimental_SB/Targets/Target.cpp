@@ -8,7 +8,7 @@ namespace serenity
 		{
 			TargetBase::TargetBase( )
 			  : policy( ),
-			    logLevel( LoggerLevel::trace),
+			    logLevel( LoggerLevel::trace ),
 			    msgLevel( LoggerLevel::trace ),
 			    pattern( "|%l| %x %n %T [%N]: " ),
 			    msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
@@ -74,7 +74,8 @@ namespace serenity
 			{
 				logLevel = level;
 			}
-			LoggerLevel TargetBase::Level() {
+			LoggerLevel TargetBase::Level( )
+			{
 				return logLevel;
 			}
 

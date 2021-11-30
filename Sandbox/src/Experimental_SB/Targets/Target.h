@@ -103,8 +103,9 @@ namespace serenity
 
 
 			      protected:
-				virtual void PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg, std::format_args &&args ) = 0;
-				virtual void PolicyFlushOn( Flush_Policy &policy, std::string_view msg) { }
+				virtual void PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
+							   std::format_args &&args ) = 0;
+				virtual void PolicyFlushOn( Flush_Policy &policy, std::string_view msg ) { }
 
 				msg_details::Message_Formatter *MsgFmt( );
 				msg_details::Message_Info *     MsgInfo( );

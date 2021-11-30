@@ -129,11 +129,10 @@ namespace serenity
 				static Flush_Policy p_policy;
 				p_policy = TargetBase::FlushPolicy( );
 				if( !p_policy.ShouldFlush( ) ) {
-					buffer.emplace_back( std::move(MsgFmt( )->FormatMsg(  msg, args ) ) );
+					buffer.emplace_back( std::move( MsgFmt( )->FormatMsg( msg, args ) ) );
 				}
 				else {
-					this->PolicyFlushOn( p_policy, std::move(MsgFmt( )->FormatMsg(
-									  msg, args ) ) );
+					this->PolicyFlushOn( p_policy, std::move( MsgFmt( )->FormatMsg( msg, args ) ) );
 				}
 			}
 
@@ -146,9 +145,9 @@ namespace serenity
 				tmp.reserve( buffer.size( ) );
 				tmp.clear( );
 				for( const auto &msg : buffer ) {
-					tmp.append(svToString(msg ));
+					tmp.append( svToString( msg ) );
 				}
-				fwrite( tmp.data( ), 1, tmp.size( ),fileHandle );
+				fwrite( tmp.data( ), 1, tmp.size( ), fileHandle );
 				std::fflush( fileHandle );
 				buffer.clear( );
 			}

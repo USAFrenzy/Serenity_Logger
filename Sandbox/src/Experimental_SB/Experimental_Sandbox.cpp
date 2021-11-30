@@ -254,25 +254,23 @@ int main( )
 	auto totalSpdFileTime = spdlogFileTester.Elapsed_In( time_mode::ms );
 	std::cout << "\nSpdlog Basic File Sink Bench Finished.\n\n";
 
-	
 
-
-	auto percentConsole = (( totalColorTime - totalspdColorTime) / totalspdColorTime) * 100;
+	auto        percentConsole = ( ( totalColorTime - totalspdColorTime ) / totalspdColorTime ) * 100;
 	std::string consolePercent;
 	if( percentConsole > 0 ) {
-		consolePercent = "- " + std::to_string( std::abs(percentConsole ));
+		consolePercent = "- " + std::to_string( std::abs( percentConsole ) );
 	}
 	else {
-		consolePercent = "+ " + std::to_string( std::abs(percentConsole ));
+		consolePercent = "+ " + std::to_string( std::abs( percentConsole ) );
 	}
 
-	auto percentFile = (( totalFileTime- totalSpdFileTime) / totalSpdFileTime) * 100;
+	auto        percentFile = ( ( totalFileTime - totalSpdFileTime ) / totalSpdFileTime ) * 100;
 	std::string filePercent;
 	if( percentFile > 0 ) {
-		filePercent = "-" +  std::to_string( std::abs( percentFile ) );
+		filePercent = "-" + std::to_string( std::abs( percentFile ) );
 	}
 	else {
-		filePercent = "+" + std::to_string( std::abs(percentFile));
+		filePercent = "+" + std::to_string( std::abs( percentFile ) );
 	}
 
 	std::cout << Tag::Yellow(
