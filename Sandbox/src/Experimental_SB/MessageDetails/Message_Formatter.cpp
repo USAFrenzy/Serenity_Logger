@@ -8,10 +8,16 @@ namespace serenity
 	{
 		namespace msg_details
 		{
+#define SERENITY_SPACE_FLAG 99
+
+			// for micro-benches
+			using namespace se_utils;
+
+
 			Message_Formatter::Message_Formatter( std::string formatPattern, Message_Info *msgDetails )
 			  : fmtPattern( formatPattern ), msgInfo( msgDetails )
 			{
-				buffer.reserve( 4096 );
+				buffer.reserve( 512 );
 				InitFunctionHandler( );
 				internalFmt = { };
 				StoreFormat( );
@@ -26,7 +32,7 @@ namespace serenity
 
 			std::string Message_Formatter::GetMsgFmt( )
 			{
-				return fmtPattern;
+				return internalFmt.wholeFormatString;
 			}
 
 
@@ -58,8 +64,8 @@ namespace serenity
 			std::string Message_Formatter::Format_Arg_D( Cached_Date_Time &cache )
 			{
 				std::string date;
-				date.append( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ).append( "/" ) );
-				date.append( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ).append( "/" ) );
+				date.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ).append( "/" ) ) );
+				date.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ).append( "/" ) ) );
 				return std::move( date.append( std::to_string( cache.short_year ) ) );
 			}
 
@@ -67,7 +73,7 @@ namespace serenity
 			{
 				std::string date;
 				date.append( std::to_string( cache.long_year ).append( "-" ) );
-				date.append( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ).append( "-" ) );
+				date.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ).append( "-" ) ) );
 				return std::move( date.append( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) ) );
 			}
 
@@ -158,9 +164,9 @@ namespace serenity
 			std::string Message_Formatter::Format_Arg_n( Cached_Date_Time &cache )
 			{
 				std::string date;
-				date.append( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) );
-				date.append( cache.short_month );
-				date.append( std::to_string( cache.short_year ) );
+				date.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) ) );
+				date.append( std::move( cache.short_month ) );
+				date.append( std::move( std::to_string( cache.short_year ) ) );
 				return std::move( date );
 			}
 
@@ -230,28 +236,57 @@ namespace serenity
 			// defined flags and formatting functions whereas with a constexpr array and a switch-case, I couldn't unless I
 			// integrated more code than was needed for that functionality (Would have to be sure to check paramaters for
 			// use-case though)
-			std::string Message_Formatter::FlagFormatter( Cached_Date_Time &cache, std::string &indexStr )
+			std::string Message_Formatter::FlagFormatter( Cached_Date_Time &cache, int flag )
 			{
-				return std::move( fmtFunctions.at( stoi( indexStr ) )( cache ) );
+				if( flag != SERENITY_SPACE_FLAG ) {
+					return std::move( fmtFunctions.at( flag )( cache ) );
+				}
+				else {
+					return " ";
+				}
+
+				// auto flag = std::stoi( indexStr );
+				//				switch( flag ) {
+				//	case 0: return Format_Arg_a( cache ); break;
+				//	case 1: return Format_Arg_b( cache ); break;
+				//	case 2: return Format_Arg_d( cache ); break;
+				//	case 3: return Format_Arg_l( cache); break;
+				//	case 4: return Format_Arg_n( cache ); break;
+				//	case 5: return Format_Arg_t( cache ); break;
+				//	case 6: return Format_Arg_w( cache ); break;
+				//	case 7: return Format_Arg_x( cache ); break;
+				//	case 8: return Format_Arg_y( cache ); break;
+				//	case 9: return Format_Arg_A( cache ); break;
+				//	case 10: return Format_Arg_B( cache ); break;
+				//	case 11: return Format_Arg_D( cache ); break;
+				//	case 12: return Format_Arg_F( cache ); break;
+				//	case 13: return Format_Arg_H( cache ); break;
+				//	case 14: return Format_Arg_L( cache); break;
+				//	case 15: return Format_Arg_M( cache ); break;
+				//	case 16: return Format_Arg_N(cache ); break;
+				//	case 17: return Format_Arg_S( cache ); break;
+				//	case 18: return Format_Arg_T( cache ); break;
+				//	case 19: return Format_Arg_X( cache ); break;
+				//	case 20: return Format_Arg_Y( cache ); break;
+
+				//	// if arg after "%" isn't a flag handled here, do nothing
+				//	default: return ""; break;
+				//}
 			}
 
 			void Message_Formatter::StoreFormat( )
 			{
 				auto cache = msgInfo->TimeDetails( ).UpdateCache( msgInfo->TimeDetails( ).UpdateTimeDate( ) );
-				std::chrono::seconds now = std::chrono::duration_cast<std::chrono::seconds>(
-				  std::chrono::system_clock::now( ).time_since_epoch( ) );
-				msgInfo->TimeDetails( ).Cache( ).secondsSinceEpoch = now;
 				buffer.clear( );
-				size_t      it { 0 };
-				auto        fmt = fmtPattern;
+				std::string fmt { fmtPattern };
 				std::string flag;
 				std::string indexStr;
 
 				if( buffer.find( '%' ) ) {
-					while( it != std::string::npos && ( !fmt.empty( ) ) ) {
+					while( !fmt.empty( ) ) {
 						if( fmt.front( ) == '%' ) {
 							flag.clear( );
-							flag.append( fmt.substr( it, it + 2 ) );
+							flag.append( fmt.substr( 0, 2 ) );
 							auto position = std::find( allValidFlags.begin( ), allValidFlags.end( ), flag );
 							if( position != allValidFlags.end( ) ) {
 								auto index = std::distance( allValidFlags.begin( ), position );
@@ -263,7 +298,7 @@ namespace serenity
 									 } ) )
 							{
 								buffer.append( indexStr );
-								fmt.erase( it, it + 2 );
+								fmt.erase( 0, 2 );
 							}
 							else {
 								if( std::any_of( otherFlags.begin( ), otherFlags.end( ),
@@ -273,99 +308,136 @@ namespace serenity
 								{
 									indexStr.erase( 0, 1 );
 									indexStr.erase( indexStr.size( ) - 1, indexStr.size( ) );
-
-									buffer.append( FlagFormatter( cache, indexStr ) );
-									fmt.erase( it, flag.size( ) );
+									buffer.append( FlagFormatter( cache, std::stoi( indexStr ) ) );
+									fmt.erase( 0, flag.size( ) );
 								}
+							}
+							if( fmt.empty( ) ) {
+								break;
 							}
 						}
 						else {
 							buffer += fmt.front( );
-							fmt.erase( it, it + 1 );
+							fmt.erase( 0, 1 );
+							if( fmt.empty( ) ) {
+								break;
+							}
 						}
 					}
 					internalFmt.partitionUpToSpecifier =
 					  std::move( std::move( buffer.substr( 0, buffer.find_first_of( "%" ) ) ) );
 					buffer.erase( 0, internalFmt.partitionUpToSpecifier.size( ) );
-					internalFmt.flagPartition = std::move( buffer.substr( 0, buffer.find_last_of( "^" ) + 1 ) );
-					buffer.erase( 0, internalFmt.flagPartition.size( ) );
-					// Remove end boundary mow that we have dealt with anything other than time-date flags.
-					// Probably a more efficient way to do this, but the goal here was to not lose out on any
-					// numbers the user may have added to the format string while still being able to use a direct
-					// index into the formatting functions later on.
-					std::string sub;
-					while( true ) {
-						if( internalFmt.flagPartition.find( "^" ) ) {
-							sub.append( internalFmt.flagPartition.substr(
-							  0, internalFmt.flagPartition.find_first_of( "^" ) ) );
-							internalFmt.flagPartition.erase(
-							  0, internalFmt.flagPartition.find_first_of( "^" ) + 1 );
-							if( internalFmt.flagPartition.empty( ) ) {
-								internalFmt.flagPartition = std::move( sub );
+					internalFmt.timeDatePartition = std::move( buffer.substr( 0, buffer.find_last_of( "^" ) + 1 ) );
+					buffer.erase( 0, internalFmt.timeDatePartition.size( ) );
+					// Remove end boundary now that we have dealt with anything other than time-date flags. General
+					// idea here for the end boundary was to separate any index flags from user numbers in format
+					// string
+					internalFmt.timeDatePartition.erase( std::remove( internalFmt.timeDatePartition.begin( ),
+											  internalFmt.timeDatePartition.end( ), '^' ),
+									     internalFmt.timeDatePartition.end( ) );
+					// store flags as indexes for Update Function
+					for( ;; ) {
+						if( internalFmt.timeDatePartition.front( ) == '%' ) {
+							internalFmt.timeDatePartition.erase( 0, 1 );
+							flag.clear( );
+							flag = internalFmt.timeDatePartition.substr(
+							  0, internalFmt.timeDatePartition.find_first_of( "%" ) - 1 );
+							flags.emplace_back( std::stoi( flag ) );
+							internalFmt.timeDatePartition.erase( 0, flag.size( ) );  // Erase the Flag Token
+							if( internalFmt.timeDatePartition.empty( ) ) {
 								break;
 							}
 						}
 						else {
-							internalFmt.flagPartition = std::move( sub );
-							break;
+							if( internalFmt.timeDatePartition.empty( ) ) {
+								break;
+							}
+							flags.emplace_back( SERENITY_SPACE_FLAG );
+							internalFmt.timeDatePartition.erase( 0, 1 );
 						}
 					}
-
 					internalFmt.remainingPartition = std::move( buffer );
-					internalFmt.wholeFormatString  = internalFmt.partitionUpToSpecifier +
-									internalFmt.flagPartition + internalFmt.remainingPartition;
 				}  // if fmtPattern contains at least one "%"
 				else {
 					internalFmt.wholeFormatString = fmtPattern;
 				}
 			}
-
-			std::string &Message_Formatter::UpdateFormatForTime( std::chrono::system_clock::duration timePoint )
+			std::string &Message_Formatter::UpdateFormatForTime( std::chrono::seconds timePoint )
 			{
-				using namespace std::chrono;
+				auto                    start = std::chrono::system_clock::now( );
+				static std::vector<int> flagVec;
+				flagVec = flags;
 				buffer.clear( );
-				size_t      it { 0 };
-				std::string flagPartition { internalFmt.flagPartition };
-				std::string flag;
 
-				if( !flagPartition.empty( ) ) {
-					if( timePoint != msgInfo->TimeDetails( ).Cache( ).secondsSinceEpoch ) {
-						auto cache =
-						  msgInfo->TimeDetails( ).UpdateCache( msgInfo->TimeDetails( ).UpdateTimeDate( ) );
-						msgInfo->TimeDetails( ).Cache( ).secondsSinceEpoch = duration_cast<seconds>( timePoint );
-
-						while( it != std::string::npos && ( !flagPartition.empty( ) ) ) {
-							if( flagPartition.front( ) == '%' ) {
-								flag.clear( );
-								flagPartition.erase( it, it + 1 );
-								flag = flagPartition.substr( 0, flagPartition.find_first_of( "%" ) );
-								// flag = flagPartition.substr( it, it + 2 );
-								buffer.append( std::move( FlagFormatter( cache, flag ) ) );
-								buffer.append( " " );                     // spacing
-								flagPartition.erase( it, flag.size( ) );  // Erase the Flag Token
-							}
-							else {
-								buffer.append( flagPartition.substr( it, it + 1 ) );
-								flagPartition.erase( it, it + 1 );
-							}
-						}
-						internalFmt.wholeFormatString = internalFmt.partitionUpToSpecifier +
-										std::move( buffer ) + internalFmt.remainingPartition;
+				using namespace std::chrono;
+				auto cache = msgInfo->TimeDetails( ).UpdateCache( msgInfo->TimeDetails( ).UpdateTimeDate( ) );
+				for( ;; ) {
+					buffer.append( std::move( FlagFormatter( cache, flagVec.front( ) ) ) );
+					flagVec.erase( flagVec.begin( ), flagVec.begin( ) + 1 );
+					if( flagVec.empty( ) ) {
+						break;
 					}
 				}
-				return internalFmt.wholeFormatString;
+				auto end = std::chrono::system_clock::now( );
+				benches.totalUpdateTime += std::chrono::duration_cast<pMicro<float>>( end - start ).count( );
+				return internalFmt.wholeFormatString = std::move(
+					 internalFmt.partitionUpToSpecifier + std::move( buffer ) + internalFmt.remainingPartition );
 			}
 
-			std::string Message_Formatter::FormatMsg( const std::string_view msg, std::format_args args )
+
+			// From The Crude Micro-Benches, This Is Where The Most Time Is Spent (UpdateFormatForTime() takes < ~1us so
+			// ignoring this function for now)
+			std::string &Message_Formatter::FormatMsg( const std::string_view msg, std::format_args &&args )
 			{
+				auto               timePoint = msgInfo->MessageTimePoint( );
+				static std::string formatted;
+				size_t             formattedSize { 0 };
+				formatted.clear( );
 				buffer.clear( );
-				if( !internalFmt.flagPartition.empty( ) ) {
-					auto preFmt = std::move( UpdateFormatForTime( msgInfo->MessageTimePoint( ) ) );
-					return std::move(
-					  buffer.append( std::move( preFmt ) ).append( std::move( std::vformat( msg, args ) ) ).append( "\n" ) );
+
+				auto size_check = [ this ]( size_t formattedSize ) {
+					if( buffer.capacity( ) < formattedSize ) {
+						buffer.reserve( formattedSize );
+					}
+				};
+				auto start = std::chrono::system_clock::now( );
+
+				if( ( timePoint != msgInfo->TimeDetails( ).Cache( ).secsSinceLastLog ) ||
+				    ( internalFmt.wholeFormatString.empty( ) ) ) {
+					msgInfo->TimeDetails( ).Cache( ).secsSinceLastLog = timePoint;
+					if( !flags.empty( ) ) {
+						auto preFmt   = std::move( UpdateFormatForTime( timePoint ) );
+						formatted     = std::move( std::vformat( msg, args ).append( "\n" ) );
+						formattedSize = preFmt.size( ) + formatted.size( );
+						size_check( formattedSize );
+
+						auto end = std::chrono::system_clock::now( );
+						benches.totalFormatTime +=
+						  std::chrono::duration_cast<pMicro<float>>( end - start ).count( );
+
+						return buffer = std::move( preFmt ).append( std::move( formatted ) );
+					}
+					else {
+						formatted     = std::move( std::vformat( msg, args ).append( "\n" ) );
+						formattedSize = internalFmt.wholeFormatString.size( ) + formattedSize;
+						size_check( formattedSize );
+
+						auto end = std::chrono::system_clock::now( );
+						benches.totalFormatTime +=
+						  std::chrono::duration_cast<pMicro<float>>( end - start ).count( );
+
+						return buffer = std::move( internalFmt.wholeFormatString + std::move( formatted ) );
+					}
 				}
 				else {
-					return std::move( std::vformat( msg, args ).append( "\n" ) );
+					formatted     = std::move( std::vformat( msg, args ).append( "\n" ) );
+					formattedSize = internalFmt.wholeFormatString.size( ) + formattedSize;
+					size_check( formattedSize );
+
+					auto end = std::chrono::system_clock::now( );
+					benches.totalFormatTime += std::chrono::duration_cast<pMicro<float>>( end - start ).count( );
+
+					return buffer = std::move( internalFmt.wholeFormatString + std::move( formatted ) );
 				}
 			}
 

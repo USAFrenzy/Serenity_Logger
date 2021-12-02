@@ -59,10 +59,12 @@ namespace serenity
 					msgColor = GetMsgColor( MsgInfo( )->MsgLevel( ) );
 				}
 				if( consoleMode == console_interface::std_out ) {
-					std::cout << msgColor << MsgFmt( )->FormatMsg( msg, args ) << se_colors::formats::reset;
+					std::cout << msgColor << MsgFmt( )->FormatMsg( msg, std::forward<std::format_args>( args ) )
+						  << se_colors::formats::reset;
 				}
 				else {
-					std::cerr << msgColor << MsgFmt( )->FormatMsg( msg, args ) << se_colors::formats::reset;
+					std::cerr << msgColor << MsgFmt( )->FormatMsg( msg, std::forward<std::format_args>( args ) )
+						  << se_colors::formats::reset;
 				}
 			}
 

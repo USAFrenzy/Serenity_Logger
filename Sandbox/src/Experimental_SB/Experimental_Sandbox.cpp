@@ -135,8 +135,7 @@ int main( )
 	using namespace serenity::se_utils;
 
 	targets::ColorConsole C;
-
-	targets::FileTarget testFile;
+	targets::FileTarget   testFile;
 	// Flush_Policy          policy( Flush_Policy::Flush::periodically, Flush_Policy::Periodic_Options::mem_usage );
 	// testFile.SetFlushPolicy( policy );
 
@@ -293,8 +292,15 @@ int main( )
 		  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
 		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
 		  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+
+	std::cout << Tag::Bright_Yellow( "Time Spent In UpdateFormatForTime() Per Iteration:\n" )
+		  << Tag::Bright_Green( std::to_string( C.GetFormatStats( ).totalUpdateTime / iterations ) + " us\n" );
+	std::cout << Tag::Bright_Yellow( "Time Spent In FormatMsg() Per Iteration:\n" )
+		  << Tag::Bright_Green( std::to_string( C.GetFormatStats( ).totalFormatTime / iterations ) + " us\n" );
+
 	std::cout
 	  << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n" );
+
 
 	std::cout << Tag::Bright_Yellow( "File Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 		  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
@@ -308,10 +314,15 @@ int main( )
 		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
 		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
 		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::sec ) / iterations ) +
-					" s"
-					"\n" );
+		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+
+	std::cout << Tag::Bright_Yellow( "Time Spent In UpdateFormatForTime() Per Iteration:\n" )
+		  << Tag::Bright_Green( std::to_string( testFile.GetFormatStats( ).totalUpdateTime / iterations ) + " us\n" );
+	std::cout << Tag::Bright_Yellow( "Time Spent In FormatMsg() Per Iteration:\n" )
+		  << Tag::Bright_Green( std::to_string( testFile.GetFormatStats( ).totalFormatTime / iterations ) + " us\n" );
+
 	std::cout << Tag::Bright_Magenta( "File Target Is " + filePercent + " Percent Of Spdlog's File Sink Speed\n" );
+
 
 	std::cout << "\n";
 
@@ -329,6 +340,8 @@ int main( )
 #endif  // ALLOC_TEST
 
 #ifdef INSTRUMENTATION_ENABLED
+
+
 	std::cout << Tag::Bright_Yellow( "Size of ColorConsole Class:\t\t" )
 		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::ColorConsole ) ) + "\tbytes ]\n" );
 

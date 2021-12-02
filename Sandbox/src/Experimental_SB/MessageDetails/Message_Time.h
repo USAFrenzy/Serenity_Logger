@@ -28,7 +28,7 @@ namespace serenity
 				std::string          short_month;
 				int                  dec_month;
 				int                  day;
-				std::chrono::seconds secondsSinceEpoch;
+				std::chrono::seconds secsSinceLastLog;
 			};
 
 			class Message_Time

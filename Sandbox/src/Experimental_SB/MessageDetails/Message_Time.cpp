@@ -77,19 +77,19 @@ namespace serenity
 
 			Cached_Date_Time Message_Time::InitializeCache( std::tm *t )
 			{
-				m_cache.long_year         = std::move( GetCurrentYear( t->tm_year ) );
-				m_cache.short_year        = std::move( GetCurrentYear( t->tm_year, true ) );
-				m_cache.long_month        = std::move( MonthString( t->tm_mon ) );
-				m_cache.dec_month         = std::move( ( t->tm_mon + 1 ) );
-				m_cache.short_month       = std::move( MonthString( t->tm_mon, true ) );
-				m_cache.long_weekday      = std::move( WeekdayString( t->tm_wday ) );
-				m_cache.short_weekday     = std::move( WeekdayString( t->tm_wday, true ) );
-				m_cache.dec_wkday         = t->tm_wday;
-				m_cache.day               = t->tm_mday;
-				m_cache.hour              = t->tm_hour;
-				m_cache.min               = t->tm_min;
-				m_cache.sec               = t->tm_sec;
-				m_cache.secondsSinceEpoch = std::chrono::duration_cast<std::chrono::seconds>( m_time.time_since_epoch( ) );
+				m_cache.long_year        = std::move( GetCurrentYear( t->tm_year ) );
+				m_cache.short_year       = std::move( GetCurrentYear( t->tm_year, true ) );
+				m_cache.long_month       = std::move( MonthString( t->tm_mon ) );
+				m_cache.dec_month        = std::move( ( t->tm_mon + 1 ) );
+				m_cache.short_month      = std::move( MonthString( t->tm_mon, true ) );
+				m_cache.long_weekday     = std::move( WeekdayString( t->tm_wday ) );
+				m_cache.short_weekday    = std::move( WeekdayString( t->tm_wday, true ) );
+				m_cache.dec_wkday        = t->tm_wday;
+				m_cache.day              = t->tm_mday;
+				m_cache.hour             = t->tm_hour;
+				m_cache.min              = t->tm_min;
+				m_cache.sec              = t->tm_sec;
+				m_cache.secsSinceLastLog = std::chrono::duration_cast<std::chrono::seconds>( m_time.time_since_epoch( ) );
 				return m_cache;
 			}
 

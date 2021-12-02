@@ -101,6 +101,11 @@ namespace serenity
 				template <typename... Args> void error( std::string_view s, Args &&...args );
 				template <typename... Args> void fatal( std::string_view s, Args &&...args );
 
+				// for microbenches
+				msg_details::Message_Formatter::TimeStats GetFormatStats( )
+				{
+					return MsgFmt( )->GetStats( );
+				}
 
 			      protected:
 				virtual void PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,

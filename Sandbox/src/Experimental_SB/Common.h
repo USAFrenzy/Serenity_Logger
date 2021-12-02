@@ -7,7 +7,7 @@ namespace serenity
 {
 	namespace expiremental
 	{
-		static constexpr std::array<const char *, 7> short_weekdays = { "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat" };
+		static constexpr std::array<const char *, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
 		static constexpr std::array<const char *, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
 									       "Thursday", "Friday", "Saturday" };

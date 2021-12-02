@@ -105,8 +105,10 @@ namespace serenity
 			{
 				try {
 					Flush( );
-					std::fclose( fileHandle );
-					fileHandle = nullptr;
+					if( fileHandle != nullptr ) {
+						std::fclose( fileHandle );
+						fileHandle = nullptr;
+					}
 				}
 				catch( const std::exception &e ) {
 					printf( "%s\n", se_colors::Tag::Red( "Error In Closing File:" ).c_str( ) );
@@ -129,10 +131,12 @@ namespace serenity
 				static Flush_Policy p_policy;
 				p_policy = TargetBase::FlushPolicy( );
 				if( !p_policy.ShouldFlush( ) ) {
-					buffer.emplace_back( std::move( MsgFmt( )->FormatMsg( msg, args ) ) );
+					buffer.emplace_back(
+					  std::move( MsgFmt( )->FormatMsg( msg, std::forward<std::format_args>( args ) ) ) );
 				}
 				else {
-					this->PolicyFlushOn( p_policy, std::move( MsgFmt( )->FormatMsg( msg, args ) ) );
+					this->PolicyFlushOn(
+					  p_policy, std::move( MsgFmt( )->FormatMsg( msg, std::forward<std::format_args>( args ) ) ) );
 				}
 			}
 
@@ -142,10 +146,10 @@ namespace serenity
 				// For Loop Reasoning is that it's more effiecient to write in
 				// one call rather than writing each message in the loop itself
 				std::string tmp;
-				tmp.reserve( buffer.size( ) );
 				tmp.clear( );
-				for( const auto &msg : buffer ) {
-					tmp.append( svToString( msg ) );
+				tmp.reserve( buffer.capacity( ) );
+				for( auto &msg : buffer ) {
+					tmp.append( std::move( msg ) );
 				}
 				fwrite( tmp.data( ), 1, tmp.size( ), fileHandle );
 				std::fflush( fileHandle );

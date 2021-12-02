@@ -36,10 +36,10 @@ namespace serenity
 				void        Flush( );
 
 			      private:
-				std::vector<std::string_view> buffer;  // faster than string buffer
-				FILE *                        fileHandle;
-				LoggerLevel                   logLevel;
-				std::filesystem::path         filePath;
+				std::vector<std::string> buffer;  // faster than string buffer
+				FILE *                   fileHandle;
+				LoggerLevel              logLevel;
+				std::filesystem::path    filePath;
 
 			      private:
 				void PolicyFlushOn( Flush_Policy &policy, std::string_view msg ) final override;
