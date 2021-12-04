@@ -52,7 +52,9 @@ namespace serenity
 				std::chrono::system_clock::time_point m_time;
 				std::tm *                             t_struct = { };
 				Cached_Date_Time                      m_cache  = { };
-				Cached_Date_Time                      InitializeCache( std::tm *t );
+
+			      private:
+				Cached_Date_Time InitializeCache( std::tm *t );
 			};
 		}  // namespace msg_details
 	}          // namespace expiremental

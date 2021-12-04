@@ -415,11 +415,11 @@ namespace serenity
 						benches.totalFormatTime +=
 						  std::chrono::duration_cast<pMicro<float>>( end - start ).count( );
 
-						return buffer = std::move( preFmt ).append( std::move( formatted ) );
+						return buffer = std::move( preFmt.append( std::move( formatted ) ));
 					}
 					else {
 						formatted     = std::move( std::vformat( msg, args ).append( "\n" ) );
-						formattedSize = internalFmt.wholeFormatString.size( ) + formattedSize;
+						formattedSize = internalFmt.wholeFormatString.size( ) + formatted.size();
 						size_check( formattedSize );
 
 						auto end = std::chrono::system_clock::now( );
@@ -431,7 +431,7 @@ namespace serenity
 				}
 				else {
 					formatted     = std::move( std::vformat( msg, args ).append( "\n" ) );
-					formattedSize = internalFmt.wholeFormatString.size( ) + formattedSize;
+					formattedSize = internalFmt.wholeFormatString.size( ) + formatted.size();
 					size_check( formattedSize );
 
 					auto end = std::chrono::system_clock::now( );
@@ -445,3 +445,224 @@ namespace serenity
 		}  // namespace msg_details
 	}          // namespace expiremental
 }  // namespace serenity
+
+
+// Example taken from https://madridccppug.github.io/posts/stdformat/#integrating-user-defined-types
+enum class State
+{
+	On,
+	Off
+};
+
+template <> struct std::formatter<State> : std::formatter<std::string_view>
+{
+	// Specific formatting logic
+	template <typename Context> auto format( const State state, Context &context )
+	{
+		switch( state ) {
+			case State::On: return formatter<std::string_view>::format( "On", context );
+			case State::Off: return formatter<std::string_view>::format( "Off", context );
+		}
+
+		// unreachable
+		return context.out( );
+	}
+	// Iterator based formatting/parsing logic for format_to/vformat_to
+	std::format_parse_context::iterator parse( std::format_parse_context &context ) { }
+
+	std::format_parse_context::iterator format( const State state, std::format_context &context ) { }
+};
+
+// Example Taken From https://fmt.dev/latest/api.html#formatting-user-defined-types
+struct point
+{
+	double x, y;
+};
+template <> struct std::formatter<point>
+{
+	// Presentation format: 'f' - fixed, 'e' - exponential.
+	char presentation = 'f';
+
+	// Parses format specifications of the form ['f' | 'e'].
+	constexpr auto parse( format_parse_context &ctx ) -> decltype( ctx.begin( ) )
+	{
+		// [ctx.begin(), ctx.end()) is a character range that contains a part of
+		// the format string starting from the format specifications to be parsed,
+		// e.g. in
+		//
+		//   fmt::format("{:f} - point of interest", point{1, 2});
+		//
+		// the range will contain "f} - point of interest". The formatter should
+		// parse specifiers until '}' or the end of the range. In this example
+		// the formatter should parse the 'f' specifier and return an iterator
+		// pointing to '}'.
+
+		// Parse the presentation format and store it in the formatter:
+		auto it = ctx.begin( ), end = ctx.end( );
+		if( it != end && ( *it == 'f' || *it == 'e' ) ) presentation = *it++;
+
+		// Check if reached the end of the range:
+		if( it != end && *it != '}' ) throw format_error( "invalid format" );
+
+		// Return an iterator past the end of the parsed range:
+		return it;
+	}
+
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext> auto format( const point &p, FormatContext &ctx ) -> decltype( ctx.out( ) )
+	{
+		// ctx.out() is an output iterator to write to.
+		return format_to( ctx.out( ), presentation == 'f' ? "({:.1f}, {:.1f})" : "({:.1e}, {:.1e})", p.x, p.y );
+	}
+};
+
+//-----------------------------------------------------------------------------------------------------------------------------
+// _________________________________________ Actual Custom Formatting Functions Here  _________________________________________
+//-----------------------------------------------------------------------------------------------------------------------------
+/*
+  One way of thinking about this might be the following:
+  1) When storing the user's format, just replace the internalFmt string with the corresponding format function type flag instead
+     - If the char at the position being checked isn't a flag, replace it with a format function type flag that handles this
+	  (User chars like "[", "]", etc or spaces for example)
+  EXAMPLE:
+  // Psuedo-Code
+	StoreFormat(std::string fmt){
+	std::string localBuffer;
+	std::string fmt = fmtPattern;
+		for(;;){
+		if(fmt.front() == '%'){
+		take substr at '%' position and '%' position +1 for flag
+		 handle flag in another function that returns the format_arg representation
+		 In this flag handling function:
+		   - search validFlags array to check if it's an internal flag
+		     - If it is, handle flag in another function that will return back the format_arg representation
+		       - In this internal flag handler, if it's not a time-date flag, return the value for what the flag represented (i.e. %N -> return the name string)
+			   - If this flag is a time-date flag, then return the format library's flag (i.e. if %t is the flag, this would equate to %I:%M:%S  or %r)
+			   - If It's neither, then check if it's a user-defined flag
+			     - If it is, then append this flag to a not-yet-created internalFmt.userDefinedPartion string and return %U 
+				 - If it isn't, then append this 'flag' directly into StoreFormat()'s local buffer
+		   - append to StoreFormat local buffer
+		   - erase flag token from local format copy 
+		   - if local format copy is empty, then break
+		   } else {
+		     - If it isn't then, check to see if it's a user-defined flag.
+			   - If it is, then append this flag to a not-yet-created internalFmt.userFlagPartion string and return %U
+			   - If it isn't, then append this 'flag' directly into StoreFormat()'s local buffer
+			 - erase flag token from local format copy
+		      - if local format copy is empty, then break
+		   }
+		   // Do some magic here to to partition out the internal format string like currently (but clean it up)
+			}
+		}
+  // In Practice:
+	StoreFormat("|%L| %t [%N]: "); (where it's local time used and not utc)
+	-> internalized format would look like: 
+	   - partitionUpToSpecifier = "|Trace| "
+	   - timeDatePartition = "%r"
+	   - remainingPartition = " [Console_Logger]: "
+	   - userDefinedPartition = ""
+	   - wholeFormatString = "|Trace| %r [Console_Logger]: "
+
+  2) On formatting, check to see if userDefinedPartition is empty or not
+
+*/
+//
+//namespace format_experimental
+//{
+//	struct Format_Arg_a
+//	{
+//	};
+//	struct Format_Arg_b
+//	{
+//	};
+//	struct Format_Arg_d
+//	{
+//	};
+//	struct Format_Arg_l
+//	{
+//	};
+//	struct Format_Arg_n
+//	{
+//	};
+//	struct Format_Arg_t
+//	{
+//	};
+//	struct Format_Arg_w
+//	{
+//	};
+//	struct Format_Arg_x
+//	{
+//	};
+//	struct Format_Arg_y
+//	{
+//	};
+//	struct Format_Arg_A
+//	{
+//	};
+//
+//	struct Format_Arg_B
+//	{
+//	};
+//	struct Format_Arg_D
+//	{
+//	};
+//	struct Format_Arg_F
+//	{
+//	};
+//	struct Format_Arg_H
+//	{
+//	};
+//	struct Format_Arg_L
+//	{
+//	};
+//	struct Format_Arg_M
+//	{
+//	};
+//	struct Format_Arg_N
+//	{
+//	};
+//	struct Format_Arg_S
+//	{
+//	};
+//
+//	template <std::chrono::duration> struct Format_Arg_T : std::formatter<std::chrono::hh_mm_ss<std::chrono::duration>>
+//	{
+//		template <typename Context> auto format( const Format_Arg_T flag, Context &context, std::tm *time )
+//		{
+//			return std::formatter<std::chrono::hh_mm_ss<std::chrono::duration>>::format( &time, context );
+//		}
+//
+//	      private:
+//		std::string_view result;
+//	};
+//
+//	struct Format_Arg_X
+//	{
+//	};
+//	struct Format_Arg_Y
+//	{
+//	};
+//
+//
+//}  // namespace format_experimental
+//
+//using Message_Formatter = serenity::expiremental::msg_details::Message_Formatter;
+//template <> struct std::formatter<Message_Formatter>
+//{
+//	template <typename FormatContext> auto format( Message_Formatter flag, FormatContext &context )
+//	{
+//		std::string_view daySpecifier;
+//		switch( flag ) {
+//			case Message_Formatter::al {}
+//
+//			default:
+//				break;
+//		}
+//	}
+//
+//	template <typename FormatContext> auto parse( FormatContext &context ) -> decltype( context.begin( ) ) { }
+//
+//      private:
+//	std::vector<char> buffer;
+//};

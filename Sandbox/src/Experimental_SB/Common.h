@@ -21,7 +21,7 @@ namespace serenity
 
 		static std::string svToString( std::string_view s )
 		{
-			return std::string( s.data( ), s.size( ) );
+			return std::string( s.data( ), s.data() + s.size( ) );
 		}
 
 		enum class LoggerLevel
