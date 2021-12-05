@@ -1,6 +1,5 @@
 #include "Message_Formatter.h"
 
-#include <serenity/Utilities/Utilities.h>
 
 namespace serenity
 {
@@ -18,7 +17,6 @@ namespace serenity
 			  : fmtPattern( formatPattern ), msgInfo( msgDetails )
 			{
 				buffer.reserve( 512 );
-				InitFunctionHandler( );
 				internalFmt = { };
 				StoreFormat( );
 			}
@@ -184,94 +182,34 @@ namespace serenity
 			  "%a", "%b", "%d", "%n", "%t", "%w", "%x", "%y", "%A", "%B", "%D", "%F", "%H", "%M", "%S", "%T", "%X", "%Y" };
 			static constexpr std::array<std::string_view, 3> otherFlags = { "%l", "%L", "%N" };
 
-			void Message_Formatter::InitFunctionHandler( )
-			{
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_a( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_b( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_d( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_l( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_n( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_t( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_w( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_x( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_y( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_A( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_B( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_D( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_F( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_H( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_L( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_M( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_N( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_S( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_T( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_X( cache ); } );
-				fmtFunctions.emplace_back(
-				  [ this ]( Cached_Date_Time cache ) -> std::string { return this->Format_Arg_Y( cache ); } );
-			}
-
-			// I was initially hoping that indexing straight into a function call would be faster - currently it's about
-			// the same speed as it was beforehand. However, I feel like this approach is better, especially if I make the
-			// allValidFlags a member vector instead of a constexpr array - that way, I can have things such as adding user
-			// defined flags and formatting functions whereas with a constexpr array and a switch-case, I couldn't unless I
-			// integrated more code than was needed for that functionality (Would have to be sure to check paramaters for
-			// use-case though)
 			std::string Message_Formatter::FlagFormatter( Cached_Date_Time &cache, int flag )
 			{
-				if( flag != SERENITY_SPACE_FLAG ) {
-					return std::move( fmtFunctions.at( flag )( cache ) );
+				switch( flag ) {
+					case 0: return Format_Arg_a( cache ); break;
+					case 1: return Format_Arg_b( cache ); break;
+					case 2: return Format_Arg_d( cache ); break;
+					case 3: return Format_Arg_l( cache ); break;
+					case 4: return Format_Arg_n( cache ); break;
+					case 5: return Format_Arg_t( cache ); break;
+					case 6: return Format_Arg_w( cache ); break;
+					case 7: return Format_Arg_x( cache ); break;
+					case 8: return Format_Arg_y( cache ); break;
+					case 9: return Format_Arg_A( cache ); break;
+					case 10: return Format_Arg_B( cache ); break;
+					case 11: return Format_Arg_D( cache ); break;
+					case 12: return Format_Arg_F( cache ); break;
+					case 13: return Format_Arg_H( cache ); break;
+					case 14: return Format_Arg_L( cache ); break;
+					case 15: return Format_Arg_M( cache ); break;
+					case 16: return Format_Arg_N( cache ); break;
+					case 17: return Format_Arg_S( cache ); break;
+					case 18: return Format_Arg_T( cache ); break;
+					case 19: return Format_Arg_X( cache ); break;
+					case 20: return Format_Arg_Y( cache ); break;
+					case SERENITY_SPACE_FLAG: return " "; break;
+					// if arg after "%" isn't a flag handled here, do nothing
+					default: return ""; break;
 				}
-				else {
-					return " ";
-				}
-
-				// auto flag = std::stoi( indexStr );
-				//				switch( flag ) {
-				//	case 0: return Format_Arg_a( cache ); break;
-				//	case 1: return Format_Arg_b( cache ); break;
-				//	case 2: return Format_Arg_d( cache ); break;
-				//	case 3: return Format_Arg_l( cache); break;
-				//	case 4: return Format_Arg_n( cache ); break;
-				//	case 5: return Format_Arg_t( cache ); break;
-				//	case 6: return Format_Arg_w( cache ); break;
-				//	case 7: return Format_Arg_x( cache ); break;
-				//	case 8: return Format_Arg_y( cache ); break;
-				//	case 9: return Format_Arg_A( cache ); break;
-				//	case 10: return Format_Arg_B( cache ); break;
-				//	case 11: return Format_Arg_D( cache ); break;
-				//	case 12: return Format_Arg_F( cache ); break;
-				//	case 13: return Format_Arg_H( cache ); break;
-				//	case 14: return Format_Arg_L( cache); break;
-				//	case 15: return Format_Arg_M( cache ); break;
-				//	case 16: return Format_Arg_N(cache ); break;
-				//	case 17: return Format_Arg_S( cache ); break;
-				//	case 18: return Format_Arg_T( cache ); break;
-				//	case 19: return Format_Arg_X( cache ); break;
-				//	case 20: return Format_Arg_Y( cache ); break;
-
-				//	// if arg after "%" isn't a flag handled here, do nothing
-				//	default: return ""; break;
-				//}
 			}
 
 			void Message_Formatter::StoreFormat( )
@@ -390,54 +328,43 @@ namespace serenity
 			std::string &Message_Formatter::FormatMsg( const std::string_view msg, std::format_args &&args )
 			{
 				auto               timePoint = msgInfo->MessageTimePoint( );
-				static std::string formatted;
+				std::string formatted;
 				size_t             formattedSize { 0 };
 				formatted.clear( );
 				buffer.clear( );
-
 				auto size_check = [ this ]( size_t formattedSize ) {
 					if( buffer.capacity( ) < formattedSize ) {
 						buffer.reserve( formattedSize );
 					}
 				};
 				auto start = std::chrono::system_clock::now( );
-
+				formatted  = std::move( std::vformat( msg, args ).append( "\n" ) );
 				if( ( timePoint != msgInfo->TimeDetails( ).Cache( ).secsSinceLastLog ) ||
 				    ( internalFmt.wholeFormatString.empty( ) ) ) {
 					msgInfo->TimeDetails( ).Cache( ).secsSinceLastLog = timePoint;
 					if( !flags.empty( ) ) {
-						auto preFmt   = std::move( UpdateFormatForTime( timePoint ) );
-						formatted     = std::move( std::vformat( msg, args ).append( "\n" ) );
-						formattedSize = preFmt.size( ) + formatted.size( );
-						size_check( formattedSize );
-
+						auto preFmt = std::move( UpdateFormatForTime( timePoint ) );
+						size_check( preFmt.size( ) + formatted.size( ) );
 						auto end = std::chrono::system_clock::now( );
 						benches.totalFormatTime +=
 						  std::chrono::duration_cast<pMicro<float>>( end - start ).count( );
-
-						return buffer = std::move( preFmt.append( std::move( formatted ) ));
+						return buffer = std::move( preFmt ).append( std::move( formatted ) );
 					}
 					else {
-						formatted     = std::move( std::vformat( msg, args ).append( "\n" ) );
-						formattedSize = internalFmt.wholeFormatString.size( ) + formatted.size();
-						size_check( formattedSize );
-
+						size_check( internalFmt.wholeFormatString.size( ) + formatted.size( ) );
+						buffer   = internalFmt.wholeFormatString;
 						auto end = std::chrono::system_clock::now( );
 						benches.totalFormatTime +=
 						  std::chrono::duration_cast<pMicro<float>>( end - start ).count( );
-
-						return buffer = std::move( internalFmt.wholeFormatString + std::move( formatted ) );
+						return buffer.append( std::move( formatted ) );
 					}
 				}
 				else {
-					formatted     = std::move( std::vformat( msg, args ).append( "\n" ) );
-					formattedSize = internalFmt.wholeFormatString.size( ) + formatted.size();
-					size_check( formattedSize );
-
+					size_check( internalFmt.wholeFormatString.size( ) + formatted.size( ) );
+					buffer   = internalFmt.wholeFormatString;
 					auto end = std::chrono::system_clock::now( );
 					benches.totalFormatTime += std::chrono::duration_cast<pMicro<float>>( end - start ).count( );
-
-					return buffer = std::move( internalFmt.wholeFormatString + std::move( formatted ) );
+					return buffer.append( std::move( formatted ) );
 				}
 			}
 
@@ -447,76 +374,8 @@ namespace serenity
 }  // namespace serenity
 
 
-// Example taken from https://madridccppug.github.io/posts/stdformat/#integrating-user-defined-types
-enum class State
-{
-	On,
-	Off
-};
-
-template <> struct std::formatter<State> : std::formatter<std::string_view>
-{
-	// Specific formatting logic
-	template <typename Context> auto format( const State state, Context &context )
-	{
-		switch( state ) {
-			case State::On: return formatter<std::string_view>::format( "On", context );
-			case State::Off: return formatter<std::string_view>::format( "Off", context );
-		}
-
-		// unreachable
-		return context.out( );
-	}
-	// Iterator based formatting/parsing logic for format_to/vformat_to
-	std::format_parse_context::iterator parse( std::format_parse_context &context ) { }
-
-	std::format_parse_context::iterator format( const State state, std::format_context &context ) { }
-};
-
-// Example Taken From https://fmt.dev/latest/api.html#formatting-user-defined-types
-struct point
-{
-	double x, y;
-};
-template <> struct std::formatter<point>
-{
-	// Presentation format: 'f' - fixed, 'e' - exponential.
-	char presentation = 'f';
-
-	// Parses format specifications of the form ['f' | 'e'].
-	constexpr auto parse( format_parse_context &ctx ) -> decltype( ctx.begin( ) )
-	{
-		// [ctx.begin(), ctx.end()) is a character range that contains a part of
-		// the format string starting from the format specifications to be parsed,
-		// e.g. in
-		//
-		//   fmt::format("{:f} - point of interest", point{1, 2});
-		//
-		// the range will contain "f} - point of interest". The formatter should
-		// parse specifiers until '}' or the end of the range. In this example
-		// the formatter should parse the 'f' specifier and return an iterator
-		// pointing to '}'.
-
-		// Parse the presentation format and store it in the formatter:
-		auto it = ctx.begin( ), end = ctx.end( );
-		if( it != end && ( *it == 'f' || *it == 'e' ) ) presentation = *it++;
-
-		// Check if reached the end of the range:
-		if( it != end && *it != '}' ) throw format_error( "invalid format" );
-
-		// Return an iterator past the end of the parsed range:
-		return it;
-	}
-
-	// Formats the point p using the parsed format specification (presentation)
-	// stored in this formatter.
-	template <typename FormatContext> auto format( const point &p, FormatContext &ctx ) -> decltype( ctx.out( ) )
-	{
-		// ctx.out() is an output iterator to write to.
-		return format_to( ctx.out( ), presentation == 'f' ? "({:.1f}, {:.1f})" : "({:.1e}, {:.1e})", p.x, p.y );
-	}
-};
-
+// Example One Of std::formatter specialization  https://madridccppug.github.io/posts/stdformat/#integrating-user-defined-types
+// Example Two Of std::formatter specialization  https://fmt.dev/latest/api.html#formatting-user-defined-types
 //-----------------------------------------------------------------------------------------------------------------------------
 // _________________________________________ Actual Custom Formatting Functions Here  _________________________________________
 //-----------------------------------------------------------------------------------------------------------------------------
@@ -537,13 +396,15 @@ template <> struct std::formatter<point>
 		 In this flag handling function:
 		   - search validFlags array to check if it's an internal flag
 		     - If it is, handle flag in another function that will return back the format_arg representation
-		       - In this internal flag handler, if it's not a time-date flag, return the value for what the flag represented (i.e. %N -> return the name string)
-			   - If this flag is a time-date flag, then return the format library's flag (i.e. if %t is the flag, this would equate to %I:%M:%S  or %r)
+		       - In this internal flag handler, if it's not a time-date flag, return the value for what the flag represented
+  (i.e. %N -> return the name string)
+			   - If this flag is a time-date flag, then return the format library's flag (i.e. if %t is the flag, this
+  would equate to %I:%M:%S  or %r)
 			   - If It's neither, then check if it's a user-defined flag
-			     - If it is, then append this flag to a not-yet-created internalFmt.userDefinedPartion string and return %U 
+			     - If it is, then append this flag to a not-yet-created internalFmt.userDefinedPartion string and return %U
 				 - If it isn't, then append this 'flag' directly into StoreFormat()'s local buffer
 		   - append to StoreFormat local buffer
-		   - erase flag token from local format copy 
+		   - erase flag token from local format copy
 		   - if local format copy is empty, then break
 		   } else {
 		     - If it isn't then, check to see if it's a user-defined flag.
@@ -557,7 +418,7 @@ template <> struct std::formatter<point>
 		}
   // In Practice:
 	StoreFormat("|%L| %t [%N]: "); (where it's local time used and not utc)
-	-> internalized format would look like: 
+	-> internalized format would look like:
 	   - partitionUpToSpecifier = "|Trace| "
 	   - timeDatePartition = "%r"
 	   - remainingPartition = " [Console_Logger]: "
@@ -566,103 +427,5 @@ template <> struct std::formatter<point>
 
   2) On formatting, check to see if userDefinedPartition is empty or not
 
+
 */
-//
-//namespace format_experimental
-//{
-//	struct Format_Arg_a
-//	{
-//	};
-//	struct Format_Arg_b
-//	{
-//	};
-//	struct Format_Arg_d
-//	{
-//	};
-//	struct Format_Arg_l
-//	{
-//	};
-//	struct Format_Arg_n
-//	{
-//	};
-//	struct Format_Arg_t
-//	{
-//	};
-//	struct Format_Arg_w
-//	{
-//	};
-//	struct Format_Arg_x
-//	{
-//	};
-//	struct Format_Arg_y
-//	{
-//	};
-//	struct Format_Arg_A
-//	{
-//	};
-//
-//	struct Format_Arg_B
-//	{
-//	};
-//	struct Format_Arg_D
-//	{
-//	};
-//	struct Format_Arg_F
-//	{
-//	};
-//	struct Format_Arg_H
-//	{
-//	};
-//	struct Format_Arg_L
-//	{
-//	};
-//	struct Format_Arg_M
-//	{
-//	};
-//	struct Format_Arg_N
-//	{
-//	};
-//	struct Format_Arg_S
-//	{
-//	};
-//
-//	template <std::chrono::duration> struct Format_Arg_T : std::formatter<std::chrono::hh_mm_ss<std::chrono::duration>>
-//	{
-//		template <typename Context> auto format( const Format_Arg_T flag, Context &context, std::tm *time )
-//		{
-//			return std::formatter<std::chrono::hh_mm_ss<std::chrono::duration>>::format( &time, context );
-//		}
-//
-//	      private:
-//		std::string_view result;
-//	};
-//
-//	struct Format_Arg_X
-//	{
-//	};
-//	struct Format_Arg_Y
-//	{
-//	};
-//
-//
-//}  // namespace format_experimental
-//
-//using Message_Formatter = serenity::expiremental::msg_details::Message_Formatter;
-//template <> struct std::formatter<Message_Formatter>
-//{
-//	template <typename FormatContext> auto format( Message_Formatter flag, FormatContext &context )
-//	{
-//		std::string_view daySpecifier;
-//		switch( flag ) {
-//			case Message_Formatter::al {}
-//
-//			default:
-//				break;
-//		}
-//	}
-//
-//	template <typename FormatContext> auto parse( FormatContext &context ) -> decltype( context.begin( ) ) { }
-//
-//      private:
-//	std::vector<char> buffer;
-//};
