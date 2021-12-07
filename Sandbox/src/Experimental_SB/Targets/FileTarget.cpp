@@ -11,7 +11,7 @@ namespace serenity
 		{
 			FileTarget::FileTarget( ) : TargetBase( "File Logger" )
 			{
-				buffer.reserve( BUFFER_SIZE );
+				WriteToInternalBuffer( );
 
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
 				auto                  logDir { "Logs" };
@@ -39,7 +39,8 @@ namespace serenity
 
 			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists ) : TargetBase( "File Logger" )
 			{
-				buffer.reserve( BUFFER_SIZE );
+				WriteToInternalBuffer( );
+
 				std::filesystem::path file { filePath };
 				this->filePath = std::move( file.relative_path( ).make_preferred( ) );
 				logLevel       = LoggerLevel::trace;
@@ -81,10 +82,10 @@ namespace serenity
 			{
 				try {
 					if( !truncate ) {
-						fileHandle = std::fopen( filePath.string( ).c_str( ), "a+" );
+						fileHandle.open( filePath, std::ios_base::app );
 					}
 					else {
-						fileHandle = std::fopen( filePath.string( ).c_str( ), "w+" );
+						fileHandle.open( filePath, std::ios_base::trunc );
 					}
 				}
 				catch( const std::exception &e ) {
@@ -105,10 +106,7 @@ namespace serenity
 			{
 				try {
 					Flush( );
-					if( fileHandle != nullptr ) {
-						std::fclose( fileHandle );
-						fileHandle = nullptr;
-					}
+					fileHandle.close( );
 				}
 				catch( const std::exception &e ) {
 					printf( "%s\n", se_colors::Tag::Red( "Error In Closing File:" ).c_str( ) );
@@ -118,6 +116,7 @@ namespace serenity
 				return true;
 			}
 
+			// TODO: Check To See This Works (Not Tested)
 			bool FileTarget::RenameFile( std::string_view newFileName )
 			{
 				std::filesystem::path newFile { filePath };
@@ -125,38 +124,47 @@ namespace serenity
 				return file_utils::RenameFile( filePath, newFile.filename( ) );
 			}
 
-			void FileTarget::PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
-						       std::format_args &&args )
+			void FileTarget::PrintMessage( std::string &buffer )
 			{
 				static Flush_Policy p_policy;
 				p_policy = TargetBase::FlushPolicy( );
-				if( !p_policy.ShouldFlush( ) ) {
-					buffer.emplace_back(
-					  std::move( MsgFmt( )->FormatMsg( msg, std::forward<std::format_args>( args ) ) ) );
-				}
-				else {
-					this->PolicyFlushOn(
-					  p_policy, std::move( MsgFmt( )->FormatMsg( msg, std::forward<std::format_args>( args ) ) ) );
+				std::lock_guard<std::mutex> lock( m_mutex );
+				m_futures.push_back( std::async( std::launch::async, &FileTarget::Write, this,
+								 std::forward<std::string &>( buffer ),
+								 std::forward<Flush_Policy &>( p_policy ) ) );
+			}
+
+			void FileTarget::Write( std::string buffer, Flush_Policy policy )
+			{
+				std::lock_guard<std::mutex> lock( m_mutex );
+				if( policy.ShouldFlush( ) ) {
+					PolicyFlushOn( policy );
 				}
 			}
+
 
 			void FileTarget::Flush( )
 			{
-				// buffer already formatted so using fwrite() vs fprintf() here
-				// For Loop Reasoning is that it's more effiecient to write in
-				// one call rather than writing each message in the loop itself
-				std::string tmp;
-				tmp.clear( );
-				tmp.reserve( buffer.capacity( ) );
-				for( auto &msg : buffer ) {
-					tmp.append( std::move( msg ) );
+				std::lock_guard<std::mutex> lock( m_mutex );
+				if( isWriteToBuf( ) ) {
+				static std::string          futuresResult;
+				futuresResult.reserve( AsyncFutures( )->size( ) );
+				futuresResult.clear( );
+					for( auto &future: *AsyncFutures( ) ) {
+					future.wait( );
+					auto tmp = future.get( );
+					futuresResult.append( std::move(tmp ));
+					}
+					AsyncFutures()->clear();
+					for( ; futuresResult.size( ) != 0; ) {
+						fileHandle.write( futuresResult.c_str(), futuresResult.size( ) );
+						break;
+					}
 				}
-				fwrite( tmp.data( ), 1, tmp.size( ), fileHandle );
-				std::fflush( fileHandle );
-				buffer.clear( );
+				fileHandle.flush( );
 			}
 
-			void FileTarget::PolicyFlushOn( Flush_Policy &policy, std::string_view msg )
+			void FileTarget::PolicyFlushOn( Flush_Policy &policy )
 			{
 				switch( policy.GetFlushSetting( ) ) {
 					case Flush_Policy::Flush::periodically:
@@ -167,12 +175,8 @@ namespace serenity
 										// Check that the message won't cause
 										// an allocation if larger than
 										// BUFFER_SIZE
-										if( ( ( buffer.size( ) + msg.size( ) ) < BUFFER_SIZE ) ) {
-											buffer.emplace_back( std::move( msg ) );
-										}
-										else {
+										if( !( Buffer( )->size( ) < BUFFER_SIZE ) ) {
 											Flush( );
-											buffer.emplace_back( std::move( msg ) );
 										}
 										return;
 									}
@@ -183,8 +187,7 @@ namespace serenity
 									return;
 								case Flush_Policy::Periodic_Options::undef:
 									{
-										// Behave As If Flush Setting = Never
-										buffer.emplace_back( std::move( msg ) );
+										// Behave As If Flush Setting = Never & Do Nothing
 									}
 									return;
 							}
@@ -192,7 +195,6 @@ namespace serenity
 					case Flush_Policy::Flush::always:
 						{
 							// Always Flush
-							buffer.emplace_back( std::move( msg ) );
 							Flush( );
 						}
 						return;

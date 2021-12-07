@@ -6,6 +6,14 @@
 #include "../MessageDetails/Message_Time.h"
 #include "../MessageDetails/Message_Formatter.h"
 
+#include <future>
+
+// Messing with buffer sizes
+#define KB          ( 1024 )
+#define MB          ( 1024 * KB )
+#define GB          ( 1024 * MB )
+#define BUFFER_SIZE static_cast<size_t>( 512 * KB )
+
 namespace serenity
 {
 	namespace expiremental
@@ -84,7 +92,7 @@ namespace serenity
 				TargetBase( );
 				TargetBase( std::string_view name );
 				TargetBase( std::string_view name, std::string_view msgPattern );
-				~TargetBase( ) = default;
+				~TargetBase( );
 
 				void               SetFlushPolicy( Flush_Policy policy );
 				const Flush_Policy FlushPolicy( );
@@ -93,6 +101,9 @@ namespace serenity
 				void                             SetPattern( std::string_view pattern );
 				void                             ResetPatternToDefault( );
 				void                             SetLogLevel( LoggerLevel level );
+				void                             WriteToInternalBuffer( bool fmtToBuf = true );
+				bool                             isWriteToBuf( );
+				std::string *                    Buffer( );
 				LoggerLevel                      Level( );
 				template <typename... Args> void trace( std::string_view s, Args &&...args );
 				template <typename... Args> void info( std::string_view s, Args &&...args );
@@ -101,6 +112,45 @@ namespace serenity
 				template <typename... Args> void error( std::string_view s, Args &&...args );
 				template <typename... Args> void fatal( std::string_view s, Args &&...args );
 
+
+				template <typename... Args> void test( std::string_view s, Args &&...args )
+				{
+					std::lock_guard<std::mutex> lock( base_mutex );
+					if( logLevel <= LoggerLevel::test ) {
+						msgDetails.SetMsgLevel( LoggerLevel::test );
+						std::chrono::seconds messageTimePoint = msgDetails.MessageTimePoint( );
+						static std::string   preFormat;
+						std::string   msg;
+						preFormat.reserve( msgPattern.FormatSplices( )->wholeFormatString.size( ) );
+						msg.reserve( preFormat.capacity( ) + s.size( ) );
+
+						if( messageTimePoint != lastLogTime ) {
+							lastLogTime = messageTimePoint;
+							preFormat.clear( );
+							preFormat = std::move( msgPattern.UpdateFormatForTime( msgDetails.TimeInfo( ) ) );
+						}
+						msg.clear( );
+						msg = preFormat + svToString(s).append("\n");
+						internalBuffer.reserve( internalBuffer.size( ) + msg.size( ) );
+						if( isWriteToBuf( ) ) {
+							auto async_format = [ this, msg ]( ) {
+								return std::move(std::format( msg, std::forward<Args>( args )... ));
+							};
+
+							base_futures.push_back( std::async( std::launch::async, async_format ) );
+						}
+						else {
+							auto formatted = std::move( std::format( msg, std::forward<Args>( args )... ) );
+							PrintMessage(  formatted);
+						}
+					}
+				}
+
+				std::vector<std::future<std::string>>* AsyncFutures( )
+				{
+					return &base_futures;
+				}
+
 				// for microbenches
 				msg_details::Message_Formatter::TimeStats GetFormatStats( )
 				{
@@ -108,14 +158,15 @@ namespace serenity
 				}
 
 			      protected:
-				virtual void PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
-							   std::format_args &&args ) = 0;
-				virtual void PolicyFlushOn( Flush_Policy &policy, std::string_view msg ) { }
+				virtual void                          PrintMessage( std::string &buffer ) = 0;
+				virtual void                          PolicyFlushOn( Flush_Policy &policy ) { }
+				msg_details::Message_Formatter *      MsgFmt( );
+				msg_details::Message_Info *           MsgInfo( );
+				std::vector<std::future<std::string>> base_futures;
 
-				msg_details::Message_Formatter *MsgFmt( );
-				msg_details::Message_Info *     MsgInfo( );
 
 			      private:
+				bool                           toBuffer;
 				Flush_Policy                   policy;
 				LoggerLevel                    logLevel;
 				LoggerLevel                    msgLevel;
@@ -123,6 +174,9 @@ namespace serenity
 				std::string                    loggerName;
 				msg_details::Message_Info      msgDetails;
 				msg_details::Message_Formatter msgPattern;
+				std::chrono::seconds           lastLogTime { 0 };
+				std::string                    internalBuffer;
+				std::mutex                     base_mutex;
 			};
 #include "Target-impl.h"
 		}  // namespace targets

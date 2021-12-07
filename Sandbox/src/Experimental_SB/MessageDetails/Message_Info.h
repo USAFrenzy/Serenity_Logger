@@ -23,7 +23,9 @@ namespace serenity
 				void                 SetName( std::string name );
 				void                 SetMsgLevel( LoggerLevel level );
 				std::chrono::seconds MessageTimePoint( );
-
+				void                 SetTimeMode( message_time_mode mode );
+				const message_time_mode    TimeMode( );
+				const std::tm *         TimeInfo( );
 			      private:
 				std::chrono::seconds logTime;
 				std::string          m_name;

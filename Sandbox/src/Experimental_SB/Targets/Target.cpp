@@ -7,33 +7,65 @@ namespace serenity
 		namespace targets
 		{
 			TargetBase::TargetBase( )
-			  : policy( ),
+			  : toBuffer( false ),
+			    policy( ),
 			    logLevel( LoggerLevel::trace ),
 			    msgLevel( LoggerLevel::trace ),
 			    pattern( "|%l| %x %n %T [%N]: " ),
 			    msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
 			    msgPattern( pattern, &msgDetails )
 			{
+				internalBuffer.reserve( BUFFER_SIZE );
+				base_futures.reserve(512);
+				base_futures.clear();
+				internalBuffer.clear( );
 			}
 
 			TargetBase::TargetBase( std::string_view name )
-			  : policy( ),
+			  : toBuffer( false ),
+			    policy( ),
 			    logLevel( LoggerLevel::trace ),
 			    msgLevel( LoggerLevel::trace ),
 			    pattern( "|%l| %x %n %T [%N]: " ),
 			    msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
 			    msgPattern( pattern, &msgDetails )
 			{
+				internalBuffer.reserve( BUFFER_SIZE );
+				base_futures.reserve(512);
+				base_futures.clear();
+				internalBuffer.clear();
 			}
 
-			TargetBase::TargetBase( std::string_view name, std::string_view msgPattern )
-			  : policy( ),
+			TargetBase::TargetBase( std::string_view name, std::string_view fmtPattern )
+			  : toBuffer( false ),
+			    policy( ),
 			    logLevel( LoggerLevel::trace ),
 			    msgLevel( LoggerLevel::trace ),
-			    pattern( std::move( svToString( msgPattern ) ) ),
+			    pattern( std::move( svToString( fmtPattern ) ) ),
 			    msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
 			    msgPattern( pattern, &msgDetails )
 			{
+				internalBuffer.reserve( BUFFER_SIZE );
+				base_futures.reserve(512);
+				base_futures.clear();
+				internalBuffer.clear();
+			}
+
+			TargetBase::~TargetBase( ) { }
+
+			void TargetBase::WriteToInternalBuffer( bool fmtToBuf )
+			{
+				toBuffer = fmtToBuf;
+			}
+
+			bool TargetBase::isWriteToBuf( )
+			{
+				return toBuffer;
+			}
+
+			std::string *TargetBase::Buffer( )
+			{
+				return &internalBuffer;
 			}
 
 			void TargetBase::SetPattern( std::string_view pattern )

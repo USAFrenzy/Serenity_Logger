@@ -60,7 +60,7 @@ namespace serenity
 				}
 			}
 
-			Cached_Date_Time Message_Time::UpdateCache( std::tm *timeStruct )
+			Cached_Date_Time Message_Time::UpdateCache( const std::tm *timeStruct )
 			{
 				return InitializeCache( std::move( timeStruct ) );
 			}
@@ -75,7 +75,7 @@ namespace serenity
 				return m_mode;
 			}
 
-			Cached_Date_Time Message_Time::InitializeCache( std::tm *t )
+			Cached_Date_Time Message_Time::InitializeCache( const std::tm *t )
 			{
 				m_cache.long_year        = std::move( GetCurrentYear( t->tm_year ) );
 				m_cache.short_year       = std::move( GetCurrentYear( t->tm_year, true ) );

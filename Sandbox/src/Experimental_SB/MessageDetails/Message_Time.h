@@ -1,11 +1,9 @@
 #pragma once
 
 #include "../Common.h"
-
 #include <string_view>
 #include <ctime>
 #include <time.h>
-
 #include <chrono>
 
 namespace serenity
@@ -40,7 +38,7 @@ namespace serenity
 				std::string             MonthString( int monthIndex, bool shortened = false );
 				std::string             ZeroPadDecimal( int dec );
 				std::tm *               UpdateTimeDate( );
-				Cached_Date_Time        UpdateCache( std::tm *timeStruct );
+				Cached_Date_Time        UpdateCache( const std::tm *timeStruct );
 				Cached_Date_Time        Cache( );
 				std::string             DayHalf( int hour );
 				const message_time_mode Mode( );
@@ -54,7 +52,7 @@ namespace serenity
 				Cached_Date_Time                      m_cache  = { };
 
 			      private:
-				Cached_Date_Time InitializeCache( std::tm *t );
+				Cached_Date_Time InitializeCache( const std::tm *t );
 			};
 		}  // namespace msg_details
 	}          // namespace expiremental

@@ -37,8 +37,7 @@ namespace serenity
 				void              SetOriginalColors( );
 
 			      private:
-				void PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
-						   std::format_args &&args ) override;
+				void PrintMessage( std::string &buffer ) override;
 
 				bool                                              coloredOutput;
 				console_interface                                 consoleMode;

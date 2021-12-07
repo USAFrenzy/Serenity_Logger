@@ -51,6 +51,21 @@ namespace serenity
 					 std::chrono::system_clock::now( ).time_since_epoch( ) );
 			}
 
+			void Message_Info::SetTimeMode( message_time_mode mode )
+			{
+				msgTime.SetTimeMode( mode );
+			}
+
+			const message_time_mode Message_Info::TimeMode( ) 
+			{ 
+				return msgTime.Mode( );
+			}
+
+			const std::tm *Message_Info::TimeInfo( )
+			{
+				return msgTime.UpdateTimeDate( );
+			}
+
 			std::string Message_Info::Name( )
 			{
 				return m_name;

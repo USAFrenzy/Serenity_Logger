@@ -2,14 +2,9 @@
 
 #include "Target.h"
 
-#include <filesystem>
 #include <fstream>
-
-// Messing with buffer sizes
-#define KB          ( 1024 )
-#define MB          ( 1024 * KB )
-#define GB          ( 1024 * MB )
-#define BUFFER_SIZE static_cast<size_t>( 512 * KB )
+#include <mutex>
+#include <future>
 
 namespace serenity
 {
@@ -26,23 +21,27 @@ namespace serenity
 				FileTarget &operator=( const FileTarget &t ) = delete;
 				~FileTarget( );
 
-				bool        OpenFile( bool truncate = false );
-				bool        CloseFile( );
 				std::string FilePath( );
 				void        EraseContents( );
 				bool        RenameFile( std::string_view newFileName );
-				void        PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
-							  std::format_args &&args ) final override;
+				bool        OpenFile( bool truncate = false );
+				bool        CloseFile( );
 				void        Flush( );
+				void        Write( std::string buffer, Flush_Policy policy );
 
 			      private:
-				std::vector<std::string> buffer;  // faster than string buffer
-				FILE *                   fileHandle;
-				LoggerLevel              logLevel;
-				std::filesystem::path    filePath;
+				std::ofstream         fileHandle;
+				LoggerLevel           logLevel;
+				std::filesystem::path filePath;
+
+				// ------------------- WIP -------------------
+				std::vector<std::future<void>> m_futures;
+				std::mutex                     m_mutex;
+				// ------------------- WIP -------------------
 
 			      private:
-				void PolicyFlushOn( Flush_Policy &policy, std::string_view msg ) final override;
+				void PolicyFlushOn( Flush_Policy &policy ) final override;
+				void PrintMessage( std::string &buffer ) final override;
 			};
 		}  // namespace targets
 	}          // namespace expiremental

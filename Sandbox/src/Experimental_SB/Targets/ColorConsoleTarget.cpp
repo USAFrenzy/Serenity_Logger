@@ -11,18 +11,21 @@ namespace serenity
 			ColorConsole::ColorConsole( )
 			  : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
+				WriteToInternalBuffer( false );
 				SetOriginalColors( );
 			}
 
 			ColorConsole::ColorConsole( std::string_view name )
 			  : TargetBase( name ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
+				WriteToInternalBuffer( false );
 				SetOriginalColors( );
 			}
 
 			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
 			  : TargetBase( name, msgPattern ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
+				WriteToInternalBuffer( false );
 				SetOriginalColors( );
 			}
 
@@ -51,20 +54,17 @@ namespace serenity
 				return consoleMode;
 			}
 
-			void ColorConsole::PrintMessage( msg_details::Message_Info msgInfo, const std::string_view msg,
-							 std::format_args &&args )
+			void ColorConsole::PrintMessage( std::string &buffer )
 			{
 				static std::string_view msgColor;
 				if( coloredOutput ) {
 					msgColor = GetMsgColor( MsgInfo( )->MsgLevel( ) );
 				}
 				if( consoleMode == console_interface::std_out ) {
-					std::cout << msgColor << MsgFmt( )->FormatMsg( msg, std::forward<std::format_args>( args ) )
-						  << se_colors::formats::reset;
+					std::cout << msgColor << buffer << se_colors::formats::reset;
 				}
 				else {
-					std::cerr << msgColor << MsgFmt( )->FormatMsg( msg, std::forward<std::format_args>( args ) )
-						  << se_colors::formats::reset;
+					std::cerr << msgColor << buffer << se_colors::formats::reset;
 				}
 			}
 
