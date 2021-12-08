@@ -7,17 +7,20 @@
 #include "../MessageDetails/Message_Formatter.h"
 
 #include <future>
+#include <chrono>
 
 // Messing with buffer sizes
 #define KB          ( 1024 )
 #define MB          ( 1024 * KB )
 #define GB          ( 1024 * MB )
-#define BUFFER_SIZE static_cast<size_t>( 512 * KB )
+#define BUFFER_SIZE static_cast<size_t>( 256 * KB )
 
 namespace serenity
 {
 	namespace expiremental
 	{
+		using namespace std::chrono_literals;
+
 		class Flush_Policy
 		{
 		      public:
@@ -37,15 +40,15 @@ namespace serenity
 		      private:
 			struct Flush_Settings
 			{
-				Flush            policy;
-				Periodic_Options sub_options;
-				float            interval;
-				bool             sFlush;
+				Flush                     policy;
+				Periodic_Options          sub_options;
+				std::chrono::milliseconds interval;
+				bool                      sFlush;
 			};
 
 		      public:
 			Flush_Policy( Flush mode = Flush::never, Periodic_Options sub_options = Periodic_Options::undef,
-				      float interval = 0.0 )
+				      std::chrono::milliseconds interval = 0ms )
 			{
 				options.policy      = mode;
 				options.sub_options = sub_options;
@@ -101,7 +104,7 @@ namespace serenity
 				void                             SetPattern( std::string_view pattern );
 				void                             ResetPatternToDefault( );
 				void                             SetLogLevel( LoggerLevel level );
-				void                             WriteToInternalBuffer( bool fmtToBuf = true );
+				void                             WriteToBaseBuffer( bool fmtToBuf = true );
 				bool                             isWriteToBuf( );
 				std::string *                    Buffer( );
 				LoggerLevel                      Level( );
@@ -120,7 +123,7 @@ namespace serenity
 						msgDetails.SetMsgLevel( LoggerLevel::test );
 						std::chrono::seconds messageTimePoint = msgDetails.MessageTimePoint( );
 						static std::string   preFormat;
-						std::string   msg;
+						std::string          msg;
 						preFormat.reserve( msgPattern.FormatSplices( )->wholeFormatString.size( ) );
 						msg.reserve( preFormat.capacity( ) + s.size( ) );
 
@@ -130,23 +133,27 @@ namespace serenity
 							preFormat = std::move( msgPattern.UpdateFormatForTime( msgDetails.TimeInfo( ) ) );
 						}
 						msg.clear( );
-						msg = preFormat + svToString(s).append("\n");
+						msg = preFormat + svToString( s ).append( "\n" );
 						internalBuffer.reserve( internalBuffer.size( ) + msg.size( ) );
+
 						if( isWriteToBuf( ) ) {
-							auto async_format = [ this, msg ]( ) {
-								return std::move(std::format( msg, std::forward<Args>( args )... ));
+							auto async_format = [ = ]( ) {
+								return std::move(
+								  std::vformat( msg, std::make_format_args( ( args )... ) ) );
 							};
 
 							base_futures.push_back( std::async( std::launch::async, async_format ) );
 						}
 						else {
-							auto formatted = std::move( std::format( msg, std::forward<Args>( args )... ) );
-							PrintMessage(  formatted);
+							std::format_to( std::back_inserter( internalBuffer ), msg,
+									std::forward<Args &&>( args )... );
+							PrintMessage( internalBuffer );
+							internalBuffer.clear( );
 						}
 					}
 				}
 
-				std::vector<std::future<std::string>>* AsyncFutures( )
+				std::vector<std::future<std::string>> *AsyncFutures( )
 				{
 					return &base_futures;
 				}
@@ -159,7 +166,7 @@ namespace serenity
 
 			      protected:
 				virtual void                          PrintMessage( std::string &buffer ) = 0;
-				virtual void                          PolicyFlushOn( Flush_Policy &policy ) { }
+				virtual void                          PolicyFlushOn( std::string &buffer, Flush_Policy policy ) { }
 				msg_details::Message_Formatter *      MsgFmt( );
 				msg_details::Message_Info *           MsgInfo( );
 				std::vector<std::future<std::string>> base_futures;

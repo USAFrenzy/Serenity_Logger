@@ -16,8 +16,8 @@ namespace serenity
 			    msgPattern( pattern, &msgDetails )
 			{
 				internalBuffer.reserve( BUFFER_SIZE );
-				base_futures.reserve(512);
-				base_futures.clear();
+				base_futures.reserve( 512 );
+				base_futures.clear( );
 				internalBuffer.clear( );
 			}
 
@@ -31,9 +31,9 @@ namespace serenity
 			    msgPattern( pattern, &msgDetails )
 			{
 				internalBuffer.reserve( BUFFER_SIZE );
-				base_futures.reserve(512);
-				base_futures.clear();
-				internalBuffer.clear();
+				base_futures.reserve( 512 );
+				base_futures.clear( );
+				internalBuffer.clear( );
 			}
 
 			TargetBase::TargetBase( std::string_view name, std::string_view fmtPattern )
@@ -46,14 +46,14 @@ namespace serenity
 			    msgPattern( pattern, &msgDetails )
 			{
 				internalBuffer.reserve( BUFFER_SIZE );
-				base_futures.reserve(512);
-				base_futures.clear();
-				internalBuffer.clear();
+				base_futures.reserve( 512 );
+				base_futures.clear( );
+				internalBuffer.clear( );
 			}
 
 			TargetBase::~TargetBase( ) { }
 
-			void TargetBase::WriteToInternalBuffer( bool fmtToBuf )
+			void TargetBase::WriteToBaseBuffer( bool fmtToBuf )
 			{
 				toBuffer = fmtToBuf;
 			}

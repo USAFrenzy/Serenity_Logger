@@ -11,21 +11,21 @@ namespace serenity
 			ColorConsole::ColorConsole( )
 			  : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
-				WriteToInternalBuffer( false );
+				WriteToBaseBuffer( false );
 				SetOriginalColors( );
 			}
 
 			ColorConsole::ColorConsole( std::string_view name )
 			  : TargetBase( name ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
-				WriteToInternalBuffer( false );
+				WriteToBaseBuffer( false );
 				SetOriginalColors( );
 			}
 
 			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
 			  : TargetBase( name, msgPattern ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
-				WriteToInternalBuffer( false );
+				WriteToBaseBuffer( false );
 				SetOriginalColors( );
 			}
 

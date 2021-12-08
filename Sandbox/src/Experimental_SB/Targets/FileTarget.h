@@ -40,7 +40,7 @@ namespace serenity
 				// ------------------- WIP -------------------
 
 			      private:
-				void PolicyFlushOn( Flush_Policy &policy ) final override;
+				void PolicyFlushOn( std::string &buffer, Flush_Policy policy ) final override;
 				void PrintMessage( std::string &buffer ) final override;
 			};
 		}  // namespace targets
