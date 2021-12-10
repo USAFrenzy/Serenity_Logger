@@ -30,7 +30,6 @@ template <typename... Args> void TargetBase::trace( std::string_view s, Args &&.
 	}
 }
 
-
 template <typename... Args> void TargetBase::info( std::string_view s, Args &&...args )
 {
 	if( logLevel <= LoggerLevel::info ) {
@@ -56,7 +55,6 @@ template <typename... Args> void TargetBase::info( std::string_view s, Args &&..
 		}
 	}
 }
-
 
 template <typename... Args> void TargetBase::debug( std::string_view s, Args &&...args )
 {
@@ -84,7 +82,6 @@ template <typename... Args> void TargetBase::debug( std::string_view s, Args &&.
 	}
 }
 
-
 template <typename... Args> void TargetBase::warn( std::string_view s, Args &&...args )
 {
 	if( logLevel <= LoggerLevel::warning ) {
@@ -111,7 +108,6 @@ template <typename... Args> void TargetBase::warn( std::string_view s, Args &&..
 	}
 }
 
-
 template <typename... Args> void TargetBase::error( std::string_view s, Args &&...args )
 {
 	if( logLevel <= LoggerLevel::error ) {
@@ -137,7 +133,6 @@ template <typename... Args> void TargetBase::error( std::string_view s, Args &&.
 		}
 	}
 }
-
 
 template <typename... Args> void TargetBase::fatal( std::string_view s, Args &&...args )
 {

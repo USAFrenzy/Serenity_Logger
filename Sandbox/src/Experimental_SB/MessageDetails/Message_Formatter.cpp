@@ -1,6 +1,5 @@
 #include "Message_Formatter.h"
 
-
 namespace serenity
 {
 	namespace expiremental
@@ -11,7 +10,6 @@ namespace serenity
 
 			// for micro-benches
 			using namespace se_utils;
-
 
 			Message_Formatter::Message_Formatter( std::string formatPattern, Message_Info *msgDetails )
 			  : fmtPattern( formatPattern ), msgInfo( msgDetails )
@@ -32,7 +30,6 @@ namespace serenity
 			{
 				return internalFmt.wholeFormatString;
 			}
-
 
 			std::string Message_Formatter::Format_Arg_a( Cached_Date_Time &cache )
 			{
@@ -98,8 +95,7 @@ namespace serenity
 			{
 				std::string time;
 				if( cache.hour > 12 ) {
-					time.append(
-					  std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ).append( ":" ) ) );
+					time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ).append( ":" ) ) );
 				}
 				else {
 					time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ).append( ":" ) ) );
@@ -175,11 +171,11 @@ namespace serenity
 			}
 
 			static constexpr std::array<std::string_view, 21> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w",
-											    "%x", "%y", "%A", "%B", "%D", "%F", "%H",
-											    "%L", "%M", "%N", "%S", "%T", "%X", "%Y" };
+																				"%x", "%y", "%A", "%B", "%D", "%F", "%H",
+																				"%L", "%M", "%N", "%S", "%T", "%X", "%Y" };
 			// separation for storage caching due to just storing the direct substitution of anything not time-date related
 			static constexpr std::array<std::string_view, 18> timeDateFlags = {
-			  "%a", "%b", "%d", "%n", "%t", "%w", "%x", "%y", "%A", "%B", "%D", "%F", "%H", "%M", "%S", "%T", "%X", "%Y" };
+			"%a", "%b", "%d", "%n", "%t", "%w", "%x", "%y", "%A", "%B", "%D", "%F", "%H", "%M", "%S", "%T", "%X", "%Y" };
 			static constexpr std::array<std::string_view, 3> otherFlags = { "%l", "%L", "%N" };
 
 			std::string Message_Formatter::FlagFormatter( Cached_Date_Time &cache, int flag )
@@ -229,19 +225,17 @@ namespace serenity
 							auto index = std::distance( allValidFlags.begin( ), position );
 							indexStr   = "%" + std::to_string( index ) + "^";
 						}
-						if( std::any_of( timeDateFlags.begin( ), timeDateFlags.end( ),
-								 [ this, &flag ]( const std::string_view sv ) {
-									 return ( sv == flag ) ? true : false;
-								 } ) )
+						if( std::any_of( timeDateFlags.begin( ),
+										 timeDateFlags.end( ),
+										 [ this, &flag ]( const std::string_view sv ) { return ( sv == flag ) ? true : false; } ) )
 						{
 							buffer.append( indexStr );
 							fmt.erase( 0, 2 );
 						}
 						else {
-							if( std::any_of( otherFlags.begin( ), otherFlags.end( ),
-									 [ this, &flag ]( const std::string_view sv ) {
-										 return ( sv == flag ) ? true : false;
-									 } ) )
+							if( std::any_of( otherFlags.begin( ),
+											 otherFlags.end( ),
+											 [ this, &flag ]( const std::string_view sv ) { return ( sv == flag ) ? true : false; } ) )
 							{
 								indexStr.erase( 0, 1 );
 								indexStr.erase( indexStr.size( ) - 1, indexStr.size( ) );
@@ -261,24 +255,22 @@ namespace serenity
 						}
 					}
 				}
-				internalFmt.partitionUpToSpecifier =
-				  std::move( std::move( buffer.substr( 0, buffer.find_first_of( "%" ) ) ) );
+				internalFmt.partitionUpToSpecifier = std::move( std::move( buffer.substr( 0, buffer.find_first_of( "%" ) ) ) );
 				buffer.erase( 0, internalFmt.partitionUpToSpecifier.size( ) );
 				internalFmt.timeDatePartition = std::move( buffer.substr( 0, buffer.find_last_of( "^" ) + 1 ) );
 				buffer.erase( 0, internalFmt.timeDatePartition.size( ) );
 				// Remove end boundary now that we have dealt with anything other than time-date flags. General
 				// idea here for the end boundary was to separate any index flags from user numbers in format
 				// string
-				internalFmt.timeDatePartition.erase( std::remove( internalFmt.timeDatePartition.begin( ),
-										  internalFmt.timeDatePartition.end( ), '^' ),
-								     internalFmt.timeDatePartition.end( ) );
+				internalFmt.timeDatePartition.erase(
+				std::remove( internalFmt.timeDatePartition.begin( ), internalFmt.timeDatePartition.end( ), '^' ),
+				internalFmt.timeDatePartition.end( ) );
 				// store flags as indexes for Update Function
 				for( ;; ) {
 					if( internalFmt.timeDatePartition.front( ) == '%' ) {
 						internalFmt.timeDatePartition.erase( 0, 1 );
 						flag.clear( );
-						flag = internalFmt.timeDatePartition.substr(
-						  0, internalFmt.timeDatePartition.find_first_of( "%" ) - 1 );
+						flag = internalFmt.timeDatePartition.substr( 0, internalFmt.timeDatePartition.find_first_of( "%" ) - 1 );
 						flags.emplace_back( std::stoi( flag ) );
 						internalFmt.timeDatePartition.erase( 0, flag.size( ) );  // Erase the Flag Token
 						if( internalFmt.timeDatePartition.empty( ) ) {
@@ -309,8 +301,8 @@ namespace serenity
 						break;
 					}
 				}
-				return internalFmt.wholeFormatString = std::move(
-					 internalFmt.partitionUpToSpecifier + std::move( buffer ) + internalFmt.remainingPartition );
+				return internalFmt.wholeFormatString =
+					   std::move( internalFmt.partitionUpToSpecifier + std::move( buffer ) + internalFmt.remainingPartition );
 			}
 
 			std::string &Message_Formatter::FormatMsg( const std::string_view msg, std::format_args &&args )
@@ -323,7 +315,6 @@ namespace serenity
 				return &internalFmt;
 			}
 
-
 		}  // namespace msg_details
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity

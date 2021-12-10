@@ -10,7 +10,6 @@
 	#define INSTRUMENTATION_ENABLED
 #endif
 
-
 // Crude but it should keep from optimizing scope away
 #define BENCH_START {
 #define BENCH_END   }
@@ -118,22 +117,28 @@ int main( )
 	spdlog::register_logger( spdlogFileLogger );
 	spdlogFileLogger->set_pattern( "%^|%L| %a %d%b%C %T [%n]: %v%$" );  // equivalent to Target's Default Pattern
 
-
 	using namespace se_colors;
 	using namespace serenity::expiremental;
 	using namespace serenity::se_utils;
 
 	targets::ColorConsole C;
 	targets::FileTarget   testFile;
-	// Flush_Policy          policy( Flush_Policy::Flush::periodically, Flush_Policy::Periodic_Options::time_based, 500ms );
-	// testFile.SetFlushPolicy( policy );
+
+	//  TODO: Abstract Away Option Settings So That The Below Aren't The Semantics To Use
+	 Flush_Policy::Flush_Settings settings;
+	 settings.primaryOption = Flush_Policy::Flush::periodically;
+	 settings.subSettings.logLevelBased.store( LoggerLevel::warning );
+	 settings.subSettings.timeBased.store( std::chrono::milliseconds( 500 ) );
+	 settings.subOption = Flush_Policy::Periodic_Options::timeBased;
+	 settings.subSettings.memUsage.store( 256 * KB );
+	// testFile.SetFlushPolicy( settings );
+	// C.SetFlushPolicy( settings );
 
 	const char *   test;
 	Instrumentator macroTester;
 	Instrumentator macroTesterFile;
 	Instrumentator spdlogConsoleTester;
 	Instrumentator spdlogFileTester;
-
 
 #ifdef INSTRUMENTATION_ENABLED
 	BENCH_START
@@ -145,73 +150,73 @@ int main( )
 		temp += "a";
 	}  // 400 chars = 400 bytes
 	test = temp.c_str( );
-	unsigned long int i { 0 }, iterations { 1000000 };
+	unsigned long int       i { 0 };
+	const unsigned long int iterations { 1000000 };
+	auto                    m = iterations / 2;
 	std::cout << "Benching Color Console Target...\n\n";
 	for( i; i < iterations; i++ ) {
 		C.info( "{}", test );
-
-
+	}
 #endif  // INSTRUMENTATION_ENABLED
 
 #ifndef INSTRUMENTATION_ENABLED
-		printf( "####################################################################\n" );
-		printf( "# This Will Be The Default Pattern Format And Message Level Colors #\n" );
-		printf( "####################################################################\n" );
-		// Trace Is Default Color
-		C.trace( "Trace" );
-		// Info Is Light Green
-		C.info( "Info" );
-		// Debug Is Light Cyan
-		C.debug( "Debug" );
-		// Warning Is Light Yellow
-		C.warn( "Warning" );
-		// Error Is Dark Red
-		C.error( "Error" );
-		// Fatal Is Light Yellow On Dark Red
-		C.fatal( "Fatal" );
-		printf( "####################################################################\n\n" );
-		printf( "########################################################################\n" );
-		printf( "# Testing Some Basic Functions To Make Sure All Is Working As I Expect #\n" );
-		printf( "########################################################################\n" );
-		C.SetPattern( "%T [%N]: " );
-		C.info( "Pattern String Has Been Changed To \"%T [%N]: \"" );
-		C.ColorizeOutput( false );
-		C.info( "Colorized Output Set To False, Therefore, This Output Should Be The Default Color" );
-		C.error( "This Line Should Also Still Lack Color" );
-		C.ColorizeOutput( true );
-		C.info( "Colorized Output Re-enabled, therefore this line should be colored" );
-		C.info( "Log Level Will Be Set To \"warning\"" );
-		C.SetLogLevel( LoggerLevel::warning );
-		C.info( "Log Level Has Been Set To Warning, So This Line Should Not Print" );
-		C.warn( "However, This Line Should Print" );
-		C.fatal( "And This Line Should Also Print" );
-		C.SetLogLevel( LoggerLevel::trace );
-		C.info( "Log Level Set Back To \"trace\"" );
-		C.ResetPatternToDefault( );
-		C.info( "Pattern String Should Have Been Changed Back To Default Pattern" );
-		C.SetMsgColor( LoggerLevel::warning, se_colors::bright_colors::combos::cyan::on_grey );
-		C.trace( "Warning Level Color Has Been Changed To Cyan On Grey" );
-		C.warn( "So This Line Should Now Be Cyan On Grey" );
-		C.warn( "As Should This Line - Testing For Any One-Off Weirdness Here" );
-		C.SetOriginalColors( );
-		C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
+	printf( "####################################################################\n" );
+	printf( "# This Will Be The Default Pattern Format And Message Level Colors #\n" );
+	printf( "####################################################################\n" );
+	// Trace Is Default Color
+	C.trace( "Trace" );
+	// Info Is Light Green
+	C.info( "Info" );
+	// Debug Is Light Cyan
+	C.debug( "Debug" );
+	// Warning Is Light Yellow
+	C.warn( "Warning" );
+	// Error Is Dark Red
+	C.error( "Error" );
+	// Fatal Is Light Yellow On Dark Red
+	C.fatal( "Fatal" );
+	printf( "####################################################################\n\n" );
+	printf( "########################################################################\n" );
+	printf( "# Testing Some Basic Functions To Make Sure All Is Working As I Expect #\n" );
+	printf( "########################################################################\n" );
+	C.SetPattern( "%T [%N]: " );
+	C.info( "Pattern String Has Been Changed To \"%T [%N]: \"" );
+	C.ColorizeOutput( false );
+	C.info( "Colorized Output Set To False, Therefore, This Output Should Be The Default Color" );
+	C.error( "This Line Should Also Still Lack Color" );
+	C.ColorizeOutput( true );
+	C.info( "Colorized Output Re-enabled, therefore this line should be colored" );
+	C.info( "Log Level Will Be Set To \"warning\"" );
+	C.SetLogLevel( LoggerLevel::warning );
+	C.info( "Log Level Has Been Set To Warning, So This Line Should Not Print" );
+	C.warn( "However, This Line Should Print" );
+	C.fatal( "And This Line Should Also Print" );
+	C.SetLogLevel( LoggerLevel::trace );
+	C.info( "Log Level Set Back To \"trace\"" );
+	C.ResetPatternToDefault( );
+	C.info( "Pattern String Should Have Been Changed Back To Default Pattern" );
+	C.SetMsgColor( LoggerLevel::warning, se_colors::bright_colors::combos::cyan::on_grey );
+	C.trace( "Warning Level Color Has Been Changed To Cyan On Grey" );
+	C.warn( "So This Line Should Now Be Cyan On Grey" );
+	C.warn( "As Should This Line - Testing For Any One-Off Weirdness Here" );
+	C.SetOriginalColors( );
+	C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
+	// This Is Now Fully Working As Well
+	testFile.EraseContents( );
+	testFile.trace( "This Is A Trace Message To The File" );
+	testFile.info( "This Is An Info Message To The File" );
+	testFile.debug( "This Is A Debug Message To The File" );
+	testFile.warn( "This Is A Warning Message To The File" );
+	testFile.error( "This Is An Error Message To The File" );
+	testFile.fatal( "This Is A Fatal Message To The File" );
 
-		// This Is Now Fully Working As Well
-		testFile.EraseContents( );
-		testFile.trace( "This Is A Trace Message To The File" );
-		testFile.info( "This Is An Info Message To The File" );
-		testFile.debug( "This Is A Debug Message To The File" );
-		testFile.warn( "This Is A Warning Message To The File" );
-		testFile.error( "This Is An Error Message To The File" );
-		testFile.fatal( "This Is A Fatal Message To The File" );
-
-		// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder
-		// And Finally Link All The Targets Together Using A Singular Logging Class
+	// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder
+	// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED
 
 #ifdef INSTRUMENTATION_ENABLED
-	}
+
 	macroTester.StopWatch_Stop( );
 	auto totalColorTime = macroTester.Elapsed_In( time_mode::ms );
 	std::cout << "\nColor Console Target Bench Finished. Benching Spdlog Color Console Sink...\n\n";
@@ -244,7 +249,6 @@ int main( )
 	auto totalSpdFileTime = spdlogFileTester.Elapsed_In( time_mode::ms );
 	std::cout << "\nSpdlog Basic File Sink Bench Finished.\n\n";
 
-
 	auto        percentConsole = ( ( totalColorTime - totalspdColorTime ) / totalspdColorTime ) * 100;
 	std::string consolePercent;
 	if( percentConsole > 0 ) {
@@ -264,93 +268,85 @@ int main( )
 	}
 
 	std::cout << Tag::Yellow(
-		       "\n\n***************************************************************************************\n"
-		       "*************** Instrumentation Data (Averaged Over " )
-		  << Tag::Yellow( std::to_string( iterations ) + " Iterations: " )
-		  << Tag::Yellow(
-		       "***************\n"
-		       "***************************************************************************************\n" );
-	 std::cout << Tag::Bright_Yellow( "Color Console Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
-		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
-		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+				 "\n\n***************************************************************************************\n"
+				 "*************** Instrumentation Data (Averaged Over " )
+			  << Tag::Yellow( std::to_string( iterations ) + " Iterations: " )
+			  << Tag::Yellow(
+				 "***************\n"
+				 "***************************************************************************************\n" );
+	std::cout << Tag::Bright_Yellow( "Color Console Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
+			  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
+			  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
+			  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
+			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
+			  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
 
-	 std::cout << Tag::Bright_Yellow( "Spdlog Color Console Sink (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
-		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
-		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-		  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+	std::cout << Tag::Bright_Yellow( "Spdlog Color Console Sink (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
+			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
+			  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
+			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
+			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
+			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
 
-	std::cout
-	  << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n" );
-
+	std::cout << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n" );
 
 	std::cout << Tag::Bright_Yellow( "File Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
-		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
-		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-		  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+			  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
+			  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
+			  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
+			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
+			  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
 
 	std::cout << Tag::Bright_Yellow( "Spdlog Basic File Sink (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
-		  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
-		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
-		  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-		  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+			  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
+			  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
+			  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
+			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
+			  << Tag::Bright_Green( std::to_string( spdlogFileTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
 
 	std::cout << Tag::Bright_Magenta( "File Target Is " + filePercent + " Percent Of Spdlog's File Sink Speed\n" );
 
-
 	std::cout << "\n";
 
-
 #endif  // INSTRUMENTATION_ENABLED
-
 
 #if ALLOC_TEST
 	auto mem_used = macroTester.mem_tracker.Memory_Usage( );
 	// setting up for the current usage and allocations so no variation in conversions
 	std::cout << Tag::Bright_Yellow( "Total Memory Used:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( mem_used ) + " bytes]\n" )
-		  << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( mem_used / 1000.0 ) + " KB]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( mem_used ) + " bytes]\n" ) << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t\t" )
+			  << Tag::Bright_Green( "[ " + std::to_string( mem_used / 1000.0 ) + " KB]\n" );
 #endif  // ALLOC_TEST
 
 #ifdef INSTRUMENTATION_ENABLED
 
 	std::cout << Tag::Bright_Yellow( "Size of Base Target Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::TargetBase ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::TargetBase ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of ColorConsole Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::ColorConsole ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::ColorConsole ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of FileTarget Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::FileTarget ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::FileTarget ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Info Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Info ) ) + "\tbytes ]\n" );
-
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Info ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Formatter Class:\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Formatter ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Formatter ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Time Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Time ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Time ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Cached_Date_Time Class:\t\t" )
-		  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Cached_Date_Time ) ) + "\tbytes ]\n" );
-
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Cached_Date_Time ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Yellow(
-	  "***************************************************************************************"
-	  "\n" );
+	"***************************************************************************************"
+	"\n" );
 	std::cout << Tag::Yellow(
-	  "***************************************************************************************"
-	  "\n" );
+	"***************************************************************************************"
+	"\n" );
 	std::cout << Tag::Yellow( "***************************************************************************************\n\n" );
 
 	BENCH_END

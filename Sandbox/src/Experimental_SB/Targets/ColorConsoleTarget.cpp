@@ -66,25 +66,22 @@ namespace serenity
 				else {
 					std::cerr << msgColor << buffer << se_colors::formats::reset;
 				}
+				Buffer( )->clear( );
 			}
-
 
 			void ColorConsole::SetOriginalColors( )
 			{
 				msgLevelColors = {
-				  { LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
-				  { LoggerLevel::info, se_colors::bright_colors::foreground::green },
-				  { LoggerLevel::debug, se_colors::bright_colors::foreground::cyan },
-				  { LoggerLevel::warning, se_colors::bright_colors::foreground::yellow },
-				  { LoggerLevel::error, se_colors::basic_colors::foreground::red },
-				  { LoggerLevel::fatal, se_colors::bright_colors::combos::yellow::on_red },
-				  { LoggerLevel::off, se_colors::formats::reset },
+				{ LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
+				{ LoggerLevel::info, se_colors::bright_colors::foreground::green },
+				{ LoggerLevel::debug, se_colors::bright_colors::foreground::cyan },
+				{ LoggerLevel::warning, se_colors::bright_colors::foreground::yellow },
+				{ LoggerLevel::error, se_colors::basic_colors::foreground::red },
+				{ LoggerLevel::fatal, se_colors::bright_colors::combos::yellow::on_red },
+				{ LoggerLevel::off, se_colors::formats::reset },
 				};
 			}
 
-			// don't really know yet if console really needs a flush implementation
-
-
 		}  // namespace targets
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity

@@ -3,16 +3,19 @@
 #include <serenity/Utilities/Utilities.h>
 #include <serenity/Color/Color.h>
 
+#include <thread>
+
 namespace serenity
 {
 	namespace expiremental
 	{
 		namespace targets
 		{
+			using namespace std::chrono_literals;
+
 			FileTarget::FileTarget( ) : TargetBase( "File Logger" )
 			{
 				WriteToBaseBuffer( );
-
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
 				auto                  logDir { "Logs" };
 				// NOTE: This Appends The Log Dir To The File Path AS WELL AS assigns that path to logDirPath
@@ -35,7 +38,6 @@ namespace serenity
 					printf( "%s\n", se_colors::Tag::Red( "Unable To Create Default Directory" ).c_str( ) );
 				}
 			}
-
 
 			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists ) : TargetBase( "File Logger" )
 			{
@@ -105,6 +107,10 @@ namespace serenity
 			bool FileTarget::CloseFile( )
 			{
 				try {
+					ableToFlush.exchange( false );
+					ableToFlush.notify_one( );
+					cleanUpThreads.exchange( true );
+					cleanUpThreads.notify_one( );
 					Flush( );
 					fileHandle.close( );
 				}
@@ -126,30 +132,30 @@ namespace serenity
 
 			void FileTarget::PrintMessage( std::string &buffer )
 			{
-				static Flush_Policy p_policy;
-				p_policy = TargetBase::FlushPolicy( );
-				std::lock_guard<std::mutex> lock( m_mutex );
-				m_futures.push_back( std::async( std::launch::async, &FileTarget::Write, this,
-								 std::forward<std::string &>( buffer ),
-								 std::forward<Flush_Policy &>( p_policy ) ) );
+				auto ignore = std::async( std::launch::async, &FileTarget::Write, this, std::forward<std::string &>( buffer ) );
 			}
 
-			void FileTarget::Write( std::string buffer, Flush_Policy policy )
+			void FileTarget::Write( std::string buffer )
 			{
-				std::lock_guard<std::mutex> lock( m_mutex );
-				if( !policy.ShouldFlush( ) ) {
-					fileHandle.write( buffer.c_str( ), buffer.size( ) );
+				static auto policy = Policy( );
+				ableToFlush.exchange( false );
+				ableToFlush.notify_one( );
+				while( !readWriteMutex.try_lock_shared( ) ) {
+					std::this_thread::sleep_for( 100ms );
 				}
-				else {
-					FileTarget::PolicyFlushOn( buffer, policy );
-				}
+				fileHandle.write( buffer.c_str( ), buffer.size( ) );
+				Buffer( )->clear( );
+				ableToFlush.exchange( true );
+				ableToFlush.notify_one( );
+				readWriteMutex.unlock_shared( );
 			}
-
 
 			void FileTarget::Flush( )
 			{
-				std::lock_guard<std::mutex> lock( m_mutex );
+				std::lock_guard<std::shared_mutex> lock( readWriteMutex );
+				if( !fileHandle.is_open( ) ) return;
 				if( isWriteToBuf( ) ) {
+					if( AsyncFutures( )->size( ) == 0 ) return;
 					static std::string futuresResult;
 					futuresResult.reserve( AsyncFutures( )->size( ) );
 					futuresResult.clear( );
@@ -159,88 +165,79 @@ namespace serenity
 						futuresResult.append( std::move( tmp ) );
 					}
 					AsyncFutures( )->clear( );
-					for( ; futuresResult.size( ) != 0; ) {
-						fileHandle.write( futuresResult.c_str( ), futuresResult.size( ) );
-						break;
-					}
+					fileHandle.write( futuresResult.c_str( ), futuresResult.size( ) );
 				}
 				fileHandle.flush( );
 			}
 
-			void FileTarget::PolicyFlushOn( std::string &buffer, Flush_Policy policy )
+			void FileTarget::PolicyFlushOn( Flush_Policy settings )
 			{
-				switch( policy.GetFlushSetting( ) ) {
+				switch( settings.GetSettings( ).primaryOption ) {
 					case Flush_Policy::Flush::periodically:
-						{
-							switch( policy.GetPeriodicSetting( ) ) {
-								case Flush_Policy::Periodic_Options::mem_usage:
-									{
-										// Check that the message won't cause
-										// an allocation if larger than
-										// BUFFER_SIZE
-										size_t bufferSize = isWriteToBuf( ) ? Buffer( )->size( )
-														    : buffer.size( );
-										if( !( bufferSize < BUFFER_SIZE ) ) {
-											Flush( );
-										}
-										fileHandle.write( buffer.c_str( ), buffer.size( ) );
-									}
-									break;
-								case Flush_Policy::Periodic_Options::time_based:
-									{
-										// Still a work in progress. Unsure if this will
-										// correctly block this thread from writing if flushing
-										// and then resume
-										using namespace std::chrono;
-										static bool threadStarted { false }, isFlushing { false };
-										std::condition_variable cv;
-
-										auto periodic_flush = [ =, &cv, &policy ]( ) {
-											while( true ) {
-												static seconds lastTimePoint;
-												auto now = duration_cast<seconds>(
-												  system_clock::now( ).time_since_epoch( ) );
-												auto elapsed = duration_cast<milliseconds>(
-												  now - lastTimePoint );
-												if( elapsed >
-												    policy.GetSettings( ).interval ) {
-													isFlushing = true;
-													cv.notify_one( );
-													Flush( );
-													lastTimePoint = now;
+					{
+						switch( Policy( ).GetSettings( ).subOption ) {
+							case Flush_Policy::Periodic_Options::memUsage:
+							{
+								// Check that the message won't cause an allocation if larger than BUFFER_SIZE
+								if( !( Buffer( )->size( ) < settings.GetSettings( ).subSettings.memUsage.load( ) ) ) {
+									Flush( );
+								}
+							} break;
+							case Flush_Policy::Periodic_Options::timeBased:
+							{
+								static bool threadStarted { false };
+								if( threadStarted ) return;
+								// lambda that starts a background thread to flush on time interval given
+								auto periodic_flush = [ this, &settings ]( )
+								{
+									using namespace std::chrono;
+									while( !cleanUpThreads.load( ) ) {
+										while( ableToFlush.load( ) ) {
+											static milliseconds lastTimePoint;
+											auto now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
+											auto elapsed = duration_cast<milliseconds>( now - lastTimePoint );
+											if( elapsed >= settings.GetSettings( ).subSettings.timeBased.load( ) ) {
+												Flush( );
+												lastTimePoint = now;
+												while( !ableToFlush.load( ) ) {
+													std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
 												}
-												isFlushing = false;
-												cv.notify_one( );
 											}
-										};
-										std::unique_lock<std::mutex> lock( m_mutex );
-										if( !threadStarted ) {
-											std::thread t( periodic_flush );
-											threadStarted = true;
 										}
-										cv.wait( lock, []( ) { return isFlushing; } );
-										fileHandle.write( buffer.c_str( ), buffer.size( ) );
 									}
-									break;
-								case Flush_Policy::Periodic_Options::undef:
-									{
-										// Behave As If Flush Setting = Never & Do Nothing
-									}
-									break;
-							}
-							break;
-						}  // periodic option check
+								};  // periodic_flush
+
+								if( !threadStarted ) {
+									std::thread t( periodic_flush );
+									t.detach( );
+									threadStarted = true;
+								}
+							} break;  // time based bounds
+							case Flush_Policy::Periodic_Options::logLevelBased:
+							{
+								if( ( Policy( ).GetSettings( ).subSettings.logLevelBased.load( ) > MsgInfo( )->MsgLevel( ) ) ) return;
+								return;
+								Flush( );
+							} break;
+							default: break;  // Don't bother with undef field
+						}                    // Sub Option Check
+					} break;                 // Periodic Option Check
 					case Flush_Policy::Flush::always:
-						{
-							fileHandle.write( buffer.c_str( ), buffer.size( ) );
-							// Always Flush
-							Flush( );
-						}
-						break;
+					{
+						Flush( );
+					} break;
+					case Flush_Policy::Flush::never:
+					{
+					} break;
 				}
+			}  // PolicyFlushOn( ) Function
+
+			void FileTarget::EnableAsyncFlush( bool isEnabled )
+			{
+				ableToFlush.store( isEnabled );
+				ableToFlush.notify_one( );
 			}
 
-
 		}  // namespace targets
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity

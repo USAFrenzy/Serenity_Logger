@@ -31,7 +31,7 @@ namespace serenity
 
 			class Message_Time
 			{
-			      public:
+			  public:
 				Message_Time( message_time_mode mode );
 				std::string             WeekdayString( int weekdayIndex, bool shortened = false );
 				int                     GetCurrentYear( int yearOffset, bool shortened = false );
@@ -44,16 +44,15 @@ namespace serenity
 				const message_time_mode Mode( );
 				void                    SetTimeMode( message_time_mode mode );
 
-
-			      private:
+			  private:
 				message_time_mode                     m_mode;
 				std::chrono::system_clock::time_point m_time;
 				std::tm *                             t_struct = { };
 				Cached_Date_Time                      m_cache  = { };
 
-			      private:
+			  private:
 				Cached_Date_Time InitializeCache( const std::tm *t );
 			};
 		}  // namespace msg_details
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity

@@ -5,7 +5,6 @@
 #include "Message_Info.h"
 #include <format>
 
-
 #include <serenity/Utilities/Utilities.h>  // for duration cast typedefs
 
 namespace serenity
@@ -16,7 +15,7 @@ namespace serenity
 		{
 			class Message_Formatter
 			{
-			      public:
+			  public:
 				explicit Message_Formatter( std::string formatPattern, Message_Info *msgDetails );
 				Message_Formatter &operator=( const Message_Formatter &t );
 				// returns user format string
@@ -44,7 +43,7 @@ namespace serenity
 					return benches;
 				}
 
-			      private:
+			  private:
 				// returns evaluated flag's value to the caller
 				std::string FlagFormatter( Cached_Date_Time &cache, int flag );
 				// ----------------------------------------------------------------------------
@@ -93,7 +92,7 @@ namespace serenity
 				// Long Year Format (2021, 2022)
 				std::string Format_Arg_Y( Cached_Date_Time &cache );
 
-			      private:
+			  private:
 				InternalFormat   internalFmt;
 				std::string      fmtPattern;
 				Message_Info *   msgInfo;
@@ -104,5 +103,5 @@ namespace serenity
 				TimeStats benches = { };
 			};
 		}  // namespace msg_details
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity

@@ -8,45 +8,45 @@ namespace serenity
 		{
 			TargetBase::TargetBase( )
 			  : toBuffer( false ),
-			    policy( ),
-			    logLevel( LoggerLevel::trace ),
-			    msgLevel( LoggerLevel::trace ),
-			    pattern( "|%l| %x %n %T [%N]: " ),
-			    msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails )
+				policy( Flush_Policy::Flush::never, Flush_Policy::Periodic_Options::undef ),
+				logLevel( LoggerLevel::trace ),
+				msgLevel( LoggerLevel::trace ),
+				pattern( "|%l| %x %n %T [%N]: " ),
+				msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
+				msgPattern( pattern, &msgDetails )
 			{
-				internalBuffer.reserve( BUFFER_SIZE );
-				base_futures.reserve( 512 );
+				internalBuffer.reserve( DEFAULT_BUFFER_SIZE );
+				base_futures.reserve( DEFAULT_BUFFER_SIZE );
 				base_futures.clear( );
 				internalBuffer.clear( );
 			}
 
 			TargetBase::TargetBase( std::string_view name )
 			  : toBuffer( false ),
-			    policy( ),
-			    logLevel( LoggerLevel::trace ),
-			    msgLevel( LoggerLevel::trace ),
-			    pattern( "|%l| %x %n %T [%N]: " ),
-			    msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails )
+				policy( Flush_Policy::Flush::never, Flush_Policy::Periodic_Options::undef ),
+				logLevel( LoggerLevel::trace ),
+				msgLevel( LoggerLevel::trace ),
+				pattern( "|%l| %x %n %T [%N]: " ),
+				msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
+				msgPattern( pattern, &msgDetails )
 			{
-				internalBuffer.reserve( BUFFER_SIZE );
-				base_futures.reserve( 512 );
+				internalBuffer.reserve( DEFAULT_BUFFER_SIZE );
+				base_futures.reserve( DEFAULT_BUFFER_SIZE );
 				base_futures.clear( );
 				internalBuffer.clear( );
 			}
 
 			TargetBase::TargetBase( std::string_view name, std::string_view fmtPattern )
 			  : toBuffer( false ),
-			    policy( ),
-			    logLevel( LoggerLevel::trace ),
-			    msgLevel( LoggerLevel::trace ),
-			    pattern( std::move( svToString( fmtPattern ) ) ),
-			    msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
-			    msgPattern( pattern, &msgDetails )
+				policy( Flush_Policy::Flush::never, Flush_Policy::Periodic_Options::undef ),
+				logLevel( LoggerLevel::trace ),
+				msgLevel( LoggerLevel::trace ),
+				pattern( std::move( svToString( fmtPattern ) ) ),
+				msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
+				msgPattern( pattern, &msgDetails )
 			{
-				internalBuffer.reserve( BUFFER_SIZE );
-				base_futures.reserve( 512 );
+				internalBuffer.reserve( DEFAULT_BUFFER_SIZE );
+				base_futures.reserve( DEFAULT_BUFFER_SIZE );
 				base_futures.clear( );
 				internalBuffer.clear( );
 			}
@@ -73,12 +73,22 @@ namespace serenity
 				msgPattern.SetPattern( pattern );
 			}
 
-			void TargetBase::SetFlushPolicy( Flush_Policy policy )
+			void TargetBase::SetFlushPolicy( Flush_Policy::Flush_Settings newPolicy )
 			{
-				this->policy = policy;
+				policy.SetFlushOptions( newPolicy );
+				NotifyAllAtomicSubs( );
 			}
 
-			const Flush_Policy TargetBase::FlushPolicy( )
+			void TargetBase::NotifyAllAtomicSubs( )
+			{
+				policy.GetAtomics( ).logLevelBased.notify_all( );
+				policy.GetAtomics( ).timeBased.notify_all( );
+				policy.GetAtomics( ).memUsage.notify_all( );
+				policy.GetAtomics( ).settingsChange.store( true );
+				policy.GetAtomics( ).settingsChange.notify_all( );
+			}
+
+			Flush_Policy TargetBase::Policy( )
 			{
 				return policy;
 			}
@@ -112,5 +122,5 @@ namespace serenity
 			}
 
 		}  // namespace targets
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity

@@ -9,15 +9,14 @@ namespace serenity
 	{
 		static constexpr std::array<const char *, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
-		static constexpr std::array<const char *, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
-									       "Thursday", "Friday", "Saturday" };
+		static constexpr std::array<const char *, 7> long_weekdays = {
+		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 
-		static constexpr std::array<const char *, 12> short_months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-									       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+		static constexpr std::array<const char *, 12> short_months = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-		static constexpr std::array<const char *, 12> long_months = { "January",   "February", "March",    "April",
-									      "May",       "June",     "July",     "August",
-									      "September", "October",  "November", "December" };
+		static constexpr std::array<const char *, 12> long_months = {
+		"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
 		static std::string svToString( std::string_view s )
 		{
@@ -90,9 +89,8 @@ namespace serenity
 	}  // namespace expiremental
 }  // namespace serenity
 
-
 #ifndef NDEBUG
-	#define DB_PRINT( msg, ... ) ( std::cout << std::format( msg, __VA_ARGS__ ) << "\n" )
+	#define DB_PRINT( msg, ... ) ( printf( "%s\n", std::format( msg, __VA_ARGS__ ).c_str( ) ) )
 #else
 	#define DB_PRINT( msg, ... )
 #endif  // !NDEBUG

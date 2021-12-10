@@ -24,7 +24,7 @@ namespace serenity
 			// project I'll be using this in (< win 8.1 EOL).
 			class ColorConsole : public TargetBase
 			{
-			      public:
+			  public:
 				ColorConsole( );
 				ColorConsole( std::string_view name );
 				ColorConsole( std::string_view name, std::string_view msgPattern );
@@ -36,13 +36,12 @@ namespace serenity
 				void              ColorizeOutput( bool colorize );
 				void              SetOriginalColors( );
 
-			      private:
-				void PrintMessage( std::string &buffer ) override;
-
+			  private:
+				void                                              PrintMessage( std::string &buffer ) override;
 				bool                                              coloredOutput;
 				console_interface                                 consoleMode;
 				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 			};  // class ColorConsole
-		}           // namespace targets
-	}                   // namespace expiremental
+		}       // namespace targets
+	}           // namespace expiremental
 }  // namespace serenity

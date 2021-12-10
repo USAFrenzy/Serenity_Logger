@@ -3,8 +3,7 @@
 #include "Target.h"
 
 #include <fstream>
-#include <mutex>
-#include <future>
+#include <shared_mutex>
 
 namespace serenity
 {
@@ -14,7 +13,7 @@ namespace serenity
 		{
 			class FileTarget : public TargetBase
 			{
-			      public:
+			  public:
 				FileTarget( );  // default that will just write to a "GenericLog.txt"
 				FileTarget( std::string_view filePath, bool replaceIfExists = false );
 				FileTarget( const FileTarget &t ) = delete;
@@ -27,22 +26,25 @@ namespace serenity
 				bool        OpenFile( bool truncate = false );
 				bool        CloseFile( );
 				void        Flush( );
-				void        Write( std::string buffer, Flush_Policy policy );
+				void        Write( std::string buffer );
+				void        EnableAsyncFlush( bool isEnabled );
 
-			      private:
+			  private:
 				std::ofstream         fileHandle;
 				LoggerLevel           logLevel;
 				std::filesystem::path filePath;
 
 				// ------------------- WIP -------------------
 				std::vector<std::future<void>> m_futures;
-				std::mutex                     m_mutex;
+				std::atomic<bool>              ableToFlush { true };
+				std::atomic<bool>              cleanUpThreads { false };
+				std::shared_mutex              readWriteMutex;
 				// ------------------- WIP -------------------
 
-			      private:
-				void PolicyFlushOn( std::string &buffer, Flush_Policy policy ) final override;
+			  private:
+				void PolicyFlushOn( Flush_Policy ) final override;
 				void PrintMessage( std::string &buffer ) final override;
 			};
 		}  // namespace targets
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity

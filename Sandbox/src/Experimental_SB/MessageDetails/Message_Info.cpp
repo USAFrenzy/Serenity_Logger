@@ -1,24 +1,22 @@
 #include "Message_Info.h"
 
-
 namespace serenity
 {
 	namespace expiremental
 	{
 		namespace msg_details
 		{
-			Message_Info::Message_Info( )
-			  : m_name( ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local )
+			Message_Info::Message_Info( ) : m_name( ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local )
 			{
-				msgTime.Cache( ).secsSinceLastLog = logTime = std::chrono::duration_cast<std::chrono::seconds>(
-				  std::chrono::system_clock::now( ).time_since_epoch( ) );
+				msgTime.Cache( ).secsSinceLastLog = logTime =
+				std::chrono::duration_cast<std::chrono::seconds>( std::chrono::system_clock::now( ).time_since_epoch( ) );
 			}
 
 			Message_Info::Message_Info( std::string name, LoggerLevel level, message_time_mode mode )
 			  : m_name( name ), msgLevel( level ), msg( ), msgTime( mode )
 			{
-				msgTime.Cache( ).secsSinceLastLog = logTime = std::chrono::duration_cast<std::chrono::seconds>(
-				  std::chrono::system_clock::now( ).time_since_epoch( ) );
+				msgTime.Cache( ).secsSinceLastLog = logTime =
+				std::chrono::duration_cast<std::chrono::seconds>( std::chrono::system_clock::now( ).time_since_epoch( ) );
 			}
 
 			Message_Info &Message_Info::operator=( const Message_Info &t )
@@ -47,8 +45,8 @@ namespace serenity
 			}
 			std::chrono::seconds Message_Info::MessageTimePoint( )
 			{
-				return msgTime.Cache( ).secsSinceLastLog = logTime = std::chrono::duration_cast<std::chrono::seconds>(
-					 std::chrono::system_clock::now( ).time_since_epoch( ) );
+				return msgTime.Cache( ).secsSinceLastLog = logTime =
+					   std::chrono::duration_cast<std::chrono::seconds>( std::chrono::system_clock::now( ).time_since_epoch( ) );
 			}
 
 			void Message_Info::SetTimeMode( message_time_mode mode )
@@ -56,8 +54,8 @@ namespace serenity
 				msgTime.SetTimeMode( mode );
 			}
 
-			const message_time_mode Message_Info::TimeMode( ) 
-			{ 
+			const message_time_mode Message_Info::TimeMode( )
+			{
 				return msgTime.Mode( );
 			}
 
@@ -77,5 +75,5 @@ namespace serenity
 			}
 
 		}  // namespace msg_details
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity

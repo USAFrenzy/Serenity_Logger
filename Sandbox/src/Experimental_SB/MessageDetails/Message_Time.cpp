@@ -103,5 +103,5 @@ namespace serenity
 				return m_cache;
 			}
 		}  // namespace msg_details
-	}          // namespace expiremental
+	}      // namespace expiremental
 }  // namespace serenity
