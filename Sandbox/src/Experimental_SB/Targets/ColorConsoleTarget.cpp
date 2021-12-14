@@ -12,6 +12,7 @@ namespace serenity
 			  : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				WriteToBaseBuffer( false );
+				EnableAsyncFormat( false );
 				SetOriginalColors( );
 			}
 
@@ -19,6 +20,7 @@ namespace serenity
 			  : TargetBase( name ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				WriteToBaseBuffer( false );
+				EnableAsyncFormat( false );
 				SetOriginalColors( );
 			}
 
@@ -26,6 +28,7 @@ namespace serenity
 			  : TargetBase( name, msgPattern ), consoleMode( console_interface::std_out ), coloredOutput( true )
 			{
 				WriteToBaseBuffer( false );
+				EnableAsyncFormat( false );
 				SetOriginalColors( );
 			}
 
@@ -54,17 +57,17 @@ namespace serenity
 				return consoleMode;
 			}
 
-			void ColorConsole::PrintMessage( std::string &buffer )
+			void ColorConsole::PrintMessage( )
 			{
 				static std::string_view msgColor;
-				if( coloredOutput ) {
-					msgColor = GetMsgColor( MsgInfo( )->MsgLevel( ) );
-				}
+				// if( coloredOutput ) {
+				//	msgColor = GetMsgColor( MsgInfo( )->MsgLevel( ) );
+				//}
 				if( consoleMode == console_interface::std_out ) {
-					std::cout << msgColor << buffer << se_colors::formats::reset;
+					std::cout << msgColor << Buffer( )->data( ) << se_colors::formats::reset;
 				}
 				else {
-					std::cerr << msgColor << buffer << se_colors::formats::reset;
+					std::cerr << msgColor << Buffer( )->data( ) << se_colors::formats::reset;
 				}
 				Buffer( )->clear( );
 			}

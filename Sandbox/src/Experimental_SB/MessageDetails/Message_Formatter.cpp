@@ -31,137 +31,130 @@ namespace serenity
 				return internalFmt.wholeFormatString;
 			}
 
-			std::string Message_Formatter::Format_Arg_a( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_a( Cached_Date_Time &cache )
 			{
-				if( cache.hour > 12 ) {
-					return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ) );
-				}
-				else {
-					return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) );
-				}
+				std::string hour;
+				( cache.hour > 12 )?
+					hour = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ) ):
+					hour = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) );
+				std::format_to( std::back_inserter( buffer ), "{}", hour );
 			}
 
-			std::string Message_Formatter::Format_Arg_A( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_A( Cached_Date_Time &cache )
 			{
-				return std::move( msgInfo->TimeDetails( ).DayHalf( cache.hour ) );
+				std::format_to( std::back_inserter( buffer ), "{}", msgInfo->TimeDetails( ).DayHalf( cache.hour ) );
 			}
 
-			std::string Message_Formatter::Format_Arg_b( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_b( Cached_Date_Time &cache )
 			{
-				return std::move( cache.short_month );
+				std::format_to( std::back_inserter( buffer ), "{}", cache.short_month );
 			}
 
-			std::string Message_Formatter::Format_Arg_B( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_B( Cached_Date_Time &cache )
 			{
-				return std::move( cache.long_month );
+				std::format_to( std::back_inserter( buffer ), "{}", cache.long_month );
 			}
 
-			std::string Message_Formatter::Format_Arg_D( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_D( Cached_Date_Time &cache )
 			{
-				std::string date;
-				date.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ).append( "/" ) ) );
-				date.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ).append( "/" ) ) );
-				return std::move( date.append( std::to_string( cache.short_year ) ) );
+				auto month = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ));
+				auto day =  std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) );
+				std::format_to( std::back_inserter( buffer ), "{}/{}/{}", month, day, cache.short_year );
 			}
 
-			std::string Message_Formatter::Format_Arg_F( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_F( Cached_Date_Time &cache )
 			{
-				std::string date;
-				date.append( std::to_string( cache.long_year ).append( "-" ) );
-				date.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ).append( "-" ) ) );
-				return std::move( date.append( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) ) );
+				auto month = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ) );
+				auto day   = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) );
+				std::format_to( std::back_inserter( buffer ), "{}-{}-{}", cache.long_year, month, day );
 			}
 
-			std::string Message_Formatter::Format_Arg_M( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_M( Cached_Date_Time &cache )
 			{
-				return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ) );
+				std::format_to( std::back_inserter( buffer ), "{}", msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ) );
 			}
 
-			std::string Message_Formatter::Format_Arg_S( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_S( Cached_Date_Time &cache )
 			{
-				return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) );
+				std::format_to( std::back_inserter( buffer ), "{}", msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) );
 			}
 
-			std::string Message_Formatter::Format_Arg_T( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_T( Cached_Date_Time &cache )
 			{
-				std::string time;
-				time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ).append( ":" ) ) );
-				time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ).append( ":" ) ) );
-				time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) ) );
-				return std::move( time );
+				auto hour = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) );
+				auto min  = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ) );
+				auto sec  = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) );
+				std::format_to( std::back_inserter( buffer ), "{}:{}:{}", hour, min, sec );
 			}
 
-			std::string Message_Formatter::Format_Arg_t( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_t( Cached_Date_Time &cache )
 			{
-				std::string time;
-				if( cache.hour > 12 ) {
-					time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ).append( ":" ) ) );
-				}
-				else {
-					time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ).append( ":" ) ) );
-				}
-				time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ).append( ":" ) ) );
-				time.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) ) );
-				return std::move( time );
+				std::string hour;
+				( cache.hour >= 12 ) ? hour.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ) ) )
+									 : hour.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) ) );
+
+				auto min = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ) );
+				auto sec = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) );
+				std::format_to( std::back_inserter( buffer ), "{}:{}:{}", hour, min, sec );
 			}
 
-			std::string Message_Formatter::Format_Arg_w( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_w( Cached_Date_Time &cache )
 			{
-				return std::move( std::to_string( cache.dec_wkday ) );
+				std::format_to( std::back_inserter( buffer ), "{}", cache.dec_wkday );
 			}
 
-			std::string Message_Formatter::Format_Arg_y( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_y( Cached_Date_Time &cache )
 			{
-				return std::move( std::to_string( cache.short_year ) );
+				std::format_to( std::back_inserter( buffer ), "{}", cache.short_year );
 			}
 
-			std::string Message_Formatter::Format_Arg_Y( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_Y( Cached_Date_Time &cache )
 			{
-				return std::move( std::to_string( cache.long_year ) );
+				std::format_to( std::back_inserter( buffer ), "{}", cache.long_year );
 			}
 
-			std::string Message_Formatter::Format_Arg_N( )
+			void Message_Formatter::Format_Arg_N( )
 			{
-				return msgInfo->Name( );
+				std::format_to( std::back_inserter( buffer ), "{}", msgInfo->Name( ) );
 			}
 
-			std::string Message_Formatter::Format_Arg_l( )
+			void Message_Formatter::Format_Arg_l( )
 			{
-				return std::move( svToString( MsgLevelToShortString( msgInfo->MsgLevel( ) ) ) );
+				std::format_to( std::back_inserter( buffer ), "{}", MsgLevelToShortString( msgInfo->MsgLevel( ) ) );
 			}
 
-			std::string Message_Formatter::Format_Arg_L( )
+			void Message_Formatter::Format_Arg_L( )
 			{
-				return std::move( svToString( MsgLevelToString( msgInfo->MsgLevel( ) ) ) );
+				std::format_to( std::back_inserter( buffer ), "{}", MsgLevelToString( msgInfo->MsgLevel( ) ) );
 			}
 
-			std::string Message_Formatter::Format_Arg_d( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_d( Cached_Date_Time &cache )
 			{
-				return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) );
+				std::format_to( std::back_inserter( buffer ), "{}", msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) );
 			}
 
-			std::string Message_Formatter::Format_Arg_H( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_H( Cached_Date_Time &cache )
 			{
-				return std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) );
+				std::format_to( std::back_inserter( buffer ), "{}", msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) );
 			}
 
-			std::string Message_Formatter::Format_Arg_x( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_x( Cached_Date_Time &cache )
 			{
-				return std::move( cache.short_weekday );
+				std::format_to( std::back_inserter( buffer ), "{}", cache.short_weekday );
 			}
 
-			std::string Message_Formatter::Format_Arg_X( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_X( Cached_Date_Time &cache )
 			{
-				return std::move( cache.long_weekday );
+				std::format_to( std::back_inserter( buffer ), "{}", cache.long_weekday );
 			}
 
-			std::string Message_Formatter::Format_Arg_n( Cached_Date_Time &cache )
+			void Message_Formatter::Format_Arg_n( Cached_Date_Time &cache )
 			{
-				std::string date;
-				date.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) ) );
-				date.append( std::move( cache.short_month ) );
-				date.append( std::move( std::to_string( cache.short_year ) ) );
-				return std::move( date );
+				std::format_to( std::back_inserter( buffer ),
+								"{}{}{}",
+								msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ),
+								cache.short_month,
+								cache.short_year );
 			}
 
 			void Message_Formatter::SetPattern( std::string_view pattern )
@@ -178,7 +171,7 @@ namespace serenity
 			"%a", "%b", "%d", "%n", "%t", "%w", "%x", "%y", "%A", "%B", "%D", "%F", "%H", "%M", "%S", "%T", "%X", "%Y" };
 			static constexpr std::array<std::string_view, 3> otherFlags = { "%l", "%L", "%N" };
 
-			std::string Message_Formatter::FlagFormatter( Cached_Date_Time &cache, int flag )
+			void Message_Formatter::FlagFormatter( Cached_Date_Time &cache, int flag )
 			{
 				switch( flag ) {
 					case 0: return Format_Arg_a( cache ); break;
@@ -202,15 +195,15 @@ namespace serenity
 					case 18: return Format_Arg_T( cache ); break;
 					case 19: return Format_Arg_X( cache ); break;
 					case 20: return Format_Arg_Y( cache ); break;
-					case SERENITY_SPACE_FLAG: return " "; break;
+					case SERENITY_SPACE_FLAG: std::format_to( std::back_inserter( buffer ), "{}", " " ); break;
 					// if arg after "%" isn't a flag handled here, do nothing
-					default: return ""; break;
+					default: break;
 				}
 			}
 
 			void Message_Formatter::StoreFormat( )
 			{
-				auto cache = msgInfo->TimeDetails( ).UpdateCache( msgInfo->TimeDetails( ).UpdateTimeDate( ) );
+				auto cache = msgInfo->TimeDetails().UpdateCache( std::chrono::system_clock::now());
 				buffer.clear( );
 				std::string fmt { fmtPattern };
 				std::string flag;
@@ -239,7 +232,7 @@ namespace serenity
 							{
 								indexStr.erase( 0, 1 );
 								indexStr.erase( indexStr.size( ) - 1, indexStr.size( ) );
-								buffer.append( FlagFormatter( cache, std::stoi( indexStr ) ) );
+								FlagFormatter( cache, std::stoi( indexStr ) );
 								fmt.erase( 0, flag.size( ) );
 							}
 						}
@@ -288,14 +281,13 @@ namespace serenity
 				internalFmt.remainingPartition = std::move( buffer );
 			}
 
-			std::string &Message_Formatter::UpdateFormatForTime( const std::tm *time )
+			std::string &Message_Formatter::UpdateFormatForTime( Cached_Date_Time &cache )
 			{
 				static std::vector<int> flagVec;
 				flagVec = flags;
 				buffer.clear( );
-				auto cache = msgInfo->TimeDetails( ).UpdateCache( time );
 				for( ;; ) {
-					buffer.append( std::move( FlagFormatter( cache, flagVec.front( ) ) ) );
+					FlagFormatter( cache, flagVec.front( ) );
 					flagVec.erase( flagVec.begin( ), flagVec.begin( ) + 1 );
 					if( flagVec.empty( ) ) {
 						break;
@@ -307,12 +299,13 @@ namespace serenity
 
 			std::string &Message_Formatter::FormatMsg( const std::string_view msg, std::format_args &&args )
 			{
+				buffer.clear( );
 				return buffer = std::move( std::vformat( msg, std::move( args ) ) );
 			}
 
-			const InternalFormat *Message_Formatter::FormatSplices( )
+			const InternalFormat &Message_Formatter::FormatSplices( )
 			{
-				return &internalFmt;
+				return internalFmt;
 			}
 
 		}  // namespace msg_details

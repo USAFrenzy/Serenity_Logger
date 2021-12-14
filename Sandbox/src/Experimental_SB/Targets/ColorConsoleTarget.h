@@ -37,7 +37,7 @@ namespace serenity
 				void              SetOriginalColors( );
 
 			  private:
-				void                                              PrintMessage( std::string &buffer ) override;
+				void                                              PrintMessage( ) override;
 				bool                                              coloredOutput;
 				console_interface                                 consoleMode;
 				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;

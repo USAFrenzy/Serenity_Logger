@@ -26,8 +26,7 @@ namespace serenity
 				bool        OpenFile( bool truncate = false );
 				bool        CloseFile( );
 				void        Flush( );
-				void        Write( std::string buffer );
-				void        EnableAsyncFlush( bool isEnabled );
+				void        AsyncWriteMessage( std::string formatted ) override final;
 
 			  private:
 				std::ofstream         fileHandle;
@@ -42,8 +41,8 @@ namespace serenity
 				// ------------------- WIP -------------------
 
 			  private:
-				void PolicyFlushOn( Flush_Policy ) final override;
-				void PrintMessage( std::string &buffer ) final override;
+				void PolicyFlushOn( Flush_Policy& ) final override;
+				void PrintMessage( ) final override;
 			};
 		}  // namespace targets
 	}      // namespace expiremental

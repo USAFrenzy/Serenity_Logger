@@ -6,9 +6,11 @@ namespace serenity
 	{
 		namespace targets
 		{
+			using namespace std::chrono;
+
 			TargetBase::TargetBase( )
 			  : toBuffer( false ),
-				policy( Flush_Policy::Flush::never, Flush_Policy::Periodic_Options::undef ),
+				policy( Flush::never ),
 				logLevel( LoggerLevel::trace ),
 				msgLevel( LoggerLevel::trace ),
 				pattern( "|%l| %x %n %T [%N]: " ),
@@ -19,11 +21,12 @@ namespace serenity
 				base_futures.reserve( DEFAULT_BUFFER_SIZE );
 				base_futures.clear( );
 				internalBuffer.clear( );
+				msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog = duration_cast<seconds>( system_clock::now( ).time_since_epoch( ) );
 			}
 
 			TargetBase::TargetBase( std::string_view name )
 			  : toBuffer( false ),
-				policy( Flush_Policy::Flush::never, Flush_Policy::Periodic_Options::undef ),
+				policy( Flush::never ),
 				logLevel( LoggerLevel::trace ),
 				msgLevel( LoggerLevel::trace ),
 				pattern( "|%l| %x %n %T [%N]: " ),
@@ -34,11 +37,12 @@ namespace serenity
 				base_futures.reserve( DEFAULT_BUFFER_SIZE );
 				base_futures.clear( );
 				internalBuffer.clear( );
+				msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog = duration_cast<seconds>( system_clock::now( ).time_since_epoch( ) );
 			}
 
 			TargetBase::TargetBase( std::string_view name, std::string_view fmtPattern )
 			  : toBuffer( false ),
-				policy( Flush_Policy::Flush::never, Flush_Policy::Periodic_Options::undef ),
+				policy( Flush::never ),
 				logLevel( LoggerLevel::trace ),
 				msgLevel( LoggerLevel::trace ),
 				pattern( std::move( svToString( fmtPattern ) ) ),
@@ -49,6 +53,7 @@ namespace serenity
 				base_futures.reserve( DEFAULT_BUFFER_SIZE );
 				base_futures.clear( );
 				internalBuffer.clear( );
+				msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog = duration_cast<seconds>( system_clock::now( ).time_since_epoch( ) );
 			}
 
 			TargetBase::~TargetBase( ) { }
@@ -73,22 +78,12 @@ namespace serenity
 				msgPattern.SetPattern( pattern );
 			}
 
-			void TargetBase::SetFlushPolicy( Flush_Policy::Flush_Settings newPolicy )
+			void TargetBase::SetFlushPolicy( Flush_Policy pPolicy )
 			{
-				policy.SetFlushOptions( newPolicy );
-				NotifyAllAtomicSubs( );
+				policy = std::move( pPolicy );
 			}
 
-			void TargetBase::NotifyAllAtomicSubs( )
-			{
-				policy.GetAtomics( ).logLevelBased.notify_all( );
-				policy.GetAtomics( ).timeBased.notify_all( );
-				policy.GetAtomics( ).memUsage.notify_all( );
-				policy.GetAtomics( ).settingsChange.store( true );
-				policy.GetAtomics( ).settingsChange.notify_all( );
-			}
-
-			Flush_Policy TargetBase::Policy( )
+			Flush_Policy &TargetBase::Policy( )
 			{
 				return policy;
 			}
@@ -120,6 +115,8 @@ namespace serenity
 			{
 				return logLevel;
 			}
+
+
 
 		}  // namespace targets
 	}      // namespace expiremental

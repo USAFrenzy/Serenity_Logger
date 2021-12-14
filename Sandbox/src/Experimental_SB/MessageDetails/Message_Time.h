@@ -37,9 +37,9 @@ namespace serenity
 				int                     GetCurrentYear( int yearOffset, bool shortened = false );
 				std::string             MonthString( int monthIndex, bool shortened = false );
 				std::string             ZeroPadDecimal( int dec );
-				std::tm *               UpdateTimeDate( );
-				Cached_Date_Time        UpdateCache( const std::tm *timeStruct );
-				Cached_Date_Time        Cache( );
+				std::tm *               UpdateTimeDate( std::chrono::system_clock::time_point time );
+				Cached_Date_Time        UpdateCache( std::chrono::system_clock::time_point timePoint );
+				Cached_Date_Time &      Cache( );
 				std::string             DayHalf( int hour );
 				const message_time_mode Mode( );
 				void                    SetTimeMode( message_time_mode mode );

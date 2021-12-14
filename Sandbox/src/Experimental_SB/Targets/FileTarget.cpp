@@ -15,7 +15,9 @@ namespace serenity
 
 			FileTarget::FileTarget( ) : TargetBase( "File Logger" )
 			{
-				WriteToBaseBuffer( );
+				EnableAsyncWrites( false );
+				WriteToBaseBuffer( false);
+				EnableAsyncFormat( true );
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
 				auto                  logDir { "Logs" };
 				// NOTE: This Appends The Log Dir To The File Path AS WELL AS assigns that path to logDirPath
@@ -41,7 +43,9 @@ namespace serenity
 
 			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists ) : TargetBase( "File Logger" )
 			{
-				WriteToBaseBuffer( );
+				EnableAsyncWrites( false );
+				WriteToBaseBuffer( false );
+				EnableAsyncFormat( true );
 
 				std::filesystem::path file { filePath };
 				this->filePath = std::move( file.relative_path( ).make_preferred( ) );
@@ -130,113 +134,111 @@ namespace serenity
 				return file_utils::RenameFile( filePath, newFile.filename( ) );
 			}
 
-			void FileTarget::PrintMessage( std::string &buffer )
+			void FileTarget::PrintMessage( )
 			{
-				auto ignore = std::async( std::launch::async, &FileTarget::Write, this, std::forward<std::string &>( buffer ) );
+				// Using Buffer Here From The Faster Format_To impl so have to clear buffer as well
+				fileHandle.write( Buffer( )->data( ), Buffer( )->size( ) );
+				Buffer( )->clear( );
 			}
 
-			void FileTarget::Write( std::string buffer )
+			void FileTarget::AsyncWriteMessage( std::string formatted )
 			{
-				static auto policy = Policy( );
-				ableToFlush.exchange( false );
-				ableToFlush.notify_one( );
-				while( !readWriteMutex.try_lock_shared( ) ) {
-					std::this_thread::sleep_for( 100ms );
-				}
-				fileHandle.write( buffer.c_str( ), buffer.size( ) );
-				Buffer( )->clear( );
-				ableToFlush.exchange( true );
-				ableToFlush.notify_one( );
-				readWriteMutex.unlock_shared( );
+				auto async_write = [ = ]( )
+				{
+					while( !readWriteMutex.try_lock_shared( ) ) {
+						std::this_thread::sleep_for( 10ms );
+					}
+					fileHandle.write( formatted.data( ), formatted.size( ) );
+					readWriteMutex.unlock_shared( );
+				};
+				// just assigning to tmp to ignore compiler warning on discarding
+				auto _ = std::async( std::launch::async, async_write );
 			}
 
 			void FileTarget::Flush( )
 			{
-				std::lock_guard<std::shared_mutex> lock( readWriteMutex );
 				if( !fileHandle.is_open( ) ) return;
-				if( isWriteToBuf( ) ) {
-					if( AsyncFutures( )->size( ) == 0 ) return;
-					static std::string futuresResult;
-					futuresResult.reserve( AsyncFutures( )->size( ) );
-					futuresResult.clear( );
-					for( auto &future : *AsyncFutures( ) ) {
-						future.wait( );
-						auto tmp = future.get( );
-						futuresResult.append( std::move( tmp ) );
+				while( !readWriteMutex.try_lock_shared( ) ) {
+					std::this_thread::sleep_for( 10ms );
+				}
+				// Synchronize async format threads to write to file
+				if( isAsyncFormat( ) && ( AsyncFormatFutures( )->size( ) != 0 ) ) {
+					for( auto &formatted : *AsyncFormatFutures( ) ) {
+						Buffer( )->append( std::move( formatted.get( ) ) );
 					}
-					AsyncFutures( )->clear( );
-					fileHandle.write( futuresResult.c_str( ), futuresResult.size( ) );
+					fileHandle.write( Buffer( )->data( ), Buffer( )->size( ) );
+					Buffer( )->clear( );
+				}
+				// Since we didn't write to file and instead wrote to the buffer, write to file now
+				if( ( isWriteToBuf( ) ) && ( Buffer( )->size( ) != 0 ) ) {
+					fileHandle.write( Buffer( )->data( ), Buffer( )->size( ) );
+					Buffer( )->clear( );
 				}
 				fileHandle.flush( );
+				readWriteMutex.unlock_shared( );
 			}
 
-			void FileTarget::PolicyFlushOn( Flush_Policy settings )
+			void FileTarget::PolicyFlushOn( Flush_Policy &settings )
 			{
-				switch( settings.GetSettings( ).primaryOption ) {
-					case Flush_Policy::Flush::periodically:
+				if( settings.PrimarySetting( ) == Flush::never ) return;
+				if( settings.PrimarySetting( ) == Flush::always ) {
+					Flush( );
+					return;
+				}
+				switch( settings.SubSetting( ) ) {
+					case PeriodicOptions::memUsage:
 					{
-						switch( Policy( ).GetSettings( ).subOption ) {
-							case Flush_Policy::Periodic_Options::memUsage:
-							{
-								// Check that the message won't cause an allocation if larger than BUFFER_SIZE
-								if( !( Buffer( )->size( ) < settings.GetSettings( ).subSettings.memUsage.load( ) ) ) {
-									Flush( );
+						// Check that the message won't cause an allocation if larger than BUFFER_SIZE
+						if( ( AsyncFormatFutures( )->size( ) >= settings.SecondarySettings( ).memoryFlushOn ) ||
+							( Buffer( )->size( ) >= settings.SecondarySettings( ).memoryFlushOn ) )
+						{
+							Flush( );
+						}
+					} break;
+					case PeriodicOptions::timeBased:
+					{
+						static bool threadStarted { false };
+						if( threadStarted ) return;
+						// lambda that starts a background thread to flush on time interval given
+						auto periodic_flush = [ this, &settings ]( )
+						{
+							using namespace std::chrono;
+							while( !cleanUpThreads.load( ) ) {
+								while( !base_mutex.try_lock( ) ) {
+									std::this_thread::sleep_for( 10ms );
 								}
-							} break;
-							case Flush_Policy::Periodic_Options::timeBased:
-							{
-								static bool threadStarted { false };
-								if( threadStarted ) return;
-								// lambda that starts a background thread to flush on time interval given
-								auto periodic_flush = [ this, &settings ]( )
-								{
-									using namespace std::chrono;
-									while( !cleanUpThreads.load( ) ) {
-										while( ableToFlush.load( ) ) {
-											static milliseconds lastTimePoint;
-											auto now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
-											auto elapsed = duration_cast<milliseconds>( now - lastTimePoint );
-											if( elapsed >= settings.GetSettings( ).subSettings.timeBased.load( ) ) {
-												Flush( );
-												lastTimePoint = now;
-												while( !ableToFlush.load( ) ) {
-													std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
-												}
-											}
-										}
-									}
-								};  // periodic_flush
+								static milliseconds lastTimePoint;
+								auto                now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
+								auto                elapsed = duration_cast<milliseconds>( now - lastTimePoint );
 
-								if( !threadStarted ) {
-									std::thread t( periodic_flush );
-									t.detach( );
-									threadStarted = true;
+								if( elapsed >= settings.SecondarySettings( ).flushEvery ) {
+									Flush( );
+									lastTimePoint = now;
+									while( !ableToFlush.load( ) ) {
+										std::this_thread::sleep_for( 10ms );
+									}
 								}
-							} break;  // time based bounds
-							case Flush_Policy::Periodic_Options::logLevelBased:
-							{
-								if( ( Policy( ).GetSettings( ).subSettings.logLevelBased.load( ) > MsgInfo( )->MsgLevel( ) ) ) return;
-								return;
-								Flush( );
-							} break;
-							default: break;  // Don't bother with undef field
-						}                    // Sub Option Check
-					} break;                 // Periodic Option Check
-					case Flush_Policy::Flush::always:
+								base_mutex.unlock( );
+							}
+						};  // periodic_flush
+
+						if( !threadStarted ) {
+							std::thread t( periodic_flush );
+							t.detach( );
+							threadStarted = true;
+						}
+					} break;  // time based bounds
+					case PeriodicOptions::logLevelBased:
 					{
+						if( ( settings.SecondarySettings( ).flushOn > MsgInfo( )->MsgLevel( ) ) ) return;
+						return;
 						Flush( );
 					} break;
-					case Flush_Policy::Flush::never:
-					{
-					} break;
-				}
-			}  // PolicyFlushOn( ) Function
+					default: break;  // Don't bother with undef field
+				}                    // Sub Option Check
+			}                        // PolicyFlushOn( ) Function
 
-			void FileTarget::EnableAsyncFlush( bool isEnabled )
-			{
-				ableToFlush.store( isEnabled );
-				ableToFlush.notify_one( );
-			}
+
 
 		}  // namespace targets
 	}      // namespace expiremental

@@ -124,15 +124,10 @@ int main( )
 	targets::ColorConsole C;
 	targets::FileTarget   testFile;
 
-	//  TODO: Abstract Away Option Settings So That The Below Aren't The Semantics To Use
-	 Flush_Policy::Flush_Settings settings;
-	 settings.primaryOption = Flush_Policy::Flush::periodically;
-	 settings.subSettings.logLevelBased.store( LoggerLevel::warning );
-	 settings.subSettings.timeBased.store( std::chrono::milliseconds( 500 ) );
-	 settings.subOption = Flush_Policy::Periodic_Options::timeBased;
-	 settings.subSettings.memUsage.store( 256 * KB );
-	// testFile.SetFlushPolicy( settings );
-	// C.SetFlushPolicy( settings );
+	//PeriodicSettings settings;
+	//settings.flushEvery = std::chrono::milliseconds( 500 );
+	//Flush_Policy policy( PeriodicOptions::timeBased, settings );
+	//testFile.SetFlushPolicy( policy );
 
 	const char *   test;
 	Instrumentator macroTester;
@@ -152,10 +147,9 @@ int main( )
 	test = temp.c_str( );
 	unsigned long int       i { 0 };
 	const unsigned long int iterations { 1000000 };
-	auto                    m = iterations / 2;
 	std::cout << "Benching Color Console Target...\n\n";
 	for( i; i < iterations; i++ ) {
-		C.info( "{}", test );
+		C.test( "{}", test );
 	}
 #endif  // INSTRUMENTATION_ENABLED
 
@@ -228,26 +222,27 @@ int main( )
 	}
 	spdlogConsoleTester.StopWatch_Stop( );
 	auto totalspdColorTime = spdlogConsoleTester.Elapsed_In( time_mode::ms );
-	std::cout << "\nSpdlog Color Console Sink Bench Finished. Benching File Target...\n";
+	std::cout << "\nSpdlog Color Console Sink Bench Finished.  Benching Spdlog Basic File Sink......\n";
 
-	i = 0;  // reset
-
-	macroTesterFile.StopWatch_Reset( );
-	for( i; i < iterations; i++ ) {
-		testFile.test( "{}", test );
-	}
-	macroTesterFile.StopWatch_Stop( );
-	auto totalFileTime = macroTesterFile.Elapsed_In( time_mode::ms );
-	std::cout << "\nFile Target Bench Finished. Benching Spdlog Basic File Sink...\n";
-
-	i = 0;  // reset
+		i = 0;  // reset
 	spdlogFileTester.StopWatch_Reset( );
 	for( i; i < iterations; i++ ) {
 		spdlogFileLogger->info( "{}", test );
 	}
 	spdlogFileTester.StopWatch_Stop( );
 	auto totalSpdFileTime = spdlogFileTester.Elapsed_In( time_mode::ms );
-	std::cout << "\nSpdlog Basic File Sink Bench Finished.\n\n";
+	std::cout << "\nSpdlog Basic File Sink Bench Finished. Benching File Target...\n";
+
+	i = 0;  // reset
+	macroTesterFile.StopWatch_Reset( );
+	for( i; i < iterations; i++ ) {
+		testFile.test( "{}", test );
+	}
+	macroTesterFile.StopWatch_Stop( );
+	auto totalFileTime = macroTesterFile.Elapsed_In( time_mode::ms );
+	std::cout << "\nFile Target Bench Finished.\n\n";
+
+
 
 	auto        percentConsole = ( ( totalColorTime - totalspdColorTime ) / totalspdColorTime ) * 100;
 	std::string consolePercent;
@@ -288,7 +283,7 @@ int main( )
 			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
 			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
 
-	std::cout << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n" );
+	 std::cout << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n" );
 
 	std::cout << Tag::Bright_Yellow( "File Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 			  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )

@@ -10,7 +10,7 @@ namespace serenity
 		{
 			Message_Time::Message_Time( message_time_mode mode ) : m_mode( mode )
 			{
-				InitializeCache( UpdateTimeDate( ) );
+				InitializeCache( UpdateTimeDate( std::chrono::system_clock::now( ) ) );
 			}
 
 			std::string Message_Time::WeekdayString( int weekdayIndex, bool shortened )
@@ -48,9 +48,9 @@ namespace serenity
 				return ( dec >= 10 ) ? std::to_string( dec ) : "0" + std::to_string( dec );
 			}
 
-			std::tm *Message_Time::UpdateTimeDate( )
+			std::tm *Message_Time::UpdateTimeDate( std::chrono::system_clock::time_point timePoint )
 			{
-				m_time    = std::chrono::system_clock( ).now( );
+				m_time    = timePoint;
 				auto time = std::chrono::system_clock::to_time_t( m_time );
 				if( m_mode == message_time_mode::local ) {
 					return t_struct = std::localtime( &time );
@@ -60,9 +60,9 @@ namespace serenity
 				}
 			}
 
-			Cached_Date_Time Message_Time::UpdateCache( const std::tm *timeStruct )
+			Cached_Date_Time Message_Time::UpdateCache( std::chrono::system_clock::time_point timePoint )
 			{
-				return InitializeCache( std::move( timeStruct ) );
+				return  InitializeCache( UpdateTimeDate( timePoint ) );
 			}
 
 			std::string Message_Time::DayHalf( int hour )
@@ -98,10 +98,30 @@ namespace serenity
 				m_mode = mode;
 			}
 
-			Cached_Date_Time Message_Time::Cache( )
+			Cached_Date_Time &Message_Time::Cache( )
 			{
 				return m_cache;
 			}
 		}  // namespace msg_details
 	}      // namespace expiremental
 }  // namespace serenity
+
+// template <> struct  std::formatter<serenity::expiremental::msg_details::Message_Time>
+//{
+//
+//
+//
+//	auto parse(std::format_parse_context& context)->decltype(context.begin()) {
+//		auto iter = context.begin( );
+//		auto end  = context.end( );
+//		if( iter == end || *iter == '}' ) return;
+//
+//
+//
+//
+//	}
+//
+//
+//
+//
+//};

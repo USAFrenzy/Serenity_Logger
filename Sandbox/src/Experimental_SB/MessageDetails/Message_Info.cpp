@@ -8,14 +8,14 @@ namespace serenity
 		{
 			Message_Info::Message_Info( ) : m_name( ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local )
 			{
-				msgTime.Cache( ).secsSinceLastLog = logTime =
+				msgTime.Cache( ).secsSinceLastLog =
 				std::chrono::duration_cast<std::chrono::seconds>( std::chrono::system_clock::now( ).time_since_epoch( ) );
 			}
 
 			Message_Info::Message_Info( std::string name, LoggerLevel level, message_time_mode mode )
 			  : m_name( name ), msgLevel( level ), msg( ), msgTime( mode )
 			{
-				msgTime.Cache( ).secsSinceLastLog = logTime =
+				msgTime.Cache( ).secsSinceLastLog =
 				std::chrono::duration_cast<std::chrono::seconds>( std::chrono::system_clock::now( ).time_since_epoch( ) );
 			}
 
@@ -25,7 +25,6 @@ namespace serenity
 				msgLevel = t.msgLevel;
 				msgTime  = t.msgTime;
 				m_name   = t.m_name;
-				logTime  = t.logTime;
 				return *this;
 			}
 
@@ -43,10 +42,9 @@ namespace serenity
 			{
 				msgLevel = level;
 			}
-			std::chrono::seconds Message_Info::MessageTimePoint( )
+			std::chrono::system_clock::time_point Message_Info::MessageTimePoint( )
 			{
-				return msgTime.Cache( ).secsSinceLastLog = logTime =
-					   std::chrono::duration_cast<std::chrono::seconds>( std::chrono::system_clock::now( ).time_since_epoch( ) );
+				return std::chrono::system_clock::now( );
 			}
 
 			void Message_Info::SetTimeMode( message_time_mode mode )
@@ -59,9 +57,9 @@ namespace serenity
 				return msgTime.Mode( );
 			}
 
-			const std::tm *Message_Info::TimeInfo( )
+			std::tm *Message_Info::TimeInfo( )
 			{
-				return msgTime.UpdateTimeDate( );
+				return msgTime.UpdateTimeDate( MessageTimePoint( ) );
 			}
 
 			std::string Message_Info::Name( )
