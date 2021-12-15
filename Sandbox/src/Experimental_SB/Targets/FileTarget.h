@@ -41,7 +41,7 @@ namespace serenity
 				// ------------------- WIP -------------------
 
 			  private:
-				void PolicyFlushOn( Flush_Policy& ) final override;
+				void PolicyFlushOn( Flush_Policy & ) final override;
 				void PrintMessage( ) final override;
 			};
 		}  // namespace targets

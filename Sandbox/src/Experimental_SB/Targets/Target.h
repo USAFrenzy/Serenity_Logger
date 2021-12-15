@@ -57,7 +57,6 @@ namespace serenity
 						msgDetails.SetMsgLevel( LoggerLevel::test );
 						auto    now              = msgDetails.MessageTimePoint( );
 						seconds messageTimePoint = duration_cast<seconds>( now.time_since_epoch( ) );
-
 						if( ( messageTimePoint != msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog ) ||
 							( MsgFmt( )->FormatSplices( ).wholeFormatString.empty( ) ) )
 						{
@@ -66,32 +65,34 @@ namespace serenity
 							auto cache = std::move( msgDetails.TimeDetails( ).UpdateCache( now ) );
 							msgPattern.UpdateFormatForTime( cache );
 						}
-						auto msg =
-						std::move( msgPattern.FormatSplices( ).wholeFormatString + std::move( svToString( s ).append( "\n" ) ) );
-						internalBuffer.reserve( internalBuffer.size( ) + msg.size( ) + ESTIMATED_ARG_SIZE );
+						internalBuffer.append( msgPattern.FormatSplices( ).wholeFormatString );
 						// Using this branching in case both async format & buffer enabled...
 						if( isAsyncWrites( ) ) {
+							std::format_to( std::back_inserter( internalBuffer ),
+											std::move( s ),
+											std::forward<Args &&>( args )... );
+							AsyncWriteMessage( std::move( internalBuffer.append("\n" ) ));
 							internalBuffer.clear( );
-							std::format_to( std::back_inserter( internalBuffer ), msg, std::forward<Args &&>( args )... );
-							AsyncWriteMessage( std::move( internalBuffer ) );
 						}
 						else {
 							if( isAsyncFormat( ) ) {
-								AsyncFormat( std::move( msg ), std::forward<Args &&>( args )... );
+								AsyncFormat( std::move( s), std::forward<Args &&>( args )... );
 								PolicyFlushOn( policy );
 							}
 							else {
 								if( isWriteToBuf( ) ) {
 									std::format_to( std::back_inserter( internalBuffer ),
-													std::move( msg ),
+													std::move( s ),
 													std::forward<Args &&>( args )... );
+									internalBuffer.append( "\n" );
 									PolicyFlushOn( policy );
 								}
 								else {
 									// Using the format_to() since it's faster than just passing in via format()
 									std::format_to( std::back_inserter( internalBuffer ),
-													std::move( msg ),
+													std::move( s ),
 													std::forward<Args &&>( args )... );
+									internalBuffer.append( "\n" );
 									PrintMessage( );
 									PolicyFlushOn( policy );
 								}
@@ -117,7 +118,7 @@ namespace serenity
 				virtual void AsyncWriteMessage( std::string formatted ) { };
 			
 
-				template <typename... Args> void AsyncFormat( std::string msg, Args... args )
+				template <typename... Args> void AsyncFormat( std::string_view msg, Args... args )
 				{
 					// Not true async in the purest sense, concurrent formatting is the main goal here
 					// Return the formatted text to be written to the file when flushed
@@ -126,7 +127,7 @@ namespace serenity
 						std::string formatted;
 						formatted.reserve( std::formatted_size( msg, args... ) );
 						std::format_to( std::back_inserter( formatted ), msg, args... );
-						return std::move( formatted );
+						return std::move( formatted.append("\n" ));
 					};
 					base_futures.emplace_back( std::move( std::async( std::launch::async, async_format ) ) );
 				};

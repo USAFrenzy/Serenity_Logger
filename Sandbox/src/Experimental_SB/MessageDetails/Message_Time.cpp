@@ -50,8 +50,8 @@ namespace serenity
 
 			std::tm *Message_Time::UpdateTimeDate( std::chrono::system_clock::time_point timePoint )
 			{
-				m_time    = timePoint;
-				auto time = std::chrono::system_clock::to_time_t( m_time );
+				m_time    = timePoint; // set for the casting argument in InitializeCache
+				auto time = std::chrono::system_clock::to_time_t(timePoint);
 				if( m_mode == message_time_mode::local ) {
 					return t_struct = std::localtime( &time );
 				}

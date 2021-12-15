@@ -17,7 +17,7 @@ namespace serenity
 			{
 				EnableAsyncWrites( false );
 				WriteToBaseBuffer( false);
-				EnableAsyncFormat( true );
+				EnableAsyncFormat( true);
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
 				auto                  logDir { "Logs" };
 				// NOTE: This Appends The Log Dir To The File Path AS WELL AS assigns that path to logDirPath
