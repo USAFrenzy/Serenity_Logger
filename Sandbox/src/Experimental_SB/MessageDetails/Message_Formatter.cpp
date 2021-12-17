@@ -34,9 +34,8 @@ namespace serenity
 			void Message_Formatter::Format_Arg_a( Cached_Date_Time &cache )
 			{
 				std::string hour;
-				( cache.hour > 12 )?
-					hour = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ) ):
-					hour = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) );
+				( cache.hour > 12 ) ? hour = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ) )
+									: hour = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) );
 				std::format_to( std::back_inserter( buffer ), "{}", hour );
 			}
 
@@ -57,8 +56,8 @@ namespace serenity
 
 			void Message_Formatter::Format_Arg_D( Cached_Date_Time &cache )
 			{
-				auto month = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ));
-				auto day =  std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) );
+				auto month = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.dec_month ) );
+				auto day   = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.day ) );
 				std::format_to( std::back_inserter( buffer ), "{}/{}/{}", month, day, cache.short_year );
 			}
 
@@ -92,7 +91,6 @@ namespace serenity
 				std::string hour;
 				( cache.hour >= 12 ) ? hour.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour - 12 ) ) )
 									 : hour.append( std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.hour ) ) );
-
 				auto min = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.min ) );
 				auto sec = std::move( msgInfo->TimeDetails( ).ZeroPadDecimal( cache.sec ) );
 				std::format_to( std::back_inserter( buffer ), "{}:{}:{}", hour, min, sec );
@@ -174,27 +172,27 @@ namespace serenity
 			void Message_Formatter::FlagFormatter( Cached_Date_Time &cache, int flag )
 			{
 				switch( flag ) {
-					case 0: return Format_Arg_a( cache ); break;
-					case 1: return Format_Arg_b( cache ); break;
-					case 2: return Format_Arg_d( cache ); break;
-					case 3: return Format_Arg_l( ); break;
-					case 4: return Format_Arg_n( cache ); break;
-					case 5: return Format_Arg_t( cache ); break;
-					case 6: return Format_Arg_w( cache ); break;
-					case 7: return Format_Arg_x( cache ); break;
-					case 8: return Format_Arg_y( cache ); break;
-					case 9: return Format_Arg_A( cache ); break;
-					case 10: return Format_Arg_B( cache ); break;
-					case 11: return Format_Arg_D( cache ); break;
-					case 12: return Format_Arg_F( cache ); break;
-					case 13: return Format_Arg_H( cache ); break;
-					case 14: return Format_Arg_L( ); break;
-					case 15: return Format_Arg_M( cache ); break;
-					case 16: return Format_Arg_N( ); break;
-					case 17: return Format_Arg_S( cache ); break;
-					case 18: return Format_Arg_T( cache ); break;
-					case 19: return Format_Arg_X( cache ); break;
-					case 20: return Format_Arg_Y( cache ); break;
+					case 0: Format_Arg_a( cache ); break;
+					case 1: Format_Arg_b( cache ); break;
+					case 2: Format_Arg_d( cache ); break;
+					case 3: Format_Arg_l( ); break;
+					case 4: Format_Arg_n( cache ); break;
+					case 5: Format_Arg_t( cache ); break;
+					case 6: Format_Arg_w( cache ); break;
+					case 7: Format_Arg_x( cache ); break;
+					case 8: Format_Arg_y( cache ); break;
+					case 9: Format_Arg_A( cache ); break;
+					case 10: Format_Arg_B( cache ); break;
+					case 11: Format_Arg_D( cache ); break;
+					case 12: Format_Arg_F( cache ); break;
+					case 13: Format_Arg_H( cache ); break;
+					case 14: Format_Arg_L( ); break;
+					case 15: Format_Arg_M( cache ); break;
+					case 16: Format_Arg_N( ); break;
+					case 17: Format_Arg_S( cache ); break;
+					case 18: Format_Arg_T( cache ); break;
+					case 19: Format_Arg_X( cache ); break;
+					case 20: Format_Arg_Y( cache ); break;
 					case SERENITY_SPACE_FLAG: std::format_to( std::back_inserter( buffer ), "{}", " " ); break;
 					// if arg after "%" isn't a flag handled here, do nothing
 					default: break;
@@ -203,7 +201,7 @@ namespace serenity
 
 			void Message_Formatter::StoreFormat( )
 			{
-				auto cache = msgInfo->TimeDetails().UpdateCache( std::chrono::system_clock::now());
+				auto cache = msgInfo->TimeDetails( ).UpdateCache( std::chrono::system_clock::now( ) );
 				buffer.clear( );
 				std::string fmt { fmtPattern };
 				std::string flag;

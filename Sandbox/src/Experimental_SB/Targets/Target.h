@@ -60,37 +60,35 @@ namespace serenity
 						if( ( messageTimePoint != msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog ) ||
 							( MsgFmt( )->FormatSplices( ).wholeFormatString.empty( ) ) )
 						{
-							msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog = messageTimePoint;
-
 							auto cache = std::move( msgDetails.TimeDetails( ).UpdateCache( now ) );
 							msgPattern.UpdateFormatForTime( cache );
 						}
 						internalBuffer.append( msgPattern.FormatSplices( ).wholeFormatString );
+
 						// Using this branching in case both async format & buffer enabled...
 						if( isAsyncWrites( ) ) {
 							std::format_to( std::back_inserter( internalBuffer ),
-											std::move( s ),
+											std::move( svToString( s ) ),
 											std::forward<Args &&>( args )... );
-							AsyncWriteMessage( std::move( internalBuffer.append("\n" ) ));
+							AsyncWriteMessage( std::move( internalBuffer ) );
 							internalBuffer.clear( );
 						}
 						else {
 							if( isAsyncFormat( ) ) {
-								AsyncFormat( std::move( s), std::forward<Args &&>( args )... );
+								internalBuffer.append( std::move( svToString( s ) ) );
+								AsyncFormat( std::move( internalBuffer ), std::forward<Args &&>( args )... );
 								PolicyFlushOn( policy );
+								internalBuffer.clear( );
 							}
 							else {
 								if( isWriteToBuf( ) ) {
-									std::format_to( std::back_inserter( internalBuffer ),
-													std::move( s ),
-													std::forward<Args &&>( args )... );
-									internalBuffer.append( "\n" );
+									std::format_to( std::back_inserter( internalBuffer ), s, std::forward<Args &&>( args )... );
 									PolicyFlushOn( policy );
 								}
 								else {
 									// Using the format_to() since it's faster than just passing in via format()
 									std::format_to( std::back_inserter( internalBuffer ),
-													std::move( s ),
+													std::move( svToString( s ) ),
 													std::forward<Args &&>( args )... );
 									internalBuffer.append( "\n" );
 									PrintMessage( );
@@ -116,9 +114,8 @@ namespace serenity
 				virtual void PrintMessage( ) = 0;
 				virtual void PolicyFlushOn( Flush_Policy & ) { }
 				virtual void AsyncWriteMessage( std::string formatted ) { };
-			
 
-				template <typename... Args> void AsyncFormat( std::string_view msg, Args... args )
+				template <typename... Args> void AsyncFormat( std::string &&msg, Args &&...args )
 				{
 					// Not true async in the purest sense, concurrent formatting is the main goal here
 					// Return the formatted text to be written to the file when flushed
@@ -126,8 +123,8 @@ namespace serenity
 					{
 						std::string formatted;
 						formatted.reserve( std::formatted_size( msg, args... ) );
-						std::format_to( std::back_inserter( formatted ), msg, args... );
-						return std::move( formatted.append("\n" ));
+						std::format_to( std::back_inserter( formatted ), std::move( msg ), args... );
+						return std::move( formatted.append( "\n" ) );
 					};
 					base_futures.emplace_back( std::move( std::async( std::launch::async, async_format ) ) );
 				};
@@ -140,7 +137,8 @@ namespace serenity
 				{
 					isAsyncFormatted = enable;
 				}
-				bool isAsyncWrites() {
+				bool isAsyncWrites( )
+				{
 					return isAsyncWrite;
 				}
 
@@ -170,3 +168,12 @@ namespace serenity
 		}  // namespace targets
 	}      // namespace expiremental
 }  // namespace serenity
+
+// Need to test template specializations at least for flags currently being used as a prototype to see if this is the route I need to
+// take to achieve faster times here (Currently with async formatting, its 2.6us, writes to buffer is 3.0us, and just plain writing to
+// handle is 3.7us)
+using Formatter = serenity::expiremental::msg_details::Message_Formatter;
+template <> struct std::formatter<Formatter> : std::formatter<std::string_view>
+{
+	template <typename Context> auto format( const Formatter &fmt, const Context &context ) { }
+};

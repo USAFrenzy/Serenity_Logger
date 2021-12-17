@@ -16,8 +16,8 @@ namespace serenity
 			  public:
 				FileTarget( );  // default that will just write to a "GenericLog.txt"
 				FileTarget( std::string_view filePath, bool replaceIfExists = false );
-				FileTarget( const FileTarget &t ) = delete;
-				FileTarget &operator=( const FileTarget &t ) = delete;
+				FileTarget( const FileTarget &) = delete;
+				FileTarget &operator=( const FileTarget &) = delete;
 				~FileTarget( );
 
 				std::string FilePath( );
@@ -26,7 +26,7 @@ namespace serenity
 				bool        OpenFile( bool truncate = false );
 				bool        CloseFile( );
 				void        Flush( );
-				void        AsyncWriteMessage( std::string formatted ) override final;
+				void        AsyncWriteMessage( std::string formatted ) override;
 
 			  private:
 				std::ofstream         fileHandle;
@@ -41,8 +41,8 @@ namespace serenity
 				// ------------------- WIP -------------------
 
 			  private:
-				void PolicyFlushOn( Flush_Policy & ) final override;
-				void PrintMessage( ) final override;
+				void PolicyFlushOn( Flush_Policy & ) override;
+				void PrintMessage( ) override;
 			};
 		}  // namespace targets
 	}      // namespace expiremental
