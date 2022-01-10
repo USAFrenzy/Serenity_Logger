@@ -8,97 +8,333 @@
 #include <serenity/Utilities/Utilities.h>  // for duration cast typedefs
 
 namespace serenity
-{
+{  // for micro-benches
+
 	namespace expiremental
 	{
 		namespace msg_details
 		{
 			class Message_Formatter
 			{
+				struct Formatters;
+
 			  public:
-				explicit Message_Formatter( std::string formatPattern, Message_Info *msgDetails );
-				Message_Formatter &operator=( const Message_Formatter &t );
-				// returns user format string
-				std::string GetMsgFmt( );
-				// sets the format pattern and stores the pattern in an internally efficient manner
-				void SetPattern( std::string_view pattern );
-				// Returns formatted message string based on args and if there's a log format string, appends to the
-				// log format string before returning.
-				std::string &FormatMsg( const std::string_view message, std::format_args &&args );
-				// parses and stores format into partitions to be used more effieciently
-				void StoreFormat( );
-				// parses internal format flag partition string for time-date variables and updates them
-				std::string &UpdateFormatForTime( Cached_Date_Time &cache );
+				Message_Formatter( std::string_view pattern, Message_Info *details );
+				void          FlagFormatter( size_t flag );
+				void          SetPattern( std::string_view pattern );
+				Formatters &  GetFormatters( );
+				void          StoreFormat( );
+				Message_Info *MessageDetails( );
 
-				const InternalFormat &FormatSplices( );
-
-				// for micro-benches
 				struct TimeStats
 				{
 					float totalUpdateTime { 0 };
 					float totalFormatTime { 0 };
 				};
+
 				TimeStats GetStats( )
 				{
 					return benches;
 				}
 
-			  private:
-				// returns evaluated flag's value to the caller
-				void FlagFormatter( Cached_Date_Time &cache, int flag );
-				// ----------------------------------------------------------------------------
-				// TODO: Work on implementing template specializations for all arguments below
-				// ----------------------------------------------------------------------------
-				// Twelve Hour Format (13 -> 1, 14 -> 2, 11 -> 11, 10 -> 10, etc)
-				void Format_Arg_a( Cached_Date_Time &cache );
-				// Short Month Format (Jan, Feb, Mar, etc)
-				void Format_Arg_b( Cached_Date_Time &cache );
-				// Padded Day Date (01-31)
-				void Format_Arg_d( Cached_Date_Time &cache );
-				// Short Message Level (T, I, D, W, E, F)
-				void Format_Arg_l( );
-				// Padded DDMMMYY Format (01Nov21, 09Oct22, 12Dec22 etc)
-				void Format_Arg_n( Cached_Date_Time &cache );
-				// HH:MM:SS Format With A 12 Hour Clock Time
-				void Format_Arg_t( Cached_Date_Time &cache );
-				// Decimal Weekday Format (0-6)
-				void Format_Arg_w( Cached_Date_Time &cache );
-				// Short Weekday Format (Mon, Tues, Wed, Thurs, Fri, Sat, Sun)
-				void Format_Arg_x( Cached_Date_Time &cache );
-				// Short Year Format (For 2021 -> 21, For 2022 -> 22)
-				void Format_Arg_y( Cached_Date_Time &cache );
-				// AM Or PM Specifier
-				void Format_Arg_A( Cached_Date_Time &cache );
-				// Long Month Format (January, February, March, etc)
-				void Format_Arg_B( Cached_Date_Time &cache );
-				// MM/DD/YY Format
-				void Format_Arg_D( Cached_Date_Time &cache );
-				// YYYY-MM-DD Format
-				void Format_Arg_F( Cached_Date_Time &cache );
-				// Padded 24 Hour Format (00-23)
-				void Format_Arg_H( Cached_Date_Time &cache );
-				// Long Message Level (Trace, Info, Debug, Warn, Error, Fatal)
-				void Format_Arg_L( );
-				// Padded Minute ( 07, 08, 13, 15, etc)
-				void Format_Arg_M( Cached_Date_Time &cache );
-				// Name Passed In To Target Or Default Name If None Specified
-				void Format_Arg_N( );
-				// Padded Second ( 07, 08, 13, 15, etc)
-				void Format_Arg_S( Cached_Date_Time &cache );
-				// HH:MM:SS Format With A 24 Hour Clock Time
-				void Format_Arg_T( Cached_Date_Time &cache );
-				// Short Weekday Format (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
-				void Format_Arg_X( Cached_Date_Time &cache );
-				// Long Year Format (2021, 2022)
-				void Format_Arg_Y( Cached_Date_Time &cache );
+				struct Formatter
+				{
+					virtual std::string_view Format( )             = 0;
+					virtual std::string      UpdateInternalView( ) = 0;
+				};
+
+				struct Format_Arg_a : Formatter
+				{
+					Format_Arg_a( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastHour;
+					std::string    hour;
+				};
+
+				struct Format_Arg_b : Formatter
+				{
+					Format_Arg_b( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastMonth;
+					std::string    month;
+				};
+
+				struct Format_Arg_d : Formatter
+				{
+					Format_Arg_d( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastDay;
+					std::string    day;
+				};
+
+				struct Format_Arg_l : Formatter
+				{
+					Format_Arg_l( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					LoggerLevel &levelRef;
+					LoggerLevel  lastLevel;
+					std::string  levelStr;
+				};
+
+				struct Format_Arg_n : Formatter
+				{
+					Format_Arg_n( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					Message_Time & timeRef;
+					const std::tm &cacheRef;
+					int            lastDay;
+					std::string    ddmmyy;
+				};
+
+				struct Format_Arg_t : Formatter
+				{
+					Format_Arg_t( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastMin;
+					std::string    hmStr;
+				};
+
+				struct Format_Arg_w : Formatter
+				{
+					Format_Arg_w( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastDay { 0 };
+					std::string    lastDecDay;
+				};
+
+				struct Format_Arg_x : Formatter
+				{
+					Format_Arg_x( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					std::string    wkday;
+					int            lastWkday { 0 };
+				};
+
+				struct Format_Arg_y : Formatter
+				{
+					Format_Arg_y( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					Message_Time & timeRef;
+					int            lastYear;
+					std::string    year;
+				};
+
+				struct Format_Arg_A : Formatter
+				{
+					Format_Arg_A( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastHour;
+					std::string    dayHalf;
+				};
+
+				struct Format_Arg_B : Formatter
+				{
+					Format_Arg_B( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastMonth;
+					std::string    month;
+				};
+
+				struct Format_Arg_D : Formatter
+				{
+					Format_Arg_D( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					Message_Time & timeRef;
+					const std::tm &cacheRef;
+					int            lastDay;
+					std::string    mmddyy;
+				};
+
+				struct Format_Arg_F : Formatter
+				{
+					Format_Arg_F( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					Message_Time & timeRef;
+					const std::tm &cacheRef;
+					int            lastDay;
+					std::string    yymmdd;
+				};
+
+				struct Format_Arg_H : Formatter
+				{
+					Format_Arg_H( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastHour;
+					std::string    hour;
+				};
+
+				struct Format_Arg_L : Formatter
+				{
+					Format_Arg_L( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					LoggerLevel &levelRef;
+					LoggerLevel  lastLevel;
+					std::string  levelStr;
+				};
+
+				struct Format_Arg_M : Formatter
+				{
+					Format_Arg_M( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastMin;
+					std::string    min;
+				};
+
+				struct Format_Arg_N : Formatter
+				{
+					Format_Arg_N( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					std::string &name;
+				};
+
+				struct Format_Arg_S : Formatter
+				{
+					Format_Arg_S( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastSec;
+					std::string    sec;
+				};
+
+				struct Format_Arg_T : Formatter
+				{
+					Format_Arg_T( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastMin;
+					std::string    hmStr;
+				};
+
+				struct Format_Arg_X : Formatter
+				{
+					Format_Arg_X( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					const std::tm &cacheRef;
+					int            lastWkday;
+					std::string    wkday;
+				};
+
+				struct Format_Arg_Y : Formatter
+				{
+					Format_Arg_Y( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					Message_Time & timeRef;
+					const std::tm &cacheRef;
+					int            lastYear;
+					std::string    year;
+				};
+
+				struct Format_Arg_Message : Formatter
+				{
+					Format_Arg_Message( Message_Info &info );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					std::string &message;
+				};
+
+				struct Format_Arg_Char : Formatter
+				{
+					Format_Arg_Char( std::string_view ch );
+					std::string      UpdateInternalView( ) override;
+					std::string_view Format( ) override;
+
+				  private:
+					std::string m_char;
+				};
+
+				class Formatters
+				{
+				  public:
+					Formatters( std::vector<std::shared_ptr<Formatter>> &&container );
+					Formatters( );
+					void             Emplace_Back( std::unique_ptr<Formatter> &&formatter );
+					std::string_view Format( );
+
+				  private:
+					std::string                             localBuffer;
+					std::vector<std::shared_ptr<Formatter>> m_Formatter;
+				};
 
 			  private:
-				InternalFormat   internalFmt;
-				std::string      fmtPattern;
-				Message_Info *   msgInfo;
-				std::string      buffer;
-				std::vector<int> flags;
-
+				Formatters    formatter;
+				std::string   fmtPattern;
+				Message_Info *msgInfo;
 				// for some micro benches
 				TimeStats benches = { };
 			};

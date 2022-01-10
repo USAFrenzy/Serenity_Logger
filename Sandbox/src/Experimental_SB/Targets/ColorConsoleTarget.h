@@ -4,9 +4,6 @@
 
 #include <serenity/Color/Color.h>
 #include <unordered_map>
-#include <iostream>
-
-#include <iterator>
 
 namespace serenity
 {
@@ -37,7 +34,7 @@ namespace serenity
 				void              SetOriginalColors( );
 
 			  private:
-				void                                              PrintMessage( ) override;
+				void                                              PrintMessage( std::string_view formatted ) override;
 				bool                                              coloredOutput;
 				console_interface                                 consoleMode;
 				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;

@@ -1,6 +1,5 @@
 #include "Message_Time.h"
 
-#include <chrono>
 
 namespace serenity
 {
@@ -10,87 +9,43 @@ namespace serenity
 		{
 			Message_Time::Message_Time( message_time_mode mode ) : m_mode( mode )
 			{
-				InitializeCache( UpdateTimeDate( std::chrono::system_clock::now( ) ) );
+				m_mode = mode;
+				UpdateTimeDate( std::chrono::system_clock::now( ) );
 			}
 
-			std::string Message_Time::WeekdayString( int weekdayIndex, bool shortened )
+			std::string_view Message_Time::GetCurrentYearSV( int yearOffset, bool shortened )
 			{
 				if( !shortened ) {
-					return long_weekdays.at( weekdayIndex );
+					auto year { 1900 + yearOffset };
+					// could be clever here in order to use LUT instead of vformat - is it worth? Probs not
+					return std::move( std::vformat( "{}", std::make_format_args( year ) ) );
 				}
 				else {
-					return short_weekdays.at( weekdayIndex );
+					auto year { yearOffset - 100 };
+					return SE_LUTS::numberStr[ year ];
 				}
 			}
 
-			int Message_Time::GetCurrentYear( int yearOffset, bool shortened )
+			void Message_Time::UpdateTimeDate( std::chrono::system_clock::time_point timePoint )
 			{
-				if( !shortened ) {
-					return 1900 + yearOffset;  //  Format XXXX, same as %Y strftime
-				}
-				else {
-					return yearOffset - 100;  //  Format XX, Same as %y strftime
-				}
+				auto time { std::chrono::system_clock::to_time_t( timePoint ) };
+				secsSinceLastLog = std::chrono::duration_cast<std::chrono::seconds>( timePoint.time_since_epoch( ) );
+				( m_mode == message_time_mode::local ) ? localtime_s( &m_cache, &time ) : gmtime_s( &m_cache, &time );
 			}
 
-			std::string Message_Time::MonthString( int monthIndex, bool shortened )
+			void Message_Time::UpdateCache( std::chrono::system_clock::time_point timePoint )
 			{
-				if( !shortened ) {
-					return long_months.at( monthIndex );
-				}
-				else {
-					return short_months.at( monthIndex );
-				}
+				UpdateTimeDate( timePoint );
 			}
 
-			std::string Message_Time::ZeroPadDecimal( int dec )
+			std::tm &Message_Time::Cache( )
 			{
-				return ( dec >= 10 ) ? std::to_string( dec ) : "0" + std::to_string( dec );
+				return m_cache;
 			}
 
-			std::tm *Message_Time::UpdateTimeDate( std::chrono::system_clock::time_point timePoint )
-			{
-				m_time    = timePoint; // set for the casting argument in InitializeCache
-				auto time = std::chrono::system_clock::to_time_t(timePoint);
-				if( m_mode == message_time_mode::local ) {
-					return t_struct = std::localtime( &time );
-				}
-				else {
-					return t_struct = std::gmtime( &time );
-				}
-			}
-
-			Cached_Date_Time Message_Time::UpdateCache( std::chrono::system_clock::time_point timePoint )
-			{
-				return  InitializeCache( UpdateTimeDate( timePoint ) );
-			}
-
-			std::string Message_Time::DayHalf( int hour )
-			{
-				return ( hour >= 12 ) ? "PM" : "AM";
-			}
-
-			const message_time_mode Message_Time::Mode( )
+			message_time_mode &Message_Time::Mode( )
 			{
 				return m_mode;
-			}
-
-			Cached_Date_Time Message_Time::InitializeCache( const std::tm *t )
-			{
-				m_cache.long_year        = std::move( GetCurrentYear( t->tm_year ) );
-				m_cache.short_year       = std::move( GetCurrentYear( t->tm_year, true ) );
-				m_cache.long_month       = std::move( MonthString( t->tm_mon ) );
-				m_cache.dec_month        = std::move( ( t->tm_mon + 1 ) );
-				m_cache.short_month      = std::move( MonthString( t->tm_mon, true ) );
-				m_cache.long_weekday     = std::move( WeekdayString( t->tm_wday ) );
-				m_cache.short_weekday    = std::move( WeekdayString( t->tm_wday, true ) );
-				m_cache.dec_wkday        = t->tm_wday;
-				m_cache.day              = t->tm_mday;
-				m_cache.hour             = t->tm_hour;
-				m_cache.min              = t->tm_min;
-				m_cache.sec              = t->tm_sec;
-				m_cache.secsSinceLastLog = std::chrono::duration_cast<std::chrono::seconds>( m_time.time_since_epoch( ) );
-				return m_cache;
 			}
 
 			void Message_Time::SetTimeMode( message_time_mode mode )
@@ -98,30 +53,11 @@ namespace serenity
 				m_mode = mode;
 			}
 
-			Cached_Date_Time &Message_Time::Cache( )
+			std::chrono::seconds &Message_Time::LastLogPoint( )
 			{
-				return m_cache;
+				return secsSinceLastLog;
 			}
+
 		}  // namespace msg_details
 	}      // namespace expiremental
 }  // namespace serenity
-
-// template <> struct  std::formatter<serenity::expiremental::msg_details::Message_Time>
-//{
-//
-//
-//
-//	auto parse(std::format_parse_context& context)->decltype(context.begin()) {
-//		auto iter = context.begin( );
-//		auto end  = context.end( );
-//		if( iter == end || *iter == '}' ) return;
-//
-//
-//
-//
-//	}
-//
-//
-//
-//
-//};

@@ -7,14 +7,12 @@
 #include "../MessageDetails/Message_Formatter.h"
 #include "../MessageDetails/FlushPolicy.h"
 
-#include <future>
 #include <chrono>
 
 // Messing with buffer sizes
 #define KB                  ( 1024 )
 #define MB                  ( 1024 * KB )
 #define GB                  ( 1024 * MB )
-#define DEFAULT_BUFFER_SIZE static_cast<size_t>( 1 * KB )
 
 namespace serenity
 {
@@ -31,9 +29,8 @@ namespace serenity
 				TargetBase( std::string_view name, std::string_view msgPattern );
 				~TargetBase( );
 
-				void          SetFlushPolicy( Flush_Policy pPolicy );
-				Flush_Policy &Policy( );
-
+				void                             SetFlushPolicy( Flush_Policy pPolicy );
+				Flush_Policy &                   Policy( );
 				std::string                      LoggerName( );
 				void                             SetPattern( std::string_view pattern );
 				void                             ResetPatternToDefault( );
@@ -49,59 +46,28 @@ namespace serenity
 				template <typename... Args> void error( std::string_view s, Args &&...args );
 				template <typename... Args> void fatal( std::string_view s, Args &&...args );
 
-#define ESTIMATED_ARG_SIZE 32
 				template <typename... Args> void test( std::string_view s, Args &&...args )
 				{
 					using namespace std::chrono;
 					if( logLevel <= LoggerLevel::test ) {
-						msgDetails.SetMsgLevel( LoggerLevel::test );
 						auto    now              = msgDetails.MessageTimePoint( );
 						seconds messageTimePoint = duration_cast<seconds>( now.time_since_epoch( ) );
-						if( ( messageTimePoint != msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog ) ||
-							( MsgFmt( )->FormatSplices( ).wholeFormatString.empty( ) ) )
-						{
-							auto cache = std::move( msgDetails.TimeDetails( ).UpdateCache( now ) );
-							msgPattern.UpdateFormatForTime( cache );
+						if( messageTimePoint != msgDetails.TimeDetails( ).LastLogPoint( ) ) {
+							msgDetails.TimeDetails( ).UpdateCache( now );
 						}
-						internalBuffer.append( msgPattern.FormatSplices( ).wholeFormatString );
+						msgDetails.SetMsgLevel( LoggerLevel::test );
+						msgDetails.SetMessage( s, std::forward<Args>( args )... );
+						auto formatted { MsgFmt( )->GetFormatters( ).Format( ) };
 
-						// Using this branching in case both async format & buffer enabled...
-						if( isAsyncWrites( ) ) {
-							std::format_to( std::back_inserter( internalBuffer ),
-											std::move( svToString( s ) ),
-											std::forward<Args &&>( args )... );
-							AsyncWriteMessage( std::move( internalBuffer ) );
-							internalBuffer.clear( );
+						if( isWriteToBuf( ) ) {
+							internalBuffer.append( formatted.data( ), formatted.size( ) );
+							PolicyFlushOn( policy );
 						}
 						else {
-							if( isAsyncFormat( ) ) {
-								internalBuffer.append( std::move( svToString( s ) ) );
-								AsyncFormat( std::move( internalBuffer ), std::forward<Args &&>( args )... );
-								PolicyFlushOn( policy );
-								internalBuffer.clear( );
-							}
-							else {
-								if( isWriteToBuf( ) ) {
-									std::format_to( std::back_inserter( internalBuffer ), s, std::forward<Args &&>( args )... );
-									PolicyFlushOn( policy );
-								}
-								else {
-									// Using the format_to() since it's faster than just passing in via format()
-									std::format_to( std::back_inserter( internalBuffer ),
-													std::move( svToString( s ) ),
-													std::forward<Args &&>( args )... );
-									internalBuffer.append( "\n" );
-									PrintMessage( );
-									PolicyFlushOn( policy );
-								}
-							}
+							PrintMessage( formatted );
+							PolicyFlushOn( policy );
 						}
 					}
-				}
-
-				std::vector<std::future<std::string>> *AsyncFormatFutures( )
-				{
-					return &base_futures;
 				}
 
 				// for microbenches
@@ -111,50 +77,14 @@ namespace serenity
 				}
 
 			  protected:
-				virtual void PrintMessage( ) = 0;
-				virtual void PolicyFlushOn( Flush_Policy & ) { }
-				virtual void AsyncWriteMessage( std::string formatted ) { };
-
-				template <typename... Args> void AsyncFormat( std::string &&msg, Args &&...args )
-				{
-					// Not true async in the purest sense, concurrent formatting is the main goal here
-					// Return the formatted text to be written to the file when flushed
-					auto async_format = [ = ]( )
-					{
-						std::string formatted;
-						formatted.reserve( std::formatted_size( msg, args... ) );
-						std::format_to( std::back_inserter( formatted ), std::move( msg ), args... );
-						return std::move( formatted.append( "\n" ) );
-					};
-					base_futures.emplace_back( std::move( std::async( std::launch::async, async_format ) ) );
-				};
-
-				void EnableAsyncFormat( bool enable )
-				{
-					isAsyncFormatted = enable;
-				}
-				void EnableAsyncWrites( bool enable )
-				{
-					isAsyncFormatted = enable;
-				}
-				bool isAsyncWrites( )
-				{
-					return isAsyncWrite;
-				}
-
-				bool isAsyncFormat( )
-				{
-					return isAsyncFormatted;
-				}
-				std::mutex                            base_mutex;
-				msg_details::Message_Formatter *      MsgFmt( );
-				msg_details::Message_Info *           MsgInfo( );
-				std::vector<std::future<std::string>> base_futures;
+				virtual void                    PrintMessage( std::string_view formatted ) = 0;
+				virtual void                    PolicyFlushOn( Flush_Policy & ) { }
+				msg_details::Message_Formatter *MsgFmt( );
+				msg_details::Message_Info *     MsgInfo( );
+				std::mutex                      base_mutex;
 
 			  private:
-				bool                           isAsyncWrite { false };
 				bool                           toBuffer;
-				bool                           isAsyncFormatted { false };
 				Flush_Policy                   policy;
 				LoggerLevel                    logLevel;
 				LoggerLevel                    msgLevel;

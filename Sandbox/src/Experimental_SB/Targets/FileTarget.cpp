@@ -15,9 +15,9 @@ namespace serenity
 
 			FileTarget::FileTarget( ) : TargetBase( "File Logger" )
 			{
-				EnableAsyncWrites( false );
-				WriteToBaseBuffer( false);
-				EnableAsyncFormat( true); 
+				WriteToBaseBuffer( false );
+				bufferSize = 64 * KB;
+
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
 				auto                  logDir { "Logs" };
 				// NOTE: This Appends The Log Dir To The File Path AS WELL AS assigns that path to logDirPath
@@ -43,9 +43,8 @@ namespace serenity
 
 			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists ) : TargetBase( "File Logger" )
 			{
-				EnableAsyncWrites( false );
 				WriteToBaseBuffer( false );
-				EnableAsyncFormat( true );
+				bufferSize = 64 * KB;
 
 				std::filesystem::path file { filePath };
 				this->filePath = std::move( file.relative_path( ).make_preferred( ) );
@@ -88,10 +87,12 @@ namespace serenity
 			{
 				try {
 					if( !truncate ) {
-						fileHandle.open( filePath, std::ios_base::app );
+						fileHandle = std::fopen( filePath.string( ).c_str( ), "ab" );
+						std::setvbuf( fileHandle, fileBuffer.data( ), _IOFBF, bufferSize );
 					}
 					else {
-						fileHandle.open( filePath, std::ios_base::trunc );
+						fileHandle = std::fopen( filePath.string( ).c_str( ), "wb" );
+						std::setvbuf( fileHandle, fileBuffer.data( ), _IOFBF, bufferSize );
 					}
 				}
 				catch( const std::exception &e ) {
@@ -116,7 +117,7 @@ namespace serenity
 					cleanUpThreads.exchange( true );
 					cleanUpThreads.notify_one( );
 					Flush( );
-					fileHandle.close( );
+					std::fclose( fileHandle );
 				}
 				catch( const std::exception &e ) {
 					printf( "%s\n", se_colors::Tag::Red( "Error In Closing File:" ).c_str( ) );
@@ -134,48 +135,19 @@ namespace serenity
 				return file_utils::RenameFile( filePath, newFile.filename( ) );
 			}
 
-			void FileTarget::PrintMessage( )
+			void FileTarget::PrintMessage( std::string_view formatted )
 			{
-				// Using Buffer Here From The Faster Format_To impl so have to clear buffer as well
-				fileHandle.write( Buffer( )->data( ), Buffer( )->size( ) );
-				Buffer( )->clear( );
-			}
-
-			void FileTarget::AsyncWriteMessage( std::string formatted )
-			{
-				auto async_write = [ = ]( )
-				{
-					while( !readWriteMutex.try_lock_shared( ) ) {
-						std::this_thread::sleep_for( 10ms );
-					}
-					fileHandle.write( formatted.data( ), formatted.size( ) );
-					readWriteMutex.unlock_shared( );
-				};
-				// just assigning to tmp to ignore compiler warning on discarding
-				auto _ = std::async( std::launch::async, async_write );
+				std::fwrite( formatted.data( ), sizeof( char ), formatted.size( ), fileHandle );
 			}
 
 			void FileTarget::Flush( )
 			{
-				if( !fileHandle.is_open( ) ) return;
-				while( !readWriteMutex.try_lock_shared( ) ) {
-					std::this_thread::sleep_for( 10ms );
-				}
-				// Synchronize async format threads to write to file
-				if( isAsyncFormat( ) && ( AsyncFormatFutures( )->size( ) != 0 ) ) {
-					for( auto &formatted : *AsyncFormatFutures( ) ) {
-						Buffer( )->append( std::move( formatted.get( ) ) );
-					}
-					fileHandle.write( Buffer( )->data( ), Buffer( )->size( ) );
-					Buffer( )->clear( );
-				}
 				// Since we didn't write to file and instead wrote to the buffer, write to file now
 				if( ( isWriteToBuf( ) ) && ( Buffer( )->size( ) != 0 ) ) {
-					fileHandle.write( Buffer( )->data( ), Buffer( )->size( ) );
+					std::fwrite( Buffer( )->data( ), sizeof( char ), Buffer( )->size( ), fileHandle );
 					Buffer( )->clear( );
 				}
-				fileHandle.flush( );
-				readWriteMutex.unlock_shared( );
+				std::fflush( fileHandle );
 			}
 
 			void FileTarget::PolicyFlushOn( Flush_Policy &settings )
@@ -189,9 +161,7 @@ namespace serenity
 					case PeriodicOptions::memUsage:
 					{
 						// Check that the message won't cause an allocation if larger than BUFFER_SIZE
-						if( ( AsyncFormatFutures( )->size( ) >= settings.SecondarySettings( ).memoryFlushOn ) ||
-							( Buffer( )->size( ) >= settings.SecondarySettings( ).memoryFlushOn ) )
-						{
+						if( Buffer( )->size( ) >= settings.SecondarySettings( ).memoryFlushOn ) {
 							Flush( );
 						}
 					} break;
@@ -207,7 +177,7 @@ namespace serenity
 								while( !base_mutex.try_lock( ) ) {
 									std::this_thread::sleep_for( 10ms );
 								}
-								static milliseconds lastTimePoint;
+								static milliseconds lastTimePoint { };
 								auto                now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
 								auto                elapsed = duration_cast<milliseconds>( now - lastTimePoint );
 
@@ -237,8 +207,6 @@ namespace serenity
 					default: break;  // Don't bother with undef field
 				}                    // Sub Option Check
 			}                        // PolicyFlushOn( ) Function
-
-
 
 		}  // namespace targets
 	}      // namespace expiremental

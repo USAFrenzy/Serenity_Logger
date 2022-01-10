@@ -7,36 +7,31 @@ namespace serenity
 {
 	namespace expiremental
 	{
-		static constexpr std::array<const char *, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-
-		static constexpr std::array<const char *, 7> long_weekdays = {
-		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-
-		static constexpr std::array<const char *, 12> short_months = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-
-		static constexpr std::array<const char *, 12> long_months = {
-		"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
-
-		static std::string svToString( std::string_view s )
+		namespace SE_LUTS
 		{
-			return std::string( s.data( ), s.size( ) );
-		}
+			static constexpr std::array<const char *, 22> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x",
+																			"%y", "%A", "%B", "%D", "%F", "%H", "%L", "%M",
+																			"%N", "%S", "%T", "%X", "%Y", "%+" };
 
-		constexpr std::string concatToStr( std::string_view s, std::string_view t )
-		{
-			std::string str;
-			str.reserve( s.size( ) + t.size( ) );
-			return std::move( str.append( s.data( ) ).append( t.data( ) ) );
-		}
+			static constexpr std::array<const char *, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
-		struct InternalFormat
-		{
-			std::string partitionUpToSpecifier;
-			std::string timeDatePartition;
-			std::string remainingPartition;
-			std::string wholeFormatString;
-		};
+			static constexpr std::array<const char *, 7> long_weekdays = {
+			"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+
+			static constexpr std::array<const char *, 12> short_months = {
+			"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+			static constexpr std::array<const char *, 12> long_months = {
+			"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+
+			static constexpr std::array<const char *, 100> numberStr = {
+			"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+			"20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
+			"40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59",
+			"60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
+			"80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99" };
+
+		}  // namespace SE_LUTS
 
 		// TODO: Get Rid of 'test' once done
 		enum class LoggerLevel
@@ -60,7 +55,7 @@ namespace serenity
 				case LoggerLevel::warning: return "W"; break;
 				case LoggerLevel::error: return "E"; break;
 				case LoggerLevel::fatal: return "F"; break;
-				case LoggerLevel::test: return "Test"; break;
+				case LoggerLevel::test: return "T"; break;
 
 				default: return ""; break;
 			}

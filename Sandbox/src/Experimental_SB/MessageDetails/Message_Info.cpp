@@ -6,72 +6,70 @@ namespace serenity
 	{
 		namespace msg_details
 		{
-			Message_Info::Message_Info( ) : m_name( ), msgLevel( LoggerLevel::trace ), msg( ), msgTime( message_time_mode::local )
+			Message_Info::Message_Info( ) : m_name( ), m_msgLevel( LoggerLevel::trace ), m_msgTime( message_time_mode::local ) { }
+			Message_Info::Message_Info( std::string_view name, LoggerLevel level, message_time_mode mode )
+			  : m_name( name ), m_msgLevel( level ), m_msgTime( mode )
 			{
-				msgTime.Cache( ).secsSinceLastLog =
-				std::chrono::duration_cast<std::chrono::seconds>( std::chrono::system_clock::now( ).time_since_epoch( ) );
-			}
-
-			Message_Info::Message_Info( std::string name, LoggerLevel level, message_time_mode mode )
-			  : m_name( name ), msgLevel( level ), msg( ), msgTime( mode )
-			{
-				msgTime.Cache( ).secsSinceLastLog =
-				std::chrono::duration_cast<std::chrono::seconds>( std::chrono::system_clock::now( ).time_since_epoch( ) );
 			}
 
 			Message_Info &Message_Info::operator=( const Message_Info &t )
 			{
-				msg      = t.msg;
-				msgLevel = t.msgLevel;
-				msgTime  = t.msgTime;
-				m_name   = t.m_name;
+				m_message  = t.m_message;
+				m_msgLevel = t.m_msgLevel;
+				m_msgTime  = t.m_msgTime;
+				m_name     = t.m_name;
 				return *this;
 			}
-
-			LoggerLevel Message_Info::MsgLevel( )
+			// ############### New Function Added #################
+			std::string &Message_Info::MessageBuffer( )
 			{
-				return msgLevel;
+				return m_msgStrBuf;
 			}
-
-			void Message_Info::SetName( std::string name )
+			// ####################################################
+			LoggerLevel &Message_Info::MsgLevel( )
+			{
+				return m_msgLevel;
+			}
+			std::string &Message_Info::Name( )
+			{
+				return m_name;
+			}
+			Message_Time &Message_Info::TimeDetails( )
+			{
+				return m_msgTime;
+			}
+			void Message_Info::SetName( const std::string name )
 			{
 				m_name = name;
 			}
 
-			void Message_Info::SetMsgLevel( LoggerLevel level )
+			void Message_Info::SetMsgLevel( const LoggerLevel level )
 			{
-				msgLevel = level;
+				m_msgLevel = level;
 			}
+
 			std::chrono::system_clock::time_point Message_Info::MessageTimePoint( )
 			{
 				return std::chrono::system_clock::now( );
 			}
-
-			void Message_Info::SetTimeMode( message_time_mode mode )
+			void Message_Info::SetTimeMode( const message_time_mode mode )
 			{
-				msgTime.SetTimeMode( mode );
+				m_msgTime.SetTimeMode( mode );
 			}
 
-			const message_time_mode Message_Info::TimeMode( )
+			message_time_mode Message_Info::TimeMode( )
 			{
-				return msgTime.Mode( );
+				return m_msgTime.Mode( );
 			}
 
-			std::tm *Message_Info::TimeInfo( )
+			std::tm &Message_Info::TimeInfo( )
 			{
-				return msgTime.UpdateTimeDate( MessageTimePoint( ) );
+				return m_msgTime.Cache( );
 			}
-
-			std::string Message_Info::Name( )
+			std::string &Message_Info::Message( )
 			{
-				return m_name;
+				return m_message;
 			}
-
-			Message_Time Message_Info::TimeDetails( )
-			{
-				return msgTime;
-			}
-
 		}  // namespace msg_details
 	}      // namespace expiremental
 }  // namespace serenity

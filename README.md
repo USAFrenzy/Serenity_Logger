@@ -12,8 +12,9 @@ I still have to properly benchmark among other logging frameworks as well as spd
     __________________________________________________________________________________________________________
 	| Serenity Console Target |    Spdlog Console Sink    | Serenity File Target | Spdlog Basic File Sink    |
     | ----------------------- | ------------------------- | -------------------- | --------------------------|
-    |       67.007 us         |        82.667 us          |       1.713 us       |          1.119 us         |
+    |       57.573 us         |        84.394 us          |       0.735 us       |          1.118 us         |
     | ----------------------- | ------------------------- | -------------------- | --------------------------|
+
 *This Will Be Updated Later When I Have More Time*
 
 

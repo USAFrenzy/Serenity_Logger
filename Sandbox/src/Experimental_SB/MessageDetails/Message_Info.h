@@ -1,5 +1,5 @@
 #pragma once
-#include <string>
+
 #include "../Common.h"
 #include "Message_Time.h"
 
@@ -13,24 +13,38 @@ namespace serenity
 			{
 			  public:
 				Message_Info( );
-				Message_Info( std::string name, LoggerLevel level, message_time_mode mode );
+				Message_Info( std::string_view name, LoggerLevel level, message_time_mode mode );
 				Message_Info &operator=( const Message_Info &t );
 
-				LoggerLevel                           MsgLevel( );
-				std::string                           Name( );
-				Message_Time                          TimeDetails( );
-				void                                  SetName( std::string name );
-				void                                  SetMsgLevel( LoggerLevel level );
+				std::string &                         MessageBuffer( );
+				LoggerLevel &                         MsgLevel( );
+				std::string &                         Name( );
+				Message_Time &                        TimeDetails( );
+				void                                  SetName( const std::string name );
+				void                                  SetMsgLevel( const LoggerLevel level );
 				std::chrono::system_clock::time_point MessageTimePoint( );
-				void                                  SetTimeMode( message_time_mode mode );
-				const message_time_mode               TimeMode( );
-				std::tm *                             TimeInfo( );
+				void                                  SetTimeMode( const message_time_mode mode );
+				message_time_mode                     TimeMode( );
+				std::tm &                             TimeInfo( );
+				std::string &                         Message( );
+
+				template <typename... Args> void SetMessage( const std::string_view message, Args &&...args )
+				{
+					m_message.clear( );
+					using iterator = std::back_insert_iterator<std::basic_string<char>>;
+					using context  = std::basic_format_context<iterator, char>;
+					std::vformat_to( std::back_inserter( m_message ),
+									 message,
+									 std::make_format_args<context>( std::forward<Args>( args )... ) );
+					m_message.append( "\n" );
+				}
 
 			  private:
-				std::string      m_name;
-				LoggerLevel      msgLevel;
-				std::string_view msg;
-				Message_Time     msgTime;
+				std::string  m_name;
+				LoggerLevel  m_msgLevel;
+				std::string  m_message;
+				Message_Time m_msgTime;
+				std::string  m_msgStrBuf;
 			};
 		}  // namespace msg_details
 	}      // namespace expiremental

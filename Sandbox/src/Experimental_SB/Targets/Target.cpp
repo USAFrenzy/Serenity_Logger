@@ -13,15 +13,10 @@ namespace serenity
 				policy( Flush::never ),
 				logLevel( LoggerLevel::trace ),
 				msgLevel( LoggerLevel::trace ),
-				pattern( "|%l| %x %n %T [%N]: " ),
+				pattern( "|%l| %x %n %T [%N]: %+" ),
 				msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
 				msgPattern( pattern, &msgDetails )
 			{
-				internalBuffer.reserve( DEFAULT_BUFFER_SIZE );
-				base_futures.reserve( DEFAULT_BUFFER_SIZE );
-				base_futures.clear( );
-				internalBuffer.clear( );
-				msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog = duration_cast<seconds>( system_clock::now( ).time_since_epoch( ) );
 			}
 
 			TargetBase::TargetBase( std::string_view name )
@@ -29,15 +24,10 @@ namespace serenity
 				policy( Flush::never ),
 				logLevel( LoggerLevel::trace ),
 				msgLevel( LoggerLevel::trace ),
-				pattern( "|%l| %x %n %T [%N]: " ),
-				msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
+				pattern( "|%l| %x %n %T [%N]: %+" ),
+				msgDetails( name, msgLevel, message_time_mode::local ),
 				msgPattern( pattern, &msgDetails )
 			{
-				internalBuffer.reserve( DEFAULT_BUFFER_SIZE );
-				base_futures.reserve( DEFAULT_BUFFER_SIZE );
-				base_futures.clear( );
-				internalBuffer.clear( );
-				msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog = duration_cast<seconds>( system_clock::now( ).time_since_epoch( ) );
 			}
 
 			TargetBase::TargetBase( std::string_view name, std::string_view fmtPattern )
@@ -45,15 +35,10 @@ namespace serenity
 				policy( Flush::never ),
 				logLevel( LoggerLevel::trace ),
 				msgLevel( LoggerLevel::trace ),
-				pattern( std::move( svToString( fmtPattern ) ) ),
-				msgDetails( std::move( svToString( name ) ), msgLevel, message_time_mode::local ),
+				pattern( fmtPattern ),
+				msgDetails( name, msgLevel, message_time_mode::local ),
 				msgPattern( pattern, &msgDetails )
 			{
-				internalBuffer.reserve( DEFAULT_BUFFER_SIZE );
-				base_futures.reserve( DEFAULT_BUFFER_SIZE );
-				base_futures.clear( );
-				internalBuffer.clear( );
-				msgDetails.TimeDetails( ).Cache( ).secsSinceLastLog = duration_cast<seconds>( system_clock::now( ).time_since_epoch( ) );
 			}
 
 			TargetBase::~TargetBase( ) { }
@@ -80,7 +65,7 @@ namespace serenity
 
 			void TargetBase::SetFlushPolicy( Flush_Policy pPolicy )
 			{
-				policy = std::move( pPolicy );
+				policy = pPolicy;
 			}
 
 			Flush_Policy &TargetBase::Policy( )
@@ -105,7 +90,7 @@ namespace serenity
 
 			void TargetBase::ResetPatternToDefault( )
 			{
-				msgPattern.SetPattern( "|%l| %x %n %T [%N]: " );
+				msgPattern.SetPattern( "|%l| %x %n %T [%N]: %+ " );
 			}
 			void TargetBase::SetLogLevel( LoggerLevel level )
 			{
@@ -115,8 +100,6 @@ namespace serenity
 			{
 				return logLevel;
 			}
-
-
 
 		}  // namespace targets
 	}      // namespace expiremental
