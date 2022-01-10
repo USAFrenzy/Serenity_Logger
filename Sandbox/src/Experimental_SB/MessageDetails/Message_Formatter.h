@@ -321,14 +321,14 @@ namespace serenity
 				class Formatters
 				{
 				  public:
-					Formatters( std::vector<std::shared_ptr<Formatter>> &&container );
+					Formatters( std::vector<std::unique_ptr<Formatter>> &&container );
 					Formatters( );
 					void             Emplace_Back( std::unique_ptr<Formatter> &&formatter );
 					std::string_view Format( );
 
 				  private:
 					std::string                             localBuffer;
-					std::vector<std::shared_ptr<Formatter>> m_Formatter;
+					std::vector<std::unique_ptr<Formatter>> m_Formatter;
 				};
 
 			  private:

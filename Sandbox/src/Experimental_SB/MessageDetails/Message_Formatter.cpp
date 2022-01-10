@@ -420,27 +420,24 @@ namespace serenity
 			Message_Formatter::Format_Arg_T::Format_Arg_T( Message_Info &info )
 			  : cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( cacheRef.tm_min )
 			{
-				hmStr = std::move( UpdateInternalView( ) );
+				hmStr = UpdateInternalView( );
 			}
 			std::string Message_Formatter::Format_Arg_T::UpdateInternalView( )
 			{
 				lastMin = cacheRef.tm_min;
 				auto        hour { SE_LUTS::numberStr[ cacheRef.tm_hour ] };
 				auto        min { SE_LUTS::numberStr[ lastMin ] };
-				std::string result;
-				return result.append( hour ).append( ":" ).append( min );
+				std::string result { hour };
+				return result.append( ":" ).append( min );
 			}
 			std::string_view Message_Formatter::Format_Arg_T::Format( )
 			{
 				auto sec = SE_LUTS::numberStr[ cacheRef.tm_sec ];
 				if( cacheRef.tm_min != lastMin ) {
-					auto result = hmStr = std::move( UpdateInternalView( ) );
-					return result.append( ":" ).append( sec );
+					hmStr = UpdateInternalView( );
 				}
-				else {
-					auto result = hmStr;
-					return result.append( ":" ).append( sec );
-				}
+				std::string result{ hmStr };
+				return result.append( ":" ).append( sec );
 			}
 
 			// Format_T Functions
@@ -502,7 +499,7 @@ namespace serenity
 			}
 
 			// Formatters Functions
-			Message_Formatter::Formatters::Formatters( std::vector<std::shared_ptr<Formatter>> &&container )
+			Message_Formatter::Formatters::Formatters( std::vector<std::unique_ptr<Formatter>> &&container )
 			  : m_Formatter( std::move( container ) )
 			{
 				// Reserve an estimated amount based off arg sizes
@@ -523,7 +520,7 @@ namespace serenity
 				localBuffer.clear( );
 				for( auto &formatter : m_Formatter ) {
 					auto formatted { formatter->Format( ) };
-					localBuffer.append( std::move( formatted.data( ) ), formatted.size( ) );
+					localBuffer.append(formatted);
 				}
 				return localBuffer;
 			}
