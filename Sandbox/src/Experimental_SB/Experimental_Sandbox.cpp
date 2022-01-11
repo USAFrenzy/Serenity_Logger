@@ -10,9 +10,6 @@
 	#define INSTRUMENTATION_ENABLED
 #endif
 
-// Crude but it should keep from optimizing scope away
-#define BENCH_START {
-#define BENCH_END   }
 
 #if ALLOC_TEST  // Testing Allocations
 uint64_t total_allocated_bytes { 0 };
@@ -106,8 +103,8 @@ int main( )
 	spdlogConsoleLogger->set_pattern( "%^|%L| %a %d%b%C %T [%n]: %v%$" );  // equivalent to Target's Default Pattern
 
 	// Too lazy to set up paths correctly at the moment, hard-coding paths for desktop/laptop
-	std::string filePath = "C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/build/Sandbox/Logs/Spdlog_File_Bench.txt";
-	// std::string filePath = "C:/Users/mccul/Desktop/Logging Project/build/Sandbox/Logs/Spdlog_File_Bench.txt";
+	//std::string filePath = "C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/build/Sandbox/Logs/Spdlog_File_Bench.txt";
+	 std::string filePath = "C:/Users/mccul/Desktop/Logging Project/build/Sandbox/Logs/Spdlog_File_Bench.txt";
 
 	bool truncate = true;
 	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>( filePath, truncate );
@@ -136,7 +133,6 @@ int main( )
 	Instrumentator spdlogFileTester;
 
 #ifdef INSTRUMENTATION_ENABLED
-	BENCH_START
 	macroTester.StopWatch_Reset( );
 
 	// test string
@@ -341,6 +337,5 @@ int main( )
 	"\n" );
 	std::cout << Tag::Yellow( "***************************************************************************************\n\n" );
 
-	BENCH_END
 #endif  // INSTRUMENTATION_ENABLED
 }

@@ -61,11 +61,11 @@ namespace serenity
 
 						if( isWriteToBuf( ) ) {
 							internalBuffer.append( formatted.data( ), formatted.size( ) );
-							PolicyFlushOn( policy );
+							PolicyFlushOn( );
 						}
 						else {
 							PrintMessage( formatted );
-							PolicyFlushOn( policy );
+							PolicyFlushOn(  );
 						}
 					}
 				}
@@ -78,7 +78,7 @@ namespace serenity
 
 			  protected:
 				virtual void                    PrintMessage( std::string_view formatted ) = 0;
-				virtual void                    PolicyFlushOn( Flush_Policy & ) { }
+				virtual void                    PolicyFlushOn(  ) { }
 				msg_details::Message_Formatter *MsgFmt( );
 				msg_details::Message_Info *     MsgInfo( );
 				std::mutex                      base_mutex;

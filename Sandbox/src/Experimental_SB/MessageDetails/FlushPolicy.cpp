@@ -25,6 +25,9 @@ namespace serenity
 		  : mainOpt( Flush::periodically ), subOpt( secondaryOpt ), subSettings( std::move( settings ) )
 		{
 		}
+		Flush_Policy::Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt ) : mainOpt( primaryOpt ), subOpt( secondaryOpt) 
+		{ 
+		}
 
 		Flush_Policy &Flush_Policy::operator=( const Flush_Policy &p )
 		{

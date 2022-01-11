@@ -35,6 +35,7 @@ namespace serenity
 			Flush_Policy( ) = delete;
 			explicit Flush_Policy( Flush primaryOpt );
 			explicit Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt, PeriodicSettings settings );
+			explicit Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt);
 			explicit Flush_Policy( PeriodicOptions secondaryOpt, PeriodicSettings settings );
 			Flush_Policy( const Flush_Policy &p );
 			Flush_Policy &operator=( const Flush_Policy &p );

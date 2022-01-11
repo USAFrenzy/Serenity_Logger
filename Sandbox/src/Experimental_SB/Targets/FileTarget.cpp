@@ -13,7 +13,7 @@ namespace serenity
 		{
 			using namespace std::chrono_literals;
 
-			FileTarget::FileTarget( ) : TargetBase( "File Logger" )
+			FileTarget::FileTarget( ) : TargetBase( "File Logger" ), policy( Policy( ) )
 			{
 				WriteToBaseBuffer( false );
 				bufferSize = 64 * KB;
@@ -41,7 +41,8 @@ namespace serenity
 				}
 			}
 
-			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists ) : TargetBase( "File Logger" )
+			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists )
+			  : TargetBase( "File Logger" ), policy( Policy( ) )
 			{
 				WriteToBaseBuffer( false );
 				bufferSize = 64 * KB;
@@ -76,6 +77,7 @@ namespace serenity
 			FileTarget::~FileTarget( )
 			{
 				CloseFile( );
+
 			}
 
 			std::string FileTarget::FilePath( )
@@ -117,6 +119,9 @@ namespace serenity
 					cleanUpThreads.exchange( true );
 					cleanUpThreads.notify_one( );
 					Flush( );
+					if( flushThread.joinable( ) ) {
+						flushThread.join( );
+					}
 					std::fclose( fileHandle );
 				}
 				catch( const std::exception &e ) {
@@ -137,7 +142,11 @@ namespace serenity
 
 			void FileTarget::PrintMessage( std::string_view formatted )
 			{
+				while( !base_mutex.try_lock( ) ) {
+					std::this_thread::sleep_for( 10ms );
+				}
 				std::fwrite( formatted.data( ), sizeof( char ), formatted.size( ), fileHandle );
+				base_mutex.unlock( );
 			}
 
 			void FileTarget::Flush( )
@@ -150,57 +159,57 @@ namespace serenity
 				std::fflush( fileHandle );
 			}
 
-			void FileTarget::PolicyFlushOn( Flush_Policy &settings )
+			void FileTarget::PolicyFlushOn(  )
 			{
-				if( settings.PrimarySetting( ) == Flush::never ) return;
-				if( settings.PrimarySetting( ) == Flush::always ) {
+				if( policy.PrimarySetting( ) == Flush::never ) return;
+				if( policy.PrimarySetting( ) == Flush::always ) {
 					Flush( );
 					return;
 				}
-				switch( settings.SubSetting( ) ) {
+				switch( policy.SubSetting( ) ) {
 					case PeriodicOptions::memUsage:
 					{
 						// Check that the message won't cause an allocation if larger than BUFFER_SIZE
-						if( Buffer( )->size( ) >= settings.SecondarySettings( ).memoryFlushOn ) {
+						if( Buffer( )->size( ) >= policy.SecondarySettings( ).memoryFlushOn ) {
 							Flush( );
 						}
 					} break;
 					case PeriodicOptions::timeBased:
 					{
-						static bool threadStarted { false };
-						if( threadStarted ) return;
+						if( flushThread.joinable() ) return;
 						// lambda that starts a background thread to flush on time interval given
-						auto periodic_flush = [ this, &settings ]( )
+						auto &p_policy { policy };
+						auto periodic_flush = [ this, p_policy ]( )
 						{
 							using namespace std::chrono;
 							while( !cleanUpThreads.load( ) ) {
+								while( !ableToFlush.load( ) ) {
+									std::this_thread::sleep_for( 100ms );
+									if( ableToFlush.load( ) ) break;
+								}
+
 								while( !base_mutex.try_lock( ) ) {
 									std::this_thread::sleep_for( 10ms );
 								}
-								static milliseconds lastTimePoint { };
+								static  milliseconds lastTimePoint { };
 								auto                now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
 								auto                elapsed = duration_cast<milliseconds>( now - lastTimePoint );
 
-								if( elapsed >= settings.SecondarySettings( ).flushEvery ) {
+								if( elapsed >= policy.SecondarySettings( ).flushEvery ) {
 									Flush( );
 									lastTimePoint = now;
-									while( !ableToFlush.load( ) ) {
-										std::this_thread::sleep_for( 10ms );
-									}
 								}
 								base_mutex.unlock( );
 							}
 						};  // periodic_flush
 
-						if( !threadStarted ) {
-							std::thread t( periodic_flush );
-							t.detach( );
-							threadStarted = true;
+						if( !flushThread.joinable() ) {
+							flushThread = std::thread( periodic_flush );
 						}
 					} break;  // time based bounds
 					case PeriodicOptions::logLevelBased:
 					{
-						if( ( settings.SecondarySettings( ).flushOn > MsgInfo( )->MsgLevel( ) ) ) return;
+						if( ( policy.SecondarySettings( ).flushOn > MsgInfo( )->MsgLevel( ) ) ) return;
 						return;
 						Flush( );
 					} break;

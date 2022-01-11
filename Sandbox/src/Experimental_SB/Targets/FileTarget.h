@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Target.h"
-
+#include <thread>
 namespace serenity
 {
 	namespace expiremental
@@ -25,18 +25,20 @@ namespace serenity
 				void        Flush( );
 
 			  private:
+				// ------------------- WIP -------------------
+				std::atomic<bool> ableToFlush { true };
+				std::atomic<bool> cleanUpThreads { false };
+				Flush_Policy &    policy;
+				std::thread       flushThread;
+				// ------------------- WIP -------------------
 				FILE *                fileHandle;
 				LoggerLevel           logLevel;
 				std::filesystem::path filePath;
 				std::vector<char>     fileBuffer;
 				size_t                bufferSize;
-				// ------------------- WIP -------------------
-				std::atomic<bool> ableToFlush { true };
-				std::atomic<bool> cleanUpThreads { false };
-				// ------------------- WIP -------------------
 
 			  private:
-				void PolicyFlushOn( Flush_Policy & ) override;
+				void PolicyFlushOn( ) override;
 				void PrintMessage( std::string_view formatted ) override;
 			};
 		}  // namespace targets
