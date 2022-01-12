@@ -3,7 +3,7 @@
 #include "Targets/ColorConsoleTarget.h"
 #include "Targets/FileTarget.h"
 
-#define INSTRUMENT 0
+#define INSTRUMENT 1
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED

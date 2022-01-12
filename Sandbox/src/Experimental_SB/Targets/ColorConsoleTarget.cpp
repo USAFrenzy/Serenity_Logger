@@ -60,6 +60,8 @@ namespace serenity
 				coloredOutput = colorize;
 			}
 
+			// Other than some wierd color trailing on the right-hand side for some of the differently colored lines,
+			// This now ACTUALLY works almost as intended
 			void ColorConsole::WinConsoleMode( console_interface cInterface )
 			{
 				if( cInterface == console_interface::std_out ) {
@@ -69,15 +71,23 @@ namespace serenity
 					outputHandle = GetStdHandle( STD_ERROR_HANDLE );
 				}
 				consoleMode = cInterface;
-				DWORD opMode { ENABLE_VIRTUAL_TERMINAL_PROCESSING };
+				DWORD opMode { 0 };
 				if( !GetConsoleMode( outputHandle, &opMode ) ) {
+					exit( GetLastError( ) );
+				}
+				opMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+				if( !SetConsoleMode( outputHandle, opMode ) ) {
 					exit( GetLastError( ) );
 				}
 			}
 
+			// Was having some wierd garbage glyphs if I didn't call GetConsoleMode() here first... Not sure what that's about
 			void ColorConsole::ResetWinConsole( )
 			{
 				DWORD opMode { 0 };
+				if( !GetConsoleMode( outputHandle, &opMode ) ) {
+					exit( GetLastError( ) );
+				}
 				if( !SetConsoleMode( outputHandle, opMode ) ) {
 					exit( GetLastError( ) );
 				}
