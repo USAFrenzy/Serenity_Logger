@@ -13,6 +13,9 @@ namespace serenity
 			{
 				WriteToBaseBuffer( false );
 				SetOriginalColors( );
+#ifdef WINDOWS_PLATFORM
+				WinConsoleMode( consoleMode );
+#endif  // WINDOWS_PLATFORM
 			}
 
 			ColorConsole::ColorConsole( std::string_view name )
@@ -20,6 +23,9 @@ namespace serenity
 			{
 				WriteToBaseBuffer( false );
 				SetOriginalColors( );
+#ifdef WINDOWS_PLATFORM
+				WinConsoleMode( consoleMode );
+#endif  // WINDOWS_PLATFORM
 			}
 
 			ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
@@ -27,6 +33,16 @@ namespace serenity
 			{
 				WriteToBaseBuffer( false );
 				SetOriginalColors( );
+#ifdef WINDOWS_PLATFORM
+				WinConsoleMode( consoleMode );
+#endif  // WINDOWS_PLATFORM
+			}
+
+			ColorConsole::~ColorConsole( )
+			{
+#ifdef WINDOWS_PLATFORM
+				ResetWinConsole( );
+#endif  // WINDOWS_PLATFORM
 			}
 
 			void ColorConsole::SetMsgColor( LoggerLevel level, std::string_view color )
@@ -44,12 +60,52 @@ namespace serenity
 				coloredOutput = colorize;
 			}
 
-			void ColorConsole::SetConsoleMode( console_interface mode )
+			void ColorConsole::WinConsoleMode( console_interface cInterface )
+			{
+				DWORD opMode { 0 };
+				if( cInterface == console_interface::std_out ) {
+					outputHandle = GetStdHandle( STD_OUTPUT_HANDLE );
+				}
+				else {
+					outputHandle = GetStdHandle( STD_ERROR_HANDLE );
+				}
+				consoleMode = cInterface;
+				if( !GetConsoleMode( outputHandle, &opMode ) ) {
+					exit( GetLastError( ) );
+				}
+				opMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+				if( !SetConsoleMode( outputHandle, opMode ) ) {
+					exit( GetLastError( ) );
+				}
+			}
+			void ColorConsole::ResetWinConsole( )
+			{
+				switch( consoleMode ) {
+					case serenity::expiremental::targets::console_interface::std_out:
+					{
+						std::cout << se_colors::formats::reset;
+					} break;
+					case serenity::expiremental::targets::console_interface::std_err:
+					{
+						std::cerr << se_colors::formats::reset;
+					} break;
+					case serenity::expiremental::targets::console_interface::std_log:
+					{
+						std::clog << se_colors::formats::reset;
+					} break;
+				}
+				DWORD opMode { 0 };
+				if( !SetConsoleMode( outputHandle, opMode ) ) {
+					exit( GetLastError( ) );
+				}
+			}
+
+			void ColorConsole::SetConsoleInterface( console_interface mode )
 			{
 				consoleMode = mode;
 			}
 
-			console_interface ColorConsole::GetConsoleMode( )
+			console_interface ColorConsole::ConsoleMode( )
 			{
 				return consoleMode;
 			}
@@ -59,7 +115,7 @@ namespace serenity
 				std::string_view msgColor { "" }, reset { "" };
 				if( coloredOutput ) {
 					msgColor = GetMsgColor( MsgInfo( )->MsgLevel( ) );
-					reset = msgLevelColors.at(LoggerLevel::off);
+					reset    = msgLevelColors.at( LoggerLevel::off );
 				}
 				switch( consoleMode ) {
 					case serenity::expiremental::targets::console_interface::std_out:

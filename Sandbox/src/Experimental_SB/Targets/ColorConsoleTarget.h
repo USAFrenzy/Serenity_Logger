@@ -26,11 +26,13 @@ namespace serenity
 				ColorConsole( );
 				ColorConsole( std::string_view name );
 				ColorConsole( std::string_view name, std::string_view msgPattern );
-
+				~ColorConsole( );
 				std::string_view  GetMsgColor( LoggerLevel level );
 				void              SetMsgColor( LoggerLevel level, std::string_view color );
-				void              SetConsoleMode( console_interface mode );
-				console_interface GetConsoleMode( );
+				void              WinConsoleMode( console_interface cInterface );
+				void              ResetWinConsole( );
+				void              SetConsoleInterface( console_interface mode );
+				console_interface ConsoleMode( );
 				void              ColorizeOutput( bool colorize );
 				void              SetOriginalColors( );
 
@@ -39,6 +41,7 @@ namespace serenity
 				bool                                              coloredOutput;
 				console_interface                                 consoleMode;
 				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
+				HANDLE                                            outputHandle;
 			};  // class ColorConsole
 		}       // namespace targets
 	}           // namespace expiremental

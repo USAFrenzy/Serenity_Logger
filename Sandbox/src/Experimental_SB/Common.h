@@ -3,6 +3,22 @@
 #include <string_view>
 #include <array>
 
+#ifdef _WIN32
+	#ifdef _WIN64
+		#define WINDOWS_PLATFORM
+		#define WIN32_LEAN_AND_MEAN
+		#include <Windows.h>
+	#else
+		#error "x86 Is Currently Unsupported"
+	#endif
+#elif defined( __APPLE__ ) || ( __MACH__ )
+#define APPLE_PLATFORM
+	#include <TargetConditionals.h>
+#else
+#define LINUX_PLATFORM
+	#error "Unable To Detect Platform. Currently Only Supports Windows"
+#endif
+
 namespace serenity
 {
 // Messing with buffer sizes
