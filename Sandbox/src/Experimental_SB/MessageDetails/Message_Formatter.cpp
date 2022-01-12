@@ -14,7 +14,6 @@ namespace serenity
 			Message_Formatter::Message_Formatter( std::string_view pattern, Message_Info *details ) : msgInfo( *&details )
 			{
 				SetPattern( pattern );
-				StoreFormat( );
 			}
 
 			void Message_Formatter::FlagFormatter( size_t flag )
@@ -51,11 +50,19 @@ namespace serenity
 
 			void Message_Formatter::SetPattern( std::string_view pattern )
 			{
-				fmtPattern = pattern;
+				fmtPattern.clear( );
+				fmtPattern.append( pattern.data( ), pattern.size( ) );
+				StoreFormat( );
 			}
+
 			Message_Formatter::Formatters &Message_Formatter::GetFormatters( )
 			{
 				return formatter;
+			}
+
+			void Message_Formatter::Formatters::Clear( )
+			{
+				m_Formatter.clear( );
 			}
 
 			void Message_Formatter::StoreFormat( )
@@ -63,6 +70,7 @@ namespace serenity
 				std::string fmt { fmtPattern };
 				std::string flag;
 				size_t      index { 150 };
+				formatter.Clear( );
 
 				while( !fmt.empty( ) ) {
 					if( fmt.front( ) == '%' ) {
@@ -436,7 +444,7 @@ namespace serenity
 				if( cacheRef.tm_min != lastMin ) {
 					hmStr = UpdateInternalView( );
 				}
-				std::string result{ hmStr };
+				std::string result { hmStr };
 				return result.append( ":" ).append( sec );
 			}
 
@@ -520,7 +528,7 @@ namespace serenity
 				localBuffer.clear( );
 				for( auto &formatter : m_Formatter ) {
 					auto formatted { formatter->Format( ) };
-					localBuffer.append(formatted);
+					localBuffer.append( formatted );
 				}
 				return localBuffer;
 			}

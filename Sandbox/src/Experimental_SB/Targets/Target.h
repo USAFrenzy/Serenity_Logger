@@ -9,11 +9,6 @@
 
 #include <chrono>
 
-// Messing with buffer sizes
-#define KB                  ( 1024 )
-#define MB                  ( 1024 * KB )
-#define GB                  ( 1024 * MB )
-
 namespace serenity
 {
 	namespace expiremental
@@ -48,8 +43,8 @@ namespace serenity
 
 				template <typename... Args> void test( std::string_view s, Args &&...args )
 				{
-					using namespace std::chrono;
 					if( logLevel <= LoggerLevel::test ) {
+						using namespace std::chrono;
 						auto    now              = msgDetails.MessageTimePoint( );
 						seconds messageTimePoint = duration_cast<seconds>( now.time_since_epoch( ) );
 						if( messageTimePoint != msgDetails.TimeDetails( ).LastLogPoint( ) ) {
@@ -65,7 +60,7 @@ namespace serenity
 						}
 						else {
 							PrintMessage( formatted );
-							PolicyFlushOn(  );
+							PolicyFlushOn( );
 						}
 					}
 				}
@@ -78,10 +73,9 @@ namespace serenity
 
 			  protected:
 				virtual void                    PrintMessage( std::string_view formatted ) = 0;
-				virtual void                    PolicyFlushOn(  ) { }
+				virtual void                    PolicyFlushOn( ) { }
 				msg_details::Message_Formatter *MsgFmt( );
 				msg_details::Message_Info *     MsgInfo( );
-				std::mutex                      base_mutex;
 
 			  private:
 				bool                           toBuffer;

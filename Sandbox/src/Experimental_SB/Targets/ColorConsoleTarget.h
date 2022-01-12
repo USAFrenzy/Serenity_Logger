@@ -14,7 +14,8 @@ namespace serenity
 			enum class console_interface
 			{
 				std_out,
-				std_err
+				std_err,
+				std_log
 			};
 
 			// ansi color codes supported in Win 10+, therefore, targetting Win 10+ due to what the timeframe of the

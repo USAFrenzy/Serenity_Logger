@@ -56,15 +56,21 @@ namespace serenity
 
 			void ColorConsole::PrintMessage( std::string_view formatted )
 			{
-				static std::string_view msgColor { "" };
-				// if( coloredOutput ) {
-				//	msgColor = GetMsgColor( MsgInfo( )->MsgLevel( ) );
-				//}
-				if( consoleMode == console_interface::std_out ) {
-					std::cout << msgColor << formatted << se_colors::formats::reset;
+				std::string_view msgColor { "" }, reset { "" };
+				if( coloredOutput ) {
+					msgColor = GetMsgColor( MsgInfo( )->MsgLevel( ) );
+					reset = msgLevelColors.at(LoggerLevel::off);
 				}
-				else {
-					std::cerr << msgColor << formatted << se_colors::formats::reset;
+				switch( consoleMode ) {
+					case serenity::expiremental::targets::console_interface::std_out:
+						std::cout << msgColor << formatted << reset;
+						break;
+					case serenity::expiremental::targets::console_interface::std_log:
+						std::clog << msgColor << formatted << reset;
+						break;
+					case serenity::expiremental::targets::console_interface::std_err:
+						std::cerr << msgColor << formatted << reset;
+						break;
 				}
 			}
 

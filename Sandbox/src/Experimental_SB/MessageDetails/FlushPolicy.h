@@ -24,7 +24,7 @@ namespace serenity
 
 		struct PeriodicSettings
 		{
-			unsigned int              memoryFlushOn { 512 };
+			size_t                    memoryFlushOn { 8 * KB };
 			std::chrono::milliseconds flushEvery { std::chrono::milliseconds( 500 ) };
 			LoggerLevel               flushOn { LoggerLevel::trace };
 		};
@@ -35,7 +35,7 @@ namespace serenity
 			Flush_Policy( ) = delete;
 			explicit Flush_Policy( Flush primaryOpt );
 			explicit Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt, PeriodicSettings settings );
-			explicit Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt);
+			explicit Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt );
 			explicit Flush_Policy( PeriodicOptions secondaryOpt, PeriodicSettings settings );
 			Flush_Policy( const Flush_Policy &p );
 			Flush_Policy &operator=( const Flush_Policy &p );

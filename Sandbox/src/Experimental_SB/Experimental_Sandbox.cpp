@@ -4,93 +4,35 @@
 #include "Targets/FileTarget.h"
 
 #define INSTRUMENT 1
-#define ALLOC_TEST 0
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
 #endif
 
-
-#if ALLOC_TEST  // Testing Allocations
-uint64_t total_allocated_bytes { 0 };
-
-void *operator new( std::size_t n )
-{
-	total_allocated_bytes += n;
-	serenity::se_utils::Instrumentator::mem_tracker.Allocated += n;
-	return malloc( n );
-}
-void operator delete( void *p, size_t n ) throw( )
-{
-	total_allocated_bytes -= n;
-	serenity::se_utils::Instrumentator::mem_tracker.Freed += n;
-	free( p );
-}
-#endif  // ALLOC_TEST
-
 /************************************************************************************************************
 									custom flags
 						************************************
 	- %N (Name)					- %L (Full Message Level)		- %x (Short Weekday String)
-	- %l (Short Message Level)	- %n (DD/MMM/YY Date)			- %X (Long Weekday String)
+	- %l (Short Message Level)	    - %n (DD/MMM/YY Date)			- %X (Long Weekday String)
 
 							The rest are strftime equivalents
 						******************************************
-	- %d (Day Of Month)				- %T (HH:MM:SS Time format)		- %S (Seconds)
-	- %D (MM/DD/YY Date)			- %w (weekday as decimal 0-6)	- %Y (Year XXXX)
+	- %d (Day Of Month)			- %T (HH:MM:SS Time format)		- %S (Seconds)
+	- %D (MM/DD/YY Date)			- %w (weekday as decimal 0-6)	    - %Y (Year XXXX)
 	- %b (Abbrev Month Name)		- %F (YYYY-MM-DD Date)			- %M (Minute)
-	- %B (Full Month Name)			- %H (24hr Hour format)			- %y (year XX Format)
+	- %B (Full Month Name)		- %H (24hr Hour format)			- %y (year XX Format)
 ************************************************************************************************************/
-
-// clang-format off
-// #####################################################################################################################################################
-// This will probably be used for something more along the lines of just checking if a new flag that isn't default supported is being parsed, in a very 
-// similar fashion to how spdlog allows users to create custom flags and custom flag argument handlers
-// #####################################################################################################################################################
-
-// This Might Also NOT Be The Way To Aid Formatting.. This Is Just An Idea
-// *************************************************************************
-_Enum_is_bitflag_ enum class Flags : uint32_t {
-	name         = 0,        // Mapping To %N
-	f_msg_lvl    = 1 << 1,   // Mapping To %L
-	s_msg_lvl    = 1 << 2,   // Mapping To %l
-	d_wkday      = 1 << 3,   // Mapping To %w
-	l_month      = 1 << 4,   // Mapping To %B
-	s_month      = 1 << 5,   // Mapping To %b
-	m_day        = 1 << 6,   // Mapping To %d
-	l_year       = 1 << 7,   // Mapping To %Y
-	s_year       = 1 << 8,   // Mapping To %y
-	mdy_date     = 1 << 9,   // Mapping To %D
-	ymd_date     = 1 << 10,  // Mapping To %F
-	full_time    = 1 << 11,  // Mapping To %T
-	mil_hour     = 1 << 12,  // Mapping To %H
-	min          = 1 << 13,  // Mapping To %M
-	sec          = 1 << 14,  // Mapping To %S
-	l_wkday      = 1 << 15,  // Mapping To %X 
-	s_wkday      = 1 << 16,  // Mapping To %x
-	ddmmmyy_date = 1 << 17,  // Mapping To %n
-	// More to possibly come..(obviously would have to change inherited type attr if additions made)
-};
-
-
-inline Flags operator|( Flags a, Flags b )
-{
-	return static_cast<Flags>( static_cast<uint16_t>( a ) | static_cast<uint16_t>( b ) );
-}
-
-static const std::unordered_map<std::string_view, Flags> flagMapper = {
-  { "%N", Flags::name },     { "%L", Flags::f_msg_lvl }, { "%l", Flags::s_msg_lvl }, { "%w", Flags::d_wkday },
-  { "%x", Flags::s_wkday },  { "%X", Flags::l_wkday },   { "%B", Flags::l_month },   { "%b", Flags::s_month },
-  { "%d", Flags::m_day },    { "%Y", Flags::l_year },    { "%y", Flags::s_year },    { "%D", Flags::mdy_date },
-  { "%F", Flags::ymd_date }, { "%T", Flags::full_time }, { "%H", Flags::mil_hour },  { "%M", Flags::min },
-  { "%S", Flags::sec },
-};
-// #####################################################################################################################################################
-// clang-format on
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+
+std::string SpdlogPath( )
+{
+	auto filePath { std::filesystem::current_path( ) };
+	filePath /= "Logs/Spdlog_File_Bench.txt";
+	return filePath.make_preferred( ).string( );
+}
 
 int main( )
 {
@@ -102,12 +44,8 @@ int main( )
 	spdlog::register_logger( spdlogConsoleLogger );
 	spdlogConsoleLogger->set_pattern( "%^|%L| %a %d%b%C %T [%n]: %v%$" );  // equivalent to Target's Default Pattern
 
-	// Too lazy to set up paths correctly at the moment, hard-coding paths for desktop/laptop
-	//std::string filePath = "C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/build/Sandbox/Logs/Spdlog_File_Bench.txt";
-	 std::string filePath = "C:/Users/mccul/Desktop/Logging Project/build/Sandbox/Logs/Spdlog_File_Bench.txt";
-
 	bool truncate = true;
-	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>( filePath, truncate );
+	auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>( SpdlogPath( ), truncate );
 	sinks.clear( );
 	sinks.emplace_back( fileSink );
 	auto spdlogFileLogger = std::make_shared<spdlog::logger>( "File Logger", begin( sinks ), end( sinks ) );
@@ -126,15 +64,13 @@ int main( )
 	// Flush_Policy policy( PeriodicOptions::timeBased, settings );
 	// testFile.SetFlushPolicy( policy );
 
-	const char *   test;
 	Instrumentator macroTester;
 	Instrumentator macroTesterFile;
 	Instrumentator spdlogConsoleTester;
 	Instrumentator spdlogFileTester;
 
 #ifdef INSTRUMENTATION_ENABLED
-	macroTester.StopWatch_Reset( );
-
+	const char *   test = nullptr;
 	// test string
 	std::string temp;
 	for( int h = 0; h < 399; h++ ) {
@@ -164,8 +100,8 @@ int main( )
 	printf( "########################################################################\n" );
 	printf( "# Testing Some Basic Functions To Make Sure All Is Working As I Expect #\n" );
 	printf( "########################################################################\n" );
-	C.SetPattern( "%T [%N]: " );
-	C.info( "Pattern String Has Been Changed To \"%T [%N]: \"" );
+	C.SetPattern( "%T [%N]: %+" );
+	C.info( "Pattern String Has Been Changed To \"%T [%N]: %+\"" );
 	C.ColorizeOutput( false );
 	C.info( "Colorized Output Set To False, Therefore, This Output Should Be The Default Color" );
 	C.error( "This Line Should Also Still Lack Color" );
@@ -203,11 +139,11 @@ int main( )
 #ifdef INSTRUMENTATION_ENABLED
 
 	unsigned long int       i { 0 };
-	const unsigned long int iterations { 1000000 };
-
+	const unsigned long int iterations { 1'000'000 };
+	macroTester.StopWatch_Reset( );
 	std::cout << "Benching Color Console Target...\n\n";
 	for( i; i < iterations; i++ ) {
-		C.test( "{}", test );
+		C.info( "{}", test );
 	}
 	macroTester.StopWatch_Stop( );
 	auto totalColorTime = macroTester.Elapsed_In( time_mode::ms );
@@ -220,16 +156,7 @@ int main( )
 	}
 	spdlogConsoleTester.StopWatch_Stop( );
 	auto totalspdColorTime = spdlogConsoleTester.Elapsed_In( time_mode::ms );
-	std::cout << "\nSpdlog Color Console Sink Bench Finished.  Benching Spdlog Basic File Sink......\n";
-
-	i = 0;  // reset
-	spdlogFileTester.StopWatch_Reset( );
-	for( i; i < iterations; i++ ) {
-		spdlogFileLogger->info( "{}", test );
-	}
-	spdlogFileTester.StopWatch_Stop( );
-	auto totalSpdFileTime = spdlogFileTester.Elapsed_In( time_mode::ms );
-	std::cout << "\nSpdlog Basic File Sink Bench Finished. Benching File Target...\n";
+	std::cout << "\nSpdlog Color Console Sink Bench Finished.  Benching File Target...\n";
 
 	i = 0;  // reset
 	macroTesterFile.StopWatch_Reset( );
@@ -238,7 +165,16 @@ int main( )
 	}
 	macroTesterFile.StopWatch_Stop( );
 	auto totalFileTime = macroTesterFile.Elapsed_In( time_mode::ms );
-	std::cout << "\nFile Target Bench Finished.\n\n";
+	std::cout << "\nFile Target Bench Finished. Benching Spdlog Basic File Sink...\n";
+
+	i = 0;  // reset
+	spdlogFileTester.StopWatch_Reset( );
+	for( i; i < iterations; i++ ) {
+		spdlogFileLogger->info( "{}", test );
+	}
+	spdlogFileTester.StopWatch_Stop( );
+	auto totalSpdFileTime = spdlogFileTester.Elapsed_In( time_mode::ms );
+	std::cout << "\nSpdlog Basic File Sink Bench Finished.\n";
 
 	auto        percentConsole = ( ( totalColorTime - totalspdColorTime ) / totalspdColorTime ) * 100;
 	std::string consolePercent;
@@ -298,18 +234,6 @@ int main( )
 	std::cout << Tag::Bright_Magenta( "File Target Is " + filePercent + " Percent Of Spdlog's File Sink Speed\n" );
 
 	std::cout << "\n";
-
-#endif  // INSTRUMENTATION_ENABLED
-
-#if ALLOC_TEST
-	auto mem_used = macroTester.mem_tracker.Memory_Usage( );
-	// setting up for the current usage and allocations so no variation in conversions
-	std::cout << Tag::Bright_Yellow( "Total Memory Used:\n" ) << Tag::Bright_Cyan( "\t- In Bytes:\t\t\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( mem_used ) + " bytes]\n" ) << Tag::Bright_Cyan( "\t- In Kilobytes:\t\t\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( mem_used / 1000.0 ) + " KB]\n" );
-#endif  // ALLOC_TEST
-
-#ifdef INSTRUMENTATION_ENABLED
 
 	std::cout << Tag::Bright_Yellow( "Size of Base Target Class:\t\t" )
 			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::TargetBase ) ) + "\tbytes ]\n" );

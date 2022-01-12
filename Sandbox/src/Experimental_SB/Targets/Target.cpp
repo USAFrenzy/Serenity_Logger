@@ -60,7 +60,8 @@ namespace serenity
 
 			void TargetBase::SetPattern( std::string_view pattern )
 			{
-				msgPattern.SetPattern( pattern );
+				
+				msgPattern.SetPattern( std::string { pattern.data(), pattern.size() } );
 			}
 
 			void TargetBase::SetFlushPolicy( Flush_Policy pPolicy )
@@ -90,7 +91,7 @@ namespace serenity
 
 			void TargetBase::ResetPatternToDefault( )
 			{
-				msgPattern.SetPattern( "|%l| %x %n %T [%N]: %+ " );
+				msgPattern.SetPattern( "|%l| %x %n %T [%N]: %+" );
 			}
 			void TargetBase::SetLogLevel( LoggerLevel level )
 			{

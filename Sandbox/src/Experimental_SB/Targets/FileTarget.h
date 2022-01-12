@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Target.h"
+
+#include <fstream>
 #include <thread>
 namespace serenity
 {
@@ -26,16 +28,18 @@ namespace serenity
 
 			  private:
 				// ------------------- WIP -------------------
-				std::atomic<bool> ableToFlush { true };
 				std::atomic<bool> cleanUpThreads { false };
 				Flush_Policy &    policy;
 				std::thread       flushThread;
+				std::atomic<bool> flushThreadEnabled { false };
+				std::mutex        readWriteMutex;
 				// ------------------- WIP -------------------
-				FILE *                fileHandle;
+				std::ofstream         fileHandle;
 				LoggerLevel           logLevel;
 				std::filesystem::path filePath;
 				std::vector<char>     fileBuffer;
 				size_t                bufferSize;
+				size_t                fileBufOccupied { 0 };
 
 			  private:
 				void PolicyFlushOn( ) override;

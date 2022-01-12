@@ -325,6 +325,7 @@ namespace serenity
 					Formatters( );
 					void             Emplace_Back( std::unique_ptr<Formatter> &&formatter );
 					std::string_view Format( );
+					void             Clear( );
 
 				  private:
 					std::string                             localBuffer;

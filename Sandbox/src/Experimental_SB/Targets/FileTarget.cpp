@@ -17,6 +17,7 @@ namespace serenity
 			{
 				WriteToBaseBuffer( false );
 				bufferSize = 64 * KB;
+				fileBuffer.reserve( bufferSize );
 
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
 				auto                  logDir { "Logs" };
@@ -46,6 +47,7 @@ namespace serenity
 			{
 				WriteToBaseBuffer( false );
 				bufferSize = 64 * KB;
+				fileBuffer.reserve( bufferSize );
 
 				std::filesystem::path file { filePath };
 				this->filePath = std::move( file.relative_path( ).make_preferred( ) );
@@ -77,7 +79,6 @@ namespace serenity
 			FileTarget::~FileTarget( )
 			{
 				CloseFile( );
-
 			}
 
 			std::string FileTarget::FilePath( )
@@ -85,17 +86,21 @@ namespace serenity
 				return filePath.string( );
 			}
 
+			// Apparently the reason why the buffer wasn't being used is due to different implementations of how to call pubsetbuf()
+			// (whether before or after opening a file...)
+			// https://stackoverflow.com/questions/59160807/rdbuf-pubsetbuf-using-a-bidirectional-fstream-is-applied-only-to-writes
+			// In lieu of this, reverting back to std::ofstream from FILE*, however, NEED a better way to do this that's less clunky..
 			bool FileTarget::OpenFile( bool truncate )
 			{
 				try {
+					fileHandle.rdbuf( )->pubsetbuf( fileBuffer.data( ), bufferSize );
 					if( !truncate ) {
-						fileHandle = std::fopen( filePath.string( ).c_str( ), "ab" );
-						std::setvbuf( fileHandle, fileBuffer.data( ), _IOFBF, bufferSize );
+						fileHandle.open( filePath.string( ), std::ios_base::binary | std::ios_base::app );
 					}
 					else {
-						fileHandle = std::fopen( filePath.string( ).c_str( ), "wb" );
-						std::setvbuf( fileHandle, fileBuffer.data( ), _IOFBF, bufferSize );
+						fileHandle.open( filePath.string( ), std::ios_base::binary | std::ios_base::trunc );
 					}
+					fileHandle.rdbuf( )->pubsetbuf( fileBuffer.data( ), bufferSize );
 				}
 				catch( const std::exception &e ) {
 					printf( "%s\n", se_colors::Tag::Red( "Error In Opening File:" ).c_str( ) );
@@ -114,15 +119,12 @@ namespace serenity
 			bool FileTarget::CloseFile( )
 			{
 				try {
-					ableToFlush.exchange( false );
-					ableToFlush.notify_one( );
-					cleanUpThreads.exchange( true );
-					cleanUpThreads.notify_one( );
-					Flush( );
 					if( flushThread.joinable( ) ) {
+						cleanUpThreads.store( true );
+						cleanUpThreads.notify_one( );
 						flushThread.join( );
 					}
-					std::fclose( fileHandle );
+					fileHandle.close( );
 				}
 				catch( const std::exception &e ) {
 					printf( "%s\n", se_colors::Tag::Red( "Error In Closing File:" ).c_str( ) );
@@ -142,24 +144,32 @@ namespace serenity
 
 			void FileTarget::PrintMessage( std::string_view formatted )
 			{
-				while( !base_mutex.try_lock( ) ) {
-					std::this_thread::sleep_for( 10ms );
+				// naive guard from always trying to take a lock regardless of
+				// whether the background flush thread is running or not
+				auto flushThread { flushThreadEnabled.load( std::memory_order::relaxed ) };
+				if( flushThread ) {
+					while( !readWriteMutex.try_lock( ) ) {
+						std::this_thread::sleep_for( 10ms );
+					}
 				}
-				std::fwrite( formatted.data( ), sizeof( char ), formatted.size( ), fileHandle );
-				base_mutex.unlock( );
+				fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
+				if( policy.SubSetting( ) == PeriodicOptions::memUsage ) fileBufOccupied += formatted.size( );
+				if( flushThread ) {
+					readWriteMutex.unlock( );
+				}
 			}
 
 			void FileTarget::Flush( )
 			{
-				// Since we didn't write to file and instead wrote to the buffer, write to file now
+				// If formatted message wasn't written to file and instead was written to the buffer, write to file now
 				if( ( isWriteToBuf( ) ) && ( Buffer( )->size( ) != 0 ) ) {
-					std::fwrite( Buffer( )->data( ), sizeof( char ), Buffer( )->size( ), fileHandle );
+					fileHandle.rdbuf( )->sputn( Buffer( )->data( ), Buffer( )->size( ) );
 					Buffer( )->clear( );
 				}
-				std::fflush( fileHandle );
+				fileHandle.flush( );
 			}
 
-			void FileTarget::PolicyFlushOn(  )
+			void FileTarget::PolicyFlushOn( )
 			{
 				if( policy.PrimarySetting( ) == Flush::never ) return;
 				if( policy.PrimarySetting( ) == Flush::always ) {
@@ -169,48 +179,47 @@ namespace serenity
 				switch( policy.SubSetting( ) ) {
 					case PeriodicOptions::memUsage:
 					{
-						// Check that the message won't cause an allocation if larger than BUFFER_SIZE
-						if( Buffer( )->size( ) >= policy.SecondarySettings( ).memoryFlushOn ) {
-							Flush( );
-						}
+						auto shouldFlush { ( Buffer( )->size( ) >= policy.SecondarySettings( ).memoryFlushOn ) ||
+										   ( fileBufOccupied >= policy.SecondarySettings( ).memoryFlushOn ) };
+						if( !shouldFlush ) return;
+						Flush( );
+						fileBufOccupied = 0;
 					} break;
 					case PeriodicOptions::timeBased:
 					{
-						if( flushThread.joinable() ) return;
-						// lambda that starts a background thread to flush on time interval given
+						if( flushThread.joinable( ) ) return;
 						auto &p_policy { policy };
+						// lambda that starts a background thread to flush on time interval given
 						auto periodic_flush = [ this, p_policy ]( )
 						{
 							using namespace std::chrono;
-							while( !cleanUpThreads.load( ) ) {
-								while( !ableToFlush.load( ) ) {
-									std::this_thread::sleep_for( 100ms );
-									if( ableToFlush.load( ) ) break;
-								}
+							static milliseconds lastTimePoint { };
 
-								while( !base_mutex.try_lock( ) ) {
-									std::this_thread::sleep_for( 10ms );
-								}
-								static  milliseconds lastTimePoint { };
-								auto                now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
-								auto                elapsed = duration_cast<milliseconds>( now - lastTimePoint );
-
-								if( elapsed >= policy.SecondarySettings( ).flushEvery ) {
+							while( !cleanUpThreads.load( std::memory_order::relaxed ) ) {
+								auto now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
+								auto elapsed = duration_cast<milliseconds>( now - lastTimePoint );
+								auto shouldFlush { elapsed >= policy.SecondarySettings( ).flushEvery };
+								// naive guard from always trying to take a lock regardless of whether enough time has passed that
+								// Flush() should even be called
+								if( shouldFlush ) {
+									while( !readWriteMutex.try_lock( ) ) {
+										std::this_thread::sleep_for( 10ms );
+									}
 									Flush( );
-									lastTimePoint = now;
+									readWriteMutex.unlock( );
 								}
-								base_mutex.unlock( );
+								lastTimePoint = now;
 							}
 						};  // periodic_flush
 
-						if( !flushThread.joinable() ) {
+						if( !flushThread.joinable( ) ) {
 							flushThread = std::thread( periodic_flush );
+							flushThreadEnabled.store( true );
 						}
 					} break;  // time based bounds
 					case PeriodicOptions::logLevelBased:
 					{
-						if( ( policy.SecondarySettings( ).flushOn > MsgInfo( )->MsgLevel( ) ) ) return;
-						return;
+						if( MsgInfo( )->MsgLevel( ) < policy.SecondarySettings( ).flushOn ) return;
 						Flush( );
 					} break;
 					default: break;  // Don't bother with undef field

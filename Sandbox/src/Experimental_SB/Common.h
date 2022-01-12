@@ -5,13 +5,18 @@
 
 namespace serenity
 {
+// Messing with buffer sizes
+#define KB ( 1024 )
+#define MB ( 1024 * KB )
+#define GB ( 1024 * MB )
+
 	namespace expiremental
 	{
 		namespace SE_LUTS
 		{
 			static constexpr std::array<std::string_view, 22> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x",
-																			"%y", "%A", "%B", "%D", "%F", "%H", "%L", "%M",
-																			"%N", "%S", "%T", "%X", "%Y", "%+" };
+																				"%y", "%A", "%B", "%D", "%F", "%H", "%L", "%M",
+																				"%N", "%S", "%T", "%X", "%Y", "%+" };
 
 			static constexpr std::array<std::string_view, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
