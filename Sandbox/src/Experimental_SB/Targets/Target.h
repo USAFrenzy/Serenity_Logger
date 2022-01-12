@@ -92,12 +92,3 @@ namespace serenity
 		}  // namespace targets
 	}      // namespace expiremental
 }  // namespace serenity
-
-// Need to test template specializations at least for flags currently being used as a prototype to see if this is the route I need to
-// take to achieve faster times here (Currently with async formatting, its 2.6us, writes to buffer is 3.0us, and just plain writing to
-// handle is 3.7us)
-using Formatter = serenity::expiremental::msg_details::Message_Formatter;
-template <> struct std::formatter<Formatter> : std::formatter<std::string_view>
-{
-	template <typename Context> auto format( const Formatter &fmt, const Context &context ) { }
-};
