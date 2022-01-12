@@ -62,7 +62,6 @@ namespace serenity
 
 			void ColorConsole::WinConsoleMode( console_interface cInterface )
 			{
-				DWORD opMode { 0 };
 				if( cInterface == console_interface::std_out ) {
 					outputHandle = GetStdHandle( STD_OUTPUT_HANDLE );
 				}
@@ -70,30 +69,14 @@ namespace serenity
 					outputHandle = GetStdHandle( STD_ERROR_HANDLE );
 				}
 				consoleMode = cInterface;
+				DWORD opMode { ENABLE_VIRTUAL_TERMINAL_PROCESSING };
 				if( !GetConsoleMode( outputHandle, &opMode ) ) {
 					exit( GetLastError( ) );
 				}
-				opMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-				if( !SetConsoleMode( outputHandle, opMode ) ) {
-					exit( GetLastError( ) );
-				}
 			}
+
 			void ColorConsole::ResetWinConsole( )
 			{
-				switch( consoleMode ) {
-					case serenity::expiremental::targets::console_interface::std_out:
-					{
-						std::cout << se_colors::formats::reset;
-					} break;
-					case serenity::expiremental::targets::console_interface::std_err:
-					{
-						std::cerr << se_colors::formats::reset;
-					} break;
-					case serenity::expiremental::targets::console_interface::std_log:
-					{
-						std::clog << se_colors::formats::reset;
-					} break;
-				}
 				DWORD opMode { 0 };
 				if( !SetConsoleMode( outputHandle, opMode ) ) {
 					exit( GetLastError( ) );

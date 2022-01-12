@@ -3,7 +3,7 @@
 #include "Targets/ColorConsoleTarget.h"
 #include "Targets/FileTarget.h"
 
-#define INSTRUMENT 1
+#define INSTRUMENT 0
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -63,27 +63,11 @@ int main( )
 	// settings.flushEvery = std::chrono::milliseconds( 500 );
 	// Flush_Policy policy( PeriodicOptions::timeBased, settings );
 	// testFile.SetFlushPolicy( policy );
-
-	Instrumentator macroTester;
-	Instrumentator macroTesterFile;
-	Instrumentator spdlogConsoleTester;
-	Instrumentator spdlogFileTester;
-
-#ifdef INSTRUMENTATION_ENABLED
-	const char *   test = nullptr;
-	// test string
-	std::string temp;
-	for( int h = 0; h < 399; h++ ) {
-		temp += "a";
-	}  // 400 chars = 400 bytes
-	test = temp.c_str( );
-
-#endif  // INSTRUMENTATION_ENABLED
-
+	
 #ifndef INSTRUMENTATION_ENABLED
-	printf( "####################################################################\n" );
-	printf( "# This Will Be The Default Pattern Format And Message Level Colors #\n" );
-	printf( "####################################################################\n" );
+	std::cout << "####################################################################\n";
+	std::cout << "# This Will Be The Default Pattern Format And Message Level Colors #\n";
+	std::cout << "####################################################################\n";
 	// Trace Is Default Color
 	C.trace( "Trace" );
 	// Info Is Light Green
@@ -96,10 +80,10 @@ int main( )
 	C.error( "Error" );
 	// Fatal Is Light Yellow On Dark Red
 	C.fatal( "Fatal" );
-	printf( "####################################################################\n\n" );
-	printf( "########################################################################\n" );
-	printf( "# Testing Some Basic Functions To Make Sure All Is Working As I Expect #\n" );
-	printf( "########################################################################\n" );
+	std::cout << "####################################################################\n\n";
+	std::cout << "########################################################################\n";
+	std::cout << "# Testing Some Basic Functions To Make Sure All Is Working As I Expect #\n";
+	std::cout << "########################################################################\n";
 	C.SetPattern( "%T [%N]: %+" );
 	C.info( "Pattern String Has Been Changed To \"%T [%N]: %+\"" );
 	C.ColorizeOutput( false );
@@ -136,7 +120,19 @@ int main( )
 	// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED
 
+
+	Instrumentator macroTester;
+	Instrumentator macroTesterFile;
+	Instrumentator spdlogConsoleTester;
+	Instrumentator spdlogFileTester;
 #ifdef INSTRUMENTATION_ENABLED
+	const char *   test = nullptr;
+	// test string
+	std::string temp;
+	for( int h = 0; h < 399; h++ ) {
+		temp += "a";
+	}  // 400 chars = 400 bytes
+	test = temp.c_str( );
 
 	unsigned long int       i { 0 };
 	const unsigned long int iterations { 1'000'000 };
