@@ -7,24 +7,25 @@
 	#ifdef _WIN64
 		#define WINDOWS_PLATFORM
 		#define WIN32_LEAN_AND_MEAN
+		#define VC_EXTRALEAN
 		#include <Windows.h>
 	#else
 		#error "x86 Is Currently Unsupported"
 	#endif
 #elif defined( __APPLE__ ) || ( __MACH__ )
-#define APPLE_PLATFORM
+	#define APPLE_PLATFORM
 	#include <TargetConditionals.h>
 #else
-#define LINUX_PLATFORM
-	#error "Unable To Detect Platform. Currently Only Supports Windows"
+	#define LINUX_PLATFORM
 #endif
 
 namespace serenity
 {
 // Messing with buffer sizes
-#define KB ( 1024 )
-#define MB ( 1024 * KB )
-#define GB ( 1024 * MB )
+#define KB                  ( 1024 )
+#define MB                  ( 1024 * KB )
+#define GB                  ( 1024 * MB )
+#define DEFAULT_BUFFER_SIZE ( 64 * KB )
 
 	namespace expiremental
 	{

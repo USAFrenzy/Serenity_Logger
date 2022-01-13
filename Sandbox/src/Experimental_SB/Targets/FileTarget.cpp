@@ -16,20 +16,21 @@ namespace serenity
 			FileTarget::FileTarget( ) : TargetBase( "File Logger" ), policy( Policy( ) )
 			{
 				WriteToBaseBuffer( false );
-				bufferSize = 64 * KB;
+				bufferSize = DEFAULT_BUFFER_SIZE;
 				fileBuffer.reserve( bufferSize );
 
 				std::filesystem::path fullFilePath = std::filesystem::current_path( );
-				auto                  logDir { "Logs" };
-				// NOTE: This Appends The Log Dir To The File Path AS WELL AS assigns that path to logDirPath
-				// (Reason: Foregoing const-ness here)
-				auto logDirPath = fullFilePath /= logDir;
+				const auto                  logDir { "Logs" };
+				const auto logDirPath { fullFilePath };
+				fullFilePath /= logDir;
 				fullFilePath /= "Generic_Log.txt";
-				filePath = std::move( fullFilePath.make_preferred( ).string( ) );
+
+				filePath = fullFilePath.make_preferred( ).string( );
 				logLevel = LoggerLevel::trace;
+
 				try {
-					if( !std::filesystem::exists( this->filePath ) ) {
-						file_utils::CreateDir( logDir );
+					if( !std::filesystem::exists( logDirPath) ) {
+						file_utils::CreateDir( logDirPath );
 						OpenFile( true );
 					}
 					else {
@@ -38,28 +39,25 @@ namespace serenity
 				}
 				catch( const std::exception &e ) {
 					CloseFile( );
-					printf( "%s\n", se_colors::Tag::Red( "Unable To Create Default Directory" ).c_str( ) );
+					printf( "%s\n", se_colors::Tag::Red( e.what() ).c_str( ) );
 				}
 			}
 
-			FileTarget::FileTarget( std::string_view filePath, bool replaceIfExists )
+			FileTarget::FileTarget( std::string_view fPath, bool replaceIfExists )
 			  : TargetBase( "File Logger" ), policy( Policy( ) )
 			{
 				WriteToBaseBuffer( false );
-				bufferSize = 64 * KB;
+				bufferSize = DEFAULT_BUFFER_SIZE;
 				fileBuffer.reserve( bufferSize );
 
 				std::filesystem::path file { filePath };
-				this->filePath = std::move( file.relative_path( ).make_preferred( ) );
+				filePath = file.relative_path( ).make_preferred( );
 				logLevel       = LoggerLevel::trace;
-
 				try {
-					if( file_utils::ValidateFileName( this->filePath.filename( ).string( ) ) ) {
-						if( !std::filesystem::exists( this->filePath ) ) {
-							// TODO: Test the code below to ensure it works as intended
-							std::filesystem::path dirPath = filePath;
-							dirPath.replace_filename( "" );
-							file_utils::CreateDir( dirPath );
+					if( file_utils::ValidateFileName( filePath.filename( ).string( ) ) ) {
+						if( !std::filesystem::exists( filePath ) ) {
+							file._Remove_filename_and_separator( );
+							file_utils::CreateDir( file);
 							OpenFile( );
 						}
 						else {
@@ -72,7 +70,7 @@ namespace serenity
 				}
 				catch( const std::exception &e ) {
 					CloseFile( );
-					printf( "%s\n", se_colors::Tag::Red( "Unable To Create Directory From Path" ).c_str( ) );
+					printf( "%s\n", se_colors::Tag::Red( e.what() ).c_str( ) );
 				}
 			}
 

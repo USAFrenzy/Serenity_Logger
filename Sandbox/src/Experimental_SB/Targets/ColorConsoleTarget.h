@@ -4,6 +4,7 @@
 
 #include <serenity/Color/Color.h>
 #include <unordered_map>
+#include <fstream>
 
 namespace serenity
 {
@@ -18,8 +19,6 @@ namespace serenity
 				std_log
 			};
 
-			// ansi color codes supported in Win 10+, therefore, targetting Win 10+ due to what the timeframe of the
-			// project I'll be using this in (< win 8.1 EOL).
 			class ColorConsole : public TargetBase
 			{
 			  public:
@@ -29,19 +28,32 @@ namespace serenity
 				~ColorConsole( );
 				std::string_view  GetMsgColor( LoggerLevel level );
 				void              SetMsgColor( LoggerLevel level, std::string_view color );
-				void              WinConsoleMode( console_interface cInterface );
-				void              ResetWinConsole( );
 				void              SetConsoleInterface( console_interface mode );
-				console_interface ConsoleMode( );
+				console_interface ConsoleInterface( );
 				void              ColorizeOutput( bool colorize );
 				void              SetOriginalColors( );
+				// *************************************** WIP ***************************************
+				bool         IsTerminalType( );
+				virtual void SetRedirectionOutputs( );
+				void         RedirectOutput( console_interface mode, std::string_view dest );
+				void         ResetOutputBuffer( console_interface mode );
+				// *************************************** WIP ***************************************
+
+			  protected:
+				void PrintMessage( std::string_view formatted ) override;
 
 			  private:
-				void                                              PrintMessage( std::string_view formatted ) override;
 				bool                                              coloredOutput;
 				console_interface                                 consoleMode;
 				std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
-				HANDLE                                            outputHandle;
+#ifdef WINDOWS_PLATFORM
+				HANDLE outputHandle;
+#else
+				FILE *outputHandle;
+#endif  // WINDOWS_PLATFORM
+				std::ofstream                                               redirectHandle;
+				std::unordered_map<console_interface, std::streambuf *>     terminalBuff;
+				std::vector<std::pair<console_interface, std::streambuf *>> redirectionBackup;
 			};  // class ColorConsole
 		}       // namespace targets
 	}           // namespace expiremental
