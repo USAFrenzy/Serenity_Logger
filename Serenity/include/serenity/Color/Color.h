@@ -222,8 +222,7 @@ namespace se_colors
 			}  // namespace white
 
 		}  // namespace combos
-	}          // namespace basic_colors
-
+	}      // namespace basic_colors
 
 	namespace bright_colors
 	{
@@ -405,8 +404,8 @@ namespace se_colors
 				constexpr const char *on_bright_cyan    = "\033[97m\033[106m";
 				constexpr const char *on_bright_white   = "\033[97m\033[107m";
 			}  // namespace white
-		}          // namespace combos
-	}                  // namespace bright_colors
+		}      // namespace combos
+	}          // namespace bright_colors
 }  // namespace se_colors
 
 namespace se_colors

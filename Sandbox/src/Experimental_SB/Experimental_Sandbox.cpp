@@ -34,6 +34,16 @@ std::string SpdlogPath( )
 	return filePath.make_preferred( ).string( );
 }
 
+// This is from (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128)
+// Just using this to set throughput precision
+template <typename T> std::string SetPrecision( const T value, const int precision = 3 )
+{
+	std::ostringstream temp;
+	temp.precision( precision );
+	temp << std::fixed << value;
+	return temp.str( );
+}
+
 int main( )
 {
 	std::vector<spdlog::sink_ptr> sinks;
@@ -63,7 +73,7 @@ int main( )
 	// settings.flushEvery = std::chrono::milliseconds( 500 );
 	// Flush_Policy policy( PeriodicOptions::timeBased, settings );
 	// testFile.SetFlushPolicy( policy );
-	
+
 #ifndef INSTRUMENTATION_ENABLED
 	std::cout << "####################################################################\n";
 	std::cout << "# This Will Be The Default Pattern Format And Message Level Colors #\n";
@@ -120,13 +130,12 @@ int main( )
 	// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED
 
-
 	Instrumentator macroTester;
 	Instrumentator macroTesterFile;
 	Instrumentator spdlogConsoleTester;
 	Instrumentator spdlogFileTester;
 #ifdef INSTRUMENTATION_ENABLED
-	const char *   test = nullptr;
+	const char *test = nullptr;
 	// test string
 	std::string temp;
 	for( int h = 0; h < 399; h++ ) {
@@ -157,9 +166,10 @@ int main( )
 	i = 0;  // reset
 	macroTesterFile.StopWatch_Reset( );
 	for( i; i < iterations; i++ ) {
-		testFile.test( "{}", test );
+		testFile.info( "{}", test );
 	}
 	macroTesterFile.StopWatch_Stop( );
+	testFile.Flush( );
 	auto totalFileTime = macroTesterFile.Elapsed_In( time_mode::ms );
 	std::cout << "\nFile Target Bench Finished. Benching Spdlog Basic File Sink...\n";
 
@@ -169,6 +179,7 @@ int main( )
 		spdlogFileLogger->info( "{}", test );
 	}
 	spdlogFileTester.StopWatch_Stop( );
+	spdlogFileLogger->flush( );
 	auto totalSpdFileTime = spdlogFileTester.Elapsed_In( time_mode::ms );
 	std::cout << "\nSpdlog Basic File Sink Bench Finished.\n";
 
@@ -189,6 +200,14 @@ int main( )
 	else {
 		filePercent = "+" + std::to_string( std::abs( percentFile ) );
 	}
+
+	auto testStrInMB { ( temp.length( ) ) / static_cast<float>( MB ) };
+	auto FileThroughput { ( testStrInMB * iterations ) / macroTesterFile.Elapsed_In( time_mode::sec ) };
+	auto SpdlogFileThroughput { ( testStrInMB * iterations ) / spdlogFileTester.Elapsed_In( time_mode::sec ) };
+	auto ConsoleThroughput { ( testStrInMB * iterations ) / macroTester.Elapsed_In( time_mode::sec ) };
+	auto SpdlogConsoleThroughput { ( testStrInMB * iterations ) / spdlogConsoleTester.Elapsed_In( time_mode::sec ) };
+
+
 
 	std::cout << Tag::Yellow(
 				 "\n\n***************************************************************************************\n"
@@ -229,6 +248,16 @@ int main( )
 
 	std::cout << Tag::Bright_Magenta( "File Target Is " + filePercent + " Percent Of Spdlog's File Sink Speed\n" );
 
+	std::cout << "\n";
+	std::cout << Tag::Bright_Yellow( "Program Throughput :\n" );
+	std::cout << Tag::Bright_Cyan( "Color Console Target Throughput:" ) << "\n  "
+			  << Tag::Bright_Green( SetPrecision(ConsoleThroughput ) + " MB/s\n" );
+	std::cout << Tag::Bright_Cyan( "spdlog Color Sink Throughput:" ) << "\n  "
+			  << Tag::Bright_Green(  SetPrecision(SpdlogConsoleThroughput) + " MB/s\n" );
+	std::cout << Tag::Bright_Cyan( "File Target Throughput:" ) << "\n  "
+			  << Tag::Bright_Green( SetPrecision(FileThroughput ) + " MB/s\n" );
+	std::cout << Tag::Bright_Cyan( "spdlog File Sink Throughput:" ) << "\n  "
+			  << Tag::Bright_Green(  SetPrecision(SpdlogFileThroughput) + " MB/s\n" );
 	std::cout << "\n";
 
 	std::cout << Tag::Bright_Yellow( "Size of Base Target Class:\t\t" )
