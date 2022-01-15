@@ -4,6 +4,12 @@
 
 namespace serenity::expiremental::targets
 {
+#ifdef WINDOWS_PLATFORM
+	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+	#endif  // !ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#endif      // WINDOWS_PLATFORM
+
 	ColorConsole::ColorConsole( ) : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( false )
 	{
 		WriteToBaseBuffer( false );
@@ -135,6 +141,10 @@ namespace serenity::expiremental::targets
 
 	// TODO: Work on this and see if this works as intended
 	// dest probably shouldn't be a sv and if I'm going this route. This seems like the wrong way to go about this though...
+	// Found a really helpful video, although it's platform specific
+	// (https://www.youtube.com/watch?v=Mqb2dVRe0uo&ab_channel=CodeVault)
+	// TODO: Refer to above video and rework this -> currently, this setup (which isn't fully functional anyways) would only redirect
+	// TODO: to a file, not a pipe
 	void ColorConsole::RedirectOutput( console_interface mode, std::string_view dest )
 	{
 		// store old buffer
@@ -143,12 +153,14 @@ namespace serenity::expiremental::targets
 			if( stdoutHandle.is_open( ) ) stdoutHandle.close( );
 			ResetOutputBuffer( mode );
 			stdoutHandle.open( dest );
+			outputHandle = &stdoutHandle;
 			SetOutputBuffer( mode, stdoutHandle.rdbuf( ) );
 		}
 		else {
 			if( stderrHandle.is_open( ) ) stderrHandle.close( );
 			ResetOutputBuffer( mode );
 			stderrHandle.open( dest );
+			outputHandle = &stderrHandle;
 			SetOutputBuffer( mode, stderrHandle.rdbuf( ) );
 		}
 	}
@@ -204,10 +216,10 @@ namespace serenity::expiremental::targets
 			}
 #else
 			fwrite( message.data( ), sizeof( char ), message.size( ), outputHandle );
-#endif     // WINDOWS_PLATFORM
-			terminalBuff.at( consoleMode )->pubsync( ); // flush in case redirected to file
-		}  // IsValidHandle() Check
-	}      // PrintMessage()
+#endif                                                   // WINDOWS_PLATFORM
+			terminalBuff.at( consoleMode )->pubsync( );  // flush in case redirected to file
+		}                                                // IsValidHandle() Check
+	}                                                    // PrintMessage()
 
 	void ColorConsole::SetOriginalColors( )
 	{
