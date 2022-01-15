@@ -26,14 +26,24 @@ version of a console target, color console target, file target, rotating file ta
 
 ## Statistics ##
 I still have to properly benchmark among other logging frameworks as well as spdlog, but in crude timing benches of a 400 byte C-style string in 1,000,000 iterations 
-on my Intel I9-10900k cpu. While my library still lacks a lot of the features and safety that spdlog has in place, Serenity's console target is ~31% faster while 
-Serenity's file target is ~35% faster than spdlog's current counterparts. (Compiled with /utf-8 /O2; No noticable change in speed with /O1).
+on my Intel I9-10900k cpu. While my library still lacks a lot of the features and safety that spdlog has in place, Serenity's console target is ~40%-42% faster while 
+Serenity's file target is ~38%-40% faster than spdlog's current counterparts.
+- Compiled with /utf-8 /O2
+  - No noticable change in speed with any combination of /O1, /Os, /Ot, or /Oi.
+  - Should allow for compiling with a smaller binary w/o compromising speed
 ### For A Very Crude And Simple Benchmark Test Of A 400 byte C-style string over 1,000,000 iterations (Single Threaded) ###
     __________________________________________________________________________________________________________
 	| Serenity Console Target |    Spdlog Console Sink    | Serenity File Target | Spdlog Basic File Sink    |
     | ----------------------- | ------------------------- | -------------------- | --------------------------|
-    |       57.573 us         |        84.394 us          |       0.735 us       |          1.118 us         |
+    |       47.505 us         |        80.597 us          |       0.693 us       |          1.118 us         |
     | ----------------------- | ------------------------- | -------------------- | --------------------------|
+#### Through-put ####
+    __________________________________________________________________________________________________________
+	| Serenity Console Target |    Spdlog Console Sink    | Serenity File Target | Spdlog Basic File Sink    |
+    | ----------------------- | ------------------------- | -------------------- | --------------------------|
+    |       8.010 MB/s        |        4.721 MB/s         |     549.114 MB/s     |       340.100 MB/s        |
+    | ----------------------- | ------------------------- | -------------------- | --------------------------|
+
 
 *This Will Be Updated Later When I Have More Time*
 
