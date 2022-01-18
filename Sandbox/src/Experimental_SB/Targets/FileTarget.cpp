@@ -258,7 +258,7 @@ namespace serenity::expiremental::targets
 			newFilePath.make_preferred( );
 
 			if( !std::filesystem::exists( newFilePath ) ) {
-				file_utils::RenameFile( fileOptions.filePath, newFilePath );
+				fileOptions.filePath = std::move(newFilePath);
 				if( OpenFile( ) ) {
 					rotateSuccessful = true;
 					break;
