@@ -244,7 +244,8 @@ namespace serenity::expiremental::targets
 	void FileTarget::RotateFileOnSize( )
 	{
 		CloseFile( );
-		auto newFilePath { fileOptions.filePath };
+		auto oldFilePath { fileOptions.filePath };  // used to reset in case of error
+		auto newFilePath { oldFilePath };
 		auto oldFile { newFilePath.filename( ) };
 		auto extension { oldFile.extension( ).string( ) };
 		// remove extension now that we have a copy of original extension so that we can append file number to name
@@ -258,16 +259,20 @@ namespace serenity::expiremental::targets
 			newFilePath.make_preferred( );
 
 			if( !std::filesystem::exists( newFilePath ) ) {
-				fileOptions.filePath = std::move(newFilePath);
+				fileOptions.filePath = std::move( newFilePath );
 				if( OpenFile( ) ) {
 					rotateSuccessful = true;
 					break;
 				}
+				else {
+					// effectively reset
+					fileOptions.filePath = oldFilePath;
+				}
 			}
-		} 
+		}
 
 		if( !rotateSuccessful ) {
-			std::cerr <<"Warning: Unable To Create New File In Rotating File. Overwriting Oldest File\n";
+			std::cerr << "Warning: Unable To Create New File In Rotating File. Overwriting Oldest File\n";
 			auto                            logDirPath { newFilePath.remove_filename( ) };
 			std::filesystem::file_time_type oldestWriteTime = { };
 			std::filesystem::path           fileToReplace   = { };
@@ -284,7 +289,7 @@ namespace serenity::expiremental::targets
 			file_utils::RenameFile( fileOptions.filePath, fileToReplace );
 			// Overwriting file, so truncate file when opening
 			if( !OpenFile( true ) ) {
-				std::cerr <<  "Error: Unable Finish Rotating To New File\n";
+				std::cerr << "Error: Unable Finish Rotating To New File\n";
 			}
 		}
 	}
