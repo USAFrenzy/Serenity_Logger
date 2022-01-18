@@ -9,9 +9,8 @@ namespace serenity::expiremental::targets
 {
 	FileTarget::FileTarget( ) : TargetBase( "File Logger" ), policy( Policy( ) )
 	{
-		WriteToBaseBuffer( false);
-		bufferSize = DEFAULT_BUFFER_SIZE;
-		fileBuffer.reserve( bufferSize );
+		WriteToBaseBuffer( false );
+		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 
 		std::filesystem::path fullFilePath = std::filesystem::current_path( );
 		const auto            logDir { "Logs" };
@@ -19,36 +18,35 @@ namespace serenity::expiremental::targets
 		fullFilePath /= logDir;
 		fullFilePath /= "Generic_Log.txt";
 
-		filePath = fullFilePath.make_preferred( ).string( );
-		logLevel = LoggerLevel::trace;
+		fileOptions.filePath = fullFilePath.make_preferred( ).string( );
+		logLevel             = LoggerLevel::trace;
 
 		try {
 			if( !std::filesystem::exists( logDirPath ) ) {
 				file_utils::CreateDir( logDirPath );
-				OpenFile( true );
+				OpenFile( );
 			}
 			else {
-				OpenFile( true );
+				OpenFile( );
 			}
 		}
 		catch( const std::exception &e ) {
+			std::cerr << e.what( ) << "\n";
 			CloseFile( );
-			std::cerr << se_colors::Tag::Red( e.what( ) );
 		}
 	}
 
 	FileTarget::FileTarget( std::string_view fPath, bool replaceIfExists ) : TargetBase( "File Logger" ), policy( Policy( ) )
 	{
 		WriteToBaseBuffer( false );
-		bufferSize = DEFAULT_BUFFER_SIZE;
-		fileBuffer.reserve( bufferSize );
+		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 
-		std::filesystem::path file { filePath };
-		filePath = file.relative_path( ).make_preferred( );
-		logLevel = LoggerLevel::trace;
+		std::filesystem::path file { fileOptions.filePath };
+		fileOptions.filePath = file.relative_path( ).make_preferred( );
+		logLevel             = LoggerLevel::trace;
 		try {
-			if( file_utils::ValidateFileName( filePath.filename( ).string( ) ) ) {
-				if( !std::filesystem::exists( filePath ) ) {
+			if( file_utils::ValidateFileName( fileOptions.filePath.filename( ).string( ) ) ) {
+				if( !std::filesystem::exists( fileOptions.filePath ) ) {
 					file._Remove_filename_and_separator( );
 					file_utils::CreateDir( file );
 					OpenFile( );
@@ -62,8 +60,8 @@ namespace serenity::expiremental::targets
 			}
 		}
 		catch( const std::exception &e ) {
+			std::cerr << e.what( ) << "\n";
 			CloseFile( );
-			std::cerr << se_colors::Tag::Red( e.what( ) );
 		}
 	}
 
@@ -74,13 +72,9 @@ namespace serenity::expiremental::targets
 
 	std::string FileTarget::FilePath( )
 	{
-		return filePath.string( );
+		return fileOptions.filePath.string( );
 	}
 
-	// Apparently the reason why the buffer wasn't being used is due to different implementations of how to call pubsetbuf()
-	// (whether before or after opening a file...)
-	// https://stackoverflow.com/questions/59160807/rdbuf-pubsetbuf-using-a-bidirectional-fstream-is-applied-only-to-writes
-	// In lieu of this, reverting back to std::ofstream from FILE*, however, NEED a better way to do this that's less clunky..
 	bool FileTarget::OpenFile( bool truncate )
 	{
 		try {
@@ -88,18 +82,18 @@ namespace serenity::expiremental::targets
 			fileHandle.rdbuf( )->pubsetbuf( fileBuffer.data( ), bufferSize );
 #endif  // !WINDOWS_PLATFORM
 			if( !truncate ) {
-				fileHandle.open( filePath.string( ), std::ios_base::binary | std::ios_base::app );
+				fileHandle.open( fileOptions.filePath.string( ), std::ios_base::binary | std::ios_base::app );
 			}
 			else {
-				fileHandle.open( filePath.string( ), std::ios_base::binary | std::ios_base::trunc );
+				fileHandle.open( fileOptions.filePath.string( ), std::ios_base::binary | std::ios_base::trunc );
 			}
 #ifdef WINDOWS_PLATFORM
-			fileHandle.rdbuf( )->pubsetbuf( fileBuffer.data( ), bufferSize );
+			fileHandle.rdbuf( )->pubsetbuf( fileOptions.fileBuffer.data( ), fileOptions.bufferSize );
 #endif  // WINDOWS_PLATFORM
 		}
 		catch( const std::exception &e ) {
-			std::cerr << se_colors::Tag::Red( "Error In Opening File:" );
-			std::cerr << se_colors::Tag::Red( e.what( ) );
+			std::cerr << "Error In Opening File:\n";
+			std::cerr << e.what( ) << "\n";
 			return false;
 		}
 		return true;
@@ -114,44 +108,62 @@ namespace serenity::expiremental::targets
 	bool FileTarget::CloseFile( )
 	{
 		try {
-			if( flushThread.joinable( ) ) {
-				cleanUpThreads.store( true );
-				cleanUpThreads.notify_one( );
-				flushThread.join( );
+			if( flushWorker.flushThread.joinable( ) ) {
+				flushWorker.cleanUpThreads.store( true );
+				flushWorker.cleanUpThreads.notify_one( );
+				flushWorker.flushThread.join( );
 			}
 			Flush( );
 			fileHandle.close( );
 		}
 		catch( const std::exception &e ) {
-			std::cerr << se_colors::Tag::Red( "Error In Closing File:" );
-			std::cerr << se_colors::Tag::Red( e.what( ) );
+			std::cerr << "Error In Closing File:\n";
+			std::cerr << e.what( ) << "\n";
 			return false;
 		}
 		return true;
 	}
 
-	// TODO: Check To See This Works (Not Tested)
 	bool FileTarget::RenameFile( std::string_view newFileName )
 	{
-		std::filesystem::path newFile { filePath };
-		newFile.replace_filename( newFileName );
-		return file_utils::RenameFile( filePath, newFile.filename( ) );
+		try {
+			// make copy for old file conversion
+			std::filesystem::path newFile { fileOptions.filePath };
+			newFile.replace_filename( newFileName );
+			CloseFile( );
+			file_utils::RenameFile( fileOptions.filePath, newFile );
+			fileOptions.filePath = std::move( newFile );
+			OpenFile( );
+			return true;
+		}
+		catch( const std::exception &e ) {
+			std::cerr << se_colors::Tag::Red( e.what( ) );
+			return false;
+		}
 	}
 
 	void FileTarget::PrintMessage( std::string_view formatted )
 	{
 		// naive guard from always trying to take a lock regardless of
 		// whether the background flush thread is running or not (using manual lock due to scoping here)
-		auto flushThread { flushThreadEnabled.load( std::memory_order::relaxed ) };
+		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
-			while( !readWriteMutex.try_lock( ) ) {
+			while( !flushWorker.readWriteMutex.try_lock( ) ) {
 				std::this_thread::sleep_for( 10ms );
 			}
 		}
+		if( fileOptions.rotateFile ) {
+			if( fileOptions.rotateFileSettings != nullptr ) {
+				if( std::filesystem::file_size( fileOptions.filePath ) >= fileOptions.rotateFileSettings->fileSize ) {
+					RotateFileOnSize( );
+				}
+			}
+		}
+
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
-		if( policy.SubSetting( ) == PeriodicOptions::memUsage ) fileBufOccupied += formatted.size( );
+		if( policy.SubSetting( ) == PeriodicOptions::memUsage ) fileOptions.fileBufOccupied += formatted.size( );
 		if( flushThread ) {
-			readWriteMutex.unlock( );
+			flushWorker.readWriteMutex.unlock( );
 		}
 	}
 
@@ -176,14 +188,14 @@ namespace serenity::expiremental::targets
 			case PeriodicOptions::memUsage:
 			{
 				auto shouldFlush { ( Buffer( )->size( ) >= policy.SecondarySettings( ).memoryFlushOn ) ||
-								   ( fileBufOccupied >= policy.SecondarySettings( ).memoryFlushOn ) };
+								   ( fileOptions.fileBufOccupied >= policy.SecondarySettings( ).memoryFlushOn ) };
 				if( !shouldFlush ) return;
 				Flush( );
-				fileBufOccupied = 0;
+				fileOptions.fileBufOccupied = 0;
 			} break;
 			case PeriodicOptions::timeBased:
 			{
-				if( flushThreadEnabled.load( std::memory_order::relaxed ) ) return;
+				if( flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) ) return;
 				auto &p_policy { policy };
 				// lambda that starts a background thread to flush on time interval given
 				auto periodic_flush = [ this, p_policy ]( )
@@ -192,21 +204,21 @@ namespace serenity::expiremental::targets
 					using namespace std::chrono_literals;
 					static milliseconds lastTimePoint { };
 
-					while( !cleanUpThreads.load( std::memory_order::relaxed ) ) {
+					while( !flushWorker.cleanUpThreads.load( std::memory_order::relaxed ) ) {
 						auto now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
 						auto elapsed = duration_cast<milliseconds>( now - lastTimePoint );
 						auto shouldFlush { elapsed >= policy.SecondarySettings( ).flushEvery };
 						if( shouldFlush ) {
-							std::scoped_lock<std::mutex> lock( readWriteMutex );
+							std::scoped_lock<std::mutex> lock( flushWorker.readWriteMutex );
 							Flush( );
 						}
 						lastTimePoint = now;
 					}
 				};  // periodic_flush
 
-				if( !flushThreadEnabled.load( std::memory_order::relaxed ) ) {
-					flushThread = std::thread( periodic_flush );
-					flushThreadEnabled.store( true );
+				if( !flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) ) {
+					flushWorker.flushThread = std::thread( periodic_flush );
+					flushWorker.flushThreadEnabled.store( true );
 				}
 			} break;  // time based bounds
 			case PeriodicOptions::logLevelBased:
@@ -217,5 +229,65 @@ namespace serenity::expiremental::targets
 			default: break;  // Don't bother with undef field
 		}                    // Sub Option Check
 	}                        // PolicyFlushOn( ) Function
+
+	// ------------------------------------------------------------- WIP -------------------------------------------------------------
+	void FileTarget::ShouldRotateFile( bool shouldRotate )
+	{
+		fileOptions.rotateFile = shouldRotate;
+	}
+
+	void FileTarget::SetRotateSettings( RotateSettings settings )
+	{
+		fileOptions.rotateFileSettings = &settings;
+	}
+
+	void FileTarget::RotateFileOnSize( )
+	{
+		CloseFile( );
+		auto newFilePath { fileOptions.filePath };
+		auto oldFile { newFilePath.filename( ) };
+		auto extension { oldFile.extension( ).string( ) };
+		// remove extension now that we have a copy of original extension so that we can append file number to name
+		oldFile.replace_extension( );
+		bool  rotateSuccessful { false };
+		auto &numberOfFiles { fileOptions.rotateFileSettings->maxNumberOfFiles };
+
+		for( size_t fileNumber { 1 }; fileNumber <= numberOfFiles; ++fileNumber ) {
+			auto newFile { oldFile.string( ).append( SE_LUTS::numberStr[ fileNumber ] ).append( extension ) };
+			newFilePath.replace_filename( std::move( newFile ) );
+			newFilePath.make_preferred( );
+
+			if( !std::filesystem::exists( newFilePath ) ) {
+				file_utils::RenameFile( fileOptions.filePath, newFilePath );
+				if( OpenFile( ) ) {
+					rotateSuccessful = true;
+					break;
+				}
+			}
+		} 
+
+		if( !rotateSuccessful ) {
+			std::cerr <<"Warning: Unable To Create New File In Rotating File. Overwriting Oldest File\n";
+			auto                            logDirPath { newFilePath.remove_filename( ) };
+			std::filesystem::file_time_type oldestWriteTime = { };
+			std::filesystem::path           fileToReplace   = { };
+
+			for( auto &file : std::filesystem::directory_iterator( logDirPath ) ) {
+				if( ( file.is_regular_file( ) ) && ( file.path( ).filename( ).string( ).find( oldFile.filename( ).string( ) ) ) ) {
+					if( oldestWriteTime < file.last_write_time( ) ) {
+						oldestWriteTime = file.last_write_time( );
+						fileToReplace   = file.path( );
+					}
+				}
+			}
+
+			file_utils::RenameFile( fileOptions.filePath, fileToReplace );
+			// Overwriting file, so truncate file when opening
+			if( !OpenFile( true ) ) {
+				std::cerr <<  "Error: Unable Finish Rotating To New File\n";
+			}
+		}
+	}
+	// ------------------------------------------------------------- WIP -------------------------------------------------------------
 
 }  // namespace serenity::expiremental::targets

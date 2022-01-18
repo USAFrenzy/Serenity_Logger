@@ -5,7 +5,6 @@
 #include <fstream>
 #include <thread>
 
-
 #define INSTRUMENTATION_ENABLED 1
 
 namespace serenity
@@ -101,8 +100,8 @@ namespace serenity
 			std::smatch match;
 #if WIN32
 			std::regex validateFile(
-			  "^[\\/:\"*?<>|]|CON|PRN|AUX|NUL|COM1|COM2|COM3|COM4|COM5|COM6|COM7|"
-			  "COM8|COM9|LPT1|LPT2|LPT3|LPT4|LPT5|LPT6|LPT7|LPT8|LPT9+$" );
+			"^[\\/:\"*?<>|]|CON|PRN|AUX|NUL|COM1|COM2|COM3|COM4|COM5|COM6|COM7|"
+			"COM8|COM9|LPT1|LPT2|LPT3|LPT4|LPT5|LPT6|LPT7|LPT8|LPT9+$" );
 #else
 			std::regex validateFile( "^[\\/:]|NUL+$" );
 #endif
@@ -115,7 +114,6 @@ namespace serenity
 			std::regex  validExtension( "^\\.[a-zA-Z]{7}$" );  // making 7 a thing here due to files like .config
 			return ( std::regex_search( fileName, match, validExtension ) ) ? false : true;
 		}
-
 
 		bool const CompareExtensions( std::string oldFile, std::string newFile )
 		{
@@ -135,31 +133,38 @@ namespace serenity
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
 			std::error_code             ec;
 
+			// No need to validate if already exists anyways, effectively overwrites old file 
 			if( std::filesystem::exists( newFile ) ) {
+				std::filesystem::copy_file( oldFile, newFile, std::filesystem::copy_options::update_existing);
+				std::filesystem::remove( oldFile );
 				return true;
 			}
+
 			try {
 				file_utils::ValidateFileName( newFile.filename( ).string( ) );
 			}
 			catch( std::exception &fileName_err ) {
-				printf( "Could Not Rename %s To %s\nReason: %s\n", oldFile.filename( ).string( ).c_str( ),
-					newFile.filename( ).string( ).c_str( ), fileName_err.what( ) );
+				printf( "Could Not Rename %s To %s\nReason: %s\n",
+						oldFile.filename( ).string( ).c_str( ),
+						newFile.filename( ).string( ).c_str( ),
+						fileName_err.what( ) );
 				return false;
 			}
 
 			if( !file_utils::ValidateExtension( newFile.extension( ).string( ) ) ) {
 				printf( "Could Not Rename %s To %s\tReason: Not A Valid Extension String\n",
-					oldFile.filename( ).string( ).c_str( ), newFile.filename( ).string( ).c_str( ) );
+						oldFile.filename( ).string( ).c_str( ),
+						newFile.filename( ).string( ).c_str( ) );
 				return false;
 			}
 			else {
 				try {
-					if( !( file_utils::CompareExtensions( oldFile.extension( ).string( ),
-									      newFile.extension( ).string( ) ) ) ) {
+					if( !( file_utils::CompareExtensions( oldFile.extension( ).string( ), newFile.extension( ).string( ) ) ) ) {
 						printf(
-						  "WARNING:\t"
-						  "New File Name: [ %s ] Does Not Have The Same Extension As Old File: [ %s ]\n",
-						  newFile.filename( ).string( ).c_str( ), oldFile.filename( ).string( ).c_str( ) );
+						"WARNING:\t"
+						"New File Name: [ %s ] Does Not Have The Same Extension As Old File: [ %s ]\n",
+						newFile.filename( ).string( ).c_str( ),
+						oldFile.filename( ).string( ).c_str( ) );
 						std::filesystem::rename( oldFile, newFile );
 					}
 					else {
@@ -173,7 +178,7 @@ namespace serenity
 			}
 
 			if( ( oldFile.filename( ) == newFile.filename( ) ) &&
-			    ( std::filesystem::file_size( oldFile ) == std::filesystem::file_size( newFile ) ) )
+				( std::filesystem::file_size( oldFile ) == std::filesystem::file_size( newFile ) ) )
 			{
 				return true;
 			}
@@ -197,9 +202,9 @@ namespace serenity
 
 			if( path.has_extension( ) ) {
 				printf(
-				  "ERROR: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: "
-				  "%s\n",
-				  path.string( ).c_str( ) );
+				"ERROR: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: "
+				"%s\n",
+				path.string( ).c_str( ) );
 				results.retrievedItems = dirEntries;
 				results.success        = false;
 			}
@@ -208,8 +213,7 @@ namespace serenity
 			timer.StopWatch_Reset( );
 #endif
 			if( recursive ) {
-				for( const std::filesystem::directory_entry &entry :
-				     std::filesystem::recursive_directory_iterator( path ) ) {
+				for( const std::filesystem::directory_entry &entry : std::filesystem::recursive_directory_iterator( path ) ) {
 					dirEntries.emplace_back( entry.path( ).string( ) );
 					fileCount++;
 				}
@@ -233,10 +237,9 @@ namespace serenity
 			return results;
 		}
 
-
 		// std::tuple<bool, std::vector<std::filesystem::directory_entry>>
 		file_utils_results::search_dir_entries const
-		  SearchDirEntries( std::vector<std::filesystem::directory_entry> &dirEntries, std::string searchString )
+		SearchDirEntries( std::vector<std::filesystem::directory_entry> &dirEntries, std::string searchString )
 		{
 			std::lock_guard<std::mutex> funcLock( utils_mutex );
 
@@ -396,16 +399,6 @@ namespace serenity
 				return false;
 			}
 			return true;
-		}
-
-		void Flush( std::filesystem::path file )
-		{
-			std::fstream fFile { file };
-			if( std::filesystem::exists( file ) ) {
-				OpenFile( file, false );
-				std::flush( fFile );
-				CloseFile( file );
-			}
 		}
 
 		bool CloseFile( std::filesystem::path file )

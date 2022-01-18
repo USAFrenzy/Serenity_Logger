@@ -36,7 +36,11 @@ namespace serenity
 					std::vformat_to( std::back_inserter( m_message ),
 									 message,
 									 std::make_format_args<context>( std::forward<Args>( args )... ) );
+#ifdef WINDOWS_PLATFORM
+					m_message.append( "\r\n" );
+#else
 					m_message.append( "\n" );
+#endif  // WINDOWS_PLATFORM
 				}
 
 			  private:

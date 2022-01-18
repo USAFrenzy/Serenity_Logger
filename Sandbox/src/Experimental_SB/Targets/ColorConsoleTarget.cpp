@@ -4,16 +4,9 @@
 
 namespace serenity::expiremental::targets
 {
-#ifdef WINDOWS_PLATFORM
-	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
-		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
-	#endif  // !ENABLE_VIRTUAL_TERMINAL_PROCESSING
-#endif      // WINDOWS_PLATFORM
-
 	ColorConsole::ColorConsole( ) : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( false )
 	{
 		WriteToBaseBuffer( false );
-		InitTerminalOutputs( );
 		SetConsoleInterface( consoleMode );
 		SetOriginalColors( );
 		if( IsValidHandle( ) && IsTerminalType( ) ) {
@@ -25,7 +18,6 @@ namespace serenity::expiremental::targets
 	  : TargetBase( name ), consoleMode( console_interface::std_out ), coloredOutput( false )
 	{
 		WriteToBaseBuffer( false );
-		InitTerminalOutputs( );
 		SetConsoleInterface( consoleMode );
 		SetOriginalColors( );
 		if( IsValidHandle( ) && IsTerminalType( ) ) {
@@ -37,7 +29,6 @@ namespace serenity::expiremental::targets
 	  : TargetBase( name, msgPattern ), consoleMode( console_interface::std_out ), coloredOutput( false )
 	{
 		WriteToBaseBuffer( false );
-		InitTerminalOutputs( );
 		SetConsoleInterface( consoleMode );
 		SetOriginalColors( );
 		if( IsValidHandle( ) && IsTerminalType( ) ) {
@@ -47,7 +38,11 @@ namespace serenity::expiremental::targets
 
 	ColorConsole::~ColorConsole( )
 	{
+		// If console was redirected, flush output to destination
 #ifdef WINDOWS_PLATFORM
+		if( !IsTerminalType( ) ) {
+			FlushFileBuffers( outputHandle );
+		}
 		DWORD opMode { 0 };
 		if( !GetConsoleMode( outputHandle, &opMode ) ) {
 			exit( GetLastError( ) );
@@ -55,8 +50,12 @@ namespace serenity::expiremental::targets
 		if( !SetConsoleMode( outputHandle, opMode ) ) {
 			exit( GetLastError( ) );
 		}
+#else
+		if( !IsTerminalType( ) ) {
+			fflush( outputHandle );
+		}
 #endif  // WINDOWS_PLATFORM
-	}
+	}   // ~ColorConsole
 
 	bool ColorConsole::IsValidHandle( )
 	{
@@ -83,11 +82,10 @@ namespace serenity::expiremental::targets
 	}
 
 	// Other than some wierd color trailing on the right-hand side for some of the differently colored lines,
-	// This now ACTUALLY works almost as intended
+	// This now ACTUALLY works as intended (color trailing might be result of known windows cell issue)
 	void ColorConsole::SetConsoleInterface( console_interface mode )
 	{
 		consoleMode = mode;
-
 #ifdef WINDOWS_PLATFORM
 		if( mode == console_interface::std_out ) {
 			outputHandle = GetStdHandle( STD_OUTPUT_HANDLE );
@@ -118,96 +116,24 @@ namespace serenity::expiremental::targets
 		return consoleMode;
 	}
 
-	// TODO: Work on this and see if this works as intended
-	void ColorConsole::InitTerminalOutputs( )
-	{
-		terminalBuff = {
-		{ console_interface::std_out, std::cout.rdbuf( ) },
-		{ console_interface::std_err, std::cerr.rdbuf( ) },
-		{ console_interface::std_log, std::clog.rdbuf( ) },
-		};
-	}
-
-	// TODO: Work on this and see if this works as intended
-	template <class BufferType> void SetOutputBuffer( console_interface mode, BufferType *buffer )
-	{
-		switch( mode ) {
-			case console_interface::std_out: std::cout.rdbuf( buffer ); break;
-			case console_interface::std_err: std::cerr.rdbuf( buffer ); break;
-			case console_interface::std_log: std::clog.rdbuf( buffer ); break;
-			default: break;
-		}
-	}
-
-	// TODO: Work on this and see if this works as intended
-	// dest probably shouldn't be a sv and if I'm going this route. This seems like the wrong way to go about this though...
-	// Found a really helpful video, although it's platform specific
-	// (https://www.youtube.com/watch?v=Mqb2dVRe0uo&ab_channel=CodeVault)
-	// TODO: Refer to above video and rework this -> currently, this setup (which isn't fully functional anyways) would only redirect
-	// TODO: to a file, not a pipe
-	void ColorConsole::RedirectOutput( console_interface mode, std::string_view dest )
-	{
-		// store old buffer
-		redirectionBackup.push_back( std::make_pair( mode, terminalBuff.at( mode ) ) );
-		if( mode == console_interface::std_out ) {
-			if( stdoutHandle.is_open( ) ) stdoutHandle.close( );
-			ResetOutputBuffer( mode );
-			stdoutHandle.open( dest );
-			outputHandle = &stdoutHandle;
-			SetOutputBuffer( mode, stdoutHandle.rdbuf( ) );
-		}
-		else {
-			if( stderrHandle.is_open( ) ) stderrHandle.close( );
-			ResetOutputBuffer( mode );
-			stderrHandle.open( dest );
-			outputHandle = &stderrHandle;
-			SetOutputBuffer( mode, stderrHandle.rdbuf( ) );
-		}
-	}
-
-	// TODO: Work on this and see if this works as intended
-	void ColorConsole::ResetOutputBuffer( console_interface mode )
-	{
-		for( auto &pair : redirectionBackup ) {
-			if( pair.first == mode ) {
-				auto originalBuffer { pair.second };
-				switch( mode ) {
-					case console_interface::std_out: std::cout.rdbuf( originalBuffer ); break;
-					case console_interface::std_err: std::cerr.rdbuf( originalBuffer ); break;
-					case console_interface::std_log: std::clog.rdbuf( originalBuffer ); break;
-					default: break;
-				}
-			}
-			break;  // end early if found
-		}
-	}
-
 	bool ColorConsole::IsTerminalType( )
 	{
 		auto consoleType { ( consoleMode == console_interface::std_out ) ? stdout : stderr };
 		return ( ISATTY( FILENO( consoleType ) ) ) ? true : false;
 	}
 
-	// TODO: Clean this up to look more succint
 	void ColorConsole::PrintMessage( std::string_view formatted )
 	{
+		std::string      message;
 		std::string_view msgColor { "" }, reset { "" };
 		if( IsValidHandle( ) ) {
 			if( IsTerminalType( ) && coloredOutput ) {
 				msgColor = msgLevelColors.at( MsgInfo( )->MsgLevel( ) );
 				reset    = se_colors::formats::reset;
 			}
-			std::string message;
 			message.reserve( formatted.size( ) + msgColor.size( ) + reset.size( ) );
-			message.append( msgColor.data( ), msgColor.size( ) );
-			message.append( formatted.data( ), formatted.size( ) );
-			message.append( reset.data( ), reset.size( ) );
-
+			message.append( msgColor ).append( formatted ).append( reset );
 #ifdef WINDOWS_PLATFORM
-			/*
-				From MSDN (https://docs.microsoft.com/en-us/windows/console/writeconsole):
-				If the handle is not a console handle, the output is redirected and you should call WriteFile to perform the I/O.
-			*/
 			if( IsTerminalType( ) ) {
 				WriteConsole( outputHandle, message.data( ), message.size( ), NULL, NULL );
 			}
@@ -215,11 +141,10 @@ namespace serenity::expiremental::targets
 				WriteFile( outputHandle, message.data( ), message.size( ), NULL, NULL );
 			}
 #else
-			fwrite( message.data( ), sizeof( char ), message.size( ), outputHandle );
-#endif                                                   // WINDOWS_PLATFORM
-			terminalBuff.at( consoleMode )->pubsync( );  // flush in case redirected to file
-		}                                                // IsValidHandle() Check
-	}                                                    // PrintMessage()
+			fwrite( message.data( ), 1, message.size( ), outputHandle );
+#endif     // WINDOWS_PLATFORM
+		}  // IsValidHandle() Check
+	}      // PrintMessage()
 
 	void ColorConsole::SetOriginalColors( )
 	{

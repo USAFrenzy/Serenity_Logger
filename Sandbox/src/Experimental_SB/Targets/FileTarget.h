@@ -11,7 +11,33 @@ namespace serenity::expiremental::targets
 	class FileTarget : public TargetBase
 	{
 	  public:
-		FileTarget( );  // default that will just write to a "GenericLog.txt"
+		// Wanted To Abstract some of the variables away as the list was growing pretty large
+		struct RotateSettings
+		{
+			// Will add an interval based setting later
+			// (something like a weekly basis on specified day and a daily setting)
+			bool   rotateOnFileSize { false };
+			size_t maxNumberOfFiles { 0 };
+			size_t fileSize { 1 * GB };
+		};
+		struct BackgroundThread
+		{
+			std::atomic<bool>  cleanUpThreads { false };
+			std::atomic<bool>  flushThreadEnabled { false };
+			mutable std::mutex readWriteMutex;
+			std::thread        flushThread;
+		};
+		struct FileSettings
+		{
+			std::filesystem::path filePath;
+			std::vector<char>     fileBuffer;
+			bool                  rotateFile { false };
+			size_t                bufferSize { DEFAULT_BUFFER_SIZE };
+			size_t                fileBufOccupied { 0 };
+			RotateSettings *      rotateFileSettings { nullptr };
+		};
+
+		FileTarget( );  // default that will just write to a "Generic_Log.txt"
 		FileTarget( std::string_view filePath, bool replaceIfExists = false );
 		FileTarget( const FileTarget & ) = delete;
 		FileTarget &operator=( const FileTarget & ) = delete;
@@ -23,23 +49,20 @@ namespace serenity::expiremental::targets
 		bool        OpenFile( bool truncate = false );
 		bool        CloseFile( );
 		void        Flush( );
+		// ------------------- WIP -------------------
+		void ShouldRotateFile( bool shouldRotate = true );
+		void SetRotateSettings( RotateSettings settings );
+		void RotateFileOnSize( );
+		// ------------------- WIP -------------------
 
 	  private:
-		// ------------------- WIP -------------------
-		std::atomic<bool> cleanUpThreads { false };
-		Flush_Policy &    policy;
-		std::thread       flushThread;
-		std::atomic<bool> flushThreadEnabled { false };
-		std::mutex        readWriteMutex;
-		// ------------------- WIP -------------------
-		std::ofstream         fileHandle;
-		LoggerLevel           logLevel;
-		std::filesystem::path filePath;
-		std::vector<char>     fileBuffer;
-		size_t                bufferSize;
-		size_t                fileBufOccupied { 0 };
+		Flush_Policy &   policy;
+		BackgroundThread flushWorker;
+		FileSettings     fileOptions;
+		std::ofstream    fileHandle;
+		LoggerLevel      logLevel;
 
-	  private:
+	  protected:
 		void PolicyFlushOn( ) override;
 		void PrintMessage( std::string_view formatted ) override;
 	};

@@ -29,7 +29,6 @@ namespace serenity
 		void                               NotifyLogger( ) override;
 		void                               UpdateFileInfo( const file_helper::path pathToFile ) override;
 		bool                               OpenFile( const file_helper::path filePath, bool truncate = false );
-		void                               Flush( );
 		bool                               CloseFile( const file_helper::path filePath );
 
 	      private:

@@ -118,23 +118,26 @@ int main( )
 	C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
 	// This Is Now Fully Working As Well
-	testFile.EraseContents( );
 	testFile.trace( "This Is A Trace Message To The File" );
 	testFile.info( "This Is An Info Message To The File" );
 	testFile.debug( "This Is A Debug Message To The File" );
 	testFile.warn( "This Is A Warning Message To The File" );
 	testFile.error( "This Is An Error Message To The File" );
 	testFile.fatal( "This Is A Fatal Message To The File" );
+	testFile.RenameFile( "Renamed_File.txt" );
+	testFile.trace( "File Should Have Been Renamed To \"Renamed_File.txt\"" );
 
 	// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder
 	// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED
 
+
+#ifdef INSTRUMENTATION_ENABLED
 	Instrumentator macroTester;
 	Instrumentator macroTesterFile;
 	Instrumentator spdlogConsoleTester;
 	Instrumentator spdlogFileTester;
-#ifdef INSTRUMENTATION_ENABLED
+
 	const char *test = nullptr;
 	// test string
 	std::string temp;

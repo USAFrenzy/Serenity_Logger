@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <mutex>
 
-
 namespace serenity
 {
 	namespace se_utils
@@ -34,23 +33,22 @@ namespace serenity
 
 		class Instrumentator
 		{
-		      public:
+		  public:
 			Instrumentator( );
 
 			void  StopWatch_Reset( );
 			void  StopWatch_Stop( );
 			float Elapsed_In( time_mode mode );
 
-
 			void *operator new( std::size_t n );
 			void  operator delete( void *p ) throw( );
 
 			~Instrumentator( );
 
-		      public:
+		  public:
 			static Allocation_Statistics mem_tracker;
 
-		      private:
+		  private:
 			std::chrono::time_point<std::chrono::steady_clock> m_Start, m_End;
 		};
 		/// <summary>
@@ -139,8 +137,6 @@ namespace serenity
 		/// To The Console. By Default, Creates A File With Full Permissions If It Doesn't Exist And Opens It In Append
 		/// Mode</returns>
 		bool OpenFile( std::filesystem::path file, bool truncate );
-		/// <summary>Opens The File Specified In "file" Parameter, Flushes Contents To File, And Then Closes The File</summary>
-		void Flush( std::filesystem::path file );  // Not Neccessarily Fully Implemented
 		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
 		/// To The Console</returns>
 		bool CloseFile( std::filesystem::path file );
@@ -148,38 +144,4 @@ namespace serenity
 		static std::mutex utils_mutex;
 
 	}  // namespace file_utils
-
-	// ########################################### WIP ###########################################
-	namespace se_thread
-	{
-		struct se_mutex_guard
-		{
-			explicit se_mutex_guard( )
-			{
-				acquire_lock( );
-			}
-
-			se_mutex_guard( const se_mutex_guard &mutexGuard )  = delete;
-			se_mutex_guard( const se_mutex_guard &&mutexGuard ) = delete;
-
-			~se_mutex_guard( )
-			{
-				release_lock( );
-			}
-			void acquire_lock( )
-			{
-				std::unique_lock<std::mutex> local_lock( m_mutex );
-				fileLock = std::move( local_lock );
-			}
-			void release_lock( )
-			{
-				std::unique_lock<std::mutex> local_lock = std::move( fileLock );
-				local_lock.unlock( );
-			}
-
-		      private:
-			std::unique_lock<std::mutex> fileLock;
-			std::mutex                   m_mutex;
-		};
-	}  // namespace se_thread
 }  // namespace serenity

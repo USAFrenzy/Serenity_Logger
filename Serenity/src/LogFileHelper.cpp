@@ -47,11 +47,6 @@ namespace serenity
 		return true;
 	}
 
-	void LogFileHelper::Flush( )
-	{
-		file_utils::Flush( LogFilePath( ) );
-	}
-
 	bool LogFileHelper::CloseFile( const file_helper::path filePath )
 	{
 		auto path = filePath;

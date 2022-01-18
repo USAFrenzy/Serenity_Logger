@@ -28,16 +28,11 @@ namespace serenity::expiremental::targets
 		console_interface ConsoleInterface( );
 		void              ColorizeOutput( bool colorize );
 		void              SetOriginalColors( );
-		// *************************************** WIP ***************************************
-		bool IsTerminalType( );
-		void InitTerminalOutputs( );
-		void RedirectOutput( console_interface mode, std::string_view dest );
-		void ResetOutputBuffer( console_interface mode );
-		// *************************************** WIP ***************************************
+		bool              IsTerminalType( );
+		bool              IsValidHandle( );
 
 	  protected:
 		void PrintMessage( std::string_view formatted ) override;
-		bool IsValidHandle( );
 
 	  private:
 		bool                                              coloredOutput;
@@ -48,9 +43,7 @@ namespace serenity::expiremental::targets
 #else
 		FILE *outputHandle;
 #endif  // WINDOWS_PLATFORM
-		std::ofstream                                               stdoutHandle;
-		std::ofstream                                               stderrHandle;
-		std::unordered_map<console_interface, std::streambuf *>     terminalBuff;
-		std::vector<std::pair<console_interface, std::streambuf *>> redirectionBackup;
+
 	};  // class ColorConsole
+
 }  // namespace serenity::expiremental::targets

@@ -1,35 +1,42 @@
 #pragma once
 
-#include <string_view>
-#include <array>
-
 #ifdef _WIN32
 	#ifdef _WIN64
 		#define WINDOWS_PLATFORM
 		#define WIN32_LEAN_AND_MEAN
 		#define VC_EXTRALEAN
+
 		#include <Windows.h>
 		#include <io.h>
+
 		#define ISATTY _isatty
 		#define FILENO _fileno
+
+		#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+			#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+		#endif
 	#endif
 #else
 	#include <unistd.h>
+
 	#define ISATTY isatty
 	#define FILENO fileno
 #endif
 
-namespace serenity::expiremental
-{
-	// Messing with buffer sizes
 #define KB                  ( 1024 )
 #define MB                  ( 1024 * KB )
 #define GB                  ( 1024 * MB )
 #define DEFAULT_BUFFER_SIZE ( 64 * KB )
 
+#include <string_view>
+#include <array>
+
+namespace serenity::expiremental
+{
 	namespace SE_LUTS
 	{
-		// These need to be kept in order so FlagFormatter() doesn't break  when called from StoreFormat()
+		// These need to be kept in order so FlagFormatter() doesn't break when called from StoreFormat()
+		//? Might alter FlagFormatter() so that it takes in the index found before being called so order here wouldn't matter?
 		static constexpr std::array<std::string_view, 22> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x",
 																			"%y", "%A", "%B", "%D", "%F", "%H", "%L", "%M",
 																			"%N", "%S", "%T", "%X", "%Y", "%+" };
