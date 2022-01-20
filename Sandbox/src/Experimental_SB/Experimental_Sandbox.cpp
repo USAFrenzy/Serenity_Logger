@@ -3,7 +3,7 @@
 #include "Targets/ColorConsoleTarget.h"
 #include "Targets/FileTarget.h"
 
-#define INSTRUMENT 1
+#define INSTRUMENT 0
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -34,8 +34,9 @@ std::string SpdlogPath( )
 	return filePath.make_preferred( ).string( );
 }
 
-// This is from (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128)
-// Just using this to set throughput precision
+// This is from
+// (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128) Just
+// using this to set throughput precision
 template <typename T> std::string SetPrecision( const T value, const int precision = 3 )
 {
 	std::ostringstream temp;
@@ -118,6 +119,13 @@ int main( )
 	C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
 	// This Is Now Fully Working As Well
+	testFile.ShouldRotateFile( );
+	serenity::expiremental::targets::FileTarget::RotateSettings settings;
+	settings.fileSize         = 128 * KB;
+	settings.maxNumberOfFiles = 5;
+	settings.rotateOnFileSize = true;  // Haven't implemented usage of this yet
+	testFile.SetRotateSettings( settings );
+
 	testFile.trace( "This Is A Trace Message To The File" );
 	testFile.info( "This Is An Info Message To The File" );
 	testFile.debug( "This Is A Debug Message To The File" );
@@ -126,11 +134,22 @@ int main( )
 	testFile.fatal( "This Is A Fatal Message To The File" );
 	testFile.RenameFile( "Renamed_File.txt" );
 	testFile.trace( "File Should Have Been Renamed To \"Renamed_File.txt\"" );
+	testFile.Flush( );
 
+	// Could make this specific factor faster if needed. ~17us per iteration averaged is much longer than the original ~0.68us per
+	// iteration for formatting a 400 byte string into a file
+	auto start { std::chrono::steady_clock::now( ) };
+	for( int i = 0; i < 1'000'000; ++i ) {
+		testFile.trace( "This is a test loop for rotating the file. Iteration {}", i );
+	}
+	auto end { std::chrono::steady_clock::now( ) };
+	auto elapsed = ( end - start );
+	auto time { std::chrono::duration_cast<std::chrono::microseconds>( elapsed ) };
+	auto averaged { time.count( ) / 1'000'000.0f };
+	std::cout << "\nTime Taken For Rotation Loop (Averaged): " << averaged << "us\n";
 	// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder
 	// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED
-
 
 #ifdef INSTRUMENTATION_ENABLED
 	Instrumentator macroTester;
@@ -210,8 +229,6 @@ int main( )
 	auto ConsoleThroughput { ( testStrInMB * iterations ) / macroTester.Elapsed_In( time_mode::sec ) };
 	auto SpdlogConsoleThroughput { ( testStrInMB * iterations ) / spdlogConsoleTester.Elapsed_In( time_mode::sec ) };
 
-
-
 	std::cout << Tag::Yellow(
 				 "\n\n***************************************************************************************\n"
 				 "*************** Instrumentation Data (Averaged Over " )
@@ -254,13 +271,13 @@ int main( )
 	std::cout << "\n";
 	std::cout << Tag::Bright_Yellow( "Program Throughput :\n" );
 	std::cout << Tag::Bright_Cyan( "Color Console Target Throughput:" ) << "\n  "
-			  << Tag::Bright_Green( SetPrecision(ConsoleThroughput ) + " MB/s\n" );
+			  << Tag::Bright_Green( SetPrecision( ConsoleThroughput ) + " MB/s\n" );
 	std::cout << Tag::Bright_Cyan( "spdlog Color Sink Throughput:" ) << "\n  "
-			  << Tag::Bright_Green(  SetPrecision(SpdlogConsoleThroughput) + " MB/s\n" );
+			  << Tag::Bright_Green( SetPrecision( SpdlogConsoleThroughput ) + " MB/s\n" );
 	std::cout << Tag::Bright_Cyan( "File Target Throughput:" ) << "\n  "
-			  << Tag::Bright_Green( SetPrecision(FileThroughput ) + " MB/s\n" );
+			  << Tag::Bright_Green( SetPrecision( FileThroughput ) + " MB/s\n" );
 	std::cout << Tag::Bright_Cyan( "spdlog File Sink Throughput:" ) << "\n  "
-			  << Tag::Bright_Green(  SetPrecision(SpdlogFileThroughput) + " MB/s\n" );
+			  << Tag::Bright_Green( SetPrecision( SpdlogFileThroughput ) + " MB/s\n" );
 	std::cout << "\n";
 
 	std::cout << Tag::Bright_Yellow( "Size of Base Target Class:\t\t" )

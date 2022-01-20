@@ -17,8 +17,16 @@ namespace serenity::expiremental::targets
 			// Will add an interval based setting later
 			// (something like a weekly basis on specified day and a daily setting)
 			bool   rotateOnFileSize { false };
-			size_t maxNumberOfFiles { 0 };
-			size_t fileSize { 1 * GB };
+			size_t maxNumberOfFiles { 5 };
+			size_t fileSize { 512 * KB };
+
+			std::filesystem::path &OriginalFileName( )
+			{
+				return originalFileName;
+			}
+
+		  private:
+			std::filesystem::path originalFileName;
 		};
 		struct BackgroundThread
 		{
@@ -65,5 +73,6 @@ namespace serenity::expiremental::targets
 	  protected:
 		void PolicyFlushOn( ) override;
 		void PrintMessage( std::string_view formatted ) override;
+		void RenameFileForRotation( );
 	};
 }  // namespace serenity::expiremental::targets

@@ -140,8 +140,5 @@ namespace serenity
 		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
 		/// To The Console</returns>
 		bool CloseFile( std::filesystem::path file );
-		/// <summary> Mutex Used To Lock Functions In file_utils Namespace </summary>
-		static std::mutex utils_mutex;
-
 	}  // namespace file_utils
 }  // namespace serenity

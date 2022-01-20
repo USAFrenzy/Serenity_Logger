@@ -17,17 +17,16 @@ namespace serenity::expiremental::targets
 		const auto            logDirPath { fullFilePath };
 		fullFilePath /= logDir;
 		fullFilePath /= "Generic_Log.txt";
-
 		fileOptions.filePath = fullFilePath.make_preferred( ).string( );
 		logLevel             = LoggerLevel::trace;
 
 		try {
 			if( !std::filesystem::exists( logDirPath ) ) {
 				file_utils::CreateDir( logDirPath );
-				OpenFile( );
+				OpenFile( true );
 			}
 			else {
-				OpenFile( );
+				OpenFile( true );
 			}
 		}
 		catch( const std::exception &e ) {
@@ -133,6 +132,11 @@ namespace serenity::expiremental::targets
 			CloseFile( );
 			file_utils::RenameFile( fileOptions.filePath, newFile );
 			fileOptions.filePath = std::move( newFile );
+
+			if( fileOptions.rotateFileSettings != nullptr ) {
+				fileOptions.rotateFileSettings->OriginalFileName() = fileOptions.filePath;
+				RenameFileForRotation( );
+			}
 			OpenFile( );
 			return true;
 		}
@@ -236,25 +240,47 @@ namespace serenity::expiremental::targets
 		fileOptions.rotateFile = shouldRotate;
 	}
 
+	void FileTarget::RenameFileForRotation() {
+		auto       extension { fileOptions.filePath.extension( ).string( ) };
+		const auto oldFile { fileOptions.filePath };
+		// need to make copy to avoid changing old file so that we can rename it
+		auto        rotateFile { fileOptions.filePath };
+		std::string fileName { rotateFile.replace_extension( ).string( ) };
+		rotateFile.replace_filename( fileName.append( "_" ).append( "01" ).append( extension ) );
+		if( fileHandle.is_open( ) ) {
+			CloseFile( );
+		}
+		try {
+			std::filesystem::rename( oldFile, rotateFile );
+		}
+		catch( const std::exception &e ) {
+			std::cerr << e.what( );
+		}
+		fileOptions.filePath = std::move( rotateFile );
+		OpenFile( );
+	}
+
+
 	void FileTarget::SetRotateSettings( RotateSettings settings )
 	{
-		fileOptions.rotateFileSettings = &settings;
+		fileOptions.rotateFileSettings                   = &settings;
+		fileOptions.rotateFileSettings->OriginalFileName( ) = fileOptions.filePath;
+		RenameFileForRotation( );
 	}
 
 	void FileTarget::RotateFileOnSize( )
 	{
 		CloseFile( );
-		auto oldFilePath { fileOptions.filePath };  // used to reset in case of error
-		auto newFilePath { oldFilePath };
-		auto oldFile { newFilePath.filename( ) };
-		auto extension { oldFile.extension( ).string( ) };
+		auto                  newFilePath { fileOptions.rotateFileSettings->OriginalFileName( ) };
+		std::filesystem::path oldFile { newFilePath.filename( ) };
+		auto                  extension { oldFile.extension( ).string( ) };
 		// remove extension now that we have a copy of original extension so that we can append file number to name
 		oldFile.replace_extension( );
 		bool  rotateSuccessful { false };
 		auto &numberOfFiles { fileOptions.rotateFileSettings->maxNumberOfFiles };
 
 		for( size_t fileNumber { 1 }; fileNumber <= numberOfFiles; ++fileNumber ) {
-			auto newFile { oldFile.string( ).append( SE_LUTS::numberStr[ fileNumber ] ).append( extension ) };
+			auto newFile { oldFile.string( ).append("_").append( SE_LUTS::numberStr[ fileNumber ] ).append( extension ) };
 			newFilePath.replace_filename( std::move( newFile ) );
 			newFilePath.make_preferred( );
 
@@ -264,32 +290,35 @@ namespace serenity::expiremental::targets
 					rotateSuccessful = true;
 					break;
 				}
-				else {
-					// effectively reset
-					fileOptions.filePath = oldFilePath;
-				}
 			}
 		}
 
 		if( !rotateSuccessful ) {
-			std::cerr << "Warning: Unable To Create New File In Rotating File. Overwriting Oldest File\n";
 			auto                            logDirPath { newFilePath.remove_filename( ) };
 			std::filesystem::file_time_type oldestWriteTime = { };
 			std::filesystem::path           fileToReplace   = { };
-
+			bool                            firstIteration { true };
 			for( auto &file : std::filesystem::directory_iterator( logDirPath ) ) {
-				if( ( file.is_regular_file( ) ) && ( file.path( ).filename( ).string( ).find( oldFile.filename( ).string( ) ) ) ) {
-					if( oldestWriteTime < file.last_write_time( ) ) {
-						oldestWriteTime = file.last_write_time( );
-						fileToReplace   = file.path( );
+				if( file.is_regular_file( ) ) {
+					auto db { file.path( ).filename( ).string( ) };
+					if( file.path( ).filename( ).string( ).find( oldFile.string( ) ) != std::string::npos ) {
+						if( firstIteration ) {
+							firstIteration  = false;
+							oldestWriteTime = file.last_write_time( );
+							fileToReplace   = file.path( );
+						}
+						if( file.last_write_time( ) < oldestWriteTime ) {
+							oldestWriteTime = file.last_write_time( );
+							fileToReplace   = file.path( );
+						}
 					}
 				}
 			}
-
-			file_utils::RenameFile( fileOptions.filePath, fileToReplace );
+			std::filesystem::remove( fileToReplace );
+			fileOptions.filePath = std::move( fileToReplace );
 			// Overwriting file, so truncate file when opening
 			if( !OpenFile( true ) ) {
-				std::cerr << "Error: Unable Finish Rotating To New File\n";
+				std::cerr << std::vformat("Error: Unable To Finish Rotating File To {}\n", std::make_format_args(fileOptions.filePath.string()));
 			}
 		}
 	}

@@ -130,16 +130,18 @@ namespace serenity
 
 		bool RenameFile( std::filesystem::path oldFile, std::filesystem::path newFile )
 		{
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
-			std::error_code             ec;
-
-			// No need to validate if already exists anyways, effectively overwrites old file 
 			if( std::filesystem::exists( newFile ) ) {
-				std::filesystem::copy_file( oldFile, newFile, std::filesystem::copy_options::update_existing);
-				std::filesystem::remove( oldFile );
+				if( newFile == oldFile ) {
+					std::filesystem::remove( oldFile);
+				}
+				else {
+					std::filesystem::remove( newFile );
+					std::filesystem::rename( oldFile, newFile );
+				}
 				return true;
 			}
 
+			std::error_code ec;
 			try {
 				file_utils::ValidateFileName( newFile.filename( ).string( ) );
 			}
@@ -189,8 +191,6 @@ namespace serenity
 
 		file_utils_results::retrieve_dir_entries const RetrieveDirEntries( std::filesystem::path &path, bool recursive )
 		{
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
-
 			std::vector<std::filesystem::directory_entry> dirEntries;
 			std::size_t                                   pathSize = path.string( ).size( );
 			file_utils_results::retrieve_dir_entries      results;
@@ -241,8 +241,6 @@ namespace serenity
 		file_utils_results::search_dir_entries const
 		SearchDirEntries( std::vector<std::filesystem::directory_entry> &dirEntries, std::string searchString )
 		{
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
-
 			std::vector<std::filesystem::directory_entry> matchedResults;
 			bool                                          containsMatch { false };
 			file_utils_results::search_dir_entries        results;
@@ -274,7 +272,6 @@ namespace serenity
 		std::filesystem::directory_entry const RetrieveDirObject( std::filesystem::directory_entry &entry )
 		{
 			std::filesystem::directory_entry temp { };
-			std::lock_guard<std::mutex>      funcLock( utils_mutex );
 			using prevRetrieved = file_utils_results::retrieve_dir_entries;
 
 			file_utils_results::search_dir_entries results;
@@ -288,7 +285,6 @@ namespace serenity
 		bool CreateDir( std::filesystem::path dirPath )
 		{
 			std::filesystem::directory_entry entry { dirPath };
-			std::lock_guard<std::mutex>      funcLock( utils_mutex );
 			try {
 				if( entry.exists( ) ) {
 					return true;
@@ -306,7 +302,6 @@ namespace serenity
 
 		bool RemoveEntry( std::filesystem::path entry )
 		{
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
 			try {
 				if( !std::filesystem::exists( entry ) ) {
 					return true;
@@ -324,8 +319,7 @@ namespace serenity
 
 		bool ChangeDir( std::filesystem::path dirPath )
 		{
-			std::error_code             ec;
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
+			std::error_code ec;
 			try {
 				std::filesystem::current_path( dirPath, ec );
 				return true;
@@ -338,10 +332,10 @@ namespace serenity
 
 		bool CopyContents( std::filesystem::path source, std::filesystem::path destination )
 		{
-			std::ifstream               inputFile( source );
-			std::ofstream               outputFile( destination, std::ios_base::app );
-			std::string                 line;
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
+			std::ifstream inputFile( source );
+			std::ofstream outputFile( destination, std::ios_base::app );
+			std::string   line;
+			// If input file isn't empty, try to read from input and write to destination
 			if( !( inputFile.peek( ) == std::ifstream::traits_type::eof( ) ) ) {
 				try {
 					if( inputFile && outputFile ) {
@@ -365,9 +359,8 @@ namespace serenity
 		bool OpenFile( std::filesystem::path file, bool truncate )
 		{
 			namespace fs = std::filesystem;
-			std::fstream                openFile;
-			int                         mode;
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
+			std::fstream openFile;
+			int          mode;
 			// By Default Create A File With Full Permissions If File Doesn't Already Exist
 			if( !fs::exists( file ) ) {
 				try {
@@ -404,8 +397,7 @@ namespace serenity
 		bool CloseFile( std::filesystem::path file )
 		{
 			namespace fs = std::filesystem;
-			std::fstream                closeFile( file );
-			std::lock_guard<std::mutex> funcLock( utils_mutex );
+			std::fstream closeFile( file );
 			// By Default, Just Checking That The File Has Some Permission To Close
 			if( fs::status( file ).permissions( ) == fs::perms::none ) {
 				printf( "Error In CloseFile():\nInsufficient Permissions\n" );
