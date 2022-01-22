@@ -133,7 +133,7 @@ namespace serenity::expiremental::targets
 			file_utils::RenameFile( fileOptions.filePath, newFile );
 			fileOptions.filePath = std::move( newFile );
 
-			if( fileOptions.rotateFileSettings != nullptr ) {
+			if( ( fileOptions.rotateFile ) && ( fileOptions.rotateFileSettings != nullptr ) ) {
 				fileOptions.rotateFileSettings->SetOriginalSettings( fileOptions.filePath );
 				RenameFileForRotation( );
 			}
@@ -157,14 +157,12 @@ namespace serenity::expiremental::targets
 				std::this_thread::sleep_for( 10ms );
 			}
 		}
-		if( fileOptions.rotateFile ) {
-			if( fileOptions.rotateFileSettings != nullptr ) {
-				if( fileOptions.rotateFileSettings->currentFileSize >= fileOptions.rotateFileSettings->fileSizeLimit ) {
-					RotateFileOnSize( );
-					fileOptions.rotateFileSettings->currentFileSize = 0;
-				}
-				fileOptions.rotateFileSettings->currentFileSize += formatted.size( );
+		if( ( fileOptions.rotateFile ) && ( fileOptions.rotateFileSettings != nullptr ) ) {
+			if( fileOptions.rotateFileSettings->currentFileSize >= fileOptions.rotateFileSettings->fileSizeLimit ) {
+				RotateFileOnSize( );
+				fileOptions.rotateFileSettings->currentFileSize = 0;
 			}
+			fileOptions.rotateFileSettings->currentFileSize += formatted.size( );
 		}
 
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
@@ -275,6 +273,8 @@ namespace serenity::expiremental::targets
 
 	void FileTarget::RotateFileOnSize( )
 	{
+		if( ( !fileOptions.rotateFile ) || ( fileOptions.rotateFileSettings == nullptr ) ) return;
+
 		CloseFile( );
 		bool rotateSuccessful { false };
 		// make local copies of originals
@@ -289,7 +289,7 @@ namespace serenity::expiremental::targets
 			newFilePath.replace_filename( newFile );
 			if( !std::filesystem::exists( newFilePath ) ) {
 				fileOptions.filePath = std::move( newFilePath );
-				if( OpenFile( ) ) {
+				if( OpenFile( true ) ) {
 					rotateSuccessful = true;
 					break;
 				}
@@ -300,7 +300,7 @@ namespace serenity::expiremental::targets
 			auto logDirectory { std::filesystem::directory_iterator( fileOptions.rotateFileSettings->OriginalDirectory( ) ) };
 			std::filesystem::file_time_type oldestWriteTime = { std::chrono::file_clock::now( ) };
 			std::string                     fileNameToFind { fileOptions.rotateFileSettings->OriginalName( ) };
-			std::filesystem::path           fileToReplace = { };
+			std::filesystem::path           fileToReplace;
 			for( auto &file : logDirectory ) {
 				if( file.is_regular_file( ) ) {
 					if( file.path( ).filename( ).string( ).find( fileNameToFind ) != std::string::npos ) {
@@ -311,13 +311,27 @@ namespace serenity::expiremental::targets
 					}
 				}
 			}
-
 			std::filesystem::remove( fileToReplace );
 			auto previousFile { fileOptions.filePath.filename( ).string( ) };
-			fileOptions.filePath = std::move( fileToReplace );
+
+			if( !fileToReplace.empty( ) ) {
+				fileOptions.filePath = std::move( fileToReplace );
+			}
+			else {
+				std::cerr << std::vformat(
+				"Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And Truncating Previous File, \"{}\"\n",
+				std::make_format_args( originalFile, previousFile ) );
+			}
+
 			if( !OpenFile( true ) ) {
-				std::cerr << std::vformat( "Error: Unable To Finish Rotating From File {} To File {}\n",
-										   std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
+				if( fileToReplace != previousFile ) {
+					std::cerr << std::vformat( "Error: Unable To Finish Rotating From File \"{}\" To File \"{}\"\n",
+											   std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
+				}
+				else {
+					std::cerr
+					<< std::vformat( "Error: Unable To Open And Truncate File \"{}\"\n", std::make_format_args( previousFile ) );
+				}
 			}
 		}
 	}
