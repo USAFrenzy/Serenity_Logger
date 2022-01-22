@@ -18,15 +18,42 @@ namespace serenity::expiremental::targets
 			// (something like a weekly basis on specified day and a daily setting)
 			bool   rotateOnFileSize { false };
 			size_t maxNumberOfFiles { 5 };
-			size_t fileSize { 512 * KB };
+			size_t fileSizeLimit { 512 * KB };
+			size_t currentFileSize { 0 };
 
-			std::filesystem::path &OriginalFileName( )
+			void SetOriginalSettings( const std::filesystem::path &path )
 			{
-				return originalFileName;
+				originalPath = path;
+				ext          = path.filename( ).extension( ).string( );
+				auto fName { path.filename( ) };
+				fName.replace_extension( );
+				fileName = fName.string( );
+				auto dir { path };
+				directory = dir.remove_filename( );
+			}
+
+			const std::filesystem::path &OriginalPath( )
+			{
+				return originalPath;
+			}
+
+			const std::filesystem::path &OriginalDirectory( )
+			{
+				return directory;
+			}
+
+			const std::string &OriginalName( )
+			{
+				return fileName;
+			}
+			const std::string &OriginalExtension( )
+			{
+				return ext;
 			}
 
 		  private:
-			std::filesystem::path originalFileName;
+			std::string           ext, fileName;
+			std::filesystem::path originalPath, directory;
 		};
 		struct BackgroundThread
 		{

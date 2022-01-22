@@ -121,7 +121,7 @@ int main( )
 	// This Is Now Fully Working As Well
 	testFile.ShouldRotateFile( );
 	serenity::expiremental::targets::FileTarget::RotateSettings settings;
-	settings.fileSize         = 128 * KB;
+	settings.fileSizeLimit    = 256 * KB;
 	settings.maxNumberOfFiles = 5;
 	settings.rotateOnFileSize = true;  // Haven't implemented usage of this yet
 	testFile.SetRotateSettings( settings );
@@ -136,8 +136,8 @@ int main( )
 	testFile.trace( "File Should Have Been Renamed To \"Renamed_File.txt\"" );
 	testFile.Flush( );
 
-	// Could make this specific factor faster if needed. ~17us per iteration averaged is much longer than the original ~0.68us per
-	// iteration for formatting a 400 byte string into a file
+	// Found out why this was so slow.. the std::filesystem::file_size() call is apparently extremely expensive, opted for manual
+	// tracking of size
 	auto start { std::chrono::steady_clock::now( ) };
 	for( int i = 0; i < 1'000'000; ++i ) {
 		testFile.trace( "This is a test loop for rotating the file. Iteration {}", i );
@@ -145,8 +145,9 @@ int main( )
 	auto end { std::chrono::steady_clock::now( ) };
 	auto elapsed = ( end - start );
 	auto time { std::chrono::duration_cast<std::chrono::microseconds>( elapsed ) };
-	auto averaged { time.count( ) / 1'000'000.0f };
-	std::cout << "\nTime Taken For Rotation Loop (Averaged): " << averaged << "us\n";
+	auto averaged { time / 1'000'000.0f };
+	std::cout << "\nTime Taken For Rotation Loop (Averaged): " << averaged << "\n";
+
 	// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder
 	// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED
