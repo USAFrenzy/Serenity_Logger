@@ -6,20 +6,11 @@ namespace serenity
 	{
 		namespace msg_details
 		{
-			Message_Info::Message_Info( ) : m_name( ), m_msgLevel( LoggerLevel::trace ), m_msgTime( message_time_mode::local ) { }
 			Message_Info::Message_Info( std::string_view name, LoggerLevel level, message_time_mode mode )
 			  : m_name( name ), m_msgLevel( level ), m_msgTime( mode )
 			{
 			}
 
-			Message_Info &Message_Info::operator=( const Message_Info &t )
-			{
-				m_message  = t.m_message;
-				m_msgLevel = t.m_msgLevel;
-				m_msgTime  = t.m_msgTime;
-				m_name     = t.m_name;
-				return *this;
-			}
 			// ############### New Function Added #################
 			std::string &Message_Info::MessageBuffer( )
 			{

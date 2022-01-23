@@ -2,8 +2,6 @@
 
 namespace serenity::expiremental::targets
 {
-	using namespace std::chrono;
-
 	TargetBase::TargetBase( )
 	  : toBuffer( false ),
 		policy( Flush::never ),

@@ -7,9 +7,8 @@
 
 namespace serenity::expiremental::targets
 {
-	FileTarget::FileTarget( ) : TargetBase( "File_Logger" ), policy( TargetBase::Policy( ) )
+	FileTarget::FileTarget( ) : TargetBase( "File_Logger" ), policy( Policy( ) )
 	{
-		WriteToBaseBuffer( false );
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 
 		std::filesystem::path fullFilePath = std::filesystem::current_path( );
@@ -35,10 +34,9 @@ namespace serenity::expiremental::targets
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view fPath, bool replaceIfExists )
-	  : TargetBase( "File_Logger" ), policy( TargetBase::Policy( ) )
+	FileTarget::FileTarget( std::string_view name, std::string_view fPath, bool replaceIfExists )
+	  : TargetBase( name ), policy( Policy( ) )
 	{
-		WriteToBaseBuffer( false );
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		fileOptions.filePath = fPath;
 		fileOptions.filePath.make_preferred( );
@@ -49,10 +47,39 @@ namespace serenity::expiremental::targets
 					auto dir { fileOptions.filePath };
 					dir.remove_filename( );
 					file_utils::CreateDir( dir );
-					OpenFile( );
+					OpenFile( replaceIfExists );
 				}
 				else {
-					OpenFile( );
+					OpenFile( replaceIfExists );
+				}
+			}
+			else {
+				std::cerr << "Error In File Name\n";
+			}
+		}
+		catch( const std::exception &e ) {
+			std::cerr << e.what( ) << "\n";
+			CloseFile( );
+		}
+	}
+
+	FileTarget::FileTarget( std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists )
+	  : TargetBase( name, formatPattern ), policy( Policy( ) )
+	{
+		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
+		fileOptions.filePath = fPath;
+		fileOptions.filePath.make_preferred( );
+		logLevel = LoggerLevel::trace;
+		try {
+			if( file_utils::ValidateFileName( fileOptions.filePath.filename( ).string( ) ) ) {
+				if( !std::filesystem::exists( fileOptions.filePath ) ) {
+					auto dir { fileOptions.filePath };
+					dir.remove_filename( );
+					file_utils::CreateDir( dir );
+					OpenFile( replaceIfExists );
+				}
+				else {
+					OpenFile( replaceIfExists );
 				}
 			}
 			else {
@@ -70,9 +97,13 @@ namespace serenity::expiremental::targets
 		CloseFile( );
 	}
 
-	std::string FileTarget::FilePath( )
+	const std::string FileTarget::FilePath( )
 	{
 		return fileOptions.filePath.string( );
+	}
+	const std::string FileTarget::FileName( )
+	{
+		return fileOptions.filePath.filename( ).string( );
 	}
 
 	bool FileTarget::OpenFile( bool truncate )
@@ -150,7 +181,7 @@ namespace serenity::expiremental::targets
 		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
 			while( !flushWorker.readWriteMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( 10ms );
+				std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 			}
 		}
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );

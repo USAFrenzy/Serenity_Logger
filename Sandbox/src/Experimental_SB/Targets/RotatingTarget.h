@@ -25,8 +25,14 @@ namespace serenity::expiremental::targets
 			std::filesystem::path path, directory;
 		};
 
-		RotatingTarget( );  // default that will just write to a "Generic_Log.txt"
-		RotatingTarget( std::string_view filePath, bool replaceIfExists = false );
+		/*
+			Default constructor will write to Generic_Log.txt which will be renamed as Generic_Log_01.txt
+			and follow rotation settings thereafter
+		*/
+		RotatingTarget( );
+		explicit RotatingTarget( std::string_view name, std::string_view filePath, bool replaceIfExists = false );
+		explicit RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
+								 bool replaceIfExists = false );
 		RotatingTarget( const RotatingTarget & ) = delete;
 		RotatingTarget &operator=( const RotatingTarget & ) = delete;
 		~RotatingTarget( );

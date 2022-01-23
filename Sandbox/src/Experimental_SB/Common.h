@@ -17,8 +17,13 @@
 		#endif
 	#endif
 #else
-	#include <unistd.h>
+	#if defined( __APPLE__ ) || ( __MACH__ )
+		#define MAC_PLATFORM
+	#else 
+		#define UNIX_PLATFORM
+	#endif
 
+	#include <unistd.h>
 	#define ISATTY isatty
 	#define FILENO fileno
 #endif

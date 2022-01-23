@@ -12,9 +12,11 @@ namespace serenity
 			class Message_Info
 			{
 			  public:
-				Message_Info( );
 				Message_Info( std::string_view name, LoggerLevel level, message_time_mode mode );
-				Message_Info &operator=( const Message_Info &t );
+				Message_Info &operator=( const Message_Info &t ) = delete;
+				Message_Info( const Message_Info & )             = delete;
+				Message_Info( )                                  = delete;
+				~Message_Info( )                                 = default;
 
 				std::string &                         MessageBuffer( );
 				LoggerLevel &                         MsgLevel( );
@@ -38,6 +40,8 @@ namespace serenity
 									 std::make_format_args<context>( std::forward<Args>( args )... ) );
 #ifdef WINDOWS_PLATFORM
 					m_message.append( "\r\n" );
+#elif defined MAC_PLATFORM
+					m_message.append( "\r" );
 #else
 					m_message.append( "\n" );
 #endif  // WINDOWS_PLATFORM

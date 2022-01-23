@@ -11,26 +11,12 @@ namespace serenity::expiremental::msg_details
 {
 	class Message_Formatter
 	{
-		struct Formatters;
-
 	  public:
-		Message_Formatter( std::string_view pattern, Message_Info *details );
-		void          FlagFormatter( size_t flag );
-		void          SetPattern( std::string_view pattern );
-		Formatters &  GetFormatters( );
-		void          StoreFormat( );
-		Message_Info *MessageDetails( );
-
-		struct TimeStats
-		{
-			float totalUpdateTime { 0 };
-			float totalFormatTime { 0 };
-		};
-
-		TimeStats GetStats( )
-		{
-			return benches;
-		}
+		explicit Message_Formatter( std::string_view pattern, Message_Info *details );
+		~Message_Formatter( )                          = default;
+		Message_Formatter( )                           = delete;
+		Message_Formatter( const Message_Formatter & ) = delete;
+		Message_Formatter &operator=( const Message_Info & ) = delete;
 
 		struct Formatter
 		{
@@ -38,6 +24,28 @@ namespace serenity::expiremental::msg_details
 			virtual std::string      UpdateInternalView( ) = 0;
 		};
 
+		class Formatters
+		{
+		  public:
+			Formatters( std::vector<std::unique_ptr<Formatter>> &&container );
+			Formatters( );
+			void             Emplace_Back( std::unique_ptr<Formatter> &&formatter );
+			std::string_view Format( );
+			void             Clear( );
+
+		  private:
+			std::string                             localBuffer;
+			std::vector<std::unique_ptr<Formatter>> m_Formatter;
+		};
+
+		void          FlagFormatter( size_t flag );
+		void          SetPattern( std::string_view pattern );
+		Formatters &  GetFormatters( );
+		void          StoreFormat( );
+		Message_Info *MessageDetails( );
+
+		// Formatting Structs For Flag Arguments
+	  private:
 		struct Format_Arg_a : Formatter
 		{
 			Format_Arg_a( Message_Info &info );
@@ -313,25 +321,8 @@ namespace serenity::expiremental::msg_details
 			std::string m_char;
 		};
 
-		class Formatters
-		{
-		  public:
-			Formatters( std::vector<std::unique_ptr<Formatter>> &&container );
-			Formatters( );
-			void             Emplace_Back( std::unique_ptr<Formatter> &&formatter );
-			std::string_view Format( );
-			void             Clear( );
-
-		  private:
-			std::string                             localBuffer;
-			std::vector<std::unique_ptr<Formatter>> m_Formatter;
-		};
-
-	  private:
 		Formatters    formatter;
 		std::string   fmtPattern;
 		Message_Info *msgInfo;
-		// for some micro benches
-		TimeStats benches = { };
 	};
 }  // namespace serenity::expiremental::msg_details

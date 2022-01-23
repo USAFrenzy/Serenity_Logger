@@ -116,7 +116,6 @@ int main( )
 	C.SetMsgColor( LoggerLevel::warning, se_colors::bright_colors::combos::cyan::on_grey );
 	C.trace( "Warning Level Color Has Been Changed To Cyan On Grey" );
 	C.warn( "So This Line Should Now Be Cyan On Grey" );
-	C.warn( "As Should This Line - Testing For Any One-Off Weirdness Here" );
 	C.SetOriginalColors( );
 	C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
@@ -124,7 +123,7 @@ int main( )
 	serenity::expiremental::targets::RotatingTarget::RotateSettings settings;
 	settings.fileSizeLimit    = 256 * KB;
 	settings.maxNumberOfFiles = 5;
-	settings.rotateOnFileSize = true;  // Haven't implemented usage of this yet
+	settings.rotateOnFileSize = true;
 	rotatingFile.SetRotateSettings( settings );
 	rotatingFile.RenameFile( "Renamed_Rotating_File.txt" );
 	testFile.trace( "This Is A Trace Message To The File" );
@@ -148,7 +147,6 @@ int main( )
 	auto time { std::chrono::duration_cast<std::chrono::microseconds>( elapsed ) };
 	auto averaged { time / 4'000'000.0f };
 	std::cout << "\nTime Taken For Rotation Loop (Averaged): " << averaged << "\n";
-
 	// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder
 	// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED

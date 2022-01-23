@@ -19,9 +19,10 @@ namespace serenity::expiremental::targets
 	{
 	  public:
 		ColorConsole( );
-		ColorConsole( std::string_view name );
-		ColorConsole( std::string_view name, std::string_view msgPattern );
+		explicit ColorConsole( std::string_view name );
+		explicit ColorConsole( std::string_view name, std::string_view msgPattern );
 		~ColorConsole( );
+
 		std::string_view  GetMsgColor( LoggerLevel level );
 		void              SetMsgColor( LoggerLevel level, std::string_view color );
 		void              SetConsoleInterface( console_interface mode );
@@ -30,9 +31,7 @@ namespace serenity::expiremental::targets
 		void              SetOriginalColors( );
 		bool              IsTerminalType( );
 		bool              IsValidHandle( );
-
-	  protected:
-		void PrintMessage( std::string_view formatted ) override;
+		void              PrintMessage( std::string_view formatted ) override;
 
 	  private:
 		bool                                              coloredOutput;

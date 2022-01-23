@@ -11,7 +11,9 @@ namespace serenity::expiremental::targets
 		RenameFileForRotation( );
 		SetLoggerName( "Rotating_Logger" );
 	}
-	RotatingTarget::RotatingTarget( std::string_view filePath, bool replaceIfExists ) : FileTarget( filePath, replaceIfExists )
+
+	RotatingTarget::RotatingTarget( std::string_view name, std::string_view filePath, bool replaceIfExists )
+	  : FileTarget( name, filePath, replaceIfExists )
 	{
 		rotateFile = true;
 		rotateSettings.SetOriginalSettings( filePath );
@@ -19,6 +21,15 @@ namespace serenity::expiremental::targets
 		SetLoggerName( "Rotating_Logger" );
 	}
 
+	RotatingTarget::RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
+									bool replaceIfExists )
+	  : FileTarget( name, formatPattern, filePath, replaceIfExists )
+	{
+		rotateFile = true;
+		rotateSettings.SetOriginalSettings( filePath );
+		RenameFileForRotation( );
+		SetLoggerName( "Rotating_Logger" );
+	}
 	RotatingTarget::~RotatingTarget( )
 	{
 		CloseFile( );
@@ -63,10 +74,9 @@ namespace serenity::expiremental::targets
 			file_utils::RenameFile( fileOptions.filePath, newFile );
 			fileOptions.filePath = std::move( newFile );
 
-			if( rotateFile ) {
-				rotateSettings.SetOriginalSettings( fileOptions.filePath );
-				RenameFileForRotation( );
-			}
+			rotateSettings.SetOriginalSettings( fileOptions.filePath );
+			RenameFileForRotation( );
+			
 			OpenFile( );
 			return true;
 		}
@@ -109,6 +119,7 @@ namespace serenity::expiremental::targets
 		rotateSettings.fileSizeLimit    = settings.fileSizeLimit;
 		rotateSettings.maxNumberOfFiles = settings.maxNumberOfFiles;
 		rotateSettings.rotateOnFileSize = settings.rotateOnFileSize;
+		rotateFile                      = rotateSettings.rotateOnFileSize;
 	}
 
 	void RotatingTarget::RotateFileOnSize( )
@@ -181,7 +192,7 @@ namespace serenity::expiremental::targets
 		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
 			while( !flushWorker.readWriteMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( 10ms );
+				std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 			}
 		}
 		if( rotateFile ) {
@@ -189,8 +200,8 @@ namespace serenity::expiremental::targets
 				RotateFileOnSize( );
 				rotateSettings.currentFileSize = 0;
 			}
-			rotateSettings.currentFileSize += formatted.size( );
 		}
+		rotateSettings.currentFileSize += formatted.size( );
 
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
 		if( Policy( ).SubSetting( ) == PeriodicOptions::memUsage ) fileOptions.fileBufOccupied += formatted.size( );

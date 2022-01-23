@@ -14,7 +14,12 @@ namespace serenity
 			class Message_Time
 			{
 			  public:
-				Message_Time( message_time_mode mode );
+				Message_Time( ) = delete;
+				explicit Message_Time( message_time_mode mode );
+				Message_Time( const Message_Time & ) = delete;
+				Message_Time &operator=( const Message_Time & ) = delete;
+				~Message_Time( )                                = default;
+
 				std::string_view      GetCurrentYearSV( int yearOffset, bool shortened = false );
 				void                  UpdateTimeDate( std::chrono::system_clock::time_point timePoint );
 				void                  UpdateCache( std::chrono::system_clock::time_point timePoint );

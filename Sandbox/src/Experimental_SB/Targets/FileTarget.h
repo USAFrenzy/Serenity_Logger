@@ -28,17 +28,20 @@ namespace serenity::expiremental::targets
 		};
 
 		FileTarget( );  // default that will just write to a "Generic_Log.txt"
-		FileTarget( std::string_view filePath, bool replaceIfExists = false );
+		explicit FileTarget( std::string_view name, std::string_view filePath, bool replaceIfExists = false );
+		explicit FileTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
+							 bool replaceIfExists = false );
 		FileTarget( const FileTarget & ) = delete;
 		FileTarget &operator=( const FileTarget & ) = delete;
 		~FileTarget( );
 
-		std::string  FilePath( );
-		void         EraseContents( );
-		virtual bool RenameFile( std::string_view newFileName );
-		bool         OpenFile( bool truncate = false );
-		bool         CloseFile( );
-		void         Flush( );
+		const std::string FilePath( );
+		const std::string FileName( );
+		void              EraseContents( );
+		virtual bool      RenameFile( std::string_view newFileName );
+		bool              OpenFile( bool truncate = false );
+		bool              CloseFile( );
+		void              Flush( );
 
 	  private:
 		LoggerLevel   logLevel;
