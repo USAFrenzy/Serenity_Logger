@@ -22,7 +22,7 @@ namespace serenity::expiremental::targets
 
 		void                             SetFlushPolicy( Flush_Policy pPolicy );
 		Flush_Policy &                   Policy( );
-		std::string                      LoggerName( );
+		const std::string                LoggerName( );
 		void                             SetPattern( std::string_view pattern );
 		void                             ResetPatternToDefault( );
 		void                             SetLogLevel( LoggerLevel level );
@@ -30,6 +30,7 @@ namespace serenity::expiremental::targets
 		bool                             isWriteToBuf( );
 		std::string *                    Buffer( );
 		LoggerLevel                      Level( );
+		void                             SetLoggerName( std::string_view name );
 		template <typename... Args> void trace( std::string_view s, Args &&...args );
 		template <typename... Args> void info( std::string_view s, Args &&...args );
 		template <typename... Args> void debug( std::string_view s, Args &&...args );

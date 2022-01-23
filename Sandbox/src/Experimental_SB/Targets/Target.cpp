@@ -69,7 +69,7 @@ namespace serenity::expiremental::targets
 		return policy;
 	}
 
-	std::string TargetBase::LoggerName( )
+	const std::string TargetBase::LoggerName( )
 	{
 		return loggerName;
 	}
@@ -95,6 +95,11 @@ namespace serenity::expiremental::targets
 	LoggerLevel TargetBase::Level( )
 	{
 		return logLevel;
+	}
+
+	void TargetBase::SetLoggerName( std::string_view name )
+	{
+		loggerName = name;
 	}
 
 }  // namespace serenity::expiremental::targets

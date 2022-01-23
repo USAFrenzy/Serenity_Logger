@@ -2,7 +2,7 @@
 
 #define SERENITY_VERSION_MAJOR 0
 #define SERENITY_VERSION_MINOR 2
-#define SERENITY_VERSION_REVISION 82
+#define SERENITY_VERSION_REVISION 83
 
 #define VERSION_STRING_FORMAT( major, minor, revision ) #major "." #minor "." #revision
 #define VERSION_NUMBER( maj, min, rev )                 VERSION_STRING_FORMAT( maj, min, rev )
@@ -11,4 +11,4 @@
 #define SE_DAY             22
 #define SE_MONTH           01
 #define SE_YEAR            2022
-#define SE_LAST_BUILT   "16:04:58"
+#define SE_LAST_BUILT   "19:23:42"

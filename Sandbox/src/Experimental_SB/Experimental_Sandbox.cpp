@@ -2,6 +2,7 @@
 
 #include "Targets/ColorConsoleTarget.h"
 #include "Targets/FileTarget.h"
+#include "Targets/RotatingTarget.h"
 
 #define INSTRUMENT 0
 
@@ -67,8 +68,9 @@ int main( )
 	using namespace serenity::expiremental;
 	using namespace serenity::se_utils;
 
-	targets::ColorConsole C;
-	targets::FileTarget   testFile;
+	targets::ColorConsole   C;
+	targets::FileTarget     testFile;
+	targets::RotatingTarget rotatingFile;
 
 	// PeriodicSettings settings;
 	// settings.flushEvery = std::chrono::milliseconds( 500 );
@@ -119,13 +121,12 @@ int main( )
 	C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
 	// This Is Now Fully Working As Well
-	testFile.ShouldRotateFile( );
-	serenity::expiremental::targets::FileTarget::RotateSettings settings;
+	serenity::expiremental::targets::RotatingTarget::RotateSettings settings;
 	settings.fileSizeLimit    = 256 * KB;
 	settings.maxNumberOfFiles = 5;
 	settings.rotateOnFileSize = true;  // Haven't implemented usage of this yet
-	testFile.SetRotateSettings( settings );
-
+	rotatingFile.SetRotateSettings( settings );
+	rotatingFile.RenameFile( "Renamed_Rotating_File.txt" );
 	testFile.trace( "This Is A Trace Message To The File" );
 	testFile.info( "This Is An Info Message To The File" );
 	testFile.debug( "This Is A Debug Message To The File" );
@@ -139,13 +140,13 @@ int main( )
 	// Found out why this was so slow.. the std::filesystem::file_size() call is apparently extremely expensive, opted for manual
 	// tracking of size
 	auto start { std::chrono::steady_clock::now( ) };
-	for( int i = 0; i < 1'000'000; ++i ) {
-		testFile.trace( "This is a test loop for rotating the file. Iteration {}", i );
+	for( int i = 0; i < 4'000'000; ++i ) {
+		rotatingFile.trace( "This is a test loop for rotating the file. Iteration {}", i );
 	}
 	auto end { std::chrono::steady_clock::now( ) };
 	auto elapsed = ( end - start );
 	auto time { std::chrono::duration_cast<std::chrono::microseconds>( elapsed ) };
-	auto averaged { time / 1'000'000.0f };
+	auto averaged { time / 4'000'000.0f };
 	std::cout << "\nTime Taken For Rotation Loop (Averaged): " << averaged << "\n";
 
 	// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder

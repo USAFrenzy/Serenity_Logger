@@ -7,7 +7,7 @@
 
 namespace serenity::expiremental::targets
 {
-	FileTarget::FileTarget( ) : TargetBase( "File Logger" ), policy( Policy( ) )
+	FileTarget::FileTarget( ) : TargetBase( "File_Logger" ), policy( TargetBase::Policy( ) )
 	{
 		WriteToBaseBuffer( false );
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
@@ -35,7 +35,8 @@ namespace serenity::expiremental::targets
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view fPath, bool replaceIfExists ) : TargetBase( "File Logger" ), policy( Policy( ) )
+	FileTarget::FileTarget( std::string_view fPath, bool replaceIfExists )
+	  : TargetBase( "File_Logger" ), policy( TargetBase::Policy( ) )
 	{
 		WriteToBaseBuffer( false );
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
@@ -132,11 +133,6 @@ namespace serenity::expiremental::targets
 			CloseFile( );
 			file_utils::RenameFile( fileOptions.filePath, newFile );
 			fileOptions.filePath = std::move( newFile );
-
-			if( ( fileOptions.rotateFile ) && ( fileOptions.rotateFileSettings != nullptr ) ) {
-				fileOptions.rotateFileSettings->SetOriginalSettings( fileOptions.filePath );
-				RenameFileForRotation( );
-			}
 			OpenFile( );
 			return true;
 		}
@@ -157,14 +153,6 @@ namespace serenity::expiremental::targets
 				std::this_thread::sleep_for( 10ms );
 			}
 		}
-		if( ( fileOptions.rotateFile ) && ( fileOptions.rotateFileSettings != nullptr ) ) {
-			if( fileOptions.rotateFileSettings->currentFileSize >= fileOptions.rotateFileSettings->fileSizeLimit ) {
-				RotateFileOnSize( );
-				fileOptions.rotateFileSettings->currentFileSize = 0;
-			}
-			fileOptions.rotateFileSettings->currentFileSize += formatted.size( );
-		}
-
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
 		if( policy.SubSetting( ) == PeriodicOptions::memUsage ) fileOptions.fileBufOccupied += formatted.size( );
 		if( flushThread ) {
@@ -234,107 +222,5 @@ namespace serenity::expiremental::targets
 			default: break;  // Don't bother with undef field
 		}                    // Sub Option Check
 	}                        // PolicyFlushOn( ) Function
-
-	// ------------------------------------------------------------- WIP -------------------------------------------------------------
-	void FileTarget::ShouldRotateFile( bool shouldRotate )
-	{
-		fileOptions.rotateFile = shouldRotate;
-	}
-
-	void FileTarget::RenameFileForRotation( )
-	{
-		auto       extension { fileOptions.filePath.extension( ).string( ) };
-		const auto oldFile { fileOptions.filePath };
-		// need to make copy to avoid changing old file so that we can rename it
-		auto        rotateFile { fileOptions.filePath };
-		std::string fileName { rotateFile.replace_extension( ).string( ) };
-		rotateFile.replace_filename( fileName.append( "_" ).append( "01" ).append( extension ) );
-		if( fileHandle.is_open( ) ) {
-			CloseFile( );
-		}
-		try {
-			std::filesystem::rename( oldFile, rotateFile );
-		}
-		catch( const std::exception &e ) {
-			std::cerr << e.what( );
-		}
-		fileOptions.filePath = std::move( rotateFile );
-		OpenFile( );
-	}
-
-	void FileTarget::SetRotateSettings( RotateSettings settings )
-	{
-		fileOptions.rotateFileSettings = &settings;
-		// Setting up for original full path, file name, and extension
-		fileOptions.rotateFileSettings->SetOriginalSettings( fileOptions.filePath );
-		// Now that original components are cached, rename current file to rotate file name
-		RenameFileForRotation( );
-	}
-
-	void FileTarget::RotateFileOnSize( )
-	{
-		if( ( !fileOptions.rotateFile ) || ( fileOptions.rotateFileSettings == nullptr ) ) return;
-
-		CloseFile( );
-		bool rotateSuccessful { false };
-		// make local copies of originals
-		auto newFilePath { fileOptions.rotateFileSettings->OriginalPath( ) };
-		auto originalFile { fileOptions.rotateFileSettings->OriginalName( ) };
-		auto extension { fileOptions.rotateFileSettings->OriginalExtension( ) };
-		auto numberOfFiles { fileOptions.rotateFileSettings->maxNumberOfFiles };
-
-		for( size_t fileNumber { 1 }; fileNumber <= numberOfFiles; ++fileNumber ) {
-			std::string newFile { originalFile };  // effectively reset each loop iteration
-			newFile.append( "_" ).append( SE_LUTS::numberStr[ fileNumber ] ).append( extension );
-			newFilePath.replace_filename( newFile );
-			if( !std::filesystem::exists( newFilePath ) ) {
-				fileOptions.filePath = std::move( newFilePath );
-				if( OpenFile( true ) ) {
-					rotateSuccessful = true;
-					break;
-				}
-			}
-		}
-
-		if( !rotateSuccessful ) {
-			auto logDirectory { std::filesystem::directory_iterator( fileOptions.rotateFileSettings->OriginalDirectory( ) ) };
-			std::filesystem::file_time_type oldestWriteTime = { std::chrono::file_clock::now( ) };
-			std::string                     fileNameToFind { fileOptions.rotateFileSettings->OriginalName( ) };
-			std::filesystem::path           fileToReplace;
-			for( auto &file : logDirectory ) {
-				if( file.is_regular_file( ) ) {
-					if( file.path( ).filename( ).string( ).find( fileNameToFind ) != std::string::npos ) {
-						if( file.last_write_time( ) < oldestWriteTime ) {
-							oldestWriteTime = file.last_write_time( );
-							fileToReplace   = file.path( );
-						}
-					}
-				}
-			}
-			std::filesystem::remove( fileToReplace );
-			auto previousFile { fileOptions.filePath.filename( ).string( ) };
-
-			if( !fileToReplace.empty( ) ) {
-				fileOptions.filePath = std::move( fileToReplace );
-			}
-			else {
-				std::cerr << std::vformat(
-				"Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And Truncating Previous File, \"{}\"\n",
-				std::make_format_args( originalFile, previousFile ) );
-			}
-
-			if( !OpenFile( true ) ) {
-				if( fileToReplace != previousFile ) {
-					std::cerr << std::vformat( "Error: Unable To Finish Rotating From File \"{}\" To File \"{}\"\n",
-											   std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
-				}
-				else {
-					std::cerr
-					<< std::vformat( "Error: Unable To Open And Truncate File \"{}\"\n", std::make_format_args( previousFile ) );
-				}
-			}
-		}
-	}
-	// ------------------------------------------------------------- WIP -------------------------------------------------------------
 
 }  // namespace serenity::expiremental::targets

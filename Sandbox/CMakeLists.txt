@@ -25,6 +25,8 @@ set (EXPERIMENTAL_SB_HEADER_FILES
 "src/Experimental_SB/Targets/Target-impl.h"
 "src/Experimental_SB/Targets/ColorConsoleTarget.h"
 "src/Experimental_SB/Targets/FileTarget.h"
+"src/Experimental_SB/Targets/RotatingTarget.h"
+
 )
 
 set (EXPERIMENTAL_SB_SOURCE_FILES 
@@ -36,6 +38,7 @@ set (EXPERIMENTAL_SB_SOURCE_FILES
 "src/Experimental_SB/Targets/Target.cpp"
 "src/Experimental_SB/Targets/ColorConsoleTarget.cpp"
 "src/Experimental_SB/Targets/FileTarget.cpp"
+"src/Experimental_SB/Targets/RotatingTarget.cpp"
 )
 
 set (EXPERIMENTAL_SB_ALL_FILES ${EXPERIMENTAL_SB_HEADER_FILES} ${EXPERIMENTAL_SB_SOURCE_FILES})
