@@ -26,7 +26,7 @@ namespace serenity::expiremental::targets
 		};
 
 		/*
-			Default constructor will write to Generic_Log.txt which will be renamed as Generic_Log_01.txt
+			Default constructor will write to Rotating_Log.txt which will be renamed as Rotating_Log_01.txt
 			and follow rotation settings thereafter
 		*/
 		RotatingTarget( );
@@ -45,8 +45,8 @@ namespace serenity::expiremental::targets
 		void PrintMessage( std::string_view formatted ) override;
 
 	  private:
-		bool           rotateFile { false };
-		RotateSettings rotateSettings = { };
+		bool           rotateFile;
+		RotateSettings rotateSettings;
 	};
 
 }  // namespace serenity::expiremental::targets

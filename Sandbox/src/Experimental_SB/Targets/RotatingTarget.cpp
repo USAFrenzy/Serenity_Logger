@@ -4,18 +4,16 @@
 
 namespace serenity::expiremental::targets
 {
-	RotatingTarget::RotatingTarget( ) : FileTarget( )
+	RotatingTarget::RotatingTarget( ) : FileTarget( "Rotating_Log.txt", true ), rotateFile( true ), rotateSettings( RotateSettings( ) )
 	{
-		rotateFile = true;
 		rotateSettings.SetOriginalSettings( fileOptions.filePath );
 		RenameFileForRotation( );
 		SetLoggerName( "Rotating_Logger" );
 	}
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view filePath, bool replaceIfExists )
-	  : FileTarget( name, filePath, replaceIfExists )
+	  : FileTarget( name, filePath, replaceIfExists ), rotateFile( true ), rotateSettings( RotateSettings( ) )
 	{
-		rotateFile = true;
 		rotateSettings.SetOriginalSettings( filePath );
 		RenameFileForRotation( );
 		SetLoggerName( "Rotating_Logger" );
@@ -23,9 +21,8 @@ namespace serenity::expiremental::targets
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
 									bool replaceIfExists )
-	  : FileTarget( name, formatPattern, filePath, replaceIfExists )
+	  : FileTarget( name, formatPattern, filePath, replaceIfExists ), rotateFile( true ), rotateSettings( RotateSettings( ) )
 	{
-		rotateFile = true;
 		rotateSettings.SetOriginalSettings( filePath );
 		RenameFileForRotation( );
 		SetLoggerName( "Rotating_Logger" );
@@ -76,7 +73,7 @@ namespace serenity::expiremental::targets
 
 			rotateSettings.SetOriginalSettings( fileOptions.filePath );
 			RenameFileForRotation( );
-			
+
 			OpenFile( );
 			return true;
 		}

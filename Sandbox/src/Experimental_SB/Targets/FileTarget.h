@@ -27,7 +27,10 @@ namespace serenity::expiremental::targets
 			size_t                fileBufOccupied { 0 };
 		};
 
-		FileTarget( );  // default that will just write to a "Generic_Log.txt"
+		// default that will just write to a "Generic_Log.txt"
+		FileTarget( );
+		// Will use default location for the log directory, but allows user file name
+		explicit FileTarget( std::string_view fileName, bool replaceIfExists = false );
 		explicit FileTarget( std::string_view name, std::string_view filePath, bool replaceIfExists = false );
 		explicit FileTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
 							 bool replaceIfExists = false );
