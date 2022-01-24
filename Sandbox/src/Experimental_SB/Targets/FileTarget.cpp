@@ -34,9 +34,8 @@ namespace serenity::expiremental::targets
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view fileName, bool replaceIfExists) 
-	: TargetBase( "File_Logger" ), policy( Policy( ) )
-	{ 
+	FileTarget::FileTarget( std::string_view fileName, bool replaceIfExists ) : TargetBase( "File_Logger" ), policy( Policy( ) )
+	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		std::filesystem::path fullFilePath = std::filesystem::current_path( );
 		const auto            logDir { "Logs" };

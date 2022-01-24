@@ -29,7 +29,7 @@ namespace serenity
 			{
 				return m_msgTime;
 			}
-			void Message_Info::SetName( const std::string name )
+			void Message_Info::SetName( const std::string_view name )
 			{
 				m_name = name;
 			}

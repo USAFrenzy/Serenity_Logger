@@ -27,6 +27,7 @@ namespace serenity::expiremental::targets
 		RenameFileForRotation( );
 		SetLoggerName( "Rotating_Logger" );
 	}
+
 	RotatingTarget::~RotatingTarget( )
 	{
 		CloseFile( );
@@ -74,7 +75,9 @@ namespace serenity::expiremental::targets
 			rotateSettings.SetOriginalSettings( fileOptions.filePath );
 			RenameFileForRotation( );
 
-			OpenFile( );
+			if( !fileHandle.is_open( ) ) {
+				OpenFile( );
+			}
 			return true;
 		}
 		catch( const std::exception &e ) {
@@ -107,7 +110,9 @@ namespace serenity::expiremental::targets
 			std::cerr << e.what( );
 		}
 		fileOptions.filePath = std::move( rotateFile );
-		OpenFile( );
+		if( !fileHandle.is_open( ) ) {
+			OpenFile( );
+		}
 	}
 
 	void RotatingTarget::SetRotateSettings( RotateSettings settings )

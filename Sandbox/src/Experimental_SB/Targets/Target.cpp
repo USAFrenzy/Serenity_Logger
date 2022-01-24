@@ -69,7 +69,7 @@ namespace serenity::expiremental::targets
 
 	const std::string TargetBase::LoggerName( )
 	{
-		return loggerName;
+		return msgDetails.Name( );
 	}
 
 	msg_details::Message_Formatter *TargetBase::MsgFmt( )
@@ -97,7 +97,7 @@ namespace serenity::expiremental::targets
 
 	void TargetBase::SetLoggerName( std::string_view name )
 	{
-		loggerName = name;
+		msgDetails.SetName( name );
 	}
 
 }  // namespace serenity::expiremental::targets

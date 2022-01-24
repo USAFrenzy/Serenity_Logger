@@ -125,7 +125,7 @@ int main( )
 	settings.maxNumberOfFiles = 5;
 	settings.rotateOnFileSize = true;
 	rotatingFile.SetRotateSettings( settings );
-	rotatingFile.RenameFile( "Renamed_Rotating_File.txt" );
+
 	testFile.trace( "This Is A Trace Message To The File" );
 	testFile.info( "This Is An Info Message To The File" );
 	testFile.debug( "This Is A Debug Message To The File" );

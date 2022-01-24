@@ -50,7 +50,6 @@ namespace serenity::expiremental::targets
 		LoggerLevel                    logLevel;
 		LoggerLevel                    msgLevel;
 		std::string                    pattern;
-		std::string                    loggerName;
 		msg_details::Message_Info      msgDetails;
 		msg_details::Message_Formatter msgPattern;
 		std::string                    internalBuffer;
