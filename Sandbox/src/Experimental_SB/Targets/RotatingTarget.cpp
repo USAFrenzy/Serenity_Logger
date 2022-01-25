@@ -8,6 +8,7 @@ namespace serenity::expiremental::targets
 	{
 		rotateSettings.SetOriginalSettings( fileOptions.filePath );
 		RenameFileForRotation( );
+		rotateSettings.SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 		SetLoggerName( "Rotating_Logger" );
 	}
 
@@ -16,6 +17,7 @@ namespace serenity::expiremental::targets
 	{
 		rotateSettings.SetOriginalSettings( filePath );
 		RenameFileForRotation( );
+		rotateSettings.SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 		SetLoggerName( "Rotating_Logger" );
 	}
 
@@ -25,41 +27,13 @@ namespace serenity::expiremental::targets
 	{
 		rotateSettings.SetOriginalSettings( filePath );
 		RenameFileForRotation( );
+		rotateSettings.SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 		SetLoggerName( "Rotating_Logger" );
 	}
 
 	RotatingTarget::~RotatingTarget( )
 	{
 		CloseFile( );
-	}
-
-	void RotatingTarget::RotateSettings::SetOriginalSettings( const std::filesystem::path &filePath )
-	{
-		path = filePath;
-		ext  = filePath.filename( ).extension( ).string( );
-		auto fName { filePath.filename( ) };
-		fileName = fName.replace_extension( ).string( );
-		auto dir { filePath };
-		directory = dir.remove_filename( );
-	}
-
-	const std::filesystem::path &RotatingTarget::RotateSettings::OriginalPath( )
-	{
-		return path;
-	}
-
-	const std::filesystem::path &RotatingTarget::RotateSettings::OriginalDirectory( )
-	{
-		return directory;
-	}
-
-	const std::string &RotatingTarget::RotateSettings::OriginalName( )
-	{
-		return fileName;
-	}
-	const std::string &RotatingTarget::RotateSettings::OriginalExtension( )
-	{
-		return ext;
 	}
 
 	bool RotatingTarget::RenameFile( std::string_view newFileName )
@@ -90,6 +64,7 @@ namespace serenity::expiremental::targets
 	void RotatingTarget::ShouldRotateFile( bool shouldRotate )
 	{
 		rotateFile = shouldRotate;
+		rotateSettings.SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 	}
 
 	void RotatingTarget::RenameFileForRotation( )
@@ -117,11 +92,12 @@ namespace serenity::expiremental::targets
 
 	void RotatingTarget::SetRotateSettings( RotateSettings settings )
 	{
-		rotateSettings.currentFileSize  = settings.currentFileSize;
 		rotateSettings.fileSizeLimit    = settings.fileSizeLimit;
 		rotateSettings.maxNumberOfFiles = settings.maxNumberOfFiles;
 		rotateSettings.rotateOnFileSize = settings.rotateOnFileSize;
-		rotateFile                      = rotateSettings.rotateOnFileSize;
+		// rotateFile will, in the future, be dependant on whether or not rotate
+		// setting is allowed via size/interval means
+		rotateFile = rotateSettings.rotateOnFileSize;
 	}
 
 	void RotatingTarget::RotateFileOnSize( )
@@ -137,8 +113,9 @@ namespace serenity::expiremental::targets
 		auto numberOfFiles { rotateSettings.maxNumberOfFiles };
 
 		for( size_t fileNumber { 1 }; fileNumber <= numberOfFiles; ++fileNumber ) {
-			std::string newFile { originalFile };  // effectively reset each loop iteration
-			newFile.append( "_" ).append( SE_LUTS::numberStr[ fileNumber ] ).append( extension );
+			std::string newFile { originalFile };  // effectively reset each loop
+												   // iteration
+			newFile.append( "_" ).append( SERENITY_LUTS::numberStr[ fileNumber ] ).append( extension );
 			newFilePath.replace_filename( newFile );
 			if( !std::filesystem::exists( newFilePath ) ) {
 				fileOptions.filePath = std::move( newFilePath );
@@ -169,21 +146,22 @@ namespace serenity::expiremental::targets
 
 			if( !fileToReplace.empty( ) ) {
 				fileOptions.filePath = std::move( fileToReplace );
-			}
-			else {
-				std::cerr << std::vformat(
-				"Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And Truncating Previous File, \"{}\"\n",
-				std::make_format_args( originalFile, previousFile ) );
+			} else {
+				std::cerr << std::vformat( "Warning: Unable To Locate Oldest File "
+										   "With Base Name \"{}\". Opening And "
+										   "Truncating Previous File, \"{}\"\n",
+										   std::make_format_args( originalFile, previousFile ) );
 			}
 
 			if( !FileTarget::OpenFile( true ) ) {
 				if( fileToReplace != previousFile ) {
-					std::cerr << std::vformat( "Error: Unable To Finish Rotating From File \"{}\" To File \"{}\"\n",
+					std::cerr << std::vformat( "Error: Unable To Finish Rotating From File "
+											   "\"{}\" To File \"{}\"\n",
 											   std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
-				}
-				else {
-					std::cerr
-					<< std::vformat( "Error: Unable To Open And Truncate File \"{}\"\n", std::make_format_args( previousFile ) );
+				} else {
+					std::cerr << std::vformat( "Error: Unable To Open And Truncate File "
+											   "\"{}\"\n",
+											   std::make_format_args( previousFile ) );
 				}
 			}
 		}
@@ -198,13 +176,14 @@ namespace serenity::expiremental::targets
 			}
 		}
 		if( rotateFile ) {
-			if( rotateSettings.currentFileSize >= rotateSettings.fileSizeLimit ) {
+			if( rotateSettings.FileSize( ) >= rotateSettings.fileSizeLimit ) {
 				RotateFileOnSize( );
-				rotateSettings.currentFileSize = 0;
+				// Truncate file in RotateFileOnSize(), so should be safe to
+				// explicitly set to "0" here
+				rotateSettings.SetCurrentFileSize( 0 );
 			}
 		}
-		rotateSettings.currentFileSize += formatted.size( );
-
+		rotateSettings.SetCurrentFileSize( rotateSettings.FileSize( ) + formatted.size( ) );
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
 		if( Policy( ).SubSetting( ) == PeriodicOptions::memUsage ) fileOptions.fileBufOccupied += formatted.size( );
 		if( flushThread ) {

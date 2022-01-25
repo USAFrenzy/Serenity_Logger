@@ -29,8 +29,7 @@ namespace serenity
 				message_time_mode                     TimeMode( );
 				std::tm &                             TimeInfo( );
 				std::string &                         Message( );
-
-				template <typename... Args> void SetMessage( const std::string_view message, Args &&...args )
+				template <typename... Args> void      SetMessage( const std::string_view message, Args &&...args )
 				{
 					m_message.clear( );
 					using iterator = std::back_insert_iterator<std::basic_string<char>>;
@@ -38,16 +37,11 @@ namespace serenity
 					std::vformat_to( std::back_inserter( m_message ),
 									 message,
 									 std::make_format_args<context>( std::forward<Args>( args )... ) );
-#ifdef WINDOWS_PLATFORM
-					m_message.append( "\r\n" );
-#elif defined MAC_PLATFORM
-					m_message.append( "\r" );
-#else
-					m_message.append( "\n" );
-#endif  // WINDOWS_PLATFORM
+					m_message.append( SERENITY_LUTS::line_ending.at( platformEOL ) );
 				}
 
 			  private:
+				LineEnd      platformEOL;
 				std::string  m_name;
 				LoggerLevel  m_msgLevel;
 				std::string  m_message;

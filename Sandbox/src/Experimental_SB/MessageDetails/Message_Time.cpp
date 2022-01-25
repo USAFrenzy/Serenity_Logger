@@ -22,7 +22,7 @@ namespace serenity
 				}
 				else {
 					auto year { yearOffset - 100 };
-					return SE_LUTS::numberStr[ year ];
+					return SERENITY_LUTS::numberStr[ year ];
 				}
 			}
 

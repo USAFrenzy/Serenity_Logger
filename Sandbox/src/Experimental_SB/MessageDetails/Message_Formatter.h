@@ -20,8 +20,11 @@ namespace serenity::expiremental::msg_details
 
 		struct Formatter
 		{
-			virtual std::string_view Format( )             = 0;
-			virtual std::string      UpdateInternalView( ) = 0;
+			virtual std::string_view Format( ) = 0;
+			virtual std::string      UpdateInternalView( )
+			{
+				return "";
+			};
 		};
 
 		class Formatters
@@ -245,7 +248,6 @@ namespace serenity::expiremental::msg_details
 		struct Format_Arg_N : Formatter
 		{
 			Format_Arg_N( Message_Info &info );
-			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
 
 		  private:
@@ -304,7 +306,6 @@ namespace serenity::expiremental::msg_details
 		struct Format_Arg_Message : Formatter
 		{
 			Format_Arg_Message( Message_Info &info );
-			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
 
 		  private:
@@ -314,7 +315,6 @@ namespace serenity::expiremental::msg_details
 		struct Format_Arg_Char : Formatter
 		{
 			Format_Arg_Char( std::string_view ch );
-			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
 
 		  private:

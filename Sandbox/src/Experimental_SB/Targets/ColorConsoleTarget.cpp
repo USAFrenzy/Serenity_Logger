@@ -81,16 +81,16 @@ namespace serenity::expiremental::targets
 		coloredOutput = colorize;
 	}
 
-	// Other than some wierd color trailing on the right-hand side for some of the differently colored lines,
-	// This now ACTUALLY works as intended (color trailing might be result of known windows cell issue)
+	// Other than some wierd color trailing on the right-hand side for some of the
+	// differently colored lines, This now ACTUALLY works as intended (color trailing
+	// might be result of known windows cell issue)
 	void ColorConsole::SetConsoleInterface( console_interface mode )
 	{
 		consoleMode = mode;
 #ifdef WINDOWS_PLATFORM
 		if( mode == console_interface::std_out ) {
 			outputHandle = GetStdHandle( STD_OUTPUT_HANDLE );
-		}
-		else {
+		} else {
 			outputHandle = GetStdHandle( STD_ERROR_HANDLE );
 		}
 		DWORD opMode { 0 };
@@ -104,8 +104,7 @@ namespace serenity::expiremental::targets
 #else
 		if( mode == console_interface::std_out ) {
 			outputHandle = stdout;
-		}
-		else {
+		} else {
 			outputHandle = stderr;
 		}
 #endif  // WINDOWS_PLATFORM
@@ -136,8 +135,7 @@ namespace serenity::expiremental::targets
 #ifdef WINDOWS_PLATFORM
 			if( IsTerminalType( ) ) {
 				WriteConsole( outputHandle, message.data( ), message.size( ), NULL, NULL );
-			}
-			else {
+			} else {
 				WriteFile( outputHandle, message.data( ), message.size( ), NULL, NULL );
 			}
 #else

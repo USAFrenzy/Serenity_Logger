@@ -75,17 +75,16 @@ namespace serenity::expiremental::msg_details
 			if( fmt.front( ) == '%' ) {
 				flag.clear( );
 				flag.append( fmt.substr( 0, 2 ) );
-				auto position = std::find( SE_LUTS::allValidFlags.begin( ), SE_LUTS::allValidFlags.end( ), flag );
-				if( position != SE_LUTS::allValidFlags.end( ) ) {
-					index = std::distance( SE_LUTS::allValidFlags.begin( ), position );
+				auto position = std::find( SERENITY_LUTS::allValidFlags.begin( ), SERENITY_LUTS::allValidFlags.end( ), flag );
+				if( position != SERENITY_LUTS::allValidFlags.end( ) ) {
+					index = std::distance( SERENITY_LUTS::allValidFlags.begin( ), position );
 				}
 				FlagFormatter( index );
 				fmt.erase( 0, flag.size( ) );
 				if( fmt.empty( ) ) {
 					break;
 				}
-			}
-			else {
+			} else {
 				formatter.Emplace_Back( std::make_unique<Format_Arg_Char>( fmt.substr( 0, 1 ) ) );
 				fmt.erase( 0, 1 );
 				if( fmt.empty( ) ) {
@@ -111,7 +110,8 @@ namespace serenity::expiremental::msg_details
 		lastHour = cacheRef.tm_hour;
 		auto hr { lastHour };
 		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		std::string_view paddedHour { ( hr > 12 ) ? SE_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ] : SE_LUTS::numberStr[ hr ] };
+		std::string_view paddedHour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ]
+												  : SERENITY_LUTS::numberStr[ hr ] };
 		return std::string { paddedHour.data( ), paddedHour.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_a::Format( )
@@ -128,7 +128,7 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_b::UpdateInternalView( )
 	{
 		lastMonth = cacheRef.tm_mon;
-		std::string_view paddedMonth { SE_LUTS::numberStr[ lastMonth ] };
+		std::string_view paddedMonth { SERENITY_LUTS::numberStr[ lastMonth ] };
 		return std::string { paddedMonth.data( ), paddedMonth.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_b::Format( )
@@ -145,7 +145,7 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_d::UpdateInternalView( )
 	{
 		lastDay = cacheRef.tm_mday;
-		std::string_view paddedDay { SE_LUTS::numberStr[ lastDay ] };
+		std::string_view paddedDay { SERENITY_LUTS::numberStr[ lastDay ] };
 		return std::string { paddedDay.data( ), paddedDay.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_d::Format( )
@@ -179,8 +179,8 @@ namespace serenity::expiremental::msg_details
 	{
 		lastDay = cacheRef.tm_mday;
 		std::string result;
-		auto        day { SE_LUTS::numberStr[ cacheRef.tm_mday ] };
-		auto        month { SE_LUTS::short_months[ cacheRef.tm_mon ] };
+		auto        day { SERENITY_LUTS::numberStr[ cacheRef.tm_mday ] };
+		auto        month { SERENITY_LUTS::short_months[ cacheRef.tm_mon ] };
 		auto        year { timeRef.GetCurrentYearSV( cacheRef.tm_year, true ) };
 		return result.append( day ).append( month ).append( year );
 	}
@@ -200,19 +200,18 @@ namespace serenity::expiremental::msg_details
 		lastMin = cacheRef.tm_min;
 		auto hr { cacheRef.tm_hour };  // just to avoid another lookup, make local copy
 		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		auto        hour { ( hr > 12 ) ? SE_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ] : SE_LUTS::numberStr[ hr ] };
-		auto        min { SE_LUTS::numberStr[ lastMin ] };
+		auto hour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ] : SERENITY_LUTS::numberStr[ hr ] };
+		auto min { SERENITY_LUTS::numberStr[ lastMin ] };
 		std::string result;
 		return result.append( hour ).append( ":" ).append( min );
 	}
 	std::string_view Message_Formatter::Format_Arg_t::Format( )
 	{
-		auto sec = SE_LUTS::numberStr[ cacheRef.tm_sec ];
+		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		if( cacheRef.tm_min != lastMin ) {
 			auto result { hmStr = std::move( UpdateInternalView( ) ) };
 			return result.append( ":" ).append( sec );
-		}
-		else {
+		} else {
 			auto result { hmStr };
 			return result.append( ":" ).append( sec );
 		}
@@ -242,7 +241,7 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_x::UpdateInternalView( )
 	{
 		lastWkday = cacheRef.tm_wday;
-		std::string_view sWkday { SE_LUTS::short_weekdays[ lastWkday ] };
+		std::string_view sWkday { SERENITY_LUTS::short_weekdays[ lastWkday ] };
 		return std::string { sWkday.data( ), sWkday.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_x::Format( )
@@ -293,7 +292,7 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_B::UpdateInternalView( )
 	{
 		lastMonth = cacheRef.tm_mon;
-		std::string_view lMonth { SE_LUTS::long_months[ lastMonth ] };
+		std::string_view lMonth { SERENITY_LUTS::long_months[ lastMonth ] };
 		return std::string { lMonth.data( ), lMonth.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_B::Format( )
@@ -312,8 +311,8 @@ namespace serenity::expiremental::msg_details
 		std::string result;
 		lastDay = cacheRef.tm_mday;
 		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		auto m { SE_LUTS::numberStr[ static_cast<int64_t>( cacheRef.tm_mon ) + 1 ] };
-		auto d { SE_LUTS::numberStr[ lastDay ] };
+		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>( cacheRef.tm_mon ) + 1 ] };
+		auto d { SERENITY_LUTS::numberStr[ lastDay ] };
 		auto y { timeRef.GetCurrentYearSV( cacheRef.tm_year, true ) };
 		return result.append( m ).append( "/" ).append( d ).append( "/" ).append( y );
 	}
@@ -334,8 +333,8 @@ namespace serenity::expiremental::msg_details
 		lastDay = cacheRef.tm_mday;
 		auto y { timeRef.GetCurrentYearSV( cacheRef.tm_year, true ) };
 		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		auto m { SE_LUTS::numberStr[ static_cast<int64_t>( cacheRef.tm_mon ) + 1 ] };
-		auto d { SE_LUTS::numberStr[ lastDay ] };
+		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>( cacheRef.tm_mon ) + 1 ] };
+		auto d { SERENITY_LUTS::numberStr[ lastDay ] };
 		return result.append( y ).append( "-" ).append( m ).append( "-" ).append( d );
 	}
 	std::string_view Message_Formatter::Format_Arg_F::Format( )
@@ -352,7 +351,7 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_H::UpdateInternalView( )
 	{
 		lastHour = cacheRef.tm_hour;
-		std::string_view hr { SE_LUTS::numberStr[ lastHour ] };
+		std::string_view hr { SERENITY_LUTS::numberStr[ lastHour ] };
 		return std::string { hr.data( ), hr.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_H::Format( )
@@ -385,7 +384,7 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_M::UpdateInternalView( )
 	{
 		lastMin = cacheRef.tm_min;
-		std::string_view minute { SE_LUTS::numberStr[ lastMin ] };
+		std::string_view minute { SERENITY_LUTS::numberStr[ lastMin ] };
 		return std::string { minute.data( ), minute.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_M::Format( )
@@ -395,11 +394,6 @@ namespace serenity::expiremental::msg_details
 
 	// Format_N Functions
 	Message_Formatter::Format_Arg_N::Format_Arg_N( Message_Info &info ) : name( info.Name( ) ) { }
-	std::string Message_Formatter::Format_Arg_N::UpdateInternalView( )
-	{
-		// No Need to implement as it's not used
-		return "";
-	}
 	std::string_view Message_Formatter::Format_Arg_N::Format( )
 	{
 		return name;
@@ -414,7 +408,7 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_S::UpdateInternalView( )
 	{
 		lastSec = cacheRef.tm_sec;
-		std::string_view second { SE_LUTS::numberStr[ lastSec ] };
+		std::string_view second { SERENITY_LUTS::numberStr[ lastSec ] };
 		return std::string { second.data( ), second.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_S::Format( )
@@ -431,14 +425,14 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_T::UpdateInternalView( )
 	{
 		lastMin = cacheRef.tm_min;
-		auto        hour { SE_LUTS::numberStr[ cacheRef.tm_hour ] };
-		auto        min { SE_LUTS::numberStr[ lastMin ] };
+		auto        hour { SERENITY_LUTS::numberStr[ cacheRef.tm_hour ] };
+		auto        min { SERENITY_LUTS::numberStr[ lastMin ] };
 		std::string result { hour };
 		return result.append( ":" ).append( min );
 	}
 	std::string_view Message_Formatter::Format_Arg_T::Format( )
 	{
-		auto sec = SE_LUTS::numberStr[ cacheRef.tm_sec ];
+		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		if( cacheRef.tm_min != lastMin ) {
 			hmStr = UpdateInternalView( );
 		}
@@ -455,7 +449,7 @@ namespace serenity::expiremental::msg_details
 	std::string Message_Formatter::Format_Arg_X::UpdateInternalView( )
 	{
 		lastWkday = cacheRef.tm_wday;
-		std::string_view lWkday { SE_LUTS::long_weekdays[ lastWkday ] };
+		std::string_view lWkday { SERENITY_LUTS::long_weekdays[ lastWkday ] };
 		return std::string { lWkday.data( ), lWkday.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_X::Format( )
@@ -482,11 +476,6 @@ namespace serenity::expiremental::msg_details
 
 	// Format_Message Functions
 	Message_Formatter::Format_Arg_Message::Format_Arg_Message( Message_Info &info ) : message( info.Message( ) ) { }
-	std::string Message_Formatter::Format_Arg_Message::UpdateInternalView( )
-	{
-		// No Need to implement as it's not used
-		return "";
-	}
 	std::string_view Message_Formatter::Format_Arg_Message::Format( )
 	{
 		return message;
@@ -494,11 +483,6 @@ namespace serenity::expiremental::msg_details
 
 	// Format_Char Functions
 	Message_Formatter::Format_Arg_Char::Format_Arg_Char( std::string_view ch ) : m_char( ch.data( ), ch.size( ) ) { }
-	std::string Message_Formatter::Format_Arg_Char::UpdateInternalView( )
-	{
-		// No Need to implement as it's not used
-		return "";
-	}
 	std::string_view Message_Formatter::Format_Arg_Char::Format( )
 	{
 		return m_char;

@@ -3,31 +3,14 @@
 #include "Target.h"
 
 #include <fstream>
-#include <thread>
-#include <atomic>
 
 namespace serenity::expiremental::targets
 {
 	class FileTarget : public TargetBase
 	{
 	  public:
-		// Wanted To Abstract some of the variables away as the list was growing pretty large
-		struct BackgroundThread
-		{
-			std::atomic<bool>  cleanUpThreads { false };
-			std::atomic<bool>  flushThreadEnabled { false };
-			mutable std::mutex readWriteMutex;
-			std::thread        flushThread;
-		};
-		struct FileSettings
-		{
-			std::filesystem::path filePath;
-			std::vector<char>     fileBuffer;
-			size_t                bufferSize { DEFAULT_BUFFER_SIZE };
-			size_t                fileBufOccupied { 0 };
-		};
-
-		// default that will just write to a "Generic_Log.txt"
+		// default log directory and log file name that will just write to a
+		// "Generic_Log.txt"
 		FileTarget( );
 		// Will use default location for the log directory, but allows user file name
 		explicit FileTarget( std::string_view fileName, bool replaceIfExists = false );

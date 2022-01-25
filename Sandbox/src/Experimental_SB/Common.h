@@ -19,7 +19,7 @@
 #else
 	#if defined( __APPLE__ ) || ( __MACH__ )
 		#define MAC_PLATFORM
-	#else 
+	#else
 		#define UNIX_PLATFORM
 	#endif
 
@@ -33,12 +33,24 @@
 #define GB                  ( 1024 * MB )
 #define DEFAULT_BUFFER_SIZE ( 64 * KB )
 
+#include <filesystem>
 #include <string_view>
 #include <array>
+#include <unordered_map>
+#include <mutex>
+#include <thread>
+#include <atomic>
 
 namespace serenity::expiremental
 {
-	namespace SE_LUTS
+	enum class LineEnd
+	{
+		unix    = 0,
+		windows = 1,
+		mac     = 2,
+	};
+
+	namespace SERENITY_LUTS
 	{
 		// These need to be kept in order so FlagFormatter() doesn't break when called from StoreFormat()
 		//? Might alter FlagFormatter() so that it takes in the index found before being called so order here wouldn't matter?
@@ -64,7 +76,13 @@ namespace serenity::expiremental
 		"60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
 		"80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99" };
 
-	}  // namespace SE_LUTS
+		static std::unordered_map<LineEnd, std::string_view> line_ending = {
+		{ LineEnd::unix, "\n" },
+		{ LineEnd::windows, "\r\n" },
+		{ LineEnd::mac, "\r" },
+		};
+
+	}  // namespace SERENITY_LUTS
 
 	// TODO: Get Rid of 'test' once done
 	enum class LoggerLevel
@@ -76,7 +94,6 @@ namespace serenity::expiremental
 		error   = 4,
 		fatal   = 5,
 		off     = 6,
-		test    = 20,
 	};
 
 	static std::string_view MsgLevelToShortString( LoggerLevel level )
@@ -88,8 +105,6 @@ namespace serenity::expiremental
 			case LoggerLevel::warning: return "W"; break;
 			case LoggerLevel::error: return "E"; break;
 			case LoggerLevel::fatal: return "F"; break;
-			case LoggerLevel::test: return "T"; break;
-
 			default: return ""; break;
 		}
 	}
@@ -103,8 +118,6 @@ namespace serenity::expiremental
 			case LoggerLevel::warning: return "Warn"; break;
 			case LoggerLevel::error: return "Error"; break;
 			case LoggerLevel::fatal: return "Fatal"; break;
-			case LoggerLevel::test: return "Test"; break;
-
 			default: return ""; break;
 		}
 	}
@@ -113,6 +126,44 @@ namespace serenity::expiremental
 	{
 		local,
 		utc
+	};
+
+	struct BackgroundThread
+	{
+		std::atomic<bool>  cleanUpThreads { false };
+		std::atomic<bool>  flushThreadEnabled { false };
+		mutable std::mutex readWriteMutex;
+		std::thread        flushThread;
+	};
+
+	struct FileSettings
+	{
+		std::filesystem::path filePath;
+		std::vector<char>     fileBuffer;
+		size_t                bufferSize { DEFAULT_BUFFER_SIZE };
+		size_t                fileBufOccupied { 0 };
+	};
+
+	struct RotateSettings
+	{
+		// Will add an interval based setting later
+		// (something like a weekly basis on specified day and a daily setting)
+		bool   rotateOnFileSize { true };
+		size_t maxNumberOfFiles { 5 };
+		size_t fileSizeLimit { 512 * KB };
+
+		void                         SetOriginalSettings( const std::filesystem::path &filePath );
+		void                         SetCurrentFileSize( size_t currentSize );
+		const std::filesystem::path &OriginalPath( );
+		const std::filesystem::path &OriginalDirectory( );
+		const std::string &          OriginalName( );
+		const std::string &          OriginalExtension( );
+		const size_t &               FileSize( );
+
+	  private:
+		size_t                currentFileSize { 0 };
+		std::string           ext, fileName;
+		std::filesystem::path path, directory;
 	};
 }  // namespace serenity::expiremental
 

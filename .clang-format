@@ -114,7 +114,7 @@ AlwaysBreakAfterReturnType: None
 # aaaa =                         vs.     aaaa = "bbbb"
 #     "bbbb"                                    "cccc";
 #     "cccc";
-AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakBeforeMultilineStrings: false
 ########## Force break after template declaration only when ##########
 ########## the following declaration spans multiple lines.  ##########
 # template <typename T> T foo() {
@@ -166,7 +166,7 @@ BraceWrapping:
   AfterUnion: false
   AfterExternBlock: false
   BeforeCatch: true
-  BeforeElse: true
+  BeforeElse: false
   BeforeLambdaBody: true
   BeforeWhile: true
   IndentBraces: false
@@ -243,7 +243,7 @@ DeriveLineEnding: true
 ########## Analyze the formatted file for the most common alignment of & and *. Pointer   ##########
 ##########    and reference alignment styles are going to be updated according to the     ##########
 ########## preferences found in the file. PointerAlignment is then used only as fallback. ##########
-DerivePointerAlignment: false
+DerivePointerAlignment: true
 ########## Disables formatting completely ##########
 DisableFormat: false
 ########## If true, clang-format adds missing namespace ##########

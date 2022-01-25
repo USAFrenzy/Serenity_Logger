@@ -19,18 +19,17 @@ namespace serenity::expiremental::targets
 		TargetBase( std::string_view name, std::string_view msgPattern );
 		~TargetBase( );
 
-		void              SetFlushPolicy( Flush_Policy pPolicy );
-		Flush_Policy &    Policy( );
-		const std::string LoggerName( );
-		void              SetPattern( std::string_view pattern );
-		void              ResetPatternToDefault( );
-		void              SetLogLevel( LoggerLevel level );
-		void              WriteToBaseBuffer( bool fmtToBuf = true );
-		bool              isWriteToBuf( );
-		std::string *     Buffer( );
-		LoggerLevel       Level( );
-		void              SetLoggerName( std::string_view name );
-
+		void                             SetFlushPolicy( Flush_Policy pPolicy );
+		Flush_Policy &                   Policy( );
+		const std::string                LoggerName( );
+		void                             SetPattern( std::string_view pattern );
+		void                             ResetPatternToDefault( );
+		void                             SetLogLevel( LoggerLevel level );
+		void                             WriteToBaseBuffer( bool fmtToBuf = true );
+		bool                             isWriteToBuf( );
+		std::string *                    Buffer( );
+		LoggerLevel                      Level( );
+		void                             SetLoggerName( std::string_view name );
 		template <typename... Args> void trace( std::string_view s, Args &&...args );
 		template <typename... Args> void info( std::string_view s, Args &&...args );
 		template <typename... Args> void debug( std::string_view s, Args &&...args );

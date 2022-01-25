@@ -9,6 +9,13 @@ namespace serenity
 			Message_Info::Message_Info( std::string_view name, LoggerLevel level, message_time_mode mode )
 			  : m_name( name ), m_msgLevel( level ), m_msgTime( mode )
 			{
+#ifdef WINDOWS_PLATFORM
+				platformEOL = LineEnd::windows;
+#elif defined MAC_PLATFORM
+				platformEOL = LineEnd::mac;
+#else
+				platformEOL = LineEnd::unix;
+#endif  // WINDOWS_PLATFORM
 			}
 
 			// ############### New Function Added #################

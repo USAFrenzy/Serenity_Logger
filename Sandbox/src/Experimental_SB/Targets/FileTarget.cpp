@@ -23,8 +23,7 @@ namespace serenity::expiremental::targets
 			if( !std::filesystem::exists( logDirPath ) ) {
 				file_utils::CreateDir( logDirPath );
 				OpenFile( true );
-			}
-			else {
+			} else {
 				OpenFile( true );
 			}
 		}
@@ -48,8 +47,7 @@ namespace serenity::expiremental::targets
 			if( !std::filesystem::exists( logDirPath ) ) {
 				file_utils::CreateDir( logDirPath );
 				OpenFile( true );
-			}
-			else {
+			} else {
 				OpenFile( true );
 			}
 		}
@@ -73,12 +71,10 @@ namespace serenity::expiremental::targets
 					dir.remove_filename( );
 					file_utils::CreateDir( dir );
 					OpenFile( replaceIfExists );
-				}
-				else {
+				} else {
 					OpenFile( replaceIfExists );
 				}
-			}
-			else {
+			} else {
 				std::cerr << "Error In File Name\n";
 			}
 		}
@@ -102,12 +98,10 @@ namespace serenity::expiremental::targets
 					dir.remove_filename( );
 					file_utils::CreateDir( dir );
 					OpenFile( replaceIfExists );
-				}
-				else {
+				} else {
 					OpenFile( replaceIfExists );
 				}
-			}
-			else {
+			} else {
 				std::cerr << "Error In File Name\n";
 			}
 		}
@@ -139,8 +133,7 @@ namespace serenity::expiremental::targets
 #endif  // !WINDOWS_PLATFORM
 			if( !truncate ) {
 				fileHandle.open( fileOptions.filePath.string( ), std::ios_base::binary | std::ios_base::app );
-			}
-			else {
+			} else {
 				fileHandle.open( fileOptions.filePath.string( ), std::ios_base::binary | std::ios_base::trunc );
 			}
 #ifdef WINDOWS_PLATFORM
@@ -202,7 +195,8 @@ namespace serenity::expiremental::targets
 	void FileTarget::PrintMessage( std::string_view formatted )
 	{
 		// naive guard from always trying to take a lock regardless of
-		// whether the background flush thread is running or not (using manual lock due to scoping here)
+		// whether the background flush thread is running or not (using manual lock
+		// due to scoping here)
 		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
 			while( !flushWorker.readWriteMutex.try_lock( ) ) {
@@ -218,7 +212,8 @@ namespace serenity::expiremental::targets
 
 	void FileTarget::Flush( )
 	{
-		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
+		// If formatted message wasn't written to file and instead was written to the
+		// buffer, write to file now
 		if( Buffer( )->size( ) != 0 ) {
 			fileHandle.rdbuf( )->sputn( Buffer( )->data( ), Buffer( )->size( ) );
 			Buffer( )->clear( );
@@ -246,7 +241,8 @@ namespace serenity::expiremental::targets
 			{
 				if( flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) ) return;
 				auto &p_policy { policy };
-				// lambda that starts a background thread to flush on time interval given
+				// lambda that starts a background thread to flush on time interval
+				// given
 				auto periodic_flush = [ this, p_policy ]( )
 				{
 					using namespace std::chrono;
