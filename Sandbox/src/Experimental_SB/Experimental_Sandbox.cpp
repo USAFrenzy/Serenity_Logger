@@ -4,31 +4,42 @@
 #include "Targets/FileTarget.h"
 #include "Targets/RotatingTarget.h"
 
+// clang-format off
+// TODO: ####################################################################################################################################
+// TODO: Remove Internal Dependancy On Utilities File - I'll work on that as a separate project from this (as it honestly should have been)
+// TODO: ####################################################################################################################################
+// clang-format on
+
 #define INSTRUMENT 1
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
 #endif
 
+// TODO: Finish adding strftime equivalent flags and the last two original flags
+// TODO: and then figure a way to add user defined flags and formatting callbacks
 /************************************************************************************************************
-									custom flags
-						************************************
-	- %N (Name)					- %L (Full Message Level)		- %x (Short Weekday String)
-	- %l (Short Message Level)	    - %n (DD/MMM/YY Date)			- %X (Long Weekday String)
+									   custom flags
+							************************************
+	- %N (Name)                   - %L (Full Message Level)      - %x (Short Weekday String)
+	- %l (Short Message Level)	    - %n (DD/MMM/YY Date)          - %X (Long Weekday String)
 
-							The rest are strftime equivalents
-						******************************************
-	- %d (Day Of Month)			- %T (HH:MM:SS Time format)		- %S (Seconds)
-	- %D (MM/DD/YY Date)			- %w (weekday as decimal 0-6)	    - %Y (Year XXXX)
-	- %b (Abbrev Month Name)		- %F (YYYY-MM-DD Date)			- %M (Minute)
-	- %B (Full Month Name)		- %H (24hr Hour format)			- %y (year XX Format)
+							  The rest are strftime equivalents
+						 ******************************************
+	- %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
+	- %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year XXXX)
+	- %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
+	- %B (Full Month Name)	   - %H (24hr Hour format)	         - %y (year XX Format)
 ************************************************************************************************************/
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
+// Want to keep this utility file separate from actual project as it is itself a WIP project anyways
+#include <serenity/Utilities/Utilities.h>
 
+// This is just used to write all logs in the same directory as the serenity targets
 std::string SpdlogPath( bool rotate = false )
 {
 	if( !rotate ) {
@@ -92,6 +103,7 @@ int main( )
 	targets::FileTarget     testFile;
 	targets::RotatingTarget rotatingFile;
 
+	// TODO: Fix this to work as expected
 	// PeriodicSettings settings;
 	// settings.flushEvery = std::chrono::milliseconds( 500 );
 	// Flush_Policy policy( PeriodicOptions::timeBased, settings );
@@ -140,6 +152,7 @@ int main( )
 	C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
 	// This Is Now Fully Working As Well
+	// TODO: Add interval based rotation settings
 	serenity::expiremental::RotateSettings settings;
 	settings.fileSizeLimit    = 256 * KB;
 	settings.maxNumberOfFiles = 5;

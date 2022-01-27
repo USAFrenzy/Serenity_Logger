@@ -110,7 +110,7 @@ namespace serenity::expiremental::targets
 #endif  // WINDOWS_PLATFORM
 	}
 
-	console_interface ColorConsole::ConsoleInterface( )
+	const console_interface ColorConsole::ConsoleInterface( )
 	{
 		return consoleMode;
 	}

@@ -1,6 +1,6 @@
 #include "FileTarget.h"
 
-#include <serenity/Utilities/Utilities.h>
+//#include <serenity/Utilities/Utilities.h>
 #include <serenity/Color/Color.h>
 
 #include <iostream>  // specifically for std::cerr
@@ -21,7 +21,7 @@ namespace serenity::expiremental::targets
 
 		try {
 			if( !std::filesystem::exists( logDirPath ) ) {
-				file_utils::CreateDir( logDirPath );
+				std::filesystem::create_directories( logDirPath );
 				OpenFile( true );
 			} else {
 				OpenFile( true );
@@ -45,7 +45,7 @@ namespace serenity::expiremental::targets
 		logLevel             = LoggerLevel::trace;
 		try {
 			if( !std::filesystem::exists( logDirPath ) ) {
-				file_utils::CreateDir( logDirPath );
+				std::filesystem::create_directories( logDirPath );
 				OpenFile( true );
 			} else {
 				OpenFile( true );
@@ -65,17 +65,13 @@ namespace serenity::expiremental::targets
 		fileOptions.filePath.make_preferred( );
 		logLevel = LoggerLevel::trace;
 		try {
-			if( file_utils::ValidateFileName( fileOptions.filePath.filename( ).string( ) ) ) {
-				if( !std::filesystem::exists( fileOptions.filePath ) ) {
-					auto dir { fileOptions.filePath };
-					dir.remove_filename( );
-					file_utils::CreateDir( dir );
-					OpenFile( replaceIfExists );
-				} else {
-					OpenFile( replaceIfExists );
-				}
+			if( !std::filesystem::exists( fileOptions.filePath ) ) {
+				auto dir { fileOptions.filePath };
+				dir.remove_filename( );
+				std::filesystem::create_directories( dir );
+				OpenFile( replaceIfExists );
 			} else {
-				std::cerr << "Error In File Name\n";
+				OpenFile( replaceIfExists );
 			}
 		}
 		catch( const std::exception &e ) {
@@ -92,17 +88,13 @@ namespace serenity::expiremental::targets
 		fileOptions.filePath.make_preferred( );
 		logLevel = LoggerLevel::trace;
 		try {
-			if( file_utils::ValidateFileName( fileOptions.filePath.filename( ).string( ) ) ) {
-				if( !std::filesystem::exists( fileOptions.filePath ) ) {
-					auto dir { fileOptions.filePath };
-					dir.remove_filename( );
-					file_utils::CreateDir( dir );
-					OpenFile( replaceIfExists );
-				} else {
-					OpenFile( replaceIfExists );
-				}
+			if( !std::filesystem::exists( fileOptions.filePath ) ) {
+				auto dir { fileOptions.filePath };
+				dir.remove_filename( );
+				std::filesystem::create_directories( dir );
+				OpenFile( replaceIfExists );
 			} else {
-				std::cerr << "Error In File Name\n";
+				OpenFile( replaceIfExists );
 			}
 		}
 		catch( const std::exception &e ) {
@@ -180,7 +172,7 @@ namespace serenity::expiremental::targets
 			std::filesystem::path newFile { fileOptions.filePath };
 			newFile.replace_filename( newFileName );
 			CloseFile( );
-			file_utils::RenameFile( fileOptions.filePath, newFile );
+			std::filesystem::rename( fileOptions.filePath, newFile );
 			fileOptions.filePath = std::move( newFile );
 			OpenFile( );
 			return true;
@@ -194,9 +186,8 @@ namespace serenity::expiremental::targets
 
 	void FileTarget::PrintMessage( std::string_view formatted )
 	{
-		// naive guard from always trying to take a lock regardless of
-		// whether the background flush thread is running or not (using manual lock
-		// due to scoping here)
+		// naive guard from always trying to take a lock regardless of whether the background flush thread is running or not (using
+		// manual lock due to scoping here)
 		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
 			while( !flushWorker.readWriteMutex.try_lock( ) ) {
@@ -204,7 +195,6 @@ namespace serenity::expiremental::targets
 			}
 		}
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
-		if( policy.SubSetting( ) == PeriodicOptions::memUsage ) fileOptions.fileBufOccupied += formatted.size( );
 		if( flushThread ) {
 			flushWorker.readWriteMutex.unlock( );
 		}
@@ -212,8 +202,7 @@ namespace serenity::expiremental::targets
 
 	void FileTarget::Flush( )
 	{
-		// If formatted message wasn't written to file and instead was written to the
-		// buffer, write to file now
+		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
 		if( Buffer( )->size( ) != 0 ) {
 			fileHandle.rdbuf( )->sputn( Buffer( )->data( ), Buffer( )->size( ) );
 			Buffer( )->clear( );
@@ -229,20 +218,11 @@ namespace serenity::expiremental::targets
 			return;
 		}
 		switch( policy.SubSetting( ) ) {
-			case PeriodicOptions::memUsage:
-			{
-				auto shouldFlush { ( Buffer( )->size( ) >= policy.SecondarySettings( ).memoryFlushOn ) ||
-								   ( fileOptions.fileBufOccupied >= policy.SecondarySettings( ).memoryFlushOn ) };
-				if( !shouldFlush ) return;
-				Flush( );
-				fileOptions.fileBufOccupied = 0;
-			} break;
 			case PeriodicOptions::timeBased:
 			{
 				if( flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) ) return;
 				auto &p_policy { policy };
-				// lambda that starts a background thread to flush on time interval
-				// given
+				// lambda that starts a background thread to flush on time interval given
 				auto periodic_flush = [ this, p_policy ]( )
 				{
 					using namespace std::chrono;

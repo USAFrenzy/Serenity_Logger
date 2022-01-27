@@ -42,13 +42,13 @@ namespace serenity::expiremental::targets
 			// make copy for old file conversion
 			std::filesystem::path newFile { fileOptions.filePath };
 			newFile.replace_filename( newFileName );
-			CloseFile( );
-			file_utils::RenameFile( fileOptions.filePath, newFile );
+			if( fileHandle.is_open( ) ) {
+				CloseFile( );
+			}
+			std::filesystem::rename( fileOptions.filePath, newFile );
 			fileOptions.filePath = std::move( newFile );
-
 			rotateSettings.SetOriginalSettings( fileOptions.filePath );
 			RenameFileForRotation( );
-
 			if( !fileHandle.is_open( ) ) {
 				OpenFile( );
 			}
@@ -74,20 +74,18 @@ namespace serenity::expiremental::targets
 		// need to make copy to avoid changing old file so that we can rename it
 		auto        rotateFile { fileOptions.filePath };
 		std::string fileName { rotateFile.replace_extension( ).string( ) };
-		rotateFile.replace_filename( fileName.append( "_" ).append( "01" ).append( extension ) );
+		fileName.append( "_" ).append( "01" ).append( extension );
+		rotateFile.replace_filename( fileName );
 		if( fileHandle.is_open( ) ) {
 			CloseFile( );
 		}
-		try {
+		// only if the file doesn't exist already should it be renamed,
+		// otherwise we just open the already existing file
+		if( !std::filesystem::exists( rotateFile ) ) {
 			std::filesystem::rename( oldFile, rotateFile );
 		}
-		catch( const std::exception &e ) {
-			std::cerr << e.what( );
-		}
 		fileOptions.filePath = std::move( rotateFile );
-		if( !fileHandle.is_open( ) ) {
-			OpenFile( );
-		}
+		OpenFile( );
 	}
 
 	void RotatingTarget::SetRotateSettings( RotateSettings settings )
@@ -147,21 +145,18 @@ namespace serenity::expiremental::targets
 			if( !fileToReplace.empty( ) ) {
 				fileOptions.filePath = std::move( fileToReplace );
 			} else {
-				std::cerr << std::vformat( "Warning: Unable To Locate Oldest File "
-										   "With Base Name \"{}\". Opening And "
-										   "Truncating Previous File, \"{}\"\n",
+				std::cerr << std::vformat( "Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And Truncating "
+										   "Previous File, \"{}\"\n",
 										   std::make_format_args( originalFile, previousFile ) );
 			}
 
 			if( !FileTarget::OpenFile( true ) ) {
 				if( fileToReplace != previousFile ) {
-					std::cerr << std::vformat( "Error: Unable To Finish Rotating From File "
-											   "\"{}\" To File \"{}\"\n",
+					std::cerr << std::vformat( "Error: Unable To Finish Rotating From File \"{}\" To File \"{}\"\n",
 											   std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
 				} else {
-					std::cerr << std::vformat( "Error: Unable To Open And Truncate File "
-											   "\"{}\"\n",
-											   std::make_format_args( previousFile ) );
+					std::cerr
+					<< std::vformat( "Error: Unable To Open And Truncate File \"{}\"\n", std::make_format_args( previousFile ) );
 				}
 			}
 		}
@@ -176,16 +171,14 @@ namespace serenity::expiremental::targets
 			}
 		}
 		if( rotateFile ) {
-			if( rotateSettings.FileSize( ) >= rotateSettings.fileSizeLimit ) {
+			if( ( rotateSettings.FileSize( ) + formatted.size( ) ) >= rotateSettings.fileSizeLimit ) {
 				RotateFileOnSize( );
-				// Truncate file in RotateFileOnSize(), so should be safe to
-				// explicitly set to "0" here
+				// Truncate file in RotateFileOnSize(), so should be safe to explicitly set to "0" here
 				rotateSettings.SetCurrentFileSize( 0 );
 			}
 		}
-		rotateSettings.SetCurrentFileSize( rotateSettings.FileSize( ) + formatted.size( ) );
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
-		if( Policy( ).SubSetting( ) == PeriodicOptions::memUsage ) fileOptions.fileBufOccupied += formatted.size( );
+		rotateSettings.SetCurrentFileSize( rotateSettings.FileSize( ) + formatted.size( ) );
 		if( flushThread ) {
 			flushWorker.readWriteMutex.unlock( );
 		}

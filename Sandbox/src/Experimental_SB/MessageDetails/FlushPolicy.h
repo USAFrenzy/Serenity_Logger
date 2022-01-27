@@ -14,7 +14,6 @@ namespace serenity::expiremental
 	};
 	enum class PeriodicOptions
 	{
-		memUsage,
 		timeBased,
 		logLevelBased,
 		undef,
@@ -22,7 +21,6 @@ namespace serenity::expiremental
 
 	struct PeriodicSettings
 	{
-		size_t                    memoryFlushOn { 8 * KB };
 		std::chrono::milliseconds flushEvery { std::chrono::milliseconds( 500 ) };
 		LoggerLevel               flushOn { LoggerLevel::trace };
 	};

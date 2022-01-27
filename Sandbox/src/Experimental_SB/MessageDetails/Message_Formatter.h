@@ -2,7 +2,6 @@
 
 #include "../Common.h"
 #include "Message_Info.h"
-#include <serenity/Utilities/Utilities.h>  // for duration cast typedefs
 
 #include <format>
 #include <string>

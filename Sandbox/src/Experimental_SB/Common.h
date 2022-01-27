@@ -168,7 +168,7 @@ namespace serenity::expiremental
 }  // namespace serenity::expiremental
 
 #ifndef NDEBUG
-	#define DB_PRINT( msg, ... ) ( printf( "%s\n", std::format( msg, __VA_ARGS__ ).c_str( ) ) )
+	#define DB_PRINT( msg, ... ) ( std::cout << std::format( msg, __VA_ARGS__ ) )
 #else
 	#define DB_PRINT( msg, ... )
 #endif  // !NDEBUG

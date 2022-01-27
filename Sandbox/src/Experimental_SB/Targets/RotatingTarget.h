@@ -6,8 +6,8 @@ namespace serenity::expiremental::targets
 	{
 	  public:
 		/// <summary>
-		/// Default constructor will write to Rotating_Log.txt which will be renamed
-		/// as Rotating_Log_01.txt and follow rotation settings thereafter
+		/// Default constructor will write to Rotating_Log.txt which will be renamed as Rotating_Log_01.txt
+		/// and follow rotation settings thereafter in the "Logs" directory of where the app is running from
 		/// </summary>
 		RotatingTarget( );
 		/// <summary>
@@ -31,13 +31,9 @@ namespace serenity::expiremental::targets
 		/// create the neccessary directories as well as the file</param>
 		explicit RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
 								 bool replaceIfExists = false );
-		/// <summary>
-		/// Deleted
-		/// </summary>
+		/// <summary> Deleted </summary>
 		RotatingTarget( const RotatingTarget & ) = delete;
-		/// <summary>
-		/// Deleted
-		/// </summary>
+		/// <summary> Deleted </summary>
 		RotatingTarget &operator=( const RotatingTarget & ) = delete;
 		/// <summary>
 		/// When the deconstructor is called, will clean up background flush thread
