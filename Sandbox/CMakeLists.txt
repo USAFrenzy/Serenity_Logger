@@ -39,7 +39,7 @@ set (EXPERIMENTAL_SB_SOURCE_FILES
 "src/Experimental_SB/Targets/ColorConsoleTarget.cpp"
 "src/Experimental_SB/Targets/FileTarget.cpp"
 "src/Experimental_SB/Targets/RotatingTarget.cpp"
-"src/Experimental_SB/Common.h"
+"src/Experimental_SB/Common.cpp"
 )
 
 set (EXPERIMENTAL_SB_ALL_FILES ${EXPERIMENTAL_SB_HEADER_FILES} ${EXPERIMENTAL_SB_SOURCE_FILES})

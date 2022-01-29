@@ -53,7 +53,7 @@ namespace serenity::expiremental::msg_details
 		StoreFormat( );
 	}
 
-	Message_Formatter::Formatters &Message_Formatter::GetFormatters( )
+	 Message_Formatter::Formatters &Message_Formatter::GetFormatters( )
 	{
 		return formatter;
 	}
@@ -495,10 +495,7 @@ namespace serenity::expiremental::msg_details
 		// Reserve an estimated amount based off arg sizes
 		localBuffer.reserve( m_Formatter.size( ) * 32 );
 	}
-	Message_Formatter::Formatters::Formatters( )
-	{
-		localBuffer.reserve( 512 );
-	}
+
 	void Message_Formatter::Formatters::Emplace_Back( std::unique_ptr<Formatter> &&formatter )
 	{
 		m_Formatter.emplace_back( std::move( formatter ) );

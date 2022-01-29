@@ -6,21 +6,38 @@
 #include <format>
 #include <string>
 
+// TODO: Finish the light documentation
 namespace serenity::expiremental::msg_details
 {
 	class Message_Formatter
 	{
 	  public:
+		/// <summary>
+		/// Constructor that takes in a format pattern paramater and a Message_Info class pointer.
+		/// The format pattern is set and internally stored by its individual flag arguments to iterate over when a message is logged.
+		/// The Message_Info class is used to populate the arguments or references when storing and using the individual flag
+		/// components
+		/// </summary>
 		explicit Message_Formatter( std::string_view pattern, Message_Info *details );
-		~Message_Formatter( )                          = default;
-		Message_Formatter( )                           = delete;
+		/// <summary> Default Destructor clean up </summary>
+		~Message_Formatter( ) = default;
+		/// <summary> Deleted </summary>
+		Message_Formatter( ) = delete;
+		/// <summary> Deleted </summary>
 		Message_Formatter( const Message_Formatter & ) = delete;
+		/// <summary> Deleted </summary>
 		Message_Formatter &operator=( const Message_Info & ) = delete;
-
+		/// <summary>
+		/// Virtual Base Struct that all formatter structs inherit from and implement
+		/// </summary>
 		struct Formatter
 		{
+			/// <summary> Each derived class or struct must implement this funtion. This function determines how an argument will be
+			/// formatted </summary>
 			virtual std::string_view Format( ) = 0;
-			virtual std::string      UpdateInternalView( )
+			/// <summary> A derived class or struct may implement this function. This function determines if an argument needs to be
+			/// updated if a derived class or struct implements some form of caching with argument values</summary>
+			virtual std::string UpdateInternalView( )
 			{
 				return "";
 			};
@@ -29,21 +46,58 @@ namespace serenity::expiremental::msg_details
 		class Formatters
 		{
 		  public:
+			/// <summary>
+			/// Constructor that takes ownership of the vector of Formatter pointers passed in. The class internal buffer reserves 32
+			/// bytes per pointer to help mitigate reallocations for how these arguments are formatted from the formatter pointers
+			/// </summary>
 			Formatters( std::vector<std::unique_ptr<Formatter>> &&container );
-			Formatters( );
-			void             Emplace_Back( std::unique_ptr<Formatter> &&formatter );
+			/// <summary> Default Constructor. Internal formatters container is empty and internal buffer holds the compiler-specific
+			/// capacity of a string </summary>
+			Formatters( ) = default;
+			/// <summary>
+			/// Takes ownership of the Formatter pointer passed in and stores this pointer in the internal Formatters container.
+			/// Reserves the current size of the Formatters container plus 32 bytes for the Formatter pointer passed in to help
+			/// mitigate reallocations for how these arguments are formatted from the formatter pointers
+			/// </summary>
+			void Emplace_Back( std::unique_ptr<Formatter> &&formatter );
+			/// <summary>
+			/// Calls each Formatter pointer's specific Format() implementation that is stored in the internal Formatter container in
+			/// the order they are stored and returns the whole formatted string as a view
+			/// </summary>
+			/// <returns>string view of cumulative formatted arguments</returns>
 			std::string_view Format( );
-			void             Clear( );
+			/// <summary> Clears the internal Formatter pointers container </summary>
+			void Clear( );
 
 		  private:
 			std::string                             localBuffer;
 			std::vector<std::unique_ptr<Formatter>> m_Formatter;
 		};
-
-		void          FlagFormatter( size_t flag );
-		void          SetPattern( std::string_view pattern );
-		Formatters &  GetFormatters( );
-		void          StoreFormat( );
+		/// <summary>
+		/// If called by StoreFormat(), Takes in an index found by matching the position of the potential flag to the position of that
+		/// flag in the valid flags array, initializes and stores the Formatter struct in the Message_Formatter's instance of
+		/// Formatters class, otherwise,  just intializes and stores the Formatter struct at this index
+		/// </summary>
+		void FlagFormatter( size_t flag );
+		/// <summary>
+		/// Sets the format pattern variable and then parses the format string to store each flag as its own individual Formmater
+		/// struct that will be in charge of how each flag is formatted
+		/// </summary>
+		void SetPattern( std::string_view pattern );
+		/// <summary>
+		/// Returns the Message_Formatter's instance of the Formatters container which holds the individual Formatter pointers. Can be
+		/// called to manually call the Format( ) function for all arguments stored
+		/// </summary>
+		Formatters &GetFormatters( );
+		/// <summary>
+		/// SetPattern( ) calls this function internally. Parses the internal format pattern string stored from SetPattern( )
+		/// or from a constructor that took in a format pattern argument and for each flag found by the delimiter "%", will try to
+		/// match the potential flag to the index of the valid flags array. If a match is found, initializes and stores the respective
+		/// Formatter struct for that flag, otherwise, stores this value as well as any other char, by passing in the value to
+		/// initialize and store a Format_Arg_Char struct
+		/// </summary>
+		void StoreFormat( );
+		/// <summary> Returns a pointer to the Message_Info instance used by Message_Formatter </summary>
 		Message_Info *MessageDetails( );
 
 		// Formatting Structs For Flag Arguments
