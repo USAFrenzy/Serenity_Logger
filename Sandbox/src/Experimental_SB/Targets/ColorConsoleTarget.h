@@ -52,7 +52,7 @@ namespace serenity::expiremental::targets
 		void SetConsoleInterface( console_interface mode );
 		/// <summary> Returns the current console mode being used </summary>
 		const console_interface ConsoleInterface( );
-		/// <summary> Enables/Diables colored text output </summary>
+		/// <summary> Enables/Disables colored text output </summary>
 		void ColorizeOutput( bool colorize );
 		/// <summary> Initializes the default colors to use for log levels </summary>
 		void SetOriginalColors( );
