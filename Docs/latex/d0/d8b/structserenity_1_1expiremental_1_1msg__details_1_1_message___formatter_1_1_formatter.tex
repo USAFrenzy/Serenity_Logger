@@ -1,0 +1,41 @@
+\hypertarget{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{}\doxysection{serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Formatter Struct Reference}
+\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}\index{serenity::expiremental::msg\_details::Message\_Formatter::Formatter@{serenity::expiremental::msg\_details::Message\_Formatter::Formatter}}
+
+
+Virtual Base Struct that all formatter structs inherit from and implement.  
+
+
+
+
+{\ttfamily \#include $<$Message\+\_\+\+Formatter.\+h$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual std\+::string\+\_\+view \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}{Format}} ()=0
+\item 
+virtual std\+::string \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}{Update\+Internal\+View}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Virtual Base Struct that all formatter structs inherit from and implement. 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Formatter@{serenity::expiremental::msg\_details::Message\_Formatter::Formatter}!Format@{Format}}
+\index{Format@{Format}!serenity::expiremental::msg\_details::Message\_Formatter::Formatter@{serenity::expiremental::msg\_details::Message\_Formatter::Formatter}}
+\doxysubsubsection{\texorpdfstring{Format()}{Format()}}
+{\footnotesize\ttfamily virtual std\+::string\+\_\+view serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter\+::\+Format (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+Each derived class or struct must implement this funtion. This function determines how an argument will be formatted \mbox{\Hypertarget{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Formatter@{serenity::expiremental::msg\_details::Message\_Formatter::Formatter}!UpdateInternalView@{UpdateInternalView}}
+\index{UpdateInternalView@{UpdateInternalView}!serenity::expiremental::msg\_details::Message\_Formatter::Formatter@{serenity::expiremental::msg\_details::Message\_Formatter::Formatter}}
+\doxysubsubsection{\texorpdfstring{UpdateInternalView()}{UpdateInternalView()}}
+{\footnotesize\ttfamily virtual std\+::string serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter\+::\+Update\+Internal\+View (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+A derived class or struct may implement this function. This function determines if an argument needs to be updated if a derived class or struct implements some form of caching with argument values 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+h\end{DoxyCompactItemize}

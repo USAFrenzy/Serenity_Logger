@@ -1,0 +1,332 @@
+\hypertarget{_message___formatter_8h_source}{}\doxysection{Message\+\_\+\+Formatter.\+h}
+\label{_message___formatter_8h_source}\index{Serenity\_Logger/Sandbox/src/Experimental\_SB/MessageDetails/Message\_Formatter.h@{Serenity\_Logger/Sandbox/src/Experimental\_SB/MessageDetails/Message\_Formatter.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{3 \textcolor{preprocessor}{\#include "{}../Common.h"{}}}
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#include "{}Message\_Info.h"{}}}
+\DoxyCodeLine{5 }
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#include <format>}}
+\DoxyCodeLine{7 \textcolor{preprocessor}{\#include <string>}}
+\DoxyCodeLine{8 }
+\DoxyCodeLine{9 \textcolor{comment}{// TODO: Finish the light documentation}}
+\DoxyCodeLine{10 \textcolor{keyword}{namespace }serenity::expiremental::msg\_details}
+\DoxyCodeLine{11 \{}
+\DoxyCodeLine{12     \textcolor{keyword}{class }\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter}{Message\_Formatter}}}
+\DoxyCodeLine{13     \{}
+\DoxyCodeLine{14       \textcolor{keyword}{public}:}
+\DoxyCodeLine{19         \textcolor{keyword}{explicit} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_a6e55fbba79c6a1e79e0f9f1b0add6b79}{Message\_Formatter}}( std::string\_view pattern, \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} *details );}
+\DoxyCodeLine{21         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_aab746b42ee89b8b9b0e2deac6c7f74cb}{\string~Message\_Formatter}}( ) = \textcolor{keywordflow}{default};}
+\DoxyCodeLine{23         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_a6e55fbba79c6a1e79e0f9f1b0add6b79}{Message\_Formatter}}( ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{25         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_abca7fd668660d11f40e18112733925b0}{Message\_Formatter}}( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter}{Message\_Formatter}} \& ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{27         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter}{Message\_Formatter}} \&\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_a1cec1f48709b1faf65dd39bab8f46cf3}{operator=}}( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \& ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{29         \textcolor{keyword}{struct }\mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}}}
+\DoxyCodeLine{30         \{}
+\DoxyCodeLine{33             \textcolor{keyword}{virtual} std::string\_view \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}{Format}}( ) = 0;}
+\DoxyCodeLine{36             \textcolor{keyword}{virtual} std::string \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}{UpdateInternalView}}( )}
+\DoxyCodeLine{37             \{}
+\DoxyCodeLine{38                 \textcolor{keywordflow}{return} \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{39             \};}
+\DoxyCodeLine{40         \};}
+\DoxyCodeLine{41 }
+\DoxyCodeLine{42         \textcolor{keyword}{class }\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters}{Formatters}}}
+\DoxyCodeLine{43         \{}
+\DoxyCodeLine{44           \textcolor{keyword}{public}:}
+\DoxyCodeLine{46             \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_adb5cc9d06d4fd5c02af76fbeaaea4616}{Formatters}}( std::vector<std::unique\_ptr<Formatter>> \&\&container );}
+\DoxyCodeLine{48             \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_adb5cc9d06d4fd5c02af76fbeaaea4616}{Formatters}}( ) = \textcolor{keywordflow}{default};}
+\DoxyCodeLine{51             \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_ae4e3921204e8fdd814fa4716224fe450}{Emplace\_Back}}( std::unique\_ptr<Formatter> \&\&formatter );}
+\DoxyCodeLine{54             std::string\_view \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a4f811227d7ef4cc22ca98fc16a55f61a}{Format}}( );}
+\DoxyCodeLine{56             \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a1a09dd32bf100ea3effde8b80147ddb9}{Clear}}( );}
+\DoxyCodeLine{57 }
+\DoxyCodeLine{58           \textcolor{keyword}{private}:}
+\DoxyCodeLine{59             std::string                             localBuffer;}
+\DoxyCodeLine{60             std::vector<std::unique\_ptr<Formatter>> m\_Formatter;}
+\DoxyCodeLine{61         \};}
+\DoxyCodeLine{63         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_ac64806c90b2c385a4b64dc45f6591cab}{FlagFormatter}}( \textcolor{keywordtype}{size\_t} flag );}
+\DoxyCodeLine{66         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_a94b44c9dcb793f3296ca05be93b49310}{SetPattern}}( std::string\_view pattern );}
+\DoxyCodeLine{69         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters}{Formatters}} \&\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_ae44c5a786048a5364fbe63ec1b622f7e}{GetFormatters}}( );}
+\DoxyCodeLine{75         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_a87b86853299440df53d8dc3b9721d8ef}{StoreFormat}}( );}
+\DoxyCodeLine{77         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} *\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_af2e22f9a4af27be2162820477ae9092b}{MessageDetails}}( );}
+\DoxyCodeLine{78 }
+\DoxyCodeLine{79         \textcolor{comment}{// Formatting Structs For Flag Arguments}}
+\DoxyCodeLine{80       \textcolor{keyword}{private}:}
+\DoxyCodeLine{82         \textcolor{keyword}{struct }Format\_Arg\_a : \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}}}
+\DoxyCodeLine{83         \{}
+\DoxyCodeLine{86             Format\_Arg\_a( \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \&info );}
+\DoxyCodeLine{89             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{93             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{94 }
+\DoxyCodeLine{95           \textcolor{keyword}{private}:}
+\DoxyCodeLine{96             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{97             \textcolor{keywordtype}{int}            lastHour;}
+\DoxyCodeLine{98             std::string    hour;}
+\DoxyCodeLine{99         \};}
+\DoxyCodeLine{100 }
+\DoxyCodeLine{102         \textcolor{keyword}{struct }Format\_Arg\_b : Formatter}
+\DoxyCodeLine{103         \{}
+\DoxyCodeLine{106             Format\_Arg\_b( \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \&info );}
+\DoxyCodeLine{109             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{113             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{114 }
+\DoxyCodeLine{115           \textcolor{keyword}{private}:}
+\DoxyCodeLine{116             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{117             \textcolor{keywordtype}{int}            lastMonth;}
+\DoxyCodeLine{118             std::string    month;}
+\DoxyCodeLine{119         \};}
+\DoxyCodeLine{120 }
+\DoxyCodeLine{122         \textcolor{keyword}{struct }Format\_Arg\_d : Formatter}
+\DoxyCodeLine{123         \{}
+\DoxyCodeLine{126             Format\_Arg\_d( Message\_Info \&info );}
+\DoxyCodeLine{129             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{133             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{134 }
+\DoxyCodeLine{135           \textcolor{keyword}{private}:}
+\DoxyCodeLine{136             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{137             \textcolor{keywordtype}{int}            lastDay;}
+\DoxyCodeLine{138             std::string    day;}
+\DoxyCodeLine{139         \};}
+\DoxyCodeLine{140 }
+\DoxyCodeLine{143         \textcolor{keyword}{struct }Format\_Arg\_l : Formatter}
+\DoxyCodeLine{144         \{}
+\DoxyCodeLine{146             Format\_Arg\_l( Message\_Info \&info );}
+\DoxyCodeLine{149             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{153             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{154 }
+\DoxyCodeLine{155           \textcolor{keyword}{private}:}
+\DoxyCodeLine{156             LoggerLevel \&levelRef;}
+\DoxyCodeLine{157             LoggerLevel  lastLevel;}
+\DoxyCodeLine{158             std::string  levelStr;}
+\DoxyCodeLine{159         \};}
+\DoxyCodeLine{160 }
+\DoxyCodeLine{163         \textcolor{keyword}{struct }Format\_Arg\_n : Formatter}
+\DoxyCodeLine{164         \{}
+\DoxyCodeLine{167             Format\_Arg\_n( Message\_Info \&info );}
+\DoxyCodeLine{170             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{175             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{176 }
+\DoxyCodeLine{177           \textcolor{keyword}{private}:}
+\DoxyCodeLine{178             Message\_Time \& timeRef;}
+\DoxyCodeLine{179             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{180             \textcolor{keywordtype}{int}            lastDay;}
+\DoxyCodeLine{181             std::string    ddmmyy;}
+\DoxyCodeLine{182         \};}
+\DoxyCodeLine{183 }
+\DoxyCodeLine{186         \textcolor{keyword}{struct }Format\_Arg\_t : Formatter}
+\DoxyCodeLine{187         \{}
+\DoxyCodeLine{190             Format\_Arg\_t( Message\_Info \&info );}
+\DoxyCodeLine{193             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{198             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{199 }
+\DoxyCodeLine{200           \textcolor{keyword}{private}:}
+\DoxyCodeLine{201             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{202             \textcolor{keywordtype}{int}            lastMin;}
+\DoxyCodeLine{203             std::string    hmStr;}
+\DoxyCodeLine{204         \};}
+\DoxyCodeLine{205 }
+\DoxyCodeLine{208         \textcolor{keyword}{struct }Format\_Arg\_w : Formatter}
+\DoxyCodeLine{209         \{}
+\DoxyCodeLine{212             Format\_Arg\_w( Message\_Info \&info );}
+\DoxyCodeLine{215             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{220             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{221 }
+\DoxyCodeLine{222           \textcolor{keyword}{private}:}
+\DoxyCodeLine{223             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{224             \textcolor{keywordtype}{int}            lastDay \{ 0 \};}
+\DoxyCodeLine{225             std::string    lastDecDay;}
+\DoxyCodeLine{226         \};}
+\DoxyCodeLine{227 }
+\DoxyCodeLine{230         \textcolor{keyword}{struct }Format\_Arg\_x : Formatter}
+\DoxyCodeLine{231         \{}
+\DoxyCodeLine{234             Format\_Arg\_x( Message\_Info \&info );}
+\DoxyCodeLine{237             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{242             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{243 }
+\DoxyCodeLine{244           \textcolor{keyword}{private}:}
+\DoxyCodeLine{245             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{246             std::string    wkday;}
+\DoxyCodeLine{247             \textcolor{keywordtype}{int}            lastWkday \{ 0 \};}
+\DoxyCodeLine{248         \};}
+\DoxyCodeLine{249 }
+\DoxyCodeLine{252         \textcolor{keyword}{struct }Format\_Arg\_y : Formatter}
+\DoxyCodeLine{253         \{}
+\DoxyCodeLine{256             Format\_Arg\_y( Message\_Info \&info );}
+\DoxyCodeLine{259             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{264             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{265 }
+\DoxyCodeLine{266           \textcolor{keyword}{private}:}
+\DoxyCodeLine{267             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{268             Message\_Time \& timeRef;}
+\DoxyCodeLine{269             \textcolor{keywordtype}{int}            lastYear;}
+\DoxyCodeLine{270             std::string    year;}
+\DoxyCodeLine{271         \};}
+\DoxyCodeLine{272 }
+\DoxyCodeLine{275         \textcolor{keyword}{struct }Format\_Arg\_A : Formatter}
+\DoxyCodeLine{276         \{}
+\DoxyCodeLine{279             Format\_Arg\_A( Message\_Info \&info );}
+\DoxyCodeLine{283             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{288             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{289 }
+\DoxyCodeLine{290           \textcolor{keyword}{private}:}
+\DoxyCodeLine{291             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{292             \textcolor{keywordtype}{int}            lastHour;}
+\DoxyCodeLine{293             std::string    dayHalf;}
+\DoxyCodeLine{294         \};}
+\DoxyCodeLine{295 }
+\DoxyCodeLine{298         \textcolor{keyword}{struct }Format\_Arg\_B : Formatter}
+\DoxyCodeLine{299         \{}
+\DoxyCodeLine{302             Format\_Arg\_B( Message\_Info \&info );}
+\DoxyCodeLine{305             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{310             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{311 }
+\DoxyCodeLine{312           \textcolor{keyword}{private}:}
+\DoxyCodeLine{313             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{314             \textcolor{keywordtype}{int}            lastMonth;}
+\DoxyCodeLine{315             std::string    month;}
+\DoxyCodeLine{316         \};}
+\DoxyCodeLine{317 }
+\DoxyCodeLine{320         \textcolor{keyword}{struct }Format\_Arg\_D : Formatter}
+\DoxyCodeLine{321         \{}
+\DoxyCodeLine{324             Format\_Arg\_D( Message\_Info \&info );}
+\DoxyCodeLine{327             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{332             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{333 }
+\DoxyCodeLine{334           \textcolor{keyword}{private}:}
+\DoxyCodeLine{335             Message\_Time \& timeRef;}
+\DoxyCodeLine{336             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{337             \textcolor{keywordtype}{int}            lastDay;}
+\DoxyCodeLine{338             std::string    mmddyy;}
+\DoxyCodeLine{339         \};}
+\DoxyCodeLine{340 }
+\DoxyCodeLine{342         \textcolor{keyword}{struct }Format\_Arg\_F : Formatter}
+\DoxyCodeLine{343         \{}
+\DoxyCodeLine{346             Format\_Arg\_F( Message\_Info \&info );}
+\DoxyCodeLine{349             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{354             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{355 }
+\DoxyCodeLine{356           \textcolor{keyword}{private}:}
+\DoxyCodeLine{357             Message\_Time \& timeRef;}
+\DoxyCodeLine{358             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{359             \textcolor{keywordtype}{int}            lastDay;}
+\DoxyCodeLine{360             std::string    yymmdd;}
+\DoxyCodeLine{361         \};}
+\DoxyCodeLine{362 }
+\DoxyCodeLine{365         \textcolor{keyword}{struct }Format\_Arg\_H : Formatter}
+\DoxyCodeLine{366         \{}
+\DoxyCodeLine{369             Format\_Arg\_H( Message\_Info \&info );}
+\DoxyCodeLine{372             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{377             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{378 }
+\DoxyCodeLine{379           \textcolor{keyword}{private}:}
+\DoxyCodeLine{380             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{381             \textcolor{keywordtype}{int}            lastHour;}
+\DoxyCodeLine{382             std::string    hour;}
+\DoxyCodeLine{383         \};}
+\DoxyCodeLine{384 }
+\DoxyCodeLine{387         \textcolor{keyword}{struct }Format\_Arg\_L : Formatter}
+\DoxyCodeLine{388         \{}
+\DoxyCodeLine{390             Format\_Arg\_L( Message\_Info \&info );}
+\DoxyCodeLine{392             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{396             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{397 }
+\DoxyCodeLine{398           \textcolor{keyword}{private}:}
+\DoxyCodeLine{399             LoggerLevel \&levelRef;}
+\DoxyCodeLine{400             LoggerLevel  lastLevel;}
+\DoxyCodeLine{401             std::string  levelStr;}
+\DoxyCodeLine{402         \};}
+\DoxyCodeLine{403 }
+\DoxyCodeLine{405         \textcolor{keyword}{struct }Format\_Arg\_M : Formatter}
+\DoxyCodeLine{406         \{}
+\DoxyCodeLine{409             Format\_Arg\_M( Message\_Info \&info );}
+\DoxyCodeLine{412             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{417             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{418 }
+\DoxyCodeLine{419           \textcolor{keyword}{private}:}
+\DoxyCodeLine{420             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{421             \textcolor{keywordtype}{int}            lastMin;}
+\DoxyCodeLine{422             std::string    min;}
+\DoxyCodeLine{423         \};}
+\DoxyCodeLine{424 }
+\DoxyCodeLine{426         \textcolor{keyword}{struct }Format\_Arg\_N : Formatter}
+\DoxyCodeLine{427         \{}
+\DoxyCodeLine{429             Format\_Arg\_N( Message\_Info \&info );}
+\DoxyCodeLine{431             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{432 }
+\DoxyCodeLine{433           \textcolor{keyword}{private}:}
+\DoxyCodeLine{434             std::string \&name;}
+\DoxyCodeLine{435         \};}
+\DoxyCodeLine{436 }
+\DoxyCodeLine{438         \textcolor{keyword}{struct }Format\_Arg\_S : Formatter}
+\DoxyCodeLine{439         \{}
+\DoxyCodeLine{442             Format\_Arg\_S( Message\_Info \&info );}
+\DoxyCodeLine{445             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{450             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{451 }
+\DoxyCodeLine{452           \textcolor{keyword}{private}:}
+\DoxyCodeLine{453             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{454             \textcolor{keywordtype}{int}            lastSec;}
+\DoxyCodeLine{455             std::string    sec;}
+\DoxyCodeLine{456         \};}
+\DoxyCodeLine{457 }
+\DoxyCodeLine{460         \textcolor{keyword}{struct }Format\_Arg\_T : Formatter}
+\DoxyCodeLine{461         \{}
+\DoxyCodeLine{464             Format\_Arg\_T( Message\_Info \&info );}
+\DoxyCodeLine{467             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{472             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{473 }
+\DoxyCodeLine{474           \textcolor{keyword}{private}:}
+\DoxyCodeLine{475             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{476             \textcolor{keywordtype}{int}            lastMin;}
+\DoxyCodeLine{477             std::string    hmStr;}
+\DoxyCodeLine{478         \};}
+\DoxyCodeLine{479 }
+\DoxyCodeLine{482         \textcolor{keyword}{struct }Format\_Arg\_X : Formatter}
+\DoxyCodeLine{483         \{}
+\DoxyCodeLine{486             Format\_Arg\_X( Message\_Info \&info );}
+\DoxyCodeLine{489             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{493             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{494 }
+\DoxyCodeLine{495           \textcolor{keyword}{private}:}
+\DoxyCodeLine{496             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{497             \textcolor{keywordtype}{int}            lastWkday;}
+\DoxyCodeLine{498             std::string    wkday;}
+\DoxyCodeLine{499         \};}
+\DoxyCodeLine{500 }
+\DoxyCodeLine{502         \textcolor{keyword}{struct }Format\_Arg\_Y : Formatter}
+\DoxyCodeLine{503         \{}
+\DoxyCodeLine{506             Format\_Arg\_Y( Message\_Info \&info );}
+\DoxyCodeLine{508             std::string UpdateInternalView( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{512             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{513 }
+\DoxyCodeLine{514           \textcolor{keyword}{private}:}
+\DoxyCodeLine{515             Message\_Time \& timeRef;}
+\DoxyCodeLine{516             \textcolor{keyword}{const} std::tm \&cacheRef;}
+\DoxyCodeLine{517             \textcolor{keywordtype}{int}            lastYear;}
+\DoxyCodeLine{518             std::string    year;}
+\DoxyCodeLine{519         \};}
+\DoxyCodeLine{520 }
+\DoxyCodeLine{523         \textcolor{keyword}{struct }Format\_Arg\_Message : Formatter}
+\DoxyCodeLine{524         \{}
+\DoxyCodeLine{526             Format\_Arg\_Message( Message\_Info \&info );}
+\DoxyCodeLine{528             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{529 }
+\DoxyCodeLine{530           \textcolor{keyword}{private}:}
+\DoxyCodeLine{531             std::string \&message;}
+\DoxyCodeLine{532         \};}
+\DoxyCodeLine{533 }
+\DoxyCodeLine{536         \textcolor{keyword}{struct }Format\_Arg\_Char : Formatter}
+\DoxyCodeLine{537         \{}
+\DoxyCodeLine{539             Format\_Arg\_Char( std::string\_view ch );}
+\DoxyCodeLine{541             std::string\_view Format( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{542 }
+\DoxyCodeLine{543           \textcolor{keyword}{private}:}
+\DoxyCodeLine{544             std::string m\_char;}
+\DoxyCodeLine{545         \};}
+\DoxyCodeLine{546 }
+\DoxyCodeLine{547         Formatters    formatter;}
+\DoxyCodeLine{548         std::string   fmtPattern;}
+\DoxyCodeLine{549         Message\_Info *msgInfo;}
+\DoxyCodeLine{550     \};}
+\DoxyCodeLine{551 \}  \textcolor{comment}{// namespace serenity::expiremental::msg\_details}}
+
+\end{DoxyCode}

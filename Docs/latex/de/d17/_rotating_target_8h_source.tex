@@ -1,0 +1,33 @@
+\hypertarget{_rotating_target_8h_source}{}\doxysection{Rotating\+Target.\+h}
+\label{_rotating_target_8h_source}\index{Serenity\_Logger/Sandbox/src/Experimental\_SB/Targets/RotatingTarget.h@{Serenity\_Logger/Sandbox/src/Experimental\_SB/Targets/RotatingTarget.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{preprocessor}{\#include "{}FileTarget.h"{}}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{3 \textcolor{keyword}{namespace }serenity::expiremental::targets}
+\DoxyCodeLine{4 \{}
+\DoxyCodeLine{14     \textcolor{keyword}{class }\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}{RotatingTarget}} : \textcolor{keyword}{public} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{FileTarget}}}
+\DoxyCodeLine{15     \{}
+\DoxyCodeLine{16       \textcolor{keyword}{public}:}
+\DoxyCodeLine{19         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a51151ca9fc9f97139b234d25d59e9c0a}{RotatingTarget}}( );}
+\DoxyCodeLine{20         \textcolor{keyword}{explicit} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a51151ca9fc9f97139b234d25d59e9c0a}{RotatingTarget}}( std::string\_view name, std::string\_view filePath, \textcolor{keywordtype}{bool} replaceIfExists = \textcolor{keyword}{false} );}
+\DoxyCodeLine{21         \textcolor{keyword}{explicit} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a51151ca9fc9f97139b234d25d59e9c0a}{RotatingTarget}}( std::string\_view name, std::string\_view formatPattern, std::string\_view filePath,}
+\DoxyCodeLine{22                                  \textcolor{keywordtype}{bool} replaceIfExists = \textcolor{keyword}{false} );}
+\DoxyCodeLine{24         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a5ee2c6d0a50a23c9734da9c1e8025df3}{RotatingTarget}}( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}{RotatingTarget}} \& ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{26         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}{RotatingTarget}} \&\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_aa10fc123a0a8877e96db67be922c11f1}{operator=}}( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}{RotatingTarget}} \& ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{30         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a40acb1fb8072c6fe9e42207115d50420}{\string~RotatingTarget}}( );}
+\DoxyCodeLine{33         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a4b1635772b462e8ae88b56094da65502}{ShouldRotateFile}}( \textcolor{keywordtype}{bool} shouldRotate = \textcolor{keyword}{true} );}
+\DoxyCodeLine{38         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_aa462f60978046554450c890e20754e1b}{SetRotateSettings}}( \mbox{\hyperlink{structserenity_1_1expiremental_1_1_rotate_settings}{RotateSettings}} settings );}
+\DoxyCodeLine{42         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a7d3293a86ea6164d38c1555cef2e8eff}{RenameFileForRotation}}( );}
+\DoxyCodeLine{46         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a81512fcdd5f96dbaecf080c4e161c456}{RotateFileOnSize}}( );}
+\DoxyCodeLine{50         \textcolor{keywordtype}{bool} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a896eedf218ba0cd6c21c0b761e948b80}{RenameFile}}( std::string\_view newFileName ) \textcolor{keyword}{override};}
+\DoxyCodeLine{55         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a90c8a3f9917674edfed9d4ad0a5169d9}{PrintMessage}}( std::string\_view formatted ) \textcolor{keyword}{override};}
+\DoxyCodeLine{56 }
+\DoxyCodeLine{57       \textcolor{keyword}{private}:}
+\DoxyCodeLine{58         \textcolor{keywordtype}{bool}           rotateFile;}
+\DoxyCodeLine{59         \mbox{\hyperlink{structserenity_1_1expiremental_1_1_rotate_settings}{RotateSettings}} rotateSettings;}
+\DoxyCodeLine{60     \};}
+\DoxyCodeLine{61 }
+\DoxyCodeLine{62 \}  \textcolor{comment}{// namespace serenity::expiremental::targets}}
+
+\end{DoxyCode}

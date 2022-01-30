@@ -1,0 +1,56 @@
+\hypertarget{_color_console_target_8h_source}{}\doxysection{Color\+Console\+Target.\+h}
+\label{_color_console_target_8h_source}\index{Serenity\_Logger/Sandbox/src/Experimental\_SB/Targets/ColorConsoleTarget.h@{Serenity\_Logger/Sandbox/src/Experimental\_SB/Targets/ColorConsoleTarget.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{3 \textcolor{preprocessor}{\#include "{}Target.h"{}}}
+\DoxyCodeLine{4 }
+\DoxyCodeLine{5 \textcolor{preprocessor}{\#include <serenity/Color/Color.h>}}
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#include <unordered\_map>}}
+\DoxyCodeLine{7 \textcolor{preprocessor}{\#include <fstream>}}
+\DoxyCodeLine{8 }
+\DoxyCodeLine{9 \textcolor{keyword}{namespace }serenity::expiremental::targets}
+\DoxyCodeLine{10 \{}
+\DoxyCodeLine{12     \textcolor{keyword}{enum class} console\_interface}
+\DoxyCodeLine{13     \{}
+\DoxyCodeLine{14         std\_out,}
+\DoxyCodeLine{15         std\_err,}
+\DoxyCodeLine{16         std\_log}
+\DoxyCodeLine{17     \};}
+\DoxyCodeLine{20     \textcolor{keyword}{class }\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console}{ColorConsole}} : \textcolor{keyword}{public} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{TargetBase}}}
+\DoxyCodeLine{21     \{}
+\DoxyCodeLine{22       \textcolor{keyword}{public}:}
+\DoxyCodeLine{23         \textcolor{comment}{// clang-\/format off}}
+\DoxyCodeLine{24 \textcolor{comment}{        /*************************************************************************************************************/}}
+\DoxyCodeLine{31         \textcolor{comment}{// clang-\/format on}}
+\DoxyCodeLine{32 }
+\DoxyCodeLine{33         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_abdc04bb9fb84bedc6a40ba8b13d800bb}{ColorConsole}}( );}
+\DoxyCodeLine{34         \textcolor{keyword}{explicit} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_abdc04bb9fb84bedc6a40ba8b13d800bb}{ColorConsole}}( std::string\_view name );}
+\DoxyCodeLine{35         \textcolor{keyword}{explicit} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_abdc04bb9fb84bedc6a40ba8b13d800bb}{ColorConsole}}( std::string\_view name, std::string\_view msgPattern );}
+\DoxyCodeLine{38         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a2dd34715e3bc088598a395b23d8b1965}{\string~ColorConsole}}( );}
+\DoxyCodeLine{40         std::string\_view \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_acd1b3e902eb5992bc73ecaede1b84144}{GetMsgColor}}( LoggerLevel level );}
+\DoxyCodeLine{42         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a3e15c2c060f03b097209e4235aa20492}{SetMsgColor}}( LoggerLevel level, std::string\_view color );}
+\DoxyCodeLine{47         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a80ba65c128483fdefd79ca66db5bad43}{SetConsoleInterface}}( console\_interface mode );}
+\DoxyCodeLine{49         \textcolor{keyword}{const} console\_interface \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a29ed413d82a9b0c8d11401fd47da1e7e}{ConsoleInterface}}( );}
+\DoxyCodeLine{51         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_af3aec7d9ced9dbe06be097bf2a7378b8}{ColorizeOutput}}( \textcolor{keywordtype}{bool} colorize );}
+\DoxyCodeLine{53         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a8a8515323fb197f22c040534fd39316f}{SetOriginalColors}}( );}
+\DoxyCodeLine{55         \textcolor{keywordtype}{bool} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_ae2dabedddf99b1e26cf1eb757768a2be}{IsTerminalType}}( );}
+\DoxyCodeLine{57         \textcolor{keywordtype}{bool} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_acaf2de90563dcd5aaa7bdb660e37c358}{IsValidHandle}}( );}
+\DoxyCodeLine{61         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a85dc874dc8a9dda0bf4e07303995950c}{PrintMessage}}( std::string\_view formatted ) \textcolor{keyword}{override};}
+\DoxyCodeLine{62 }
+\DoxyCodeLine{63       \textcolor{keyword}{private}:}
+\DoxyCodeLine{64         \textcolor{keywordtype}{bool}                                              coloredOutput;}
+\DoxyCodeLine{65         console\_interface                                 consoleMode;}
+\DoxyCodeLine{66         std::unordered\_map<LoggerLevel, std::string\_view> msgLevelColors;}
+\DoxyCodeLine{67 \textcolor{preprocessor}{\#ifdef WINDOWS\_PLATFORM}}
+\DoxyCodeLine{68         HANDLE outputHandle;}
+\DoxyCodeLine{69 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{70         FILE *outputHandle;}
+\DoxyCodeLine{71 \textcolor{preprocessor}{\#endif  }\textcolor{comment}{// WINDOWS\_PLATFORM}}
+\DoxyCodeLine{72 }
+\DoxyCodeLine{73     \};  \textcolor{comment}{// class ColorConsole}}
+\DoxyCodeLine{74 }
+\DoxyCodeLine{75 \}  \textcolor{comment}{// namespace serenity::expiremental::targets}}
+
+\end{DoxyCode}

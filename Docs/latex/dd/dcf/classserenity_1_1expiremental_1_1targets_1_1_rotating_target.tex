@@ -1,0 +1,131 @@
+\hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}{}\doxysection{serenity\+::expiremental\+::targets\+::Rotating\+Target Class Reference}
+\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+
+
+This class is in charge of logging to any basic file type and handling the rotation of files up to a maximum number of files set. This class inherits from the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{File\+Target}} class and, therefore, the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{Target\+Base}} class for common logging functions and logging settings.  
+
+
+
+
+{\ttfamily \#include $<$Rotating\+Target.\+h$>$}
+
+Inheritance diagram for serenity\+::expiremental\+::targets\+::Rotating\+Target\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a51151ca9fc9f97139b234d25d59e9c0a}{Rotating\+Target}} ()
+\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a46cba28127a43fc749fea7acc4429586}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a46cba28127a43fc749fea7acc4429586}} 
+{\bfseries Rotating\+Target} (std\+::string\+\_\+view name, std\+::string\+\_\+view file\+Path, bool replace\+If\+Exists=false)
+\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a470854865a43ba27bc1faec14aa04f1f}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a470854865a43ba27bc1faec14aa04f1f}} 
+{\bfseries Rotating\+Target} (std\+::string\+\_\+view name, std\+::string\+\_\+view format\+Pattern, std\+::string\+\_\+view file\+Path, bool replace\+If\+Exists=false)
+\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a5ee2c6d0a50a23c9734da9c1e8025df3}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a5ee2c6d0a50a23c9734da9c1e8025df3}} 
+{\bfseries Rotating\+Target} (const \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}{Rotating\+Target}} \&)=delete
+\begin{DoxyCompactList}\small\item\em Deleted. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_aa10fc123a0a8877e96db67be922c11f1}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_aa10fc123a0a8877e96db67be922c11f1}} 
+\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}{Rotating\+Target}} \& {\bfseries operator=} (const \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target}{Rotating\+Target}} \&)=delete
+\begin{DoxyCompactList}\small\item\em Deleted. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a40acb1fb8072c6fe9e42207115d50420}{$\sim$\+Rotating\+Target}} ()
+\item 
+void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a4b1635772b462e8ae88b56094da65502}{Should\+Rotate\+File}} (bool should\+Rotate=true)
+\item 
+void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_aa462f60978046554450c890e20754e1b}{Set\+Rotate\+Settings}} (\mbox{\hyperlink{structserenity_1_1expiremental_1_1_rotate_settings}{Rotate\+Settings}} settings)
+\item 
+void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a7d3293a86ea6164d38c1555cef2e8eff}{Rename\+File\+For\+Rotation}} ()
+\item 
+void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a81512fcdd5f96dbaecf080c4e161c456}{Rotate\+File\+On\+Size}} ()
+\item 
+bool \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a896eedf218ba0cd6c21c0b761e948b80}{Rename\+File}} (std\+::string\+\_\+view new\+File\+Name) override
+\item 
+void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a90c8a3f9917674edfed9d4ad0a5169d9}{Print\+Message}} (std\+::string\+\_\+view formatted) override
+\end{DoxyCompactItemize}
+\doxysubsection*{Additional Inherited Members}
+
+
+\doxysubsection{Detailed Description}
+This class is in charge of logging to any basic file type and handling the rotation of files up to a maximum number of files set. This class inherits from the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{File\+Target}} class and, therefore, the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{Target\+Base}} class for common logging functions and logging settings. 
+
+For all Rotating Target Constructors\+: ~\newline
+
+\begin{DoxyItemize}
+\item if either the directories or the file don\textquotesingle{}t exist yet, the $\ast$constructor will create the neccessary directories ~\newline
+ as well as the file needed to write to. ~\newline
+
+\item For the constructors that don\textquotesingle{}t take a file path variable, the logs will be written to a \char`\"{}\+Logs\char`\"{} directory in the ~\newline
+ location that the app is being run from. ~\newline
+ 
+\end{DoxyItemize}
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a51151ca9fc9f97139b234d25d59e9c0a}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a51151ca9fc9f97139b234d25d59e9c0a}} 
+\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}!RotatingTarget@{RotatingTarget}}
+\index{RotatingTarget@{RotatingTarget}!serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+\doxysubsubsection{\texorpdfstring{RotatingTarget()}{RotatingTarget()}}
+{\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+Rotating\+Target\+::\+Rotating\+Target (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Default constructor will write to Rotating\+\_\+\+Log.\+txt which will be renamed as Rotating\+\_\+\+Log\+\_\+01.\+txt and follow rotation settings thereafter in the \char`\"{}\+Logs\char`\"{} directory of where the app is running from \mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a40acb1fb8072c6fe9e42207115d50420}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a40acb1fb8072c6fe9e42207115d50420}} 
+\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}!````~RotatingTarget@{$\sim$RotatingTarget}}
+\index{````~RotatingTarget@{$\sim$RotatingTarget}!serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+\doxysubsubsection{\texorpdfstring{$\sim$RotatingTarget()}{~RotatingTarget()}}
+{\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+Rotating\+Target\+::$\sim$\+Rotating\+Target (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+When the deconstructor is called, will clean up background flush thread if enabled, flush the contents of the file handle to the file (if messages were written to buffer, will now write contents of buffer to file), and then close the file context 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a90c8a3f9917674edfed9d4ad0a5169d9}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a90c8a3f9917674edfed9d4ad0a5169d9}} 
+\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}!PrintMessage@{PrintMessage}}
+\index{PrintMessage@{PrintMessage}!serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+\doxysubsubsection{\texorpdfstring{PrintMessage()}{PrintMessage()}}
+{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Rotating\+Target\+::\+Print\+Message (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{formatted }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+Checks if background flush thread is active, if it is -\/ will lock access to the file for writing. If rotate setting is enabled, will check that the file size doesn\textquotesingle{}t exceed file size limit and writes the message to the file. If the file size would exceed the limit, closes the current file and rotates to next file before writing the message. This function will then follow any settings active in the flush policy 
+
+Reimplemented from \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac17d3f0ca839ed863e16115b8587e1cb}{serenity\+::expiremental\+::targets\+::\+File\+Target}}.
+
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a896eedf218ba0cd6c21c0b761e948b80}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a896eedf218ba0cd6c21c0b761e948b80}} 
+\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}!RenameFile@{RenameFile}}
+\index{RenameFile@{RenameFile}!serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+\doxysubsubsection{\texorpdfstring{RenameFile()}{RenameFile()}}
+{\footnotesize\ttfamily bool serenity\+::expiremental\+::targets\+::\+Rotating\+Target\+::\+Rename\+File (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{new\+File\+Name }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+Will close the current file being written to and replace the old file name with the new file name given. Previous files are unaffected. However, if cycling through rotation, future files will have this new name as their base as well 
+
+Reimplemented from \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a840beb71fa0e349a0b2c7b03f08420d3}{serenity\+::expiremental\+::targets\+::\+File\+Target}}.
+
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a7d3293a86ea6164d38c1555cef2e8eff}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a7d3293a86ea6164d38c1555cef2e8eff}} 
+\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}!RenameFileForRotation@{RenameFileForRotation}}
+\index{RenameFileForRotation@{RenameFileForRotation}!serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+\doxysubsubsection{\texorpdfstring{RenameFileForRotation()}{RenameFileForRotation()}}
+{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Rotating\+Target\+::\+Rename\+File\+For\+Rotation (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+This function will cache the file path given in the constructor, the file name base (Example\+: for Rotate\+\_\+\+Log.\+txt, Rotate\+\_\+\+Log is stored), the extension of the file, and the log directory before renaming the current file to the first iteration of the log file to rotate through. (Example\+: Rotate\+\_\+\+Log.\+txt becomes Rotate\+\_\+\+Log\+\_\+01.\+txt) \mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a81512fcdd5f96dbaecf080c4e161c456}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a81512fcdd5f96dbaecf080c4e161c456}} 
+\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}!RotateFileOnSize@{RotateFileOnSize}}
+\index{RotateFileOnSize@{RotateFileOnSize}!serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+\doxysubsubsection{\texorpdfstring{RotateFileOnSize()}{RotateFileOnSize()}}
+{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Rotating\+Target\+::\+Rotate\+File\+On\+Size (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+If the logger should rotate, will close the current file, increment the file count up to max number of files set, and try to open the next file in iteration. If file already exists, will remove the oldest file with the given file name base before opening the next file in iteration \mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_aa462f60978046554450c890e20754e1b}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_aa462f60978046554450c890e20754e1b}} 
+\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}!SetRotateSettings@{SetRotateSettings}}
+\index{SetRotateSettings@{SetRotateSettings}!serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+\doxysubsubsection{\texorpdfstring{SetRotateSettings()}{SetRotateSettings()}}
+{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Rotating\+Target\+::\+Set\+Rotate\+Settings (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structserenity_1_1expiremental_1_1_rotate_settings}{Rotate\+Settings}}}]{settings }\end{DoxyParamCaption})}
+
+Sets the overall rotation settings for the logger in regards to the filecontext. Current options revolve around file size settings only. Parameter \char`\"{}settings\char`\"{}\+: controls the following\+: file size limit, number of files to rotate through, and whether or not the logger should rotate through files up to the max number of files set \mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a4b1635772b462e8ae88b56094da65502}\label{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a4b1635772b462e8ae88b56094da65502}} 
+\index{serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}!ShouldRotateFile@{ShouldRotateFile}}
+\index{ShouldRotateFile@{ShouldRotateFile}!serenity::expiremental::targets::RotatingTarget@{serenity::expiremental::targets::RotatingTarget}}
+\doxysubsubsection{\texorpdfstring{ShouldRotateFile()}{ShouldRotateFile()}}
+{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Rotating\+Target\+::\+Should\+Rotate\+File (\begin{DoxyParamCaption}\item[{bool}]{should\+Rotate = {\ttfamily true} }\end{DoxyParamCaption})}
+
+This function takes in a boolean value that determines whether or not the file context currently held should rotate when file size limit option has been reached 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Targets/Rotating\+Target.\+h\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Targets/Rotating\+Target.\+cpp\end{DoxyCompactItemize}

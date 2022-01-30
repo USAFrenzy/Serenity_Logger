@@ -116,42 +116,42 @@ int main( )
 	std::cout << "# This Will Be The Default Pattern Format And Message Level Colors #\n";
 	std::cout << "####################################################################\n";
 	// Trace Is Default Color
-	C.trace( "Trace" );
+	C.Trace( "Trace" );
 	// Info Is Light Green
-	C.info( "Info" );
+	C.Info( "Info" );
 	// Debug Is Light Cyan
-	C.debug( "Debug" );
+	C.Debug( "Debug" );
 	// Warning Is Light Yellow
-	C.warn( "Warning" );
+	C.Warn( "Warning" );
 	// Error Is Dark Red
-	C.error( "Error" );
+	C.Error( "Error" );
 	// Fatal Is Light Yellow On Dark Red
-	C.fatal( "Fatal" );
+	C.Fatal( "Fatal" );
 	std::cout << "####################################################################\n\n";
 	std::cout << "########################################################################\n";
 	std::cout << "# Testing Some Basic Functions To Make Sure All Is Working As I Expect #\n";
 	std::cout << "########################################################################\n";
 	C.SetPattern( "%T [%N]: %+" );
-	C.info( "Pattern String Has Been Changed To \"%T [%N]: %+\"" );
+	C.Info( "Pattern String Has Been Changed To \"%T [%N]: %+\"" );
 	C.ColorizeOutput( false );
-	C.info( "Colorized Output Set To False, Therefore, This Output Should Be The Default Color" );
-	C.error( "This Line Should Also Still Lack Color" );
+	C.Info( "Colorized Output Set To False, Therefore, This Output Should Be The Default Color" );
+	C.Error( "This Line Should Also Still Lack Color" );
 	C.ColorizeOutput( true );
-	C.info( "Colorized Output Re-enabled, therefore this line should be colored" );
-	C.info( "Log Level Will Be Set To \"warning\"" );
+	C.Info( "Colorized Output Re-enabled, therefore this line should be colored" );
+	C.Info( "Log Level Will Be Set To \"warning\"" );
 	C.SetLogLevel( LoggerLevel::warning );
-	C.info( "Log Level Has Been Set To Warning, So This Line Should Not Print" );
-	C.warn( "However, This Line Should Print" );
-	C.fatal( "And This Line Should Also Print" );
+	C.Info( "Log Level Has Been Set To Warning, So This Line Should Not Print" );
+	C.Warn( "However, This Line Should Print" );
+	C.Fatal( "And This Line Should Also Print" );
 	C.SetLogLevel( LoggerLevel::trace );
-	C.info( "Log Level Set Back To \"trace\"" );
+	C.Info( "Log Level Set Back To \"trace\"" );
 	C.ResetPatternToDefault( );
-	C.info( "Pattern String Should Have Been Changed Back To Default Pattern" );
+	C.Info( "Pattern String Should Have Been Changed Back To Default Pattern" );
 	C.SetMsgColor( LoggerLevel::warning, se_colors::bright_colors::combos::cyan::on_grey );
-	C.trace( "Warning Level Color Has Been Changed To Cyan On Grey" );
-	C.warn( "So This Line Should Now Be Cyan On Grey" );
+	C.Trace( "Warning Level Color Has Been Changed To Cyan On Grey" );
+	C.Warn( "So This Line Should Now Be Cyan On Grey" );
 	C.SetOriginalColors( );
-	C.warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
+	C.Warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
 	// This Is Now Fully Working As Well
 	// TODO: Add interval based rotation settings
@@ -161,21 +161,21 @@ int main( )
 	settings.rotateOnFileSize = true;
 	rotatingFile.SetRotateSettings( settings );
 
-	testFile.trace( "This Is A Trace Message To The File" );
-	testFile.info( "This Is An Info Message To The File" );
-	testFile.debug( "This Is A Debug Message To The File" );
-	testFile.warn( "This Is A Warning Message To The File" );
-	testFile.error( "This Is An Error Message To The File" );
-	testFile.fatal( "This Is A Fatal Message To The File" );
+	testFile.Trace( "This Is A Trace Message To The File" );
+	testFile.Info( "This Is An Info Message To The File" );
+	testFile.Debug( "This Is A Debug Message To The File" );
+	testFile.Warn( "This Is A Warning Message To The File" );
+	testFile.Error( "This Is An Error Message To The File" );
+	testFile.Fatal( "This Is A Fatal Message To The File" );
 	testFile.RenameFile( "Renamed_File.txt" );
-	testFile.trace( "File Should Have Been Renamed To \"Renamed_File.txt\"" );
+	testFile.Trace( "File Should Have Been Renamed To \"Renamed_File.txt\"" );
 	testFile.Flush( );
 
 	// Found out why this was so slow.. the std::filesystem::file_size() call is apparently extremely expensive, opted for
 	// manual tracking of size
 	auto start { std::chrono::steady_clock::now( ) };
 	for( int i = 0; i < 4'000'000; ++i ) {
-		rotatingFile.trace( "This is a test loop for rotating the file. Iteration {}", i );
+		rotatingFile.Trace( "This is a test loop for rotating the file. Iteration {}", i );
 	}
 	auto end { std::chrono::steady_clock::now( ) };
 	auto elapsed = ( end - start );
@@ -208,7 +208,7 @@ int main( )
 	macroTester.StopWatch_Reset( );
 	std::cout << "Benching Color Console Target...\n\n";
 	for( i; i < iterations; i++ ) {
-		C.info( "{}", test );
+		C.Info( "{}", test );
 	}
 	macroTester.StopWatch_Stop( );
 	auto totalColorTime = macroTester.Elapsed_In( time_mode::ms );
@@ -226,7 +226,7 @@ int main( )
 	i = 0;  // reset
 	macroTesterFile.StopWatch_Reset( );
 	for( i; i < iterations; i++ ) {
-		testFile.info( "{}", test );
+		testFile.Info( "{}", test );
 	}
 	macroTesterFile.StopWatch_Stop( );
 	testFile.Flush( );
@@ -246,7 +246,7 @@ int main( )
 	i = 0;  // reset
 	rotateTester.StopWatch_Reset( );
 	for( i; i < iterations; i++ ) {
-		rotatingFile.info( "{}", test );
+		rotatingFile.Info( "{}", test );
 	}
 	rotateTester.StopWatch_Stop( );
 	rotatingFile.Flush( );

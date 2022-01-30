@@ -1,6 +1,5 @@
 #include "Message_Time.h"
 
-
 namespace serenity
 {
 	namespace expiremental
@@ -19,8 +18,7 @@ namespace serenity
 					auto year { 1900 + yearOffset };
 					// could be clever here in order to use LUT instead of vformat - is it worth? Probs not
 					return std::move( std::vformat( "{}", std::make_format_args( year ) ) );
-				}
-				else {
+				} else {
 					auto year { yearOffset - 100 };
 					return SERENITY_LUTS::numberStr[ year ];
 				}

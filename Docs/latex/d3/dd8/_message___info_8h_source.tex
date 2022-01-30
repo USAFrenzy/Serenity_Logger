@@ -1,0 +1,59 @@
+\hypertarget{_message___info_8h_source}{}\doxysection{Message\+\_\+\+Info.\+h}
+\label{_message___info_8h_source}\index{Serenity\_Logger/Sandbox/src/Experimental\_SB/MessageDetails/Message\_Info.h@{Serenity\_Logger/Sandbox/src/Experimental\_SB/MessageDetails/Message\_Info.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{3 \textcolor{preprocessor}{\#include "{}../Common.h"{}}}
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#include "{}Message\_Time.h"{}}}
+\DoxyCodeLine{5 }
+\DoxyCodeLine{6 \textcolor{keyword}{namespace }serenity}
+\DoxyCodeLine{7 \{}
+\DoxyCodeLine{8     \textcolor{keyword}{namespace }expiremental}
+\DoxyCodeLine{9     \{}
+\DoxyCodeLine{10         \textcolor{keyword}{namespace }msg\_details}
+\DoxyCodeLine{11         \{}
+\DoxyCodeLine{12             \textcolor{keyword}{class }\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}}}
+\DoxyCodeLine{13             \{}
+\DoxyCodeLine{14               \textcolor{keyword}{public}:}
+\DoxyCodeLine{15                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}}( std::string\_view name, LoggerLevel level, message\_time\_mode mode );}
+\DoxyCodeLine{16                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \&operator=( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \&t ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{17                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}}( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \& )             = \textcolor{keyword}{delete};}
+\DoxyCodeLine{18                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}}( )                                  = \textcolor{keyword}{delete};}
+\DoxyCodeLine{19                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{\string~Message\_Info}}( )                                 = \textcolor{keywordflow}{default};}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21                 std::string \&                         MessageBuffer( );}
+\DoxyCodeLine{22                 LoggerLevel \&                         MsgLevel( );}
+\DoxyCodeLine{23                 std::string \&                         Name( );}
+\DoxyCodeLine{24                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___time}{Message\_Time}} \&                        TimeDetails( );}
+\DoxyCodeLine{25                 \textcolor{keywordtype}{void}                                  SetName( \textcolor{keyword}{const} std::string\_view name );}
+\DoxyCodeLine{26                 \textcolor{keywordtype}{void}                                  SetMsgLevel( \textcolor{keyword}{const} LoggerLevel level );}
+\DoxyCodeLine{27                 std::chrono::system\_clock::time\_point MessageTimePoint( );}
+\DoxyCodeLine{28                 \textcolor{keywordtype}{void}                                  SetTimeMode( \textcolor{keyword}{const} message\_time\_mode mode );}
+\DoxyCodeLine{29                 message\_time\_mode                     TimeMode( );}
+\DoxyCodeLine{30                 std::tm \&                             TimeInfo( );}
+\DoxyCodeLine{31                 std::string \&                         Message( );}
+\DoxyCodeLine{32                 \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void}      SetMessage( \textcolor{keyword}{const} std::string\_view message, Args \&\&...args )}
+\DoxyCodeLine{33                 \{}
+\DoxyCodeLine{34                     m\_message.clear( );}
+\DoxyCodeLine{35                     \textcolor{keyword}{using} iterator = std::back\_insert\_iterator<std::basic\_string<char>>;}
+\DoxyCodeLine{36                     \textcolor{keyword}{using} context  = std::basic\_format\_context<iterator, char>;}
+\DoxyCodeLine{37                     std::vformat\_to( std::back\_inserter( m\_message ),}
+\DoxyCodeLine{38                                      message,}
+\DoxyCodeLine{39                                      std::make\_format\_args<context>( std::forward<Args>( args )... ) );}
+\DoxyCodeLine{40                     m\_message.append( SERENITY\_LUTS::line\_ending.at( platformEOL ) );}
+\DoxyCodeLine{41                 \}}
+\DoxyCodeLine{42 }
+\DoxyCodeLine{43               \textcolor{keyword}{private}:}
+\DoxyCodeLine{44                 LineEnd      platformEOL;}
+\DoxyCodeLine{45                 std::string  m\_name;}
+\DoxyCodeLine{46                 LoggerLevel  m\_msgLevel;}
+\DoxyCodeLine{47                 std::string  m\_message;}
+\DoxyCodeLine{48                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___time}{Message\_Time}} m\_msgTime;}
+\DoxyCodeLine{49                 std::string  m\_msgStrBuf;}
+\DoxyCodeLine{50             \};}
+\DoxyCodeLine{51         \}  \textcolor{comment}{// namespace msg\_details}}
+\DoxyCodeLine{52     \}      \textcolor{comment}{// namespace expiremental}}
+\DoxyCodeLine{53 \}  \textcolor{comment}{// namespace serenity}}
+
+\end{DoxyCode}

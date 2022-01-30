@@ -15,7 +15,8 @@ namespace serenity::expiremental::targets
 		std_err,
 		std_log
 	};
-
+	/// @brief This class is in charge of logging to the terminal and supports color logging and the ability to log without
+	/// color. This class inherits from the TargetBase class for common logging functions and logging settings.
 	class ColorConsole : public TargetBase
 	{
 	  public:

@@ -1,0 +1,27 @@
+var classserenity_1_1expiremental_1_1targets_1_1_target_base =
+[
+    [ "TargetBase", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a00920d6545c5783da8db176297c3dc33", null ],
+    [ "TargetBase", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a3ca48dda0b948587e11cae370a7d77d3", null ],
+    [ "TargetBase", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#ad83ca24db5ff11d1d8f871d5dabbfbb6", null ],
+    [ "Buffer", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a004adcbd403c7e0fc332edd0d8658879", null ],
+    [ "Debug", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#ad929f6fdbf083c8503d0bbee241c3bab", null ],
+    [ "Error", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a642036ccc81a6f8eaed0c5e8ceebd3e5", null ],
+    [ "Fatal", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#afdcbf379c68e6a7ebd76ab09d6008e6d", null ],
+    [ "Info", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a5bb7193f6e6ddd7947e52ab67054a03b", null ],
+    [ "isWriteToBuf", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a923f74e7e87e3f3add647bab13042b28", null ],
+    [ "Level", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a9ab6441c93db92254475cdba46f18eb2", null ],
+    [ "LoggerName", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a93eb6fcb7c858c38e7c6c75be14709ea", null ],
+    [ "MsgFmt", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#abfbc3f56c6f5d8b2012419d1f812e903", null ],
+    [ "MsgInfo", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a267fd00b85ed1e8cea8c8a9c57eb6002", null ],
+    [ "Policy", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#ae8f5ae1860dbfaa258808b92daad35b9", null ],
+    [ "PolicyFlushOn", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39", null ],
+    [ "PrintMessage", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1", null ],
+    [ "ResetPatternToDefault", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a59007ca28ccfec836272bbba0e991cf7", null ],
+    [ "SetFlushPolicy", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a10378fe3e1915c448202fcdc12fe5990", null ],
+    [ "SetLoggerName", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a4ad638bb3c8b3ef7e52f13239aaa1ac9", null ],
+    [ "SetLogLevel", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a18f79b8a22642e4669fbe7e169ba4216", null ],
+    [ "SetPattern", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#ae9fc4043c7cc925bde9258a8b9eab51b", null ],
+    [ "Trace", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#afd23065688b320bce564faed71b769ff", null ],
+    [ "Warn", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a7a5b321f43433174f4e89a895230cd80", null ],
+    [ "WriteToBaseBuffer", "dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#aed328459507a705ae45f37059d3b5eee", null ]
+];

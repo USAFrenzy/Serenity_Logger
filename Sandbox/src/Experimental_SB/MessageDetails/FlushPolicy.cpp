@@ -2,7 +2,10 @@
 
 namespace serenity::expiremental
 {
-	Flush_Policy::Flush_Policy( Flush primaryOpt ) : mainOpt( primaryOpt ), subOpt( PeriodicOptions::undef ), subSettings( { } ) { }
+	Flush_Policy::Flush_Policy( Flush primaryOpt )
+	  : mainOpt( primaryOpt ), subOpt( PeriodicOptions::undef ), subSettings( { } )
+	{
+	}
 
 	Flush_Policy::Flush_Policy( const Flush_Policy &p )
 	{
@@ -18,7 +21,10 @@ namespace serenity::expiremental
 	  : mainOpt( Flush::periodically ), subOpt( secondaryOpt ), subSettings( std::move( settings ) )
 	{
 	}
-	Flush_Policy::Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt ) : mainOpt( primaryOpt ), subOpt( secondaryOpt ) { }
+	Flush_Policy::Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt )
+	  : mainOpt( primaryOpt ), subOpt( secondaryOpt )
+	{
+	}
 
 	Flush_Policy &Flush_Policy::operator=( const Flush_Policy &p )
 	{

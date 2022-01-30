@@ -2,18 +2,18 @@
 
 namespace serenity::expiremental::targets
 {
+	/// @brief This class is in charge of logging to any basic file type and handling the rotation of files up to a maximum
+	/// number of files set. This class inherits from the FileTarget class and, therefore, the TargetBase class for common
+	/// logging functions and logging settings.
+	/// 
+	/// @details For all Rotating Target Constructors: \n
+	/// - if either the directories or the file don't exist yet, the  *constructor will create the neccessary directories  \n
+	///   as well as the file needed to write to. \n
+	/// - For the constructors that don't take a file path variable, the logs will be written to a "Logs" directory in the \n
+	///   location that the app is being run from. \n
 	class RotatingTarget : public FileTarget
 	{
 	  public:
-		// clang-format off
-		/*******************************************************************************************************//**
-	    *     - For all Rotating Target Constructors, if either the directories or the file don't exist yet, the 
-		*       constructor will create the neccessary directories as well as the file needed to write to.
-		*     - For the constructors that don't take a file path variable, the logs will be written to 
-		*       a "Logs" directory in the location that the app is being run from.
-        **********************************************************************************************************/
-		// clang-format on
-
 		/// Default constructor will write to Rotating_Log.txt which will be renamed as Rotating_Log_01.txt
 		/// and follow rotation settings thereafter in the "Logs" directory of where the app is running from
 		RotatingTarget( );
@@ -46,7 +46,7 @@ namespace serenity::expiremental::targets
 		void RotateFileOnSize( );
 		/// Will close the current file being written to and replace the old file name with the new file name given. Previous
 		/// files are unaffected. However, if cycling through rotation, future files will have this new name as their base as
-		/// well 
+		/// well
 		bool RenameFile( std::string_view newFileName ) override;
 		/// Checks if background flush thread is active, if it is - will lock access to the file for writing. If rotate
 		/// setting is enabled, will check that the file size doesn't exceed file size limit and writes the message to the

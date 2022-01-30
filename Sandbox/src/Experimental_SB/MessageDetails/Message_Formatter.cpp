@@ -53,7 +53,7 @@ namespace serenity::expiremental::msg_details
 		StoreFormat( );
 	}
 
-	 Message_Formatter::Formatters &Message_Formatter::GetFormatters( )
+	Message_Formatter::Formatters &Message_Formatter::GetFormatters( )
 	{
 		return formatter;
 	}
@@ -200,8 +200,9 @@ namespace serenity::expiremental::msg_details
 		lastMin = cacheRef.tm_min;
 		auto hr { cacheRef.tm_hour };  // just to avoid another lookup, make local copy
 		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		auto hour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ] : SERENITY_LUTS::numberStr[ hr ] };
-		auto min { SERENITY_LUTS::numberStr[ lastMin ] };
+		auto        hour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ]
+									   : SERENITY_LUTS::numberStr[ hr ] };
+		auto        min { SERENITY_LUTS::numberStr[ lastMin ] };
 		std::string result;
 		return result.append( hour ).append( ":" ).append( min );
 	}

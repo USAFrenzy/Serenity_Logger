@@ -1,0 +1,107 @@
+\hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console}{}\doxysection{serenity\+::expiremental\+::targets\+::Color\+Console Class Reference}
+\label{classserenity_1_1expiremental_1_1targets_1_1_color_console}\index{serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}}
+
+
+This class is in charge of logging to the terminal and supports color logging and the ability to log without color. This class inherits from the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{Target\+Base}} class for common logging functions and logging settings.  
+
+
+
+
+{\ttfamily \#include $<$Color\+Console\+Target.\+h$>$}
+
+Inheritance diagram for serenity\+::expiremental\+::targets\+::Color\+Console\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_abdc04bb9fb84bedc6a40ba8b13d800bb}{Color\+Console}} ()
+\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_a33e9dfbc11d88f4a80112c217fa2bb68}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_a33e9dfbc11d88f4a80112c217fa2bb68}} 
+{\bfseries Color\+Console} (std\+::string\+\_\+view name)
+\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_ab114c020c496fb36b76d35564b3dda9b}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_ab114c020c496fb36b76d35564b3dda9b}} 
+{\bfseries Color\+Console} (std\+::string\+\_\+view name, std\+::string\+\_\+view msg\+Pattern)
+\item 
+\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a2dd34715e3bc088598a395b23d8b1965}{$\sim$\+Color\+Console}} ()
+\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_acd1b3e902eb5992bc73ecaede1b84144}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_acd1b3e902eb5992bc73ecaede1b84144}} 
+std\+::string\+\_\+view {\bfseries Get\+Msg\+Color} (Logger\+Level level)
+\begin{DoxyCompactList}\small\item\em Returns the log level based color for the current message to use. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_a3e15c2c060f03b097209e4235aa20492}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_a3e15c2c060f03b097209e4235aa20492}} 
+void {\bfseries Set\+Msg\+Color} (Logger\+Level level, std\+::string\+\_\+view color)
+\begin{DoxyCompactList}\small\item\em Sets color specified for the log level specified. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a80ba65c128483fdefd79ca66db5bad43}{Set\+Console\+Interface}} (console\+\_\+interface mode)
+\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_a29ed413d82a9b0c8d11401fd47da1e7e}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_a29ed413d82a9b0c8d11401fd47da1e7e}} 
+const console\+\_\+interface {\bfseries Console\+Interface} ()
+\begin{DoxyCompactList}\small\item\em Returns the current console mode being used. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_af3aec7d9ced9dbe06be097bf2a7378b8}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_af3aec7d9ced9dbe06be097bf2a7378b8}} 
+void {\bfseries Colorize\+Output} (bool colorize)
+\begin{DoxyCompactList}\small\item\em Enables/\+Disables colored text output. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_a8a8515323fb197f22c040534fd39316f}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_a8a8515323fb197f22c040534fd39316f}} 
+void {\bfseries Set\+Original\+Colors} ()
+\begin{DoxyCompactList}\small\item\em Initializes the default colors to use for log levels. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_ae2dabedddf99b1e26cf1eb757768a2be}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_ae2dabedddf99b1e26cf1eb757768a2be}} 
+bool {\bfseries Is\+Terminal\+Type} ()
+\begin{DoxyCompactList}\small\item\em Checks to see if output handle is referring to a terminal type device or not. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_acaf2de90563dcd5aaa7bdb660e37c358}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_acaf2de90563dcd5aaa7bdb660e37c358}} 
+bool {\bfseries Is\+Valid\+Handle} ()
+\begin{DoxyCompactList}\small\item\em Checks to see if output handle is valid and not empty. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a85dc874dc8a9dda0bf4e07303995950c}{Print\+Message}} (std\+::string\+\_\+view formatted) override
+\end{DoxyCompactItemize}
+\doxysubsection*{Additional Inherited Members}
+
+
+\doxysubsection{Detailed Description}
+This class is in charge of logging to the terminal and supports color logging and the ability to log without color. This class inherits from the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{Target\+Base}} class for common logging functions and logging settings. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_abdc04bb9fb84bedc6a40ba8b13d800bb}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_abdc04bb9fb84bedc6a40ba8b13d800bb}} 
+\index{serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}!ColorConsole@{ColorConsole}}
+\index{ColorConsole@{ColorConsole}!serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}}
+\doxysubsubsection{\texorpdfstring{ColorConsole()}{ColorConsole()}}
+{\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+Color\+Console\+::\+Color\+Console (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}                           For all Console Target Constructors:
+\end{DoxyVerb}
+
+\begin{DoxyItemize}
+\item will set the console mode to \char`\"{}console\+\_\+interface\+::stdout\char`\"{}
+\item Initializes the default colors to use for each message level
+\item If output is a terminal and hasn\textquotesingle{}t been redirected and if the output handle is valid, enables color output
+\item Sets \char`\"{}\+ENABLE\+\_\+\+VIRTUAL\+\_\+\+TERMINAL\+\_\+\+PROCESSING\char`\"{} flag if on Windows Platform 
+\end{DoxyItemize}\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_a2dd34715e3bc088598a395b23d8b1965}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_a2dd34715e3bc088598a395b23d8b1965}} 
+\index{serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}!````~ColorConsole@{$\sim$ColorConsole}}
+\index{````~ColorConsole@{$\sim$ColorConsole}!serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}}
+\doxysubsubsection{\texorpdfstring{$\sim$ColorConsole()}{~ColorConsole()}}
+{\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+Color\+Console\+::$\sim$\+Color\+Console (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+If the output wasn\textquotesingle{}t directed to a terminal, will flush the contents. If Windows, also resets the console mode to default to clear \char`\"{}\+ENABLE\+\_\+\+VIRTUAL\+\_\+\+TERMINAL\+\_\+\+PROCESSING\char`\"{} flag 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_a85dc874dc8a9dda0bf4e07303995950c}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_a85dc874dc8a9dda0bf4e07303995950c}} 
+\index{serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}!PrintMessage@{PrintMessage}}
+\index{PrintMessage@{PrintMessage}!serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}}
+\doxysubsubsection{\texorpdfstring{PrintMessage()}{PrintMessage()}}
+{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Color\+Console\+::\+Print\+Message (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{formatted }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+If output handle is valid, will write the message to the output. If color is enabled, will write the message in the color specified for the log level used if the output is to a terminal. For windows, uses Write\+Console( ) unless the output is not a terminal (in which case, uses Write\+File( ) ) 
+
+Implements \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{serenity\+::expiremental\+::targets\+::\+Target\+Base}}.
+
+\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_color_console_a80ba65c128483fdefd79ca66db5bad43}\label{classserenity_1_1expiremental_1_1targets_1_1_color_console_a80ba65c128483fdefd79ca66db5bad43}} 
+\index{serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}!SetConsoleInterface@{SetConsoleInterface}}
+\index{SetConsoleInterface@{SetConsoleInterface}!serenity::expiremental::targets::ColorConsole@{serenity::expiremental::targets::ColorConsole}}
+\doxysubsubsection{\texorpdfstring{SetConsoleInterface()}{SetConsoleInterface()}}
+{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Color\+Console\+::\+Set\+Console\+Interface (\begin{DoxyParamCaption}\item[{console\+\_\+interface}]{mode }\end{DoxyParamCaption})}
+
+Sets console mode. Console modes mirror standard outputs. For Windows, sets \char`\"{}\+ENABLE\+\_\+\+VIRTUAL\+\_\+\+TERMINAL\+\_\+\+PROCESSING\char`\"{}. (If not defined, a macro is used to define this value). Parameter \char`\"{}mode\char`\"{}\+: Can be one of the following\+: console\+\_\+interface\+::std\+\_\+out, console\+\_\+interface\+::std\+\_\+err, or console\+\_\+interface\+::std\+\_\+log 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Targets/Color\+Console\+Target.\+h\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Targets/Color\+Console\+Target.\+cpp\end{DoxyCompactItemize}
