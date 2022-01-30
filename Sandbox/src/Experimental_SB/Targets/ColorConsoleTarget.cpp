@@ -4,7 +4,8 @@
 
 namespace serenity::expiremental::targets
 {
-	ColorConsole::ColorConsole( ) : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( false )
+	ColorConsole::ColorConsole( )
+	  : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( false )
 	{
 		WriteToBaseBuffer( false );
 		SetConsoleInterface( consoleMode );

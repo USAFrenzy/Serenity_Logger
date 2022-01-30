@@ -35,8 +35,6 @@ namespace serenity::expiremental::targets
 	{
 	}
 
-	TargetBase::~TargetBase( ) { }
-
 	void TargetBase::WriteToBaseBuffer( bool fmtToBuf )
 	{
 		toBuffer = fmtToBuf;
@@ -90,7 +88,7 @@ namespace serenity::expiremental::targets
 	{
 		logLevel = level;
 	}
-	LoggerLevel TargetBase::Level( )
+	const LoggerLevel TargetBase::Level( )
 	{
 		return logLevel;
 	}

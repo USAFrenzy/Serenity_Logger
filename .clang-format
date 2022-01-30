@@ -207,7 +207,7 @@ BreakInheritanceList: AfterColon
 #                 "ryVeryVeryVeryVeryVery"
 #                 "VeryLongString";
 BreakStringLiterals: true
-ColumnLimit: 135
+ColumnLimit: 125
 ########## A regular expression that describes comments with special meaning ##########
 CommentPragmas: '^///'
 ########## If false, each namespace is declared on a new line ##########

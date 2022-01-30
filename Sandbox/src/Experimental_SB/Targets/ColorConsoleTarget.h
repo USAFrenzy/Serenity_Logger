@@ -8,6 +8,7 @@
 
 namespace serenity::expiremental::targets
 {
+	/// Mirrors the standard outputs: std::out, std::err, std::clog
 	enum class console_interface
 	{
 		std_out,
@@ -18,54 +19,44 @@ namespace serenity::expiremental::targets
 	class ColorConsole : public TargetBase
 	{
 	  public:
-		/// <summary>
-		/// Default Constructor that automatically sets logger name to "Console_Logger", the console mode to std::out by default, Sets
-		/// the colors to use for log levels, and determines if colors should be used dependant on whether or not a valid output handle
-		/// is set and the output is to a terminal type interface
-		/// </summary>
+		// clang-format off
+		/*************************************************************************************************************//**
+	    *                                For all Console Target Constructors:
+		* - will set the console mode to "console_interface::stdout"
+		* - Initializes the default colors to use for each message level
+		* - If output is a terminal and hasn't been redirected and if the output handle is valid, enables color output
+		* - Sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING" flag if on Windows Platform
+        ******************************************************************************************************************/
+		// clang-format on
+
 		ColorConsole( );
-		/// <summary>
-		/// Constructor that takes in a logger name to use, automatically sets the console mode to std::out by default, Sets the colors
-		/// to use for log levels, and determines if colors should be used dependant on whether or not a valid output handle is set and
-		/// the output is to a terminal type interface
-		/// </summary>
 		explicit ColorConsole( std::string_view name );
-		/// <summary>
-		/// Constructor that takes in a logger name to use, a format pattern for how the messages should be formatted, automatically
-		/// sets the console mode to std::out by default, Sets the colors to use for log levels, and determines if colors should be
-		/// used dependant on whether or not a valid output handle is set and the output is to a terminal type interface
-		/// </summary>
 		explicit ColorConsole( std::string_view name, std::string_view msgPattern );
-		/// <summary> If the output wasn't directed to a terminal, will flush the contents. If Windows, also resets the console mode to
-		/// default to clear "ENABLE_VIRTUAL_TERMINAL_PROCESSING"  </summary>
+		///  If the output wasn't directed to a terminal, will flush the contents.
+		///  If Windows, also resets the console mode to default to clear "ENABLE_VIRTUAL_TERMINAL_PROCESSING" flag
 		~ColorConsole( );
-		/// <summary> Returns the log level based color for the current message to use </summary>
+		///  Returns the log level based color for the current message to use
 		std::string_view GetMsgColor( LoggerLevel level );
-		/// <summary> Sets color specified for the log level specified</summary>
+		///  Sets color specified for the log level specified
 		void SetMsgColor( LoggerLevel level, std::string_view color );
-		/// <summary>
-		/// Sets console mode. Console modes mirror standard outputs. For Windows, sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING".
-		/// (If not defined, a macro is used to define this value).
-		/// </summary>
-		/// <param name="mode: "> Can be one of the following: console_interface::std_out, console_interface::std_err, or
-		/// console_interface::std_log</param>
+		/// Sets console mode. Console modes mirror standard outputs.
+		/// For Windows, sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING". (If not defined, a macro is used to define this value).
+		/// Parameter "mode": Can be one of the following: console_interface::std_out, console_interface::std_err, or
+		/// console_interface::std_log
 		void SetConsoleInterface( console_interface mode );
-		/// <summary> Returns the current console mode being used </summary>
+		///  Returns the current console mode being used
 		const console_interface ConsoleInterface( );
-		/// <summary> Enables/Disables colored text output </summary>
+		///  Enables/Disables colored text output
 		void ColorizeOutput( bool colorize );
-		/// <summary> Initializes the default colors to use for log levels </summary>
+		///  Initializes the default colors to use for log levels
 		void SetOriginalColors( );
-		/// <summary> Checks to see if output handle is referring to a terminal type device or not </summary>
+		///  Checks to see if output handle is referring to a terminal type device or not
 		bool IsTerminalType( );
-		/// <summary> Checks to see if output handle is valid and not empty </summary>
+		///  Checks to see if output handle is valid and not empty
 		bool IsValidHandle( );
-		/// <summary>
-		/// If output handle is valid, will write the message to the output. If color is enabled, will write the message
-		/// in the color specified for the log level used if the output is to a terminal. For windows, uses WriteConsole( ) unless the
-		/// output is not a terminal (in which case, uses WriteFile( ) )
-		/// </summary>
-		/// <param name="formatted"></param>
+		/// If output handle is valid, will write the message to the output. If color is enabled, will write the message in
+		/// the color specified for the log level used if the output is to a terminal. For windows, uses WriteConsole( )
+		/// unless the output is not a terminal (in which case, uses WriteFile( ) )
 		void PrintMessage( std::string_view formatted ) override;
 
 	  private:

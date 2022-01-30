@@ -33,7 +33,8 @@ namespace serenity::expiremental::targets
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view fileName, bool replaceIfExists ) : TargetBase( "File_Logger" ), policy( Policy( ) )
+	FileTarget::FileTarget( std::string_view fileName, bool replaceIfExists )
+	  : TargetBase( "File_Logger" ), policy( Policy( ) )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		std::filesystem::path fullFilePath = std::filesystem::current_path( );
@@ -80,7 +81,8 @@ namespace serenity::expiremental::targets
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists )
+	FileTarget::FileTarget( std::string_view name, std::string_view formatPattern, std::string_view fPath,
+							bool replaceIfExists )
 	  : TargetBase( name, formatPattern ), policy( Policy( ) )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
@@ -186,8 +188,8 @@ namespace serenity::expiremental::targets
 
 	void FileTarget::PrintMessage( std::string_view formatted )
 	{
-		// naive guard from always trying to take a lock regardless of whether the background flush thread is running or not (using
-		// manual lock due to scoping here)
+		// naive guard from always trying to take a lock regardless of whether the background flush thread is running or not
+		// (using manual lock due to scoping here)
 		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
 			while( !flushWorker.readWriteMutex.try_lock( ) ) {

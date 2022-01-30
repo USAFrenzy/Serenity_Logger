@@ -54,8 +54,8 @@ std::string SpdlogPath( bool rotate = false )
 }
 
 // This is from
-// (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128) Just
-// using this to set throughput precision
+// (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128)
+// Just using this to set throughput precision
 template <typename T> std::string SetPrecision( const T value, const int precision = 3 )
 {
 	std::ostringstream temp;
@@ -87,8 +87,10 @@ int main( )
 	auto rotateOnOpen { false };
 	// above settings equivalent to default RotatingTarget Settings
 	bool isRotateFilePath { true };
-	auto rotatingSink {
-	std::make_shared<spdlog::sinks::rotating_file_sink_st>( SpdlogPath( isRotateFilePath ), fileSize, numberOfFiles, rotateOnOpen ) };
+	auto rotatingSink { std::make_shared<spdlog::sinks::rotating_file_sink_st>( SpdlogPath( isRotateFilePath ),
+																				fileSize,
+																				numberOfFiles,
+																				rotateOnOpen ) };
 	sinks.clear( );
 	sinks.emplace_back( rotatingSink );
 	auto spdlogRotatingLogger { std::make_shared<spdlog::logger>( "Rotating_Logger", begin( sinks ), end( sinks ) ) };
@@ -169,8 +171,8 @@ int main( )
 	testFile.trace( "File Should Have Been Renamed To \"Renamed_File.txt\"" );
 	testFile.Flush( );
 
-	// Found out why this was so slow.. the std::filesystem::file_size() call is apparently extremely expensive, opted for manual
-	// tracking of size
+	// Found out why this was so slow.. the std::filesystem::file_size() call is apparently extremely expensive, opted for
+	// manual tracking of size
 	auto start { std::chrono::steady_clock::now( ) };
 	for( int i = 0; i < 4'000'000; ++i ) {
 		rotatingFile.trace( "This is a test loop for rotating the file. Iteration {}", i );
@@ -306,13 +308,17 @@ int main( )
 			  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
 
 	std::cout << Tag::Bright_Yellow( "Spdlog Color Console Sink (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
-			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
+			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::us ) / iterations ) + " us"
+																													 "\n" )
 			  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
-			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
+			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms"
+																													 "\n" )
 			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::sec ) / iterations ) + " s"
+																													  "\n" );
 
-	std::cout << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n" );
+	std::cout << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent +
+									  " Percent Of Spdlog's Color Console Sink Speed\n" );
 
 	std::cout << Tag::Bright_Yellow( "File Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 			  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
@@ -342,7 +348,8 @@ int main( )
 			  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
 			  << Tag::Bright_Green( std::to_string( spdlogRotateTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
 			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
-			  << Tag::Bright_Green( std::to_string( spdlogRotateTester.Elapsed_In( time_mode::sec ) / iterations ) + " s\n" );
+			  << Tag::Bright_Green( std::to_string( spdlogRotateTester.Elapsed_In( time_mode::sec ) / iterations ) + " s"
+																													 "\n" );
 
 	std::cout << Tag::Bright_Magenta( "Rotating Target Is " + rotatePercent + " Percent Of Spdlog's File Sink Speed\n" );
 
@@ -387,7 +394,8 @@ int main( )
 							  "\n" );
 	std::cout << Tag::Yellow( "***************************************************************************************"
 							  "\n" );
-	std::cout << Tag::Yellow( "***************************************************************************************\n\n" );
+	std::cout << Tag::Yellow( "***************************************************************************************"
+							  "\n\n" );
 
 #endif  // INSTRUMENTATION_ENABLED
 }

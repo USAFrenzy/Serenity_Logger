@@ -4,7 +4,8 @@
 
 namespace serenity::expiremental::targets
 {
-	RotatingTarget::RotatingTarget( ) : FileTarget( "Rotating_Log.txt", true ), rotateFile( true ), rotateSettings( RotateSettings( ) )
+	RotatingTarget::RotatingTarget( )
+	  : FileTarget( "Rotating_Log.txt", true ), rotateFile( true ), rotateSettings( RotateSettings( ) )
 	{
 		rotateSettings.SetOriginalSettings( fileOptions.filePath );
 		RenameFileForRotation( );
@@ -145,18 +146,19 @@ namespace serenity::expiremental::targets
 			if( !fileToReplace.empty( ) ) {
 				fileOptions.filePath = std::move( fileToReplace );
 			} else {
-				std::cerr << std::vformat( "Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And Truncating "
-										   "Previous File, \"{}\"\n",
+				std::cerr << std::vformat( "Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And "
+										   "Truncating Previous File, \"{}\"\n",
 										   std::make_format_args( originalFile, previousFile ) );
 			}
 
 			if( !FileTarget::OpenFile( true ) ) {
 				if( fileToReplace != previousFile ) {
-					std::cerr << std::vformat( "Error: Unable To Finish Rotating From File \"{}\" To File \"{}\"\n",
-											   std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
-				} else {
 					std::cerr
-					<< std::vformat( "Error: Unable To Open And Truncate File \"{}\"\n", std::make_format_args( previousFile ) );
+					<< std::vformat( "Error: Unable To Finish Rotating From File \"{}\" To File \"{}\"\n",
+									 std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
+				} else {
+					std::cerr << std::vformat( "Error: Unable To Open And Truncate File \"{}\"\n",
+											   std::make_format_args( previousFile ) );
 				}
 			}
 		}
