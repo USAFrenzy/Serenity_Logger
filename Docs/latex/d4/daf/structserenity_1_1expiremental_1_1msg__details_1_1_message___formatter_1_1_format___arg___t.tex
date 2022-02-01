@@ -1,0 +1,67 @@
+\doxysection{serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+T Struct Reference}
+\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___t}\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T}}
+
+
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%\+T\char`\"{} and represents the wall clock time in a 24-\/hour format (i.\+e. 23\+:45\+:05) format.  
+
+
+
+
+{\ttfamily \#include $<$Message\+\_\+\+Formatter.\+h$>$}
+
+Inheritance diagram for serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+T\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{d4/daf/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___t}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___t_ab93d89b5f9dded59e6914b2b7c82e4ae}} 
+{\bfseries Format\+\_\+\+Arg\+\_\+T} (\textbf{ Message\+\_\+\+Info} \&info)
+\begin{DoxyCompactList}\small\item\em Constructor that uses the \doxyref{Message\+\_\+\+Info}{p.}{d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info} pointer to store a reference to the cache and intitialize the current and last known minute values. \end{DoxyCompactList}\item 
+std\+::string \textbf{ Update\+Internal\+View} () override
+\begin{DoxyCompactList}\small\item\em Will update the last known minute to the current minute and then return a string representation of the wall clock time in a 24-\/hour format. \end{DoxyCompactList}\item 
+std\+::string\+\_\+view \textbf{ Format} () override
+\begin{DoxyCompactList}\small\item\em Returns The Formatted Argument. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%\+T\char`\"{} and represents the wall clock time in a 24-\/hour format (i.\+e. 23\+:45\+:05) format. 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___t_a56d85bfdbea027f4b90f607c0cd09158}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T}!Format@{Format}}
+\index{Format@{Format}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T}}
+\doxysubsubsection{Format()}
+{\footnotesize\ttfamily std\+::string\+\_\+view serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+\+T\+::\+Format (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Returns The Formatted Argument. 
+
+When called, if the current minute doesn\textquotesingle{}t match the last known minute, will update the last known minute to the current minute and then call \doxyref{Update\+Internal\+View( )}{p.}{d4/daf/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___t_a8de1df67e98af945e8532e841507b063} to update the internal string representation of the time in a 24-\/hour format, otherwise, just returns the internal string representation of the time in a 24-\/hour format stored 
+
+Implements \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}.
+
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___t_a8de1df67e98af945e8532e841507b063}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T}!UpdateInternalView@{UpdateInternalView}}
+\index{UpdateInternalView@{UpdateInternalView}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_T}}
+\doxysubsubsection{UpdateInternalView()}
+{\footnotesize\ttfamily std\+::string serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+\+T\+::\+Update\+Internal\+View (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Will update the last known minute to the current minute and then return a string representation of the wall clock time in a 24-\/hour format. 
+
+
+
+Reimplemented from \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}.
+
+
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+h\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+cpp\end{DoxyCompactItemize}

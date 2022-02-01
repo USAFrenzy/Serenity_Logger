@@ -1,0 +1,67 @@
+\doxysection{serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+x Struct Reference}
+\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__x}\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x}}
+
+
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%x\char`\"{} and represents the string representation of the shortened weekday name (i.\+e. For Monday -\/ Mon, for Tuesday -\/ Tues, etc...)  
+
+
+
+
+{\ttfamily \#include $<$Message\+\_\+\+Formatter.\+h$>$}
+
+Inheritance diagram for serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+x\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{d6/db6/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__x}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__x_a8de9311b80ec06a9c71c21aaa569805e}} 
+{\bfseries Format\+\_\+\+Arg\+\_\+x} (\textbf{ Message\+\_\+\+Info} \&info)
+\begin{DoxyCompactList}\small\item\em Constructor that uses the \doxyref{Message\+\_\+\+Info}{p.}{d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info} pointer to store a reference to the cache and intitialize the current and last known weekday values. \end{DoxyCompactList}\item 
+std\+::string \textbf{ Update\+Internal\+View} () override
+\begin{DoxyCompactList}\small\item\em Will update the last known weekday to the current weekday and then return a string representation of the shortened weekday. \end{DoxyCompactList}\item 
+std\+::string\+\_\+view \textbf{ Format} () override
+\begin{DoxyCompactList}\small\item\em Returns The Formatted Argument. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%x\char`\"{} and represents the string representation of the shortened weekday name (i.\+e. For Monday -\/ Mon, for Tuesday -\/ Tues, etc...) 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__x_a3129f1885f47fa723faa0093b21a24cc}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x}!Format@{Format}}
+\index{Format@{Format}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x}}
+\doxysubsubsection{Format()}
+{\footnotesize\ttfamily std\+::string\+\_\+view serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+x\+::\+Format (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Returns The Formatted Argument. 
+
+When called, if the current weekday value doesn\textquotesingle{}t match the last known weekday value, will update the last known weekday value to the current weekday value and then call \doxyref{Update\+Internal\+View( )}{p.}{d6/db6/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__x_aa069fda0a23ae0bd03acd4f623ab985e} to update the internal string representation of the new shortened weekday value, otherwise, just returns the internal shortened weekday representation stored 
+
+Implements \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}.
+
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__x_aa069fda0a23ae0bd03acd4f623ab985e}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x}!UpdateInternalView@{UpdateInternalView}}
+\index{UpdateInternalView@{UpdateInternalView}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_x}}
+\doxysubsubsection{UpdateInternalView()}
+{\footnotesize\ttfamily std\+::string serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+x\+::\+Update\+Internal\+View (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Will update the last known weekday to the current weekday and then return a string representation of the shortened weekday. 
+
+
+
+Reimplemented from \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}.
+
+
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+h\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+cpp\end{DoxyCompactItemize}

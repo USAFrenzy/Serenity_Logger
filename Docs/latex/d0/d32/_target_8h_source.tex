@@ -1,4 +1,4 @@
-\hypertarget{_target_8h_source}{}\doxysection{Target.\+h}
+\doxysection{Target.\+h}
 \label{_target_8h_source}\index{Serenity\_Logger/Sandbox/src/Experimental\_SB/Targets/Target.h@{Serenity\_Logger/Sandbox/src/Experimental\_SB/Targets/Target.h}}
 
 \begin{DoxyCode}{0}
@@ -15,46 +15,46 @@
 \DoxyCodeLine{11 }
 \DoxyCodeLine{12 \textcolor{keyword}{namespace }serenity::expiremental::targets}
 \DoxyCodeLine{13 \{}
-\DoxyCodeLine{24     \textcolor{keyword}{class }\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{TargetBase}}}
+\DoxyCodeLine{24     \textcolor{keyword}{class }TargetBase}
 \DoxyCodeLine{25     \{}
 \DoxyCodeLine{26       \textcolor{keyword}{public}:}
-\DoxyCodeLine{28         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a00920d6545c5783da8db176297c3dc33}{TargetBase}}( );}
-\DoxyCodeLine{32         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a00920d6545c5783da8db176297c3dc33}{TargetBase}}( std::string\_view name );}
-\DoxyCodeLine{38         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a00920d6545c5783da8db176297c3dc33}{TargetBase}}( std::string\_view name, std::string\_view msgPattern );}
-\DoxyCodeLine{39         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{\string~TargetBase}}( ) = \textcolor{keywordflow}{default};}
-\DoxyCodeLine{46         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a10378fe3e1915c448202fcdc12fe5990}{SetFlushPolicy}}( \mbox{\hyperlink{classserenity_1_1expiremental_1_1_flush___policy}{Flush\_Policy}} pPolicy );}
-\DoxyCodeLine{48         \mbox{\hyperlink{classserenity_1_1expiremental_1_1_flush___policy}{Flush\_Policy}} \&\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae8f5ae1860dbfaa258808b92daad35b9}{Policy}}( );}
-\DoxyCodeLine{50         \textcolor{keyword}{const} std::string \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a93eb6fcb7c858c38e7c6c75be14709ea}{LoggerName}}( );}
-\DoxyCodeLine{57         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b}{SetPattern}}( std::string\_view pattern );}
-\DoxyCodeLine{59         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a59007ca28ccfec836272bbba0e991cf7}{ResetPatternToDefault}}( );}
-\DoxyCodeLine{65         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a18f79b8a22642e4669fbe7e169ba4216}{SetLogLevel}}( LoggerLevel level );}
-\DoxyCodeLine{71         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_aed328459507a705ae45f37059d3b5eee}{WriteToBaseBuffer}}( \textcolor{keywordtype}{bool} fmtToBuf = \textcolor{keyword}{true} );}
-\DoxyCodeLine{73         \textcolor{keywordtype}{bool} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a923f74e7e87e3f3add647bab13042b28}{isWriteToBuf}}( );}
-\DoxyCodeLine{75         std::string *\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a004adcbd403c7e0fc332edd0d8658879}{Buffer}}( );}
-\DoxyCodeLine{77         \textcolor{keyword}{const} LoggerLevel \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a9ab6441c93db92254475cdba46f18eb2}{Level}}( );}
-\DoxyCodeLine{80         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a4ad638bb3c8b3ef7e52f13239aaa1ac9}{SetLoggerName}}( std::string\_view name );}
+\DoxyCodeLine{28         TargetBase( );}
+\DoxyCodeLine{32         TargetBase( std::string\_view name );}
+\DoxyCodeLine{38         TargetBase( std::string\_view name, std::string\_view msgPattern );}
+\DoxyCodeLine{39         \string~TargetBase( ) = \textcolor{keywordflow}{default};}
+\DoxyCodeLine{46         \textcolor{keywordtype}{void} SetFlushPolicy( Flush\_Policy pPolicy );}
+\DoxyCodeLine{48         Flush\_Policy \&Policy( );}
+\DoxyCodeLine{50         \textcolor{keyword}{const} std::string LoggerName( );}
+\DoxyCodeLine{57         \textcolor{keywordtype}{void} SetPattern( std::string\_view pattern );}
+\DoxyCodeLine{59         \textcolor{keywordtype}{void} ResetPatternToDefault( );}
+\DoxyCodeLine{65         \textcolor{keywordtype}{void} SetLogLevel( LoggerLevel level );}
+\DoxyCodeLine{71         \textcolor{keywordtype}{void} WriteToBaseBuffer( \textcolor{keywordtype}{bool} fmtToBuf = \textcolor{keyword}{true} );}
+\DoxyCodeLine{73         \textcolor{keywordtype}{bool} isWriteToBuf( );}
+\DoxyCodeLine{75         std::string *Buffer( );}
+\DoxyCodeLine{77         \textcolor{keyword}{const} LoggerLevel Level( );}
+\DoxyCodeLine{80         \textcolor{keywordtype}{void} SetLoggerName( std::string\_view name );}
 \DoxyCodeLine{81 }
-\DoxyCodeLine{91         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_afd23065688b320bce564faed71b769ff}{Trace}}( std::string\_view msg, Args \&\&...args );}
-\DoxyCodeLine{94         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a5bb7193f6e6ddd7947e52ab67054a03b}{Info}}( std::string\_view msg, Args \&\&...args );}
-\DoxyCodeLine{97         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad929f6fdbf083c8503d0bbee241c3bab}{Debug}}( std::string\_view msg, Args \&\&...args );}
-\DoxyCodeLine{100         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a7a5b321f43433174f4e89a895230cd80}{Warn}}( std::string\_view msg, Args \&\&...args );}
-\DoxyCodeLine{103         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a642036ccc81a6f8eaed0c5e8ceebd3e5}{Error}}( std::string\_view msg, Args \&\&...args );}
-\DoxyCodeLine{106         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_afdcbf379c68e6a7ebd76ab09d6008e6d}{Fatal}}( std::string\_view msg, Args \&\&...args );}
+\DoxyCodeLine{91         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} Trace( std::string\_view msg, Args \&\&...args );}
+\DoxyCodeLine{94         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} Info( std::string\_view msg, Args \&\&...args );}
+\DoxyCodeLine{97         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} Debug( std::string\_view msg, Args \&\&...args );}
+\DoxyCodeLine{100         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} Warn( std::string\_view msg, Args \&\&...args );}
+\DoxyCodeLine{103         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} Error( std::string\_view msg, Args \&\&...args );}
+\DoxyCodeLine{106         \textcolor{keyword}{template} <\textcolor{keyword}{typename}... Args> \textcolor{keywordtype}{void} Fatal( std::string\_view msg, Args \&\&...args );}
 \DoxyCodeLine{107 }
 \DoxyCodeLine{108       \textcolor{keyword}{protected}:}
-\DoxyCodeLine{115         \textcolor{keyword}{virtual} \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{PrintMessage}}( std::string\_view formatted ) = 0;}
-\DoxyCodeLine{118         \textcolor{keyword}{virtual} \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{PolicyFlushOn}}( ) \{ \}}
-\DoxyCodeLine{120         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter}{msg\_details::Message\_Formatter}} *\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_abfbc3f56c6f5d8b2012419d1f812e903}{MsgFmt}}( );}
-\DoxyCodeLine{122         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{msg\_details::Message\_Info}} *\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a267fd00b85ed1e8cea8c8a9c57eb6002}{MsgInfo}}( );}
+\DoxyCodeLine{115         \textcolor{keyword}{virtual} \textcolor{keywordtype}{void} PrintMessage( std::string\_view formatted ) = 0;}
+\DoxyCodeLine{118         \textcolor{keyword}{virtual} \textcolor{keywordtype}{void} PolicyFlushOn( ) \{ \}}
+\DoxyCodeLine{120         msg\_details::Message\_Formatter *MsgFmt( );}
+\DoxyCodeLine{122         msg\_details::Message\_Info *MsgInfo( );}
 \DoxyCodeLine{123 }
 \DoxyCodeLine{124       \textcolor{keyword}{private}:}
 \DoxyCodeLine{125         \textcolor{keywordtype}{bool}                           toBuffer;}
-\DoxyCodeLine{126         \mbox{\hyperlink{classserenity_1_1expiremental_1_1_flush___policy}{Flush\_Policy}}                   policy;}
+\DoxyCodeLine{126         Flush\_Policy                   policy;}
 \DoxyCodeLine{127         LoggerLevel                    logLevel;}
 \DoxyCodeLine{128         LoggerLevel                    msgLevel;}
 \DoxyCodeLine{129         std::string                    pattern;}
-\DoxyCodeLine{130         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{msg\_details::Message\_Info}}      msgDetails;}
-\DoxyCodeLine{131         \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter}{msg\_details::Message\_Formatter}} msgPattern;}
+\DoxyCodeLine{130         msg\_details::Message\_Info      msgDetails;}
+\DoxyCodeLine{131         msg\_details::Message\_Formatter msgPattern;}
 \DoxyCodeLine{132         std::string                    internalBuffer;}
 \DoxyCodeLine{133     \};}
 \DoxyCodeLine{134 \textcolor{preprocessor}{\#include "{}Target-\/impl.h"{}}}

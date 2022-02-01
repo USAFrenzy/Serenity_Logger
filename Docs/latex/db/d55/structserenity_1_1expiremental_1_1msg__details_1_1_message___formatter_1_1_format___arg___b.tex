@@ -1,0 +1,67 @@
+\doxysection{serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+B Struct Reference}
+\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b}\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B}}
+
+
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%\+B\char`\"{} and represents the string representation the whole month name (i.\+e. \char`\"{}\+January\char`\"{}, \char`\"{}\+February\char`\"{}, etc..)  
+
+
+
+
+{\ttfamily \#include $<$Message\+\_\+\+Formatter.\+h$>$}
+
+Inheritance diagram for serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+B\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{db/d55/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b_a06da0dca3a6e06cb95e7abd964858bd2}} 
+{\bfseries Format\+\_\+\+Arg\+\_\+B} (\textbf{ Message\+\_\+\+Info} \&info)
+\begin{DoxyCompactList}\small\item\em Constructor that uses the \doxyref{Message\+\_\+\+Info}{p.}{d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info} pointer to store a reference to the cache and intitialize the current and last known month values. \end{DoxyCompactList}\item 
+std\+::string \textbf{ Update\+Internal\+View} () override
+\begin{DoxyCompactList}\small\item\em Will update the last known month to the current month and then return a string representation of the whole month name. \end{DoxyCompactList}\item 
+std\+::string\+\_\+view \textbf{ Format} () override
+\begin{DoxyCompactList}\small\item\em Returns The Formatted Argument. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%\+B\char`\"{} and represents the string representation the whole month name (i.\+e. \char`\"{}\+January\char`\"{}, \char`\"{}\+February\char`\"{}, etc..) 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b_a4167401828036c5970a2e66ddcb8f81e}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B}!Format@{Format}}
+\index{Format@{Format}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B}}
+\doxysubsubsection{Format()}
+{\footnotesize\ttfamily std\+::string\+\_\+view serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+\+B\+::\+Format (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Returns The Formatted Argument. 
+
+When called, if the current month value doesn\textquotesingle{}t match the last known month value, will update the last known month value to the current month value and then call \doxyref{Update\+Internal\+View( )}{p.}{db/d55/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b_a675543b0d54695441099dcb6d02e8414} to update the internal string representation of the current month, otherwise, just returns the internal month representation stored 
+
+Implements \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}.
+
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b_a675543b0d54695441099dcb6d02e8414}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B}!UpdateInternalView@{UpdateInternalView}}
+\index{UpdateInternalView@{UpdateInternalView}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_B}}
+\doxysubsubsection{UpdateInternalView()}
+{\footnotesize\ttfamily std\+::string serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+\+B\+::\+Update\+Internal\+View (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Will update the last known month to the current month and then return a string representation of the whole month name. 
+
+
+
+Reimplemented from \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}.
+
+
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+h\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+cpp\end{DoxyCompactItemize}

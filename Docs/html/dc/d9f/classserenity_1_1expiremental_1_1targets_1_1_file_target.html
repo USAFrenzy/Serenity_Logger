@@ -27,6 +27,7 @@
   <td id="projectalign">
    <div id="projectname">Serenity Logger
    </div>
+   <div id="projectbrief">A very fast and effiecient logging library. This library currently can log to files, rotate files when logging, log to the terminal, and is aware if the terminal is being piped during logging.</div>
   </td>
  </tr>
  </tbody>
@@ -153,7 +154,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>EraseContents</b> ()<
 <tr class="memitem:af4147b9b283d46f9de20fed081b394e0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#af4147b9b283d46f9de20fed081b394e0">CloseFile</a> ()</td></tr>
 <tr class="memdesc:af4147b9b283d46f9de20fed081b394e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Joins any currently running flush background thread (if enabled) and if the file handle's file context is currently open, will flush contents to disk and close the file.  <a href="../../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#af4147b9b283d46f9de20fed081b394e0">More...</a><br /></td></tr>
 <tr class="separator:af4147b9b283d46f9de20fed081b394e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f6ad6fd27f4a0fe5f41f8def08c8d9e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#a2f6ad6fd27f4a0fe5f41f8def08c8d9e">Flush</a> ()</td></tr>
+<tr class="memitem:a2f6ad6fd27f4a0fe5f41f8def08c8d9e"><td class="memItemLeft" align="right" valign="top"><a id="a2f6ad6fd27f4a0fe5f41f8def08c8d9e" name="a2f6ad6fd27f4a0fe5f41f8def08c8d9e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>Flush</b> ()</td></tr>
+<tr class="memdesc:a2f6ad6fd27f4a0fe5f41f8def08c8d9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">If contents were written to buffer, this will now write contents of buffer to file and flush contents to disk, otherwise, just flushes contents to disk. <br /></td></tr>
 <tr class="separator:a2f6ad6fd27f4a0fe5f41f8def08c8d9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classserenity_1_1expiremental_1_1targets_1_1_target_base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classserenity_1_1expiremental_1_1targets_1_1_target_base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html">serenity::expiremental::targets::TargetBase</a></td></tr>
 <tr class="memitem:a00920d6545c5783da8db176297c3dc33 inherit pub_methods_classserenity_1_1expiremental_1_1targets_1_1_target_base"><td class="memItemLeft" align="right" valign="top"><a id="a00920d6545c5783da8db176297c3dc33" name="a00920d6545c5783da8db176297c3dc33"></a>
@@ -484,6 +487,8 @@ std::ofstream&#160;</td><td class="memItemRight" valign="bottom"><b>fileHandle</
 <p>Cleans up any background threads, flushes contents to disk, and closes the file context being used. </p>
 <p >Cleans up background flush thread if enabled by joining the thread and then flushing the contents of the file handle to the file (if messages were written to buffer, will now write contents of buffer to file). Afterwards, the file context being used is closed. </p>
 
+<p class="reference">References <a class="el" href="../../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#af4147b9b283d46f9de20fed081b394e0">CloseFile()</a>.</p>
+
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
@@ -505,23 +510,7 @@ std::ofstream&#160;</td><td class="memItemRight" valign="bottom"><b>fileHandle</
 <p>Joins any currently running flush background thread (if enabled) and if the file handle's file context is currently open, will flush contents to disk and close the file. </p>
 <dl class="section return"><dt>Returns</dt><dd>If successful, returns true. If unsuccessful, will return false with error message </dd></dl>
 
-</div>
-</div>
-<a id="a2f6ad6fd27f4a0fe5f41f8def08c8d9e" name="a2f6ad6fd27f4a0fe5f41f8def08c8d9e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f6ad6fd27f4a0fe5f41f8def08c8d9e">&#9670;&nbsp;</a></span>Flush()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void serenity::expiremental::targets::FileTarget::Flush </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p >If contents were written to buffer with <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a923f74e7e87e3f3add647bab13042b28" title="Returns true if buffer writes are enabled and false if they are disabled.">isWriteToBuf()</a> set to true, will now write contents of buffer to file and flush contents to disk, otherwise, just flushes contents to disk </p>
+<p class="reference">References <a class="el" href="../../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#a2f6ad6fd27f4a0fe5f41f8def08c8d9e">Flush()</a>.</p>
 
 </div>
 </div>
@@ -643,6 +632,8 @@ std::ofstream&#160;</td><td class="memItemRight" valign="bottom"><b>fileHandle</
 <dl class="section return"><dt>Returns</dt><dd>If successful, returns true. If unsuccessful, will return false with error message </dd></dl>
 
 <p>Reimplemented in <a class="el" href="../../dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target.html#a896eedf218ba0cd6c21c0b761e948b80">serenity::expiremental::targets::RotatingTarget</a>.</p>
+
+<p class="reference">References <a class="el" href="../../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#af4147b9b283d46f9de20fed081b394e0">CloseFile()</a>, and <a class="el" href="../../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#ab19812d9b25aac8532eec307d9820718">OpenFile()</a>.</p>
 
 </div>
 </div>

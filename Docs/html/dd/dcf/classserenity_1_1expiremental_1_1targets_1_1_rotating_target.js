@@ -1,6 +1,8 @@
 var classserenity_1_1expiremental_1_1targets_1_1_rotating_target =
 [
     [ "RotatingTarget", "dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target.html#a51151ca9fc9f97139b234d25d59e9c0a", null ],
+    [ "RotatingTarget", "dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target.html#a46cba28127a43fc749fea7acc4429586", null ],
+    [ "RotatingTarget", "dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target.html#a470854865a43ba27bc1faec14aa04f1f", null ],
     [ "RotatingTarget", "dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target.html#a5ee2c6d0a50a23c9734da9c1e8025df3", null ],
     [ "~RotatingTarget", "dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target.html#a40acb1fb8072c6fe9e42207115d50420", null ],
     [ "operator=", "dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target.html#aa10fc123a0a8877e96db67be922c11f1", null ],

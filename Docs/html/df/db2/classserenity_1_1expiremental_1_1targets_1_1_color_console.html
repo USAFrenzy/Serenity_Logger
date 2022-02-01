@@ -27,6 +27,7 @@
   <td id="projectalign">
    <div id="projectname">Serenity Logger
    </div>
+   <div id="projectbrief">A very fast and effiecient logging library. This library currently can log to files, rotate files when logging, log to the terminal, and is aware if the terminal is being piped during logging.</div>
   </td>
  </tr>
  </tbody>
@@ -105,25 +106,27 @@ Inheritance diagram for serenity::expiremental::targets::ColorConsole:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:abdc04bb9fb84bedc6a40ba8b13d800bb"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#abdc04bb9fb84bedc6a40ba8b13d800bb">ColorConsole</a> ()</td></tr>
+<tr class="memitem:abdc04bb9fb84bedc6a40ba8b13d800bb"><td class="memItemLeft" align="right" valign="top"><a id="abdc04bb9fb84bedc6a40ba8b13d800bb" name="abdc04bb9fb84bedc6a40ba8b13d800bb"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ColorConsole</b> ()</td></tr>
+<tr class="memdesc:abdc04bb9fb84bedc6a40ba8b13d800bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor that will set the logger name to "Console_Logger". All other settings to their defaults. <br /></td></tr>
 <tr class="separator:abdc04bb9fb84bedc6a40ba8b13d800bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a33e9dfbc11d88f4a80112c217fa2bb68"><td class="memItemLeft" align="right" valign="top"><a id="a33e9dfbc11d88f4a80112c217fa2bb68" name="a33e9dfbc11d88f4a80112c217fa2bb68"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ColorConsole</b> (std::string_view name)</td></tr>
+<tr class="memitem:a33e9dfbc11d88f4a80112c217fa2bb68"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a33e9dfbc11d88f4a80112c217fa2bb68">ColorConsole</a> (std::string_view name)</td></tr>
+<tr class="memdesc:a33e9dfbc11d88f4a80112c217fa2bb68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that will set the logger name to the parameter <code>name</code> passed in. All other settings to their defaults.  <a href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a33e9dfbc11d88f4a80112c217fa2bb68">More...</a><br /></td></tr>
 <tr class="separator:a33e9dfbc11d88f4a80112c217fa2bb68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab114c020c496fb36b76d35564b3dda9b"><td class="memItemLeft" align="right" valign="top"><a id="ab114c020c496fb36b76d35564b3dda9b" name="ab114c020c496fb36b76d35564b3dda9b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ColorConsole</b> (std::string_view name, std::string_view msgPattern)</td></tr>
+<tr class="memitem:ab114c020c496fb36b76d35564b3dda9b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#ab114c020c496fb36b76d35564b3dda9b">ColorConsole</a> (std::string_view name, std::string_view msgPattern)</td></tr>
+<tr class="memdesc:ab114c020c496fb36b76d35564b3dda9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that will set the logger name to the parameter <code>name</code> passed in and set the format pattern via the parameter <code>msgPattern</code> passed in. All other settings to their defaults.  <a href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#ab114c020c496fb36b76d35564b3dda9b">More...</a><br /></td></tr>
 <tr class="separator:ab114c020c496fb36b76d35564b3dda9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2dd34715e3bc088598a395b23d8b1965"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a2dd34715e3bc088598a395b23d8b1965">~ColorConsole</a> ()</td></tr>
+<tr class="memdesc:a2dd34715e3bc088598a395b23d8b1965"><td class="mdescLeft">&#160;</td><td class="mdescRight">If the output wasn't directed to a terminal, will flush the contents.  <a href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a2dd34715e3bc088598a395b23d8b1965">More...</a><br /></td></tr>
 <tr class="separator:a2dd34715e3bc088598a395b23d8b1965"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd1b3e902eb5992bc73ecaede1b84144"><td class="memItemLeft" align="right" valign="top"><a id="acd1b3e902eb5992bc73ecaede1b84144" name="acd1b3e902eb5992bc73ecaede1b84144"></a>
-std::string_view&#160;</td><td class="memItemRight" valign="bottom"><b>GetMsgColor</b> (LoggerLevel level)</td></tr>
-<tr class="memdesc:acd1b3e902eb5992bc73ecaede1b84144"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the log level based color for the current message to use. <br /></td></tr>
+<tr class="memitem:acd1b3e902eb5992bc73ecaede1b84144"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#acd1b3e902eb5992bc73ecaede1b84144">GetMsgColor</a> (LoggerLevel level)</td></tr>
+<tr class="memdesc:acd1b3e902eb5992bc73ecaede1b84144"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the log level based color for the current message to use.  <a href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#acd1b3e902eb5992bc73ecaede1b84144">More...</a><br /></td></tr>
 <tr class="separator:acd1b3e902eb5992bc73ecaede1b84144"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3e15c2c060f03b097209e4235aa20492"><td class="memItemLeft" align="right" valign="top"><a id="a3e15c2c060f03b097209e4235aa20492" name="a3e15c2c060f03b097209e4235aa20492"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SetMsgColor</b> (LoggerLevel level, std::string_view color)</td></tr>
-<tr class="memdesc:a3e15c2c060f03b097209e4235aa20492"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets color specified for the log level specified. <br /></td></tr>
+<tr class="memitem:a3e15c2c060f03b097209e4235aa20492"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a3e15c2c060f03b097209e4235aa20492">SetMsgColor</a> (LoggerLevel level, std::string_view color)</td></tr>
+<tr class="memdesc:a3e15c2c060f03b097209e4235aa20492"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets color specified for the log level specified.  <a href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a3e15c2c060f03b097209e4235aa20492">More...</a><br /></td></tr>
 <tr class="separator:a3e15c2c060f03b097209e4235aa20492"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80ba65c128483fdefd79ca66db5bad43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a80ba65c128483fdefd79ca66db5bad43">SetConsoleInterface</a> (console_interface mode)</td></tr>
+<tr class="memdesc:a80ba65c128483fdefd79ca66db5bad43"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets console mode. Console modes mirror standard outputs.  <a href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a80ba65c128483fdefd79ca66db5bad43">More...</a><br /></td></tr>
 <tr class="separator:a80ba65c128483fdefd79ca66db5bad43"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29ed413d82a9b0c8d11401fd47da1e7e"><td class="memItemLeft" align="right" valign="top"><a id="a29ed413d82a9b0c8d11401fd47da1e7e" name="a29ed413d82a9b0c8d11401fd47da1e7e"></a>
 const console_interface&#160;</td><td class="memItemRight" valign="bottom"><b>ConsoleInterface</b> ()</td></tr>
@@ -146,6 +149,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>IsValidHandle</b> ()<
 <tr class="memdesc:acaf2de90563dcd5aaa7bdb660e37c358"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks to see if output handle is valid and not empty. <br /></td></tr>
 <tr class="separator:acaf2de90563dcd5aaa7bdb660e37c358"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a85dc874dc8a9dda0bf4e07303995950c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a85dc874dc8a9dda0bf4e07303995950c">PrintMessage</a> (std::string_view formatted) override</td></tr>
+<tr class="memdesc:a85dc874dc8a9dda0bf4e07303995950c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Outputs the message (<code>formatted</code>) to the destination output device.  <a href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a85dc874dc8a9dda0bf4e07303995950c">More...</a><br /></td></tr>
 <tr class="separator:a85dc874dc8a9dda0bf4e07303995950c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classserenity_1_1expiremental_1_1targets_1_1_target_base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classserenity_1_1expiremental_1_1targets_1_1_target_base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html">serenity::expiremental::targets::TargetBase</a></td></tr>
 <tr class="memitem:a00920d6545c5783da8db176297c3dc33 inherit pub_methods_classserenity_1_1expiremental_1_1targets_1_1_target_base"><td class="memItemLeft" align="right" valign="top"><a id="a00920d6545c5783da8db176297c3dc33" name="a00920d6545c5783da8db176297c3dc33"></a>
@@ -261,28 +265,98 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >This class is in charge of logging to the terminal and supports color logging and the ability to log without color. This class inherits from the <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html" title="The base class that derived target classes inherit from. Contains common functions between all target...">TargetBase</a> class for common logging functions and logging settings. </p>
+<p >For all Console Target Constructors: <br  />
+</p><ul>
+<li>will set the console mode to "console_interface::stdout" <br  />
+</li>
+<li>Initializes the default colors to use for each message level <br  />
+</li>
+<li>If output is a terminal and hasn't been redirected and if the output handle is valid, enables color output <br  />
+</li>
+<li>Sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING" flag if on Windows Platform <br  />
+ </li>
+</ul>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="abdc04bb9fb84bedc6a40ba8b13d800bb" name="abdc04bb9fb84bedc6a40ba8b13d800bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abdc04bb9fb84bedc6a40ba8b13d800bb">&#9670;&nbsp;</a></span>ColorConsole()</h2>
+<a id="a33e9dfbc11d88f4a80112c217fa2bb68" name="a33e9dfbc11d88f4a80112c217fa2bb68"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33e9dfbc11d88f4a80112c217fa2bb68">&#9670;&nbsp;</a></span>ColorConsole() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">serenity::expiremental::targets::ColorConsole::ColorConsole </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-<pre class="fragment">                           For all Console Target Constructors:
-</pre><ul>
-<li>will set the console mode to "console_interface::stdout"</li>
-<li>Initializes the default colors to use for each message level</li>
-<li>If output is a terminal and hasn't been redirected and if the output handle is valid, enables color output</li>
-<li>Sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING" flag if on Windows Platform </li>
-</ul>
+
+<p>Constructor that will set the logger name to the parameter <code>name</code> passed in. All other settings to their defaults. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>the name that the logger itself will use and be identified by </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">References <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#ae2dabedddf99b1e26cf1eb757768a2be">IsTerminalType()</a>, <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#acaf2de90563dcd5aaa7bdb660e37c358">IsValidHandle()</a>, <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a80ba65c128483fdefd79ca66db5bad43">SetConsoleInterface()</a>, <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a8a8515323fb197f22c040534fd39316f">SetOriginalColors()</a>, and <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#aed328459507a705ae45f37059d3b5eee">serenity::expiremental::targets::TargetBase::WriteToBaseBuffer()</a>.</p>
+
+</div>
+</div>
+<a id="ab114c020c496fb36b76d35564b3dda9b" name="ab114c020c496fb36b76d35564b3dda9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab114c020c496fb36b76d35564b3dda9b">&#9670;&nbsp;</a></span>ColorConsole() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">serenity::expiremental::targets::ColorConsole::ColorConsole </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>msgPattern</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructor that will set the logger name to the parameter <code>name</code> passed in and set the format pattern via the parameter <code>msgPattern</code> passed in. All other settings to their defaults. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>the name that the logger itself will use and be identified by </td></tr>
+    <tr><td class="paramname">msgPattern</td><td>the format pattern that determines how the prepended text will be displayed before the log message </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">References <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#ae2dabedddf99b1e26cf1eb757768a2be">IsTerminalType()</a>, <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#acaf2de90563dcd5aaa7bdb660e37c358">IsValidHandle()</a>, <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a80ba65c128483fdefd79ca66db5bad43">SetConsoleInterface()</a>, <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a8a8515323fb197f22c040534fd39316f">SetOriginalColors()</a>, and <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#aed328459507a705ae45f37059d3b5eee">serenity::expiremental::targets::TargetBase::WriteToBaseBuffer()</a>.</p>
 
 </div>
 </div>
@@ -300,11 +374,42 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >If the output wasn't directed to a terminal, will flush the contents. If Windows, also resets the console mode to default to clear "ENABLE_VIRTUAL_TERMINAL_PROCESSING" flag </p>
+
+<p>If the output wasn't directed to a terminal, will flush the contents. </p>
+<p >If on Windows platform, this function will also reset the console mode to default in order to to clear "ENABLE_VIRTUAL_TERMINAL_PROCESSING" flag. </p>
+
+<p class="reference">References <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#ae2dabedddf99b1e26cf1eb757768a2be">IsTerminalType()</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="acd1b3e902eb5992bc73ecaede1b84144" name="acd1b3e902eb5992bc73ecaede1b84144"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acd1b3e902eb5992bc73ecaede1b84144">&#9670;&nbsp;</a></span>GetMsgColor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string_view serenity::expiremental::targets::ColorConsole::GetMsgColor </td>
+          <td>(</td>
+          <td class="paramtype">LoggerLevel&#160;</td>
+          <td class="paramname"><em>level</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the log level based color for the current message to use. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">level</td><td>the level used to recieve the color code for that level. Logger levels are trace, info, debug, warning, error, and fatal. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The ansi color code for the <code>level</code> passed in </dd></dl>
+
+</div>
+</div>
 <a id="a85dc874dc8a9dda0bf4e07303995950c" name="a85dc874dc8a9dda0bf4e07303995950c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a85dc874dc8a9dda0bf4e07303995950c">&#9670;&nbsp;</a></span>PrintMessage()</h2>
 
@@ -328,9 +433,18 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >If output handle is valid, will write the message to the output. If color is enabled, will write the message in the color specified for the log level used if the output is to a terminal. For windows, uses WriteConsole( ) unless the output is not a terminal (in which case, uses WriteFile( ) ) </p>
+
+<p>Outputs the message (<code>formatted</code>) to the destination output device. </p>
+<p >If output handle is valid, will write the message to the output. If color is enabled, will write the message in the color specified for the log level used if the output is to a terminal. For windows, uses WriteConsole( ) unless the output is not a terminal (in which case, uses WriteFile( ) ) </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">formatted</td><td>The actual message in its entirety to send to the output destination. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 <p>Implements <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1">serenity::expiremental::targets::TargetBase</a>.</p>
+
+<p class="reference">References <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#ae2dabedddf99b1e26cf1eb757768a2be">IsTerminalType()</a>, <a class="el" href="../../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#acaf2de90563dcd5aaa7bdb660e37c358">IsValidHandle()</a>, and <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a267fd00b85ed1e8cea8c8a9c57eb6002">serenity::expiremental::targets::TargetBase::MsgInfo()</a>.</p>
 
 </div>
 </div>
@@ -349,7 +463,51 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Sets console mode. Console modes mirror standard outputs. For Windows, sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING". (If not defined, a macro is used to define this value). Parameter "mode": Can be one of the following: console_interface::std_out, console_interface::std_err, or console_interface::std_log </p>
+
+<p>Sets console mode. Console modes mirror standard outputs. </p>
+<p >For Windows, sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING". (If not defined, a macro is used to define this value). For any other platfrom, sets the standard output to use. The console_interface values (std_out, std_err, std_log) represent std::out, std::err, and std::clog respectively. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mode</td><td>Can be one of the following: console_interface::std_out, console_interface::std_err, or console_interface::std_log </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a3e15c2c060f03b097209e4235aa20492" name="a3e15c2c060f03b097209e4235aa20492"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e15c2c060f03b097209e4235aa20492">&#9670;&nbsp;</a></span>SetMsgColor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void serenity::expiremental::targets::ColorConsole::SetMsgColor </td>
+          <td>(</td>
+          <td class="paramtype">LoggerLevel&#160;</td>
+          <td class="paramname"><em>level</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>color</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets color specified for the log level specified. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">level</td><td>The logger level to bind the color code to from @color </td></tr>
+    <tr><td class="paramname">color</td><td>The color code to bind to the <code>level</code> passed in. This color code is expected to be an ansi code. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

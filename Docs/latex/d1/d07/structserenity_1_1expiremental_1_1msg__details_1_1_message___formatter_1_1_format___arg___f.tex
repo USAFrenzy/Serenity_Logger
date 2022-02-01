@@ -1,0 +1,67 @@
+\doxysection{serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+F Struct Reference}
+\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f}\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F}}
+
+
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%\+F\char`\"{} and represents the string representation the date in YY-\/\+MM-\/\+DD format.  
+
+
+
+
+{\ttfamily \#include $<$Message\+\_\+\+Formatter.\+h$>$}
+
+Inheritance diagram for serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+F\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{d1/d07/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f_a3e2c24adc42ebde02608d8b13d5ac48b}} 
+{\bfseries Format\+\_\+\+Arg\+\_\+F} (\textbf{ Message\+\_\+\+Info} \&info)
+\begin{DoxyCompactList}\small\item\em Constructor that uses the \doxyref{Message\+\_\+\+Info}{p.}{d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info} pointer to store a reference to the cache and intitialize the current and last known day values. \end{DoxyCompactList}\item 
+std\+::string \textbf{ Update\+Internal\+View} () override
+\begin{DoxyCompactList}\small\item\em Will update the last known day to the current day and then return a string representation of the date in YY-\/\+MM-\/\+DD format. \end{DoxyCompactList}\item 
+std\+::string\+\_\+view \textbf{ Format} () override
+\begin{DoxyCompactList}\small\item\em Returns The Formatted Argument. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%\+F\char`\"{} and represents the string representation the date in YY-\/\+MM-\/\+DD format. 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f_a8fc7d11802fe3a2a176417fc25059280}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F}!Format@{Format}}
+\index{Format@{Format}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F}}
+\doxysubsubsection{Format()}
+{\footnotesize\ttfamily std\+::string\+\_\+view serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+\+F\+::\+Format (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Returns The Formatted Argument. 
+
+When called, if the current day value doesn\textquotesingle{}t match the last known day value, will update the last known day value to the current day value and then call \doxyref{Update\+Internal\+View( )}{p.}{d1/d07/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f_a4a069f7c6c4a07713742aa5cacb8795d} to update the internal string representation of the current date in YY-\/\+MM-\/\+DD format, otherwise, just returns the internal date representation stored 
+
+Implements \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}.
+
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f_a4a069f7c6c4a07713742aa5cacb8795d}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F}!UpdateInternalView@{UpdateInternalView}}
+\index{UpdateInternalView@{UpdateInternalView}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_F}}
+\doxysubsubsection{UpdateInternalView()}
+{\footnotesize\ttfamily std\+::string serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+\+F\+::\+Update\+Internal\+View (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Will update the last known day to the current day and then return a string representation of the date in YY-\/\+MM-\/\+DD format. 
+
+
+
+Reimplemented from \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}.
+
+
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+h\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+cpp\end{DoxyCompactItemize}

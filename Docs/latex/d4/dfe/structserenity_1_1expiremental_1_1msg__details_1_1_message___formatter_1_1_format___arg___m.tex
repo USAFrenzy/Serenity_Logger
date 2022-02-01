@@ -1,0 +1,67 @@
+\doxysection{serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+M Struct Reference}
+\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___m}\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M}}
+
+
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%\+M\char`\"{} and represents the string representation of a padded minute.  
+
+
+
+
+{\ttfamily \#include $<$Message\+\_\+\+Formatter.\+h$>$}
+
+Inheritance diagram for serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Format\+\_\+\+Arg\+\_\+M\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{d4/dfe/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___m}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___m_a0a8e635822f438ca7d9e52f44aea185a}} 
+{\bfseries Format\+\_\+\+Arg\+\_\+M} (\textbf{ Message\+\_\+\+Info} \&info)
+\begin{DoxyCompactList}\small\item\em Constructor that uses the \doxyref{Message\+\_\+\+Info}{p.}{d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info} pointer to store a reference to the cache and intitialize the current and last known minute values. \end{DoxyCompactList}\item 
+std\+::string \textbf{ Update\+Internal\+View} () override
+\begin{DoxyCompactList}\small\item\em Will update the last known minute to the current minute and then return a string representation of the padded minute value. \end{DoxyCompactList}\item 
+std\+::string\+\_\+view \textbf{ Format} () override
+\begin{DoxyCompactList}\small\item\em Returns The Formatted Argument. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} struct that maps to flag \char`\"{}\%\+M\char`\"{} and represents the string representation of a padded minute. 
+
+\doxysubsection{Member Function Documentation}
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___m_ab0db11df29f4cd2694e4fc72ecd3ff7c}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M}!Format@{Format}}
+\index{Format@{Format}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M}}
+\doxysubsubsection{Format()}
+{\footnotesize\ttfamily std\+::string\+\_\+view serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+\+M\+::\+Format (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Returns The Formatted Argument. 
+
+When called, if the current minute value doesn\textquotesingle{}t match the last known minute value, will update the last known minute value to the current minute value and then call \doxyref{Update\+Internal\+View( )}{p.}{d4/dfe/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___m_ac4514ab75bcd4c0d84d124283ef10582} to update the internal string representation of the current padded minute, otherwise, just returns the internal padded minute value stored 
+
+Implements \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_a752699763063a5f421809f01e14f513b}.
+
+\mbox{\label{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___m_ac4514ab75bcd4c0d84d124283ef10582}} 
+\index{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M}!UpdateInternalView@{UpdateInternalView}}
+\index{UpdateInternalView@{UpdateInternalView}!serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M@{serenity::expiremental::msg\_details::Message\_Formatter::Format\_Arg\_M}}
+\doxysubsubsection{UpdateInternalView()}
+{\footnotesize\ttfamily std\+::string serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Format\+\_\+\+Arg\+\_\+\+M\+::\+Update\+Internal\+View (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Will update the last known minute to the current minute and then return a string representation of the padded minute value. 
+
+
+
+Reimplemented from \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatter} \doxyref{}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter_ac388ecc7192e160ed4f2991d9b67801c}.
+
+
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+h\item 
+Serenity\+\_\+\+Logger/\+Sandbox/src/\+Experimental\+\_\+\+SB/\+Message\+Details/Message\+\_\+\+Formatter.\+cpp\end{DoxyCompactItemize}

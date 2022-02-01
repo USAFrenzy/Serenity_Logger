@@ -116,24 +116,6 @@
   \newunicodechar{²}{${}^{2}$}% Superscript two
   \newunicodechar{³}{${}^{3}$}% Superscript three
   % Hyperlinks
-    % Hyperlinks (required, but should be loaded last)
-    \ifpdf
-      \usepackage[pdftex,pagebackref=true]{hyperref}
-    \else
-      \ifxetex
-        \usepackage[pagebackref=true]{hyperref}
-      \else
-        \usepackage[ps2pdf,pagebackref=true]{hyperref}
-      \fi
-    \fi
-    \hypersetup{%
-      colorlinks=true,%
-      linkcolor=blue,%
-      citecolor=blue,%
-      unicode,%
-      pdftitle=Serenity Logger,%
-      pdfsubject=%
-    }
   % Custom commands used by the header
   % Custom commands
   \newcommand{\clearemptydoublepage}{%
@@ -152,12 +134,6 @@
 \begin{document}
   \raggedbottom
   % Titlepage & ToC
-    % To avoid duplicate page anchors due to reuse of same numbers for
-    % the index (be it as roman numbers)
-    \hypersetup{pageanchor=false,
-                bookmarksnumbered=true,
-                pdfencoding=unicode
-               }
   \pagenumbering{alph}
   \begin{titlepage}
   \vspace*{7cm}
@@ -172,8 +148,6 @@
   \tableofcontents
   \clearemptydoublepage
   \pagenumbering{arabic}
-  % re-enable anchors again
-  \hypersetup{pageanchor=true}
 %--- Begin generated contents ---
 \chapter{Hierarchical Index}
 \input{hierarchy}
@@ -187,6 +161,29 @@
 \input{da/db6/structserenity_1_1expiremental_1_1_file_settings}
 \input{dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target}
 \input{d7/d3e/classserenity_1_1expiremental_1_1_flush___policy}
+\input{dd/db2/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___a}
+\input{d1/d6d/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__a}
+\input{db/d55/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b}
+\input{dd/dba/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__b}
+\input{dd/dc0/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___char}
+\input{d7/d38/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__d}
+\input{d2/d6b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___d}
+\input{d1/d07/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f}
+\input{db/dba/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___h}
+\input{df/d7f/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__l}
+\input{df/da9/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___l}
+\input{d4/dfe/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___m}
+\input{dd/d71/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___message}
+\input{d1/d5b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__n}
+\input{d9/d70/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___n}
+\input{db/d70/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___s}
+\input{dd/d58/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__t}
+\input{d4/daf/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___t}
+\input{d7/d9a/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__w}
+\input{d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x}
+\input{d6/db6/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__x}
+\input{d4/dda/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___y}
+\input{d7/d1e/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__y}
 \input{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}
 \input{dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters}
 \input{d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter}

@@ -1,0 +1,46 @@
+.TH "serenity::expiremental::msg_details::Message_Time" 3 "Mon Jan 31 2022" "Serenity Logger" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+serenity::expiremental::msg_details::Message_Time
+.SH SYNOPSIS
+.br
+.PP
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBMessage_Time\fP (message_time_mode mode)"
+.br
+.ti -1c
+.RI "\fBMessage_Time\fP (const \fBMessage_Time\fP &)=delete"
+.br
+.ti -1c
+.RI "\fBMessage_Time\fP & \fBoperator=\fP (const \fBMessage_Time\fP &)=delete"
+.br
+.ti -1c
+.RI "std::string_view \fBGetCurrentYearSV\fP (int yearOffset, bool shortened=false)"
+.br
+.ti -1c
+.RI "void \fBUpdateTimeDate\fP (std::chrono::system_clock::time_point timePoint)"
+.br
+.ti -1c
+.RI "void \fBUpdateCache\fP (std::chrono::system_clock::time_point timePoint)"
+.br
+.ti -1c
+.RI "std::tm & \fBCache\fP ()"
+.br
+.ti -1c
+.RI "message_time_mode & \fBMode\fP ()"
+.br
+.ti -1c
+.RI "void \fBSetTimeMode\fP (message_time_mode mode)"
+.br
+.ti -1c
+.RI "std::chrono::seconds & \fBLastLogPoint\fP ()"
+.br
+.in -1c
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Serenity Logger from the source code\&.

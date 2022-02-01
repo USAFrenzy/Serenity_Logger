@@ -1,6 +1,8 @@
 var classserenity_1_1expiremental_1_1targets_1_1_color_console =
 [
     [ "ColorConsole", "df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#abdc04bb9fb84bedc6a40ba8b13d800bb", null ],
+    [ "ColorConsole", "df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a33e9dfbc11d88f4a80112c217fa2bb68", null ],
+    [ "ColorConsole", "df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#ab114c020c496fb36b76d35564b3dda9b", null ],
     [ "~ColorConsole", "df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a2dd34715e3bc088598a395b23d8b1965", null ],
     [ "ColorizeOutput", "df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#af3aec7d9ced9dbe06be097bf2a7378b8", null ],
     [ "ConsoleInterface", "df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a29ed413d82a9b0c8d11401fd47da1e7e", null ],

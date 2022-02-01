@@ -1,37 +1,36 @@
-\hypertarget{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters}{}\doxysection{serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Formatters Class Reference}
+\doxysection{serenity\+::expiremental\+::msg\+\_\+details\+::Message\+\_\+\+Formatter\+::Formatters Class Reference}
 \label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters}\index{serenity::expiremental::msg\_details::Message\_Formatter::Formatters@{serenity::expiremental::msg\_details::Message\_Formatter::Formatters}}
+
+
+This class is the top-\/level formatting class that holds and controls each flag arguments specific formatting abilities.  
+
+
+
+
+{\ttfamily \#include $<$Message\+\_\+\+Formatter.\+h$>$}
+
 \doxysubsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a1d3c904f9bea917fd512b85a29adc66a}\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a1d3c904f9bea917fd512b85a29adc66a}} 
-{\bfseries Formatters} (std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}} $>$ $>$ \&\&container)
-\begin{DoxyCompactList}\small\item\em Constructor that takes ownership of the vector of \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}} pointers passed in. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_adb5cc9d06d4fd5c02af76fbeaaea4616}\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_adb5cc9d06d4fd5c02af76fbeaaea4616}} 
+\mbox{\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a1d3c904f9bea917fd512b85a29adc66a}} 
+{\bfseries Formatters} (std\+::vector$<$ std\+::unique\+\_\+ptr$<$ \textbf{ Formatter} $>$ $>$ \&\&container)
+\begin{DoxyCompactList}\small\item\em Constructor that takes ownership of the vector of \doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} pointers passed in. \end{DoxyCompactList}\item 
+\mbox{\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_adb5cc9d06d4fd5c02af76fbeaaea4616}} 
 {\bfseries Formatters} ()=default
 \begin{DoxyCompactList}\small\item\em Default Constructor. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_ae4e3921204e8fdd814fa4716224fe450}{Emplace\+\_\+\+Back}} (std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}} $>$ \&\&formatter)
-\item 
-std\+::string\+\_\+view \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a4f811227d7ef4cc22ca98fc16a55f61a}{Format}} ()
-\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a1a09dd32bf100ea3effde8b80147ddb9}\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a1a09dd32bf100ea3effde8b80147ddb9}} 
+\mbox{\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_ae4e3921204e8fdd814fa4716224fe450}} 
+void {\bfseries Emplace\+\_\+\+Back} (std\+::unique\+\_\+ptr$<$ \textbf{ Formatter} $>$ \&\&formatter)
+\begin{DoxyCompactList}\small\item\em Takes ownership of the \doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} pointer passed in and stores this pointer in the internal \doxyref{Formatters}{p.}{dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters} container. \end{DoxyCompactList}\item 
+\mbox{\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a4f811227d7ef4cc22ca98fc16a55f61a}} 
+std\+::string\+\_\+view {\bfseries Format} ()
+\begin{DoxyCompactList}\small\item\em Calls each \doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} pointer\textquotesingle{}s specific \doxyref{Format()}{p.}{dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a4f811227d7ef4cc22ca98fc16a55f61a} implementation that is stored in the internal \doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} container in the order they are stored and returns the whole formatted string as a view. \end{DoxyCompactList}\item 
+\mbox{\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a1a09dd32bf100ea3effde8b80147ddb9}} 
 void {\bfseries Clear} ()
-\begin{DoxyCompactList}\small\item\em Clears the internal \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}} pointers container. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Clears the internal \doxyref{Formatter}{p.}{d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter} pointers container. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
-\doxysubsection{Member Function Documentation}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_ae4e3921204e8fdd814fa4716224fe450}\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_ae4e3921204e8fdd814fa4716224fe450}} 
-\index{serenity::expiremental::msg\_details::Message\_Formatter::Formatters@{serenity::expiremental::msg\_details::Message\_Formatter::Formatters}!Emplace\_Back@{Emplace\_Back}}
-\index{Emplace\_Back@{Emplace\_Back}!serenity::expiremental::msg\_details::Message\_Formatter::Formatters@{serenity::expiremental::msg\_details::Message\_Formatter::Formatters}}
-\doxysubsubsection{\texorpdfstring{Emplace\_Back()}{Emplace\_Back()}}
-{\footnotesize\ttfamily void serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatters\+::\+Emplace\+\_\+\+Back (\begin{DoxyParamCaption}\item[{std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}} $>$ \&\&}]{formatter }\end{DoxyParamCaption})}
-
-Takes ownership of the \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}} pointer passed in and stores this pointer in the internal \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters}{Formatters}} container. \mbox{\Hypertarget{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a4f811227d7ef4cc22ca98fc16a55f61a}\label{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a4f811227d7ef4cc22ca98fc16a55f61a}} 
-\index{serenity::expiremental::msg\_details::Message\_Formatter::Formatters@{serenity::expiremental::msg\_details::Message\_Formatter::Formatters}!Format@{Format}}
-\index{Format@{Format}!serenity::expiremental::msg\_details::Message\_Formatter::Formatters@{serenity::expiremental::msg\_details::Message\_Formatter::Formatters}}
-\doxysubsubsection{\texorpdfstring{Format()}{Format()}}
-{\footnotesize\ttfamily std\+::string\+\_\+view serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Formatters\+::\+Format (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
-
-Calls each \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}} pointer\textquotesingle{}s specific \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters_a4f811227d7ef4cc22ca98fc16a55f61a}{Format()}} implementation that is stored in the internal \mbox{\hyperlink{structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter}{Formatter}} container in the order they are stored and returns the whole formatted string as a view 
+\doxysubsection{Detailed Description}
+This class is the top-\/level formatting class that holds and controls each flag arguments specific formatting abilities. 
 
 The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
 \item 

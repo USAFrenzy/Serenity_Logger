@@ -1,0 +1,50 @@
+.TH "serenity::expiremental::msg_details::Message_Formatter::Format_Arg_A" 3 "Mon Jan 31 2022" "Serenity Logger" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+serenity::expiremental::msg_details::Message_Formatter::Format_Arg_A \- \fBFormatter\fP struct that maps to flag '%A' and represents the string representation of 'AM' or 'PM' dependant on the hour\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <Message_Formatter\&.h>\fP
+.PP
+Inherits \fBserenity::expiremental::msg_details::Message_Formatter::Formatter\fP\&.
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBFormat_Arg_A\fP (\fBMessage_Info\fP &info)"
+.br
+.RI "Constructor that uses the \fBMessage_Info\fP pointer to store a reference to the cache and intitialize the current and last known hour values\&. "
+.ti -1c
+.RI "std::string \fBUpdateInternalView\fP () override"
+.br
+.RI "Will update the last known hour to the current hour and then return a string representation of the day half marker ('AM' or 'PM') "
+.ti -1c
+.RI "std::string_view \fBFormat\fP () override"
+.br
+.RI "Returns The Formatted Argument\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+\fBFormatter\fP struct that maps to flag '%A' and represents the string representation of 'AM' or 'PM' dependant on the hour\&. 
+.SH "Member Function Documentation"
+.PP 
+.SS "std::string_view serenity::expiremental::msg_details::Message_Formatter::Format_Arg_A::Format ()\fC [override]\fP, \fC [virtual]\fP"
+
+.PP
+Returns The Formatted Argument\&. When called, if the current hour value doesn't match the last known hour value, will update the last known hour value to the current hour value and then call \fBUpdateInternalView( )\fP to update the internal string representation of the current day half ('AM' or 'PM'), otherwise, just returns the internal day half representation stored 
+.PP
+Implements \fBserenity::expiremental::msg_details::Message_Formatter::Formatter\fP\&.
+.SS "std::string serenity::expiremental::msg_details::Message_Formatter::Format_Arg_A::UpdateInternalView ()\fC [override]\fP, \fC [virtual]\fP"
+
+.PP
+Will update the last known hour to the current hour and then return a string representation of the day half marker ('AM' or 'PM') 
+.PP
+Reimplemented from \fBserenity::expiremental::msg_details::Message_Formatter::Formatter\fP\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Serenity Logger from the source code\&.

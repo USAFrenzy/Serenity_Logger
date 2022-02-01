@@ -1,4 +1,4 @@
-\hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base}{}\doxysection{serenity\+::expiremental\+::targets\+::Target\+Base Class Reference}
+\doxysection{serenity\+::expiremental\+::targets\+::Target\+Base Class Reference}
 \label{classserenity_1_1expiremental_1_1targets_1_1_target_base}\index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
 
 
@@ -18,90 +18,90 @@ Inheritance diagram for serenity\+::expiremental\+::targets\+::Target\+Base\+:\b
 \doxysubsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a00920d6545c5783da8db176297c3dc33}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a00920d6545c5783da8db176297c3dc33}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a00920d6545c5783da8db176297c3dc33}} 
 {\bfseries Target\+Base} ()
 \begin{DoxyCompactList}\small\item\em Default constructor that sets the logger name to \char`\"{}\+Base\+\_\+\+Target\char`\"{} and sets all other values to their defaults. \end{DoxyCompactList}\item 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a3ca48dda0b948587e11cae370a7d77d3}{Target\+Base}} (std\+::string\+\_\+view name)
+\textbf{ Target\+Base} (std\+::string\+\_\+view name)
 \item 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad83ca24db5ff11d1d8f871d5dabbfbb6}{Target\+Base}} (std\+::string\+\_\+view name, std\+::string\+\_\+view msg\+Pattern)
+\textbf{ Target\+Base} (std\+::string\+\_\+view name, std\+::string\+\_\+view msg\+Pattern)
 \item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a10378fe3e1915c448202fcdc12fe5990}{Set\+Flush\+Policy}} (\mbox{\hyperlink{classserenity_1_1expiremental_1_1_flush___policy}{Flush\+\_\+\+Policy}} p\+Policy)
+void \textbf{ Set\+Flush\+Policy} (\textbf{ Flush\+\_\+\+Policy} p\+Policy)
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae8f5ae1860dbfaa258808b92daad35b9}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae8f5ae1860dbfaa258808b92daad35b9}} 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1_flush___policy}{Flush\+\_\+\+Policy}} \& {\bfseries Policy} ()
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae8f5ae1860dbfaa258808b92daad35b9}} 
+\textbf{ Flush\+\_\+\+Policy} \& {\bfseries Policy} ()
 \begin{DoxyCompactList}\small\item\em Returns the current policy in use. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a93eb6fcb7c858c38e7c6c75be14709ea}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a93eb6fcb7c858c38e7c6c75be14709ea}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a93eb6fcb7c858c38e7c6c75be14709ea}} 
 const std\+::string {\bfseries Logger\+Name} ()
 \begin{DoxyCompactList}\small\item\em Returns the logger\textquotesingle{}s name. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b}{Set\+Pattern}} (std\+::string\+\_\+view pattern)
-\begin{DoxyCompactList}\small\item\em Calls the handle to the Message\+\_\+\+Formatter\textquotesingle{}s \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b}{Set\+Pattern( )}} function. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a59007ca28ccfec836272bbba0e991cf7}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a59007ca28ccfec836272bbba0e991cf7}} 
+void \textbf{ Set\+Pattern} (std\+::string\+\_\+view pattern)
+\begin{DoxyCompactList}\small\item\em Calls the handle to the Message\+\_\+\+Formatter\textquotesingle{}s \doxyref{Set\+Pattern( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b} function. \end{DoxyCompactList}\item 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a59007ca28ccfec836272bbba0e991cf7}} 
 void {\bfseries Reset\+Pattern\+To\+Default} ()
 \begin{DoxyCompactList}\small\item\em Resets the current format pattern in use to the default format pattern. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a18f79b8a22642e4669fbe7e169ba4216}{Set\+Log\+Level}} (Logger\+Level level)
+void \textbf{ Set\+Log\+Level} (Logger\+Level level)
 \begin{DoxyCompactList}\small\item\em Sets the log level that messages should be logged at. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_aed328459507a705ae45f37059d3b5eee}{Write\+To\+Base\+Buffer}} (bool fmt\+To\+Buf=true)
+void \textbf{ Write\+To\+Base\+Buffer} (bool fmt\+To\+Buf=true)
 \begin{DoxyCompactList}\small\item\em Enables/\+Disables writing to a buffer. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a923f74e7e87e3f3add647bab13042b28}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a923f74e7e87e3f3add647bab13042b28}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a923f74e7e87e3f3add647bab13042b28}} 
 bool {\bfseries is\+Write\+To\+Buf} ()
 \begin{DoxyCompactList}\small\item\em Returns true if buffer writes are enabled and false if they are disabled. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a004adcbd403c7e0fc332edd0d8658879}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a004adcbd403c7e0fc332edd0d8658879}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a004adcbd403c7e0fc332edd0d8658879}} 
 std\+::string $\ast$ {\bfseries Buffer} ()
 \begin{DoxyCompactList}\small\item\em Returns the buffer container. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a9ab6441c93db92254475cdba46f18eb2}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a9ab6441c93db92254475cdba46f18eb2}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a9ab6441c93db92254475cdba46f18eb2}} 
 const Logger\+Level {\bfseries Level} ()
 \begin{DoxyCompactList}\small\item\em Returns the current log level setting (the threshold of whether to log a message or not). \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a4ad638bb3c8b3ef7e52f13239aaa1ac9}{Set\+Logger\+Name}} (std\+::string\+\_\+view name)
+void \textbf{ Set\+Logger\+Name} (std\+::string\+\_\+view name)
 \item 
-{\footnotesize template$<$typename... Args$>$ }\\void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_afd23065688b320bce564faed71b769ff}{Trace}} (std\+::string\+\_\+view msg, Args \&\&...args)
+{\footnotesize template$<$typename... Args$>$ }\\void \textbf{ Trace} (std\+::string\+\_\+view msg, Args \&\&...args)
 \begin{DoxyCompactList}\small\item\em Logs a message giving the message a Logger\+Level\+::trace setting. \end{DoxyCompactList}\item 
-{\footnotesize template$<$typename... Args$>$ }\\void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a5bb7193f6e6ddd7947e52ab67054a03b}{Info}} (std\+::string\+\_\+view msg, Args \&\&...args)
+{\footnotesize template$<$typename... Args$>$ }\\void \textbf{ Info} (std\+::string\+\_\+view msg, Args \&\&...args)
 \begin{DoxyCompactList}\small\item\em Logs a message giving the message a Logger\+Level\+::info setting. \end{DoxyCompactList}\item 
-{\footnotesize template$<$typename... Args$>$ }\\void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad929f6fdbf083c8503d0bbee241c3bab}{Debug}} (std\+::string\+\_\+view msg, Args \&\&...args)
+{\footnotesize template$<$typename... Args$>$ }\\void \textbf{ Debug} (std\+::string\+\_\+view msg, Args \&\&...args)
 \begin{DoxyCompactList}\small\item\em Logs a message giving the message a Logger\+Level\+::debug setting. \end{DoxyCompactList}\item 
-{\footnotesize template$<$typename... Args$>$ }\\void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a7a5b321f43433174f4e89a895230cd80}{Warn}} (std\+::string\+\_\+view msg, Args \&\&...args)
+{\footnotesize template$<$typename... Args$>$ }\\void \textbf{ Warn} (std\+::string\+\_\+view msg, Args \&\&...args)
 \begin{DoxyCompactList}\small\item\em Logs a message giving the message a Logger\+Level\+::warning setting. \end{DoxyCompactList}\item 
-{\footnotesize template$<$typename... Args$>$ }\\void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a642036ccc81a6f8eaed0c5e8ceebd3e5}{Error}} (std\+::string\+\_\+view msg, Args \&\&...args)
+{\footnotesize template$<$typename... Args$>$ }\\void \textbf{ Error} (std\+::string\+\_\+view msg, Args \&\&...args)
 \begin{DoxyCompactList}\small\item\em Logs a message giving the message a Logger\+Level\+::error setting. \end{DoxyCompactList}\item 
-{\footnotesize template$<$typename... Args$>$ }\\void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_afdcbf379c68e6a7ebd76ab09d6008e6d}{Fatal}} (std\+::string\+\_\+view msg, Args \&\&...args)
+{\footnotesize template$<$typename... Args$>$ }\\void \textbf{ Fatal} (std\+::string\+\_\+view msg, Args \&\&...args)
 \begin{DoxyCompactList}\small\item\em Logs a message giving the message a Logger\+Level\+::fatal setting. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a275dd80c86ca44ff32d88c95c91e53a4}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a275dd80c86ca44ff32d88c95c91e53a4}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a275dd80c86ca44ff32d88c95c91e53a4}} 
 {\footnotesize template$<$typename... Args$>$ }\\void {\bfseries Trace} (std\+::string\+\_\+view s, Args \&\&...args)
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a6bacd53b86c285cbdb601652c1e1b35b}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a6bacd53b86c285cbdb601652c1e1b35b}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a6bacd53b86c285cbdb601652c1e1b35b}} 
 {\footnotesize template$<$typename... Args$>$ }\\void {\bfseries Info} (std\+::string\+\_\+view s, Args \&\&...args)
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_afe354bb199238e3366f331f420054527}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_afe354bb199238e3366f331f420054527}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_afe354bb199238e3366f331f420054527}} 
 {\footnotesize template$<$typename... Args$>$ }\\void {\bfseries Debug} (std\+::string\+\_\+view s, Args \&\&...args)
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a636ff919381da6fe7a349242dda77030}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a636ff919381da6fe7a349242dda77030}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a636ff919381da6fe7a349242dda77030}} 
 {\footnotesize template$<$typename... Args$>$ }\\void {\bfseries Warn} (std\+::string\+\_\+view s, Args \&\&...args)
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a4118ae42353eafe96a7963fcace3365e}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a4118ae42353eafe96a7963fcace3365e}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a4118ae42353eafe96a7963fcace3365e}} 
 {\footnotesize template$<$typename... Args$>$ }\\void {\bfseries Error} (std\+::string\+\_\+view s, Args \&\&...args)
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_aa255defa0cb53497f32fc80ab98a4226}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_aa255defa0cb53497f32fc80ab98a4226}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_aa255defa0cb53497f32fc80ab98a4226}} 
 {\footnotesize template$<$typename... Args$>$ }\\void {\bfseries Fatal} (std\+::string\+\_\+view s, Args \&\&...args)
 \end{DoxyCompactItemize}
 \doxysubsection*{Protected Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-virtual void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{Print\+Message}} (std\+::string\+\_\+view formatted)=0
+virtual void \textbf{ Print\+Message} (std\+::string\+\_\+view formatted)=0
 \begin{DoxyCompactList}\small\item\em Pure virtual function that all derived classes must implement and is used to write the formatted message to a specific target. \end{DoxyCompactList}\item 
-virtual void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{Policy\+Flush\+On}} ()
+virtual void \textbf{ Policy\+Flush\+On} ()
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_abfbc3f56c6f5d8b2012419d1f812e903}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_abfbc3f56c6f5d8b2012419d1f812e903}} 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter}{msg\+\_\+details\+::\+Message\+\_\+\+Formatter}} $\ast$ {\bfseries Msg\+Fmt} ()
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_abfbc3f56c6f5d8b2012419d1f812e903}} 
+\textbf{ msg\+\_\+details\+::\+Message\+\_\+\+Formatter} $\ast$ {\bfseries Msg\+Fmt} ()
 \begin{DoxyCompactList}\small\item\em Returns a pointer to the handle for the Message\+\_\+\+Formatter class instance. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a267fd00b85ed1e8cea8c8a9c57eb6002}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a267fd00b85ed1e8cea8c8a9c57eb6002}} 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{msg\+\_\+details\+::\+Message\+\_\+\+Info}} $\ast$ {\bfseries Msg\+Info} ()
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a267fd00b85ed1e8cea8c8a9c57eb6002}} 
+\textbf{ msg\+\_\+details\+::\+Message\+\_\+\+Info} $\ast$ {\bfseries Msg\+Info} ()
 \begin{DoxyCompactList}\small\item\em Returns a pointer to the handle for the Message\+\_\+\+Info class instance. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
 The base class that derived target classes inherit from. Contains common functions between all targets for message logging and logging settings. 
 
-For All \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{Target\+Base}} Constructors\+: ~\newline
+For All \doxyref{Target\+Base}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base} Constructors\+: ~\newline
 The following default values are set regardless of which constructor is used\+: ~\newline
 
 \begin{DoxyItemize}
@@ -109,18 +109,18 @@ The following default values are set regardless of which constructor is used\+: 
 
 \item Log Level is set to \char`\"{}\+Logger\+Level\+::trace\char`\"{}. ~\newline
 
-\item Default pattern is set to \char`\"{}$\vert$\%l$\vert$ \%x \%n \%\+T \mbox{[}\%\+N\mbox{]}\+: \%+\char`\"{} which translates to the form of\+: ~\newline
- \char`\"{}$\vert$\+T$\vert$ Sat 29\+Jan22 \mbox{[}\+Base\+\_\+\+Logger\mbox{]}\+: The message to log\char`\"{}. ~\newline
+\item Default pattern is set to \char`\"{}$\vert$\%l$\vert$ \%x \%n \%\+T [\%\+N]\+: \%+\char`\"{} which translates to the form of\+: ~\newline
+ \char`\"{}$\vert$\+T$\vert$ Sat 29\+Jan22 [\+Base\+\_\+\+Logger]\+: The message to log\char`\"{}. ~\newline
 
 \item Time mode used is set to \char`\"{}time\+\_\+mode\+::local\char`\"{}.~\newline
  
 \end{DoxyItemize}
 
 \doxysubsection{Constructor \& Destructor Documentation}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a3ca48dda0b948587e11cae370a7d77d3}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a3ca48dda0b948587e11cae370a7d77d3}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a3ca48dda0b948587e11cae370a7d77d3}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!TargetBase@{TargetBase}}
 \index{TargetBase@{TargetBase}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{TargetBase()}{TargetBase()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+\doxysubsubsection{TargetBase()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
 {\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Target\+Base (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{name }\end{DoxyParamCaption})}
 
 Constructor that will set the logger name to the name paramater passed in and all other values to their defaults. 
@@ -128,10 +128,10 @@ Constructor that will set the logger name to the name paramater passed in and al
 {\em name} & the name that the logger itself will use and be identified by \\
 \hline
 \end{DoxyParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad83ca24db5ff11d1d8f871d5dabbfbb6}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad83ca24db5ff11d1d8f871d5dabbfbb6}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad83ca24db5ff11d1d8f871d5dabbfbb6}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!TargetBase@{TargetBase}}
 \index{TargetBase@{TargetBase}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{TargetBase()}{TargetBase()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+\doxysubsubsection{TargetBase()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
 {\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Target\+Base (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{name,  }\item[{std\+::string\+\_\+view}]{msg\+Pattern }\end{DoxyParamCaption})}
 
 Constructor that will set the logger name to the name paramater passed in as well as the format pattern to the msg\+Pattern passed in. All other values will be assigned their default values. 
@@ -144,10 +144,10 @@ Constructor that will set the logger name to the name paramater passed in as wel
 
 
 \doxysubsection{Member Function Documentation}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad929f6fdbf083c8503d0bbee241c3bab}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad929f6fdbf083c8503d0bbee241c3bab}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_ad929f6fdbf083c8503d0bbee241c3bab}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!Debug@{Debug}}
 \index{Debug@{Debug}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{Debug()}{Debug()}}
+\doxysubsubsection{Debug()}
 {\footnotesize\ttfamily template$<$typename... Args$>$ \\
 void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Debug (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{msg,  }\item[{Args \&\&...}]{args }\end{DoxyParamCaption})}
 
@@ -155,17 +155,17 @@ void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Debug (\begin{Do
 
 Logs a message giving the message a Logger\+Level\+::debug setting. 
 
-Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{Print\+Message( )}} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{Policy\+Flush\+On( )}} implementation 
+Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \doxyref{Print\+Message( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \doxyref{Policy\+Flush\+On( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39} implementation 
 \begin{DoxyTemplParams}{Template Parameters}
 {\em msg} & The message being passed in. Follows C++20\textquotesingle{}s format library and libfmt\textquotesingle{}s substitution model using \char`\"{}\{\}\char`\"{} to replace any arguments from the {\ttfamily args} parameter. \\
 \hline
 {\em args} & Variadic placeholder for any number of and any type of arguments to use in substituion. \\
 \hline
 \end{DoxyTemplParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a642036ccc81a6f8eaed0c5e8ceebd3e5}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a642036ccc81a6f8eaed0c5e8ceebd3e5}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a642036ccc81a6f8eaed0c5e8ceebd3e5}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!Error@{Error}}
 \index{Error@{Error}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{Error()}{Error()}}
+\doxysubsubsection{Error()}
 {\footnotesize\ttfamily template$<$typename... Args$>$ \\
 void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Error (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{msg,  }\item[{Args \&\&...}]{args }\end{DoxyParamCaption})}
 
@@ -173,17 +173,17 @@ void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Error (\begin{Do
 
 Logs a message giving the message a Logger\+Level\+::error setting. 
 
-Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{Print\+Message( )}} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{Policy\+Flush\+On( )}} implementation 
+Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \doxyref{Print\+Message( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \doxyref{Policy\+Flush\+On( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39} implementation 
 \begin{DoxyTemplParams}{Template Parameters}
 {\em msg} & The message being passed in. Follows C++20\textquotesingle{}s format library and libfmt\textquotesingle{}s substitution model using \char`\"{}\{\}\char`\"{} to replace any arguments from the {\ttfamily args} parameter. \\
 \hline
 {\em args} & Variadic placeholder for any number of and any type of arguments to use in substituion. \\
 \hline
 \end{DoxyTemplParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_afdcbf379c68e6a7ebd76ab09d6008e6d}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_afdcbf379c68e6a7ebd76ab09d6008e6d}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_afdcbf379c68e6a7ebd76ab09d6008e6d}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!Fatal@{Fatal}}
 \index{Fatal@{Fatal}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{Fatal()}{Fatal()}}
+\doxysubsubsection{Fatal()}
 {\footnotesize\ttfamily template$<$typename... Args$>$ \\
 void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Fatal (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{msg,  }\item[{Args \&\&...}]{args }\end{DoxyParamCaption})}
 
@@ -191,17 +191,17 @@ void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Fatal (\begin{Do
 
 Logs a message giving the message a Logger\+Level\+::fatal setting. 
 
-Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{Print\+Message( )}} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{Policy\+Flush\+On( )}} implementation 
+Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \doxyref{Print\+Message( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \doxyref{Policy\+Flush\+On( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39} implementation 
 \begin{DoxyTemplParams}{Template Parameters}
 {\em msg} & The message being passed in. Follows C++20\textquotesingle{}s format library and libfmt\textquotesingle{}s substitution model using \char`\"{}\{\}\char`\"{} to replace any arguments from the {\ttfamily args} parameter. \\
 \hline
 {\em args} & Variadic placeholder for any number of and any type of arguments to use in substituion. \\
 \hline
 \end{DoxyTemplParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a5bb7193f6e6ddd7947e52ab67054a03b}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a5bb7193f6e6ddd7947e52ab67054a03b}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a5bb7193f6e6ddd7947e52ab67054a03b}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!Info@{Info}}
 \index{Info@{Info}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{Info()}{Info()}}
+\doxysubsubsection{Info()}
 {\footnotesize\ttfamily template$<$typename... Args$>$ \\
 void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Info (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{msg,  }\item[{Args \&\&...}]{args }\end{DoxyParamCaption})}
 
@@ -209,27 +209,27 @@ void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Info (\begin{Dox
 
 Logs a message giving the message a Logger\+Level\+::info setting. 
 
-Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{Print\+Message( )}} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{Policy\+Flush\+On( )}} implementation 
+Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \doxyref{Print\+Message( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \doxyref{Policy\+Flush\+On( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39} implementation 
 \begin{DoxyTemplParams}{Template Parameters}
 {\em msg} & The message being passed in. Follows C++20\textquotesingle{}s format library and libfmt\textquotesingle{}s substitution model using \char`\"{}\{\}\char`\"{} to replace any arguments from the {\ttfamily args} parameter. \\
 \hline
 {\em args} & Variadic placeholder for any number of and any type of arguments to use in substituion. \\
 \hline
 \end{DoxyTemplParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!PolicyFlushOn@{PolicyFlushOn}}
 \index{PolicyFlushOn@{PolicyFlushOn}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{PolicyFlushOn()}{PolicyFlushOn()}}
+\doxysubsubsection{PolicyFlushOn()}
 {\footnotesize\ttfamily virtual void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Policy\+Flush\+On (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}, {\ttfamily [virtual]}}
 
 Virtual function that can be omitted if derived class has no need to implement and is used to handle how and when the derived target should flush its contents to disk. 
 
-Reimplemented in \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a0fb50e998ca49f78eb36b1f821ecfcb4}{serenity\+::expiremental\+::targets\+::\+File\+Target}}.
+Reimplemented in \textbf{ serenity\+::expiremental\+::targets\+::\+File\+Target} \doxyref{}{p.}{dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target_a0fb50e998ca49f78eb36b1f821ecfcb4}.
 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!PrintMessage@{PrintMessage}}
 \index{PrintMessage@{PrintMessage}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{PrintMessage()}{PrintMessage()}}
+\doxysubsubsection{PrintMessage()}
 {\footnotesize\ttfamily virtual void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Print\+Message (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{formatted }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
 
 
@@ -241,25 +241,25 @@ Pure virtual function that all derived classes must implement and is used to wri
 {\em formatted} & The actual message in its entirety to send to the output destination.\\
 \hline
 \end{DoxyParams}
-For built in targets, the message is formatted before reaching this point by calling Message\+\_\+\+Info\textquotesingle{}s Set\+Message( ) function. \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{Print\+Message( )}}\textquotesingle{}s intended usage is the last stop call before a log message is sent to its destination 
+For built in targets, the message is formatted before reaching this point by calling Message\+\_\+\+Info\textquotesingle{}s Set\+Message( ) function. \doxyref{Print\+Message( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}\textquotesingle{}s intended usage is the last stop call before a log message is sent to its destination 
 
-Implemented in \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_color_console_a85dc874dc8a9dda0bf4e07303995950c}{serenity\+::expiremental\+::targets\+::\+Color\+Console}}, \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac17d3f0ca839ed863e16115b8587e1cb}{serenity\+::expiremental\+::targets\+::\+File\+Target}}, and \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a90c8a3f9917674edfed9d4ad0a5169d9}{serenity\+::expiremental\+::targets\+::\+Rotating\+Target}}.
+Implemented in \textbf{ serenity\+::expiremental\+::targets\+::\+Color\+Console} \doxyref{}{p.}{df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console_a85dc874dc8a9dda0bf4e07303995950c}, \textbf{ serenity\+::expiremental\+::targets\+::\+File\+Target} \doxyref{}{p.}{dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target_ac17d3f0ca839ed863e16115b8587e1cb}, and \textbf{ serenity\+::expiremental\+::targets\+::\+Rotating\+Target} \doxyref{}{p.}{dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a90c8a3f9917674edfed9d4ad0a5169d9}.
 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a10378fe3e1915c448202fcdc12fe5990}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a10378fe3e1915c448202fcdc12fe5990}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a10378fe3e1915c448202fcdc12fe5990}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!SetFlushPolicy@{SetFlushPolicy}}
 \index{SetFlushPolicy@{SetFlushPolicy}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{SetFlushPolicy()}{SetFlushPolicy()}}
-{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Set\+Flush\+Policy (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classserenity_1_1expiremental_1_1_flush___policy}{Flush\+\_\+\+Policy}}}]{p\+Policy }\end{DoxyParamCaption})}
+\doxysubsubsection{SetFlushPolicy()}
+{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Set\+Flush\+Policy (\begin{DoxyParamCaption}\item[{\textbf{ Flush\+\_\+\+Policy}}]{p\+Policy }\end{DoxyParamCaption})}
 
 Sets the current policy in use to defer to the policy passed in from \char`\"{}p\+Policy\char`\"{}. 
 \begin{DoxyParams}{Parameters}
 {\em p\+Policy} & refers to any settings that are added or changed by the user, including whether to flush always, never, or periodically.\\
 \hline
 \end{DoxyParams}
-On top of having options to never flush, always flush, and periodically flush, the \mbox{\hyperlink{classserenity_1_1expiremental_1_1_flush___policy}{Flush\+\_\+\+Policy}} class includes the settings for whether flushing should occur based on a time-\/interval or log level if the periodical flushing option is enabled. \mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a4ad638bb3c8b3ef7e52f13239aaa1ac9}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a4ad638bb3c8b3ef7e52f13239aaa1ac9}} 
+On top of having options to never flush, always flush, and periodically flush, the \doxyref{Flush\+\_\+\+Policy}{p.}{d7/d3e/classserenity_1_1expiremental_1_1_flush___policy} class includes the settings for whether flushing should occur based on a time-\/interval or log level if the periodical flushing option is enabled. \mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a4ad638bb3c8b3ef7e52f13239aaa1ac9}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!SetLoggerName@{SetLoggerName}}
 \index{SetLoggerName@{SetLoggerName}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{SetLoggerName()}{SetLoggerName()}}
+\doxysubsubsection{SetLoggerName()}
 {\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Set\+Logger\+Name (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{name }\end{DoxyParamCaption})}
 
 Sets the name of the logger 
@@ -267,10 +267,10 @@ Sets the name of the logger
 {\em name} & the name that the logger itself will use and be identified by \\
 \hline
 \end{DoxyParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a18f79b8a22642e4669fbe7e169ba4216}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a18f79b8a22642e4669fbe7e169ba4216}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a18f79b8a22642e4669fbe7e169ba4216}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!SetLogLevel@{SetLogLevel}}
 \index{SetLogLevel@{SetLogLevel}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{SetLogLevel()}{SetLogLevel()}}
+\doxysubsubsection{SetLogLevel()}
 {\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Set\+Log\+Level (\begin{DoxyParamCaption}\item[{Logger\+Level}]{level }\end{DoxyParamCaption})}
 
 
@@ -282,25 +282,29 @@ For example, if \char`\"{}\+Set\+Log\+Level(\+Logger\+Level\+::\+Error);\char`\"
 {\em level} & -\/ the logger level threshold that will determine if a message should be logged or not \\
 \hline
 \end{DoxyParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!SetPattern@{SetPattern}}
 \index{SetPattern@{SetPattern}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{SetPattern()}{SetPattern()}}
+\doxysubsubsection{SetPattern()}
 {\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Set\+Pattern (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{pattern }\end{DoxyParamCaption})}
 
 
 
-Calls the handle to the Message\+\_\+\+Formatter\textquotesingle{}s \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b}{Set\+Pattern( )}} function. 
+Calls the handle to the Message\+\_\+\+Formatter\textquotesingle{}s \doxyref{Set\+Pattern( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_ae9fc4043c7cc925bde9258a8b9eab51b} function. 
 
 Sets the format pattern variable and parses the format string for internal storage and usage of this pattern by initializing and moving the initialized formatter struct in charge of the respective flag to a Formatters container 
 \begin{DoxyParams}{Parameters}
 {\em pattern} & -\/ the format pattern to store. This pattern is what determines how the prepended text will be displayed before the log message \\
 \hline
 \end{DoxyParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_afd23065688b320bce564faed71b769ff}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_afd23065688b320bce564faed71b769ff}} 
+
+
+References \textbf{ serenity\+::expiremental\+::msg\+\_\+details\+::\+Message\+\_\+\+Formatter\+::\+Set\+Pattern()}.
+
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_afd23065688b320bce564faed71b769ff}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!Trace@{Trace}}
 \index{Trace@{Trace}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{Trace()}{Trace()}}
+\doxysubsubsection{Trace()}
 {\footnotesize\ttfamily template$<$typename... Args$>$ \\
 void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Trace (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{msg,  }\item[{Args \&\&...}]{args }\end{DoxyParamCaption})}
 
@@ -308,17 +312,17 @@ void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Trace (\begin{Do
 
 Logs a message giving the message a Logger\+Level\+::trace setting. 
 
-Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{Print\+Message( )}} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{Policy\+Flush\+On( )}} implementation 
+Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \doxyref{Print\+Message( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \doxyref{Policy\+Flush\+On( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39} implementation 
 \begin{DoxyTemplParams}{Template Parameters}
 {\em msg} & The message being passed in. Follows C++20\textquotesingle{}s format library and libfmt\textquotesingle{}s substitution model using \char`\"{}\{\}\char`\"{} to replace any arguments from the {\ttfamily args} parameter. \\
 \hline
 {\em args} & Variadic placeholder for any number of and any type of arguments to use in substituion. \\
 \hline
 \end{DoxyTemplParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_a7a5b321f43433174f4e89a895230cd80}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a7a5b321f43433174f4e89a895230cd80}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_a7a5b321f43433174f4e89a895230cd80}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!Warn@{Warn}}
 \index{Warn@{Warn}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{Warn()}{Warn()}}
+\doxysubsubsection{Warn()}
 {\footnotesize\ttfamily template$<$typename... Args$>$ \\
 void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Warn (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{msg,  }\item[{Args \&\&...}]{args }\end{DoxyParamCaption})}
 
@@ -326,17 +330,17 @@ void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Warn (\begin{Dox
 
 Logs a message giving the message a Logger\+Level\+::warning setting. 
 
-Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{Print\+Message( )}} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{Policy\+Flush\+On( )}} implementation 
+Checks if the message should be logged via the log level threshold setting. If it isn\textquotesingle{}t, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren\textquotesingle{}t enabled, then \doxyref{Print\+Message( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1} will be called and the derived target handles how this is implemented. After writing the message, follows the derived target\textquotesingle{}s \doxyref{Policy\+Flush\+On( )}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39} implementation 
 \begin{DoxyTemplParams}{Template Parameters}
 {\em msg} & The message being passed in. Follows C++20\textquotesingle{}s format library and libfmt\textquotesingle{}s substitution model using \char`\"{}\{\}\char`\"{} to replace any arguments from the {\ttfamily args} parameter. \\
 \hline
 {\em args} & Variadic placeholder for any number of and any type of arguments to use in substituion. \\
 \hline
 \end{DoxyTemplParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_target_base_aed328459507a705ae45f37059d3b5eee}\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_aed328459507a705ae45f37059d3b5eee}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_target_base_aed328459507a705ae45f37059d3b5eee}} 
 \index{serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}!WriteToBaseBuffer@{WriteToBaseBuffer}}
 \index{WriteToBaseBuffer@{WriteToBaseBuffer}!serenity::expiremental::targets::TargetBase@{serenity::expiremental::targets::TargetBase}}
-\doxysubsubsection{\texorpdfstring{WriteToBaseBuffer()}{WriteToBaseBuffer()}}
+\doxysubsubsection{WriteToBaseBuffer()}
 {\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+Target\+Base\+::\+Write\+To\+Base\+Buffer (\begin{DoxyParamCaption}\item[{bool}]{fmt\+To\+Buf = {\ttfamily true} }\end{DoxyParamCaption})}
 
 

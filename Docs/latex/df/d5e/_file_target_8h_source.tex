@@ -1,4 +1,4 @@
-\hypertarget{_file_target_8h_source}{}\doxysection{File\+Target.\+h}
+\doxysection{File\+Target.\+h}
 \label{_file_target_8h_source}\index{Serenity\_Logger/Sandbox/src/Experimental\_SB/Targets/FileTarget.h@{Serenity\_Logger/Sandbox/src/Experimental\_SB/Targets/FileTarget.h}}
 
 \begin{DoxyCode}{0}
@@ -10,36 +10,36 @@
 \DoxyCodeLine{6 }
 \DoxyCodeLine{7 \textcolor{keyword}{namespace }serenity::expiremental::targets}
 \DoxyCodeLine{8 \{}
-\DoxyCodeLine{22     \textcolor{keyword}{class }\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{FileTarget}} : \textcolor{keyword}{public} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{TargetBase}}}
+\DoxyCodeLine{22     \textcolor{keyword}{class }FileTarget : \textcolor{keyword}{public} TargetBase}
 \DoxyCodeLine{23     \{}
 \DoxyCodeLine{24       \textcolor{keyword}{public}:}
-\DoxyCodeLine{26         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a538eb3c82f4c8fcfbd4f1913964a6a4d}{FileTarget}}( );}
-\DoxyCodeLine{33         \textcolor{keyword}{explicit} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a538eb3c82f4c8fcfbd4f1913964a6a4d}{FileTarget}}( std::string\_view fileName, \textcolor{keywordtype}{bool} replaceIfExists = \textcolor{keyword}{false} );}
-\DoxyCodeLine{44         \textcolor{keyword}{explicit} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a538eb3c82f4c8fcfbd4f1913964a6a4d}{FileTarget}}( std::string\_view name, std::string\_view filePath, \textcolor{keywordtype}{bool} replaceIfExists = \textcolor{keyword}{false} );}
-\DoxyCodeLine{58         \textcolor{keyword}{explicit} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a538eb3c82f4c8fcfbd4f1913964a6a4d}{FileTarget}}( std::string\_view name, std::string\_view formatPattern, std::string\_view filePath,}
+\DoxyCodeLine{26         FileTarget( );}
+\DoxyCodeLine{33         \textcolor{keyword}{explicit} FileTarget( std::string\_view fileName, \textcolor{keywordtype}{bool} replaceIfExists = \textcolor{keyword}{false} );}
+\DoxyCodeLine{44         \textcolor{keyword}{explicit} FileTarget( std::string\_view name, std::string\_view filePath, \textcolor{keywordtype}{bool} replaceIfExists = \textcolor{keyword}{false} );}
+\DoxyCodeLine{58         \textcolor{keyword}{explicit} FileTarget( std::string\_view name, std::string\_view formatPattern, std::string\_view filePath,}
 \DoxyCodeLine{59                              \textcolor{keywordtype}{bool} replaceIfExists = \textcolor{keyword}{false} );}
-\DoxyCodeLine{61         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a7b69192edb34f80bac9395c20551f0b0}{FileTarget}}( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{FileTarget}} \& ) = \textcolor{keyword}{delete};}
-\DoxyCodeLine{63         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{FileTarget}} \&\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a50cd4eb402dd36ce2aca48af74a34a78}{operator=}}( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{FileTarget}} \& ) = \textcolor{keyword}{delete};}
-\DoxyCodeLine{68         \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_abb8eb7a0485853ebcc0f9a6975800a20}{\string~FileTarget}}( );}
-\DoxyCodeLine{70         \textcolor{keyword}{const} std::string \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac47165787a3473fa07ac20b52f9e0cb9}{FilePath}}( );}
-\DoxyCodeLine{72         \textcolor{keyword}{const} std::string \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a05f286e2fc3d792f2dcb9fbd65d263fc}{FileName}}( );}
-\DoxyCodeLine{74         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab425429c9f0d88baec5c122fff2eba75}{EraseContents}}( );}
-\DoxyCodeLine{85         \textcolor{keyword}{virtual} \textcolor{keywordtype}{bool} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a840beb71fa0e349a0b2c7b03f08420d3}{RenameFile}}( std::string\_view newFileName );}
-\DoxyCodeLine{90         \textcolor{keywordtype}{bool} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab19812d9b25aac8532eec307d9820718}{OpenFile}}( \textcolor{keywordtype}{bool} truncate = \textcolor{keyword}{false} );}
-\DoxyCodeLine{94         \textcolor{keywordtype}{bool} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_af4147b9b283d46f9de20fed081b394e0}{CloseFile}}( );}
-\DoxyCodeLine{97         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a2f6ad6fd27f4a0fe5f41f8def08c8d9e}{Flush}}( );}
-\DoxyCodeLine{98 }
-\DoxyCodeLine{99       \textcolor{keyword}{private}:}
-\DoxyCodeLine{100         LoggerLevel   logLevel;}
-\DoxyCodeLine{101         \mbox{\hyperlink{classserenity_1_1expiremental_1_1_flush___policy}{Flush\_Policy}} \&policy;}
-\DoxyCodeLine{102 }
-\DoxyCodeLine{103       \textcolor{keyword}{protected}:}
-\DoxyCodeLine{104         std::ofstream    fileHandle;}
-\DoxyCodeLine{105         \mbox{\hyperlink{structserenity_1_1expiremental_1_1_file_settings}{FileSettings}}     fileOptions;}
-\DoxyCodeLine{106         \mbox{\hyperlink{structserenity_1_1expiremental_1_1_background_thread}{BackgroundThread}} flushWorker;}
-\DoxyCodeLine{112         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a0fb50e998ca49f78eb36b1f821ecfcb4}{PolicyFlushOn}}( ) \textcolor{keyword}{override};}
-\DoxyCodeLine{119         \textcolor{keywordtype}{void} \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac17d3f0ca839ed863e16115b8587e1cb}{PrintMessage}}( std::string\_view formatted ) \textcolor{keyword}{override};}
-\DoxyCodeLine{120     \};}
-\DoxyCodeLine{121 \}  \textcolor{comment}{// namespace serenity::expiremental::targets}}
+\DoxyCodeLine{61         FileTarget( \textcolor{keyword}{const} FileTarget \& ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{63         FileTarget \&operator=( \textcolor{keyword}{const} FileTarget \& ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{68         \string~FileTarget( );}
+\DoxyCodeLine{70         \textcolor{keyword}{const} std::string FilePath( );}
+\DoxyCodeLine{72         \textcolor{keyword}{const} std::string FileName( );}
+\DoxyCodeLine{75         \textcolor{keywordtype}{void} EraseContents( );}
+\DoxyCodeLine{86         \textcolor{keyword}{virtual} \textcolor{keywordtype}{bool} RenameFile( std::string\_view newFileName );}
+\DoxyCodeLine{91         \textcolor{keywordtype}{bool} OpenFile( \textcolor{keywordtype}{bool} truncate = \textcolor{keyword}{false} );}
+\DoxyCodeLine{95         \textcolor{keywordtype}{bool} CloseFile( );}
+\DoxyCodeLine{98         \textcolor{keywordtype}{void} Flush( );}
+\DoxyCodeLine{99 }
+\DoxyCodeLine{100       \textcolor{keyword}{private}:}
+\DoxyCodeLine{101         LoggerLevel   logLevel;}
+\DoxyCodeLine{102         Flush\_Policy \&policy;}
+\DoxyCodeLine{103 }
+\DoxyCodeLine{104       \textcolor{keyword}{protected}:}
+\DoxyCodeLine{105         std::ofstream    fileHandle;}
+\DoxyCodeLine{106         FileSettings     fileOptions;}
+\DoxyCodeLine{107         BackgroundThread flushWorker;}
+\DoxyCodeLine{113         \textcolor{keywordtype}{void} PolicyFlushOn( ) \textcolor{keyword}{override};}
+\DoxyCodeLine{120         \textcolor{keywordtype}{void} PrintMessage( std::string\_view formatted ) \textcolor{keyword}{override};}
+\DoxyCodeLine{121     \};}
+\DoxyCodeLine{122 \}  \textcolor{comment}{// namespace serenity::expiremental::targets}}
 
 \end{DoxyCode}

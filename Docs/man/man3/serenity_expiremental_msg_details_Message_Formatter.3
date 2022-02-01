@@ -1,0 +1,184 @@
+.TH "serenity::expiremental::msg_details::Message_Formatter" 3 "Mon Jan 31 2022" "Serenity Logger" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+serenity::expiremental::msg_details::Message_Formatter
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <Message_Formatter\&.h>\fP
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBFormat_Arg_a\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%a' and represents a padded 12-hour clock's hour value\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_A\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%A' and represents the string representation of 'AM' or 'PM' dependant on the hour\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_b\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%b' and represents a padded numerical month value\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_B\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%B' and represents the string representation the whole month name (i\&.e\&. 'January', 'February', etc\&.\&.) "
+.ti -1c
+.RI "struct \fBFormat_Arg_Char\fP"
+.br
+.RI "\fBFormatter\fP struct that doesn't map to a specific flag and represents any char that that doesn't end up matching with any of the known internal flags\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_d\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%d' and represents a padded numerical day value\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_D\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%D' and represents the string representation the date in MM/DD/YY format (i\&.e\&. 01/29/22) "
+.ti -1c
+.RI "struct \fBFormat_Arg_F\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%F' and represents the string representation the date in YY-MM-DD format\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_H\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%H' and represents the string representation of a padded hour on a 24-hour clock\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_l\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%l' and represents the one character log level (i\&.e\&. 'T' for trace, 'F' for fatal) "
+.ti -1c
+.RI "struct \fBFormat_Arg_L\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%L' and represents the string representation of the full log level (i\&.e\&. 'Trace' for trace, 'Fatal' for fatal, etc\&.\&.\&.) "
+.ti -1c
+.RI "struct \fBFormat_Arg_M\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%M' and represents the string representation of a padded minute\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_Message\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%+' and represents the formatted message with platform-dependant end of line applied\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_n\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%n' and represents the numerical day, textual month, and numerical year in a DDMMMYY format\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_N\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%N' and represents the Logger's name to use when formatting\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_S\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%S' and represents the string representation of a padded second\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_t\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%t' and represents the wall clock time in a 12 hour format (i\&.e\&. 12:45:05) format\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_T\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%T' and represents the wall clock time in a 24-hour format (i\&.e\&. 23:45:05) format\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_w\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%w' and represents the unpadded string representation of the numerical weekday value (as in tm_wkday) format\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_x\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%x' and represents the string representation of the shortened weekday name (i\&.e\&. For Monday - Mon, for Tuesday - Tues, etc\&.\&.\&.) "
+.ti -1c
+.RI "struct \fBFormat_Arg_X\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%X' and represents the entire Weekday name (i\&.e\&. 'Monday', 'Tuesday', etc\&.\&.\&.) format\&. "
+.ti -1c
+.RI "struct \fBFormat_Arg_y\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%y' and represents the string representation of the shortened year (i\&.e\&. '21', '22', etc) "
+.ti -1c
+.RI "struct \fBFormat_Arg_Y\fP"
+.br
+.RI "\fBFormatter\fP struct that maps to flag '%Y' and represents the year in YYYY format format\&. "
+.ti -1c
+.RI "struct \fBFormatter\fP"
+.br
+.RI "Virtual Base Struct that all formatter structs inherit from and implement\&. "
+.ti -1c
+.RI "class \fBFormatters\fP"
+.br
+.RI "This class is the top-level formatting class that holds and controls each flag arguments specific formatting abilities\&. "
+.in -1c
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBMessage_Formatter\fP (std::string_view pattern, \fBMessage_Info\fP *details)"
+.br
+.RI "Constructor that takes in a format pattern paramater and a \fBMessage_Info\fP class pointer\&. "
+.ti -1c
+.RI "\fBMessage_Formatter\fP (const \fBMessage_Formatter\fP &)=delete"
+.br
+.ti -1c
+.RI "\fBMessage_Formatter\fP & \fBoperator=\fP (const \fBMessage_Info\fP &)=delete"
+.br
+.ti -1c
+.RI "void \fBFlagFormatter\fP (size_t flag)"
+.br
+.RI "Intializes and stores the \fBFormatter\fP struct at the index provided into the \fBFormatters\fP container\&. "
+.ti -1c
+.RI "void \fBSetPattern\fP (std::string_view pattern)"
+.br
+.RI "Sets the format pattern variable and then parses the format string to store each flag as its own individual Formmater struct that will be in charge of how each flag is formatted\&. "
+.ti -1c
+.RI "\fBFormatters\fP & \fBGetFormatters\fP ()"
+.br
+.RI "Returns the \fBMessage_Formatter\fP's instance of the \fBFormatters\fP container which holds the individual \fBFormatter\fP pointers\&. Can be called to manually call the Format( ) function for all arguments stored\&. "
+.ti -1c
+.RI "void \fBStoreFormat\fP ()"
+.br
+.RI "Store the format pattern internally to be used more efficiently when formatting log messages\&. "
+.ti -1c
+.RI "\fBMessage_Info\fP * \fBMessageDetails\fP ()"
+.br
+.RI "Returns a pointer to the \fBMessage_Info\fP instance used by \fBMessage_Formatter\fP\&. "
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBFormatters\fP \fBformatter\fP"
+.br
+.ti -1c
+.RI "std::string \fBfmtPattern\fP"
+.br
+.ti -1c
+.RI "\fBMessage_Info\fP * \fBmsgInfo\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Controls how the prepended string of text before the actual log message will be displayed and how each flag/argument is formatted\&. 
+.SH "Constructor & Destructor Documentation"
+.PP 
+.SS "serenity::expiremental::msg_details::Message_Formatter::Message_Formatter (std::string_view pattern, \fBMessage_Info\fP * details)\fC [explicit]\fP"
+
+.PP
+Constructor that takes in a format pattern paramater and a \fBMessage_Info\fP class pointer\&. The format pattern is set and internally stored by its individual flag arguments to iterate over when a message is logged\&. The \fBMessage_Info\fP class is used to populate the arguments or references when storing and using the individual flag components 
+.PP
+References \fBSetPattern()\fP\&.
+.SH "Member Function Documentation"
+.PP 
+.SS "void serenity::expiremental::msg_details::Message_Formatter::StoreFormat ()"
+
+.PP
+Store the format pattern internally to be used more efficiently when formatting log messages\&. \fBSetPattern( )\fP calls this function internally\&. Parses the internal format pattern string stored from \fBSetPattern( )\fP or from a constructor that took in a format pattern argument and for each flag found by the delimiter '%', will try to match the potential flag to the index of the valid flags array\&. If a match is found, initializes and stores the respective \fBFormatter\fP struct for that flag, otherwise, stores this value as well as any other char, by passing in the value to initialize and store a \fBFormat_Arg_Char\fP struct instead 
+.PP
+References \fBserenity::expiremental::msg_details::Message_Formatter::Formatters::Clear()\fP, \fBserenity::expiremental::msg_details::Message_Formatter::Formatters::Emplace_Back()\fP, and \fBFlagFormatter()\fP\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Serenity Logger from the source code\&.

@@ -1,0 +1,40 @@
+.TH "serenity::expiremental::msg_details::Message_Formatter::Format_Arg_N" 3 "Mon Jan 31 2022" "Serenity Logger" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+serenity::expiremental::msg_details::Message_Formatter::Format_Arg_N \- \fBFormatter\fP struct that maps to flag '%N' and represents the Logger's name to use when formatting\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <Message_Formatter\&.h>\fP
+.PP
+Inherits \fBserenity::expiremental::msg_details::Message_Formatter::Formatter\fP\&.
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBFormat_Arg_N\fP (\fBMessage_Info\fP &info)"
+.br
+.RI "Constructor that uses the \fBMessage_Info\fP pointer to store a reference to the logger's name\&. "
+.ti -1c
+.RI "std::string_view \fBFormat\fP () override"
+.br
+.RI "When called, returns the logger's name as-is\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+\fBFormatter\fP struct that maps to flag '%N' and represents the Logger's name to use when formatting\&. 
+.SH "Member Function Documentation"
+.PP 
+.SS "std::string_view serenity::expiremental::msg_details::Message_Formatter::Format_Arg_N::Format ()\fC [override]\fP, \fC [virtual]\fP"
+
+.PP
+When called, returns the logger's name as-is\&. 
+.PP
+Implements \fBserenity::expiremental::msg_details::Message_Formatter::Formatter\fP\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Serenity Logger from the source code\&.

@@ -1,8 +1,8 @@
-\hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target}{}\doxysection{serenity\+::expiremental\+::targets\+::File\+Target Class Reference}
+\doxysection{serenity\+::expiremental\+::targets\+::File\+Target Class Reference}
 \label{classserenity_1_1expiremental_1_1targets_1_1_file_target}\index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
 
 
-This class is in charge of logging to any basic file type and inherits from the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{Target\+Base}} class for common logging functions and logging settings.  
+This class is in charge of logging to any basic file type and inherits from the \doxyref{Target\+Base}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base} class for common logging functions and logging settings.  
 
 
 
@@ -18,71 +18,72 @@ Inheritance diagram for serenity\+::expiremental\+::targets\+::File\+Target\+:\b
 \doxysubsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a538eb3c82f4c8fcfbd4f1913964a6a4d}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a538eb3c82f4c8fcfbd4f1913964a6a4d}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a538eb3c82f4c8fcfbd4f1913964a6a4d}} 
 {\bfseries File\+Target} ()
 \begin{DoxyCompactList}\small\item\em Default constructor that sets the logger name to \char`\"{}\+File\+\_\+\+Target\char`\"{} and sets all other values to their defaults. \end{DoxyCompactList}\item 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_abe567a48d92c0eb3e7877f1babf92452}{File\+Target}} (std\+::string\+\_\+view file\+Name, bool replace\+If\+Exists=false)
+\textbf{ File\+Target} (std\+::string\+\_\+view file\+Name, bool replace\+If\+Exists=false)
 \begin{DoxyCompactList}\small\item\em Constructor that will set the file name and will truncate the file if it already exists and if \char`\"{}replace\+If\+Exists\char`\"{} is set to true. Sets all other values to their defaults. \end{DoxyCompactList}\item 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a785bdee2418a675fb13e4a4d91e5edb8}{File\+Target}} (std\+::string\+\_\+view name, std\+::string\+\_\+view file\+Path, bool replace\+If\+Exists=false)
+\textbf{ File\+Target} (std\+::string\+\_\+view name, std\+::string\+\_\+view file\+Path, bool replace\+If\+Exists=false)
 \begin{DoxyCompactList}\small\item\em Constructor that will set the logger name, file path, log directory, and whether or not to truncate this file if it exists or not. Sets all other values to their defaults. \end{DoxyCompactList}\item 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a63fb3bca8c620e4e8c37d484e44e3e4d}{File\+Target}} (std\+::string\+\_\+view name, std\+::string\+\_\+view format\+Pattern, std\+::string\+\_\+view file\+Path, bool replace\+If\+Exists=false)
+\textbf{ File\+Target} (std\+::string\+\_\+view name, std\+::string\+\_\+view format\+Pattern, std\+::string\+\_\+view file\+Path, bool replace\+If\+Exists=false)
 \begin{DoxyCompactList}\small\item\em Constructor that will set the logger name, format pattern to use, file path, log directory, and whether or not to truncate this file if it exists or not. Sets all other values to their defaults. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a7b69192edb34f80bac9395c20551f0b0}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a7b69192edb34f80bac9395c20551f0b0}} 
-{\bfseries File\+Target} (const \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{File\+Target}} \&)=delete
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a7b69192edb34f80bac9395c20551f0b0}} 
+{\bfseries File\+Target} (const \textbf{ File\+Target} \&)=delete
 \begin{DoxyCompactList}\small\item\em Deleted. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a50cd4eb402dd36ce2aca48af74a34a78}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a50cd4eb402dd36ce2aca48af74a34a78}} 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{File\+Target}} \& {\bfseries operator=} (const \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{File\+Target}} \&)=delete
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a50cd4eb402dd36ce2aca48af74a34a78}} 
+\textbf{ File\+Target} \& {\bfseries operator=} (const \textbf{ File\+Target} \&)=delete
 \begin{DoxyCompactList}\small\item\em Deleted. \end{DoxyCompactList}\item 
-\mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_abb8eb7a0485853ebcc0f9a6975800a20}{$\sim$\+File\+Target}} ()
+\textbf{ $\sim$\+File\+Target} ()
 \begin{DoxyCompactList}\small\item\em Cleans up any background threads, flushes contents to disk, and closes the file context being used. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac47165787a3473fa07ac20b52f9e0cb9}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac47165787a3473fa07ac20b52f9e0cb9}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac47165787a3473fa07ac20b52f9e0cb9}} 
 const std\+::string {\bfseries File\+Path} ()
 \begin{DoxyCompactList}\small\item\em Returns the file path of the file context currently being held. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a05f286e2fc3d792f2dcb9fbd65d263fc}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a05f286e2fc3d792f2dcb9fbd65d263fc}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a05f286e2fc3d792f2dcb9fbd65d263fc}} 
 const std\+::string {\bfseries File\+Name} ()
 \begin{DoxyCompactList}\small\item\em Returns the file name of the file context currently being held. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab425429c9f0d88baec5c122fff2eba75}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab425429c9f0d88baec5c122fff2eba75}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab425429c9f0d88baec5c122fff2eba75}} 
 void {\bfseries Erase\+Contents} ()
 \begin{DoxyCompactList}\small\item\em Closes the file context currently being held and re-\/opens the same file context, truncating the file size to 0. \end{DoxyCompactList}\item 
-virtual bool \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a840beb71fa0e349a0b2c7b03f08420d3}{Rename\+File}} (std\+::string\+\_\+view new\+File\+Name)
+virtual bool \textbf{ Rename\+File} (std\+::string\+\_\+view new\+File\+Name)
 \begin{DoxyCompactList}\small\item\em Closes the file (if open) and trys to rename current file context. If rename is succesful, will re-\/open file context under the new file name. \end{DoxyCompactList}\item 
-bool \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab19812d9b25aac8532eec307d9820718}{Open\+File}} (bool truncate=false)
+bool \textbf{ Open\+File} (bool truncate=false)
 \begin{DoxyCompactList}\small\item\em Opens the file held by the file handle. \end{DoxyCompactList}\item 
-bool \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_af4147b9b283d46f9de20fed081b394e0}{Close\+File}} ()
+bool \textbf{ Close\+File} ()
 \begin{DoxyCompactList}\small\item\em Joins any currently running flush background thread (if enabled) and if the file handle\textquotesingle{}s file context is currently open, will flush contents to disk and close the file. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a2f6ad6fd27f4a0fe5f41f8def08c8d9e}{Flush}} ()
-\end{DoxyCompactItemize}
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a2f6ad6fd27f4a0fe5f41f8def08c8d9e}} 
+void {\bfseries Flush} ()
+\begin{DoxyCompactList}\small\item\em If contents were written to buffer, this will now write contents of buffer to file and flush contents to disk, otherwise, just flushes contents to disk. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \doxysubsection*{Protected Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_a0fb50e998ca49f78eb36b1f821ecfcb4}{Policy\+Flush\+On}} () override
+void \textbf{ Policy\+Flush\+On} () override
 \begin{DoxyCompactList}\small\item\em Executes the currently set flush policy. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac17d3f0ca839ed863e16115b8587e1cb}{Print\+Message}} (std\+::string\+\_\+view formatted) override
+void \textbf{ Print\+Message} (std\+::string\+\_\+view formatted) override
 \begin{DoxyCompactList}\small\item\em Writes the message passed in by the {\ttfamily formatted} variable to the file context. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \doxysubsection*{Protected Attributes}
 \begin{DoxyCompactItemize}
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_ad6db32b370c5402ff59a01f707a4476b}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ad6db32b370c5402ff59a01f707a4476b}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ad6db32b370c5402ff59a01f707a4476b}} 
 std\+::ofstream {\bfseries file\+Handle}
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_af2db2f1bd065d4ef71dc5dd0fb347fa1}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_af2db2f1bd065d4ef71dc5dd0fb347fa1}} 
-\mbox{\hyperlink{structserenity_1_1expiremental_1_1_file_settings}{File\+Settings}} {\bfseries file\+Options}
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_af2db2f1bd065d4ef71dc5dd0fb347fa1}} 
+\textbf{ File\+Settings} {\bfseries file\+Options}
 \item 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a19f3d737680fe5071373aea04da4f514}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a19f3d737680fe5071373aea04da4f514}} 
-\mbox{\hyperlink{structserenity_1_1expiremental_1_1_background_thread}{Background\+Thread}} {\bfseries flush\+Worker}
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a19f3d737680fe5071373aea04da4f514}} 
+\textbf{ Background\+Thread} {\bfseries flush\+Worker}
 \end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
-This class is in charge of logging to any basic file type and inherits from the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{Target\+Base}} class for common logging functions and logging settings. 
+This class is in charge of logging to any basic file type and inherits from the \doxyref{Target\+Base}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base} class for common logging functions and logging settings. 
 
-For all \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_target}{File\+Target}} Constructors\+: ~\newline
+For all \doxyref{File\+Target}{p.}{dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target} Constructors\+: ~\newline
 
 \begin{DoxyItemize}
 \item If either the directories or the file don\textquotesingle{}t exist yet, the constructor will create the neccessary ~\newline
  directories as well as the file needed to write to. ~\newline
 
-\item Default initializes the \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base}{Target\+Base}} inherited values ~\newline
+\item Default initializes the \doxyref{Target\+Base}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base} inherited values ~\newline
 
 \begin{DoxyItemize}
 \item These being the flush policy, the log level, and time mode. ~\newline
@@ -101,10 +102,10 @@ For all \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_file_targe
 \end{DoxyItemize}
 
 \doxysubsection{Constructor \& Destructor Documentation}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_abe567a48d92c0eb3e7877f1babf92452}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_abe567a48d92c0eb3e7877f1babf92452}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_abe567a48d92c0eb3e7877f1babf92452}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!FileTarget@{FileTarget}}
 \index{FileTarget@{FileTarget}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{FileTarget()}{FileTarget()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+\doxysubsubsection{FileTarget()\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
 {\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+File\+Target (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{file\+Name,  }\item[{bool}]{replace\+If\+Exists = {\ttfamily false} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
 
 
@@ -118,10 +119,10 @@ While the file name will be changed to the parameter {\ttfamily file\+Name}, the
 {\em replace\+If\+Exist} & This value denotes whether or not to truncate the file if it exists already \\
 \hline
 \end{DoxyParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a785bdee2418a675fb13e4a4d91e5edb8}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a785bdee2418a675fb13e4a4d91e5edb8}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a785bdee2418a675fb13e4a4d91e5edb8}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!FileTarget@{FileTarget}}
 \index{FileTarget@{FileTarget}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{FileTarget()}{FileTarget()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+\doxysubsubsection{FileTarget()\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
 {\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+File\+Target (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{name,  }\item[{std\+::string\+\_\+view}]{file\+Path,  }\item[{bool}]{replace\+If\+Exists = {\ttfamily false} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
 
 
@@ -137,10 +138,10 @@ The name of the logger will be set based on the {\ttfamily name} variable. The f
 {\em replace\+If\+Exist} & This value denotes whether or not to truncate the file if it exists already \\
 \hline
 \end{DoxyParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a63fb3bca8c620e4e8c37d484e44e3e4d}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a63fb3bca8c620e4e8c37d484e44e3e4d}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a63fb3bca8c620e4e8c37d484e44e3e4d}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!FileTarget@{FileTarget}}
 \index{FileTarget@{FileTarget}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{FileTarget()}{FileTarget()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+\doxysubsubsection{FileTarget()\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
 {\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+File\+Target (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{name,  }\item[{std\+::string\+\_\+view}]{format\+Pattern,  }\item[{std\+::string\+\_\+view}]{file\+Path,  }\item[{bool}]{replace\+If\+Exists = {\ttfamily false} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
 
 
@@ -158,10 +159,10 @@ The name of the logger will be set based on the {\ttfamily name} variable. The f
 {\em replace\+If\+Exist} & This value denotes whether or not to truncate the file if it exists already \\
 \hline
 \end{DoxyParams}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_abb8eb7a0485853ebcc0f9a6975800a20}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_abb8eb7a0485853ebcc0f9a6975800a20}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_abb8eb7a0485853ebcc0f9a6975800a20}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!````~FileTarget@{$\sim$FileTarget}}
 \index{````~FileTarget@{$\sim$FileTarget}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{$\sim$FileTarget()}{~FileTarget()}}
+\doxysubsubsection{$\sim$FileTarget()}
 {\footnotesize\ttfamily serenity\+::expiremental\+::targets\+::\+File\+Target\+::$\sim$\+File\+Target (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
 
 
@@ -170,11 +171,15 @@ Cleans up any background threads, flushes contents to disk, and closes the file 
 
 Cleans up background flush thread if enabled by joining the thread and then flushing the contents of the file handle to the file (if messages were written to buffer, will now write contents of buffer to file). Afterwards, the file context being used is closed. 
 
+References \textbf{ Close\+File()}.
+
+
+
 \doxysubsection{Member Function Documentation}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_af4147b9b283d46f9de20fed081b394e0}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_af4147b9b283d46f9de20fed081b394e0}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_af4147b9b283d46f9de20fed081b394e0}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!CloseFile@{CloseFile}}
 \index{CloseFile@{CloseFile}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{CloseFile()}{CloseFile()}}
+\doxysubsubsection{CloseFile()}
 {\footnotesize\ttfamily bool serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+Close\+File (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
 
 
@@ -184,16 +189,14 @@ Joins any currently running flush background thread (if enabled) and if the file
 \begin{DoxyReturn}{Returns}
 If successful, returns true. If unsuccessful, will return false with error message 
 \end{DoxyReturn}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a2f6ad6fd27f4a0fe5f41f8def08c8d9e}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a2f6ad6fd27f4a0fe5f41f8def08c8d9e}} 
-\index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!Flush@{Flush}}
-\index{Flush@{Flush}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{Flush()}{Flush()}}
-{\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+Flush (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
 
-If contents were written to buffer with \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a923f74e7e87e3f3add647bab13042b28}{is\+Write\+To\+Buf()}} set to true, will now write contents of buffer to file and flush contents to disk, otherwise, just flushes contents to disk \mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab19812d9b25aac8532eec307d9820718}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab19812d9b25aac8532eec307d9820718}} 
+
+References \textbf{ Flush()}.
+
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ab19812d9b25aac8532eec307d9820718}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!OpenFile@{OpenFile}}
 \index{OpenFile@{OpenFile}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{OpenFile()}{OpenFile()}}
+\doxysubsubsection{OpenFile()}
 {\footnotesize\ttfamily bool serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+Open\+File (\begin{DoxyParamCaption}\item[{bool}]{truncate = {\ttfamily false} }\end{DoxyParamCaption})}
 
 
@@ -203,10 +206,10 @@ Opens the file held by the file handle.
 Opens the file context currently being held and sets the file buffer size using \char`\"{}\+DEFAULT\+\_\+\+BUFFER\+\_\+\+SIZE\char`\"{} macro. If the file doessn\textquotesingle{}t already exist, this function will create the file first. \begin{DoxyReturn}{Returns}
 If successful, returns true. If unsuccessful, will return false with error message 
 \end{DoxyReturn}
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a0fb50e998ca49f78eb36b1f821ecfcb4}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a0fb50e998ca49f78eb36b1f821ecfcb4}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a0fb50e998ca49f78eb36b1f821ecfcb4}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!PolicyFlushOn@{PolicyFlushOn}}
 \index{PolicyFlushOn@{PolicyFlushOn}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{PolicyFlushOn()}{PolicyFlushOn()}}
+\doxysubsubsection{PolicyFlushOn()}
 {\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+Policy\+Flush\+On (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [protected]}, {\ttfamily [virtual]}}
 
 
@@ -215,12 +218,12 @@ Executes the currently set flush policy.
 
 Compares current flush setting and executes that policy if active. Current policies are\+: always flush, never flush, Log\+Level-\/based flushing and time-\/based flushing. Time based flushing uses a background thread worker which will intermittenly lock the file when elapsed time is reached from \char`\"{}flush\+Every\char`\"{} setting, flush the contents to disk, and then unlock the file for further writes 
 
-Reimplemented from \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}{serenity\+::expiremental\+::targets\+::\+Target\+Base}}.
+Reimplemented from \textbf{ serenity\+::expiremental\+::targets\+::\+Target\+Base} \doxyref{}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_a29e7051dc074d74422613e3a04d0bd39}.
 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac17d3f0ca839ed863e16115b8587e1cb}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac17d3f0ca839ed863e16115b8587e1cb}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_ac17d3f0ca839ed863e16115b8587e1cb}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!PrintMessage@{PrintMessage}}
 \index{PrintMessage@{PrintMessage}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{PrintMessage()}{PrintMessage()}}
+\doxysubsubsection{PrintMessage()}
 {\footnotesize\ttfamily void serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+Print\+Message (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{formatted }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [protected]}, {\ttfamily [virtual]}}
 
 
@@ -234,16 +237,16 @@ Checks if background flush thread is active, if it is -\/ will lock access to th
 \end{DoxyParams}
 
 
-Implements \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}{serenity\+::expiremental\+::targets\+::\+Target\+Base}}.
+Implements \textbf{ serenity\+::expiremental\+::targets\+::\+Target\+Base} \doxyref{}{p.}{dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base_adca96ad887133ab858002015179e29e1}.
 
 
 
-Reimplemented in \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a90c8a3f9917674edfed9d4ad0a5169d9}{serenity\+::expiremental\+::targets\+::\+Rotating\+Target}}.
+Reimplemented in \textbf{ serenity\+::expiremental\+::targets\+::\+Rotating\+Target} \doxyref{}{p.}{dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a90c8a3f9917674edfed9d4ad0a5169d9}.
 
-\mbox{\Hypertarget{classserenity_1_1expiremental_1_1targets_1_1_file_target_a840beb71fa0e349a0b2c7b03f08420d3}\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a840beb71fa0e349a0b2c7b03f08420d3}} 
+\mbox{\label{classserenity_1_1expiremental_1_1targets_1_1_file_target_a840beb71fa0e349a0b2c7b03f08420d3}} 
 \index{serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}!RenameFile@{RenameFile}}
 \index{RenameFile@{RenameFile}!serenity::expiremental::targets::FileTarget@{serenity::expiremental::targets::FileTarget}}
-\doxysubsubsection{\texorpdfstring{RenameFile()}{RenameFile()}}
+\doxysubsubsection{RenameFile()}
 {\footnotesize\ttfamily bool serenity\+::expiremental\+::targets\+::\+File\+Target\+::\+Rename\+File (\begin{DoxyParamCaption}\item[{std\+::string\+\_\+view}]{new\+File\+Name }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
 
 
@@ -258,7 +261,11 @@ If successful, returns true. If unsuccessful, will return false with error messa
 \end{DoxyReturn}
 
 
-Reimplemented in \mbox{\hyperlink{classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a896eedf218ba0cd6c21c0b761e948b80}{serenity\+::expiremental\+::targets\+::\+Rotating\+Target}}.
+Reimplemented in \textbf{ serenity\+::expiremental\+::targets\+::\+Rotating\+Target} \doxyref{}{p.}{dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target_a896eedf218ba0cd6c21c0b761e948b80}.
+
+
+
+References \textbf{ Close\+File()}, and \textbf{ Open\+File()}.
 
 
 

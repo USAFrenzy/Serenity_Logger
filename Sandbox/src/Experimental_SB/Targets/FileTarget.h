@@ -8,7 +8,7 @@ namespace serenity::expiremental::targets
 {
 	/// @brief This class is in charge of logging to any basic file type and inherits from the TargetBase class for common
 	/// logging functions and logging settings.
-	/// @details                                    For all FileTarget Constructors: \n
+	/// @details For all FileTarget Constructors: \n
 	/// - If either the directories or the file don't exist yet, the constructor will create the neccessary \n
 	///   directories as well as the file needed to write to. \n
 	/// - Default initializes the TargetBase inherited values \n
@@ -22,7 +22,7 @@ namespace serenity::expiremental::targets
 	class FileTarget : public TargetBase
 	{
 	  public:
-		/// Default constructor that sets the logger name to "File_Target" and sets all other values to their defaults
+		/// @brief Default constructor that sets the logger name to "File_Target" and sets all other values to their defaults
 		FileTarget( );
 		/// @brief Constructor that will set the file name and will truncate the file if it already exists and if
 		/// "replaceIfExists" is set to true. Sets all other values to their defaults.
@@ -57,20 +57,21 @@ namespace serenity::expiremental::targets
 		/// @param replaceIfExist: This value denotes whether or not to truncate the file if it exists already
 		explicit FileTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
 							 bool replaceIfExists = false );
-		///  Deleted
+		/// @brief Deleted
 		FileTarget( const FileTarget & ) = delete;
-		///  Deleted
+		///  @brief Deleted
 		FileTarget &operator=( const FileTarget & ) = delete;
 		/// @brief Cleans up any background threads, flushes contents to disk, and closes the file context being used
 		/// @details Cleans up background flush thread if enabled by joining the thread and then flushing the contents of the
 		/// file handle to the file (if messages were written to buffer, will now write contents of buffer to file).
 		/// Afterwards, the file context being used is closed.
 		~FileTarget( );
-		///  Returns the file path of the file context currently being held
+		///  @brief Returns the file path of the file context currently being held
 		const std::string FilePath( );
-		///  Returns the file name of the file context currently being held
+		///  @brief Returns the file name of the file context currently being held
 		const std::string FileName( );
-		///  Closes the file context currently being held and re-opens the same file context, truncating the file size to 0
+		///  @brief Closes the file context currently being held and re-opens the same file context, truncating the file size
+		///  to 0
 		void EraseContents( );
 		/// @brief Closes the file (if open) and trys to rename current file context. If rename is succesful, will re-open
 		/// file context under the new file name.
@@ -92,7 +93,7 @@ namespace serenity::expiremental::targets
 		/// currently open, will flush contents to disk and close the file.
 		/// @returns If successful, returns true. If unsuccessful, will return false with error message
 		bool CloseFile( );
-		/// If contents were written to buffer with isWriteToBuf() set to true, will now write contents of buffer to file and
+		/// @brief If contents were written to buffer, this will now write contents of buffer to file and
 		/// flush contents to disk, otherwise, just flushes contents to disk
 		void Flush( );
 

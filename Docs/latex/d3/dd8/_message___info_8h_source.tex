@@ -1,4 +1,4 @@
-\hypertarget{_message___info_8h_source}{}\doxysection{Message\+\_\+\+Info.\+h}
+\doxysection{Message\+\_\+\+Info.\+h}
 \label{_message___info_8h_source}\index{Serenity\_Logger/Sandbox/src/Experimental\_SB/MessageDetails/Message\_Info.h@{Serenity\_Logger/Sandbox/src/Experimental\_SB/MessageDetails/Message\_Info.h}}
 
 \begin{DoxyCode}{0}
@@ -13,19 +13,19 @@
 \DoxyCodeLine{9     \{}
 \DoxyCodeLine{10         \textcolor{keyword}{namespace }msg\_details}
 \DoxyCodeLine{11         \{}
-\DoxyCodeLine{12             \textcolor{keyword}{class }\mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}}}
+\DoxyCodeLine{12             \textcolor{keyword}{class }Message\_Info}
 \DoxyCodeLine{13             \{}
 \DoxyCodeLine{14               \textcolor{keyword}{public}:}
-\DoxyCodeLine{15                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}}( std::string\_view name, LoggerLevel level, message\_time\_mode mode );}
-\DoxyCodeLine{16                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \&operator=( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \&t ) = \textcolor{keyword}{delete};}
-\DoxyCodeLine{17                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}}( \textcolor{keyword}{const} \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}} \& )             = \textcolor{keyword}{delete};}
-\DoxyCodeLine{18                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{Message\_Info}}( )                                  = \textcolor{keyword}{delete};}
-\DoxyCodeLine{19                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___info}{\string~Message\_Info}}( )                                 = \textcolor{keywordflow}{default};}
+\DoxyCodeLine{15                 Message\_Info( std::string\_view name, LoggerLevel level, message\_time\_mode mode );}
+\DoxyCodeLine{16                 Message\_Info \&operator=( \textcolor{keyword}{const} Message\_Info \&t ) = \textcolor{keyword}{delete};}
+\DoxyCodeLine{17                 Message\_Info( \textcolor{keyword}{const} Message\_Info \& )             = \textcolor{keyword}{delete};}
+\DoxyCodeLine{18                 Message\_Info( )                                  = \textcolor{keyword}{delete};}
+\DoxyCodeLine{19                 \string~Message\_Info( )                                 = \textcolor{keywordflow}{default};}
 \DoxyCodeLine{20 }
 \DoxyCodeLine{21                 std::string \&                         MessageBuffer( );}
 \DoxyCodeLine{22                 LoggerLevel \&                         MsgLevel( );}
 \DoxyCodeLine{23                 std::string \&                         Name( );}
-\DoxyCodeLine{24                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___time}{Message\_Time}} \&                        TimeDetails( );}
+\DoxyCodeLine{24                 Message\_Time \&                        TimeDetails( );}
 \DoxyCodeLine{25                 \textcolor{keywordtype}{void}                                  SetName( \textcolor{keyword}{const} std::string\_view name );}
 \DoxyCodeLine{26                 \textcolor{keywordtype}{void}                                  SetMsgLevel( \textcolor{keyword}{const} LoggerLevel level );}
 \DoxyCodeLine{27                 std::chrono::system\_clock::time\_point MessageTimePoint( );}
@@ -49,7 +49,7 @@
 \DoxyCodeLine{45                 std::string  m\_name;}
 \DoxyCodeLine{46                 LoggerLevel  m\_msgLevel;}
 \DoxyCodeLine{47                 std::string  m\_message;}
-\DoxyCodeLine{48                 \mbox{\hyperlink{classserenity_1_1expiremental_1_1msg__details_1_1_message___time}{Message\_Time}} m\_msgTime;}
+\DoxyCodeLine{48                 Message\_Time m\_msgTime;}
 \DoxyCodeLine{49                 std::string  m\_msgStrBuf;}
 \DoxyCodeLine{50             \};}
 \DoxyCodeLine{51         \}  \textcolor{comment}{// namespace msg\_details}}
