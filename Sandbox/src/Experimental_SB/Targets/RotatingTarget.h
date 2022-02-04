@@ -42,9 +42,7 @@ namespace serenity::expiremental::targets
 		/// 	@param replaceIfExists: this value will determine if the file is truncated upon being opened the first time
 		explicit RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
 								 bool replaceIfExists = false );
-		///  @brief Deleted
 		RotatingTarget( const RotatingTarget & ) = delete;
-		///  @brief Deleted
 		RotatingTarget &operator=( const RotatingTarget & ) = delete;
 		/// @brief Cleans up any background resources used and closes the file context currently held
 		/// @details When the deconstructor is called, will clean up background flush thread if enabled, flush the contents

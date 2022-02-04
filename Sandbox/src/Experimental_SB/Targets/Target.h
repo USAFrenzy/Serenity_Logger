@@ -24,29 +24,35 @@ namespace serenity::expiremental::targets
 	class TargetBase
 	{
 	  public:
-		/// Default constructor that sets the logger name to "Base_Target" and sets all other values to their defaults
+		///
+		/// @brief Default constructor that sets the logger name to "Base_Target" and sets all other values to their defaults
+		///
 		TargetBase( );
-		/// Constructor that will set the logger name to the name paramater passed in and all other values to their
+		/// @brief Constructor that will set the logger name to the name paramater passed in and all other values to their
 		/// defaults.
 		/// @param name: the name that the logger itself will use and be identified by
 		TargetBase( std::string_view name );
-		/// Constructor that will set the logger name to the name paramater passed in as well as the format pattern to
+		/// @brief Constructor that will set the logger name to the name paramater passed in as well as the format pattern to
 		/// the msgPattern passed in. All other values will be assigned their default values.
 		/// @param name: the name that the logger itself will use and be identified by
 		/// @param msgPattern: the format pattern that determines how the prepended text will be displayed before the log
 		/// message
 		TargetBase( std::string_view name, std::string_view msgPattern );
 		~TargetBase( ) = default;
-		/// Sets the current policy in use to defer to the policy passed in from "pPolicy".
+		/// @brief Sets the current policy in use to defer to the policy passed in from "pPolicy".
 		/// @param pPolicy: refers to any settings that are added or changed by the user, including whether to flush always,
 		/// never, or periodically.
 		/// @details On top of having options to never flush, always flush, and periodically flush, the Flush_Policy class
 		/// includes the settings for whether flushing should occur based on a time-interval or log level if the periodical
 		/// flushing option is enabled.
 		void SetFlushPolicy( Flush_Policy pPolicy );
-		/// Returns the current policy in use
+		///
+		/// @brief Returns the current policy in use
+		///
 		Flush_Policy &Policy( );
-		/// Returns the logger's name
+		///
+		/// @brief Returns the logger's name
+		///
 		const std::string LoggerName( );
 		/// @brief Calls the handle to the Message_Formatter's SetPattern( ) function.
 		/// @details 	Sets the format pattern variable and parses the format string for internal storage and usage of this
@@ -55,7 +61,9 @@ namespace serenity::expiremental::targets
 		/// @param pattern - the format pattern to store. This pattern is what determines how the prepended text will be
 		/// displayed before the log message
 		void SetPattern( std::string_view pattern );
-		/// Resets the current format pattern in use to the default format pattern
+		///
+		/// @brief Resets the current format pattern in use to the default format pattern
+		/// 
 		void ResetPatternToDefault( );
 		/// @brief Sets the log level that messages should be logged at.
 		/// @details For example, if "SetLogLevel(LoggerLevel::Error);"
@@ -69,16 +77,21 @@ namespace serenity::expiremental::targets
 		/// was enabled, the buffer contents will now be written to the file and then flushed to disk. Disabled by default.
 		/// @param fmtToBuf: the value that controls whether or not buffer writes are enabled/disabled
 		void WriteToBaseBuffer( bool fmtToBuf = true );
-		///  Returns true if buffer writes are enabled and false if they are disabled
+		///
+		///  @brief Returns true if buffer writes are enabled and false if they are disabled
+		///
 		bool isWriteToBuf( );
-		///  Returns the buffer container
+		///
+		///  @brief Returns the buffer container
+		///
 		std::string *Buffer( );
-		///  Returns the current log level setting (the threshold of whether to log a message or not).
+		///
+		///  @brief Returns the current log level setting (the threshold of whether to log a message or not).
+		///
 		const LoggerLevel Level( );
-		///  Sets the name of the logger
+		///  @brief Sets the name of the logger
 		/// @param name: the name that the logger itself will use and be identified by
 		void SetLoggerName( std::string_view name );
-
 		/// @brief Logs a message giving the message a LoggerLevel::trace setting
 		/// @details Checks if the message should be logged via the log level threshold setting. If it isn't, immediately
 		/// returns. If the message should be logged, this function will then perform a quick check on whether or not writes
@@ -89,20 +102,30 @@ namespace serenity::expiremental::targets
 		/// "{}" to replace any arguments from the \p args parameter.
 		/// @tparam args: Variadic placeholder for any number of and any type of arguments to use in substituion.
 		template <typename... Args> void Trace( std::string_view msg, Args &&...args );
+		///
 		/// @brief Logs a message giving the message a LoggerLevel::info setting
 		/// @details @copydetails Trace()
+		///
 		template <typename... Args> void Info( std::string_view msg, Args &&...args );
+		///
 		/// @brief Logs a message giving the message a LoggerLevel::debug setting
 		/// @details @copydetails Trace()
+		///
 		template <typename... Args> void Debug( std::string_view msg, Args &&...args );
+		///
 		/// @brief Logs a message giving the message a LoggerLevel::warning setting
 		/// @details @copydetails Trace()
+		///
 		template <typename... Args> void Warn( std::string_view msg, Args &&...args );
+		///
 		/// @brief Logs a message giving the message a LoggerLevel::error setting
-		/// @details  @copydetails Trace()
+		/// @details @copydetails Trace()
+		///
 		template <typename... Args> void Error( std::string_view msg, Args &&...args );
+		///
 		/// @brief Logs a message giving the message a LoggerLevel::fatal setting
-		/// @details  @copydetails Trace()
+		/// @details @copydetails Trace()
+		/// 
 		template <typename... Args> void Fatal( std::string_view msg, Args &&...args );
 
 	  protected:
@@ -113,12 +136,16 @@ namespace serenity::expiremental::targets
 		/// SetMessage( ) function. PrintMessage( )'s intended usage is the last stop call before a log message is sent to
 		/// its destination
 		virtual void PrintMessage( std::string_view formatted ) = 0;
-		/// Virtual function that can be omitted if derived class has no need to implement and is used to handle
+		/// @brief Virtual function that can be omitted if derived class has no need to implement and is used to handle
 		/// how and when the derived target should flush its contents to disk.
 		virtual void PolicyFlushOn( ) { }
-		///  Returns a pointer to the handle for the Message_Formatter class instance
+		///
+		///  @brief Returns a pointer to the handle for the Message_Formatter class instance
+		///
 		msg_details::Message_Formatter *MsgFmt( );
-		///  Returns a pointer to the handle for the Message_Info class instance
+		///
+		///  @brief Returns a pointer to the handle for the Message_Info class instance
+		///
 		msg_details::Message_Info *MsgInfo( );
 
 	  private:

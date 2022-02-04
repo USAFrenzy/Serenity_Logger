@@ -89,31 +89,43 @@ $(document).ready(function(){initNavTree('dc/d42/structserenity_1_1expiremental_
   <div class="headertitle"><div class="title">serenity::expiremental::BackgroundThread Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Struct that holds the specific variables in charge of the background flush thread in file targets.  
+ <a href="../../dc/d42/structserenity_1_1expiremental_1_1_background_thread.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="../../d1/d6b/_documentation_8h_source.html">Documentation.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:ae2525b6570386c721f4334c92d457fc0"><td class="memItemLeft" align="right" valign="top"><a id="ae2525b6570386c721f4334c92d457fc0" name="ae2525b6570386c721f4334c92d457fc0"></a>
+<tr class="memitem:a5b1f96a359fedf6694d970398690283f"><td class="memItemLeft" align="right" valign="top"><a id="a5b1f96a359fedf6694d970398690283f" name="a5b1f96a359fedf6694d970398690283f"></a>
 std::atomic&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>cleanUpThreads</b> { false }</td></tr>
-<tr class="separator:ae2525b6570386c721f4334c92d457fc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa324f0146f0520e1eb470376725e35f0"><td class="memItemLeft" align="right" valign="top"><a id="aa324f0146f0520e1eb470376725e35f0" name="aa324f0146f0520e1eb470376725e35f0"></a>
+<tr class="memdesc:a5b1f96a359fedf6694d970398690283f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cleans up the flush thread when interval based flushing is disabled or when the program ends. <br /></td></tr>
+<tr class="separator:a5b1f96a359fedf6694d970398690283f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d2d88a823b323254e86bf39af95055c"><td class="memItemLeft" align="right" valign="top"><a id="a7d2d88a823b323254e86bf39af95055c" name="a7d2d88a823b323254e86bf39af95055c"></a>
 std::atomic&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>flushThreadEnabled</b> { false }</td></tr>
-<tr class="separator:aa324f0146f0520e1eb470376725e35f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa948643ef5c0cfd67286b4e9c13c6bc"><td class="memItemLeft" align="right" valign="top"><a id="aaa948643ef5c0cfd67286b4e9c13c6bc" name="aaa948643ef5c0cfd67286b4e9c13c6bc"></a>
+<tr class="memdesc:a7d2d88a823b323254e86bf39af95055c"><td class="mdescLeft">&#160;</td><td class="mdescRight">naive guard to protect from always taking the mutex lock when the flush thread isn't active <br /></td></tr>
+<tr class="separator:a7d2d88a823b323254e86bf39af95055c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2599b4068998cbc34875aedcc0cddfd"><td class="memItemLeft" align="right" valign="top"><a id="af2599b4068998cbc34875aedcc0cddfd" name="af2599b4068998cbc34875aedcc0cddfd"></a>
 std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>readWriteMutex</b></td></tr>
-<tr class="separator:aaa948643ef5c0cfd67286b4e9c13c6bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aea3f4b0991a6534f9f04ec325b238644"><td class="memItemLeft" align="right" valign="top"><a id="aea3f4b0991a6534f9f04ec325b238644" name="aea3f4b0991a6534f9f04ec325b238644"></a>
+<tr class="memdesc:af2599b4068998cbc34875aedcc0cddfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">protects the file during reads to write to disk and writing to the file handle <br /></td></tr>
+<tr class="separator:af2599b4068998cbc34875aedcc0cddfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2dee99c87cb6e657b7b99831b6457c76"><td class="memItemLeft" align="right" valign="top"><a id="a2dee99c87cb6e657b7b99831b6457c76" name="a2dee99c87cb6e657b7b99831b6457c76"></a>
 std::thread&#160;</td><td class="memItemRight" valign="bottom"><b>flushThread</b></td></tr>
-<tr class="separator:aea3f4b0991a6534f9f04ec325b238644"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a2dee99c87cb6e657b7b99831b6457c76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Involved in initializing and running the background thread. <br /></td></tr>
+<tr class="separator:a2dee99c87cb6e657b7b99831b6457c76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/<a class="el" href="../../db/d1f/_common_8h_source.html">Common.h</a></li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >This struct is in charge of initializing and cleaning up the flush thread background worker, protecting the file during reads/writes, and providing a naive guard against always taking a lock on the file </p>
+</div><hr/>The documentation for this struct was generated from the following files:<ul>
+<li><a class="el" href="../../db/d1f/_common_8h_source.html">Common.h</a></li>
+<li><a class="el" href="../../d1/d6b/_documentation_8h_source.html">Documentation.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>serenity</b></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><a class="el" href="../../dc/d42/structserenity_1_1expiremental_1_1_background_thread.html">BackgroundThread</a></li>
+    <li class="navelem"><a class="el" href="../../d3/ddb/namespaceserenity.html">serenity</a></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><a class="el" href="../../dc/d42/structserenity_1_1expiremental_1_1_background_thread.html">BackgroundThread</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3 </li>
   </ul>
 </div>

@@ -8,7 +8,9 @@
 
 namespace serenity::expiremental::targets
 {
+	///
 	/// @brief Mirrors the standard outputs: std::out, std::err, std::clog
+	///
 	enum class console_interface
 	{
 		std_out,
@@ -48,7 +50,7 @@ namespace serenity::expiremental::targets
 		/// @returns The ansi color code for the @p level passed in
 		std::string_view GetMsgColor( LoggerLevel level );
 		/// @brief Sets color specified for the log level specified
-		/// @param level: The logger level to bind the color code to from @color
+		/// @param level: The logger level to bind the color code to from @p color variable
 		/// @param color: The color code to bind  to the @p level passed in. This color code is expected to be an ansi code.
 		void SetMsgColor( LoggerLevel level, std::string_view color );
 		/// @brief Sets console mode. Console modes mirror standard outputs.
@@ -58,15 +60,25 @@ namespace serenity::expiremental::targets
 		/// @param mode: Can be one of the following: console_interface::std_out, console_interface::std_err, or
 		/// console_interface::std_log
 		void SetConsoleInterface( console_interface mode );
+		///
 		///  @brief Returns the current console mode being used
+		///
 		const console_interface ConsoleInterface( );
+		///
 		///  @brief Enables/Disables colored text output
+		///
 		void ColorizeOutput( bool colorize );
+		///
 		///  @brief Initializes the default colors to use for log levels
+		///
 		void SetOriginalColors( );
+		///
 		///  @brief Checks to see if output handle is referring to a terminal type device or not
+		///
 		bool IsTerminalType( );
+		///
 		///  @brief Checks to see if output handle is valid and not empty
+		///
 		bool IsValidHandle( );
 		/// @brief Outputs the message (@p formatted) to the destination output device.
 		/// @details If output handle is valid, will write the message to the output. If color is enabled, will write the

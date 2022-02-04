@@ -89,31 +89,39 @@ $(document).ready(function(){initNavTree('da/db6/structserenity_1_1expiremental_
   <div class="headertitle"><div class="title">serenity::expiremental::FileSettings Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Struct that holds the basic file settings for file targets.  
+ <a href="../../da/db6/structserenity_1_1expiremental_1_1_file_settings.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="../../d1/d6b/_documentation_8h_source.html">Documentation.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a910eeed393b1e88bcbeccf9f42f959de"><td class="memItemLeft" align="right" valign="top"><a id="a910eeed393b1e88bcbeccf9f42f959de" name="a910eeed393b1e88bcbeccf9f42f959de"></a>
+<tr class="memitem:ab0d7e01c0c5c8bb77bc8186bdb35593c"><td class="memItemLeft" align="right" valign="top"><a id="ab0d7e01c0c5c8bb77bc8186bdb35593c" name="ab0d7e01c0c5c8bb77bc8186bdb35593c"></a>
 std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><b>filePath</b></td></tr>
-<tr class="separator:a910eeed393b1e88bcbeccf9f42f959de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a09b25f4b0108ebac9fa71f3401d718d1"><td class="memItemLeft" align="right" valign="top"><a id="a09b25f4b0108ebac9fa71f3401d718d1" name="a09b25f4b0108ebac9fa71f3401d718d1"></a>
+<tr class="memdesc:ab0d7e01c0c5c8bb77bc8186bdb35593c"><td class="mdescLeft">&#160;</td><td class="mdescRight">used to hold the full path to the log file and is used for path caching and base file name caching in regards to the RotatingTarget class. <br /></td></tr>
+<tr class="separator:ab0d7e01c0c5c8bb77bc8186bdb35593c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0be686a510b824f30a3cef775f13792"><td class="memItemLeft" align="right" valign="top"><a id="ac0be686a510b824f30a3cef775f13792" name="ac0be686a510b824f30a3cef775f13792"></a>
 std::vector&lt; char &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>fileBuffer</b></td></tr>
-<tr class="separator:a09b25f4b0108ebac9fa71f3401d718d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc6858a8f125e54bb6967f40c49fba0a"><td class="memItemLeft" align="right" valign="top"><a id="acc6858a8f125e54bb6967f40c49fba0a" name="acc6858a8f125e54bb6967f40c49fba0a"></a>
+<tr class="memdesc:ac0be686a510b824f30a3cef775f13792"><td class="mdescLeft">&#160;</td><td class="mdescRight">a simple char buffer used by the file handle. <br /></td></tr>
+<tr class="separator:ac0be686a510b824f30a3cef775f13792"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7932be8db769ac5234a364b3022ebca3"><td class="memItemLeft" align="right" valign="top"><a id="a7932be8db769ac5234a364b3022ebca3" name="a7932be8db769ac5234a364b3022ebca3"></a>
 size_t&#160;</td><td class="memItemRight" valign="bottom"><b>bufferSize</b> { DEFAULT_BUFFER_SIZE }</td></tr>
-<tr class="separator:acc6858a8f125e54bb6967f40c49fba0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe60353255a39a3b3ec6826e6f55bde0"><td class="memItemLeft" align="right" valign="top"><a id="abe60353255a39a3b3ec6826e6f55bde0" name="abe60353255a39a3b3ec6826e6f55bde0"></a>
-size_t&#160;</td><td class="memItemRight" valign="bottom"><b>fileBufOccupied</b> { 0 }</td></tr>
-<tr class="separator:abe60353255a39a3b3ec6826e6f55bde0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a7932be8db769ac5234a364b3022ebca3"><td class="mdescLeft">&#160;</td><td class="mdescRight">used to set the buffer used by the file handle and its default size is equivalent to the DEFAULT_BUFFER_SIZE macro. <br /></td></tr>
+<tr class="separator:a7932be8db769ac5234a364b3022ebca3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/<a class="el" href="../../db/d1f/_common_8h_source.html">Common.h</a></li>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >This struct is in charge of caching the file path, file name, log directory, holding the buffer used for the file handle, and the size of that file buffer </p>
+</div><hr/>The documentation for this struct was generated from the following files:<ul>
+<li><a class="el" href="../../db/d1f/_common_8h_source.html">Common.h</a></li>
+<li><a class="el" href="../../d1/d6b/_documentation_8h_source.html">Documentation.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>serenity</b></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><a class="el" href="../../da/db6/structserenity_1_1expiremental_1_1_file_settings.html">FileSettings</a></li>
+    <li class="navelem"><a class="el" href="../../d3/ddb/namespaceserenity.html">serenity</a></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><a class="el" href="../../da/db6/structserenity_1_1expiremental_1_1_file_settings.html">FileSettings</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3 </li>
   </ul>
 </div>

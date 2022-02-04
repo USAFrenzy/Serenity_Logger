@@ -22,14 +22,16 @@ namespace serenity::expiremental::targets
 	class FileTarget : public TargetBase
 	{
 	  public:
+		///
 		/// @brief Default constructor that sets the logger name to "File_Target" and sets all other values to their defaults
+		///
 		FileTarget( );
 		/// @brief Constructor that will set the file name and will truncate the file if it already exists and if
 		/// "replaceIfExists" is set to true. Sets all other values to their defaults.
 		/// @details While the file name will be changed to the parameter @p fileName, the file itself will be created under
 		/// the default log directory.
 		/// @param fileName: The name of the file to create and/or use for logging
-		/// @param replaceIfExist: This value denotes whether or not to truncate the file if it exists already
+		/// @param replaceIfExists: This value denotes whether or not to truncate the file if it exists already
 		explicit FileTarget( std::string_view fileName, bool replaceIfExists = false );
 		/// @brief Constructor that will set the logger name, file path, log directory, and whether or not to truncate this
 		/// file if it exists or not. Sets all other values to their defaults.
@@ -40,7 +42,7 @@ namespace serenity::expiremental::targets
 		/// @param name: The name the logger will be identified by.
 		/// @param filePath: the full path to the file. This value should include any directories as well as the file name
 		/// itself.
-		/// @param replaceIfExist: This value denotes whether or not to truncate the file if it exists already
+		/// @param replaceIfExists: This value denotes whether or not to truncate the file if it exists already
 		explicit FileTarget( std::string_view name, std::string_view filePath, bool replaceIfExists = false );
 		/// @brief Constructor that will set the logger name, format pattern to use, file path, log directory, and whether or
 		/// not to truncate this file if it exists or not. Sets all other values to their defaults.
@@ -54,21 +56,23 @@ namespace serenity::expiremental::targets
 		/// message.
 		/// @param filePath: The full path to the file. This value should include any directories as well as the file name
 		/// itself.
-		/// @param replaceIfExist: This value denotes whether or not to truncate the file if it exists already
+		/// @param replaceIfExists: This value denotes whether or not to truncate the file if it exists already
 		explicit FileTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
 							 bool replaceIfExists = false );
-		/// @brief Deleted
 		FileTarget( const FileTarget & ) = delete;
-		///  @brief Deleted
 		FileTarget &operator=( const FileTarget & ) = delete;
 		/// @brief Cleans up any background threads, flushes contents to disk, and closes the file context being used
 		/// @details Cleans up background flush thread if enabled by joining the thread and then flushing the contents of the
 		/// file handle to the file (if messages were written to buffer, will now write contents of buffer to file).
 		/// Afterwards, the file context being used is closed.
 		~FileTarget( );
+		///
 		///  @brief Returns the file path of the file context currently being held
+		///
 		const std::string FilePath( );
+		///
 		///  @brief Returns the file name of the file context currently being held
+		///
 		const std::string FileName( );
 		///  @brief Closes the file context currently being held and re-opens the same file context, truncating the file size
 		///  to 0

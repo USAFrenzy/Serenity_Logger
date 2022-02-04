@@ -8,7 +8,7 @@
 #define VERSION_NUMBER( maj, min, rev )                 VERSION_STRING_FORMAT( maj, min, rev )
 
 // Last Built Statistics
-#define SE_DAY             30
-#define SE_MONTH           01
+#define SE_DAY             01
+#define SE_MONTH           02
 #define SE_YEAR            2022
-#define SE_LAST_BUILT   "15:50:01"
+#define SE_LAST_BUILT   "19:45:18"

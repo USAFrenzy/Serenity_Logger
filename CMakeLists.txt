@@ -9,7 +9,7 @@ get_and_increment_version()
  message("-- ${PROJECT_NAME} Building Version: ${SERENITY_FULL_VERSION}")
 
 include (cmake/CPM.cmake)
-cpmaddpackage ("gh:gabime/spdlog@1.9.1")
+cpmaddpackage ("gh:gabime/spdlog@1.9.2")
 
 option (BUILD_SANDBOX	"Build The Sandbox Project Alongside The Library" 	ON)
 option (BUILD_DEMOS	"Build The Demo Projects Alongside The Library"		ON)

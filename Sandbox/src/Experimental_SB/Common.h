@@ -1,28 +1,36 @@
 #pragma once
 
+#ifdef DOXYGEN_DOCUMENTATION
+/// @brief If _WIN32 is defined, then this is also defined.
+/// @details If this macro is defined, includes the Windows.h and io.h headers as well as defines ISATTY to _isatty and
+/// FILENO to _fileno. If ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
+	#define WINDOWS_PLATFORM
+/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also defined.
+/// @details If this macro is defined, includes the unistd.h header and defines ISATTY to isatty and FILENO to fileno
+	#define MAC_PLATFORM
+#endif
+
 #ifdef _WIN32
-	#ifdef _WIN64
-		#define WINDOWS_PLATFORM
-		#define WIN32_LEAN_AND_MEAN
-		#define VC_EXTRALEAN
+	#define WINDOWS_PLATFORM
+#elif defined( __APPLE__ ) || defined( __MACH__ )
+	#define MAC_PLATFORM
+#else
+	#define LINUX_PLATFORM
+#endif
 
-		#include <Windows.h>
-		#include <io.h>
+#ifdef WINDOWS_PLATFORM
+	#define WIN32_LEAN_AND_MEAN
+	#define VC_EXTRALEAN
 
-		#define ISATTY _isatty
-		#define FILENO _fileno
+	#include <Windows.h>
+	#include <io.h>
 
-		#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
-			#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
-		#endif
+	#define ISATTY _isatty
+	#define FILENO _fileno
+	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 	#endif
 #else
-	#if defined( __APPLE__ ) || ( __MACH__ )
-		#define MAC_PLATFORM
-	#else
-		#define UNIX_PLATFORM
-	#endif
-
 	#include <unistd.h>
 	#define ISATTY isatty
 	#define FILENO fileno
@@ -45,16 +53,13 @@ namespace serenity::expiremental
 {
 	enum class LineEnd
 	{
-		unix    = 0,
+		linux   = 0,
 		windows = 1,
 		mac     = 2,
 	};
 
 	namespace SERENITY_LUTS
 	{
-		// These need to be kept in order so FlagFormatter() doesn't break when called from StoreFormat()
-		//? Might alter FlagFormatter() so that it takes in the index found before being called so order here wouldn't
-		//matter?
 		static constexpr std::array<std::string_view, 22> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x",
 																			"%y", "%A", "%B", "%D", "%F", "%H", "%L", "%M",
 																			"%N", "%S", "%T", "%X", "%Y", "%+" };
@@ -79,14 +84,13 @@ namespace serenity::expiremental
 		"85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99" };
 
 		static std::unordered_map<LineEnd, std::string_view> line_ending = {
-		{ LineEnd::unix, "\n" },
+		{ LineEnd::linux, "\n" },
 		{ LineEnd::windows, "\r\n" },
 		{ LineEnd::mac, "\r" },
 		};
 
 	}  // namespace SERENITY_LUTS
 
-	// TODO: Get Rid of 'test' once done
 	enum class LoggerLevel
 	{
 		trace   = 0,
@@ -141,15 +145,16 @@ namespace serenity::expiremental
 	struct FileSettings
 	{
 		std::filesystem::path filePath;
-		std::vector<char>     fileBuffer;
-		size_t                bufferSize { DEFAULT_BUFFER_SIZE };
-		size_t                fileBufOccupied { 0 };
+		std::vector<char> fileBuffer;
+		size_t bufferSize { DEFAULT_BUFFER_SIZE };
 	};
 
+	// TODO: Finish Documenting RotateSettings
 	struct RotateSettings
 	{
 		// Will add an interval based setting later
 		// (something like a weekly basis on specified day and a daily setting)
+
 		bool   rotateOnFileSize { true };
 		size_t maxNumberOfFiles { 5 };
 		size_t fileSizeLimit { 512 * KB };

@@ -90,13 +90,15 @@ $(document).ready(function(){initNavTree('d9/d05/structserenity_1_1expiremental_
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%X" and represents the entire Weekday name (i.e. "Monday", "Tuesday", etc...) format.  
- <a href="../../d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x.html#details">More...</a></p>
+<p><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%X" and represents the full Weekday name (i.e. "Monday", "Tuesday", etc...) format.  
+</p>
 
 <p><code>#include &lt;<a class="el" href="../../da/d82/_message___formatter_8h_source.html">Message_Formatter.h</a>&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for serenity::expiremental::msg_details::Message_Formatter::Format_Arg_X:</div>
-<div class="dyncontent">
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="../../closed.png" alt="+"/> Inheritance diagram for serenity::expiremental::msg_details::Message_Formatter::Format_Arg_X:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
  <div class="center">
   <img src="../../d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x.png" usemap="#serenity::expiremental::msg_5Fdetails::Message_5FFormatter::Format_5FArg_5FX_map" alt=""/>
   <map id="serenity::expiremental::msg_5Fdetails::Message_5FFormatter::Format_5FArg_5FX_map" name="serenity::expiremental::msg_5Fdetails::Message_5FFormatter::Format_5FArg_5FX_map">
@@ -123,9 +125,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac388ecc7192e160ed4f2991d9b67801c"><td class="mdescLeft">&#160;</td><td class="mdescRight">A derived class or struct may implement this function. This function determines if an argument needs to be updated if a derived class or struct implements some form of caching with argument values.  <a href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html#ac388ecc7192e160ed4f2991d9b67801c">More...</a><br /></td></tr>
 <tr class="separator:ac388ecc7192e160ed4f2991d9b67801c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p ><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%X" and represents the entire Weekday name (i.e. "Monday", "Tuesday", etc...) format. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a id="a5a85268d9a1634348d9d26f446a3d258" name="a5a85268d9a1634348d9d26f446a3d258"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5a85268d9a1634348d9d26f446a3d258">&#9670;&nbsp;</a></span>Format()</h2>
 
@@ -148,8 +148,6 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Returns The Formatted Argument. </p>
 <p >When called, if the current weekday doesn't match the last known weekday , will update the last known weekday to the current weekday and then call <a class="el" href="../../d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x.html#a6ee32b8c6f389130da641707634447db" title="Will update the last known weekday to the current weekday and then return a string representation of ...">UpdateInternalView( )</a> to update the internal string representation of the weekday, otherwise, just returns the internal string representation of the weekday stored </p>
 
 <p>Implements <a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html#a752699763063a5f421809f01e14f513b">serenity::expiremental::msg_details::Message_Formatter::Formatter</a>.</p>
@@ -179,22 +177,20 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Will update the last known weekday to the current weekday and then return a string representation of the entire weekday name. </p>
-
 <p>Reimplemented from <a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html#ac388ecc7192e160ed4f2991d9b67801c">serenity::expiremental::msg_details::Message_Formatter::Formatter</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following files:<ul>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/MessageDetails/<a class="el" href="../../da/d82/_message___formatter_8h_source.html">Message_Formatter.h</a></li>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/MessageDetails/Message_Formatter.cpp</li>
+<li><a class="el" href="../../da/d82/_message___formatter_8h_source.html">Message_Formatter.h</a></li>
+<li>Message_Formatter.cpp</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>serenity</b></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><b>msg_details</b></li><li class="navelem"><a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html">Message_Formatter</a></li><li class="navelem"><a class="el" href="../../d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x.html">Format_Arg_X</a></li>
+    <li class="navelem"><a class="el" href="../../d3/ddb/namespaceserenity.html">serenity</a></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><b>msg_details</b></li><li class="navelem"><a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html">Message_Formatter</a></li><li class="navelem"><a class="el" href="../../d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x.html">Format_Arg_X</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3 </li>
   </ul>
 </div>

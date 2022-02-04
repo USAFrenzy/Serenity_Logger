@@ -6,11 +6,10 @@
 #include <format>
 #include <string>
 
-// TODO: Finish the light documentation
 namespace serenity::expiremental::msg_details
 {
-	/// Controls how the prepended string of text before the actual log message will be displayed and how each flag/argument
-	/// is formatted.
+	/// @brief Controls how the prepended string of text before the actual log message will be displayed and how each
+	/// flag/argument is formatted.
 	class Message_Formatter
 	{
 	  public:
@@ -23,7 +22,9 @@ namespace serenity::expiremental::msg_details
 		Message_Formatter( )                           = delete;
 		Message_Formatter( const Message_Formatter & ) = delete;
 		Message_Formatter &operator=( const Message_Info & ) = delete;
+		///
 		/// @brief Virtual Base Struct that all formatter structs inherit from and implement
+		///
 		struct Formatter
 		{
 			/// @brief Each derived class or struct must implement this funtion. This function determines how an argument
@@ -41,9 +42,13 @@ namespace serenity::expiremental::msg_details
 		class Formatters
 		{
 		  public:
+			///
 			/// @brief Constructor that takes ownership of the vector of Formatter pointers passed in.
+			///
 			Formatters( std::vector<std::unique_ptr<Formatter>> &&container );
+			///
 			///  @brief Default Constructor
+			///
 			Formatters( ) = default;
 			/// @brief Takes ownership of the Formatter pointer passed in and stores this pointer in the internal Formatters
 			/// container.
@@ -51,14 +56,18 @@ namespace serenity::expiremental::msg_details
 			/// @brief Calls each Formatter pointer's specific Format() implementation that is stored in the internal
 			/// Formatter container in the order they are stored and returns the whole formatted string as a view
 			std::string_view Format( );
+			///
 			///  @brief Clears the internal Formatter pointers container
+			///
 			void Clear( );
 
 		  private:
 			std::string                             localBuffer;
 			std::vector<std::unique_ptr<Formatter>> m_Formatter;
 		};
+		///
 		/// @brief Intializes and stores the Formatter struct at the index provided into the Formatters container
+		///
 		void FlagFormatter( size_t flag );
 		/// @brief Sets the format pattern variable and then parses the format string to store each flag as its own
 		/// individual Formmater struct that will be in charge of how each flag is formatted
@@ -77,8 +86,9 @@ namespace serenity::expiremental::msg_details
 		Message_Info *MessageDetails( );
 
 		// Formatting Structs For Flag Arguments
-
+		///
 		/// @brief Formatter struct that maps to flag "%a" and represents a padded 12-hour clock's hour value
+		///
 		struct Format_Arg_a : Formatter
 		{
 			/// @brief Constructor that uses the Message_Info pointer to store a reference to the cache and initializes the
@@ -98,8 +108,9 @@ namespace serenity::expiremental::msg_details
 			int            lastHour;
 			std::string    hour;
 		};
-
+		///
 		/// @brief Formatter struct that maps to flag "%b" and represents a padded numerical month value
+		///
 		struct Format_Arg_b : Formatter
 		{
 			/// @brief Constructor that uses the Message_Info pointer to store a reference to the cache and initializes the
@@ -119,8 +130,9 @@ namespace serenity::expiremental::msg_details
 			int            lastMonth;
 			std::string    month;
 		};
-
+		///
 		/// @brief Formatter struct that maps to flag "%d" and represents a padded numerical day value
+		///
 		struct Format_Arg_d : Formatter
 		{
 			/// @brief Constructor that uses the Message_Info pointer to store a reference to the cache and initializes the
@@ -304,7 +316,7 @@ namespace serenity::expiremental::msg_details
 			std::string    dayHalf;
 		};
 
-		/// @brief Formatter struct that maps to flag "%B" and represents the string representation the whole month name
+		/// @brief Formatter struct that maps to flag "%B" and represents the string representation of the whole month name
 		/// (i.e. "January", "February", etc..)
 		struct Format_Arg_B : Formatter
 		{
@@ -327,7 +339,7 @@ namespace serenity::expiremental::msg_details
 			std::string    month;
 		};
 
-		/// @brief Formatter struct that maps to flag "%D" and represents the string representation the date in MM/DD/YY
+		/// @brief Formatter struct that maps to flag "%D" and represents the string representation of the date in MM/DD/YY
 		/// format (i.e. 01/29/22)
 		struct Format_Arg_D : Formatter
 		{
@@ -351,7 +363,7 @@ namespace serenity::expiremental::msg_details
 			std::string    mmddyy;
 		};
 
-		/// @brief Formatter struct that maps to flag "%F" and represents the string representation the date in YY-MM-DD
+		/// @brief Formatter struct that maps to flag "%F" and represents the string representation of the date in YY-MM-DD
 		/// format
 		struct Format_Arg_F : Formatter
 		{
@@ -418,8 +430,9 @@ namespace serenity::expiremental::msg_details
 			LoggerLevel  lastLevel;
 			std::string  levelStr;
 		};
-
+		///
 		/// @brief Formatter struct that maps to flag "%M" and represents the string representation of a padded minute
+		///
 		struct Format_Arg_M : Formatter
 		{
 			/// @brief Constructor that uses the Message_Info pointer to store a reference to the cache and intitialize the
@@ -440,8 +453,9 @@ namespace serenity::expiremental::msg_details
 			int            lastMin;
 			std::string    min;
 		};
-
+		///
 		/// @brief Formatter struct that maps to flag "%N" and represents the Logger's name to use when formatting
+		///
 		struct Format_Arg_N : Formatter
 		{
 			///  @brief Constructor that uses the Message_Info pointer to store a reference to the logger's name
@@ -453,7 +467,9 @@ namespace serenity::expiremental::msg_details
 			std::string &name;
 		};
 
+		///
 		/// @brief Formatter struct that maps to flag "%S" and represents the string representation of a padded second
+		///
 		struct Format_Arg_S : Formatter
 		{
 			/// @brief Constructor that uses the Message_Info pointer to store a reference to the cache and intitialize the
@@ -498,7 +514,7 @@ namespace serenity::expiremental::msg_details
 			std::string    hmStr;
 		};
 
-		/// @brief Formatter struct that maps to flag "%X" and represents the entire Weekday name (i.e. "Monday", "Tuesday",
+		/// @brief Formatter struct that maps to flag "%X" and represents the full Weekday name (i.e. "Monday", "Tuesday",
 		/// etc...) format
 		struct Format_Arg_X : Formatter
 		{
@@ -520,8 +536,9 @@ namespace serenity::expiremental::msg_details
 			int            lastWkday;
 			std::string    wkday;
 		};
-
+		///
 		/// @brief Formatter struct that maps to flag "%Y" and represents the year in YYYY format format
+		///
 		struct Format_Arg_Y : Formatter
 		{
 			/// @brief Constructor that uses the Message_Info pointer to store a reference to the cache and intitialize the
@@ -570,6 +587,7 @@ namespace serenity::expiremental::msg_details
 			std::string m_char;
 		};
 
+	  private:
 		Formatters    formatter;
 		std::string   fmtPattern;
 		Message_Info *msgInfo;

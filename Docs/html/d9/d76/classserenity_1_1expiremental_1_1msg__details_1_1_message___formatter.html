@@ -86,11 +86,13 @@ $(document).ready(function(){initNavTree('d9/d76/classserenity_1_1expiremental_1
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="../../dc/da8/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">serenity::expiremental::msg_details::Message_Formatter Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Controls how the prepended string of text before the actual log message will be displayed and how each flag/argument is formatted.  
+</p>
 
 <p><code>#include &lt;<a class="el" href="../../da/d82/_message___formatter_8h_source.html">Message_Formatter.h</a>&gt;</code></p>
 <table class="memberdecls">
@@ -106,7 +108,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%b" and represents a padded numerical month value.  <a href="../../dd/dba/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__b.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d55/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b.html">Format_Arg_B</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%B" and represents the string representation the whole month name (i.e. "January", "February", etc..)  <a href="../../db/d55/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%B" and represents the string representation of the whole month name (i.e. "January", "February", etc..)  <a href="../../db/d55/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___b.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/dc0/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___char.html">Format_Arg_Char</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that doesn't map to a specific flag and represents any char that that doesn't end up matching with any of the known internal flags.  <a href="../../dd/dc0/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___char.html#details">More...</a><br /></td></tr>
@@ -115,10 +117,10 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%d" and represents a padded numerical day value.  <a href="../../d7/d38/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__d.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d6b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___d.html">Format_Arg_D</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%D" and represents the string representation the date in MM/DD/YY format (i.e. 01/29/22)  <a href="../../d2/d6b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___d.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%D" and represents the string representation of the date in MM/DD/YY format (i.e. 01/29/22)  <a href="../../d2/d6b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___d.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d07/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f.html">Format_Arg_F</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%F" and represents the string representation the date in YY-MM-DD format.  <a href="../../d1/d07/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%F" and represents the string representation of the date in YY-MM-DD format.  <a href="../../d1/d07/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___f.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dba/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___h.html">Format_Arg_H</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%H" and represents the string representation of a padded hour on a 24-hour clock.  <a href="../../db/dba/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___h.html#details">More...</a><br /></td></tr>
@@ -157,7 +159,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%x" and represents the string representation of the shortened weekday name (i.e. For Monday - Mon, for Tuesday - Tues, etc...)  <a href="../../d6/db6/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__x.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x.html">Format_Arg_X</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%X" and represents the entire Weekday name (i.e. "Monday", "Tuesday", etc...) format.  <a href="../../d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%X" and represents the full Weekday name (i.e. "Monday", "Tuesday", etc...) format.  <a href="../../d9/d05/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___x.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d1e/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__y.html">Format_Arg_y</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct that maps to flag "%y" and represents the string representation of the shortened year (i.e. "21", "22", etc)  <a href="../../d7/d1e/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg__y.html#details">More...</a><br /></td></tr>
@@ -193,31 +195,17 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetPattern</b> (std::
 <tr class="separator:a94b44c9dcb793f3296ca05be93b49310"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae44c5a786048a5364fbe63ec1b622f7e"><td class="memItemLeft" align="right" valign="top"><a id="ae44c5a786048a5364fbe63ec1b622f7e" name="ae44c5a786048a5364fbe63ec1b622f7e"></a>
 <a class="el" href="../../dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters.html">Formatters</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>GetFormatters</b> ()</td></tr>
-<tr class="memdesc:ae44c5a786048a5364fbe63ec1b622f7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html">Message_Formatter</a>'s instance of the <a class="el" href="../../dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters.html" title="This class is the top-level formatting class that holds and controls each flag arguments specific for...">Formatters</a> container which holds the individual <a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> pointers. Can be called to manually call the Format( ) function for all arguments stored. <br /></td></tr>
+<tr class="memdesc:ae44c5a786048a5364fbe63ec1b622f7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html" title="Controls how the prepended string of text before the actual log message will be displayed and how eac...">Message_Formatter</a>'s instance of the <a class="el" href="../../dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters.html" title="This class is the top-level formatting class that holds and controls each flag arguments specific for...">Formatters</a> container which holds the individual <a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> pointers. Can be called to manually call the Format( ) function for all arguments stored. <br /></td></tr>
 <tr class="separator:ae44c5a786048a5364fbe63ec1b622f7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87b86853299440df53d8dc3b9721d8ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html#a87b86853299440df53d8dc3b9721d8ef">StoreFormat</a> ()</td></tr>
 <tr class="memdesc:a87b86853299440df53d8dc3b9721d8ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Store the format pattern internally to be used more efficiently when formatting log messages.  <a href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html#a87b86853299440df53d8dc3b9721d8ef">More...</a><br /></td></tr>
 <tr class="separator:a87b86853299440df53d8dc3b9721d8ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2e22f9a4af27be2162820477ae9092b"><td class="memItemLeft" align="right" valign="top"><a id="af2e22f9a4af27be2162820477ae9092b" name="af2e22f9a4af27be2162820477ae9092b"></a>
 <a class="el" href="../../d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info.html">Message_Info</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>MessageDetails</b> ()</td></tr>
-<tr class="memdesc:af2e22f9a4af27be2162820477ae9092b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the <a class="el" href="../../d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info.html">Message_Info</a> instance used by <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html">Message_Formatter</a>. <br /></td></tr>
+<tr class="memdesc:af2e22f9a4af27be2162820477ae9092b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a pointer to the <a class="el" href="../../d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info.html">Message_Info</a> instance used by <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html" title="Controls how the prepended string of text before the actual log message will be displayed and how eac...">Message_Formatter</a>. <br /></td></tr>
 <tr class="separator:af2e22f9a4af27be2162820477ae9092b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:ac5a5e38b2c7c2893befd210f12383d19"><td class="memItemLeft" align="right" valign="top"><a id="ac5a5e38b2c7c2893befd210f12383d19" name="ac5a5e38b2c7c2893befd210f12383d19"></a>
-<a class="el" href="../../dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters.html">Formatters</a>&#160;</td><td class="memItemRight" valign="bottom"><b>formatter</b></td></tr>
-<tr class="separator:ac5a5e38b2c7c2893befd210f12383d19"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aec22610d199e0fa1be0337818db4f8b5"><td class="memItemLeft" align="right" valign="top"><a id="aec22610d199e0fa1be0337818db4f8b5" name="aec22610d199e0fa1be0337818db4f8b5"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><b>fmtPattern</b></td></tr>
-<tr class="separator:aec22610d199e0fa1be0337818db4f8b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a00e79017ee0c0a084663137c977948a3"><td class="memItemLeft" align="right" valign="top"><a id="a00e79017ee0c0a084663137c977948a3" name="a00e79017ee0c0a084663137c977948a3"></a>
-<a class="el" href="../../d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info.html">Message_Info</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>msgInfo</b></td></tr>
-<tr class="separator:a00e79017ee0c0a084663137c977948a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p >Controls how the prepended string of text before the actual log message will be displayed and how each flag/argument is formatted. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a11cdf13ebead3ef50a975451da9626d9" name="a11cdf13ebead3ef50a975451da9626d9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a11cdf13ebead3ef50a975451da9626d9">&#9670;&nbsp;</a></span>Message_Formatter()</h2>
 
@@ -251,11 +239,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>fmtPattern</b>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Constructor that takes in a format pattern paramater and a <a class="el" href="../../d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info.html">Message_Info</a> class pointer. </p>
 <p >The format pattern is set and internally stored by its individual flag arguments to iterate over when a message is logged. The <a class="el" href="../../d1/ded/classserenity_1_1expiremental_1_1msg__details_1_1_message___info.html">Message_Info</a> class is used to populate the arguments or references when storing and using the individual flag components </p>
-
-<p class="reference">References <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html#a94b44c9dcb793f3296ca05be93b49310">SetPattern()</a>.</p>
 
 </div>
 </div>
@@ -274,24 +258,20 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>fmtPattern</b>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Store the format pattern internally to be used more efficiently when formatting log messages. </p>
 <p ><a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html#a94b44c9dcb793f3296ca05be93b49310" title="Sets the format pattern variable and then parses the format string to store each flag as its own indi...">SetPattern( )</a> calls this function internally. Parses the internal format pattern string stored from <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html#a94b44c9dcb793f3296ca05be93b49310" title="Sets the format pattern variable and then parses the format string to store each flag as its own indi...">SetPattern( )</a> or from a constructor that took in a format pattern argument and for each flag found by the delimiter "%", will try to match the potential flag to the index of the valid flags array. If a match is found, initializes and stores the respective <a class="el" href="../../d0/d8b/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatter.html" title="Virtual Base Struct that all formatter structs inherit from and implement.">Formatter</a> struct for that flag, otherwise, stores this value as well as any other char, by passing in the value to initialize and store a <a class="el" href="../../dd/dc0/structserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_format___arg___char.html" title="Formatter struct that doesn&#39;t map to a specific flag and represents any char that that doesn&#39;t end up...">Format_Arg_Char</a> struct instead </p>
-
-<p class="reference">References <a class="el" href="../../dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters.html#a1a09dd32bf100ea3effde8b80147ddb9">serenity::expiremental::msg_details::Message_Formatter::Formatters::Clear()</a>, <a class="el" href="../../dd/d77/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter_1_1_formatters.html#ae4e3921204e8fdd814fa4716224fe450">serenity::expiremental::msg_details::Message_Formatter::Formatters::Emplace_Back()</a>, and <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html#ac64806c90b2c385a4b64dc45f6591cab">FlagFormatter()</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/MessageDetails/<a class="el" href="../../da/d82/_message___formatter_8h_source.html">Message_Formatter.h</a></li>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/MessageDetails/Message_Formatter.cpp</li>
+<li><a class="el" href="../../da/d82/_message___formatter_8h_source.html">Message_Formatter.h</a></li>
+<li>Message_Formatter.cpp</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>serenity</b></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><b>msg_details</b></li><li class="navelem"><a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html">Message_Formatter</a></li>
+    <li class="navelem"><a class="el" href="../../d3/ddb/namespaceserenity.html">serenity</a></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><b>msg_details</b></li><li class="navelem"><a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html">Message_Formatter</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3 </li>
   </ul>
 </div>

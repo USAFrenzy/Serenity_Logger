@@ -95,9 +95,11 @@ $(document).ready(function(){initNavTree('dd/d74/classserenity_1_1expiremental_1
  <a href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="../../d0/d32/_target_8h_source.html">Target.h</a>&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for serenity::expiremental::targets::TargetBase:</div>
-<div class="dyncontent">
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="../../closed.png" alt="+"/> Inheritance diagram for serenity::expiremental::targets::TargetBase:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
  <div class="center">
   <img src="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.png" usemap="#serenity::expiremental::targets::TargetBase_map" alt=""/>
   <map id="serenity::expiremental::targets::TargetBase_map" name="serenity::expiremental::targets::TargetBase_map">
@@ -114,10 +116,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a00920d6545c5783da8db176297c3dc33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor that sets the logger name to "Base_Target" and sets all other values to their defaults. <br /></td></tr>
 <tr class="separator:a00920d6545c5783da8db176297c3dc33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ca48dda0b948587e11cae370a7d77d3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a3ca48dda0b948587e11cae370a7d77d3">TargetBase</a> (std::string_view name)</td></tr>
+<tr class="memdesc:a3ca48dda0b948587e11cae370a7d77d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that will set the logger name to the name paramater passed in and all other values to their defaults.  <a href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a3ca48dda0b948587e11cae370a7d77d3">More...</a><br /></td></tr>
 <tr class="separator:a3ca48dda0b948587e11cae370a7d77d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad83ca24db5ff11d1d8f871d5dabbfbb6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#ad83ca24db5ff11d1d8f871d5dabbfbb6">TargetBase</a> (std::string_view name, std::string_view msgPattern)</td></tr>
+<tr class="memdesc:ad83ca24db5ff11d1d8f871d5dabbfbb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor that will set the logger name to the name paramater passed in as well as the format pattern to the msgPattern passed in. All other values will be assigned their default values.  <a href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#ad83ca24db5ff11d1d8f871d5dabbfbb6">More...</a><br /></td></tr>
 <tr class="separator:ad83ca24db5ff11d1d8f871d5dabbfbb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10378fe3e1915c448202fcdc12fe5990"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a10378fe3e1915c448202fcdc12fe5990">SetFlushPolicy</a> (<a class="el" href="../../d7/d3e/classserenity_1_1expiremental_1_1_flush___policy.html">Flush_Policy</a> pPolicy)</td></tr>
+<tr class="memdesc:a10378fe3e1915c448202fcdc12fe5990"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the current policy in use to defer to the policy passed in from "pPolicy".  <a href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a10378fe3e1915c448202fcdc12fe5990">More...</a><br /></td></tr>
 <tr class="separator:a10378fe3e1915c448202fcdc12fe5990"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae8f5ae1860dbfaa258808b92daad35b9"><td class="memItemLeft" align="right" valign="top"><a id="ae8f5ae1860dbfaa258808b92daad35b9" name="ae8f5ae1860dbfaa258808b92daad35b9"></a>
 <a class="el" href="../../d7/d3e/classserenity_1_1expiremental_1_1_flush___policy.html">Flush_Policy</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>Policy</b> ()</td></tr>
@@ -153,6 +158,7 @@ const LoggerLevel&#160;</td><td class="memItemRight" valign="bottom"><b>Level</b
 <tr class="memdesc:a9ab6441c93db92254475cdba46f18eb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current log level setting (the threshold of whether to log a message or not). <br /></td></tr>
 <tr class="separator:a9ab6441c93db92254475cdba46f18eb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ad638bb3c8b3ef7e52f13239aaa1ac9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a4ad638bb3c8b3ef7e52f13239aaa1ac9">SetLoggerName</a> (std::string_view name)</td></tr>
+<tr class="memdesc:a4ad638bb3c8b3ef7e52f13239aaa1ac9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the name of the logger.  <a href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a4ad638bb3c8b3ef7e52f13239aaa1ac9">More...</a><br /></td></tr>
 <tr class="separator:a4ad638bb3c8b3ef7e52f13239aaa1ac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd23065688b320bce564faed71b769ff"><td class="memTemplParams" colspan="2">template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:afd23065688b320bce564faed71b769ff"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#afd23065688b320bce564faed71b769ff">Trace</a> (std::string_view msg, Args &amp;&amp;...args)</td></tr>
@@ -178,30 +184,6 @@ const LoggerLevel&#160;</td><td class="memItemRight" valign="bottom"><b>Level</b
 <tr class="memitem:afdcbf379c68e6a7ebd76ab09d6008e6d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#afdcbf379c68e6a7ebd76ab09d6008e6d">Fatal</a> (std::string_view msg, Args &amp;&amp;...args)</td></tr>
 <tr class="memdesc:afdcbf379c68e6a7ebd76ab09d6008e6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logs a message giving the message a LoggerLevel::fatal setting.  <a href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#afdcbf379c68e6a7ebd76ab09d6008e6d">More...</a><br /></td></tr>
 <tr class="separator:afdcbf379c68e6a7ebd76ab09d6008e6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a275dd80c86ca44ff32d88c95c91e53a4"><td class="memTemplParams" colspan="2"><a id="a275dd80c86ca44ff32d88c95c91e53a4" name="a275dd80c86ca44ff32d88c95c91e53a4"></a>
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a275dd80c86ca44ff32d88c95c91e53a4"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Trace</b> (std::string_view s, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a275dd80c86ca44ff32d88c95c91e53a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6bacd53b86c285cbdb601652c1e1b35b"><td class="memTemplParams" colspan="2"><a id="a6bacd53b86c285cbdb601652c1e1b35b" name="a6bacd53b86c285cbdb601652c1e1b35b"></a>
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a6bacd53b86c285cbdb601652c1e1b35b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Info</b> (std::string_view s, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a6bacd53b86c285cbdb601652c1e1b35b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afe354bb199238e3366f331f420054527"><td class="memTemplParams" colspan="2"><a id="afe354bb199238e3366f331f420054527" name="afe354bb199238e3366f331f420054527"></a>
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:afe354bb199238e3366f331f420054527"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Debug</b> (std::string_view s, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:afe354bb199238e3366f331f420054527"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a636ff919381da6fe7a349242dda77030"><td class="memTemplParams" colspan="2"><a id="a636ff919381da6fe7a349242dda77030" name="a636ff919381da6fe7a349242dda77030"></a>
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a636ff919381da6fe7a349242dda77030"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Warn</b> (std::string_view s, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a636ff919381da6fe7a349242dda77030"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4118ae42353eafe96a7963fcace3365e"><td class="memTemplParams" colspan="2"><a id="a4118ae42353eafe96a7963fcace3365e" name="a4118ae42353eafe96a7963fcace3365e"></a>
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a4118ae42353eafe96a7963fcace3365e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Error</b> (std::string_view s, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:a4118ae42353eafe96a7963fcace3365e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa255defa0cb53497f32fc80ab98a4226"><td class="memTemplParams" colspan="2"><a id="aa255defa0cb53497f32fc80ab98a4226" name="aa255defa0cb53497f32fc80ab98a4226"></a>
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:aa255defa0cb53497f32fc80ab98a4226"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Fatal</b> (std::string_view s, Args &amp;&amp;...args)</td></tr>
-<tr class="separator:aa255defa0cb53497f32fc80ab98a4226"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -209,6 +191,7 @@ Protected Member Functions</h2></td></tr>
 <tr class="memdesc:adca96ad887133ab858002015179e29e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pure virtual function that all derived classes must implement and is used to write the formatted message to a specific target.  <a href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1">More...</a><br /></td></tr>
 <tr class="separator:adca96ad887133ab858002015179e29e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29e7051dc074d74422613e3a04d0bd39"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39">PolicyFlushOn</a> ()</td></tr>
+<tr class="memdesc:a29e7051dc074d74422613e3a04d0bd39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual function that can be omitted if derived class has no need to implement and is used to handle how and when the derived target should flush its contents to disk.  <a href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39">More...</a><br /></td></tr>
 <tr class="separator:a29e7051dc074d74422613e3a04d0bd39"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abfbc3f56c6f5d8b2012419d1f812e903"><td class="memItemLeft" align="right" valign="top"><a id="abfbc3f56c6f5d8b2012419d1f812e903" name="abfbc3f56c6f5d8b2012419d1f812e903"></a>
 <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html">msg_details::Message_Formatter</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>MsgFmt</b> ()</td></tr>
@@ -220,8 +203,7 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a267fd00b85ed1e8cea8c8a9c57eb6002"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p >The base class that derived target classes inherit from. Contains common functions between all targets for message logging and logging settings. </p>
-<p >For All <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html" title="The base class that derived target classes inherit from. Contains common functions between all target...">TargetBase</a> Constructors: <br  />
+<div class="textblock"><p >For All <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html" title="The base class that derived target classes inherit from. Contains common functions between all target...">TargetBase</a> Constructors: <br  />
 The following default values are set regardless of which constructor is used: <br  />
 </p><ul>
 <li>Flush Policy is set to "never". <br  />
@@ -250,7 +232,7 @@ The following default values are set regardless of which constructor is used: <b
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Constructor that will set the logger name to the name paramater passed in and all other values to their defaults. </p><dl class="params"><dt>Parameters</dt><dd>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>the name that the logger itself will use and be identified by </td></tr>
   </table>
@@ -284,7 +266,7 @@ The following default values are set regardless of which constructor is used: <b
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Constructor that will set the logger name to the name paramater passed in as well as the format pattern to the msgPattern passed in. All other values will be assigned their default values. </p><dl class="params"><dt>Parameters</dt><dd>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>the name that the logger itself will use and be identified by </td></tr>
     <tr><td class="paramname">msgPattern</td><td>the format pattern that determines how the prepended text will be displayed before the log message </td></tr>
@@ -322,9 +304,7 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Logs a message giving the message a LoggerLevel::debug setting. </p>
-<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39" title="Virtual function that can be omitted if derived class has no need to implement and is used to handle ...">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">msg</td><td>The message being passed in. Follows C++20's format library and libfmt's substitution model using "{}" to replace any arguments from the <code>args</code> parameter. </td></tr>
     <tr><td class="paramname">args</td><td>Variadic placeholder for any number of and any type of arguments to use in substituion. </td></tr>
@@ -361,9 +341,7 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Logs a message giving the message a LoggerLevel::error setting. </p>
-<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39" title="Virtual function that can be omitted if derived class has no need to implement and is used to handle ...">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">msg</td><td>The message being passed in. Follows C++20's format library and libfmt's substitution model using "{}" to replace any arguments from the <code>args</code> parameter. </td></tr>
     <tr><td class="paramname">args</td><td>Variadic placeholder for any number of and any type of arguments to use in substituion. </td></tr>
@@ -400,9 +378,7 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Logs a message giving the message a LoggerLevel::fatal setting. </p>
-<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39" title="Virtual function that can be omitted if derived class has no need to implement and is used to handle ...">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">msg</td><td>The message being passed in. Follows C++20's format library and libfmt's substitution model using "{}" to replace any arguments from the <code>args</code> parameter. </td></tr>
     <tr><td class="paramname">args</td><td>Variadic placeholder for any number of and any type of arguments to use in substituion. </td></tr>
@@ -439,9 +415,7 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Logs a message giving the message a LoggerLevel::info setting. </p>
-<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39" title="Virtual function that can be omitted if derived class has no need to implement and is used to handle ...">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">msg</td><td>The message being passed in. Follows C++20's format library and libfmt's substitution model using "{}" to replace any arguments from the <code>args</code> parameter. </td></tr>
     <tr><td class="paramname">args</td><td>Variadic placeholder for any number of and any type of arguments to use in substituion. </td></tr>
@@ -473,7 +447,6 @@ template&lt;typename... Args&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p >Virtual function that can be omitted if derived class has no need to implement and is used to handle how and when the derived target should flush its contents to disk. </p>
 
 <p>Reimplemented in <a class="el" href="../../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#a0fb50e998ca49f78eb36b1f821ecfcb4">serenity::expiremental::targets::FileTarget</a>.</p>
 
@@ -502,8 +475,6 @@ template&lt;typename... Args&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Pure virtual function that all derived classes must implement and is used to write the formatted message to a specific target. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">formatted</td><td>The actual message in its entirety to send to the output destination.</td></tr>
@@ -531,7 +502,7 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Sets the current policy in use to defer to the policy passed in from "pPolicy". </p><dl class="params"><dt>Parameters</dt><dd>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pPolicy</td><td>refers to any settings that are added or changed by the user, including whether to flush always, never, or periodically.</td></tr>
   </table>
@@ -556,7 +527,7 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Sets the name of the logger </p><dl class="params"><dt>Parameters</dt><dd>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>the name that the logger itself will use and be identified by </td></tr>
   </table>
@@ -580,8 +551,6 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Sets the log level that messages should be logged at. </p>
 <p >For example, if "SetLogLevel(LoggerLevel::Error);" is used, then no messages below LoggerLevel::Error will be logged, however once a Fatal or Error message is made, then they would be logged to the output destination </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">level</td><td>- the logger level threshold that will determine if a message should be logged or not </td></tr>
@@ -606,16 +575,12 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Calls the handle to the Message_Formatter's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#ae9fc4043c7cc925bde9258a8b9eab51b" title="Calls the handle to the Message_Formatter&#39;s SetPattern( ) function.">SetPattern( )</a> function. </p>
 <p >Sets the format pattern variable and parses the format string for internal storage and usage of this pattern by initializing and moving the initialized formatter struct in charge of the respective flag to a Formatters container </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pattern</td><td>- the format pattern to store. This pattern is what determines how the prepended text will be displayed before the log message </td></tr>
   </table>
   </dd>
 </dl>
-
-<p class="reference">References <a class="el" href="../../d9/d76/classserenity_1_1expiremental_1_1msg__details_1_1_message___formatter.html#a94b44c9dcb793f3296ca05be93b49310">serenity::expiremental::msg_details::Message_Formatter::SetPattern()</a>.</p>
 
 </div>
 </div>
@@ -646,9 +611,7 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Logs a message giving the message a LoggerLevel::trace setting. </p>
-<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39" title="Virtual function that can be omitted if derived class has no need to implement and is used to handle ...">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">msg</td><td>The message being passed in. Follows C++20's format library and libfmt's substitution model using "{}" to replace any arguments from the <code>args</code> parameter. </td></tr>
     <tr><td class="paramname">args</td><td>Variadic placeholder for any number of and any type of arguments to use in substituion. </td></tr>
@@ -685,9 +648,7 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Logs a message giving the message a LoggerLevel::warning setting. </p>
-<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+<p >Checks if the message should be logged via the log level threshold setting. If it isn't, immediately returns. If the message should be logged, this function will then perform a quick check on whether or not writes to the buffer were enabled and will write to the buffer if they were. If writes to the buffers weren't enabled, then <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1" title="Pure virtual function that all derived classes must implement and is used to write the formatted mess...">PrintMessage( )</a> will be called and the derived target handles how this is implemented. After writing the message, follows the derived target's <a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39" title="Virtual function that can be omitted if derived class has no need to implement and is used to handle ...">PolicyFlushOn( )</a> implementation </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">msg</td><td>The message being passed in. Follows C++20's format library and libfmt's substitution model using "{}" to replace any arguments from the <code>args</code> parameter. </td></tr>
     <tr><td class="paramname">args</td><td>Variadic placeholder for any number of and any type of arguments to use in substituion. </td></tr>
@@ -712,8 +673,6 @@ template&lt;typename... Args&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Enables/Disables writing to a buffer. </p>
 <p >When writing to the buffer, messages will be appended with the platform-specific end of line before being added to the buffer. When Flush( ) is called, if writing to the buffer was enabled, the buffer contents will now be written to the file and then flushed to disk. Disabled by default. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fmtToBuf</td><td>the value that controls whether or not buffer writes are enabled/disabled </td></tr>
@@ -724,16 +683,15 @@ template&lt;typename... Args&gt; </div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/Targets/<a class="el" href="../../d0/d32/_target_8h_source.html">Target.h</a></li>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/Targets/<a class="el" href="../../dc/d64/_target-impl_8h_source.html">Target-impl.h</a></li>
-<li>Serenity_Logger/Sandbox/src/Experimental_SB/Targets/Target.cpp</li>
+<li><a class="el" href="../../d0/d32/_target_8h_source.html">Target.h</a></li>
+<li>Target.cpp</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>serenity</b></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><b>targets</b></li><li class="navelem"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html">TargetBase</a></li>
+    <li class="navelem"><a class="el" href="../../d3/ddb/namespaceserenity.html">serenity</a></li><li class="navelem"><b>expiremental</b></li><li class="navelem"><b>targets</b></li><li class="navelem"><a class="el" href="../../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html">TargetBase</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3 </li>
   </ul>
 </div>
