@@ -1,7 +1,0 @@
-var searchData=
-[
-  ['periodicsettings_0',['PeriodicSettings',['../d8/d29/structserenity_1_1expiremental_1_1_periodic_settings.html',1,'serenity::expiremental']]],
-  ['policy_1',['Policy',['../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#ae8f5ae1860dbfaa258808b92daad35b9',1,'serenity::expiremental::targets::TargetBase']]],
-  ['policyflushon_2',['PolicyFlushOn',['../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#a0fb50e998ca49f78eb36b1f821ecfcb4',1,'serenity::expiremental::targets::FileTarget::PolicyFlushOn()'],['../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#a29e7051dc074d74422613e3a04d0bd39',1,'serenity::expiremental::targets::TargetBase::PolicyFlushOn()']]],
-  ['printmessage_3',['PrintMessage',['../df/db2/classserenity_1_1expiremental_1_1targets_1_1_color_console.html#a85dc874dc8a9dda0bf4e07303995950c',1,'serenity::expiremental::targets::ColorConsole::PrintMessage()'],['../dc/d9f/classserenity_1_1expiremental_1_1targets_1_1_file_target.html#ac17d3f0ca839ed863e16115b8587e1cb',1,'serenity::expiremental::targets::FileTarget::PrintMessage()'],['../dd/dcf/classserenity_1_1expiremental_1_1targets_1_1_rotating_target.html#a90c8a3f9917674edfed9d4ad0a5169d9',1,'serenity::expiremental::targets::RotatingTarget::PrintMessage()'],['../dd/d74/classserenity_1_1expiremental_1_1targets_1_1_target_base.html#adca96ad887133ab858002015179e29e1',1,'serenity::expiremental::targets::TargetBase::PrintMessage()']]]
-];
