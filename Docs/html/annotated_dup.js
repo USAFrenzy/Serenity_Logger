@@ -17,7 +17,7 @@ var annotated_dup =
         [ "FileSettings", "da/db6/structserenity_1_1expiremental_1_1_file_settings.html", "da/db6/structserenity_1_1expiremental_1_1_file_settings" ],
         [ "Flush_Policy", "d7/d3e/classserenity_1_1expiremental_1_1_flush___policy.html", null ],
         [ "PeriodicSettings", "d8/d29/structserenity_1_1expiremental_1_1_periodic_settings.html", null ],
-        [ "RotateSettings", "dd/d96/structserenity_1_1expiremental_1_1_rotate_settings.html", null ]
+        [ "RotateSettings", "dd/d96/structserenity_1_1expiremental_1_1_rotate_settings.html", "dd/d96/structserenity_1_1expiremental_1_1_rotate_settings" ]
       ] ]
     ] ]
 ];

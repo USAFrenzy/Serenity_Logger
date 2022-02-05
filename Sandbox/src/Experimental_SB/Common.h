@@ -19,8 +19,10 @@
 #endif
 
 #ifdef WINDOWS_PLATFORM
-	#define WIN32_LEAN_AND_MEAN
-	#define VC_EXTRALEAN
+	#ifndef DOXYGEN_DOCUMENTATION 
+		#define WIN32_LEAN_AND_MEAN
+		#define VC_EXTRALEAN
+	#endif  // !DOXYGEN_DOCUMENTATION
 
 	#include <Windows.h>
 	#include <io.h>
@@ -145,11 +147,10 @@ namespace serenity::expiremental
 	struct FileSettings
 	{
 		std::filesystem::path filePath;
-		std::vector<char> fileBuffer;
-		size_t bufferSize { DEFAULT_BUFFER_SIZE };
+		std::vector<char>     fileBuffer;
+		size_t                bufferSize { DEFAULT_BUFFER_SIZE };
 	};
 
-	// TODO: Finish Documenting RotateSettings
 	struct RotateSettings
 	{
 		// Will add an interval based setting later

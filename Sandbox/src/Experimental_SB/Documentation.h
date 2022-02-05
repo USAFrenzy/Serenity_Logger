@@ -11,6 +11,9 @@
  * examples and tips on how to use this library effectively, as well as how to extend the library's functionality.
  ****************************************************************************************************************************/
 
+/***************************************************************************************************************************
+ *                                                Common.h Header Documentation                                            *
+ **************************************************************************************************************************/
 /// @file Common.h
 /// @brief This file contains some common functions, enums, and look-up tables used for most logging targets.
 ///
@@ -156,7 +159,6 @@
 /// @details This is still a work in progress in the sense of adding user-specified platform support, however, this supports
 /// windows, linux, and mac by default.
 ///
-/// @file Common.h
 /// @struct serenity::expiremental::BackgroundThread
 /// @brief Struct that holds the specific variables in charge of the background flush thread in file targets
 /// @details This struct is in charge of initializing and cleaning up the flush thread background worker, protecting the
@@ -170,7 +172,6 @@
 /// @var serenity::expiremental::BackgroundThread::flushThread
 /// @brief Involved in initializing and running the background thread
 ///
-/// @file Common.h
 /// @struct serenity::expiremental::FileSettings
 /// @brief Struct that holds the basic file settings for file targets
 /// @details This struct is in charge of caching the file path, file name, log directory, holding the buffer used for the
@@ -184,12 +185,137 @@
 /// @brief used to set the buffer used by the file handle and its default size is equivalent to the
 /// DEFAULT_BUFFER_SIZE macro.
 ///
-/// @file Common.h
 /// @struct serenity::expiremental::RotateSettings
 /// @brief Struct that holds and controls different rotation settings specific to the RotatingTarget class.
 /// @details This struct is in charge of the rotation settings for the RotateTarget class. Currently, this only involves
 /// file size based rotation settings
+/// @var serenity::expiremental::RotateSettings::rotateOnFileSize
+/// @brief Determines if file size rotation is enabled/disabled
+/// @var serenity::expiremental::RotateSettings::maxNumberOfFiles
+/// @brief This can be any arbitrary number - determines how many files to create and rotate through.
+/// @var serenity::expiremental::RotateSettings::fileSizeLimit
+/// @brief The upper limit of what the size each file should be before rotating to a new file
+/// @fn serenity::expiremental::RotateSettings::SetOriginalSettings(const std::filesystem::path &filePath)
+/// @brief This function is in charge of caching the file path, its extension, its name, and the log directory.
+/// @details If no user log directory is used, the log directory will be the directory where the file should be located. \n
+/// i.e. If the path was users/desktop/Log.txt, then the log "directory" here would be the desktop location
+/// @param filePath
+/// @brief The full path to the file. This path can be an absolute or relative path.
+/// @fn serenity::expiremental::RotateSettings::SetCurrentFileSize(size_t currentSize)
+/// @brief Sets the variable in charge of tracking current file size of the file context held.
+/// @fn serenity::expiremental::RotateSettings::OriginalPath()
+/// @brief Returns a reference to the original full file path string
+/// @fn serenity::expiremental::RotateSettings::OriginalDirectory()
+/// @brief Returns a reference to the original log directory path string
+/// @fn serenity::expiremental::RotateSettings::OriginalName()
+/// @brief Returns the original base name of the file
+/// @fn serenity::expiremental::RotateSettings::OriginalExtension()
+/// @brief Returns the originnal extension string
+/// @fn serenity::expiremental::RotateSettings::FileSize()
+/// @brief Returns the current size of the file context via the manual tracking method (less expensive).
+///
 ///
 /// @def DB_PRINT( msg, ... )
-/// @brief Used for internal debug printing
+/// @brief Used for internal debug printing and only enabled when not in a release build.
 ///
+//**************************************************************************************************************************
+
+/***************************************************************************************************************************
+ *                                    ColorConsoleTarget.h Header Documentation                                            *
+ **************************************************************************************************************************/
+/// @file ColorConsoleTarget.h
+/// @brief This file holds the class in charge of writing to the standard outputs and is terminal/pipe-aware.
+///
+/// @enum serenity::expiremental::targets::console_interface
+/// @brief This enum encapsulates values that mirror the standard outputs
+/// @var serenity::expiremental::targets::console_interface::std_out
+/// @brief Mirrors std::out
+/// @var serenity::expiremental::targets::console_interface::std_err
+/// @brief Mirrors std::cerr
+/// @var serenity::expiremental::targets::console_interface::std_log
+/// @brief Mirrors std::clog
+///
+/// @class serenity::expiremental::targets::ColorConsole
+/// @brief This class is in charge of logging to the terminal and supports color logging and the ability to log without
+/// color. \n This class inherits from the TargetBase class for common logging functions and logging settings.
+/// @details For all Console Target Constructors: \n
+/// - will set the console mode to "console_interface::std_out" \n
+/// - Initializes the default colors to use for each message level \n
+/// - If output is a terminal and hasn't been redirected and if the output handle is valid, enables color output \n
+/// - Sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING" flag if on Windows Platform \n
+///
+/// @fn serenity::expiremental::targets::ColorConsole::ColorConsole()
+/// @brief Default constructor that will set the logger name to "Console_Logger". All other settings will be set to
+/// their defaults
+///
+/// @fn serenity::expiremental::targets::ColorConsole::ColorConsole( std::string_view name )
+/// @brief Constructor that will set the logger name to the parameter @p name passed in. All other settings will be
+/// set to their defaults
+/// @param name: the name that the logger itself will use and be identified by
+///
+/// @fn serenity::expiremental::targets::ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
+/// @brief Constructor that will set the logger name to the parameter @p name passed in and set the format pattern
+/// via the parameter @p msgPattern passed in. All other settings will be set to their defaults
+/// @param name: the name that the logger itself will use and be identified by
+/// @param msgPattern: the format pattern that determines how the prepended text will be displayed before the log
+/// message
+///
+/// @fn serenity::expiremental::targets::ColorConsole::~ColorConsole( )
+/// @brief If the output wasn't directed to a terminal, will flush the contents to disk.
+/// @details If on Windows platform, this function will also reset the console mode to default in order to to clear
+/// "ENABLE_VIRTUAL_TERMINAL_PROCESSING" flag.
+///
+/// @fn serenity::expiremental::targets::ColorConsole::GetMsgColor( LoggerLevel level )
+/// @brief Returns the log level based color for the current message to use
+/// @param level: the level used to recieve the color code for that level. Logger levels are trace, info, debug,
+/// warning, error, and fatal.
+/// @returns The ansi color code for the @p level passed in
+///
+/// @fn serenity::expiremental::targets::ColorConsole::SetMsgColor( LoggerLevel level, std::string_view color )
+/// @brief Sets color specified for the log level specified
+/// @param level: The logger level to bind the color code to from @p color variable
+/// @param color: The color code to bind  to the @p level passed in. This color code is expected to be an ansi code.
+///
+/// @fn serenity::expiremental::targets::ColorConsole::SetConsoleInterface( console_interface mode )
+/// @brief Sets console mode. Console modes mirror standard outputs.
+/// @details For Windows, sets "ENABLE_VIRTUAL_TERMINAL_PROCESSING". (If not defined, a macro is used to define this
+/// value). For any other platfrom, sets the standard output to use. \n
+/// The console_interface values (std_out, std_err, std_log) represent std::out, std::err, and std::clog respectively.
+/// @param mode: Can be one of the following: console_interface::std_out, console_interface::std_err, or
+/// console_interface::std_log
+///
+/// @fn serenity::expiremental::targets::ColorConsole::ConsoleInterface( )
+/// @brief Returns the current console mode being used
+///
+/// @fn serenity::expiremental::targets::ColorConsole::ColorizeOutput( bool colorize )
+/// @brief Enables/Disables colored text output
+///
+/// @fn serenity::expiremental::targets::ColorConsole::SetOriginalColors( )
+/// @brief Initializes the default colors to use for the log levels
+/// @details The default colors used are as follows: \n
+/// | Logger Level |            Color Used            |
+/// |    :----:    |             :----:               |
+/// |     info     |      Bright Green On Black       |
+/// |     trace    |     Bright White On Black        |
+/// |     debug    |     Bright Cyan On Black         |
+/// |     warning  |      Bright Yellow On Black      |
+/// |     error    |     Basic Red On Black           |
+/// |     fatal    |     Bright Yellow On Red         |
+/// |      off     | Reset To Default Terminal Colors |
+///
+/// @fn serenity::expiremental::targets::ColorConsole::IsTerminalType( )
+/// @brief Checks to see if output handle is referring to a terminal type device or not
+/// @returns True if output is terminal, false otherwise
+///
+/// @fn serenity::expiremental::targets::ColorConsole::IsValidHandle( )
+/// @brief Checks to see if output handle is valid and not empty
+/// @returns True if handle to output isn't a nullptr, or if on Windows, that the output handle isn't INVALID_HANDLE_VALUE.
+/// Returns false otherwise.
+///
+/// @fn serenity::expiremental::targets::ColorConsole::PrintMessage( std::string_view formatted )
+/// @brief Outputs the message (@p formatted) to the destination output device.
+/// @details If output handle is valid, will write the message to the output. If color is enabled, will write the
+/// message in the color specified for the log level used if the output is to a terminal. \n
+/// For windows, uses WriteConsole( ) unless the output is not a terminal (in which case, uses WriteFile( ) instead ).
+/// @param formatted: The actual message in its entirety to send to the output destination.
+//**************************************************************************************************************************

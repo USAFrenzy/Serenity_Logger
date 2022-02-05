@@ -93,50 +93,85 @@ $(document).ready(function(){initNavTree('dd/d96/structserenity_1_1expiremental_
 
 <p>Struct that holds and controls different rotation settings specific to the RotatingTarget class.  
  <a href="../../dd/d96/structserenity_1_1expiremental_1_1_rotate_settings.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="../../d1/d6b/_documentation_8h_source.html">Documentation.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a510e3781b4f026203494e7e45b97255f"><td class="memItemLeft" align="right" valign="top"><a id="a510e3781b4f026203494e7e45b97255f" name="a510e3781b4f026203494e7e45b97255f"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SetOriginalSettings</b> (const std::filesystem::path &amp;filePath)</td></tr>
-<tr class="separator:a510e3781b4f026203494e7e45b97255f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54efafaa3bf9f44f8e99995bba63d38d"><td class="memItemLeft" align="right" valign="top"><a id="a54efafaa3bf9f44f8e99995bba63d38d" name="a54efafaa3bf9f44f8e99995bba63d38d"></a>
+<tr class="memitem:adf2138c8fa4fbd3f48f1c3d614408ece"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d96/structserenity_1_1expiremental_1_1_rotate_settings.html#adf2138c8fa4fbd3f48f1c3d614408ece">SetOriginalSettings</a> (const std::filesystem::path &amp;filePath)</td></tr>
+<tr class="memdesc:adf2138c8fa4fbd3f48f1c3d614408ece"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function is in charge of caching the file path, its extension, its name, and the log directory.  <a href="../../dd/d96/structserenity_1_1expiremental_1_1_rotate_settings.html#adf2138c8fa4fbd3f48f1c3d614408ece">More...</a><br /></td></tr>
+<tr class="separator:adf2138c8fa4fbd3f48f1c3d614408ece"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a510e7733b6471192b42b7a65ee6e73f3"><td class="memItemLeft" align="right" valign="top"><a id="a510e7733b6471192b42b7a65ee6e73f3" name="a510e7733b6471192b42b7a65ee6e73f3"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetCurrentFileSize</b> (size_t currentSize)</td></tr>
-<tr class="separator:a54efafaa3bf9f44f8e99995bba63d38d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68846e5279b2f243c2890c3da711c315"><td class="memItemLeft" align="right" valign="top"><a id="a68846e5279b2f243c2890c3da711c315" name="a68846e5279b2f243c2890c3da711c315"></a>
+<tr class="memdesc:a510e7733b6471192b42b7a65ee6e73f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the variable in charge of tracking current file size of the file context held. <br /></td></tr>
+<tr class="separator:a510e7733b6471192b42b7a65ee6e73f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00c9832f1168ec11efd2c773051c0b25"><td class="memItemLeft" align="right" valign="top"><a id="a00c9832f1168ec11efd2c773051c0b25" name="a00c9832f1168ec11efd2c773051c0b25"></a>
 const std::filesystem::path &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>OriginalPath</b> ()</td></tr>
-<tr class="separator:a68846e5279b2f243c2890c3da711c315"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7fefeda0d5fab4cc45003936236d4cdf"><td class="memItemLeft" align="right" valign="top"><a id="a7fefeda0d5fab4cc45003936236d4cdf" name="a7fefeda0d5fab4cc45003936236d4cdf"></a>
+<tr class="memdesc:a00c9832f1168ec11efd2c773051c0b25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to the original full file path string. <br /></td></tr>
+<tr class="separator:a00c9832f1168ec11efd2c773051c0b25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e8b2fb5538b6f04402ea83aadfc831b"><td class="memItemLeft" align="right" valign="top"><a id="a9e8b2fb5538b6f04402ea83aadfc831b" name="a9e8b2fb5538b6f04402ea83aadfc831b"></a>
 const std::filesystem::path &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>OriginalDirectory</b> ()</td></tr>
-<tr class="separator:a7fefeda0d5fab4cc45003936236d4cdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a40f13a0da2dd8b35cd400add2b21bb31"><td class="memItemLeft" align="right" valign="top"><a id="a40f13a0da2dd8b35cd400add2b21bb31" name="a40f13a0da2dd8b35cd400add2b21bb31"></a>
+<tr class="memdesc:a9e8b2fb5538b6f04402ea83aadfc831b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to the original log directory path string. <br /></td></tr>
+<tr class="separator:a9e8b2fb5538b6f04402ea83aadfc831b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45394ed87d5a48242c4357d69136c116"><td class="memItemLeft" align="right" valign="top"><a id="a45394ed87d5a48242c4357d69136c116" name="a45394ed87d5a48242c4357d69136c116"></a>
 const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>OriginalName</b> ()</td></tr>
-<tr class="separator:a40f13a0da2dd8b35cd400add2b21bb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93860f8f5750919526861ddc8204a1f1"><td class="memItemLeft" align="right" valign="top"><a id="a93860f8f5750919526861ddc8204a1f1" name="a93860f8f5750919526861ddc8204a1f1"></a>
+<tr class="memdesc:a45394ed87d5a48242c4357d69136c116"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the original base name of the file. <br /></td></tr>
+<tr class="separator:a45394ed87d5a48242c4357d69136c116"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3ddb749f138583953d48f40d4f4a0b5"><td class="memItemLeft" align="right" valign="top"><a id="ad3ddb749f138583953d48f40d4f4a0b5" name="ad3ddb749f138583953d48f40d4f4a0b5"></a>
 const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>OriginalExtension</b> ()</td></tr>
-<tr class="separator:a93860f8f5750919526861ddc8204a1f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a578d84160633e238e5475bbc8d440993"><td class="memItemLeft" align="right" valign="top"><a id="a578d84160633e238e5475bbc8d440993" name="a578d84160633e238e5475bbc8d440993"></a>
+<tr class="memdesc:ad3ddb749f138583953d48f40d4f4a0b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the originnal extension string. <br /></td></tr>
+<tr class="separator:ad3ddb749f138583953d48f40d4f4a0b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5315b2d09308b534358033dc9f65d2c7"><td class="memItemLeft" align="right" valign="top"><a id="a5315b2d09308b534358033dc9f65d2c7" name="a5315b2d09308b534358033dc9f65d2c7"></a>
 const size_t &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>FileSize</b> ()</td></tr>
-<tr class="separator:a578d84160633e238e5475bbc8d440993"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a5315b2d09308b534358033dc9f65d2c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current size of the file context via the manual tracking method (less expensive). <br /></td></tr>
+<tr class="separator:a5315b2d09308b534358033dc9f65d2c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:ab15adc86999e91ecd0cfd143dcbf1afc"><td class="memItemLeft" align="right" valign="top"><a id="ab15adc86999e91ecd0cfd143dcbf1afc" name="ab15adc86999e91ecd0cfd143dcbf1afc"></a>
+<tr class="memitem:a5ff85d93d5950c339681e54e17d31354"><td class="memItemLeft" align="right" valign="top"><a id="a5ff85d93d5950c339681e54e17d31354" name="a5ff85d93d5950c339681e54e17d31354"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>rotateOnFileSize</b> { true }</td></tr>
-<tr class="separator:ab15adc86999e91ecd0cfd143dcbf1afc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a02a8345790708ccc789d73a0046fd825"><td class="memItemLeft" align="right" valign="top"><a id="a02a8345790708ccc789d73a0046fd825" name="a02a8345790708ccc789d73a0046fd825"></a>
+<tr class="memdesc:a5ff85d93d5950c339681e54e17d31354"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determines if file size rotation is enabled/disabled. <br /></td></tr>
+<tr class="separator:a5ff85d93d5950c339681e54e17d31354"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5246877c43cecedd2f2e1f3023a4b613"><td class="memItemLeft" align="right" valign="top"><a id="a5246877c43cecedd2f2e1f3023a4b613" name="a5246877c43cecedd2f2e1f3023a4b613"></a>
 size_t&#160;</td><td class="memItemRight" valign="bottom"><b>maxNumberOfFiles</b> { 5 }</td></tr>
-<tr class="separator:a02a8345790708ccc789d73a0046fd825"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a342d0820ef9c6896f0ef0eae42f9786d"><td class="memItemLeft" align="right" valign="top"><a id="a342d0820ef9c6896f0ef0eae42f9786d" name="a342d0820ef9c6896f0ef0eae42f9786d"></a>
+<tr class="memdesc:a5246877c43cecedd2f2e1f3023a4b613"><td class="mdescLeft">&#160;</td><td class="mdescRight">This can be any arbitrary number - determines how many files to create and rotate through. <br /></td></tr>
+<tr class="separator:a5246877c43cecedd2f2e1f3023a4b613"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0775ee24fc6c453fd2618689eed8e36f"><td class="memItemLeft" align="right" valign="top"><a id="a0775ee24fc6c453fd2618689eed8e36f" name="a0775ee24fc6c453fd2618689eed8e36f"></a>
 size_t&#160;</td><td class="memItemRight" valign="bottom"><b>fileSizeLimit</b> { 512 * KB }</td></tr>
-<tr class="separator:a342d0820ef9c6896f0ef0eae42f9786d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a0775ee24fc6c453fd2618689eed8e36f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The upper limit of what the size each file should be before rotating to a new file. <br /></td></tr>
+<tr class="separator:a0775ee24fc6c453fd2618689eed8e36f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >This struct is in charge of the rotation settings for the RotateTarget class. Currently, this only involves file size based rotation settings </p>
-</div><hr/>The documentation for this struct was generated from the following files:<ul>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="adf2138c8fa4fbd3f48f1c3d614408ece" name="adf2138c8fa4fbd3f48f1c3d614408ece"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf2138c8fa4fbd3f48f1c3d614408ece">&#9670;&nbsp;</a></span>SetOriginalSettings()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">serenity::expiremental::RotateSettings::SetOriginalSettings </td>
+          <td>(</td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>filePath</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >If no user log directory is used, the log directory will be the directory where the file should be located. <br  />
+i.e. If the path was users/desktop/Log.txt, then the log "directory" here would be the desktop location </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filePath</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The full path to the file. This path can be an absolute or relative path. </p>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following files:<ul>
 <li><a class="el" href="../../db/d1f/_common_8h_source.html">Common.h</a></li>
 <li>Common.cpp</li>
+<li><a class="el" href="../../d1/d6b/_documentation_8h_source.html">Documentation.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
