@@ -18,12 +18,6 @@ namespace serenity
 #endif  // WINDOWS_PLATFORM
 			}
 
-			// ############### New Function Added #################
-			std::string &Message_Info::MessageBuffer( )
-			{
-				return m_msgStrBuf;
-			}
-			// ####################################################
 			LoggerLevel &Message_Info::MsgLevel( )
 			{
 				return m_msgLevel;

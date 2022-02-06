@@ -34,6 +34,8 @@ namespace serenity::expiremental
 		explicit Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt );
 		explicit Flush_Policy( PeriodicOptions secondaryOpt, PeriodicSettings settings );
 		Flush_Policy( const Flush_Policy &p );
+		/// @brief copy assignment operator used in the copy constructor. Copies the Primary mode, Secondary mode, and
+		/// periodic settings from @p p.
 		Flush_Policy &operator=( const Flush_Policy &p );
 		~Flush_Policy( )      = default;
 
