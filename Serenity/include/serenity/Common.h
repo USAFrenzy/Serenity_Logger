@@ -1,118 +1,183 @@
 #pragma once
 
-#include <serenity/Defines.h>
-#include <serenity/Sinks/Sinks.h>
-#pragma warning( push, 0 )
-#include <spdlog/spdlog.h>
-#pragma warning( pop )
+#ifdef DOXYGEN_DOCUMENTATION
+/// @brief If _WIN32 is defined, then this is also defined.
+/// @details If this macro is defined, includes the Windows.h and io.h headers as well as defines ISATTY to _isatty and
+/// FILENO to _fileno. If ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
+	#define WINDOWS_PLATFORM
+/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also defined.
+/// @details If this macro is defined, includes the unistd.h header and defines ISATTY to isatty and FILENO to fileno
+	#define MAC_PLATFORM
+#endif
+
+#ifdef _WIN32
+	#define WINDOWS_PLATFORM
+#elif defined( __APPLE__ ) || defined( __MACH__ )
+	#define MAC_PLATFORM
+#else
+	#define LINUX_PLATFORM
+#endif
+
+#ifdef WINDOWS_PLATFORM
+	#ifndef DOXYGEN_DOCUMENTATION
+		#define WIN32_LEAN_AND_MEAN
+		#define VC_EXTRALEAN
+	#endif  // !DOXYGEN_DOCUMENTATION
+
+	#include <Windows.h>
+	#include <io.h>
+
+	#define ISATTY _isatty
+	#define FILENO _fileno
+	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+	#endif
+#else
+	#include <unistd.h>
+	#define ISATTY isatty
+	#define FILENO fileno
+#endif
+
+#define KB                  ( 1024 )
+#define MB                  ( 1024 * KB )
+#define GB                  ( 1024 * MB )
+#define DEFAULT_BUFFER_SIZE ( 64 * KB )
+
 #include <filesystem>
-#include <map>
+#include <string_view>
+#include <array>
+#include <unordered_map>
+#include <mutex>
+#include <thread>
+#include <atomic>
+#include <format>
 
-
-namespace serenity
+namespace serenity::expiremental
 {
-	using MappedLevel     = spdlog::level::level_enum;
-	namespace file_helper = std::filesystem;
+	enum class LineEnd
+	{
+		linux   = 0,
+		windows = 1,
+		mac     = 2,
+	};
+
+	namespace SERENITY_LUTS
+	{
+		static constexpr std::array<std::string_view, 22> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x",
+																			"%y", "%A", "%B", "%D", "%F", "%H", "%L", "%M",
+																			"%N", "%S", "%T", "%X", "%Y", "%+" };
+
+		static constexpr std::array<std::string_view, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+		static constexpr std::array<std::string_view, 7> long_weekdays = {
+		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+
+		static constexpr std::array<std::string_view, 12> short_months = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+		static constexpr std::array<const char *, 12> long_months = {
+		"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+
+		static constexpr std::array<std::string_view, 100> numberStr = {
+		"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16",
+		"17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33",
+		"34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50",
+		"51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67",
+		"68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84",
+		"85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99" };
+
+		static std::unordered_map<LineEnd, std::string_view> line_ending = {
+		{ LineEnd::linux, "\n" },
+		{ LineEnd::windows, "\r\n" },
+		{ LineEnd::mac, "\r" },
+		};
+
+	}  // namespace SERENITY_LUTS
 
 	enum class LoggerLevel
 	{
-		trace   = spdlog::level::trace,
-		debug   = spdlog::level::debug,
-		info    = spdlog::level::info,
-		warning = spdlog::level::warn,
-		error   = spdlog::level::err,
-		fatal   = spdlog::level::critical,
-		off     = spdlog::level::off,
+		trace   = 0,
+		info    = 1,
+		debug   = 2,
+		warning = 3,
+		error   = 4,
+		fatal   = 5,
+		off     = 6,
 	};
 
-	static LoggerLevel ToLogLevel( MappedLevel level )
+	static std::string_view MsgLevelToShortString( LoggerLevel level )
 	{
-		std::unordered_map<MappedLevel, LoggerLevel> levelMap = {
-		  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
-		  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
-		  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
-		LoggerLevel result   = LoggerLevel::off;
-		auto        iterator = levelMap.find( level );
-		if( iterator != levelMap.end( ) ) {
-			result = iterator->second;
+		switch( level ) {
+			case LoggerLevel::info: return "I"; break;
+			case LoggerLevel::trace: return "T"; break;
+			case LoggerLevel::debug: return "D"; break;
+			case LoggerLevel::warning: return "W"; break;
+			case LoggerLevel::error: return "E"; break;
+			case LoggerLevel::fatal: return "F"; break;
+			default: return ""; break;
 		}
-		return result;
 	}
 
-	static MappedLevel ToMappedLevel( LoggerLevel level )
+	static std::string_view MsgLevelToString( LoggerLevel level )
 	{
-		std::unordered_map<LoggerLevel, MappedLevel> levelMap = {
-		  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
-		  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
-		  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
-		MappedLevel result   = MappedLevel::off;
-		auto        iterator = levelMap.find( level );
-		if( iterator != levelMap.end( ) ) {
-			result = iterator->second;
+		switch( level ) {
+			case LoggerLevel::info: return "Info"; break;
+			case LoggerLevel::trace: return "Trace"; break;
+			case LoggerLevel::debug: return "Debug"; break;
+			case LoggerLevel::warning: return "Warn"; break;
+			case LoggerLevel::error: return "Error"; break;
+			case LoggerLevel::fatal: return "Fatal"; break;
+			default: return ""; break;
 		}
-		return result;
 	}
 
-	static std::string GetSerenityVerStr( )
+	enum class message_time_mode
 	{
-		auto version = VERSION_NUMBER( SERENITY_MAJOR, SERENITY_MINOR, SERENITY_REV );
-		return version;
-	}
-	static LoggerLevel global_level { LoggerLevel::trace };
-
-	// Honestly Kind Of Confused On How This Is Correctly Finding The Definition In Logger.cpp
-	// And On How LibLogger.cpp Is Correctly Finding The Definition From Only Common.h ???
-	// But I Mean, I Guess If It Works, It Works (Likely That This Might Be A Future Bug?)
-	void SetGlobalLevel( LoggerLevel level );
-
-	static LoggerLevel &GetGlobalLevel( )
-	{
-		return global_level;
-	}
-}  // namespace serenity
-
-
-namespace serenity
-{
-	struct logger_info
-	{
-		std::string loggerName = DEFAULT_LOGGER_NAME;
-		std::string logName    = DEFAULT_LOG;
-		LoggerLevel level      = LoggerLevel::trace;
-		LoggerLevel flushLevel = LoggerLevel::trace;
-
-		file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs" };
-		base_sink_info               sink_info = { };
+		local,
+		utc
 	};
-	namespace se_internal
-	{
-		struct internal_logger_info
-		{
-			std::string                  loggerName = INTERNAL_DEFAULT_NAME;
-			std::string                  logName    = INTERNAL_DEFAULT_LOG;
-			LoggerLevel                  level      = LoggerLevel::trace;
-			LoggerLevel                  flushLevel = LoggerLevel::trace;
-			file_helper::directory_entry logDir { file_helper::current_path( ) /= "Logs\\Internal" };
-			base_sink_info               sink_info = { };
-		};
-		static logger_info tmp = { };
 
-		static logger_info toLoggerInfo( internal_logger_info convertFrom )
-		{
-			tmp                       = { };
-			tmp.sink_info.rotate_sink = nullptr;
-			tmp.sink_info.daily_sink  = nullptr;
-			tmp.loggerName            = convertFrom.loggerName;
-			tmp.loggerName            = convertFrom.loggerName;
-			tmp.logName               = convertFrom.logName;
-			tmp.logDir                = convertFrom.logDir;
-			tmp.level                 = convertFrom.level;
-			tmp.flushLevel            = convertFrom.flushLevel;
-			tmp.sink_info             = convertFrom.sink_info;
-			// Since CreateSink() uses formatStr And Not internalFormatStr
-			// -> This Is A Work Around/Hack So As To Not Change How CreateSink() Works
-			tmp.sink_info.formatStr = std::move( tmp.sink_info.internalFormatStr );
-			return tmp;
-		}
-	}  // namespace se_internal
-}  // namespace serenity
+	struct BackgroundThread
+	{
+		std::atomic<bool>  cleanUpThreads { false };
+		std::atomic<bool>  flushThreadEnabled { false };
+		mutable std::mutex readWriteMutex;
+		std::thread        flushThread;
+	};
+
+	struct FileSettings
+	{
+		std::filesystem::path filePath;
+		std::vector<char>     fileBuffer;
+		size_t                bufferSize { DEFAULT_BUFFER_SIZE };
+	};
+
+	struct RotateSettings
+	{
+		// Will add an interval based setting later
+		// (something like a weekly basis on specified day and a daily setting)
+
+		bool   rotateOnFileSize { true };
+		size_t maxNumberOfFiles { 5 };
+		size_t fileSizeLimit { 512 * KB };
+
+		void                         SetOriginalSettings( const std::filesystem::path &filePath );
+		void                         SetCurrentFileSize( size_t currentSize );
+		const std::filesystem::path &OriginalPath( );
+		const std::filesystem::path &OriginalDirectory( );
+		const std::string &          OriginalName( );
+		const std::string &          OriginalExtension( );
+		const size_t &               FileSize( );
+
+	  private:
+		size_t                currentFileSize { 0 };
+		std::string           ext, fileName;
+		std::filesystem::path path, directory;
+	};
+}  // namespace serenity::expiremental
+
+#ifndef NDEBUG
+	#define DB_PRINT( msg, ... ) ( std::cout << std::format( msg, __VA_ARGS__ ) )
+#else
+	#define DB_PRINT( msg, ... )
+#endif  // !NDEBUG

@@ -4,32 +4,52 @@
 #include <filesystem>
 #include <mutex>
 
-
 namespace serenity
 {
 	namespace se_utils
 	{
 		enum class time_mode
 		{
+			us,
 			ms,
 			sec,
 			min,
 			hr,
 		};
 
-		class Instrumentor
-		{
-		      public:
-			Instrumentor( );
+		// for more precision
+		template <class T> using pMicro = std::chrono::duration<T, std::micro>;
+		template <class T> using pMilli = std::chrono::duration<T, std::milli>;
+		template <class T> using pSec   = std::chrono::duration<T, std::ratio<1>>;
+		template <class T> using pMin   = std::chrono::duration<T, std::ratio<1, 60>>;
+		template <class T> using pHour  = std::chrono::duration<T, std::ratio<1, 3600>>;
 
-			void  StopWatch_Start( );
+		struct Allocation_Statistics
+		{
+			uint64_t Allocated { 0 };
+			uint64_t Freed { 0 };
+			uint64_t Memory_Usage( );
+		};
+
+		class Instrumentator
+		{
+		  public:
+			Instrumentator( );
+
+			void  StopWatch_Reset( );
 			void  StopWatch_Stop( );
 			float Elapsed_In( time_mode mode );
 
-			~Instrumentor( );
+			void *operator new( std::size_t n );
+			void  operator delete( void *p ) throw( );
 
-		      private:
-			std::chrono::time_point<std::chrono::high_resolution_clock> m_Start, m_End;
+			~Instrumentator( );
+
+		  public:
+			static Allocation_Statistics mem_tracker;
+
+		  private:
+			std::chrono::time_point<std::chrono::steady_clock> m_Start, m_End;
 		};
 		/// <summary>
 		/// A wrapper for thread sleeping
@@ -45,14 +65,14 @@ namespace serenity
 			{
 				std::vector<std::filesystem::directory_entry> matchedResults;
 				bool                                          fileFound { false };
-				float                                         elapsedTime { 0.f };
+				float                                         elapsedTime { 0 };
 			};
 			struct retrieve_dir_entries
 			{
 				int                                                  fileCount { 0 };
 				bool                                                 success { false };
 				static std::vector<std::filesystem::directory_entry> retrievedItems;
-				float                                                elapsedTime { 0.f };
+				float                                                elapsedTime { 0 };
 			};
 		}  // namespace file_utils_results
 
@@ -107,57 +127,18 @@ namespace serenity
 		bool CreateDir( std::filesystem::path dirPath );
 		/// <returns>Returns True On Success Or If 'entry' Doesn't Exist, False Otherwise</returns>
 		bool RemoveEntry( std::filesystem::path entry );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
-		/// To The Console</returns>
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
+		/// Any, To The Console</returns>
 		bool ChangeDir( std::filesystem::path dirPath );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
-		/// To The Console</returns>
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
+		/// Any, To The Console</returns>
 		bool CopyContents( std::filesystem::path source, std::filesystem::path destination );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
-		/// To The Console. By Default, Creates A File With Full Permissions If It Doesn't Exist And Opens It In Append
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
+		/// Any, To The Console. By Default, Creates A File With Full Permissions If It Doesn't Exist And Opens It In Append
 		/// Mode</returns>
-		bool OpenFile( std::filesystem::path file, bool truncate = false );
-		/// <summary>Opens The File Specified In "file" Parameter, Flushes Contents To File, And Then Closes The File</summary>
-		void Flush( std::filesystem::path file );  // Not Neccessarily Fully Implemented
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
-		/// To The Console</returns>
+		bool OpenFile( std::filesystem::path file, bool truncate );
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
+		/// Any, To The Console</returns>
 		bool CloseFile( std::filesystem::path file );
-		/// <summary> Mutex Used To Lock Functions In file_utils Namespace </summary>
-		static std::mutex utils_mutex;
-
 	}  // namespace file_utils
-
-	// ########################################### WIP ###########################################
-	namespace se_thread
-	{
-		struct se_mutex_guard
-		{
-			explicit se_mutex_guard( )
-			{
-				acquire_lock( );
-			}
-
-			se_mutex_guard( const se_mutex_guard &mutexGuard )  = delete;
-			se_mutex_guard( const se_mutex_guard &&mutexGuard ) = delete;
-
-			~se_mutex_guard( )
-			{
-				release_lock( );
-			}
-			void acquire_lock( )
-			{
-				std::unique_lock<std::mutex> local_lock( m_mutex );
-				fileLock = std::move( local_lock );
-			}
-			void release_lock( )
-			{
-				std::unique_lock<std::mutex> local_lock = std::move( fileLock );
-				local_lock.unlock( );
-			}
-
-		      private:
-			std::unique_lock<std::mutex> fileLock;
-			std::mutex                   m_mutex;
-		};
-	}  // namespace se_thread
 }  // namespace serenity

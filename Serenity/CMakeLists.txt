@@ -2,24 +2,34 @@ set (PROJECT_NAME Serenity)
 
 set (
     SERENITY_SOURCE_FILES
-    "src/Logger.cpp"
-    "src/LogFileHelper.cpp"
-    "src/Utilities.cpp"
-    "src/Sinks.cpp"
-    "src/LibLogger.cpp"
+    "src/MessageDetails/Message_Info.cpp"
+    "src/MessageDetails/Message_Time.cpp"
+    "src/MessageDetails/Message_Formatter.cpp"
+    "src/MessageDetails/FlushPolicy.cpp"
+    "src/Targets/Target.cpp"
+    "src/Targets/ColorConsoleTarget.cpp"
+    "src/Targets/FileTarget.cpp"
+    "src/Targets/RotatingTarget.cpp"
+    "src/Common.cpp"
+    "src/Color/Color.cpp"
+    "src/Utilities/Utilities.cpp"
 )
 
 set (
     SERENITY_HEADER_FILES
-    "include/serenity/Logger.h"
-    "include/serenity/Logger-impl.h"
-    "include/serenity/Defines.h"
+    "include/serenity/Version.h"
     "include/serenity/Common.h"
-    "include/serenity/Helpers/LogFileHelper.h"
-    "include/serenity/Interfaces/IObserver.h"
+    "include/serenity/MessageDetails/Message_Info.h"
+    "include/serenity/MessageDetails/Message_Time.h"
+    "include/serenity/MessageDetails/Message_Formatter.h"
+    "include/serenity/MessageDetails/FlushPolicy.h"
+    "include/serenity/Targets/Target.h"
+    "include/serenity/Targets/Target-impl.h"
+    "include/serenity/Targets/ColorConsoleTarget.h"
+    "include/serenity/Targets/FileTarget.h"
+    "include/serenity/Targets/RotatingTarget.h"
+    "include/serenity/Color/Color.h"
     "include/serenity/Utilities/Utilities.h"
-    "include/serenity/Sinks/Sinks.h"
-    "include/serenity/Helpers/LibLogger.h"
 )
 
 set (SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})

@@ -1,7 +1,7 @@
 set (PROJECT_NAME Sandbox)
 
 set (SANDBOX_HEADER_FILES)
-set (SANDBOX_SOURCE_FILES "src/demoTestMain.cpp")
+set (SANDBOX_SOURCE_FILES "src/Sandbox.cpp")
 set (SANDBOX_ALL_FILES ${SANDBOX_HEADER_FILES} ${SANDBOX_SOURCE_FILES})
 
 add_executable (${PROJECT_NAME} ${SANDBOX_ALL_FILES})
