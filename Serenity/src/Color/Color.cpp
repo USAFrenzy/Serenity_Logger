@@ -8,7 +8,6 @@ namespace tag_helper
 	}
 }  // namespace tag_helper
 
-
 // So Far, Only Real Issue I've Encountered Seems To Be The Very Common Issue Of Windows Terminal Issue #32
 // where when resizing the console window, the last color used fills in empty cells in that row.
 // Not going to lie, kinda frustrating..
@@ -118,7 +117,6 @@ namespace se_colors
 			return basic_colors::combos::black::on_green + tag_helper::toString( s ) + Reset( );
 		}
 
-
 		std::string Black_On_Yellow( std::string_view s )
 		{
 			return basic_colors::combos::black::on_yellow + tag_helper::toString( s ) + Reset( );
@@ -143,7 +141,6 @@ namespace se_colors
 		{
 			return basic_colors::combos::black::on_white + tag_helper::toString( s ) + Reset( );
 		}
-
 
 		std::string Black_On_Grey( std::string_view s )
 		{

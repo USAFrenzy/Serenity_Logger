@@ -127,18 +127,18 @@ namespace serenity
 		bool CreateDir( std::filesystem::path dirPath );
 		/// <returns>Returns True On Success Or If 'entry' Doesn't Exist, False Otherwise</returns>
 		bool RemoveEntry( std::filesystem::path entry );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
-		/// To The Console</returns>
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
+		/// Any, To The Console</returns>
 		bool ChangeDir( std::filesystem::path dirPath );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
-		/// To The Console</returns>
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
+		/// Any, To The Console</returns>
 		bool CopyContents( std::filesystem::path source, std::filesystem::path destination );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
-		/// To The Console. By Default, Creates A File With Full Permissions If It Doesn't Exist And Opens It In Append
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
+		/// Any, To The Console. By Default, Creates A File With Full Permissions If It Doesn't Exist And Opens It In Append
 		/// Mode</returns>
 		bool OpenFile( std::filesystem::path file, bool truncate );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If Any,
-		/// To The Console</returns>
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
+		/// Any, To The Console</returns>
 		bool CloseFile( std::filesystem::path file );
 	}  // namespace file_utils
 }  // namespace serenity

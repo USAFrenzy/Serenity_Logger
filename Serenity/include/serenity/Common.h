@@ -1,129 +1,183 @@
 #pragma once
 
-#include <serenity/Defines.h>
-#include <serenity/Version.h>
+#ifdef DOXYGEN_DOCUMENTATION
+/// @brief If _WIN32 is defined, then this is also defined.
+/// @details If this macro is defined, includes the Windows.h and io.h headers as well as defines ISATTY to _isatty and
+/// FILENO to _fileno. If ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
+	#define WINDOWS_PLATFORM
+/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also defined.
+/// @details If this macro is defined, includes the unistd.h header and defines ISATTY to isatty and FILENO to fileno
+	#define MAC_PLATFORM
+#endif
 
-#pragma warning( push, 0 )
-#include <spdlog/spdlog.h>
-#pragma warning( pop )
+#ifdef _WIN32
+	#define WINDOWS_PLATFORM
+#elif defined( __APPLE__ ) || defined( __MACH__ )
+	#define MAC_PLATFORM
+#else
+	#define LINUX_PLATFORM
+#endif
+
+#ifdef WINDOWS_PLATFORM
+	#ifndef DOXYGEN_DOCUMENTATION
+		#define WIN32_LEAN_AND_MEAN
+		#define VC_EXTRALEAN
+	#endif  // !DOXYGEN_DOCUMENTATION
+
+	#include <Windows.h>
+	#include <io.h>
+
+	#define ISATTY _isatty
+	#define FILENO _fileno
+	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+	#endif
+#else
+	#include <unistd.h>
+	#define ISATTY isatty
+	#define FILENO fileno
+#endif
+
+#define KB                  ( 1024 )
+#define MB                  ( 1024 * KB )
+#define GB                  ( 1024 * MB )
+#define DEFAULT_BUFFER_SIZE ( 64 * KB )
 
 #include <filesystem>
-#include <map>
+#include <string_view>
+#include <array>
+#include <unordered_map>
+#include <mutex>
+#include <thread>
+#include <atomic>
+#include <format>
 
-
-namespace serenity
+namespace serenity::expiremental
 {
-	using MappedLevel     = spdlog::level::level_enum;
-	namespace file_helper = std::filesystem;
+	enum class LineEnd
+	{
+		linux   = 0,
+		windows = 1,
+		mac     = 2,
+	};
+
+	namespace SERENITY_LUTS
+	{
+		static constexpr std::array<std::string_view, 22> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x",
+																			"%y", "%A", "%B", "%D", "%F", "%H", "%L", "%M",
+																			"%N", "%S", "%T", "%X", "%Y", "%+" };
+
+		static constexpr std::array<std::string_view, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+		static constexpr std::array<std::string_view, 7> long_weekdays = {
+		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+
+		static constexpr std::array<std::string_view, 12> short_months = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+		static constexpr std::array<const char *, 12> long_months = {
+		"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+
+		static constexpr std::array<std::string_view, 100> numberStr = {
+		"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16",
+		"17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33",
+		"34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50",
+		"51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67",
+		"68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84",
+		"85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99" };
+
+		static std::unordered_map<LineEnd, std::string_view> line_ending = {
+		{ LineEnd::linux, "\n" },
+		{ LineEnd::windows, "\r\n" },
+		{ LineEnd::mac, "\r" },
+		};
+
+	}  // namespace SERENITY_LUTS
 
 	enum class LoggerLevel
 	{
-		trace   = spdlog::level::trace,
-		debug   = spdlog::level::debug,
-		info    = spdlog::level::info,
-		warning = spdlog::level::warn,
-		error   = spdlog::level::err,
-		fatal   = spdlog::level::critical,
-		off     = spdlog::level::off,
+		trace   = 0,
+		info    = 1,
+		debug   = 2,
+		warning = 3,
+		error   = 4,
+		fatal   = 5,
+		off     = 6,
 	};
 
-	namespace se_utils
+	static std::string_view MsgLevelToShortString( LoggerLevel level )
 	{
-		static LoggerLevel ToLogLevel( MappedLevel level )
-		{
-			std::unordered_map<MappedLevel, LoggerLevel> levelMap = {
-			  { MappedLevel::trace, LoggerLevel::trace }, { MappedLevel::info, LoggerLevel::info },
-			  { MappedLevel::debug, LoggerLevel::debug }, { MappedLevel::warn, LoggerLevel::warning },
-			  { MappedLevel::err, LoggerLevel::error },   { MappedLevel::critical, LoggerLevel::fatal } };
-			LoggerLevel result   = LoggerLevel::off;
-			auto        iterator = levelMap.find( level );
-			if( iterator != levelMap.end( ) ) {
-				result = iterator->second;
-			}
-			return result;
+		switch( level ) {
+			case LoggerLevel::info: return "I"; break;
+			case LoggerLevel::trace: return "T"; break;
+			case LoggerLevel::debug: return "D"; break;
+			case LoggerLevel::warning: return "W"; break;
+			case LoggerLevel::error: return "E"; break;
+			case LoggerLevel::fatal: return "F"; break;
+			default: return ""; break;
 		}
+	}
 
-		static MappedLevel ToMappedLevel( LoggerLevel level )
-		{
-			std::unordered_map<LoggerLevel, MappedLevel> levelMap = {
-			  { LoggerLevel::trace, MappedLevel::trace }, { LoggerLevel::info, MappedLevel::info },
-			  { LoggerLevel::debug, MappedLevel::debug }, { LoggerLevel::warning, MappedLevel::warn },
-			  { LoggerLevel::error, MappedLevel::err },   { LoggerLevel::fatal, MappedLevel::critical } };
-			MappedLevel result   = MappedLevel::off;
-			auto        iterator = levelMap.find( level );
-			if( iterator != levelMap.end( ) ) {
-				result = iterator->second;
-			}
-			return result;
-		}
-		static std::string GetSerenityVerStr( )
-		{
-			auto version = VERSION_NUMBER( SERENITY_VERSION_MAJOR, SERENITY_VERSION_MINOR, SERENITY_VERSION_REVISION );
-			return version;
-		}
-	}  // namespace se_utils
-
-	namespace sinks
+	static std::string_view MsgLevelToString( LoggerLevel level )
 	{
-		using basic_sv = fmt::basic_string_view<char>;
-		namespace se_colors
-		{
-#ifdef PLATFORM_WINDOWS
-	#define WIN32_LEAN_AND_MEAN
-	#include <Windows.h>
-#endif
+		switch( level ) {
+			case LoggerLevel::info: return "Info"; break;
+			case LoggerLevel::trace: return "Trace"; break;
+			case LoggerLevel::debug: return "Debug"; break;
+			case LoggerLevel::warning: return "Warn"; break;
+			case LoggerLevel::error: return "Error"; break;
+			case LoggerLevel::fatal: return "Fatal"; break;
+			default: return ""; break;
+		}
+	}
 
-			struct win_colors
-			{
-				// Directly Pulled From spdlog
-				const WORD BOLD   = FOREGROUND_INTENSITY;
-				const WORD RED    = FOREGROUND_RED;
-				const WORD GREEN  = FOREGROUND_GREEN;
-				const WORD CYAN   = FOREGROUND_GREEN | FOREGROUND_BLUE;
-				const WORD WHITE  = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-				const WORD YELLOW = FOREGROUND_RED | FOREGROUND_GREEN;
+	enum class message_time_mode
+	{
+		local,
+		utc
+	};
 
-				const WORD BG_RED = BACKGROUND_RED;
-			};
+	struct BackgroundThread
+	{
+		std::atomic<bool>  cleanUpThreads { false };
+		std::atomic<bool>  flushThreadEnabled { false };
+		mutable std::mutex readWriteMutex;
+		std::thread        flushThread;
+	};
 
-			// Directly Pulled From spdlog
-			struct ansi_colors
-			{  // Formatting codes
-				const basic_sv reset      = "\033[m";
-				const basic_sv bold       = "\033[1m";
-				const basic_sv dark       = "\033[2m";
-				const basic_sv underline  = "\033[4m";
-				const basic_sv blink      = "\033[5m";
-				const basic_sv reverse    = "\033[7m";
-				const basic_sv concealed  = "\033[8m";
-				const basic_sv clear_line = "\033[K";
+	struct FileSettings
+	{
+		std::filesystem::path filePath;
+		std::vector<char>     fileBuffer;
+		size_t                bufferSize { DEFAULT_BUFFER_SIZE };
+	};
 
-				// Foreground colors
-				const basic_sv black   = "\033[30m";
-				const basic_sv red     = "\033[31m";
-				const basic_sv green   = "\033[32m";
-				const basic_sv yellow  = "\033[33m";
-				const basic_sv blue    = "\033[34m";
-				const basic_sv magenta = "\033[35m";
-				const basic_sv cyan    = "\033[36m";
-				const basic_sv white   = "\033[37m";
+	struct RotateSettings
+	{
+		// Will add an interval based setting later
+		// (something like a weekly basis on specified day and a daily setting)
 
-				/// Background colors
-				const basic_sv on_black   = "\033[40m";
-				const basic_sv on_red     = "\033[41m";
-				const basic_sv on_green   = "\033[42m";
-				const basic_sv on_yellow  = "\033[43m";
-				const basic_sv on_blue    = "\033[44m";
-				const basic_sv on_magenta = "\033[45m";
-				const basic_sv on_cyan    = "\033[46m";
-				const basic_sv on_white   = "\033[47m";
+		bool   rotateOnFileSize { true };
+		size_t maxNumberOfFiles { 5 };
+		size_t fileSizeLimit { 512 * KB };
 
-				/// Bold colors
-				const basic_sv yellow_bold = "\033[33m\033[1m";
-				const basic_sv red_bold    = "\033[31m\033[1m";
-				const basic_sv bold_on_red = "\033[1m\033[41m";
-			};
+		void                         SetOriginalSettings( const std::filesystem::path &filePath );
+		void                         SetCurrentFileSize( size_t currentSize );
+		const std::filesystem::path &OriginalPath( );
+		const std::filesystem::path &OriginalDirectory( );
+		const std::string &          OriginalName( );
+		const std::string &          OriginalExtension( );
+		const size_t &               FileSize( );
 
-		}  // namespace se_colors
-	}          // namespace sinks
-}  // namespace serenity
+	  private:
+		size_t                currentFileSize { 0 };
+		std::string           ext, fileName;
+		std::filesystem::path path, directory;
+	};
+}  // namespace serenity::expiremental
+
+#ifndef NDEBUG
+	#define DB_PRINT( msg, ... ) ( std::cout << std::format( msg, __VA_ARGS__ ) )
+#else
+	#define DB_PRINT( msg, ... )
+#endif  // !NDEBUG

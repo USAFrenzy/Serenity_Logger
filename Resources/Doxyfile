@@ -51,7 +51,7 @@ PROJECT_BRIEF          = "A very fast and effiecient logging library. This libra
 # pixels and the maximum width should not exceed 200 pixels. Doxygen will copy
 # the logo to the output directory.
 
-PROJECT_LOGO           =
+PROJECT_LOGO           = Placeholder_Icon.png
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
 # into which the generated documentation will be written. If a relative path is
@@ -874,7 +874,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/Sandbox/src/Experimental_SB
+INPUT                  = ../Serenity
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -963,14 +963,11 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = ../Sandbox/src/Experimental_SB/SeparateSandbox/Serenity_Sandbox/.clang-format \
-                         ../Sandbox/src/Experimental_SB/SeparateSandbox/Serenity_Sandbox/.gitignore \
-                         ../Sandbox/src/Experimental_SB/SeparateSandbox/Serenity_Sandbox/CMakeLists.txt \
-                         ../Sandbox/src/Experimental_SB/SeparateSandbox/Serenity_Sandbox/Source.cpp \
-                         ../Sandbox/src/Experimental_SB/SeparateSandbox/Serenity_Sandbox/Utilities.cpp \
-                         ../Sandbox/src/Experimental_SB/SeparateSandbox/Serenity_Sandbox/Utilities.h \
-                         ../Sandbox/src/Experimental_SB/Experimental_Sandbox.cpp \
-                         ../Sandbox/src/Experimental_SB/Targets/Target-impl.h
+EXCLUDE                = ../Serenity/include/serenity/Utilities \
+                         ../Serenity/include/serenity/Color \
+                         ../Serenity/src/Utilities \
+                         ../Serenity/src/Color \
+                         ../Serenity/include/serenity/Targets/Target-impl.h
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
