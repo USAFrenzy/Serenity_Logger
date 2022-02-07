@@ -5,7 +5,7 @@
 #include <string_view>
 #include <chrono>
 
-namespace serenity::expiremental::msg_details
+namespace serenity::msg_details
 {
 	class Message_Time
 	{
@@ -29,4 +29,4 @@ namespace serenity::expiremental::msg_details
 		std::tm              m_cache;
 		std::chrono::seconds secsSinceLastLog;
 	};
-}  // namespace serenity::expiremental::msg_details
+}  // namespace serenity::experimental::msg_details

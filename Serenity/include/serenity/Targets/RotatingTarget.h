@@ -2,9 +2,9 @@
 
 #include <serenity/Targets/FileTarget.h>
 
-namespace serenity::expiremental::targets
+namespace serenity::experimental::targets
 {
-	class RotatingTarget : public FileTarget
+	class RotatingTarget : public serenity::targets::FileTarget
 	{
 	  public:
 		RotatingTarget( );
@@ -26,4 +26,4 @@ namespace serenity::expiremental::targets
 		RotateSettings rotateSettings;
 	};
 
-}  // namespace serenity::expiremental::targets
+}  // namespace serenity::experimental::targets

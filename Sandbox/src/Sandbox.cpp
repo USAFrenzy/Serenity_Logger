@@ -98,12 +98,11 @@ int main( )
 	spdlogRotatingLogger->set_pattern( "%^|%L| %a %d%b%C %T [%n]: %v%$" );  // equivalent to Target's Default Pattern
 
 	using namespace se_colors;
-	using namespace serenity::expiremental;
 	using namespace serenity::se_utils;
 
-	targets::ColorConsole   C;
-	targets::FileTarget     testFile;
-	targets::RotatingTarget rotatingFile;
+	serenity::targets::ColorConsole                 C;
+	serenity::targets::FileTarget                   testFile;
+	serenity::experimental::targets::RotatingTarget rotatingFile;
 
 	// TODO: Fix this to work as expected
 	// PeriodicSettings settings;
@@ -370,25 +369,27 @@ int main( )
 	std::cout << "\n";
 
 	std::cout << Tag::Bright_Yellow( "Size of Base Target Class:\t\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::TargetBase ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::targets::TargetBase ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of ColorConsole Target Class:\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::ColorConsole ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::targets::ColorConsole ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of File Target Class:\t\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::FileTarget ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::targets::FileTarget ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Rotating Target Class:\t\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( targets::RotatingTarget ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::experimental::targets::RotatingTarget ) ) +
+									"\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Info Class:\t\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Info ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::msg_details::Message_Info ) ) + "\tbytes ]\n" );
 
-	std::cout << Tag::Bright_Yellow( "Size of Message_Formatter Class:\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Formatter ) ) + "\tbytes ]\n" );
+	std::cout
+	<< Tag::Bright_Yellow( "Size of Message_Formatter Class:\t" )
+	<< Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::msg_details::Message_Formatter ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Time Class:\t\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( msg_details::Message_Time ) ) + "\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::msg_details::Message_Time ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Yellow( "***************************************************************************************"
 							  "\n" );

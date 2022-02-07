@@ -5,7 +5,7 @@
 #include <chrono>
 #include <mutex>
 
-namespace serenity::expiremental
+namespace serenity::experimental
 {
 	enum class Flush
 	{
@@ -52,4 +52,4 @@ namespace serenity::expiremental
 		PeriodicSettings subSettings;
 		std::mutex       policyMutex;
 	};
-}  // namespace serenity::expiremental
+}  // namespace serenity::experimental

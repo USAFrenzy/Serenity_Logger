@@ -2,8 +2,10 @@
 
 #include <iostream>
 
-namespace serenity::expiremental::targets
+namespace serenity::experimental::targets
 {
+	using namespace serenity::targets;
+
 	RotatingTarget::RotatingTarget( )
 	  : FileTarget( "Rotating_Log.txt", true ), rotateFile( true ), rotateSettings( RotateSettings( ) )
 	{
@@ -186,4 +188,4 @@ namespace serenity::expiremental::targets
 		}
 	}
 
-}  // namespace serenity::expiremental::targets
+}  // namespace serenity::experimental::targets

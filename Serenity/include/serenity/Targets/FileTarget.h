@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-namespace serenity::expiremental::targets
+namespace serenity::targets
 {
 	class FileTarget : public TargetBase
 	{
@@ -27,7 +27,7 @@ namespace serenity::expiremental::targets
 
 	  private:
 		LoggerLevel   logLevel;
-		Flush_Policy &policy;
+		serenity::experimental::Flush_Policy &policy;
 
 	  protected:
 		std::ofstream    fileHandle;
@@ -36,4 +36,4 @@ namespace serenity::expiremental::targets
 		void             PolicyFlushOn( ) override;
 		void             PrintMessage( std::string_view formatted ) override;
 	};
-}  // namespace serenity::expiremental::targets
+}  // namespace serenity::experimental::targets

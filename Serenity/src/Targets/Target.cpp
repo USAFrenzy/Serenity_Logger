@@ -1,10 +1,10 @@
 #include <serenity/Targets/Target.h>
 
-namespace serenity::expiremental::targets
+namespace serenity::targets
 {
 	TargetBase::TargetBase( )
 	  : toBuffer( false ),
-		policy( Flush::never ),
+		policy( serenity::experimental::Flush::never ),
 		logLevel( LoggerLevel::trace ),
 		msgLevel( LoggerLevel::trace ),
 		pattern( "|%l| %x %n %T [%N]: %+" ),
@@ -15,7 +15,7 @@ namespace serenity::expiremental::targets
 
 	TargetBase::TargetBase( std::string_view name )
 	  : toBuffer( false ),
-		policy( Flush::never ),
+		policy( serenity::experimental::Flush::never ),
 		logLevel( LoggerLevel::trace ),
 		msgLevel( LoggerLevel::trace ),
 		pattern( "|%l| %x %n %T [%N]: %+" ),
@@ -26,7 +26,7 @@ namespace serenity::expiremental::targets
 
 	TargetBase::TargetBase( std::string_view name, std::string_view fmtPattern )
 	  : toBuffer( false ),
-		policy( Flush::never ),
+		policy( serenity::experimental::Flush::never ),
 		logLevel( LoggerLevel::trace ),
 		msgLevel( LoggerLevel::trace ),
 		pattern( fmtPattern ),
@@ -55,12 +55,12 @@ namespace serenity::expiremental::targets
 		msgPattern.SetPattern( std::string { pattern.data( ), pattern.size( ) } );
 	}
 
-	void TargetBase::SetFlushPolicy( Flush_Policy pPolicy )
+	void TargetBase::SetFlushPolicy( serenity::experimental::Flush_Policy pPolicy )
 	{
 		policy = pPolicy;
 	}
 
-	Flush_Policy &TargetBase::Policy( )
+	serenity::experimental::Flush_Policy &TargetBase::Policy( )
 	{
 		return policy;
 	}
@@ -98,4 +98,4 @@ namespace serenity::expiremental::targets
 		msgDetails.SetName( name );
 	}
 
-}  // namespace serenity::expiremental::targets
+}  // namespace serenity::experimental::targets

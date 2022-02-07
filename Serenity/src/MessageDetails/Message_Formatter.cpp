@@ -1,6 +1,6 @@
 #include <serenity/MessageDetails/Message_Formatter.h>
 
-namespace serenity::expiremental::msg_details
+namespace serenity::msg_details
 {
 	Message_Formatter::Message_Formatter( std::string_view pattern, Message_Info *details ) : msgInfo( *&details )
 	{
@@ -513,4 +513,4 @@ namespace serenity::expiremental::msg_details
 		return localBuffer;
 	}
 
-}  // namespace serenity::expiremental::msg_details
+}  // namespace serenity::msg_details

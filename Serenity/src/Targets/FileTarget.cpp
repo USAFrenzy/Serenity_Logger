@@ -2,7 +2,7 @@
 
 #include <iostream>  // specifically for std::cerr
 
-namespace serenity::expiremental::targets
+namespace serenity::targets
 {
 	FileTarget::FileTarget( ) : TargetBase( "File_Logger" ), policy( Policy( ) )
 	{
@@ -211,13 +211,13 @@ namespace serenity::expiremental::targets
 
 	void FileTarget::PolicyFlushOn( )
 	{
-		if( policy.PrimarySetting( ) == Flush::never ) return;
-		if( policy.PrimarySetting( ) == Flush::always ) {
+		if( policy.PrimarySetting( ) == serenity::experimental::Flush::never ) return;
+		if( policy.PrimarySetting( ) == serenity::experimental::Flush::always ) {
 			Flush( );
 			return;
 		}
 		switch( policy.SubSetting( ) ) {
-			case PeriodicOptions::timeBased:
+			case serenity::experimental::PeriodicOptions::timeBased:
 			{
 				if( flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) ) return;
 				auto &p_policy { policy };
@@ -245,7 +245,7 @@ namespace serenity::expiremental::targets
 					flushWorker.flushThreadEnabled.store( true );
 				}
 			} break;  // time based bounds
-			case PeriodicOptions::logLevelBased:
+			case serenity::experimental::PeriodicOptions::logLevelBased:
 			{
 				if( MsgInfo( )->MsgLevel( ) < policy.SecondarySettings( ).flushOn ) return;
 				Flush( );
@@ -254,4 +254,4 @@ namespace serenity::expiremental::targets
 		}                    // Sub Option Check
 	}                        // PolicyFlushOn( ) Function
 
-}  // namespace serenity::expiremental::targets
+}  // namespace serenity::targets

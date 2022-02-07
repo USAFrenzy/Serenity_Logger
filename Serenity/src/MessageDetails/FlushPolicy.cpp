@@ -1,6 +1,6 @@
 #include <serenity/MessageDetails/FlushPolicy.h>
 
-namespace serenity::expiremental
+namespace serenity::experimental
 {
 	Flush_Policy::Flush_Policy( Flush primaryOpt )
 	  : mainOpt( primaryOpt ), subOpt( PeriodicOptions::undef ), subSettings( { } )
@@ -68,4 +68,4 @@ namespace serenity::expiremental
 	{
 		return *this;
 	}
-}  // namespace serenity::expiremental
+}  // namespace serenity::experimental

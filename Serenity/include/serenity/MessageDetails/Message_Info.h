@@ -3,7 +3,7 @@
 #include <serenity/Common.h>
 #include <serenity/MessageDetails/Message_Time.h>
 
-namespace serenity::expiremental::msg_details
+namespace serenity::msg_details
 {
 	class Message_Info
 	{
@@ -42,4 +42,4 @@ namespace serenity::expiremental::msg_details
 		std::string  m_message;
 		Message_Time m_msgTime;
 	};
-}  // namespace serenity::expiremental::msg_details
+}  // namespace serenity::experimental::msg_details

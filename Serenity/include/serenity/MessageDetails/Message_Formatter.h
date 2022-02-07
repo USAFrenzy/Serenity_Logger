@@ -6,7 +6,7 @@
 #include <format>
 #include <string>
 
-namespace serenity::expiremental::msg_details
+namespace serenity::msg_details
 {
 	class Message_Formatter
 	{
@@ -327,4 +327,4 @@ namespace serenity::expiremental::msg_details
 		Message_Info *msgInfo;
 	};
 
-}  // namespace serenity::expiremental::msg_details
+}  // namespace serenity::experimental::msg_details

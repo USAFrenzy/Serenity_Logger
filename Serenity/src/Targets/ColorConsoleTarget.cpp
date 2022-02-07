@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace serenity::expiremental::targets
+namespace serenity::targets
 {
 	ColorConsole::ColorConsole( )
 	  : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( false )
@@ -158,4 +158,4 @@ namespace serenity::expiremental::targets
 		};
 	}
 
-}  // namespace serenity::expiremental::targets
+}  // namespace serenity::targets

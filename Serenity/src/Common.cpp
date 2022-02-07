@@ -1,6 +1,6 @@
 #include <serenity/Common.h>
 
-namespace serenity::expiremental
+namespace serenity::experimental
 {
 	void RotateSettings::SetOriginalSettings( const std::filesystem::path &filePath )
 	{
@@ -42,4 +42,4 @@ namespace serenity::expiremental
 		return currentFileSize;
 	}
 
-}  // namespace serenity::expiremental
+}  // namespace serenity::experimental
