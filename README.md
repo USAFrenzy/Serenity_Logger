@@ -24,15 +24,17 @@
 <p>For now, my goal is simply to achieve a multi-threaded and single-threaded version of a console target, color console target, file target, rotating file target, a XML target capable of shredding, and lastly the possibility of a very basic HTML target. I would like to add many more built-in capabilities than just these, but I feel that this would be a strong start for this project. I did at one point try to use function pointers for formatting functions, however that route ended up being slower than the standard I'm aiming to beat - so for now these are in the form of formatting structs.</p>
 
 ## Statistics ##
-
+**Sandbox Environment was compiled with /utf-8 /O2 for the below results.** 
 <br>
+
 I still have to properly benchmark among other logging frameworks as well as spdlog, but in crude timing benches of a 400 byte C-style string in 1,000,000 iterations 
-on my Intel I9-10900k cpu. Serenity's console target is ~40%-42% faster while Serenity's file target is ~30% -35% faster than spdlog's current counterparts. 
-The newly added Rotating Target is ~45%-50% faster than spdlog's Rotating File Sink.
-- Sandbox compiled with /utf-8 /O2
- 
+on my Intel I9-10900k cpu:
+- Serenity's console target is ~40%-42% faster than spdlog's current counterpart.
+- Serenity's file target is ~30% -35% faster than spdlog's current counterpart. 
+- The newly added Rotating Target is ~45%-50% faster than spdlog's current counterpart.
  <br>
-For A Very Crude And Simple Benchmark Test Of A 400 byte C-style string over 1,000,000 iterations (Single Threaded) 
+
+#### For A Very Crude And Simple Benchmark Test Of A 400 byte C-style string over 1,000,000 iterations (Single Threaded) ####
 
  ___________________________________________________________________________________________
  |      Logging Sink/Target      |      Logging Speed       |      Logging Throughput      |             
