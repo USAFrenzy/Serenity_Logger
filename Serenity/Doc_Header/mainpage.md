@@ -1,6 +1,4 @@
 
-### For all current details about the library, check out the documentation [HERE](https://usafrenzy.github.io/Serenity_Logger/) ###
-
 --------------------------------------
 <h1 align="center"> Requirements And Features Explicitly Used</h1>
 
