@@ -26,6 +26,9 @@ var NAVTREE =
 [
   [ "Serenity Logger", "index.html", [
     [ "Namespaces", "namespaces.html", [
+      [ "For Out Of The Box Usage", "index.html#autotoc_md1", null ],
+      [ "More Involved Alternative", "index.html#autotoc_md2", null ],
+      [ "C++14 And Earlier", "index.html#autotoc_md3", null ],
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
         [ "All", "namespacemembers.html", null ],
@@ -43,6 +46,13 @@ var NAVTREE =
         [ "Functions", "functions_func.html", null ],
         [ "Variables", "functions_vars.html", null ]
       ] ]
+    ] ],
+    [ "Files", "files.html", [
+      [ "File List", "files.html", "files_dup" ],
+      [ "File Members", "globals.html", [
+        [ "All", "globals.html", null ],
+        [ "Macros", "globals_defs.html", null ]
+      ] ]
     ] ]
   ] ]
 ];
@@ -50,7 +60,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"dc/d4d/classserenity_1_1msg__details_1_1_message___time.html#aa2d07d2e940b1bbf1e9efa0d686c7a9c"
+"d9/d61/classserenity_1_1msg__details_1_1_message___info.html#ada1b848da76a5233a3e6ea7f1f3867c6"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

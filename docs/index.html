@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Serenity Logger: Main Page</title>
+<title>Serenity Logger: Serenity Logger</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -83,10 +83,325 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </iframe>
 </div>
 
-<div class="header">
-  <div class="headertitle"><div class="title">Serenity Logger Documentation</div></div>
+<div><div class="header">
+  <div class="headertitle"><div class="title">Serenity Logger </div></div>
 </div><!--header-->
 <div class="contents">
+<div class="textblock"><p ><a class="anchor" id="md_C__Users_mccul_OneDrive_Desktop_Serenity_Logger_Serenity_Doc_Header_mainpage"></a></p><hr  />
+ <h1 align="center">Requirements And Features Explicitly Used</h1>
+<h2><a class="anchor" id="autotoc_md1"></a>
+For Out Of The Box Usage</h2>
+<ul>
+<li>C++20<ul>
+<li>C++20 features used<ul>
+<li>the new method of lambda <code>this</code> capture</li>
+<li>using enum (in the WIP <code>template&lt;&gt; std::formatter</code> specializations)</li>
+<li><code>&lt;format&gt;</code> library header</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>CMake</li>
+<li>MSVC toolchain (Currently only MSVC has an implementation of libfmt).<ul>
+<li>This library will be updated to support clang and g++ once libfmt is <br  />
+ implemented on those compilers. </li>
+</ul>
+</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md2"></a>
+More Involved Alternative</h2>
+<ul>
+<li>For C++17 (No Built-In Support As Of Yet)<ul>
+<li>C++17 features used<ul>
+<li>automatic template argument deduction</li>
+<li>keyword <code>auto</code> deductions</li>
+<li>nested namespaces resolution operator</li>
+<li>filesystem header</li>
+<li>string_view</li>
+<li>std::data</li>
+<li>std::empty</li>
+<li>std::size</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>CMake</li>
+<li>If you have access to <code>fmtlib</code> by Viktor Zverovich:<ul>
+<li>Remove the <code>#include &lt;format&gt;</code> and drop in fmt library headers as libfmt <br  />
+ is the standard's implementation of his work.</li>
+<li>Replace any instances of std::format related functions with fmt equivalents</li>
+</ul>
+</li>
+<li>Will be adding the libfmt wrapper soon to encapsulate functions that are required by this library <br  />
+ in order to add C++17 support for this library by default. <br  />
+<ul>
+<li>This mostly boils down to the usage of:<ul>
+<li><code>std::vformat()</code></li>
+<li><code>std::vformat_to()</code></li>
+<li><code>std::make_format_args()</code></li>
+<li><code>std::basic_format_context&lt;iter, char&gt;</code></li>
+<li><code>template&lt;&gt; std::formatter</code> specializations</li>
+<li>The template specializations may be abandoned and aren't currently used - manual formatting is<br  />
+ currently still faster than the specializations </li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md3"></a>
+C++14 And Earlier</h2>
+<ul>
+<li>No C++14 Support As Of Yet<ul>
+<li>C++11 will most likely NOT be supported due to the amount of C++14 and above features used<ul>
+<li>C++14 features used<ul>
+<li>Generic lambdas</li>
+<li>Lambda capture initializers</li>
+<li>Return type deductions used internally in some functions</li>
+<li>std::make_unique</li>
+<li>Usage of move semantics and rvalue references</li>
+<li>Usage of member functions with move semantics</li>
+<li>Forwarding references</li>
+<li>Variadic templates</li>
+<li>keyword <code>auto</code> specifier</li>
+<li>strongly typed enums</li>
+<li>Explicit virtual overrides</li>
+<li>Default and Deleted functions</li>
+<li>Range-based for loops</li>
+<li>Some files use inline namespaces instead of C++17's namespace resolution operator</li>
+<li>The whole right angle bracket clarity on whitespace</li>
+<li>reference qualified member functions</li>
+</ul>
+</li>
+<li>C++11 features used<ul>
+<li>std::move</li>
+<li>std::forward</li>
+<li>std::thread</li>
+<li>std::to_string</li>
+<li>smart pointers</li>
+<li>std::chrono</li>
+<li>std::array</li>
+<li>std::make_shared <br  />
+<br  />
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr  />
+ <h1 align="center">Motivation </h1>
+<p >One often doesn't think of logging as a fun endeavor, but my goal here is to have just that - a logger that's highly efficient, fast, customizable, fun, and easy to use. I wanted to make a logger that had several color choices to pick from (More than a user may ever need, while still modularizing components for choices a user may not want). I plan on extending this to cover some basic RGB color combos as well and add user defined formatting call backs and a way to add user defined flags. </p>
+<p >This project is honestly more of a learning project meant for practicing. This is for a multitude of different reasons - the major one being that my main aim is to have a project that was completed from start to finish. </p>
+<p >For now, my goal is simply to achieve a multi-threaded and single-threaded version of a console target, color console target, file target, rotating file target, some form of an XML target capable of shredding, and lastly the possibility of a very basic HTML target. I would like to add many more built-in capabilities than just these, but I feel that this would be a strong start for this project. I did at one point try to use function pointers for formatting functions, however that route ended up being slower than the standard I'm aiming to beat - so for now these are in the form of formatting structs.</p>
+<hr  />
+ <h1 align="center">Basic Overview </h1>
+<p >Currently, this library only provides classes to allow for basic file logging, file sized based rotational logging, and terminal logging. Before going forward, all built-in logging classes inherit from the base class, TargetBase. This base class holds some common functions and settings used by all the derived targets. </p>
+<hr  />
+ <p >The TargetBase class exposes the following:</p>
+<p ><b>The TargetBase class can be found in the <code>&lt;<a class="el" href="d0/d32/_target_8h.html" title="This file contains the TargetBase class - the class all built-in targets inherit from for common shar...">serenity/Targets/Target.h</a>&gt;</code> header.</b></p><ul>
+<li>The ability to set a user specified flush policy<ul>
+<li>This determines how often log messages should be flushed to disk</li>
+<li>Current policies control a wall-clock time interval based flushing system and a message level threshold based flushing system.<ul>
+<li>The time interval policy utilizes a background thread to keep track of elapsed time <br  />
+ and will protect against data races when flushing the file to disk.</li>
+<li>Therefore, this policy will block log messages only when the time elapsed is greater <br  />
+ than or equal to the interval limit that was set by calling <code><a class="el" href="d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685" title="This enum encapsulates the values for how flushing should be done.">Flush()</a></code>.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Current flush policies expanded:<ul>
+<li>If interval based, can flush the file to disk every 5 seconds for example (time can be customized).</li>
+<li>If message threshold based, can flush the file to disk every time a message with a level of warning or <br  />
+ higher (warning, error, and fatal) is logged as an example (level threshold can be customized).</li>
+</ul>
+</li>
+<li>The ability to set a user-specified format pattern.<ul>
+<li>If no prepended pattern is wanted, use <code>SetPattern()</code> with an empty string argument.</li>
+<li>Currently supported flags can be found in the <code>&lt;<a class="el" href="db/d1f/_common_8h.html" title="This file contains some common functions, enums, and look-up tables used for most logging targets.">serenity/Common.h</a>&gt;</code> header under the <code>allValidFlags</code> <br  />
+ look up table and is a part of the SERENITY_LUTS namespace.</li>
+</ul>
+</li>
+<li>The ability to reset the format pattern to its default pattern.</li>
+<li>The default pattern is in the form of:<ul>
+<li><code>[Message Level] wkday_name DDMMMYY HH:MM:SS [Logger]: message to log + end_of_line</code></li>
+<li>Example: <code>[Trace] Mon 25Mar22 13:23:02 [Example_Logger]: message to log \n</code></li>
+</ul>
+</li>
+<li>Ability to set the log level via <code>SetLogLevel()</code> which determines what messages are actually logged.</li>
+<li>Ability to enable/disable writing to a buffer instead of a file during the process.<ul>
+<li>The buffer reserves 512KB but can dynamically resized if contents get too large.</li>
+<li>The buffer is flushed to disk when <code><a class="el" href="d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685" title="This enum encapsulates the values for how flushing should be done.">Flush()</a></code> is explicitly called or when the destructor is called.</li>
+<li>Note: this buffer is different from the buffer used by the file handle itself in derived classes.</li>
+</ul>
+</li>
+<li>Ability to set the logger's name via <code>SetLoggerName()</code>.</li>
+<li>This class is also what currently holds the explicit logging funtions:<ul>
+<li><code>Trace()</code>, <code>Info()</code>, <code>Debug()</code>, <code>Warn()</code>, <code>Error()</code>, and <code>Fatal()</code></li>
+</ul>
+</li>
+<li>Exposes the functions <code>PrintMessage()</code>, <code>PolicyFlushOn()</code>, <code>MsgFmt()</code>, <code>MsgInfo()</code> to derived <br  />
+ classes to be re-implemented by the user. </li>
+</ul>
+<hr  />
+ <p >The FileTarget class is capable of the following:</p>
+<p ><b>File logging occurs via the FileTarget class found in the <code>&lt;<a class="el" href="df/d5e/_file_target_8h.html" title="This file contains the FileTarget class which is in charge of all log operations to basic files.">serenity/Targets/FileTarget.h</a>&gt;</code> header.</b></p><ul>
+<li>Creating a log file if it doesn't exist<ul>
+<li>This also applies to the log directory</li>
+</ul>
+</li>
+<li>Being able to erase contents of the file via <code>EraseContents()</code> call</li>
+<li>Able to rename the file being logged to (this does block logs until rename completes)</li>
+<li>Ability to explicitly open, close, and flush the logging file.</li>
+<li>The ability to inherit from this target to specialize the <code>PolicyFlushOn()</code>, <code>PrintMessage()</code>, and <code>RenameFile()</code> functions.</li>
+<li>This gives the user some flexibility over how they may want to implement flushing and logging type functions.</li>
+<li><code>RenameFile()</code> is also a virtual function so that the user can define if they want a specific routine for<br  />
+ this purpose or if they don't want this function to do anything when called.</li>
+<li>Change the default buffer size held by the file handle by altering the DEFAULT_BUFFER_SIZE macro.<ul>
+<li>Default value is 64KB</li>
+<li>NOTE: this is different from the buffer used by the TargetBase class and is used to minimize system <br  />
+ OS calls for flushing contents to disk, which can be very expensive.</li>
+</ul>
+</li>
+<li>Inherits the utility of the TargetBase class functions as well. </li>
+</ul>
+<hr  />
+ <p >The RotatingTarget class is capable of the following:</p>
+<p ><b>Rotational logging occurs via the RotatingTarget class found in the <code>&lt;<a class="el" href="de/d17/_rotating_target_8h.html" title="This file holds the RotatingTarget Class and rotation based functions used in logging to files.">serenity/Targets/RotatingTarget.h</a>&gt;</code> header.</b></p><ul>
+<li>The RotatingTarget class is currently still in the experimental namespace due to work still being <br  />
+ done on interval (day/hour based) rotation. File size based rotation is functional however.</li>
+<li>Enable/Disble rotation if desired<ul>
+<li>If disabled, this class effectively mirrors FileTarget class functionality.</li>
+</ul>
+</li>
+<li>Set specific rotation settings<ul>
+<li>The current rotation settings only implement file-size based rotations</li>
+<li>Current rotation settings are:<ul>
+<li>enable/disable rotating initially</li>
+<li>set the maximum number of files to create and rotate through <br  />
+ when the file size limit has been reached</li>
+<li>set the file size limit for files being logged to</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Caching the file path and its components as well as the file's base name and setting up the current file for <br  />
+ rotation via <code>RenameFileForRotation()</code><ul>
+<li>This is done automatically in the constructors</li>
+<li>This is also done when <code>RenameFile()</code> is called AND rotation is enabled.</li>
+<li>If rotation was initially disabled but re-enabled after renaming the file, future logs will be named to <br  />
+ this base name during their rotation<ul>
+<li>Previous logs are unaffected until the next time they are selected in the rotation queue.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Inherits from FileTarget functions, TargetBase functions and both of their utilities. </li>
+</ul>
+<hr  />
+ <p >NOTE: If using both FileTarget and RotatingTarget classes, the DEFAULT_BUFFER_SIZE macro will affect both of these classes' file handle buffer. </p>
+<hr  />
+ <p >TODO: Make the file handle buffer sizing a function call instead of a macro to separate common classes. </p>
+<hr  />
+ <p >The ColorConsoleTarget class is capable of the following: </p>
+<p ><b>Terminal logging occurs via the ColorConsoleTarget class found in the <code>&lt;<a class="el" href="d2/da6/_color_console_target_8h.html" title="This file holds the class in charge of writing to the standard outputs and is terminal/pipe-aware.">serenity/Targets/ColorConsoleTarget.h</a>&gt;</code> header.</b> <br  />
+</p>
+<ul>
+<li>Setting independant colors to message levels<ul>
+<li>Default colors for the message levels are: <table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Level   </th><th class="markdownTableHeadNone">Color    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Trace   </td><td class="markdownTableBodyNone">Bright White    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Info   </td><td class="markdownTableBodyNone">Bright Green    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Debug   </td><td class="markdownTableBodyNone">Bright Cyan    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Warning   </td><td class="markdownTableBodyNone">Bright Yellow    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Error   </td><td class="markdownTableBodyNone">Basic Red    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Fatal   </td><td class="markdownTableBodyNone">Bright Yellow On Red   </td></tr>
+</table>
+</li>
+</ul>
+</li>
+<li>Setting the terminal output mode using the console_interface enum options<ul>
+<li>These options mirror the standard outputs</li>
+</ul>
+</li>
+<li>Enabling/Disabling color output for messages</li>
+<li>Resetting to default colors through <code>SetOriginalColors()</code></li>
+<li>Ability to check if an output handle is valid (<code>IsValidHandle()</code>) and <br  />
+ if the output handle is a terminal device (<code>IsTerminalType()</code>)</li>
+<li>If terminal output is being piped to another location instead:<ul>
+<li>If Windows platform, <code>WriteFile()</code> will be called instead of the default <code>WriteConsole()</code></li>
+<li>Output will be flushed when output handle's internal buffer is full or when <code><a class="el" href="d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685" title="This enum encapsulates the values for how flushing should be done.">Flush()</a></code> <br  />
+ is explicitly called. Will also call <code><a class="el" href="d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685" title="This enum encapsulates the values for how flushing should be done.">Flush()</a></code> in the destructor to ensure contents are <br  />
+ present in the pipe.</li>
+</ul>
+</li>
+<li>If Windows platform, utilizes the windows macro ENABLE_VIRTUAL_TERMINAL_PROCESSING <br  />
+ for ansi color codes.<ul>
+<li>If not defined for the windows platform, will automatically define this macro</li>
+<li>If enabled, the destructor will reset the terminal mode to its defaults</li>
+</ul>
+</li>
+<li>All basic 8 bit colors and combinations have been wrapped for ease-of-use in the <code>&lt;serenity/Colors/Color.h&gt;</code> <br  />
+ header under the se_colors namespace.</li>
+<li>example usage for setting colors with this helper header:</li>
+</ul>
+<div class="fragment"><div class="line"><span class="keyword">namespace </span>color = serenity::se_colors::bright_colors;</div>
+<div class="line"><span class="keyword">namespace </span>target = <a class="code hl_namespace" href="dc/dc1/namespaceserenity_1_1targets.html">serenity::targets</a>;</div>
+<div class="line"><span class="comment">// Create the console target with default format pattern and user-defined name</span></div>
+<div class="line">target::ColorConsoleTarget example(<span class="stringliteral">&quot;Example_Logger&quot;</span>); </div>
+<div class="line"><span class="comment">// Set the message level to any ansi-supported code (using helper header here)</span></div>
+<div class="line">example.SetMsgColor(LoggerLevel::trace, color::foreground::grey );  </div>
+<div class="ttc" id="anamespaceserenity_1_1targets_html"><div class="ttname"><a href="dc/dc1/namespaceserenity_1_1targets.html">serenity::targets</a></div><div class="ttdoc">This namespace holds the classes in charge of where to output the log message to.</div></div>
+</div><!-- fragment --><hr  />
+ <p >TODO: Rename class to ConsoleTarget and edit documentation to reflect this.<br  />
+ Reasoning: Current naming suggests only color logging is supplied by this class...</p>
+<hr  />
+ <h1 align="center">Usage Examples </h1>
+<p ><br  />
+</p>
+<p >TODO: Document examples here</p>
+<p ><br  />
+</p>
+<hr  />
+ <h1 align="center">Statistics </h1>
+<p ><b>The Sandbox Environment was compiled with /utf-8 /O2 for the below results.</b> </p>
+<ul>
+<li>Serenity's console target is ~40%-42% faster than spdlog's current counterpart.</li>
+<li>Serenity's file target is ~30% -35% faster than spdlog's current counterpart.</li>
+<li>The newly added Rotating Target is ~45%-50% faster than spdlog's current counterpart.</li>
+</ul>
+<h4><a class="anchor" id="autotoc_md15"></a>
+For A Very Crude And Simple Benchmark Test Of A 400 byte C-style string over 1,000,000 iterations (Single Threaded)</h4>
+<hr  />
+ <table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Logging Sink/Target   </th><th class="markdownTableHeadNone">Logging Speed   </th><th class="markdownTableHeadNone">Logging Throughput    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Serenity Console Target   </td><td class="markdownTableBodyNone">49.105 us   </td><td class="markdownTableBodyNone">7.749 MB/s    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Spdlog Console Sink   </td><td class="markdownTableBodyNone">80.523 us   </td><td class="markdownTableBodyNone">4.726 MB/s    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Serenity File Target   </td><td class="markdownTableBodyNone">0.705 us   </td><td class="markdownTableBodyNone">539.359 MB/s    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Spdlog Basic File Sink   </td><td class="markdownTableBodyNone">1.042 us   </td><td class="markdownTableBodyNone">365.318 MB/s    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Serenity Rotating Target   </td><td class="markdownTableBodyNone">1.089 us   </td><td class="markdownTableBodyNone">349.351 MB/s    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Spdlog Rotating Sink   </td><td class="markdownTableBodyNone">2.128 us   </td><td class="markdownTableBodyNone">178.838 MB/s   </td></tr>
+</table>
+<hr  />
+<p ><br  />
+ </p>
+</div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
