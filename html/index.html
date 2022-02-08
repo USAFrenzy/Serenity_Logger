@@ -200,14 +200,14 @@ C++14 And Earlier</h2>
 <p >Currently, this library only provides classes to allow for basic file logging, file sized based rotational logging, and terminal logging. Before going forward, all built-in logging classes inherit from the base class, TargetBase. This base class holds some common functions and settings used by all the derived targets. </p>
 <hr  />
  <p >The TargetBase class exposes the following:</p>
-<p ><b>The TargetBase class can be found in the <code>&lt;<a class="el" href="d0/d32/_target_8h.html" title="This file contains the TargetBase class - the class all built-in targets inherit from for common shar...">serenity/Targets/Target.h</a>&gt;</code> header.</b></p><ul>
+<p ><b>The TargetBase class can be found in the <code>&lt;<a class="el" href="d0/d32/_target_8h_source.html">serenity/Targets/Target.h</a>&gt;</code> header.</b></p><ul>
 <li>The ability to set a user specified flush policy<ul>
 <li>This determines how often log messages should be flushed to disk</li>
 <li>Current policies control a wall-clock time interval based flushing system and a message level threshold based flushing system.<ul>
 <li>The time interval policy utilizes a background thread to keep track of elapsed time <br  />
  and will protect against data races when flushing the file to disk.</li>
 <li>Therefore, this policy will block log messages only when the time elapsed is greater <br  />
- than or equal to the interval limit that was set by calling <code><a class="el" href="d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685" title="This enum encapsulates the values for how flushing should be done.">Flush()</a></code>.</li>
+ than or equal to the interval limit that was set by calling <code>Flush()</code>.</li>
 </ul>
 </li>
 </ul>
@@ -220,7 +220,7 @@ C++14 And Earlier</h2>
 </li>
 <li>The ability to set a user-specified format pattern.<ul>
 <li>If no prepended pattern is wanted, use <code>SetPattern()</code> with an empty string argument.</li>
-<li>Currently supported flags can be found in the <code>&lt;<a class="el" href="db/d1f/_common_8h.html" title="This file contains some common functions, enums, and look-up tables used for most logging targets.">serenity/Common.h</a>&gt;</code> header under the <code>allValidFlags</code> <br  />
+<li>Currently supported flags can be found in the <code>&lt;<a class="el" href="db/d1f/_common_8h_source.html">serenity/Common.h</a>&gt;</code> header under the <code>allValidFlags</code> <br  />
  look up table and is a part of the SERENITY_LUTS namespace.</li>
 </ul>
 </li>
@@ -233,7 +233,7 @@ C++14 And Earlier</h2>
 <li>Ability to set the log level via <code>SetLogLevel()</code> which determines what messages are actually logged.</li>
 <li>Ability to enable/disable writing to a buffer instead of a file during the process.<ul>
 <li>The buffer reserves 512KB but can dynamically resized if contents get too large.</li>
-<li>The buffer is flushed to disk when <code><a class="el" href="d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685" title="This enum encapsulates the values for how flushing should be done.">Flush()</a></code> is explicitly called or when the destructor is called.</li>
+<li>The buffer is flushed to disk when <code>Flush()</code> is explicitly called or when the destructor is called.</li>
 <li>Note: this buffer is different from the buffer used by the file handle itself in derived classes.</li>
 </ul>
 </li>
@@ -247,7 +247,7 @@ C++14 And Earlier</h2>
 </ul>
 <hr  />
  <p >The FileTarget class is capable of the following:</p>
-<p ><b>File logging occurs via the FileTarget class found in the <code>&lt;<a class="el" href="df/d5e/_file_target_8h.html" title="This file contains the FileTarget class which is in charge of all log operations to basic files.">serenity/Targets/FileTarget.h</a>&gt;</code> header.</b></p><ul>
+<p ><b>File logging occurs via the FileTarget class found in the <code>&lt;<a class="el" href="df/d5e/_file_target_8h_source.html">serenity/Targets/FileTarget.h</a>&gt;</code> header.</b></p><ul>
 <li>Creating a log file if it doesn't exist<ul>
 <li>This also applies to the log directory</li>
 </ul>
@@ -269,7 +269,7 @@ C++14 And Earlier</h2>
 </ul>
 <hr  />
  <p >The RotatingTarget class is capable of the following:</p>
-<p ><b>Rotational logging occurs via the RotatingTarget class found in the <code>&lt;<a class="el" href="de/d17/_rotating_target_8h.html" title="This file holds the RotatingTarget Class and rotation based functions used in logging to files.">serenity/Targets/RotatingTarget.h</a>&gt;</code> header.</b></p><ul>
+<p ><b>Rotational logging occurs via the RotatingTarget class found in the <code>&lt;<a class="el" href="de/d17/_rotating_target_8h_source.html">serenity/Targets/RotatingTarget.h</a>&gt;</code> header.</b></p><ul>
 <li>The RotatingTarget class is currently still in the experimental namespace due to work still being <br  />
  done on interval (day/hour based) rotation. File size based rotation is functional however.</li>
 <li>Enable/Disble rotation if desired<ul>
@@ -306,7 +306,7 @@ C++14 And Earlier</h2>
  <p >TODO: Make the file handle buffer sizing a function call instead of a macro to separate common classes. </p>
 <hr  />
  <p >The ColorConsoleTarget class is capable of the following: </p>
-<p ><b>Terminal logging occurs via the ColorConsoleTarget class found in the <code>&lt;<a class="el" href="d2/da6/_color_console_target_8h.html" title="This file holds the class in charge of writing to the standard outputs and is terminal/pipe-aware.">serenity/Targets/ColorConsoleTarget.h</a>&gt;</code> header.</b> <br  />
+<p ><b>Terminal logging occurs via the ColorConsoleTarget class found in the <code>&lt;<a class="el" href="d2/da6/_color_console_target_8h_source.html">serenity/Targets/ColorConsoleTarget.h</a>&gt;</code> header.</b> <br  />
 </p>
 <ul>
 <li>Setting independant colors to message levels<ul>
@@ -339,8 +339,8 @@ C++14 And Earlier</h2>
  if the output handle is a terminal device (<code>IsTerminalType()</code>)</li>
 <li>If terminal output is being piped to another location instead:<ul>
 <li>If Windows platform, <code>WriteFile()</code> will be called instead of the default <code>WriteConsole()</code></li>
-<li>Output will be flushed when output handle's internal buffer is full or when <code><a class="el" href="d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685" title="This enum encapsulates the values for how flushing should be done.">Flush()</a></code> <br  />
- is explicitly called. Will also call <code><a class="el" href="d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685" title="This enum encapsulates the values for how flushing should be done.">Flush()</a></code> in the destructor to ensure contents are <br  />
+<li>Output will be flushed when output handle's internal buffer is full or when <code>Flush()</code> <br  />
+ is explicitly called. Will also call <code>Flush()</code> in the destructor to ensure contents are <br  />
  present in the pipe.</li>
 </ul>
 </li>

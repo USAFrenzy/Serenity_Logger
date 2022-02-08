@@ -1,23 +1,6 @@
 var searchData=
 [
-  ['mac_0',['mac',['../d3/ddb/namespaceserenity.html#a00906b193b32e20903012b253e390e8ea140c1f12feeb2c52dfbeb2da6066a73a',1,'serenity']]],
-  ['mac_5fplatform_1',['MAC_PLATFORM',['../db/d1f/_common_8h.html#a104df3d16f264b0767fa32b147d29986',1,'Common.h']]],
-  ['maxnumberoffiles_2',['maxNumberOfFiles',['../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#ac9017e09e8fbcf61e6fcf976c06a31a2',1,'serenity::experimental::RotateSettings']]],
-  ['mb_3',['MB',['../db/d1f/_common_8h.html#aa6b38d492364d98453284934ed7caee9',1,'Common.h']]],
-  ['message_4',['Message',['../d9/d61/classserenity_1_1msg__details_1_1_message___info.html#a5d8d7c6c64d874176c3dd27a9209def3',1,'serenity::msg_details::Message_Info']]],
-  ['message_5fformatter_5',['Message_Formatter',['../df/d97/classserenity_1_1msg__details_1_1_message___formatter.html#aa8990373f427f9fb421f441ddf08de94',1,'serenity::msg_details::Message_Formatter::Message_Formatter()'],['../df/d97/classserenity_1_1msg__details_1_1_message___formatter.html',1,'serenity::msg_details::Message_Formatter']]],
-  ['message_5fformatter_2eh_6',['Message_Formatter.h',['../da/d82/_message___formatter_8h.html',1,'']]],
-  ['message_5finfo_7',['Message_Info',['../d9/d61/classserenity_1_1msg__details_1_1_message___info.html#ac0a1c6d53fe64ccaa739669d8701694d',1,'serenity::msg_details::Message_Info::Message_Info()'],['../d9/d61/classserenity_1_1msg__details_1_1_message___info.html',1,'serenity::msg_details::Message_Info']]],
-  ['message_5finfo_2eh_8',['Message_Info.h',['../d3/dd8/_message___info_8h.html',1,'']]],
-  ['message_5ftime_9',['Message_Time',['../dc/d4d/classserenity_1_1msg__details_1_1_message___time.html#a7b2c8ff9e8fd5398ba9e2b3ba1abe0b7',1,'serenity::msg_details::Message_Time::Message_Time()'],['../dc/d4d/classserenity_1_1msg__details_1_1_message___time.html',1,'serenity::msg_details::Message_Time']]],
-  ['message_5ftime_2eh_10',['Message_Time.h',['../d9/df4/_message___time_8h.html',1,'']]],
-  ['message_5ftime_5fmode_11',['message_time_mode',['../d3/ddb/namespaceserenity.html#a4445399f3db99603cc1bd57600510351',1,'serenity']]],
-  ['messagedetails_12',['MessageDetails',['../df/d97/classserenity_1_1msg__details_1_1_message___formatter.html#abb2d7674afe0985b6e77998569df6043',1,'serenity::msg_details::Message_Formatter']]],
-  ['messagetimepoint_13',['MessageTimePoint',['../d9/d61/classserenity_1_1msg__details_1_1_message___info.html#a732eb9d8d79db89d19465da643795ac5',1,'serenity::msg_details::Message_Info']]],
-  ['mode_14',['Mode',['../dc/d4d/classserenity_1_1msg__details_1_1_message___time.html#ad9f309af7d5838c7338b2372c2cc0f21',1,'serenity::msg_details::Message_Time']]],
-  ['msgfmt_15',['MsgFmt',['../d2/db2/classserenity_1_1targets_1_1_target_base.html#a65cbd94acda560b5ac15504256ec97b6',1,'serenity::targets::TargetBase']]],
-  ['msginfo_16',['MsgInfo',['../d2/db2/classserenity_1_1targets_1_1_target_base.html#adcfdad88db6f598f766f9a87e37fc9b2',1,'serenity::targets::TargetBase']]],
-  ['msglevel_17',['MsgLevel',['../d9/d61/classserenity_1_1msg__details_1_1_message___info.html#a2381d3360681c5c2297f8e701a97d1ab',1,'serenity::msg_details::Message_Info']]],
-  ['msgleveltoshortstring_18',['MsgLevelToShortString',['../d3/ddb/namespaceserenity.html#ab140218bb464a02d42d5e2b2999f2444',1,'serenity']]],
-  ['msgleveltostring_19',['MsgLevelToString',['../d3/ddb/namespaceserenity.html#af5d9436f43330033b687904ae7346e78',1,'serenity']]]
+  ['name_0',['Name',['../d9/d61/classserenity_1_1msg__details_1_1_message___info.html#af08bbb0d89238dc85c984fee74f7dbe3',1,'serenity::msg_details::Message_Info']]],
+  ['never_1',['never',['../d2/db3/namespaceserenity_1_1experimental.html#a7c73fb9df30e6ed402921cea387d0685ac7561db7a418dd39b2201dfe110ab4a4',1,'serenity::experimental']]],
+  ['numberstr_2',['numberStr',['../d6/d25/namespaceserenity_1_1_s_e_r_e_n_i_t_y___l_u_t_s.html#a1ed9467cfaa492997ae5dafe7b4ef4e2',1,'serenity::SERENITY_LUTS']]]
 ];

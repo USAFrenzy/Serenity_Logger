@@ -58,7 +58,7 @@ PROJECT_LOGO           = Placeholder_Icon.png
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = C:/Users/mccul/OneDrive/Desktop/Serenity_Logger/Docs
+OUTPUT_DIRECTORY       = ../
 
 # If the CREATE_SUBDIRS tag is set to YES then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
@@ -143,7 +143,7 @@ ALWAYS_DETAILED_SEC    = NO
 # operators of the base classes will not be shown.
 # The default value is: NO.
 
-INLINE_INHERITED_MEMB  = NO
+INLINE_INHERITED_MEMB  = YES
 
 # If the FULL_PATH_NAMES tag is set to YES, doxygen will prepend the full path
 # before files name in the file list and in the header files. If set to NO the
@@ -741,7 +741,7 @@ SHOW_USED_FILES        = YES
 # (if specified).
 # The default value is: YES.
 
-SHOW_FILES             = YES
+SHOW_FILES             = NO
 
 # Set the SHOW_NAMESPACES tag to NO to disable the generation of the Namespaces
 # page. This will remove the Namespaces entry from the Quick Index and from the
@@ -964,16 +964,8 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = ../Serenity/include/serenity/Utilities \
-                         ../Serenity/include/serenity/Color \
                          ../Serenity/src/Utilities \
-                         ../Serenity/src/Color \
-                         ../Serenity/include/serenity/Targets/Target-impl.h \
-                         ../cmake \
-                         ../Demos \
-                         . \
-                         ../Sandbox \
-                         ../scripts \
-                         ../README.md
+                         ../Serenity/include/serenity/Targets/Target-impl.h
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded

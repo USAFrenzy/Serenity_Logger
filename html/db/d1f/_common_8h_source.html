@@ -87,11 +87,11 @@ $(document).ready(function(){initNavTree('db/d1f/_common_8h_source.html','../../
   <div class="headertitle"><div class="title">Common.h</div></div>
 </div><!--header-->
 <div class="contents">
-<a href="../../db/d1f/_common_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
+<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#ifdef DOXYGEN_DOCUMENTATION</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#a4462d7e6c2b85509d116af3569c2b25d">    7</a></span><span class="preprocessor">    #define WINDOWS_PLATFORM</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#a104df3d16f264b0767fa32b147d29986">   10</a></span><span class="preprocessor">    #define MAC_PLATFORM</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">    #define WINDOWS_PLATFORM</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">    #define MAC_PLATFORM</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#ifdef _WIN32</span></div>
@@ -99,7 +99,7 @@ $(document).ready(function(){initNavTree('db/d1f/_common_8h_source.html','../../
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#elif defined( __APPLE__ ) || defined( __MACH__ )</span></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">    #define MAC_PLATFORM</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#aea13f49a32fd1c0e4c8936040892c6bd">   18</a></span><span class="preprocessor">    #define LINUX_PLATFORM</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">    #define LINUX_PLATFORM</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#ifdef WINDOWS_PLATFORM</span></div>
@@ -111,10 +111,10 @@ $(document).ready(function(){initNavTree('db/d1f/_common_8h_source.html','../../
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="preprocessor">    #include &lt;Windows.h&gt;</span></div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="preprocessor">    #include &lt;io.h&gt;</span></div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#a731b8c97222b70212a2ae3d3a785ea17">   30</a></span><span class="preprocessor">    #define ISATTY _isatty</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#af2832b8f489368732656ba888e493335">   31</a></span><span class="preprocessor">    #define FILENO _fileno</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">    #define ISATTY _isatty</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">    #define FILENO _fileno</span></div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">    #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#ae27e461d89a21edab92d159f61669183">   33</a></span><span class="preprocessor">        #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">        #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004</span></div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="preprocessor">    #endif</span></div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#else</span></div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">    #include &lt;unistd.h&gt;</span></div>
@@ -122,10 +122,10 @@ $(document).ready(function(){initNavTree('db/d1f/_common_8h_source.html','../../
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">    #define FILENO fileno</span></div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#a1841fd1a462d245d8c73dce55e2f45da">   41</a></span><span class="preprocessor">#define KB                  ( 1024 )</span></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#aa6b38d492364d98453284934ed7caee9">   42</a></span><span class="preprocessor">#define MB                  ( 1024 * KB )</span></div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#a44172ac633c517cb4c9e278cef36b000">   43</a></span><span class="preprocessor">#define GB                  ( 1024 * MB )</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#a6e576a3c6530636d68b7a220480bcd32">   44</a></span><span class="preprocessor">#define DEFAULT_BUFFER_SIZE ( 64 * KB )</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#define KB                  ( 1024 )</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="preprocessor">#define MB                  ( 1024 * KB )</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#define GB                  ( 1024 * MB )</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#define DEFAULT_BUFFER_SIZE ( 64 * KB )</span></div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#include &lt;filesystem&gt;</span></div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
@@ -255,7 +255,7 @@ $(document).ready(function(){initNavTree('db/d1f/_common_8h_source.html','../../
 <div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    {</div>
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno"><a class="line" href="../../d3/dfe/structserenity_1_1_file_settings.html#a65ba97f204b7d3b349b8225b67018376">  172</a></span>        std::filesystem::path <a class="code hl_variable" href="../../d3/dfe/structserenity_1_1_file_settings.html#a65ba97f204b7d3b349b8225b67018376">filePath</a>;</div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno"><a class="line" href="../../d3/dfe/structserenity_1_1_file_settings.html#a5e9fdfe25ebed106ae0d14af961b6345">  173</a></span>        std::vector&lt;char&gt;     <a class="code hl_variable" href="../../d3/dfe/structserenity_1_1_file_settings.html#a5e9fdfe25ebed106ae0d14af961b6345">fileBuffer</a>;</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno"><a class="line" href="../../d3/dfe/structserenity_1_1_file_settings.html#a63de795fd069fedd1f3c90c7a3f22a37">  174</a></span>        <span class="keywordtype">size_t</span>                <a class="code hl_variable" href="../../d3/dfe/structserenity_1_1_file_settings.html#a63de795fd069fedd1f3c90c7a3f22a37">bufferSize</a> { <a class="code hl_define" href="../../db/d1f/_common_8h.html#a6e576a3c6530636d68b7a220480bcd32">DEFAULT_BUFFER_SIZE</a> };</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno"><a class="line" href="../../d3/dfe/structserenity_1_1_file_settings.html#a63de795fd069fedd1f3c90c7a3f22a37">  174</a></span>        <span class="keywordtype">size_t</span>                <a class="code hl_variable" href="../../d3/dfe/structserenity_1_1_file_settings.html#a63de795fd069fedd1f3c90c7a3f22a37">bufferSize</a> { DEFAULT_BUFFER_SIZE };</div>
 <div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    };</div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
 <div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    <span class="keyword">namespace </span>experimental</div>
@@ -267,7 +267,7 @@ $(document).ready(function(){initNavTree('db/d1f/_common_8h_source.html','../../
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span> </div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno"><a class="line" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#acef506889a5895f3beedb0401bb15d17">  184</a></span>            <span class="keywordtype">bool</span>   <a class="code hl_variable" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#acef506889a5895f3beedb0401bb15d17">rotateOnFileSize</a> { <span class="keyword">true</span> };</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno"><a class="line" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#ac9017e09e8fbcf61e6fcf976c06a31a2">  185</a></span>            <span class="keywordtype">size_t</span> <a class="code hl_variable" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#ac9017e09e8fbcf61e6fcf976c06a31a2">maxNumberOfFiles</a> { 5 };</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno"><a class="line" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#ad9be50d116988c73f50aec082675afeb">  186</a></span>            <span class="keywordtype">size_t</span> <a class="code hl_variable" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#ad9be50d116988c73f50aec082675afeb">fileSizeLimit</a> { 512 * <a class="code hl_define" href="../../db/d1f/_common_8h.html#a1841fd1a462d245d8c73dce55e2f45da">KB</a> };</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno"><a class="line" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#ad9be50d116988c73f50aec082675afeb">  186</a></span>            <span class="keywordtype">size_t</span> <a class="code hl_variable" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#ad9be50d116988c73f50aec082675afeb">fileSizeLimit</a> { 512 * KB };</div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>            <span class="keywordtype">void</span>                         <a class="code hl_function" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#acf83e100819d1f4c06ec3b0eb3418d62">SetOriginalSettings</a>( <span class="keyword">const</span> std::filesystem::path &amp;filePath );</div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>            <span class="keywordtype">void</span>                         <a class="code hl_function" href="../../d3/d35/structserenity_1_1experimental_1_1_rotate_settings.html#a8773f9c02cb671167ca577637cfc8341">SetCurrentFileSize</a>( <span class="keywordtype">size_t</span> currentSize );</div>
@@ -286,12 +286,10 @@ $(document).ready(function(){initNavTree('db/d1f/_common_8h_source.html','../../
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>}  <span class="comment">// namespace serenity</span></div>
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span> </div>
 <div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span><span class="preprocessor">#ifndef NDEBUG</span></div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno"><a class="line" href="../../db/d1f/_common_8h.html#a9d70021af8f3ef02e9060aaeb6ba5cf8">  205</a></span><span class="preprocessor">    #define DB_PRINT( msg, ... ) ( std::cout &lt;&lt; std::format( msg, __VA_ARGS__ ) )</span></div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span><span class="preprocessor">    #define DB_PRINT( msg, ... ) ( std::cout &lt;&lt; std::format( msg, __VA_ARGS__ ) )</span></div>
 <div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span><span class="preprocessor">#else</span></div>
 <div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span><span class="preprocessor">    #define DB_PRINT( msg, ... )</span></div>
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><span class="preprocessor">#endif  </span><span class="comment">// !NDEBUG</span></div>
-<div class="ttc" id="a_common_8h_html_a1841fd1a462d245d8c73dce55e2f45da"><div class="ttname"><a href="../../db/d1f/_common_8h.html#a1841fd1a462d245d8c73dce55e2f45da">KB</a></div><div class="ttdeci">#define KB</div><div class="ttdoc">This macro defines a kilobyte as 1024 bytes.</div><div class="ttdef"><b>Definition:</b> Common.h:41</div></div>
-<div class="ttc" id="a_common_8h_html_a6e576a3c6530636d68b7a220480bcd32"><div class="ttname"><a href="../../db/d1f/_common_8h.html#a6e576a3c6530636d68b7a220480bcd32">DEFAULT_BUFFER_SIZE</a></div><div class="ttdeci">#define DEFAULT_BUFFER_SIZE</div><div class="ttdoc">The size used for the file handle's buffer in file targets. The default size is 64KB.</div><div class="ttdef"><b>Definition:</b> Common.h:44</div></div>
 <div class="ttc" id="anamespaceserenity_1_1_s_e_r_e_n_i_t_y___l_u_t_s_html_a1d3923d5de974482d793be404abfc5bd"><div class="ttname"><a href="../../d6/d25/namespaceserenity_1_1_s_e_r_e_n_i_t_y___l_u_t_s.html#a1d3923d5de974482d793be404abfc5bd">serenity::SERENITY_LUTS::long_weekdays</a></div><div class="ttdeci">static constexpr std::array&lt; std::string_view, 7 &gt; long_weekdays</div><div class="ttdoc">The full weekday names used in formatting.</div><div class="ttdef"><b>Definition:</b> Common.h:83</div></div>
 <div class="ttc" id="anamespaceserenity_1_1_s_e_r_e_n_i_t_y___l_u_t_s_html_a1ed9467cfaa492997ae5dafe7b4ef4e2"><div class="ttname"><a href="../../d6/d25/namespaceserenity_1_1_s_e_r_e_n_i_t_y___l_u_t_s.html#a1ed9467cfaa492997ae5dafe7b4ef4e2">serenity::SERENITY_LUTS::numberStr</a></div><div class="ttdeci">static constexpr std::array&lt; std::string_view, 100 &gt; numberStr</div><div class="ttdoc">Padded numbers up to &quot;99&quot;.</div><div class="ttdef"><b>Definition:</b> Common.h:98</div></div>
 <div class="ttc" id="anamespaceserenity_1_1_s_e_r_e_n_i_t_y___l_u_t_s_html_a267d68886ed8fed7b17005e590f178da"><div class="ttname"><a href="../../d6/d25/namespaceserenity_1_1_s_e_r_e_n_i_t_y___l_u_t_s.html#a267d68886ed8fed7b17005e590f178da">serenity::SERENITY_LUTS::long_months</a></div><div class="ttdeci">static constexpr std::array&lt; const char *, 12 &gt; long_months</div><div class="ttdoc">The full month names used in formatting.</div><div class="ttdef"><b>Definition:</b> Common.h:93</div></div>
@@ -334,7 +332,7 @@ $(document).ready(function(){initNavTree('db/d1f/_common_8h_source.html','../../
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_bbf39d9e614d7650e257b225f2e2bf39.html">Serenity</a></li><li class="navelem"><a class="el" href="../../dir_c0e8fe3b2c0e61c24cd0729000432fab.html">include</a></li><li class="navelem"><a class="el" href="../../dir_8cc19d8989c21769a5e756d303c9a132.html">serenity</a></li><li class="navelem"><a class="el" href="../../db/d1f/_common_8h.html">Common.h</a></li>
+    <li class="navelem"><a class="el" href="../../dir_bbf39d9e614d7650e257b225f2e2bf39.html">Serenity</a></li><li class="navelem"><a class="el" href="../../dir_c0e8fe3b2c0e61c24cd0729000432fab.html">include</a></li><li class="navelem"><a class="el" href="../../dir_8cc19d8989c21769a5e756d303c9a132.html">serenity</a></li><li class="navelem"><b>Common.h</b></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3 </li>
   </ul>
 </div>
