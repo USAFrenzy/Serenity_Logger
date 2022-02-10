@@ -44,13 +44,13 @@ namespace serenity::experimental
 		return currentFileSize;
 	}
 
-	void RotateSettings::EnableIntervalRotation( bool enabled )
+	void RotateSettings::InitFirstRotation( bool enabled )
 	{
-		intervalRotationEnabled = enabled;
+		initalRotationEnabled = enabled;
 	}
 
 	const bool RotateSettings::IsIntervalRotationEnabled( )
 	{
-		return intervalRotationEnabled;
+		return initalRotationEnabled;
 	}
 }  // namespace serenity::experimental

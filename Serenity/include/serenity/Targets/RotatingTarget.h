@@ -14,14 +14,14 @@ namespace serenity::experimental::targets
 		RotatingTarget( const RotatingTarget & ) = delete;
 		RotatingTarget &operator=( const RotatingTarget & ) = delete;
 		~RotatingTarget( );
-		void         WriteToBaseBuffer( bool fmtToBuf = true );
-		bool         isWriteToBuf( );
-		std::string *Buffer( );
-		void         EnableRotation( bool shouldRotate = true );
-		void         SetRotateSettings( RotateSettings settings );
-		void         RotateFile( );
-		bool         RenameFile( std::string_view newFileName ) override;
-		bool         ShouldRotate( );
+		void               WriteToBaseBuffer( bool fmtToBuf = true );
+		const bool         isWriteToBuf( );
+		std::string *const Buffer( );
+		void               EnableRotation( bool shouldRotate = true );
+		void               SetRotateSettings( RotateSettings settings );
+		void               RotateFile( );
+		bool               RenameFile( std::string_view newFileName ) override;
+		bool               ShouldRotate( );
 		// ################################# WIP #################################
 		// For IntervalMode::file_size -> interval is the file size limit
 		// For IntervalMode::daily, the interval is the hour the logger should rotate on (0-23)
@@ -35,7 +35,7 @@ namespace serenity::experimental::targets
 		// This gives granularity over which setting to change vs all settings in SetRotateSettings();
 		void                               SetRotationSetting( IntervalMode mode, size_t interval );
 		void                               SetRotationMode( IntervalMode mode );
-		const RotateSettings::IntervalMode RotateMode( );
+		const RotateSettings::IntervalMode RotationMode( );
 
 	  private:
 		void         PrintMessage( std::string_view formatted ) override;

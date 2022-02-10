@@ -17,12 +17,12 @@ namespace serenity::targets
 		TargetBase( std::string_view name );
 		TargetBase( std::string_view name, std::string_view msgPattern );
 		~TargetBase( ) = default;
-		void                                  SetFlushPolicy( serenity::experimental::Flush_Policy pPolicy );
-		serenity::experimental::Flush_Policy &Policy( );
-		const std::string                     LoggerName( );
-		void                                  SetPattern( std::string_view pattern );
-		void                                  ResetPatternToDefault( );
-		void                                  SetLogLevel( LoggerLevel level );
+		void                                        SetFlushPolicy( serenity::experimental::Flush_Policy pPolicy );
+		const serenity::experimental::Flush_Policy &Policy( );
+		const std::string                           LoggerName( );
+		void                                        SetPattern( std::string_view pattern );
+		void                                        ResetPatternToDefault( );
+		void                                        SetLogLevel( LoggerLevel level );
 
 		const LoggerLevel                Level( );
 		void                             SetLoggerName( std::string_view name );
@@ -39,8 +39,8 @@ namespace serenity::targets
 		msg_details::Message_Formatter *MsgFmt( );
 		msg_details::Message_Info *     MsgInfo( );
 		void                            WriteToBaseBuffer( bool fmtToBuf = true );
-		bool                            isWriteToBuf( );
-		std::string *                   Buffer( );
+		const bool                      isWriteToBuf( );
+		std::string *const              Buffer( );
 
 	  private:
 		bool                                 toBuffer;

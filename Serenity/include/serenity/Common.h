@@ -202,13 +202,13 @@ namespace serenity
 			const bool                   IsIntervalRotationEnabled( );
 			void                         CacheOriginalPathComponents( const std::filesystem::path &filePath );
 			void                         SetCurrentFileSize( size_t currentSize );
-			void                         EnableIntervalRotation( bool enabled = true );
+			void                         InitFirstRotation( bool enabled = true );
 
 		  private:
 			size_t                currentFileSize { 0 };
 			std::string           ext, fileName;
 			std::filesystem::path path, directory;
-			bool                  intervalRotationEnabled { true };
+			bool                  initalRotationEnabled { true };
 		};
 
 	}  // namespace experimental

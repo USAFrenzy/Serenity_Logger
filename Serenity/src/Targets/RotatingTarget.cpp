@@ -55,12 +55,12 @@ namespace serenity::experimental::targets
 		TargetBase::WriteToBaseBuffer( fmtToBuf );
 	}
 
-	bool RotatingTarget::isWriteToBuf( )
+	const bool RotatingTarget::isWriteToBuf( )
 	{
 		return TargetBase::isWriteToBuf( );
 	}
 
-	std::string *RotatingTarget::Buffer( )
+	std::string *const RotatingTarget::Buffer( )
 	{
 		return TargetBase::Buffer( );
 	}
@@ -94,7 +94,7 @@ namespace serenity::experimental::targets
 	{
 		this->shouldRotate = shouldRotate;
 		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
-		EnableIntervalRotation( shouldRotate );
+		InitFirstRotation( shouldRotate );
 	}
 
 	void RotatingTarget::RenameFileForRotation( )
@@ -144,6 +144,7 @@ namespace serenity::experimental::targets
 												   // iteration
 			newFile.append( "_" ).append( SERENITY_LUTS::numberStr[ fileNumber ] ).append( extension );
 			newFilePath.replace_filename( newFile );
+
 			if( !std::filesystem::exists( newFilePath ) ) {
 				fileOptions.filePath = std::move( newFilePath );
 				if( OpenFile( true ) ) {
@@ -214,34 +215,37 @@ namespace serenity::experimental::targets
 	bool RotatingTarget::ShouldRotate( )
 	{
 		if( !shouldRotate ) return false;
+		// If previous file was empty - no need to rotate
+		if( FileSize( ) == 0 ) return false;
+
 		using mode  = RotateSettings::IntervalMode;
 		auto &cache = MsgInfo( )->TimeDetails( ).Cache( );
 
-		switch( RotateMode( ) ) {
+		switch( RotationMode( ) ) {
 			case mode::file_size:
 			{
 				auto currentSize { FileSize( ) + MsgInfo( )->MessageSize( ) };
-				return currentSize >= fileSizeLimit;
+				return (currentSize >= fileSizeLimit);
 			} break;
 			case mode::hourly:
 			{
 				if( currentHour != cache.tm_hour ) {
 					currentHour = cache.tm_hour;
-					EnableIntervalRotation( true );
+					InitFirstRotation( true );
 				}
 				if( IsIntervalRotationEnabled( ) ) {
-					EnableIntervalRotation( false );
+					InitFirstRotation( false );
 					return true;
 				}
 			} break;
 			case mode::daily:
 				if( currentDay != cache.tm_mday ) {
 					currentDay = cache.tm_mday;
-					EnableIntervalRotation( true );
+					InitFirstRotation( true );
 				}
 				if( cache.tm_hour == dayModeSetting ) {
 					if( IsIntervalRotationEnabled( ) ) {
-						EnableIntervalRotation( false );
+						InitFirstRotation( false );
 						return true;
 					}
 				}
@@ -249,11 +253,11 @@ namespace serenity::experimental::targets
 			case mode::weekly:
 				if( currentWeekday != cache.tm_wday ) {
 					currentWeekday = cache.tm_wday;
-					EnableIntervalRotation( true );
+					InitFirstRotation( true );
 				}
 				if( currentWeekday == weekModeSetting ) {
 					if( IsIntervalRotationEnabled( ) ) {
-						EnableIntervalRotation( false );
+						InitFirstRotation( false );
 						return true;
 					}
 				}
@@ -262,11 +266,11 @@ namespace serenity::experimental::targets
 			{
 				if( currentDay != cache.tm_mday ) {
 					currentDay = cache.tm_mday;
-					EnableIntervalRotation( true );
+					InitFirstRotation( true );
 				}
 				if( currentDay == monthModeSetting ) {
 					if( IsIntervalRotationEnabled( ) ) {
-						EnableIntervalRotation( false );
+						InitFirstRotation( false );
 						return true;
 					}
 				}
@@ -324,7 +328,7 @@ namespace serenity::experimental::targets
 		m_mode = mode;
 	}
 
-	const RotateSettings::IntervalMode RotatingTarget::RotateMode( )
+	const RotateSettings::IntervalMode RotatingTarget::RotationMode( )
 	{
 		return m_mode;
 	}

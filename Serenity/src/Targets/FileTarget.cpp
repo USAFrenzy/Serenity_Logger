@@ -208,12 +208,12 @@ namespace serenity::targets
 		TargetBase::WriteToBaseBuffer( fmtToBuf );
 	}
 
-	bool FileTarget::isWriteToBuf( )
+	const bool FileTarget::isWriteToBuf( )
 	{
 		return TargetBase::isWriteToBuf( );
 	}
 
-	std::string *FileTarget::Buffer( )
+	std::string *const FileTarget::Buffer( )
 	{
 		return TargetBase::Buffer( );
 	}

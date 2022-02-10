@@ -17,19 +17,19 @@ namespace serenity::targets
 		FileTarget( const FileTarget & ) = delete;
 		FileTarget &operator=( const FileTarget & ) = delete;
 		~FileTarget( );
-		const std::string FilePath( );
-		const std::string FileName( );
-		virtual bool      RenameFile( std::string_view newFileName );
-		bool              OpenFile( bool truncate = false );
-		bool              CloseFile( );
-		void              Flush( );
-		void              WriteToBaseBuffer( bool fmtToBuf = true );
-		bool              isWriteToBuf( );
-		std::string *     Buffer( );
+		const std::string  FilePath( );
+		const std::string  FileName( );
+		virtual bool       RenameFile( std::string_view newFileName );
+		bool               OpenFile( bool truncate = false );
+		bool               CloseFile( );
+		void               Flush( );
+		void               WriteToBaseBuffer( bool fmtToBuf = true );
+		const bool         isWriteToBuf( );
+		std::string *const Buffer( );
 
 	  private:
-		LoggerLevel                           logLevel;
-		serenity::experimental::Flush_Policy &policy;
+		LoggerLevel                          logLevel;
+		serenity::experimental::Flush_Policy policy;
 
 	  protected:
 		std::ofstream    fileHandle;

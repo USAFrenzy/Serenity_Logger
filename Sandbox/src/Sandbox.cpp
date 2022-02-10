@@ -53,6 +53,11 @@ std::string SpdlogPath( bool rotate = false )
 	}
 }
 
+std::filesystem::path LogDirPath( )
+{
+	return ( std::filesystem::current_path( ) /= "Logs" );
+}
+
 // This is from
 // (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128)
 // Just using this to set throughput precision
@@ -63,6 +68,8 @@ template <typename T> std::string SetPrecision( const T value, const int precisi
 	temp << std::fixed << value;
 	return temp.str( );
 }
+
+#include <future>
 
 int main( )
 {
@@ -154,7 +161,6 @@ int main( )
 	C.SetOriginalColors( );
 	C.Warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
-
 	testFile.Trace( "This Is A Trace Message To The File" );
 	testFile.Info( "This Is An Info Message To The File" );
 	testFile.Debug( "This Is A Debug Message To The File" );
@@ -167,19 +173,78 @@ int main( )
 
 	RotateSettings settings;
 	settings.fileSizeLimit    = 256 * KB;
-	settings.maxNumberOfFiles = 5;
-	settings.dayModeSetting   = 17;
+	settings.maxNumberOfFiles = 10;
+	settings.dayModeSetting   = 22;
 	settings.monthModeSetting = 9;
 	settings.weekModeSetting  = 3;
 	rotatingFile.SetRotateSettings( settings );
 
-	rotatingFile.SetRotationMode( RotateSettings::IntervalMode::hourly );
-	std::cout << "\n\nLogging messages to test rotation on daily mark\n";
-	for( int i = 1; i <= 35; ++i ) {
-		rotatingFile.Info( "Logging message {} to rotating file based on daily mode", i );
-		std::cout << "Message " << i << " Logged To File!\n";
-		std::this_thread::sleep_for( std::chrono::minutes( 1 ) );
-	}
+	rotatingFile.SetRotationMode( RotateSettings::IntervalMode::daily );
+
+	auto                                  onSizeFilePath = LogDirPath( ) /= "Daily/OnSizeRotation.txt";
+	experimental::targets::RotatingTarget rotatingLoggerOnSize( "RotateOnSize_Logger", onSizeFilePath.string( ), true );
+	rotatingLoggerOnSize.SetRotateSettings( settings );
+	// should be the default anyways
+	rotatingLoggerOnSize.SetRotationMode( RotateSettings::IntervalMode::file_size );
+
+	auto                                  onHourFilePath = LogDirPath( ) /= "Hourly/OnHourRotation.txt";
+	experimental::targets::RotatingTarget rotatingLoggerHourly( "RotateHourly_Logger", onHourFilePath.string( ), true );
+	rotatingLoggerHourly.RenameFile( "HourlyRotation.txt" );
+	rotatingLoggerHourly.SetRotateSettings( settings );
+	// should be the default anyways
+	rotatingLoggerHourly.SetRotationMode( RotateSettings::IntervalMode::hourly );
+
+	size_t rotationIterations = 5'000'000;
+
+	std::mutex consoleMutex;
+	auto       NotifyConsole = [ & ]( std::string message )
+	{
+		std::lock_guard lock( consoleMutex );
+		std::cout << message;
+	};
+
+	std::cout << "\n\nLogging messages to test rotation on hour mark, daily mark, and file size\n";
+	auto LogHourly = [ & ]( )
+	{
+		for( int i = 1; i <= rotationIterations; ++i ) {
+			rotatingFile.Info( "Logging message {} to rotating file based on hour mode", i );
+			std::string message = "Message ";
+			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Hourly!\n" );
+			NotifyConsole( message );
+			std::this_thread::sleep_for( std::chrono::minutes( 1 ) );
+		}
+	};
+
+	auto LogOnDaily = [ & ]( )
+	{
+		for( int i = 1; i <= rotationIterations; ++i ) {
+			rotatingFile.Info( "Logging message {} to rotating file based on daily mode", i );
+			std::string message = "Message ";
+			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Daily!\n" );
+			NotifyConsole( message );
+			std::this_thread::sleep_for( std::chrono::minutes( 10 ) );
+		}
+	};
+
+	auto LogOnSize = [ & ]( )
+	{
+		for( int i = 1; i <= rotationIterations; ++i ) {
+			rotatingLoggerOnSize.Info( "Logging message {} to rotating file based on daily mode", i );
+			std::string message = "Message ";
+			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Size!\n" );
+			NotifyConsole( message );
+			std::this_thread::sleep_for( std::chrono::minutes( 15 ) );
+		}
+	};
+
+	auto m = std::async( std::launch::async, LogHourly );
+	auto n = std::async( std::launch::async, LogOnDaily );
+	auto o = std::async( std::launch::async, LogOnSize );
+
+	m.get( );
+	n.get( );
+	o.get( );
+
 #endif  // !INSTRUMENTATION_ENABLED
 
 #ifdef INSTRUMENTATION_ENABLED

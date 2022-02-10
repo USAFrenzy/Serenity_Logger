@@ -40,12 +40,12 @@ namespace serenity::targets
 		toBuffer = fmtToBuf;
 	}
 
-	bool TargetBase::isWriteToBuf( )
+	const bool TargetBase::isWriteToBuf( )
 	{
 		return toBuffer;
 	}
 
-	std::string *TargetBase::Buffer( )
+	std::string *const TargetBase::Buffer( )
 	{
 		return &internalBuffer;
 	}
@@ -60,7 +60,7 @@ namespace serenity::targets
 		policy = pPolicy;
 	}
 
-	serenity::experimental::Flush_Policy &TargetBase::Policy( )
+	const serenity::experimental::Flush_Policy &TargetBase::Policy( )
 	{
 		return policy;
 	}
@@ -98,4 +98,4 @@ namespace serenity::targets
 		msgDetails.SetName( name );
 	}
 
-}  // namespace serenity::experimental::targets
+}  // namespace serenity::targets
