@@ -207,7 +207,7 @@ int main( )
 	auto LogHourly = [ & ]( )
 	{
 		for( int i = 1; i <= rotationIterations; ++i ) {
-			rotatingFile.Info( "Logging message {} to rotating file based on hour mode", i );
+			rotatingLoggerHourly.Info( "Logging message {} to rotating file based on hour mode", i );
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Hourly!\n" );
 			NotifyConsole( message );
@@ -222,7 +222,7 @@ int main( )
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Daily!\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 10 ) );
+			std::this_thread::sleep_for( std::chrono::minutes( 5 ) );
 		}
 	};
 
@@ -233,7 +233,7 @@ int main( )
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Size!\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 15 ) );
+			std::this_thread::sleep_for( std::chrono::minutes( 2 ) );
 		}
 	};
 
