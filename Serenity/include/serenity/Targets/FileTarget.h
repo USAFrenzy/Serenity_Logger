@@ -19,14 +19,16 @@ namespace serenity::targets
 		~FileTarget( );
 		const std::string FilePath( );
 		const std::string FileName( );
-		void              EraseContents( );
 		virtual bool      RenameFile( std::string_view newFileName );
 		bool              OpenFile( bool truncate = false );
 		bool              CloseFile( );
 		void              Flush( );
+		void              WriteToBaseBuffer( bool fmtToBuf = true );
+		bool              isWriteToBuf( );
+		std::string *     Buffer( );
 
 	  private:
-		LoggerLevel   logLevel;
+		LoggerLevel                           logLevel;
 		serenity::experimental::Flush_Policy &policy;
 
 	  protected:
@@ -36,4 +38,4 @@ namespace serenity::targets
 		void             PolicyFlushOn( ) override;
 		void             PrintMessage( std::string_view formatted ) override;
 	};
-}  // namespace serenity::experimental::targets
+}  // namespace serenity::targets

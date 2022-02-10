@@ -1,8 +1,10 @@
 #include <serenity/Common.h>
 
+#include <iostream>
+
 namespace serenity::experimental
 {
-	void RotateSettings::SetOriginalSettings( const std::filesystem::path &filePath )
+	void RotateSettings::CacheOriginalPathComponents( const std::filesystem::path &filePath )
 	{
 		path = filePath;
 		ext  = filePath.filename( ).extension( ).string( );
@@ -42,4 +44,13 @@ namespace serenity::experimental
 		return currentFileSize;
 	}
 
+	void RotateSettings::EnableIntervalRotation( bool enabled )
+	{
+		intervalRotationEnabled = enabled;
+	}
+
+	const bool RotateSettings::IsIntervalRotationEnabled( )
+	{
+		return intervalRotationEnabled;
+	}
 }  // namespace serenity::experimental

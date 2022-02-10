@@ -10,7 +10,7 @@
 // TODO: ####################################################################################################################################
 // clang-format on
 
-#define INSTRUMENT 1
+#define INSTRUMENT 0
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -97,8 +97,10 @@ int main( )
 	spdlog::register_logger( spdlogRotatingLogger );
 	spdlogRotatingLogger->set_pattern( "%^|%L| %a %d%b%C %T [%n]: %v%$" );  // equivalent to Target's Default Pattern
 
+	using namespace serenity;
+	using namespace se_utils;
 	using namespace se_colors;
-	using namespace serenity::se_utils;
+	using namespace experimental;
 
 	serenity::targets::ColorConsole                 C;
 	serenity::targets::FileTarget                   testFile;
@@ -152,13 +154,6 @@ int main( )
 	C.SetOriginalColors( );
 	C.Warn( "Colors Should Have Been Reset, So This Should Be Back To Bright Yellow" );
 
-	// This Is Now Fully Working As Well
-	// TODO: Add interval based rotation settings
-	serenity::expiremental::RotateSettings settings;
-	settings.fileSizeLimit    = 256 * KB;
-	settings.maxNumberOfFiles = 5;
-	settings.rotateOnFileSize = true;
-	rotatingFile.SetRotateSettings( settings );
 
 	testFile.Trace( "This Is A Trace Message To The File" );
 	testFile.Info( "This Is An Info Message To The File" );
@@ -170,19 +165,21 @@ int main( )
 	testFile.Trace( "File Should Have Been Renamed To \"Renamed_File.txt\"" );
 	testFile.Flush( );
 
-	// Found out why this was so slow.. the std::filesystem::file_size() call is apparently extremely expensive, opted for
-	// manual tracking of size
-	auto start { std::chrono::steady_clock::now( ) };
-	for( int i = 0; i < 4'000'000; ++i ) {
-		rotatingFile.Trace( "This is a test loop for rotating the file. Iteration {}", i );
+	RotateSettings settings;
+	settings.fileSizeLimit    = 256 * KB;
+	settings.maxNumberOfFiles = 5;
+	settings.dayModeSetting   = 17;
+	settings.monthModeSetting = 9;
+	settings.weekModeSetting  = 3;
+	rotatingFile.SetRotateSettings( settings );
+
+	rotatingFile.SetRotationMode( RotateSettings::IntervalMode::hourly );
+	std::cout << "\n\nLogging messages to test rotation on daily mark\n";
+	for( int i = 1; i <= 35; ++i ) {
+		rotatingFile.Info( "Logging message {} to rotating file based on daily mode", i );
+		std::cout << "Message " << i << " Logged To File!\n";
+		std::this_thread::sleep_for( std::chrono::minutes( 1 ) );
 	}
-	auto end { std::chrono::steady_clock::now( ) };
-	auto elapsed = ( end - start );
-	auto time { std::chrono::duration_cast<std::chrono::microseconds>( elapsed ) };
-	auto averaged { time / 4'000'000.0f };
-	std::cout << "\nTime Taken For Rotation Loop (Averaged): " << averaged << "\n";
-	// Next Step Is To Benchmark And Flesh Out The FileTarget Class And Then Start Working On An HTML/XML Shredder
-	// And Finally Link All The Targets Together Using A Singular Logging Class
 #endif  // !INSTRUMENTATION_ENABLED
 
 #ifdef INSTRUMENTATION_ENABLED

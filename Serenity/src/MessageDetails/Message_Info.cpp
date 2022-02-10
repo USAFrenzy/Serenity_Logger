@@ -59,4 +59,8 @@ namespace serenity::msg_details
 		return m_message;
 	}
 
+	const size_t Message_Info::MessageSize( )
+	{
+		return m_message.size( );
+	}
 }  // namespace serenity::msg_details

@@ -23,23 +23,24 @@ namespace serenity::targets
 		void                                  SetPattern( std::string_view pattern );
 		void                                  ResetPatternToDefault( );
 		void                                  SetLogLevel( LoggerLevel level );
-		void                                  WriteToBaseBuffer( bool fmtToBuf = true );
-		bool                                  isWriteToBuf( );
-		std::string *                         Buffer( );
-		const LoggerLevel                     Level( );
-		void                                  SetLoggerName( std::string_view name );
-		template <typename... Args> void      Trace( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Info( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Debug( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Warn( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Error( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Fatal( std::string_view msg, Args &&...args );
+
+		const LoggerLevel                Level( );
+		void                             SetLoggerName( std::string_view name );
+		template <typename... Args> void Trace( std::string_view msg, Args &&...args );
+		template <typename... Args> void Info( std::string_view msg, Args &&...args );
+		template <typename... Args> void Debug( std::string_view msg, Args &&...args );
+		template <typename... Args> void Warn( std::string_view msg, Args &&...args );
+		template <typename... Args> void Error( std::string_view msg, Args &&...args );
+		template <typename... Args> void Fatal( std::string_view msg, Args &&...args );
 
 	  protected:
 		virtual void                    PrintMessage( std::string_view formatted ) = 0;
 		virtual void                    PolicyFlushOn( ) { }
 		msg_details::Message_Formatter *MsgFmt( );
 		msg_details::Message_Info *     MsgInfo( );
+		void                            WriteToBaseBuffer( bool fmtToBuf = true );
+		bool                            isWriteToBuf( );
+		std::string *                   Buffer( );
 
 	  private:
 		bool                                 toBuffer;

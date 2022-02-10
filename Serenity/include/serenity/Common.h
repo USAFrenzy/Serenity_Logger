@@ -178,26 +178,39 @@ namespace serenity
 	{
 		struct RotateSettings
 		{
-			// Will add an interval based setting later
-			// (something like a weekly basis on specified day and a daily setting)
+			enum class IntervalMode
+			{
+				file_size = 0,
+				hourly    = 1,
+				daily     = 2,
+				weekly    = 3,
+				monthly   = 4,
+			};
 
-			bool   rotateOnFileSize { true };
 			size_t maxNumberOfFiles { 5 };
 			size_t fileSizeLimit { 512 * KB };
+			int    dayModeSetting { 0 };
+			int    weekModeSetting { 0 };
+			int    monthModeSetting { 1 };
 
-			void                         SetOriginalSettings( const std::filesystem::path &filePath );
-			void                         SetCurrentFileSize( size_t currentSize );
+		  protected:
 			const std::filesystem::path &OriginalPath( );
 			const std::filesystem::path &OriginalDirectory( );
 			const std::string &          OriginalName( );
 			const std::string &          OriginalExtension( );
 			const size_t &               FileSize( );
+			const bool                   IsIntervalRotationEnabled( );
+			void                         CacheOriginalPathComponents( const std::filesystem::path &filePath );
+			void                         SetCurrentFileSize( size_t currentSize );
+			void                         EnableIntervalRotation( bool enabled = true );
 
 		  private:
 			size_t                currentFileSize { 0 };
 			std::string           ext, fileName;
 			std::filesystem::path path, directory;
+			bool                  intervalRotationEnabled { true };
 		};
+
 	}  // namespace experimental
 }  // namespace serenity
 

@@ -6,37 +6,63 @@ namespace serenity::experimental::targets
 {
 	using namespace serenity::targets;
 
-	RotatingTarget::RotatingTarget( )
-	  : FileTarget( "Rotating_Log.txt", true ), rotateFile( true ), rotateSettings( RotateSettings( ) )
+	RotatingTarget::RotatingTarget( ) : FileTarget( "Rotating_Log.txt", true ), shouldRotate( true )
 	{
-		rotateSettings.SetOriginalSettings( fileOptions.filePath );
+		CacheOriginalPathComponents( fileOptions.filePath );
 		RenameFileForRotation( );
-		rotateSettings.SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
+		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 		SetLoggerName( "Rotating_Logger" );
+		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
+		currentHour    = cache.tm_hour;
+		currentDay     = cache.tm_mday;
+		currentWeekday = cache.tm_wday;
 	}
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view filePath, bool replaceIfExists )
-	  : FileTarget( name, filePath, replaceIfExists ), rotateFile( true ), rotateSettings( RotateSettings( ) )
+	  : FileTarget( name, filePath, replaceIfExists ), shouldRotate( true )
 	{
-		rotateSettings.SetOriginalSettings( filePath );
+		CacheOriginalPathComponents( filePath );
 		RenameFileForRotation( );
-		rotateSettings.SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
+		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 		SetLoggerName( "Rotating_Logger" );
+		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
+		currentHour    = cache.tm_hour;
+		currentDay     = cache.tm_mday;
+		currentWeekday = cache.tm_wday;
 	}
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
 									bool replaceIfExists )
-	  : FileTarget( name, formatPattern, filePath, replaceIfExists ), rotateFile( true ), rotateSettings( RotateSettings( ) )
+	  : FileTarget( name, formatPattern, filePath, replaceIfExists ), shouldRotate( true )
 	{
-		rotateSettings.SetOriginalSettings( filePath );
+		CacheOriginalPathComponents( filePath );
 		RenameFileForRotation( );
-		rotateSettings.SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
+		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 		SetLoggerName( "Rotating_Logger" );
+		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
+		currentHour    = cache.tm_hour;
+		currentDay     = cache.tm_mday;
+		currentWeekday = cache.tm_wday;
 	}
 
 	RotatingTarget::~RotatingTarget( )
 	{
 		CloseFile( );
+	}
+
+	void RotatingTarget::WriteToBaseBuffer( bool fmtToBuf )
+	{
+		TargetBase::WriteToBaseBuffer( fmtToBuf );
+	}
+
+	bool RotatingTarget::isWriteToBuf( )
+	{
+		return TargetBase::isWriteToBuf( );
+	}
+
+	std::string *RotatingTarget::Buffer( )
+	{
+		return TargetBase::Buffer( );
 	}
 
 	bool RotatingTarget::RenameFile( std::string_view newFileName )
@@ -50,7 +76,7 @@ namespace serenity::experimental::targets
 			}
 			std::filesystem::rename( fileOptions.filePath, newFile );
 			fileOptions.filePath = std::move( newFile );
-			rotateSettings.SetOriginalSettings( fileOptions.filePath );
+			CacheOriginalPathComponents( fileOptions.filePath );
 			RenameFileForRotation( );
 			if( !fileHandle.is_open( ) ) {
 				OpenFile( );
@@ -64,10 +90,11 @@ namespace serenity::experimental::targets
 		}
 	}
 
-	void RotatingTarget::ShouldRotateFile( bool shouldRotate )
+	void RotatingTarget::EnableRotation( bool shouldRotate )
 	{
-		rotateFile = shouldRotate;
-		rotateSettings.SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
+		this->shouldRotate = shouldRotate;
+		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
+		EnableIntervalRotation( shouldRotate );
 	}
 
 	void RotatingTarget::RenameFileForRotation( )
@@ -93,25 +120,24 @@ namespace serenity::experimental::targets
 
 	void RotatingTarget::SetRotateSettings( RotateSettings settings )
 	{
-		rotateSettings.fileSizeLimit    = settings.fileSizeLimit;
-		rotateSettings.maxNumberOfFiles = settings.maxNumberOfFiles;
-		rotateSettings.rotateOnFileSize = settings.rotateOnFileSize;
-		// rotateFile will, in the future, be dependant on whether or not rotate
-		// setting is allowed via size/interval means
-		rotateFile = rotateSettings.rotateOnFileSize;
+		fileSizeLimit    = settings.fileSizeLimit;
+		maxNumberOfFiles = settings.maxNumberOfFiles;
+		dayModeSetting   = settings.dayModeSetting;
+		monthModeSetting = settings.monthModeSetting;
+		weekModeSetting  = settings.weekModeSetting;
 	}
 
-	void RotatingTarget::RotateFileOnSize( )
+	void RotatingTarget::RotateFile( )
 	{
-		if( !rotateFile ) return;
+		if( !shouldRotate ) return;
 
 		CloseFile( );
 		bool rotateSuccessful { false };
 		// make local copies of originals
-		auto newFilePath { rotateSettings.OriginalPath( ) };
-		auto originalFile { rotateSettings.OriginalName( ) };
-		auto extension { rotateSettings.OriginalExtension( ) };
-		auto numberOfFiles { rotateSettings.maxNumberOfFiles };
+		auto newFilePath { OriginalPath( ) };
+		auto originalFile { OriginalName( ) };
+		auto extension { OriginalExtension( ) };
+		auto numberOfFiles { maxNumberOfFiles };
 
 		for( size_t fileNumber { 1 }; fileNumber <= numberOfFiles; ++fileNumber ) {
 			std::string newFile { originalFile };  // effectively reset each loop
@@ -128,9 +154,9 @@ namespace serenity::experimental::targets
 		}
 
 		if( !rotateSuccessful ) {
-			auto logDirectory { std::filesystem::directory_iterator( rotateSettings.OriginalDirectory( ) ) };
+			auto                            logDirectory { std::filesystem::directory_iterator( OriginalDirectory( ) ) };
 			std::filesystem::file_time_type oldestWriteTime = { std::chrono::file_clock::now( ) };
-			std::string                     fileNameToFind { rotateSettings.OriginalName( ) };
+			std::string                     fileNameToFind { OriginalName( ) };
 			std::filesystem::path           fileToReplace;
 			for( auto &file : logDirectory ) {
 				if( file.is_regular_file( ) ) {
@@ -174,18 +200,132 @@ namespace serenity::experimental::targets
 				std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 			}
 		}
-		if( rotateFile ) {
-			if( ( rotateSettings.FileSize( ) + formatted.size( ) ) >= rotateSettings.fileSizeLimit ) {
-				RotateFileOnSize( );
-				// Truncate file in RotateFileOnSize(), so should be safe to explicitly set to "0" here
-				rotateSettings.SetCurrentFileSize( 0 );
-			}
+		if( ShouldRotate( ) ) {
+			RotateFile( );
+			SetCurrentFileSize( 0 );
 		}
 		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
-		rotateSettings.SetCurrentFileSize( rotateSettings.FileSize( ) + formatted.size( ) );
+		SetCurrentFileSize( FileSize( ) + formatted.size( ) );
 		if( flushThread ) {
 			flushWorker.readWriteMutex.unlock( );
 		}
 	}
 
+	bool RotatingTarget::ShouldRotate( )
+	{
+		if( !shouldRotate ) return false;
+		using mode  = RotateSettings::IntervalMode;
+		auto &cache = MsgInfo( )->TimeDetails( ).Cache( );
+
+		switch( RotateMode( ) ) {
+			case mode::file_size:
+			{
+				auto currentSize { FileSize( ) + MsgInfo( )->MessageSize( ) };
+				return currentSize >= fileSizeLimit;
+			} break;
+			case mode::hourly:
+			{
+				if( currentHour != cache.tm_hour ) {
+					currentHour = cache.tm_hour;
+					EnableIntervalRotation( true );
+				}
+				if( IsIntervalRotationEnabled( ) ) {
+					EnableIntervalRotation( false );
+					return true;
+				}
+			} break;
+			case mode::daily:
+				if( currentDay != cache.tm_mday ) {
+					currentDay = cache.tm_mday;
+					EnableIntervalRotation( true );
+				}
+				if( cache.tm_hour == dayModeSetting ) {
+					if( IsIntervalRotationEnabled( ) ) {
+						EnableIntervalRotation( false );
+						return true;
+					}
+				}
+				break;
+			case mode::weekly:
+				if( currentWeekday != cache.tm_wday ) {
+					currentWeekday = cache.tm_wday;
+					EnableIntervalRotation( true );
+				}
+				if( currentWeekday == weekModeSetting ) {
+					if( IsIntervalRotationEnabled( ) ) {
+						EnableIntervalRotation( false );
+						return true;
+					}
+				}
+				break;
+			case mode::monthly:
+			{
+				if( currentDay != cache.tm_mday ) {
+					currentDay = cache.tm_mday;
+					EnableIntervalRotation( true );
+				}
+				if( currentDay == monthModeSetting ) {
+					if( IsIntervalRotationEnabled( ) ) {
+						EnableIntervalRotation( false );
+						return true;
+					}
+				}
+			} break;
+		}
+		// If we got here, then rotation shouldn't occur since we return true in the case statements directly if we should
+		// rotate the file
+		return false;
+	}
+
+	void RotatingTarget::SetRotationSetting( IntervalMode mode, size_t setting )
+	{
+		using mType = RotateSettings::IntervalMode;
+		switch( m_mode ) {
+			case mType::file_size: fileSizeLimit = setting; break;
+			// Including hourly just to avoid compiler whining. Since we check current hour value with internal cached
+			// hour value, there's no need to set anything or check anything here.
+			case mType::hourly: return; break;
+			case mType::daily:
+			{
+				if( ( setting > 23 ) || ( setting < 0 ) ) {
+					setting = 0;
+					std::cerr << "Hour setting passed in for IntervalMode::daily is out of bounds. \nValue expected is "
+								 "between 0-23 where 0 is 12AM and 23 is 11PM. \nValue passed in: "
+							  << setting << " \n";
+				}
+				dayModeSetting = setting;
+			} break;
+			case mType::weekly:
+			{
+				if( ( setting > 6 ) || ( setting < 0 ) ) {
+					setting = 0;
+					std::cerr << "Weekday setting passed in for IntervalMode::weekly is out of bounds. \nValue expected is "
+								 "between 0-6 where 0 is Sunday and 6 is Saturday. \nValue passed in: "
+							  << setting << " \n";
+				}
+				weekModeSetting = setting;
+			} break;
+			case mType::monthly:
+			{
+				if( ( setting > 31 ) || ( setting < 1 ) ) {
+					setting = 1;
+					std::cerr << "Day setting passed in for IntervalMode::monthly is out of bounds. \nValue expected is "
+								 "between 1-31 where 1 is the first day of the month and 31 is the max value of possible "
+								 "days in a month. \nValue passed in: "
+							  << setting << " \n";
+				}
+				monthModeSetting = setting;
+			} break;
+		}
+	}
+
+	void RotatingTarget::SetRotationMode( IntervalMode mode )
+	{
+		m_mode = mode;
+	}
+
+	const RotateSettings::IntervalMode RotatingTarget::RotateMode( )
+	{
+		return m_mode;
+	}
 }  // namespace serenity::experimental::targets

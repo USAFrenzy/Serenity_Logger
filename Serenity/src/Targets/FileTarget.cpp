@@ -139,12 +139,6 @@ namespace serenity::targets
 		return true;
 	}
 
-	void FileTarget::EraseContents( )
-	{
-		CloseFile( );
-		OpenFile( true );
-	}
-
 	bool FileTarget::CloseFile( )
 	{
 		try {
@@ -207,6 +201,21 @@ namespace serenity::targets
 			Buffer( )->clear( );
 		}
 		fileHandle.flush( );
+	}
+
+	void FileTarget::WriteToBaseBuffer( bool fmtToBuf )
+	{
+		TargetBase::WriteToBaseBuffer( fmtToBuf );
+	}
+
+	bool FileTarget::isWriteToBuf( )
+	{
+		return TargetBase::isWriteToBuf( );
+	}
+
+	std::string *FileTarget::Buffer( )
+	{
+		return TargetBase::Buffer( );
 	}
 
 	void FileTarget::PolicyFlushOn( )
