@@ -8,41 +8,74 @@ namespace serenity::experimental::targets
 
 	RotatingTarget::RotatingTarget( ) : FileTarget( "Rotating_Log.txt", true ), shouldRotate( true )
 	{
-		CacheOriginalPathComponents( fileOptions.filePath );
-		RenameFileForRotation( );
-		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
-		SetLoggerName( "Rotating_Logger" );
 		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
+		std::filesystem::path rotationReadyFile { fileOptions.filePath };
+		rotationReadyFile.make_preferred( );
+		CacheOriginalPathComponents( fileOptions.filePath );
+		std::string rotateFile { OriginalName( ) };
+		rotateFile.append( "_01" ).append( OriginalExtension( ) );
+		rotationReadyFile.replace_filename( rotateFile );
+		if( !std::filesystem::exists( rotationReadyFile ) ) {
+			CloseFile( );
+			std::filesystem::rename( fileOptions.filePath, rotationReadyFile );
+			fileOptions.filePath = std::move( rotationReadyFile );
+			OpenFile( true );
+		} else {
+			RotateFile( );
+		}
+		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 	}
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view filePath, bool replaceIfExists )
 	  : FileTarget( name, filePath, replaceIfExists ), shouldRotate( true )
 	{
-		CacheOriginalPathComponents( filePath );
-		RenameFileForRotation( );
-		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
-		SetLoggerName( "Rotating_Logger" );
 		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
+		std::filesystem::path rotationReadyFile { filePath };
+		rotationReadyFile.make_preferred( );
+		CacheOriginalPathComponents( filePath );
+		std::string rotateFile { OriginalName( ) };
+		rotateFile.append( "_01" ).append( OriginalExtension( ) );
+		rotationReadyFile.replace_filename( rotateFile );
+		if( !std::filesystem::exists( rotationReadyFile ) ) {
+			CloseFile( );
+			std::filesystem::rename( fileOptions.filePath, rotationReadyFile );
+			fileOptions.filePath = std::move( rotationReadyFile );
+			OpenFile( replaceIfExists );
+		} else {
+			RotateFile( );
+		}
+		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 	}
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
 									bool replaceIfExists )
 	  : FileTarget( name, formatPattern, filePath, replaceIfExists ), shouldRotate( true )
 	{
-		CacheOriginalPathComponents( filePath );
-		RenameFileForRotation( );
-		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
-		SetLoggerName( "Rotating_Logger" );
 		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
+		std::filesystem::path rotationReadyFile { filePath };
+		rotationReadyFile.make_preferred( );
+		CacheOriginalPathComponents( filePath );
+		std::string rotateFile { OriginalName( ) };
+		rotateFile.append( "_01" ).append( OriginalExtension( ) );
+		rotationReadyFile.replace_filename( rotateFile );
+		if( !std::filesystem::exists( rotationReadyFile ) ) {
+			CloseFile( );
+			std::filesystem::rename( fileOptions.filePath, rotationReadyFile );
+			fileOptions.filePath = std::move( rotationReadyFile );
+			OpenFile( replaceIfExists );
+		} else {
+			RotateFile( );
+		}
+		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 	}
 
 	RotatingTarget::~RotatingTarget( )
@@ -68,19 +101,11 @@ namespace serenity::experimental::targets
 	bool RotatingTarget::RenameFile( std::string_view newFileName )
 	{
 		try {
-			// make copy for old file conversion
+			// make copy for old file conversion and cache new values
 			std::filesystem::path newFile { fileOptions.filePath };
 			newFile.replace_filename( newFileName );
-			if( fileHandle.is_open( ) ) {
-				CloseFile( );
-			}
-			std::filesystem::rename( fileOptions.filePath, newFile );
-			fileOptions.filePath = std::move( newFile );
-			CacheOriginalPathComponents( fileOptions.filePath );
-			RenameFileForRotation( );
-			if( !fileHandle.is_open( ) ) {
-				OpenFile( );
-			}
+			CacheOriginalPathComponents( newFile );
+			RotateFile( );
 			return true;
 		}
 		catch( const std::exception &e ) {
@@ -97,27 +122,6 @@ namespace serenity::experimental::targets
 		InitFirstRotation( shouldRotate );
 	}
 
-	void RotatingTarget::RenameFileForRotation( )
-	{
-		auto       extension { fileOptions.filePath.extension( ).string( ) };
-		const auto oldFile { fileOptions.filePath };
-		// need to make copy to avoid changing old file so that we can rename it
-		auto        rotateFile { fileOptions.filePath };
-		std::string fileName { rotateFile.replace_extension( ).string( ) };
-		fileName.append( "_" ).append( "01" ).append( extension );
-		rotateFile.replace_filename( fileName );
-		if( fileHandle.is_open( ) ) {
-			CloseFile( );
-		}
-		// only if the file doesn't exist already should it be renamed,
-		// otherwise we just open the already existing file
-		if( !std::filesystem::exists( rotateFile ) ) {
-			std::filesystem::rename( oldFile, rotateFile );
-		}
-		fileOptions.filePath = std::move( rotateFile );
-		OpenFile( );
-	}
-
 	void RotatingTarget::SetRotateSettings( RotateSettings settings )
 	{
 		fileSizeLimit    = settings.fileSizeLimit;
@@ -130,19 +134,15 @@ namespace serenity::experimental::targets
 	void RotatingTarget::RotateFile( )
 	{
 		if( !shouldRotate ) return;
-
 		CloseFile( );
 		bool rotateSuccessful { false };
-		// make local copies of originals
+		// make local copy of orginal path since we need to modify the path
 		auto newFilePath { OriginalPath( ) };
-		auto originalFile { OriginalName( ) };
-		auto extension { OriginalExtension( ) };
-		auto numberOfFiles { maxNumberOfFiles };
 
-		for( size_t fileNumber { 1 }; fileNumber <= numberOfFiles; ++fileNumber ) {
-			std::string newFile { originalFile };  // effectively reset each loop
-												   // iteration
-			newFile.append( "_" ).append( SERENITY_LUTS::numberStr[ fileNumber ] ).append( extension );
+		for( size_t fileNumber { 1 }; fileNumber <= maxNumberOfFiles; ++fileNumber ) {
+			std::string newFile { OriginalName( ) };  // effectively reset each loop
+													  // iteration
+			newFile.append( "_" ).append( SERENITY_LUTS::numberStr[ fileNumber ] ).append( OriginalExtension( ) );
 			newFilePath.replace_filename( newFile );
 
 			if( !std::filesystem::exists( newFilePath ) ) {
@@ -177,7 +177,7 @@ namespace serenity::experimental::targets
 			} else {
 				std::cerr << std::vformat( "Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And "
 										   "Truncating Previous File, \"{}\"\n",
-										   std::make_format_args( originalFile, previousFile ) );
+										   std::make_format_args( OriginalName( ), previousFile ) );
 			}
 
 			if( !FileTarget::OpenFile( true ) ) {
@@ -225,7 +225,7 @@ namespace serenity::experimental::targets
 			case mode::file_size:
 			{
 				auto currentSize { FileSize( ) + MsgInfo( )->MessageSize( ) };
-				return (currentSize >= fileSizeLimit);
+				return ( currentSize >= fileSizeLimit );
 			} break;
 			case mode::hourly:
 			{

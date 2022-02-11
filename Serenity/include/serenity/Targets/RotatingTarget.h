@@ -39,7 +39,6 @@ namespace serenity::experimental::targets
 
 	  private:
 		void         PrintMessage( std::string_view formatted ) override;
-		void         RenameFileForRotation( );
 		bool         shouldRotate;
 		IntervalMode m_mode { IntervalMode::file_size };
 		int          currentDay, currentWeekday, currentHour;

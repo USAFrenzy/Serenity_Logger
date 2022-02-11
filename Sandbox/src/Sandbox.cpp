@@ -111,7 +111,8 @@ int main( )
 
 	serenity::targets::ColorConsole                 C;
 	serenity::targets::FileTarget                   testFile;
-	serenity::experimental::targets::RotatingTarget rotatingFile;
+	std::filesystem::path dailyFilePath = LogDirPath( ) /= "Daily/DailyLog.txt";
+	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
 
 	// TODO: Fix this to work as expected
 	// PeriodicSettings settings;
@@ -174,14 +175,14 @@ int main( )
 	RotateSettings settings;
 	settings.fileSizeLimit    = 256 * KB;
 	settings.maxNumberOfFiles = 10;
-	settings.dayModeSetting   = 22;
+	settings.dayModeSetting   = 20;
 	settings.monthModeSetting = 9;
 	settings.weekModeSetting  = 3;
 	rotatingFile.SetRotateSettings( settings );
 
 	rotatingFile.SetRotationMode( RotateSettings::IntervalMode::daily );
 
-	auto                                  onSizeFilePath = LogDirPath( ) /= "Daily/OnSizeRotation.txt";
+	auto                                  onSizeFilePath = LogDirPath( ) /= "FileSize/OnSizeRotation.txt";
 	experimental::targets::RotatingTarget rotatingLoggerOnSize( "RotateOnSize_Logger", onSizeFilePath.string( ), true );
 	rotatingLoggerOnSize.SetRotateSettings( settings );
 	// should be the default anyways
@@ -189,12 +190,10 @@ int main( )
 
 	auto                                  onHourFilePath = LogDirPath( ) /= "Hourly/OnHourRotation.txt";
 	experimental::targets::RotatingTarget rotatingLoggerHourly( "RotateHourly_Logger", onHourFilePath.string( ), true );
-	rotatingLoggerHourly.RenameFile( "HourlyRotation.txt" );
 	rotatingLoggerHourly.SetRotateSettings( settings );
 	// should be the default anyways
 	rotatingLoggerHourly.SetRotationMode( RotateSettings::IntervalMode::hourly );
-
-	size_t rotationIterations = 5'000'000;
+	size_t rotationIterations = 1'000'000;
 
 	std::mutex consoleMutex;
 	auto       NotifyConsole = [ & ]( std::string message )
@@ -203,15 +202,15 @@ int main( )
 		std::cout << message;
 	};
 
-	std::cout << "\n\nLogging messages to test rotation on hour mark, daily mark, and file size\n";
+	std::cout << "\n\nLogging messages to test rotation on hour mark, daily mark, and file size\n\n";
 	auto LogHourly = [ & ]( )
 	{
 		for( int i = 1; i <= rotationIterations; ++i ) {
 			rotatingLoggerHourly.Info( "Logging message {} to rotating file based on hour mode", i );
 			std::string message = "Message ";
-			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Hourly!\n" );
+			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Hourly\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 1 ) );
+			std::this_thread::sleep_for( std::chrono::minutes( 5) );
 		}
 	};
 
@@ -220,20 +219,20 @@ int main( )
 		for( int i = 1; i <= rotationIterations; ++i ) {
 			rotatingFile.Info( "Logging message {} to rotating file based on daily mode", i );
 			std::string message = "Message ";
-			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Daily!\n" );
+			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Daily\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 5 ) );
+			std::this_thread::sleep_for( std::chrono::minutes( 10) );
 		}
 	};
 
 	auto LogOnSize = [ & ]( )
 	{
 		for( int i = 1; i <= rotationIterations; ++i ) {
-			rotatingLoggerOnSize.Info( "Logging message {} to rotating file based on daily mode", i );
+			rotatingLoggerOnSize.Info( "Logging message {} to rotating file based on file size mode", i );
 			std::string message = "Message ";
-			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Size!\n" );
+			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Size\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 2 ) );
+			std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
 		}
 	};
 
