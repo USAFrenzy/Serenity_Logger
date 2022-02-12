@@ -111,8 +111,8 @@ int main( )
 
 	serenity::targets::ColorConsole                 C;
 	serenity::targets::FileTarget                   testFile;
-	std::filesystem::path dailyFilePath = LogDirPath( ) /= "Daily/DailyLog.txt";
-	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
+	std::filesystem::path                           dailyFilePath = LogDirPath( ) /= "Daily/DailyLog.txt";
+	serenity::experimental::targets::RotatingTarget rotatingFile( "Basic_Rotating_Logger", dailyFilePath.string( ), true );
 
 	// TODO: Fix this to work as expected
 	// PeriodicSettings settings;
@@ -175,7 +175,7 @@ int main( )
 	RotateSettings settings;
 	settings.fileSizeLimit    = 256 * KB;
 	settings.maxNumberOfFiles = 10;
-	settings.dayModeSetting   = 20;
+	settings.dayModeSetting   = 19;
 	settings.monthModeSetting = 9;
 	settings.weekModeSetting  = 3;
 	rotatingFile.SetRotateSettings( settings );
@@ -193,7 +193,17 @@ int main( )
 	rotatingLoggerHourly.SetRotateSettings( settings );
 	// should be the default anyways
 	rotatingLoggerHourly.SetRotationMode( RotateSettings::IntervalMode::hourly );
-	size_t rotationIterations = 1'000'000;
+	size_t rotationIterations = 3'000'000;
+
+	// just to see contents if exit early and to see that writing is being done before rotation is called
+	PeriodicSettings flushSettings;
+	flushSettings.flushEvery = std::chrono::minutes( 5 );
+	flushSettings.flushOn    = LoggerLevel::trace;
+
+	Flush_Policy policy( Flush::periodically, PeriodicOptions::timeBased, flushSettings );
+	rotatingFile.SetFlushPolicy( policy );
+	rotatingLoggerHourly.SetFlushPolicy( policy );
+	rotatingLoggerOnSize.SetFlushPolicy( policy );
 
 	std::mutex consoleMutex;
 	auto       NotifyConsole = [ & ]( std::string message )
@@ -210,7 +220,7 @@ int main( )
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Hourly\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 5) );
+			std::this_thread::sleep_for( std::chrono::minutes( 2 ) );
 		}
 	};
 
@@ -221,7 +231,7 @@ int main( )
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Daily\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 10) );
+			std::this_thread::sleep_for( std::chrono::minutes( 1 ) );
 		}
 	};
 
