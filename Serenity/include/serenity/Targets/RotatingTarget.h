@@ -33,7 +33,7 @@ namespace serenity::experimental::targets
 		// - SetRotationSetting(IntervalMode::weekly, 2) -> Rotate Every Tuesday
 		// - SetRotationSetting(IntervalMode::monthly, 24) -> Rotate Every Month on the 24th day of that month
 		// This gives granularity over which setting to change vs all settings in SetRotateSettings();
-		void                               SetRotationSetting( IntervalMode mode, size_t interval );
+		void                               SetRotationSetting( IntervalMode mode, size_t setting, size_t secondSetting = 0 );
 		void                               SetRotationMode( IntervalMode mode );
 		const RotateSettings::IntervalMode RotationMode( );
 
@@ -45,16 +45,3 @@ namespace serenity::experimental::targets
 	};
 
 }  // namespace serenity::experimental::targets
-
-/******************************************************** Note to self: *****************************************************
-	All rotating modes seem to work - I've only tested hourly and daily so far, but weekly and monthly follow the same logic
-	so I assume those should work as well. Definitely need to test those two though instead of making assumptions here.
-
-	As a secondary note though, I'm debating if I only want the current renaming method to only apply to file size rotations.
-	- i.e. The current method of Rotating_Log.txt -> Rotating_Log_01.txt -> Rotating_Log_02.txt -> etc...
-
-	Main reason is that it could be helpful to users if say each file has a date format or hour marker:
-	- For hourly logging, Rotating_Log.txt -> Rotating_Log_8pm.txt -> Rotating_Log_9pm.txt -> etc...
-	- For daily and weekly logging, Rotating_Log.txt -> Rotating_Log_09Feb22.txt -> Rotating_Log_16Feb22.txt
-	- For monthly logging, Rotating_Log.txt -> Rotating_Log_Feb22.txt -> Rotating_Log_Mar22.txt
-****************************************************************************************************************************/

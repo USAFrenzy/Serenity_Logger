@@ -2,12 +2,14 @@
 
 namespace serenity::targets
 {
+	constexpr const char *DEFAULT_PATTERN = "|%l| %x %n %T [%N]: %+";
+
 	TargetBase::TargetBase( )
 	  : toBuffer( false ),
 		policy( serenity::experimental::Flush::never ),
 		logLevel( LoggerLevel::trace ),
 		msgLevel( LoggerLevel::trace ),
-		pattern( "|%l| %x %n %T [%N]: %+" ),
+		pattern( DEFAULT_PATTERN ),
 		msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
 		msgPattern( pattern, &msgDetails )
 	{
@@ -18,7 +20,7 @@ namespace serenity::targets
 		policy( serenity::experimental::Flush::never ),
 		logLevel( LoggerLevel::trace ),
 		msgLevel( LoggerLevel::trace ),
-		pattern( "|%l| %x %n %T [%N]: %+" ),
+		pattern( DEFAULT_PATTERN ),
 		msgDetails( name, msgLevel, message_time_mode::local ),
 		msgPattern( pattern, &msgDetails )
 	{
@@ -82,7 +84,7 @@ namespace serenity::targets
 
 	void TargetBase::ResetPatternToDefault( )
 	{
-		msgPattern.SetPattern( "|%l| %x %n %T [%N]: %+" );
+		msgPattern.SetPattern( DEFAULT_PATTERN );
 	}
 	void TargetBase::SetLogLevel( LoggerLevel level )
 	{

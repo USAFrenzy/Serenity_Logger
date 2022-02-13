@@ -4,6 +4,19 @@
 
 namespace serenity::experimental::targets
 {
+	constexpr int JANUARY   = 0;
+	constexpr int FEBRUARY  = 1;
+	constexpr int MARCH     = 2;
+	constexpr int APRIL     = 3;
+	constexpr int MAY       = 4;
+	constexpr int JUNE      = 5;
+	constexpr int JULY      = 6;
+	constexpr int AUGUST    = 7;
+	constexpr int SEPTEMBER = 8;
+	constexpr int OCTOBER   = 9;
+	constexpr int NOVEMBER  = 10;
+	constexpr int DECEMBER  = 11;
+
 	using namespace serenity::targets;
 
 	RotatingTarget::RotatingTarget( ) : FileTarget( "Rotating_Log.txt", true ), shouldRotate( true )
@@ -124,11 +137,12 @@ namespace serenity::experimental::targets
 
 	void RotatingTarget::SetRotateSettings( RotateSettings settings )
 	{
-		fileSizeLimit    = settings.fileSizeLimit;
-		maxNumberOfFiles = settings.maxNumberOfFiles;
-		dayModeSetting   = settings.dayModeSetting;
-		monthModeSetting = settings.monthModeSetting;
-		weekModeSetting  = settings.weekModeSetting;
+		fileSizeLimit        = settings.fileSizeLimit;
+		maxNumberOfFiles     = settings.maxNumberOfFiles;
+		dayModeSettingHour   = settings.dayModeSettingHour;
+		dayModeSettingMinute = settings.dayModeSettingMinute;
+		monthModeSetting     = settings.monthModeSetting;
+		weekModeSetting      = settings.weekModeSetting;
 	}
 
 	void RotatingTarget::RotateFile( )
@@ -212,6 +226,19 @@ namespace serenity::experimental::targets
 		}
 	}
 
+	static std::unordered_map<int, int> daysPerMonth = { { JANUARY, 31 },
+														 { FEBRUARY, 28 },
+														 { MARCH, 31 },
+														 { APRIL, 30 },
+														 { MAY, 31 },
+														 { JUNE, 30 },
+														 { JULY, 31 },
+														 { AUGUST, 31 },
+														 { SEPTEMBER, 30 },
+														 { OCTOBER, 31 },
+														 { NOVEMBER, 30 },
+														 { DECEMBER, 31 } };
+
 	bool RotatingTarget::ShouldRotate( )
 	{
 		if( !shouldRotate ) return false;
@@ -243,7 +270,7 @@ namespace serenity::experimental::targets
 					currentDay = cache.tm_mday;
 					InitFirstRotation( true );
 				}
-				if( cache.tm_hour == dayModeSetting ) {
+				if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
 					if( IsIntervalRotationEnabled( ) ) {
 						InitFirstRotation( false );
 						return true;
@@ -256,9 +283,11 @@ namespace serenity::experimental::targets
 					InitFirstRotation( true );
 				}
 				if( currentWeekday == weekModeSetting ) {
-					if( IsIntervalRotationEnabled( ) ) {
-						InitFirstRotation( false );
-						return true;
+					if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
+						if( IsIntervalRotationEnabled( ) ) {
+							InitFirstRotation( false );
+							return true;
+						}
 					}
 				}
 				break;
@@ -268,10 +297,31 @@ namespace serenity::experimental::targets
 					currentDay = cache.tm_mday;
 					InitFirstRotation( true );
 				}
-				if( currentDay == monthModeSetting ) {
-					if( IsIntervalRotationEnabled( ) ) {
-						InitFirstRotation( false );
-						return true;
+				int numberOfDays { daysPerMonth.at( cache.tm_mon ) };
+				int rotationDay { monthModeSetting };
+				// clang-format off
+				/********************************************** Simple Summary *****************************************************************
+				 * - If the number of days per month is less than the setting ( for example, if the setting is 31 but the month has 30 days):  *
+				 *   - The rotation day will be the 30th instead (so as not to skip a month by accident)                                       *
+				 *	 - If the current month is February, checks to see if the current year is a leap year.                                     *
+				 *     - If the year is a leap year, then sets the rotation day to 29 instead of 28                                            *
+				 * - Otherwise, this snippet uses the monthModeSetting value                                                                   *  
+				 *******************************************************************************************************************************/
+				// clang-format off
+				if( numberOfDays < monthModeSetting ) {
+					rotationDay = numberOfDays;
+					if( cache.tm_mon == FEBRUARY ) {
+						if( MsgInfo( )->TimeDetails( ).isLeapYear( ) ) {
+							rotationDay = 29;
+						}
+					}
+				}
+				if( currentDay == rotationDay ) {
+					if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
+						if( IsIntervalRotationEnabled( ) ) {
+							InitFirstRotation( false );
+							return true;
+						}
 					}
 				}
 			} break;
@@ -281,7 +331,7 @@ namespace serenity::experimental::targets
 		return false;
 	}
 
-	void RotatingTarget::SetRotationSetting( IntervalMode mode, size_t setting )
+	void RotatingTarget::SetRotationSetting( IntervalMode mode, size_t setting, size_t secondSetting )
 	{
 		using mType = RotateSettings::IntervalMode;
 		switch( m_mode ) {
@@ -297,7 +347,16 @@ namespace serenity::experimental::targets
 								 "between 0-23 where 0 is 12AM and 23 is 11PM. \nValue passed in: "
 							  << setting << " \n";
 				}
-				dayModeSetting = setting;
+				if( ( secondSetting > 59 ) || ( secondSetting < 0 ) ) {
+					secondSetting = 0;
+					std::cerr << "Minute setting passed in for IntervalMode::daily is out of bounds. \nValue expected is "
+								 "between 0-59. \nValue passed in: "
+							  << secondSetting << " \n";
+				}
+
+				dayModeSettingHour   = setting;
+				dayModeSettingMinute = secondSetting;
+
 			} break;
 			case mType::weekly:
 			{

@@ -189,7 +189,8 @@ namespace serenity
 
 			size_t maxNumberOfFiles { 5 };
 			size_t fileSizeLimit { 512 * KB };
-			int    dayModeSetting { 0 };
+			int    dayModeSettingHour { 0 };
+			int    dayModeSettingMinute { 0 };
 			int    weekModeSetting { 0 };
 			int    monthModeSetting { 1 };
 

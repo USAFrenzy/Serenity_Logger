@@ -10,7 +10,7 @@
 // TODO: ####################################################################################################################################
 // clang-format on
 
-#define INSTRUMENT 0
+#define INSTRUMENT 1
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -175,7 +175,6 @@ int main( )
 	RotateSettings settings;
 	settings.fileSizeLimit    = 256 * KB;
 	settings.maxNumberOfFiles = 10;
-	settings.dayModeSetting   = 19;
 	settings.monthModeSetting = 9;
 	settings.weekModeSetting  = 3;
 	rotatingFile.SetRotateSettings( settings );
@@ -193,17 +192,7 @@ int main( )
 	rotatingLoggerHourly.SetRotateSettings( settings );
 	// should be the default anyways
 	rotatingLoggerHourly.SetRotationMode( RotateSettings::IntervalMode::hourly );
-	size_t rotationIterations = 3'000'000;
-
-	// just to see contents if exit early and to see that writing is being done before rotation is called
-	PeriodicSettings flushSettings;
-	flushSettings.flushEvery = std::chrono::minutes( 5 );
-	flushSettings.flushOn    = LoggerLevel::trace;
-
-	Flush_Policy policy( Flush::periodically, PeriodicOptions::timeBased, flushSettings );
-	rotatingFile.SetFlushPolicy( policy );
-	rotatingLoggerHourly.SetFlushPolicy( policy );
-	rotatingLoggerOnSize.SetFlushPolicy( policy );
+	size_t rotationIterations = 1'000'000;
 
 	std::mutex consoleMutex;
 	auto       NotifyConsole = [ & ]( std::string message )
@@ -211,7 +200,7 @@ int main( )
 		std::lock_guard lock( consoleMutex );
 		std::cout << message;
 	};
-
+	// Some more crude tests - testing rotational marks
 	std::cout << "\n\nLogging messages to test rotation on hour mark, daily mark, and file size\n\n";
 	auto LogHourly = [ & ]( )
 	{
@@ -231,18 +220,18 @@ int main( )
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Daily\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 1 ) );
+			std::this_thread::sleep_for( std::chrono::minutes( 10 ) );
 		}
 	};
 
 	auto LogOnSize = [ & ]( )
 	{
-		for( int i = 1; i <= rotationIterations; ++i ) {
+		for( int i = 1; i <= 5'000'000; ++i ) {
 			rotatingLoggerOnSize.Info( "Logging message {} to rotating file based on file size mode", i );
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Size\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );
 		}
 	};
 

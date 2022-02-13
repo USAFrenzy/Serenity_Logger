@@ -229,17 +229,14 @@ namespace serenity::targets
 			case serenity::experimental::PeriodicOptions::timeBased:
 			{
 				if( flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) ) return;
-				auto &p_policy { policy };
 				// lambda that starts a background thread to flush on time interval given
-				auto periodic_flush = [ this, p_policy ]( )
+				auto periodic_flush = [ this ]( )
 				{
-					using namespace std::chrono;
-					using namespace std::chrono_literals;
-					static milliseconds lastTimePoint { };
-
+					namespace ch = std::chrono;
+					static ch::milliseconds lastTimePoint { };
 					while( !flushWorker.cleanUpThreads.load( std::memory_order::relaxed ) ) {
-						auto now     = duration_cast<milliseconds>( system_clock::now( ).time_since_epoch( ) );
-						auto elapsed = duration_cast<milliseconds>( now - lastTimePoint );
+						auto now     = ch::duration_cast<ch::milliseconds>( ch::system_clock::now( ).time_since_epoch( ) );
+						auto elapsed = ch::duration_cast<ch::milliseconds>( now - lastTimePoint );
 						auto shouldFlush { elapsed >= policy.SecondarySettings( ).flushEvery };
 						if( shouldFlush ) {
 							std::scoped_lock<std::mutex> lock( flushWorker.readWriteMutex );

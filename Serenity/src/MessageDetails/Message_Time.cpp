@@ -6,6 +6,12 @@ namespace serenity::msg_details
 	{
 		m_mode = mode;
 		UpdateTimeDate( std::chrono::system_clock::now( ) );
+		auto year { m_cache.tm_year };
+		if( ( year % 4 == 0 && year % 100 != 0 ) || year % 400 == 0 ) {
+			leapYear = true;
+		} else {
+			leapYear = false;
+		}
 	}
 
 	std::string_view Message_Time::GetCurrentYearSV( int yearOffset, bool shortened )
@@ -50,6 +56,11 @@ namespace serenity::msg_details
 	std::chrono::seconds &Message_Time::LastLogPoint( )
 	{
 		return secsSinceLastLog;
+	}
+
+	const bool Message_Time::isLeapYear( )
+	{
+		return leapYear;
 	}
 
 }  // namespace serenity::msg_details

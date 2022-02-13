@@ -23,10 +23,12 @@ namespace serenity::msg_details
 		message_time_mode &   Mode( );
 		void                  SetTimeMode( message_time_mode mode );
 		std::chrono::seconds &LastLogPoint( );
+		const bool            isLeapYear( );
 
 	  private:
 		message_time_mode    m_mode;
 		std::tm              m_cache;
 		std::chrono::seconds secsSinceLastLog;
+		bool                 leapYear;
 	};
-}  // namespace serenity::experimental::msg_details
+}  // namespace serenity::msg_details

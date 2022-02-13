@@ -53,4 +53,5 @@ namespace serenity::experimental
 	{
 		return initalRotationEnabled;
 	}
+
 }  // namespace serenity::experimental
