@@ -1,7 +1,6 @@
 #include <serenity/Color/Color.h>
 
-namespace tag_helper
-{
+namespace tag_helper {
 	std::string toString( const std::string_view s )
 	{
 		return std::string( s.data( ), s.size( ) );
@@ -12,10 +11,8 @@ namespace tag_helper
 // where when resizing the console window, the last color used fills in empty cells in that row.
 // Not going to lie, kinda frustrating..
 // (https://github.com/microsoft/terminal/issues/32)
-namespace se_colors
-{
-	namespace Tag
-	{
+namespace se_colors {
+	namespace Tag {
 		// *************************************************************************************************************
 		std::string Reset( )
 		{

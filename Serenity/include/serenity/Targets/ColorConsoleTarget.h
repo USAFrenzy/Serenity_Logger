@@ -6,8 +6,7 @@
 #include <unordered_map>
 #include <fstream>
 
-namespace serenity::targets
-{
+namespace serenity::targets {
 	enum class console_interface
 	{
 		std_out,
@@ -45,4 +44,4 @@ namespace serenity::targets
 
 	};  // class ColorConsole
 
-}  // namespace serenity::experimental::targets
+}  // namespace serenity::targets

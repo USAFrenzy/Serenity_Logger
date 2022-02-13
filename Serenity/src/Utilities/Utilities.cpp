@@ -7,10 +7,8 @@
 
 #define INSTRUMENTATION_ENABLED 1
 
-namespace serenity
-{
-	namespace se_utils
-	{
+namespace serenity {
+	namespace se_utils {
 		Allocation_Statistics Instrumentator::mem_tracker = { };
 		Instrumentator::Instrumentator( )
 		{
@@ -77,10 +75,8 @@ namespace serenity
 			}
 		}
 	}  // namespace se_utils
-	namespace file_utils
-	{
-		namespace file_utils_results
-		{
+	namespace file_utils {
+		namespace file_utils_results {
 			std::vector<std::filesystem::directory_entry> retrieve_dir_entries::retrievedItems;
 		}
 		// clang-format off
@@ -99,9 +95,8 @@ namespace serenity
 		{
 			std::smatch match;
 #if WIN32
-			std::regex validateFile(
-			"^[\\/:\"*?<>|]|CON|PRN|AUX|NUL|COM1|COM2|COM3|COM4|COM5|COM6|COM7|"
-			"COM8|COM9|LPT1|LPT2|LPT3|LPT4|LPT5|LPT6|LPT7|LPT8|LPT9+$" );
+			std::regex validateFile( "^[\\/:\"*?<>|]|CON|PRN|AUX|NUL|COM1|COM2|COM3|COM4|COM5|COM6|COM7|"
+			                         "COM8|COM9|LPT1|LPT2|LPT3|LPT4|LPT5|LPT6|LPT7|LPT8|LPT9+$" );
 #else
 			std::regex validateFile( "^[\\/:]|NUL+$" );
 #endif
@@ -132,9 +127,8 @@ namespace serenity
 		{
 			if( std::filesystem::exists( newFile ) ) {
 				if( newFile == oldFile ) {
-					std::filesystem::remove( oldFile);
-				}
-				else {
+					std::filesystem::remove( oldFile );
+				} else {
 					std::filesystem::remove( newFile );
 					std::filesystem::rename( oldFile, newFile );
 				}
@@ -147,29 +141,26 @@ namespace serenity
 			}
 			catch( std::exception &fileName_err ) {
 				printf( "Could Not Rename %s To %s\nReason: %s\n",
-						oldFile.filename( ).string( ).c_str( ),
-						newFile.filename( ).string( ).c_str( ),
-						fileName_err.what( ) );
+				        oldFile.filename( ).string( ).c_str( ),
+				        newFile.filename( ).string( ).c_str( ),
+				        fileName_err.what( ) );
 				return false;
 			}
 
 			if( !file_utils::ValidateExtension( newFile.extension( ).string( ) ) ) {
 				printf( "Could Not Rename %s To %s\tReason: Not A Valid Extension String\n",
-						oldFile.filename( ).string( ).c_str( ),
-						newFile.filename( ).string( ).c_str( ) );
+				        oldFile.filename( ).string( ).c_str( ),
+				        newFile.filename( ).string( ).c_str( ) );
 				return false;
-			}
-			else {
+			} else {
 				try {
 					if( !( file_utils::CompareExtensions( oldFile.extension( ).string( ), newFile.extension( ).string( ) ) ) ) {
-						printf(
-						"WARNING:\t"
-						"New File Name: [ %s ] Does Not Have The Same Extension As Old File: [ %s ]\n",
-						newFile.filename( ).string( ).c_str( ),
-						oldFile.filename( ).string( ).c_str( ) );
+						printf( "WARNING:\t"
+						        "New File Name: [ %s ] Does Not Have The Same Extension As Old File: [ %s ]\n",
+						        newFile.filename( ).string( ).c_str( ),
+						        oldFile.filename( ).string( ).c_str( ) );
 						std::filesystem::rename( oldFile, newFile );
-					}
-					else {
+					} else {
 						std::filesystem::rename( oldFile, newFile );
 					}
 				}
@@ -180,11 +171,9 @@ namespace serenity
 			}
 
 			if( ( oldFile.filename( ) == newFile.filename( ) ) &&
-				( std::filesystem::file_size( oldFile ) == std::filesystem::file_size( newFile ) ) )
-			{
+			    ( std::filesystem::file_size( oldFile ) == std::filesystem::file_size( newFile ) ) ) {
 				return true;
-			}
-			else {
+			} else {
 				return false;
 			}
 		}
@@ -201,10 +190,9 @@ namespace serenity
 			int fileCount { 0 };
 
 			if( path.has_extension( ) ) {
-				printf(
-				"ERROR: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: "
-				"%s\n",
-				path.string( ).c_str( ) );
+				printf( "ERROR: Path To Retrieve Directory Entries Points To A File Instead Of A Directory\nPath: "
+				        "%s\n",
+				        path.string( ).c_str( ) );
 				results.retrievedItems = dirEntries;
 				results.success        = false;
 			}
@@ -217,8 +205,7 @@ namespace serenity
 					dirEntries.emplace_back( entry.path( ).string( ) );
 					fileCount++;
 				}
-			}
-			else {
+			} else {
 				for( const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator( path ) ) {
 					dirEntries.emplace_back( entry.path( ).string( ) );
 					fileCount++;
@@ -288,8 +275,7 @@ namespace serenity
 			try {
 				if( entry.exists( ) ) {
 					return true;
-				}
-				else {
+				} else {
 					std::filesystem::create_directories( entry );
 					return true;
 				}
@@ -305,8 +291,7 @@ namespace serenity
 			try {
 				if( !std::filesystem::exists( entry ) ) {
 					return true;
-				}
-				else {
+				} else {
 					std::filesystem::remove( entry );
 					return true;
 				}
@@ -370,8 +355,7 @@ namespace serenity
 					printf( "Permissions Error In OpenFile():\n%s\n", e.what( ) );
 					return false;
 				}
-			}
-			else {
+			} else {
 				// By Default, Only Checking If The File Has Any Permissions To Open (Could Use Work Here)
 				if( fs::status( file ).permissions( ) == ( fs::perms::none ) ) {
 					printf( "Error In OpenFile():\nUnable To Open File Due To Insufficient Permissions." );
@@ -380,8 +364,7 @@ namespace serenity
 			}
 			if( truncate ) {
 				mode = std::ios_base::trunc | std::ios_base::out;
-			}
-			else {
+			} else {
 				mode = std::ios_base::app;
 			}
 			try {
@@ -412,13 +395,11 @@ namespace serenity
 			if( fs::status( file ).permissions( ) == fs::perms::none ) {
 				printf( "Error In CloseFile():\nInsufficient Permissions\n" );
 				return false;
-			}
-			else {
+			} else {
 				try {
 					if( !fs::exists( file ) ) {
 						return true;
-					}
-					else {
+					} else {
 						closeFile.flush( );
 						closeFile.close( );
 					}

@@ -2,8 +2,7 @@
 
 #include <iostream>
 
-namespace serenity::experimental::targets
-{
+namespace serenity::experimental::targets {
 	constexpr int JANUARY   = 0;
 	constexpr int FEBRUARY  = 1;
 	constexpr int MARCH     = 2;
@@ -43,7 +42,7 @@ namespace serenity::experimental::targets
 	}
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view filePath, bool replaceIfExists )
-	  : FileTarget( name, filePath, replaceIfExists ), shouldRotate( true )
+		: FileTarget( name, filePath, replaceIfExists ), shouldRotate( true )
 	{
 		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
 		currentHour    = cache.tm_hour;
@@ -66,9 +65,8 @@ namespace serenity::experimental::targets
 		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 	}
 
-	RotatingTarget::RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
-									bool replaceIfExists )
-	  : FileTarget( name, formatPattern, filePath, replaceIfExists ), shouldRotate( true )
+	RotatingTarget::RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists )
+		: FileTarget( name, formatPattern, filePath, replaceIfExists ), shouldRotate( true )
 	{
 		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
 		currentHour    = cache.tm_hour;
@@ -155,7 +153,7 @@ namespace serenity::experimental::targets
 
 		for( size_t fileNumber { 1 }; fileNumber <= maxNumberOfFiles; ++fileNumber ) {
 			std::string newFile { OriginalName( ) };  // effectively reset each loop
-													  // iteration
+			                                          // iteration
 			newFile.append( "_" ).append( SERENITY_LUTS::numberStr[ fileNumber ] ).append( OriginalExtension( ) );
 			newFilePath.replace_filename( newFile );
 
@@ -170,7 +168,7 @@ namespace serenity::experimental::targets
 
 		if( !rotateSuccessful ) {
 			auto                            logDirectory { std::filesystem::directory_iterator( OriginalDirectory( ) ) };
-			std::filesystem::file_time_type oldestWriteTime = { std::chrono::file_clock::now( ) };
+			std::filesystem::file_time_type oldestWriteTime { std::chrono::file_clock::now( ) };
 			std::string                     fileNameToFind { OriginalName( ) };
 			std::filesystem::path           fileToReplace;
 			for( auto &file : logDirectory ) {
@@ -189,19 +187,17 @@ namespace serenity::experimental::targets
 			if( !fileToReplace.empty( ) ) {
 				fileOptions.filePath = std::move( fileToReplace );
 			} else {
-				std::cerr << std::vformat( "Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And "
-										   "Truncating Previous File, \"{}\"\n",
-										   std::make_format_args( OriginalName( ), previousFile ) );
+				std::cerr << std::vformat( "Warning: Unable To Locate Oldest File With Base Name \"{}\". Opening And Truncating "
+				                           "Previous File, \"{}\"\n",
+				                           std::make_format_args( OriginalName( ), previousFile ) );
 			}
 
 			if( !FileTarget::OpenFile( true ) ) {
 				if( fileToReplace != previousFile ) {
-					std::cerr
-					<< std::vformat( "Error: Unable To Finish Rotating From File \"{}\" To File \"{}\"\n",
-									 std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
+					std::cerr << std::vformat( "Error: Unable To Finish Rotating From File \"{}\" To File \"{}\"\n",
+					                           std::make_format_args( previousFile, fileOptions.filePath.filename( ).string( ) ) );
 				} else {
-					std::cerr << std::vformat( "Error: Unable To Open And Truncate File \"{}\"\n",
-											   std::make_format_args( previousFile ) );
+					std::cerr << std::vformat( "Error: Unable To Open And Truncate File \"{}\"\n", std::make_format_args( previousFile ) );
 				}
 			}
 		}
@@ -226,18 +222,10 @@ namespace serenity::experimental::targets
 		}
 	}
 
-	static std::unordered_map<int, int> daysPerMonth = { { JANUARY, 31 },
-														 { FEBRUARY, 28 },
-														 { MARCH, 31 },
-														 { APRIL, 30 },
-														 { MAY, 31 },
-														 { JUNE, 30 },
-														 { JULY, 31 },
-														 { AUGUST, 31 },
-														 { SEPTEMBER, 30 },
-														 { OCTOBER, 31 },
-														 { NOVEMBER, 30 },
-														 { DECEMBER, 31 } };
+	static std::unordered_map<int, int> daysPerMonth = {
+		{ JANUARY, 31 }, { FEBRUARY, 28 }, { MARCH, 31 },     { APRIL, 30 },   { MAY, 31 },      { JUNE, 30 },
+		{ JULY, 31 },    { AUGUST, 31 },   { SEPTEMBER, 30 }, { OCTOBER, 31 }, { NOVEMBER, 30 }, { DECEMBER, 31 },
+	};
 
 	bool RotatingTarget::ShouldRotate( )
 	{
@@ -300,15 +288,15 @@ namespace serenity::experimental::targets
 				int numberOfDays { daysPerMonth.at( cache.tm_mon ) };
 				int rotationDay { monthModeSetting };
 				// clang-format off
-				/********************************************** Simple Summary *****************************************************************
-				 * - If the number of days per month is less than the setting ( for example, if the setting is 31 but the month has 30 days):  *
-				 *   - The rotation day will be the 30th instead (so as not to skip a month by accident)                                       *
-				 *	 - If the current month is February, checks to see if the current year is a leap year.                                     *
-				 *     - If the year is a leap year, then sets the rotation day to 29 instead of 28                                            *
-				 * - Otherwise, this snippet uses the monthModeSetting value                                                                   *  
-				 *******************************************************************************************************************************/
-				// clang-format off
-				if( numberOfDays < monthModeSetting ) {
+						/********************************************** Simple Summary *****************************************************************
+						* - If the number of days per month is less than the setting ( for example, if the setting is 31 but the month has 30 days):   
+						*   - The rotation day will be the 30th instead (so as not to skip a month by accident)                                        
+						*	 - If the current month is February, checks to see if the current year is a leap year.                                     
+						*     - If the year is a leap year, then sets the rotation day to 29 instead of 28                                             
+						* - Otherwise, this snippet uses the monthModeSetting value                                                                     
+						*******************************************************************************************************************************/
+						// clang-format off
+					if( numberOfDays < monthModeSetting ) {
 					rotationDay = numberOfDays;
 					if( cache.tm_mon == FEBRUARY ) {
 						if( MsgInfo( )->TimeDetails( ).isLeapYear( ) ) {
@@ -326,8 +314,7 @@ namespace serenity::experimental::targets
 				}
 			} break;
 		}
-		// If we got here, then rotation shouldn't occur since we return true in the case statements directly if we should
-		// rotate the file
+		// If we got here, then rotation shouldn't occur since we return true in the case statements directly if we should rotate the file
 		return false;
 	}
 
@@ -353,7 +340,6 @@ namespace serenity::experimental::targets
 								 "between 0-59. \nValue passed in: "
 							  << secondSetting << " \n";
 				}
-
 				dayModeSettingHour   = setting;
 				dayModeSettingMinute = secondSetting;
 

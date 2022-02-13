@@ -2,15 +2,13 @@
 
 #include <serenity/Targets/FileTarget.h>
 
-namespace serenity::experimental::targets
-{
+namespace serenity::experimental::targets {
 	class RotatingTarget : public serenity::targets::FileTarget, serenity::experimental::RotateSettings
 	{
 	  public:
 		RotatingTarget( );
 		explicit RotatingTarget( std::string_view name, std::string_view filePath, bool replaceIfExists = false );
-		explicit RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath,
-								 bool replaceIfExists = false );
+		explicit RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists = false );
 		RotatingTarget( const RotatingTarget & ) = delete;
 		RotatingTarget &operator=( const RotatingTarget & ) = delete;
 		~RotatingTarget( );

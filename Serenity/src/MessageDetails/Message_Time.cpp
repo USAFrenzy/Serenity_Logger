@@ -1,7 +1,6 @@
 #include <serenity/MessageDetails/Message_Time.h>
 
-namespace serenity::msg_details
-{
+namespace serenity::msg_details {
 	Message_Time::Message_Time( message_time_mode mode ) : m_mode( mode )
 	{
 		m_mode = mode;

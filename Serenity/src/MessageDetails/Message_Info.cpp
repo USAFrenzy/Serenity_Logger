@@ -1,9 +1,8 @@
 #include <serenity/MessageDetails/Message_Info.h>
 
-namespace serenity::msg_details
-{
+namespace serenity::msg_details {
 	Message_Info::Message_Info( std::string_view name, LoggerLevel level, message_time_mode mode )
-	  : m_name( name ), m_msgLevel( level ), m_msgTime( mode )
+		: m_name( name ), m_msgLevel( level ), m_msgTime( mode )
 	{
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;

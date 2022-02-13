@@ -6,8 +6,7 @@
 #include <format>
 #include <string>
 
-namespace serenity::msg_details
-{
+namespace serenity::msg_details {
 	class Message_Formatter
 	{
 	  public:
@@ -17,8 +16,7 @@ namespace serenity::msg_details
 		Message_Formatter( const Message_Formatter & ) = delete;
 		Message_Formatter &operator=( const Message_Info & ) = delete;
 
-		struct Formatter
-		{
+		struct Formatter {
 			virtual std::string_view Format( ) = 0;
 
 			virtual std::string UpdateInternalView( )
@@ -49,8 +47,7 @@ namespace serenity::msg_details
 
 	  private:
 		// Formatting Structs For Flag Arguments
-		struct Format_Arg_a : Formatter
-		{
+		struct Format_Arg_a : Formatter {
 			Format_Arg_a( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -61,8 +58,7 @@ namespace serenity::msg_details
 			std::string    hour;
 		};
 
-		struct Format_Arg_b : Formatter
-		{
+		struct Format_Arg_b : Formatter {
 			Format_Arg_b( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -73,8 +69,7 @@ namespace serenity::msg_details
 			std::string    month;
 		};
 
-		struct Format_Arg_d : Formatter
-		{
+		struct Format_Arg_d : Formatter {
 			Format_Arg_d( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -85,8 +80,7 @@ namespace serenity::msg_details
 			std::string    day;
 		};
 
-		struct Format_Arg_l : Formatter
-		{
+		struct Format_Arg_l : Formatter {
 			Format_Arg_l( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -97,8 +91,7 @@ namespace serenity::msg_details
 			std::string  levelStr;
 		};
 
-		struct Format_Arg_n : Formatter
-		{
+		struct Format_Arg_n : Formatter {
 			Format_Arg_n( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -110,8 +103,7 @@ namespace serenity::msg_details
 			std::string    ddmmyy;
 		};
 
-		struct Format_Arg_t : Formatter
-		{
+		struct Format_Arg_t : Formatter {
 			Format_Arg_t( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -122,8 +114,7 @@ namespace serenity::msg_details
 			std::string    hmStr;
 		};
 
-		struct Format_Arg_w : Formatter
-		{
+		struct Format_Arg_w : Formatter {
 			Format_Arg_w( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -134,8 +125,7 @@ namespace serenity::msg_details
 			std::string    lastDecDay;
 		};
 
-		struct Format_Arg_x : Formatter
-		{
+		struct Format_Arg_x : Formatter {
 			Format_Arg_x( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -146,8 +136,7 @@ namespace serenity::msg_details
 			int            lastWkday { 0 };
 		};
 
-		struct Format_Arg_y : Formatter
-		{
+		struct Format_Arg_y : Formatter {
 			Format_Arg_y( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -159,8 +148,7 @@ namespace serenity::msg_details
 			std::string    year;
 		};
 
-		struct Format_Arg_A : Formatter
-		{
+		struct Format_Arg_A : Formatter {
 			Format_Arg_A( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -171,8 +159,7 @@ namespace serenity::msg_details
 			std::string    dayHalf;
 		};
 
-		struct Format_Arg_B : Formatter
-		{
+		struct Format_Arg_B : Formatter {
 			Format_Arg_B( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -183,8 +170,7 @@ namespace serenity::msg_details
 			std::string    month;
 		};
 
-		struct Format_Arg_D : Formatter
-		{
+		struct Format_Arg_D : Formatter {
 			Format_Arg_D( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -196,8 +182,7 @@ namespace serenity::msg_details
 			std::string    mmddyy;
 		};
 
-		struct Format_Arg_F : Formatter
-		{
+		struct Format_Arg_F : Formatter {
 			Format_Arg_F( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -209,8 +194,7 @@ namespace serenity::msg_details
 			std::string    yymmdd;
 		};
 
-		struct Format_Arg_H : Formatter
-		{
+		struct Format_Arg_H : Formatter {
 			Format_Arg_H( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -221,8 +205,7 @@ namespace serenity::msg_details
 			std::string    hour;
 		};
 
-		struct Format_Arg_L : Formatter
-		{
+		struct Format_Arg_L : Formatter {
 			Format_Arg_L( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -233,8 +216,7 @@ namespace serenity::msg_details
 			std::string  levelStr;
 		};
 
-		struct Format_Arg_M : Formatter
-		{
+		struct Format_Arg_M : Formatter {
 			Format_Arg_M( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -245,8 +227,7 @@ namespace serenity::msg_details
 			std::string    min;
 		};
 
-		struct Format_Arg_N : Formatter
-		{
+		struct Format_Arg_N : Formatter {
 			Format_Arg_N( Message_Info &info );
 			std::string_view Format( ) override;
 
@@ -254,8 +235,7 @@ namespace serenity::msg_details
 			std::string &name;
 		};
 
-		struct Format_Arg_S : Formatter
-		{
+		struct Format_Arg_S : Formatter {
 			Format_Arg_S( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -266,8 +246,7 @@ namespace serenity::msg_details
 			std::string    sec;
 		};
 
-		struct Format_Arg_T : Formatter
-		{
+		struct Format_Arg_T : Formatter {
 			Format_Arg_T( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -278,8 +257,7 @@ namespace serenity::msg_details
 			std::string    hmStr;
 		};
 
-		struct Format_Arg_X : Formatter
-		{
+		struct Format_Arg_X : Formatter {
 			Format_Arg_X( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -290,8 +268,7 @@ namespace serenity::msg_details
 			std::string    wkday;
 		};
 
-		struct Format_Arg_Y : Formatter
-		{
+		struct Format_Arg_Y : Formatter {
 			Format_Arg_Y( Message_Info &info );
 			std::string      UpdateInternalView( ) override;
 			std::string_view Format( ) override;
@@ -303,8 +280,7 @@ namespace serenity::msg_details
 			std::string    year;
 		};
 
-		struct Format_Arg_Message : Formatter
-		{
+		struct Format_Arg_Message : Formatter {
 			Format_Arg_Message( Message_Info &info );
 			std::string_view Format( ) override;
 
@@ -312,8 +288,7 @@ namespace serenity::msg_details
 			std::string &message;
 		};
 
-		struct Format_Arg_Char : Formatter
-		{
+		struct Format_Arg_Char : Formatter {
 			Format_Arg_Char( std::string_view ch );
 			std::string_view Format( ) override;
 
@@ -327,4 +302,4 @@ namespace serenity::msg_details
 		Message_Info *msgInfo;
 	};
 
-}  // namespace serenity::experimental::msg_details
+}  // namespace serenity::msg_details

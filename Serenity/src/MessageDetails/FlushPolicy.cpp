@@ -1,11 +1,7 @@
 #include <serenity/MessageDetails/FlushPolicy.h>
 
-namespace serenity::experimental
-{
-	Flush_Policy::Flush_Policy( Flush primaryOpt )
-	  : mainOpt( primaryOpt ), subOpt( PeriodicOptions::undef ), subSettings( { } )
-	{
-	}
+namespace serenity::experimental {
+	Flush_Policy::Flush_Policy( Flush primaryOpt ) : mainOpt( primaryOpt ), subOpt( PeriodicOptions::undef ), subSettings( { } ) { }
 
 	Flush_Policy::Flush_Policy( const Flush_Policy &p )
 	{
@@ -13,18 +9,15 @@ namespace serenity::experimental
 	}
 
 	Flush_Policy::Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt, PeriodicSettings settings )
-	  : mainOpt( primaryOpt ), subOpt( secondaryOpt ), subSettings( std::move( settings ) )
+		: mainOpt( primaryOpt ), subOpt( secondaryOpt ), subSettings( std::move( settings ) )
 	{
 	}
 
 	Flush_Policy::Flush_Policy( PeriodicOptions secondaryOpt, PeriodicSettings settings )
-	  : mainOpt( Flush::periodically ), subOpt( secondaryOpt ), subSettings( std::move( settings ) )
+		: mainOpt( Flush::periodically ), subOpt( secondaryOpt ), subSettings( std::move( settings ) )
 	{
 	}
-	Flush_Policy::Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt )
-	  : mainOpt( primaryOpt ), subOpt( secondaryOpt )
-	{
-	}
+	Flush_Policy::Flush_Policy( Flush primaryOpt, PeriodicOptions secondaryOpt ) : mainOpt( primaryOpt ), subOpt( secondaryOpt ) { }
 
 	Flush_Policy &Flush_Policy::operator=( const Flush_Policy &p )
 	{

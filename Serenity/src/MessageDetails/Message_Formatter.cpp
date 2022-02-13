@@ -1,7 +1,6 @@
 #include <serenity/MessageDetails/Message_Formatter.h>
 
-namespace serenity::msg_details
-{
+namespace serenity::msg_details {
 	Message_Formatter::Message_Formatter( std::string_view pattern, Message_Info *details ) : msgInfo( *&details )
 	{
 		SetPattern( pattern );
@@ -100,8 +99,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_a Functions
-	Message_Formatter::Format_Arg_a::Format_Arg_a( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
+	Message_Formatter::Format_Arg_a::Format_Arg_a( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
 	{
 		hour = std::move( UpdateInternalView( ) );
 	}
@@ -111,7 +109,7 @@ namespace serenity::msg_details
 		auto hr { lastHour };
 		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
 		std::string_view paddedHour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ]
-												  : SERENITY_LUTS::numberStr[ hr ] };
+			                                      : SERENITY_LUTS::numberStr[ hr ] };
 		return std::string { paddedHour.data( ), paddedHour.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_a::Format( )
@@ -120,8 +118,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_b Functions
-	Message_Formatter::Format_Arg_b::Format_Arg_b( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastMonth( cacheRef.tm_mon )
+	Message_Formatter::Format_Arg_b::Format_Arg_b( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastMonth( cacheRef.tm_mon )
 	{
 		month = std::move( UpdateInternalView( ) );
 	}
@@ -137,8 +134,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_d Functions
-	Message_Formatter::Format_Arg_d::Format_Arg_d( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastDay( cacheRef.tm_mday )
+	Message_Formatter::Format_Arg_d::Format_Arg_d( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastDay( cacheRef.tm_mday )
 	{
 		day = std::move( UpdateInternalView( ) );
 	}
@@ -171,7 +167,7 @@ namespace serenity::msg_details
 
 	// Format_n Functions
 	Message_Formatter::Format_Arg_n::Format_Arg_n( Message_Info &info )
-	  : timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
+		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
 	{
 		ddmmyy = std::move( UpdateInternalView( ) );
 	}
@@ -191,7 +187,7 @@ namespace serenity::msg_details
 
 	// Format_t Functions
 	Message_Formatter::Format_Arg_t::Format_Arg_t( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( info.TimeDetails( ).Cache( ).tm_min )
+		: cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( info.TimeDetails( ).Cache( ).tm_min )
 	{
 		hmStr = std::move( UpdateInternalView( ) );
 	}
@@ -200,8 +196,7 @@ namespace serenity::msg_details
 		lastMin = cacheRef.tm_min;
 		auto hr { cacheRef.tm_hour };  // just to avoid another lookup, make local copy
 		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		auto        hour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ]
-									   : SERENITY_LUTS::numberStr[ hr ] };
+		auto        hour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ] : SERENITY_LUTS::numberStr[ hr ] };
 		auto        min { SERENITY_LUTS::numberStr[ lastMin ] };
 		std::string result;
 		return result.append( hour ).append( ":" ).append( min );
@@ -234,8 +229,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_x Functions
-	Message_Formatter::Format_Arg_x::Format_Arg_x( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastWkday( cacheRef.tm_wday )
+	Message_Formatter::Format_Arg_x::Format_Arg_x( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastWkday( cacheRef.tm_wday )
 	{
 		wkday = std::move( UpdateInternalView( ) );
 	}
@@ -252,7 +246,7 @@ namespace serenity::msg_details
 
 	// Format_y Functions
 	Message_Formatter::Format_Arg_y::Format_Arg_y( Message_Info &info )
-	  : timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastYear( cacheRef.tm_year )
+		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastYear( cacheRef.tm_year )
 	{
 		year = std::move( UpdateInternalView( ) );
 	}
@@ -268,8 +262,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_A Functions
-	Message_Formatter::Format_Arg_A::Format_Arg_A( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
+	Message_Formatter::Format_Arg_A::Format_Arg_A( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
 	{
 		dayHalf = std::move( UpdateInternalView( ) );
 	}
@@ -285,8 +278,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_B Functions
-	Message_Formatter::Format_Arg_B::Format_Arg_B( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastMonth( cacheRef.tm_mon )
+	Message_Formatter::Format_Arg_B::Format_Arg_B( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastMonth( cacheRef.tm_mon )
 	{
 		month = std::move( UpdateInternalView( ) );
 	}
@@ -303,7 +295,7 @@ namespace serenity::msg_details
 
 	// Format_D Functions
 	Message_Formatter::Format_Arg_D::Format_Arg_D( Message_Info &info )
-	  : timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
+		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
 	{
 		mmddyy = std::move( UpdateInternalView( ) );
 	}
@@ -324,7 +316,7 @@ namespace serenity::msg_details
 
 	// Format_F Functions
 	Message_Formatter::Format_Arg_F::Format_Arg_F( Message_Info &info )
-	  : timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
+		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
 	{
 		yymmdd = std::move( UpdateInternalView( ) );
 	}
@@ -344,8 +336,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_H Functions
-	Message_Formatter::Format_Arg_H::Format_Arg_H( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
+	Message_Formatter::Format_Arg_H::Format_Arg_H( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
 	{
 		hour = std::move( UpdateInternalView( ) );
 	}
@@ -377,8 +368,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_M Functions
-	Message_Formatter::Format_Arg_M::Format_Arg_M( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( cacheRef.tm_min )
+	Message_Formatter::Format_Arg_M::Format_Arg_M( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( cacheRef.tm_min )
 	{
 		min = std::move( UpdateInternalView( ) );
 	}
@@ -401,8 +391,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_S Functions
-	Message_Formatter::Format_Arg_S::Format_Arg_S( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastSec( cacheRef.tm_sec )
+	Message_Formatter::Format_Arg_S::Format_Arg_S( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastSec( cacheRef.tm_sec )
 	{
 		sec = std::move( UpdateInternalView( ) );
 	}
@@ -418,8 +407,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_T Functions
-	Message_Formatter::Format_Arg_T::Format_Arg_T( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( cacheRef.tm_min )
+	Message_Formatter::Format_Arg_T::Format_Arg_T( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( cacheRef.tm_min )
 	{
 		hmStr = UpdateInternalView( );
 	}
@@ -442,8 +430,7 @@ namespace serenity::msg_details
 	}
 
 	// Format_T Functions
-	Message_Formatter::Format_Arg_X::Format_Arg_X( Message_Info &info )
-	  : cacheRef( info.TimeDetails( ).Cache( ) ), lastWkday( cacheRef.tm_wday )
+	Message_Formatter::Format_Arg_X::Format_Arg_X( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastWkday( cacheRef.tm_wday )
 	{
 		wkday = std::move( UpdateInternalView( ) );
 	}
@@ -460,7 +447,7 @@ namespace serenity::msg_details
 
 	// Format_Y Functions
 	Message_Formatter::Format_Arg_Y::Format_Arg_Y( Message_Info &info )
-	  : timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastYear( cacheRef.tm_year )
+		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastYear( cacheRef.tm_year )
 	{
 		year = std::move( UpdateInternalView( ) );
 	}
@@ -490,8 +477,7 @@ namespace serenity::msg_details
 	}
 
 	// Formatters Functions
-	Message_Formatter::Formatters::Formatters( std::vector<std::unique_ptr<Formatter>> &&container )
-	  : m_Formatter( std::move( container ) )
+	Message_Formatter::Formatters::Formatters( std::vector<std::unique_ptr<Formatter>> &&container ) : m_Formatter( std::move( container ) )
 	{
 		// Reserve an estimated amount based off arg sizes
 		localBuffer.reserve( m_Formatter.size( ) * 32 );

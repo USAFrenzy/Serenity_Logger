@@ -2,8 +2,7 @@
 
 #include <iostream>  // specifically for std::cerr
 
-namespace serenity::targets
-{
+namespace serenity::targets {
 	FileTarget::FileTarget( ) : TargetBase( "File_Logger" ), policy( Policy( ) )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
@@ -30,8 +29,7 @@ namespace serenity::targets
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view fileName, bool replaceIfExists )
-	  : TargetBase( "File_Logger" ), policy( Policy( ) )
+	FileTarget::FileTarget( std::string_view fileName, bool replaceIfExists ) : TargetBase( "File_Logger" ), policy( Policy( ) )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		std::filesystem::path fullFilePath = std::filesystem::current_path( );
@@ -55,8 +53,7 @@ namespace serenity::targets
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view name, std::string_view fPath, bool replaceIfExists )
-	  : TargetBase( name ), policy( Policy( ) )
+	FileTarget::FileTarget( std::string_view name, std::string_view fPath, bool replaceIfExists ) : TargetBase( name ), policy( Policy( ) )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		fileOptions.filePath = fPath;
@@ -78,9 +75,8 @@ namespace serenity::targets
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view name, std::string_view formatPattern, std::string_view fPath,
-							bool replaceIfExists )
-	  : TargetBase( name, formatPattern ), policy( Policy( ) )
+	FileTarget::FileTarget( std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists )
+		: TargetBase( name, formatPattern ), policy( Policy( ) )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		fileOptions.filePath = fPath;
@@ -230,8 +226,7 @@ namespace serenity::targets
 			{
 				if( flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) ) return;
 				// lambda that starts a background thread to flush on time interval given
-				auto periodic_flush = [ this ]( )
-				{
+				auto periodic_flush = [ this ]( ) {
 					namespace ch = std::chrono;
 					static ch::milliseconds lastTimePoint { };
 					while( !flushWorker.cleanUpThreads.load( std::memory_order::relaxed ) ) {

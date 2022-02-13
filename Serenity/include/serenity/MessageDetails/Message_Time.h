@@ -5,8 +5,7 @@
 #include <string_view>
 #include <chrono>
 
-namespace serenity::msg_details
-{
+namespace serenity::msg_details {
 	class Message_Time
 	{
 	  public:

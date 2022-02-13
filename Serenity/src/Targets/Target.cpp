@@ -1,39 +1,23 @@
 #include <serenity/Targets/Target.h>
 
-namespace serenity::targets
-{
+namespace serenity::targets {
 	constexpr const char *DEFAULT_PATTERN = "|%l| %x %n %T [%N]: %+";
 
 	TargetBase::TargetBase( )
-	  : toBuffer( false ),
-		policy( serenity::experimental::Flush::never ),
-		logLevel( LoggerLevel::trace ),
-		msgLevel( LoggerLevel::trace ),
-		pattern( DEFAULT_PATTERN ),
-		msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
-		msgPattern( pattern, &msgDetails )
+		: toBuffer( false ), policy( serenity::experimental::Flush::never ), logLevel( LoggerLevel::trace ), msgLevel( LoggerLevel::trace ),
+		  pattern( DEFAULT_PATTERN ), msgDetails( "Base Logger", msgLevel, message_time_mode::local ), msgPattern( pattern, &msgDetails )
 	{
 	}
 
 	TargetBase::TargetBase( std::string_view name )
-	  : toBuffer( false ),
-		policy( serenity::experimental::Flush::never ),
-		logLevel( LoggerLevel::trace ),
-		msgLevel( LoggerLevel::trace ),
-		pattern( DEFAULT_PATTERN ),
-		msgDetails( name, msgLevel, message_time_mode::local ),
-		msgPattern( pattern, &msgDetails )
+		: toBuffer( false ), policy( serenity::experimental::Flush::never ), logLevel( LoggerLevel::trace ), msgLevel( LoggerLevel::trace ),
+		  pattern( DEFAULT_PATTERN ), msgDetails( name, msgLevel, message_time_mode::local ), msgPattern( pattern, &msgDetails )
 	{
 	}
 
 	TargetBase::TargetBase( std::string_view name, std::string_view fmtPattern )
-	  : toBuffer( false ),
-		policy( serenity::experimental::Flush::never ),
-		logLevel( LoggerLevel::trace ),
-		msgLevel( LoggerLevel::trace ),
-		pattern( fmtPattern ),
-		msgDetails( name, msgLevel, message_time_mode::local ),
-		msgPattern( pattern, &msgDetails )
+		: toBuffer( false ), policy( serenity::experimental::Flush::never ), logLevel( LoggerLevel::trace ), msgLevel( LoggerLevel::trace ),
+		  pattern( fmtPattern ), msgDetails( name, msgLevel, message_time_mode::local ), msgPattern( pattern, &msgDetails )
 	{
 	}
 

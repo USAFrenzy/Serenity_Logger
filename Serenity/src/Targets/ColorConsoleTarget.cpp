@@ -2,10 +2,8 @@
 
 #include <iostream>
 
-namespace serenity::targets
-{
-	ColorConsole::ColorConsole( )
-	  : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( false )
+namespace serenity::targets {
+	ColorConsole::ColorConsole( ) : TargetBase( "Console Logger" ), consoleMode( console_interface::std_out ), coloredOutput( false )
 	{
 		WriteToBaseBuffer( false );
 		SetConsoleInterface( consoleMode );
@@ -15,8 +13,7 @@ namespace serenity::targets
 		}
 	}
 
-	ColorConsole::ColorConsole( std::string_view name )
-	  : TargetBase( name ), consoleMode( console_interface::std_out ), coloredOutput( false )
+	ColorConsole::ColorConsole( std::string_view name ) : TargetBase( name ), consoleMode( console_interface::std_out ), coloredOutput( false )
 	{
 		WriteToBaseBuffer( false );
 		SetConsoleInterface( consoleMode );
@@ -27,7 +24,7 @@ namespace serenity::targets
 	}
 
 	ColorConsole::ColorConsole( std::string_view name, std::string_view msgPattern )
-	  : TargetBase( name, msgPattern ), consoleMode( console_interface::std_out ), coloredOutput( false )
+		: TargetBase( name, msgPattern ), consoleMode( console_interface::std_out ), coloredOutput( false )
 	{
 		WriteToBaseBuffer( false );
 		SetConsoleInterface( consoleMode );
@@ -148,13 +145,13 @@ namespace serenity::targets
 	void ColorConsole::SetOriginalColors( )
 	{
 		msgLevelColors = {
-		{ LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
-		{ LoggerLevel::info, se_colors::bright_colors::foreground::green },
-		{ LoggerLevel::debug, se_colors::bright_colors::foreground::cyan },
-		{ LoggerLevel::warning, se_colors::bright_colors::foreground::yellow },
-		{ LoggerLevel::error, se_colors::basic_colors::foreground::red },
-		{ LoggerLevel::fatal, se_colors::bright_colors::combos::yellow::on_red },
-		{ LoggerLevel::off, se_colors::formats::reset },
+			{ LoggerLevel::trace, se_colors::bright_colors::combos::white::on_black },
+			{ LoggerLevel::info, se_colors::bright_colors::foreground::green },
+			{ LoggerLevel::debug, se_colors::bright_colors::foreground::cyan },
+			{ LoggerLevel::warning, se_colors::bright_colors::foreground::yellow },
+			{ LoggerLevel::error, se_colors::basic_colors::foreground::red },
+			{ LoggerLevel::fatal, se_colors::bright_colors::combos::yellow::on_red },
+			{ LoggerLevel::off, se_colors::formats::reset },
 		};
 	}
 

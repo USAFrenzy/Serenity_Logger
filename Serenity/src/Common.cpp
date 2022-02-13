@@ -2,8 +2,7 @@
 
 #include <iostream>
 
-namespace serenity::experimental
-{
+namespace serenity::experimental {
 	void RotateSettings::CacheOriginalPathComponents( const std::filesystem::path &filePath )
 	{
 		path = filePath;

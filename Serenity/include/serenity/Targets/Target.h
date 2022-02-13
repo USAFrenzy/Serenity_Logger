@@ -8,8 +8,7 @@
 
 #include <chrono>
 
-namespace serenity::targets
-{
+namespace serenity::targets {
 	class TargetBase
 	{
 	  public:

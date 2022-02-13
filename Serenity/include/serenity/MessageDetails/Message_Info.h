@@ -3,8 +3,7 @@
 #include <serenity/Common.h>
 #include <serenity/MessageDetails/Message_Time.h>
 
-namespace serenity::msg_details
-{
+namespace serenity::msg_details {
 	class Message_Info
 	{
 	  public:
@@ -30,9 +29,7 @@ namespace serenity::msg_details
 			m_message.clear( );
 			using iterator = std::back_insert_iterator<std::basic_string<char>>;
 			using context  = std::basic_format_context<iterator, char>;
-			std::vformat_to( std::back_inserter( m_message ),
-							 message,
-							 std::make_format_args<context>( std::forward<Args>( args )... ) );
+			std::vformat_to( std::back_inserter( m_message ), message, std::make_format_args<context>( std::forward<Args>( args )... ) );
 			m_message.append( SERENITY_LUTS::line_ending.at( platformEOL ) );
 		}
 

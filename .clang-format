@@ -1,4 +1,6 @@
 ---
+BasedOnStyle: LLVM
+
 ##############################################################
 #                   Formatting Options                       #
 #  https://clang.llvm.org/docs/ClangFormatStyleOptions.html  #
@@ -12,21 +14,30 @@ AlignAfterOpenBracket: Align
 # int aaaa = 12;
 # int b    = 23;
 # int ccc  = 23;
-AlignConsecutiveAssignments: true
+AlignConsecutiveAssignments: Consecutive
+# AIAS_Left (in configuration: Left) Align array column and left justify the columns e.g.:
+# struct test demo[] =
+# {
+#     {56, 23,    "hello"},
+#     {-1, 93463, "world"},
+#     {7,  5,     "!!"   }
+# };
+# AlignArrayOfStructures: Left
+
 ########## If true, aligns consecutive declarations. ##########
-AlignConsecutiveDeclarations: true
+AlignConsecutiveDeclarations: Consecutive
 ########## If true, aligns consecutive bitfield members ##########
 # int aaaa : 1;
 # int b    : 12;
 # int ccc  : 8;
-AlignConsecutiveBitFields: true
+AlignConsecutiveBitFields: Consecutive
 ########## If true, aligns consecutive C/C++ preprocessor macros ##########
 # #define SHORT_NAME       42
 # #define LONGER_NAME      0x007f
 # #define EVEN_LONGER_NAME (2)
 # #define foo(x)           (x * x)
 # #define bar(y, z)        (y + z)
-AlignConsecutiveMacros: true
+AlignConsecutiveMacros: Consecutive
 ##########  Align escaped newlines in the right-most column ##########
 # #define A                                                        \
 #  int aaaa;                                                       \
@@ -47,11 +58,6 @@ AlignTrailingComments: true
 #                 int b,
 #                 int c);
 AllowAllArgumentsOnNextLine: false
-########## allow putting all member initializers onto the next line ##########
-# true:
-# MyClass::MyClass() :
-#    member0(0), member1(2) {}
-AllowAllConstructorInitializersOnNextLine: true
 ########## allow putting all parameters of a function declaration onto the next line ##########
 # false:
 # void myFunction(int a,
@@ -75,7 +81,7 @@ AllowShortCaseLabelsOnASingleLine: true
 ########## Allow short enums on a single line ##########
 # true:
 # enum { A, B } myEnum;
-AllowShortEnumsOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
 ########## Only merge empty functions ##########
 # void f() {}
 # void f2() {
@@ -148,7 +154,7 @@ BinPackArguments: false
 # void f(int aaaaaaaaaaaaaaaaaaaa,
 #        int aaaaaaaaaaaaaaaaaaaa,
 #        int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}
-BinPackParameters: true
+BinPackParameters: false
 ########## Add space after the : only ##########
 # unsigned bf: 2;
 # BitFieldColonSpacing: After
@@ -160,20 +166,19 @@ BraceWrapping:
   AfterControlStatement: MultiLine
   AfterEnum: true
   AfterFunction: true
-  AfterNamespace: true
+  AfterNamespace: false
   AfterObjCDeclaration: false
-  AfterStruct: true
+  AfterStruct: false
   AfterUnion: false
   AfterExternBlock: false
   BeforeCatch: true
   BeforeElse: false
-  BeforeLambdaBody: true
-  BeforeWhile: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
   IndentBraces: false
-  # Due To Above Choices, Stylistically Looks Better This Way
   SplitEmptyFunction: true
   SplitEmptyRecord: true
-  SplitEmptyNamespace: false
+  SplitEmptyNamespace: true
 ########## Break after each annotation on a field in Java files ##########
 # false:
 # @Partial @Mock DataLoad loader;
@@ -200,14 +205,14 @@ BreakConstructorInitializers: BeforeColon
 # class Foo : Base1,
 #             Base2
 # {};
-BreakInheritanceList: AfterColon
+BreakInheritanceList: BeforeColon
 ########## Allow breaking string literals when formatting ##########
 # true:
 # const char* x = "veryVeryVeryVeryVeryVe"
 #                 "ryVeryVeryVeryVeryVery"
 #                 "VeryLongString";
 BreakStringLiterals: true
-ColumnLimit: 125
+ColumnLimit: 145
 ########## A regular expression that describes comments with special meaning ##########
 CommentPragmas: '^///'
 ########## If false, each namespace is declared on a new line ##########
@@ -218,17 +223,9 @@ CommentPragmas: '^///'
 # }                                           }
 # }
 CompactNamespaces: false
-########## If the constructor initializers don’t fit on ##########
-########## a line, put each initializer on its own line ##########
-# true:
-# SomeClass::Constructor()
-#     : aaaa(aaaaaa), aaaaaa(aaaaaa), aaaaaaaa(aaaaaaaaaaaaaaaa) {
-#   return 0;
-# }
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ##########     The number of characters to use for indentation of     ##########
 ########## constructor initializer lists as well as inheritance lists ##########
-ConstructorInitializerIndentWidth: 2
+ConstructorInitializerIndentWidth: 4
 ########## Indent width for line continuations ##########
 ContinuationIndentWidth: 0
 ########## If true, format braced lists as best suited for C++11 braced lists ##########
@@ -237,7 +234,7 @@ ContinuationIndentWidth: 0
 # vector<T> x{{}, {}, {}, {}};           vector<T> x{ {}, {}, {}, {} };
 # f(MyMap[{composite, key}]);            f(MyMap[{ composite, key }]);
 # new int[3]{1, 2, 3};                   new int[3]{ 1, 2, 3 };
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 ########## Analyze the formatted file for the most used line ending (\r\n or \n) ##########
 DeriveLineEnding: true
 ########## Analyze the formatted file for the most common alignment of & and *. Pointer   ##########
@@ -253,12 +250,13 @@ DisableFormat: false
 # foo();                                 foo();
 # } // namespace a                       }
 FixNamespaceComments: true
-########## A vector of macros that should be interpreted ###########
-########## as foreach loops instead of as function calls ###########
-# These are expected to be macros of the form:
-# FOREACH(<variable-declaration>, ...)
-#   <loop-body>
-ForEachMacros: ["foreach", "Q_FOREACH", "BOOST_FOREACH", "FOREACH"]
+# Always add empty line after access modifiers if there are none. 
+# MaxEmptyLinesToKeep is applied also.
+# EmptyLineAfterAccessModifier: Always
+
+# Add empty line only when access modifier starts a new logical block. 
+# Logical block is a group of one or more member fields or functions.
+EmptyLineBeforeAccessModifier: LogicalBlock
 ########## Merge multiple #include blocks together and sort as one ##########
 ##########    Then split into groups based on category priority    ##########
 IncludeBlocks: Regroup
@@ -340,13 +338,26 @@ Language: Cpp
 # MacroBlockBegin:
 # MacroBlockEnd: 
 MaxEmptyLinesToKeep: 1
-NamespaceIndentation: All
-########## A vector of macros which are used to open namespace blocks ##########
-#  These are expected to be macros of the form:
-# NAMESPACE(<namespace-name>, ...) {
-#   <namespace-content>
+# Indent in all namespaces.
+# namespace out {
+#   int i;
+#   namespace in {
+#     int i;
+#   }
 # }
-# NamespaceMacros:
+NamespaceIndentation: All
+# The number of columns to use for indentation of preprocessor statements. 
+# When set to -1 (default) IndentWidth is used also for preprocessor statements.
+# PPIndentWidth: -1
+
+# Constructor() : a(), b()
+# Constructor()
+#     : aaaaaaaaaaaaaaaaaaaa(), bbbbbbbbbbbbbbbbbbbb(), ddddddddddddd()
+# Constructor()
+#     : aaaaaaaaaaaaaaaaaaaa(),
+#       bbbbbbbbbbbbbbbbbbbb(),
+#       cccccccccccccccccccc()
+# PackConstructorInitializers: NextLine
 
 ########## Defines hints for detecting supported ##########
 ########## languages code blocks in raw strings  ##########
@@ -387,7 +398,7 @@ Standard: c++20
 
 # StatementMacros: ["DEPRACATED", "TODO", "NOTE"]
 
-UseTab: ForContinuationAndIndentation
+UseTab: AlignWithSpaces
 TabWidth: 4
 
 PenaltyBreakAssignment: 30
@@ -398,3 +409,12 @@ PenaltyBreakString: 5
 PenaltyBreakTemplateDeclaration: 20
 PenaltyExcessCharacter: 20
 PenaltyReturnTypeOnItsOwnLine: 10
+# Align pointer to the left.
+# int* a;
+PointerAlignment: Left
+# Align reference like PointerAlignment.
+# ReferenceAlignment: Pointer
+
+# Specifies the use of empty lines to separate definition blocks,
+# including classes, structs, enums, and functions.
+# SeparateDefinitionBlocks: Always

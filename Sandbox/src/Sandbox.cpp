@@ -10,7 +10,7 @@
 // TODO: ####################################################################################################################################
 // clang-format on
 
-#define INSTRUMENT 1
+#define INSTRUMENT 0
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -19,17 +19,17 @@
 // TODO: Finish adding strftime equivalent flags and the last two original flags
 // TODO: and then figure a way to add user defined flags and formatting callbacks
 /************************************************************************************************************
-									   custom flags
-							************************************
-	- %N (Name)                   - %L (Full Message Level)      - %x (Short Weekday String)
-	- %l (Short Message Level)	    - %n (DD/MMM/YY Date)          - %X (Long Weekday String)
+                                       custom flags
+                            ************************************
+    - %N (Name)                   - %L (Full Message Level)      - %x (Short Weekday String)
+    - %l (Short Message Level)	    - %n (DD/MMM/YY Date)          - %X (Long Weekday String)
 
-							  The rest are strftime equivalents
-						 ******************************************
-	- %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
-	- %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year XXXX)
-	- %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
-	- %B (Full Month Name)	   - %H (24hr Hour format)	         - %y (year XX Format)
+                              The rest are strftime equivalents
+                         ******************************************
+    - %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
+    - %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year XXXX)
+    - %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
+    - %B (Full Month Name)	   - %H (24hr Hour format)	         - %y (year XX Format)
 ************************************************************************************************************/
 
 #include <spdlog/spdlog.h>
@@ -94,10 +94,9 @@ int main( )
 	auto rotateOnOpen { false };
 	// above settings equivalent to default RotatingTarget Settings
 	bool isRotateFilePath { true };
-	auto rotatingSink { std::make_shared<spdlog::sinks::rotating_file_sink_st>( SpdlogPath( isRotateFilePath ),
-																				fileSize,
-																				numberOfFiles,
-																				rotateOnOpen ) };
+	auto rotatingSink {
+		std::make_shared<spdlog::sinks::rotating_file_sink_st>( SpdlogPath( isRotateFilePath ), fileSize, numberOfFiles, rotateOnOpen )
+	};
 	sinks.clear( );
 	sinks.emplace_back( rotatingSink );
 	auto spdlogRotatingLogger { std::make_shared<spdlog::logger>( "Rotating_Logger", begin( sinks ), end( sinks ) ) };
@@ -195,15 +194,13 @@ int main( )
 	size_t rotationIterations = 1'000'000;
 
 	std::mutex consoleMutex;
-	auto       NotifyConsole = [ & ]( std::string message )
-	{
-		std::lock_guard lock( consoleMutex );
-		std::cout << message;
+	auto       NotifyConsole = [ & ]( std::string message ) {
+        std::lock_guard lock( consoleMutex );
+        std::cout << message;
 	};
 	// Some more crude tests - testing rotational marks
 	std::cout << "\n\nLogging messages to test rotation on hour mark, daily mark, and file size\n\n";
-	auto LogHourly = [ & ]( )
-	{
+	auto LogHourly = [ & ]( ) {
 		for( int i = 1; i <= rotationIterations; ++i ) {
 			rotatingLoggerHourly.Info( "Logging message {} to rotating file based on hour mode", i );
 			std::string message = "Message ";
@@ -213,8 +210,7 @@ int main( )
 		}
 	};
 
-	auto LogOnDaily = [ & ]( )
-	{
+	auto LogOnDaily = [ & ]( ) {
 		for( int i = 1; i <= rotationIterations; ++i ) {
 			rotatingFile.Info( "Logging message {} to rotating file based on daily mode", i );
 			std::string message = "Message ";
@@ -224,8 +220,7 @@ int main( )
 		}
 	};
 
-	auto LogOnSize = [ & ]( )
-	{
+	auto LogOnSize = [ & ]( ) {
 		for( int i = 1; i <= 5'000'000; ++i ) {
 			rotatingLoggerOnSize.Info( "Logging message {} to rotating file based on file size mode", i );
 			std::string message = "Message ";
@@ -355,10 +350,10 @@ int main( )
 	auto SpdlogRotatingThrouput { ( testStrInMB * iterations ) / spdlogRotateTester.Elapsed_In( time_mode::sec ) };
 
 	std::cout << Tag::Yellow( "\n\n***************************************************************************************\n"
-							  "*************** Instrumentation Data (Averaged Over " )
+	                          "*************** Instrumentation Data (Averaged Over " )
 			  << Tag::Yellow( std::to_string( iterations ) + " Iterations: " )
 			  << Tag::Yellow( "***************\n"
-							  "***************************************************************************************\n" );
+	                          "***************************************************************************************\n" );
 	std::cout << Tag::Bright_Yellow( "Color Console Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 			  << Tag::Bright_Green( std::to_string( macroTester.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
 			  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
@@ -368,16 +363,15 @@ int main( )
 
 	std::cout << Tag::Bright_Yellow( "Spdlog Color Console Sink (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::us ) / iterations ) + " us"
-																													 "\n" )
+	                                                                                                                 "\n" )
 			  << Tag::Bright_Cyan( "\t- In Milliseconds:\t\t" )
 			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms"
-																													 "\n" )
+	                                                                                                                 "\n" )
 			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
 			  << Tag::Bright_Green( std::to_string( spdlogConsoleTester.Elapsed_In( time_mode::sec ) / iterations ) + " s"
-																													  "\n" );
+	                                                                                                                  "\n" );
 
-	std::cout << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent +
-									  " Percent Of Spdlog's Color Console Sink Speed\n" );
+	std::cout << Tag::Bright_Magenta( "Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n" );
 
 	std::cout << Tag::Bright_Yellow( "File Target (ST)\n" ) << Tag::Bright_Cyan( "\t- In Microseconds:\t\t" )
 			  << Tag::Bright_Green( std::to_string( macroTesterFile.Elapsed_In( time_mode::us ) / iterations ) + " us\n" )
@@ -408,7 +402,7 @@ int main( )
 			  << Tag::Bright_Green( std::to_string( spdlogRotateTester.Elapsed_In( time_mode::ms ) / iterations ) + " ms\n" )
 			  << Tag::Bright_Cyan( "\t- In Seconds:\t\t\t" )
 			  << Tag::Bright_Green( std::to_string( spdlogRotateTester.Elapsed_In( time_mode::sec ) / iterations ) + " s"
-																													 "\n" );
+	                                                                                                                 "\n" );
 
 	std::cout << Tag::Bright_Magenta( "Rotating Target Is " + rotatePercent + " Percent Of Spdlog's File Sink Speed\n" );
 
@@ -418,8 +412,7 @@ int main( )
 			  << Tag::Bright_Green( SetPrecision( ConsoleThroughput ) + " MB/s\n" );
 	std::cout << Tag::Bright_Cyan( "spdlog Color Sink Throughput:" ) << "\n  "
 			  << Tag::Bright_Green( SetPrecision( SpdlogConsoleThroughput ) + " MB/s\n" );
-	std::cout << Tag::Bright_Cyan( "File Target Throughput:" ) << "\n  "
-			  << Tag::Bright_Green( SetPrecision( FileThroughput ) + " MB/s\n" );
+	std::cout << Tag::Bright_Cyan( "File Target Throughput:" ) << "\n  " << Tag::Bright_Green( SetPrecision( FileThroughput ) + " MB/s\n" );
 	std::cout << Tag::Bright_Cyan( "spdlog File Sink Throughput:" ) << "\n  "
 			  << Tag::Bright_Green( SetPrecision( SpdlogFileThroughput ) + " MB/s\n" );
 	std::cout << Tag::Bright_Cyan( "Rotating Target Throughput:" ) << "\n  "
@@ -438,25 +431,23 @@ int main( )
 			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::targets::FileTarget ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Rotating Target Class:\t\t" )
-			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::experimental::targets::RotatingTarget ) ) +
-									"\tbytes ]\n" );
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::experimental::targets::RotatingTarget ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Info Class:\t\t" )
 			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::msg_details::Message_Info ) ) + "\tbytes ]\n" );
 
-	std::cout
-	<< Tag::Bright_Yellow( "Size of Message_Formatter Class:\t" )
-	<< Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::msg_details::Message_Formatter ) ) + "\tbytes ]\n" );
+	std::cout << Tag::Bright_Yellow( "Size of Message_Formatter Class:\t" )
+			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::msg_details::Message_Formatter ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Bright_Yellow( "Size of Message_Time Class:\t\t" )
 			  << Tag::Bright_Green( "[ " + std::to_string( sizeof( serenity::msg_details::Message_Time ) ) + "\tbytes ]\n" );
 
 	std::cout << Tag::Yellow( "***************************************************************************************"
-							  "\n" );
+	                          "\n" );
 	std::cout << Tag::Yellow( "***************************************************************************************"
-							  "\n" );
+	                          "\n" );
 	std::cout << Tag::Yellow( "***************************************************************************************"
-							  "\n\n" );
+	                          "\n\n" );
 
 #endif  // INSTRUMENTATION_ENABLED
 }

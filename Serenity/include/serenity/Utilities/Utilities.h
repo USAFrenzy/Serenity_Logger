@@ -4,10 +4,8 @@
 #include <filesystem>
 #include <mutex>
 
-namespace serenity
-{
-	namespace se_utils
-	{
+namespace serenity {
+	namespace se_utils {
 		enum class time_mode
 		{
 			us,
@@ -24,8 +22,7 @@ namespace serenity
 		template <class T> using pMin   = std::chrono::duration<T, std::ratio<1, 60>>;
 		template <class T> using pHour  = std::chrono::duration<T, std::ratio<1, 3600>>;
 
-		struct Allocation_Statistics
-		{
+		struct Allocation_Statistics {
 			uint64_t Allocated { 0 };
 			uint64_t Freed { 0 };
 			uint64_t Memory_Usage( );
@@ -57,18 +54,14 @@ namespace serenity
 		void SleepFor( time_mode mode, int time );
 	}  // namespace se_utils
 
-	namespace file_utils
-	{
-		namespace file_utils_results
-		{
-			struct search_dir_entries
-			{
+	namespace file_utils {
+		namespace file_utils_results {
+			struct search_dir_entries {
 				std::vector<std::filesystem::directory_entry> matchedResults;
 				bool                                          fileFound { false };
 				float                                         elapsedTime { 0 };
 			};
-			struct retrieve_dir_entries
-			{
+			struct retrieve_dir_entries {
 				int                                                  fileCount { 0 };
 				bool                                                 success { false };
 				static std::vector<std::filesystem::directory_entry> retrievedItems;

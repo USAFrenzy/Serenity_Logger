@@ -5,8 +5,7 @@
 #include <chrono>
 #include <mutex>
 
-namespace serenity::experimental
-{
+namespace serenity::experimental {
 	enum class Flush
 	{
 		always,
@@ -20,8 +19,7 @@ namespace serenity::experimental
 		undef,
 	};
 
-	struct PeriodicSettings
-	{
+	struct PeriodicSettings {
 		std::chrono::milliseconds flushEvery { std::chrono::milliseconds( 500 ) };
 		LoggerLevel               flushOn { LoggerLevel::trace };
 	};

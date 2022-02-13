@@ -53,11 +53,10 @@
 #include <format>
 
 // declaring for use later and for doc purposes
-namespace serenity::experimental
-{ }
+namespace serenity::experimental {
+}
 
-namespace serenity
-{
+namespace serenity {
 	enum class LineEnd
 	{
 		linux   = 0,
@@ -65,54 +64,34 @@ namespace serenity
 		mac     = 2,
 	};
 
-	namespace SERENITY_LUTS
-	{
-		// clang-format off
-		static constexpr std::array<std::string_view, 22> allValidFlags = 
-		{ 
-			"%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x",
-			"%y", "%A", "%B", "%D", "%F", "%H", "%L", "%M",
-			"%N", "%S", "%T", "%X", "%Y", "%+" 
+	namespace SERENITY_LUTS {
+		static constexpr std::array<std::string_view, 22> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x", "%y", "%A", "%B",
+			                                                                "%D", "%F", "%H", "%L", "%M", "%N", "%S", "%T", "%X", "%Y", "%+" };
+
+		static constexpr std::array<std::string_view, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+		static constexpr std::array<std::string_view, 7> long_weekdays = { "Sunday",   "Monday", "Tuesday", "Wednesday",
+			                                                               "Thursday", "Friday", "Saturday" };
+
+		static constexpr std::array<std::string_view, 12> short_months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			                                                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+		static constexpr std::array<const char *, 12> long_months = { "January", "February", "March",     "April",   "May",      "June",
+			                                                          "July",    "August",   "September", "October", "November", "December" };
+
+		static constexpr std::array<std::string_view, 100> numberStr = {
+			"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+			"20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
+			"40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59",
+			"60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
+			"80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"
 		};
 
-		static constexpr std::array<std::string_view, 7> short_weekdays = 
-		{ 
-			"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" 
-		};
-
-		static constexpr std::array<std::string_view, 7> long_weekdays = 
-		{
-			"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" 
-		};
-
-		static constexpr std::array<std::string_view, 12> short_months = 
-		{
-			"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" 
-		};
-
-		static constexpr std::array<const char *, 12> long_months = 
-		{
-			"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" 
-		};
-
-		static constexpr std::array<std::string_view, 100> numberStr = 
-		{
-			"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16",
-		    "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33",
-			"34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50",
-			"51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67",
-			"68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84",
-			"85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99" 
-		};
-
-		static std::unordered_map<LineEnd, std::string_view> line_ending = 
-		{
+		static std::unordered_map<LineEnd, std::string_view> line_ending = {
 			{ LineEnd::linux, "\n" },
 			{ LineEnd::windows, "\r\n" },
 			{ LineEnd::mac, "\r" },
 		};
-
-		// clang-format on
 
 	}  // namespace SERENITY_LUTS
 
@@ -159,25 +138,21 @@ namespace serenity
 		utc
 	};
 
-	struct BackgroundThread
-	{
+	struct BackgroundThread {
 		std::atomic<bool>  cleanUpThreads { false };
 		std::atomic<bool>  flushThreadEnabled { false };
 		mutable std::mutex readWriteMutex;
 		std::thread        flushThread;
 	};
 
-	struct FileSettings
-	{
+	struct FileSettings {
 		std::filesystem::path filePath;
 		std::vector<char>     fileBuffer;
 		size_t                bufferSize { DEFAULT_BUFFER_SIZE };
 	};
 
-	namespace experimental
-	{
-		struct RotateSettings
-		{
+	namespace experimental {
+		struct RotateSettings {
 			enum class IntervalMode
 			{
 				file_size = 0,
