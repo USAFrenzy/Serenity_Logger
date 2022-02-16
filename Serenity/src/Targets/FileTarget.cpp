@@ -3,7 +3,7 @@
 #include <iostream>  // specifically for std::cerr
 
 namespace serenity::targets {
-	FileTarget::FileTarget( ) : TargetBase( "File_Logger" ), policy( Policy( ) )
+	FileTarget::FileTarget( ) : TargetBase( "File_Logger" )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 
@@ -29,7 +29,7 @@ namespace serenity::targets {
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view fileName, bool replaceIfExists ) : TargetBase( "File_Logger" ), policy( Policy( ) )
+	FileTarget::FileTarget( std::string_view fileName, bool replaceIfExists ) : TargetBase( "File_Logger" )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		std::filesystem::path fullFilePath = std::filesystem::current_path( );
@@ -53,7 +53,7 @@ namespace serenity::targets {
 		}
 	}
 
-	FileTarget::FileTarget( std::string_view name, std::string_view fPath, bool replaceIfExists ) : TargetBase( name ), policy( Policy( ) )
+	FileTarget::FileTarget( std::string_view name, std::string_view fPath, bool replaceIfExists ) : TargetBase( name )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		fileOptions.filePath = fPath;
@@ -76,7 +76,7 @@ namespace serenity::targets {
 	}
 
 	FileTarget::FileTarget( std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists )
-		: TargetBase( name, formatPattern ), policy( Policy( ) )
+		: TargetBase( name, formatPattern )
 	{
 		fileOptions.fileBuffer.reserve( fileOptions.bufferSize );
 		fileOptions.filePath = fPath;

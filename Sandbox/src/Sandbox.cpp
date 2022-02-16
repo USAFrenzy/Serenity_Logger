@@ -172,23 +172,36 @@ int main( )
 	testFile.Flush( );
 
 	RotateSettings settings;
-	settings.fileSizeLimit    = 256 * KB;
-	settings.maxNumberOfFiles = 10;
-	settings.monthModeSetting = 9;
-	settings.weekModeSetting  = 3;
+	settings.fileSizeLimit        = 256 * KB;
+	settings.maxNumberOfFiles     = 10;
+	settings.monthModeSetting     = 9;
+	settings.weekModeSetting      = 3;
+	settings.dayModeSettingHour   = 8;
+	settings.dayModeSettingMinute = 30;
+
+	PeriodicSettings flushSettings = { };
+	flushSettings.flushEvery       = std::chrono::seconds( 60);
+	Flush_Policy flushPolicy( Flush::periodically, PeriodicOptions::timeBased, flushSettings );
+
 	rotatingFile.SetRotateSettings( settings );
+	rotatingFile.SetFlushPolicy( flushPolicy );
 
 	rotatingFile.SetRotationMode( RotateSettings::IntervalMode::daily );
 
 	auto                                  onSizeFilePath = LogDirPath( ) /= "FileSize/OnSizeRotation.txt";
 	experimental::targets::RotatingTarget rotatingLoggerOnSize( "RotateOnSize_Logger", onSizeFilePath.string( ), true );
 	rotatingLoggerOnSize.SetRotateSettings( settings );
+	rotatingLoggerOnSize.SetFlushPolicy( flushPolicy );
+	
 	// should be the default anyways
 	rotatingLoggerOnSize.SetRotationMode( RotateSettings::IntervalMode::file_size );
 
 	auto                                  onHourFilePath = LogDirPath( ) /= "Hourly/OnHourRotation.txt";
 	experimental::targets::RotatingTarget rotatingLoggerHourly( "RotateHourly_Logger", onHourFilePath.string( ), true );
 	rotatingLoggerHourly.SetRotateSettings( settings );
+	rotatingLoggerHourly.SetFlushPolicy( flushPolicy );
+	
+	
 	// should be the default anyways
 	rotatingLoggerHourly.SetRotationMode( RotateSettings::IntervalMode::hourly );
 	size_t rotationIterations = 1'000'000;
@@ -216,7 +229,7 @@ int main( )
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Daily\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::minutes( 10 ) );
+			std::this_thread::sleep_for( std::chrono::minutes( 5 ) );
 		}
 	};
 
@@ -226,7 +239,7 @@ int main( )
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Size\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 500) );
 		}
 	};
 

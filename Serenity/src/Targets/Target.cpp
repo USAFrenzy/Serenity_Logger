@@ -41,7 +41,7 @@ namespace serenity::targets {
 		msgPattern.SetPattern( std::string { pattern.data( ), pattern.size( ) } );
 	}
 
-	void TargetBase::SetFlushPolicy( serenity::experimental::Flush_Policy pPolicy )
+	void TargetBase::SetFlushPolicy( const serenity::experimental::Flush_Policy &pPolicy )
 	{
 		policy = pPolicy;
 	}

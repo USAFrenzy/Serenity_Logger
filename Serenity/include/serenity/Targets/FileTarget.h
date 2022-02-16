@@ -26,8 +26,7 @@ namespace serenity::targets {
 		std::string *const Buffer( );
 
 	  private:
-		LoggerLevel                          logLevel;
-		serenity::experimental::Flush_Policy policy;
+		LoggerLevel logLevel;
 
 	  protected:
 		std::ofstream    fileHandle;

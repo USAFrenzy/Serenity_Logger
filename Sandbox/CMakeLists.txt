@@ -5,9 +5,7 @@ set (SANDBOX_SOURCE_FILES "src/Sandbox.cpp")
 set (SANDBOX_ALL_FILES ${SANDBOX_HEADER_FILES} ${SANDBOX_SOURCE_FILES})
 
 add_executable (${PROJECT_NAME} ${SANDBOX_ALL_FILES})
-set_target_properties (
-    ${PROJECT_NAME} PROPERTIES CXX_STANDARD 23 VS_STARTUP_PROJECT ${PROJECT_NAME}
-)
+set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 23)
 target_link_libraries (
     ${PROJECT_NAME}
     LINK_PUBLIC
