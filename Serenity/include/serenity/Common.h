@@ -65,6 +65,7 @@ namespace serenity {
 	};
 
 	namespace SERENITY_LUTS {
+
 		static constexpr std::array<std::string_view, 22> allValidFlags = { "%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x", "%y", "%A", "%B",
 			                                                                "%D", "%F", "%H", "%L", "%M", "%N", "%S", "%T", "%X", "%Y", "%+" };
 
@@ -93,6 +94,24 @@ namespace serenity {
 			{ LineEnd::mac, "\r" },
 		};
 
+		constexpr int JANUARY   = 0;
+		constexpr int FEBRUARY  = 1;
+		constexpr int MARCH     = 2;
+		constexpr int APRIL     = 3;
+		constexpr int MAY       = 4;
+		constexpr int JUNE      = 5;
+		constexpr int JULY      = 6;
+		constexpr int AUGUST    = 7;
+		constexpr int SEPTEMBER = 8;
+		constexpr int OCTOBER   = 9;
+		constexpr int NOVEMBER  = 10;
+		constexpr int DECEMBER  = 11;
+
+		static std::unordered_map<int, int> daysPerMonth = {
+			{ JANUARY, 31 }, { FEBRUARY, 28 }, { MARCH, 31 },     { APRIL, 30 },   { MAY, 31 },      { JUNE, 30 },
+			{ JULY, 31 },    { AUGUST, 31 },   { SEPTEMBER, 30 }, { OCTOBER, 31 }, { NOVEMBER, 30 }, { DECEMBER, 31 },
+		};
+
 	}  // namespace SERENITY_LUTS
 
 	enum class LoggerLevel
@@ -106,7 +125,7 @@ namespace serenity {
 		off     = 6,
 	};
 
-	static std::string_view MsgLevelToShortString( LoggerLevel level )
+	static std::string_view LevelToShortView( LoggerLevel level )
 	{
 		switch( level ) {
 			case LoggerLevel::info: return "I"; break;
@@ -119,7 +138,7 @@ namespace serenity {
 		}
 	}
 
-	static std::string_view MsgLevelToString( LoggerLevel level )
+	static std::string_view LevelToLongView( LoggerLevel level )
 	{
 		switch( level ) {
 			case LoggerLevel::info: return "Info"; break;

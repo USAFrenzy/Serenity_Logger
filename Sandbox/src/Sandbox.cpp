@@ -180,8 +180,8 @@ int main( )
 	settings.dayModeSettingMinute = 30;
 
 	PeriodicSettings flushSettings = { };
-	flushSettings.flushEvery       = std::chrono::seconds( 60);
-	Flush_Policy flushPolicy( Flush::periodically, PeriodicOptions::timeBased, flushSettings );
+	flushSettings.flushEvery       = std::chrono::seconds( 60 );
+	Flush_Policy flushPolicy( FlushSetting::periodically, PeriodicOptions::timeBased, flushSettings );
 
 	rotatingFile.SetRotateSettings( settings );
 	rotatingFile.SetFlushPolicy( flushPolicy );
@@ -192,7 +192,6 @@ int main( )
 	experimental::targets::RotatingTarget rotatingLoggerOnSize( "RotateOnSize_Logger", onSizeFilePath.string( ), true );
 	rotatingLoggerOnSize.SetRotateSettings( settings );
 	rotatingLoggerOnSize.SetFlushPolicy( flushPolicy );
-	
 	// should be the default anyways
 	rotatingLoggerOnSize.SetRotationMode( RotateSettings::IntervalMode::file_size );
 
@@ -200,12 +199,14 @@ int main( )
 	experimental::targets::RotatingTarget rotatingLoggerHourly( "RotateHourly_Logger", onHourFilePath.string( ), true );
 	rotatingLoggerHourly.SetRotateSettings( settings );
 	rotatingLoggerHourly.SetFlushPolicy( flushPolicy );
-	
-	
-	// should be the default anyways
 	rotatingLoggerHourly.SetRotationMode( RotateSettings::IntervalMode::hourly );
-	size_t rotationIterations = 1'000'000;
 
+	// Testing (probably won't work first time around)
+	rotatingLoggerOnSize.EnableMultiThreadingSupport( );
+	rotatingFile.EnableMultiThreadingSupport( );
+	rotatingLoggerHourly.EnableMultiThreadingSupport( );
+
+	size_t     rotationIterations = 1'000'000;
 	std::mutex consoleMutex;
 	auto       NotifyConsole = [ & ]( std::string message ) {
         std::lock_guard lock( consoleMutex );
@@ -239,17 +240,19 @@ int main( )
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Size\n" );
 			NotifyConsole( message );
-			std::this_thread::sleep_for( std::chrono::milliseconds( 500) );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
 		}
 	};
 
-	auto m = std::async( std::launch::async, LogHourly );
-	auto n = std::async( std::launch::async, LogOnDaily );
-	auto o = std::async( std::launch::async, LogOnSize );
-
-	m.get( );
-	n.get( );
-	o.get( );
+	std::thread t1 { LogOnSize };
+	std::thread t2 { LogHourly };
+	std::thread t3 { LogOnDaily };
+	while( !( t1.joinable( ) ) || !( t2.joinable( ) ) || !( t3.joinable( ) ) ) {
+		std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
+	}
+	t1.join( );
+	t2.join( );
+	t3.join( );
 
 #endif  // !INSTRUMENTATION_ENABLED
 

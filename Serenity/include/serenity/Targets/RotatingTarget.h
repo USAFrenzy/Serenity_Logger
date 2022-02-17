@@ -38,8 +38,9 @@ namespace serenity::experimental::targets {
 	  private:
 		void         PrintMessage( std::string_view formatted ) override;
 		bool         shouldRotate;
-		IntervalMode m_mode { IntervalMode::file_size };
+		IntervalMode m_mode;
 		int          currentDay, currentWeekday, currentHour;
+		std::mutex   rotateMutex;
 	};
 
 }  // namespace serenity::experimental::targets

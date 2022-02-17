@@ -157,7 +157,7 @@ namespace serenity::msg_details {
 	std::string Message_Formatter::Format_Arg_l::UpdateInternalView( )
 	{
 		lastLevel = levelRef;
-		auto lvl { MsgLevelToShortString( lastLevel ) };
+		auto lvl { LevelToShortView( lastLevel ) };
 		return std::string { lvl.data( ), lvl.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_l::Format( )
@@ -359,7 +359,7 @@ namespace serenity::msg_details {
 	std::string Message_Formatter::Format_Arg_L::UpdateInternalView( )
 	{
 		lastLevel = levelRef;
-		auto lvl { MsgLevelToString( lastLevel ) };
+		auto lvl { LevelToLongView( lastLevel ) };
 		return std::string { lvl.data( ), lvl.size( ) };
 	}
 	std::string_view Message_Formatter::Format_Arg_L::Format( )

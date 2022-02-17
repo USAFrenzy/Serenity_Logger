@@ -3,22 +3,9 @@
 #include <iostream>
 
 namespace serenity::experimental::targets {
-	constexpr int JANUARY   = 0;
-	constexpr int FEBRUARY  = 1;
-	constexpr int MARCH     = 2;
-	constexpr int APRIL     = 3;
-	constexpr int MAY       = 4;
-	constexpr int JUNE      = 5;
-	constexpr int JULY      = 6;
-	constexpr int AUGUST    = 7;
-	constexpr int SEPTEMBER = 8;
-	constexpr int OCTOBER   = 9;
-	constexpr int NOVEMBER  = 10;
-	constexpr int DECEMBER  = 11;
-
 	using namespace serenity::targets;
 
-	RotatingTarget::RotatingTarget( ) : FileTarget( "Rotating_Log.txt", true ), shouldRotate( true )
+	RotatingTarget::RotatingTarget( ) : FileTarget( "Rotating_Log.txt", true ), shouldRotate( true ), m_mode( IntervalMode::file_size )
 	{
 		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
 		currentHour    = cache.tm_hour;
@@ -42,7 +29,7 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view filePath, bool replaceIfExists )
-		: FileTarget( name, filePath, replaceIfExists ), shouldRotate( true )
+		: FileTarget( name, filePath, replaceIfExists ), shouldRotate( true ), m_mode( IntervalMode::file_size )
 	{
 		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
 		currentHour    = cache.tm_hour;
@@ -66,7 +53,7 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget( std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists )
-		: FileTarget( name, formatPattern, filePath, replaceIfExists ), shouldRotate( true )
+		: FileTarget( name, formatPattern, filePath, replaceIfExists ), shouldRotate( true ), m_mode( IntervalMode::file_size )
 	{
 		auto &cache { MsgInfo( )->TimeDetails( ).Cache( ) };
 		currentHour    = cache.tm_hour;
@@ -111,41 +98,75 @@ namespace serenity::experimental::targets {
 
 	bool RotatingTarget::RenameFile( std::string_view newFileName )
 	{
+		if( isMTSupportEnabled( ) ) {
+			while( !rotateMutex.try_lock( ) ) {
+				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
+			}
+		}
 		try {
 			// make copy for old file conversion and cache new values
 			std::filesystem::path newFile { fileOptions.filePath };
 			newFile.replace_filename( newFileName );
 			CacheOriginalPathComponents( newFile );
 			RotateFile( );
+			if( isMTSupportEnabled( ) ) {
+				rotateMutex.unlock( );
+			}
 			return true;
 		}
 		catch( const std::exception &e ) {
 			std::cerr << "Error In Renaming File:\n";
 			std::cerr << e.what( );
+			if( isMTSupportEnabled( ) ) {
+				rotateMutex.unlock( );
+			}
 			return false;
 		}
 	}
 
 	void RotatingTarget::EnableRotation( bool shouldRotate )
 	{
+		if( isMTSupportEnabled( ) ) {
+			while( !rotateMutex.try_lock( ) ) {
+				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
+			}
+		}
 		this->shouldRotate = shouldRotate;
 		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 		InitFirstRotation( shouldRotate );
+		if( isMTSupportEnabled( ) ) {
+			rotateMutex.unlock( );
+		}
 	}
 
 	void RotatingTarget::SetRotateSettings( RotateSettings settings )
 	{
+		if( isMTSupportEnabled( ) ) {
+			while( !rotateMutex.try_lock( ) ) {
+				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
+			}
+		}
 		fileSizeLimit        = settings.fileSizeLimit;
 		maxNumberOfFiles     = settings.maxNumberOfFiles;
 		dayModeSettingHour   = settings.dayModeSettingHour;
 		dayModeSettingMinute = settings.dayModeSettingMinute;
 		monthModeSetting     = settings.monthModeSetting;
 		weekModeSetting      = settings.weekModeSetting;
+		if( isMTSupportEnabled( ) ) {
+			rotateMutex.unlock( );
+		}
 	}
 
 	void RotatingTarget::RotateFile( )
 	{
-		if( !shouldRotate ) return;
+		if( isMTSupportEnabled( ) ) {
+			while( !rotateMutex.try_lock( ) ) {
+				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
+			}
+		}
+
+		if( !shouldRotate ) return;  // If this was explicitly called but rotatation is disabled, just return
+
 		CloseFile( );
 		bool rotateSuccessful { false };
 		// make local copy of orginal path since we need to modify the path
@@ -201,10 +222,20 @@ namespace serenity::experimental::targets {
 				}
 			}
 		}
+
+		if( isMTSupportEnabled( ) ) {
+			rotateMutex.unlock( );
+		}
 	}
 
 	void RotatingTarget::PrintMessage( std::string_view formatted )
 	{
+		if( isMTSupportEnabled( ) ) {
+			while( !rotateMutex.try_lock( ) ) {
+				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
+			}
+		}
+
 		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
 			while( !flushWorker.readWriteMutex.try_lock( ) ) {
@@ -220,15 +251,18 @@ namespace serenity::experimental::targets {
 		if( flushThread ) {
 			flushWorker.readWriteMutex.unlock( );
 		}
+		if( isMTSupportEnabled( ) ) {
+			rotateMutex.unlock( );
+		}
 	}
-
-	static std::unordered_map<int, int> daysPerMonth = {
-		{ JANUARY, 31 }, { FEBRUARY, 28 }, { MARCH, 31 },     { APRIL, 30 },   { MAY, 31 },      { JUNE, 30 },
-		{ JULY, 31 },    { AUGUST, 31 },   { SEPTEMBER, 30 }, { OCTOBER, 31 }, { NOVEMBER, 30 }, { DECEMBER, 31 },
-	};
 
 	bool RotatingTarget::ShouldRotate( )
 	{
+		if( isMTSupportEnabled( ) ) {
+			while( !rotateMutex.try_lock( ) ) {
+				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
+			}
+		}
 		if( !shouldRotate ) return false;
 		// If previous file was empty - no need to rotate
 		if( FileSize( ) == 0 ) return false;
@@ -240,6 +274,9 @@ namespace serenity::experimental::targets {
 			case mode::file_size:
 			{
 				auto currentSize { FileSize( ) + MsgInfo( )->MessageSize( ) };
+				if( isMTSupportEnabled( ) ) {
+					rotateMutex.unlock( );
+				}
 				return ( currentSize >= fileSizeLimit );
 			} break;
 			case mode::hourly:
@@ -250,6 +287,9 @@ namespace serenity::experimental::targets {
 				}
 				if( IsIntervalRotationEnabled( ) ) {
 					InitFirstRotation( false );
+					if( isMTSupportEnabled( ) ) {
+						rotateMutex.unlock( );
+					}
 					return true;
 				}
 			} break;
@@ -261,6 +301,9 @@ namespace serenity::experimental::targets {
 				if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
 					if( IsIntervalRotationEnabled( ) ) {
 						InitFirstRotation( false );
+						if( isMTSupportEnabled( ) ) {
+							rotateMutex.unlock( );
+						}
 						return true;
 					}
 				}
@@ -274,6 +317,9 @@ namespace serenity::experimental::targets {
 					if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
 						if( IsIntervalRotationEnabled( ) ) {
 							InitFirstRotation( false );
+							if( isMTSupportEnabled( ) ) {
+								rotateMutex.unlock( );
+							}
 							return true;
 						}
 					}
@@ -285,7 +331,7 @@ namespace serenity::experimental::targets {
 					currentDay = cache.tm_mday;
 					InitFirstRotation( true );
 				}
-				int numberOfDays { daysPerMonth.at( cache.tm_mon ) };
+				int numberOfDays { SERENITY_LUTS::daysPerMonth.at( cache.tm_mon ) };
 				int rotationDay { monthModeSetting };
 				// clang-format off
 						/********************************************** Simple Summary *****************************************************************
@@ -298,7 +344,7 @@ namespace serenity::experimental::targets {
 						// clang-format off
 					if( numberOfDays < monthModeSetting ) {
 					rotationDay = numberOfDays;
-					if( cache.tm_mon == FEBRUARY ) {
+					if( cache.tm_mon == serenity::SERENITY_LUTS::FEBRUARY ) {
 						if( MsgInfo( )->TimeDetails( ).isLeapYear( ) ) {
 							rotationDay = 29;
 						}
@@ -307,7 +353,10 @@ namespace serenity::experimental::targets {
 				if( currentDay == rotationDay ) {
 					if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
 						if( IsIntervalRotationEnabled( ) ) {
-							InitFirstRotation( false );
+							InitFirstRotation( false );		
+							if( isMTSupportEnabled( ) ) {
+								rotateMutex.unlock( );
+							}
 							return true;
 						}
 					}
@@ -315,11 +364,20 @@ namespace serenity::experimental::targets {
 			} break;
 		}
 		// If we got here, then rotation shouldn't occur since we return true in the case statements directly if we should rotate the file
+		if( isMTSupportEnabled( ) ) {
+			rotateMutex.unlock( );
+		}
 		return false;
 	}
 
 	void RotatingTarget::SetRotationSetting( IntervalMode mode, size_t setting, size_t secondSetting )
 	{
+		if( isMTSupportEnabled( ) ) {
+			while( !rotateMutex.try_lock( ) ) {
+				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
+			}
+		}
+
 		using mType = RotateSettings::IntervalMode;
 		switch( m_mode ) {
 			case mType::file_size: fileSizeLimit = setting; break;
@@ -366,15 +424,29 @@ namespace serenity::experimental::targets {
 				monthModeSetting = setting;
 			} break;
 		}
+		if( isMTSupportEnabled( ) ) {
+			rotateMutex.unlock( );
+		}
 	}
 
 	void RotatingTarget::SetRotationMode( IntervalMode mode )
 	{
+		if( isMTSupportEnabled( ) ) {
+			while( !rotateMutex.try_lock( ) ) {
+				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
+			}
+		} 
 		m_mode = mode;
+		if( isMTSupportEnabled( ) ) {
+			rotateMutex.unlock( );
+		}
 	}
+
+
 
 	const RotateSettings::IntervalMode RotatingTarget::RotationMode( )
 	{
+		std::scoped_lock<std::mutex> lock(rotateMutex);
 		return m_mode;
 	}
 }  // namespace serenity::experimental::targets

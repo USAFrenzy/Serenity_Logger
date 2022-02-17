@@ -22,34 +22,37 @@ namespace serenity::targets {
 		void                                        SetPattern( std::string_view pattern );
 		void                                        ResetPatternToDefault( );
 		void                                        SetLogLevel( LoggerLevel level );
-
-		const LoggerLevel                Level( );
-		void                             SetLoggerName( std::string_view name );
-		template <typename... Args> void Trace( std::string_view msg, Args &&...args );
-		template <typename... Args> void Info( std::string_view msg, Args &&...args );
-		template <typename... Args> void Debug( std::string_view msg, Args &&...args );
-		template <typename... Args> void Warn( std::string_view msg, Args &&...args );
-		template <typename... Args> void Error( std::string_view msg, Args &&...args );
-		template <typename... Args> void Fatal( std::string_view msg, Args &&...args );
+		void                                        EnableMultiThreadingSupport( bool enableMultiThreading = true );
+		bool                                        isMTSupportEnabled( );
+		const LoggerLevel                           Level( );
+		void                                        SetLoggerName( std::string_view name );
+		template <typename... Args> void            Trace( std::string_view msg, Args &&...args );
+		template <typename... Args> void            Info( std::string_view msg, Args &&...args );
+		template <typename... Args> void            Debug( std::string_view msg, Args &&...args );
+		template <typename... Args> void            Warn( std::string_view msg, Args &&...args );
+		template <typename... Args> void            Error( std::string_view msg, Args &&...args );
+		template <typename... Args> void            Fatal( std::string_view msg, Args &&...args );
 
 	  protected:
-		virtual void                    PrintMessage( std::string_view formatted ) = 0;
-		virtual void                    PolicyFlushOn( ) { }
-		msg_details::Message_Formatter *MsgFmt( );
-		msg_details::Message_Info *     MsgInfo( );
-		void                            WriteToBaseBuffer( bool fmtToBuf = true );
-		const bool                      isWriteToBuf( );
-		std::string *const              Buffer( );
+		virtual void                         PrintMessage( std::string_view formatted ) = 0;
+		virtual void                         PolicyFlushOn( ) { }
+		msg_details::Message_Formatter *     MsgFmt( );
+		msg_details::Message_Info *          MsgInfo( );
+		void                                 WriteToBaseBuffer( bool fmtToBuf = true );
+		const bool                           isWriteToBuf( );
+		std::string *const                   Buffer( );
 		serenity::experimental::Flush_Policy policy;
+		std::mutex                           mtMutex;
 
 	  private:
-		bool                                 toBuffer;
-		LoggerLevel                          logLevel;
-		LoggerLevel                          msgLevel;
-		std::string                          pattern;
-		msg_details::Message_Info            msgDetails;
-		msg_details::Message_Formatter       msgPattern;
-		std::string                          internalBuffer;
+		bool                           toBuffer;
+		LoggerLevel                    logLevel;
+		LoggerLevel                    msgLevel;
+		std::string                    pattern;
+		msg_details::Message_Info      msgDetails;
+		msg_details::Message_Formatter msgPattern;
+		std::string                    internalBuffer;
+		bool                           multiThreadSupport;
 	};
 #include "Target-impl.h"
 }  // namespace serenity::targets
