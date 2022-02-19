@@ -19,18 +19,18 @@ function(update_version_info ver_maj ver_min ver_rev)
 #Create, Or Update If Exists, The Version Header
     file(WRITE "${HEADER_FILE}" 
     "#pragma once\n\n"
-    "#define SERENITY_VERSION_MAJOR    ${ver_maj}\n"
-    "#define SERENITY_VERSION_MINOR    ${ver_min}\n"
+    "#define SERENITY_VERSION_MAJOR ${ver_maj}\n"
+    "#define SERENITY_VERSION_MINOR ${ver_min}\n"
     "#define SERENITY_VERSION_REVISION ${ver_rev}\n\n"
 
     "#define VERSION_STRING_FORMAT( major, minor, revision ) #major \".\" #minor \".\" #revision\n"
     "#define VERSION_NUMBER( maj, min, rev )                 VERSION_STRING_FORMAT( maj, min, rev )\n\n"
 
     "// Last Built Statistics\n"
-    "#define SE_DAY		${DATE}\n"
-    "#define SE_MONTH		${MONTH}\n"
-    "#define SE_YEAR		${YEAR}\n"
-    "#define SE_LAST_BUILT	\"${LAST_TIME_COMPILED}\"\n"
+    "#define SE_DAY         ${DATE}\n"
+    "#define SE_MONTH       ${MONTH}\n"
+    "#define SE_YEAR        ${YEAR}\n"
+    "#define SE_LAST_BUILT  \"${LAST_TIME_COMPILED}\"\n"
     )
 endfunction()
 

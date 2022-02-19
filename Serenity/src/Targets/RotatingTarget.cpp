@@ -98,73 +98,40 @@ namespace serenity::experimental::targets {
 
 	bool RotatingTarget::RenameFile( std::string_view newFileName )
 	{
-		if( isMTSupportEnabled( ) ) {
-			while( !rotateMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
-			}
-		}
 		try {
 			// make copy for old file conversion and cache new values
 			std::filesystem::path newFile { fileOptions.filePath };
 			newFile.replace_filename( newFileName );
 			CacheOriginalPathComponents( newFile );
 			RotateFile( );
-			if( isMTSupportEnabled( ) ) {
-				rotateMutex.unlock( );
-			}
 			return true;
 		}
 		catch( const std::exception &e ) {
 			std::cerr << "Error In Renaming File:\n";
 			std::cerr << e.what( );
-			if( isMTSupportEnabled( ) ) {
-				rotateMutex.unlock( );
-			}
 			return false;
 		}
 	}
 
 	void RotatingTarget::EnableRotation( bool shouldRotate )
 	{
-		if( isMTSupportEnabled( ) ) {
-			while( !rotateMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
-			}
-		}
 		this->shouldRotate = shouldRotate;
 		SetCurrentFileSize( std::filesystem::file_size( fileOptions.filePath ) );
 		InitFirstRotation( shouldRotate );
-		if( isMTSupportEnabled( ) ) {
-			rotateMutex.unlock( );
-		}
 	}
 
 	void RotatingTarget::SetRotateSettings( RotateSettings settings )
 	{
-		if( isMTSupportEnabled( ) ) {
-			while( !rotateMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
-			}
-		}
 		fileSizeLimit        = settings.fileSizeLimit;
 		maxNumberOfFiles     = settings.maxNumberOfFiles;
 		dayModeSettingHour   = settings.dayModeSettingHour;
 		dayModeSettingMinute = settings.dayModeSettingMinute;
 		monthModeSetting     = settings.monthModeSetting;
 		weekModeSetting      = settings.weekModeSetting;
-		if( isMTSupportEnabled( ) ) {
-			rotateMutex.unlock( );
-		}
 	}
 
 	void RotatingTarget::RotateFile( )
 	{
-		if( isMTSupportEnabled( ) ) {
-			while( !rotateMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
-			}
-		}
-
 		if( !shouldRotate ) return;  // If this was explicitly called but rotatation is disabled, just return
 
 		CloseFile( );
@@ -222,47 +189,31 @@ namespace serenity::experimental::targets {
 				}
 			}
 		}
-
-		if( isMTSupportEnabled( ) ) {
-			rotateMutex.unlock( );
-		}
 	}
 
 	void RotatingTarget::PrintMessage( std::string_view formatted )
 	{
-		if( isMTSupportEnabled( ) ) {
-			while( !rotateMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
-			}
-		}
-
 		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
-			while( !flushWorker.readWriteMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
+			// this is where the locking would go --- placeholder ---
+			if( ShouldRotate( ) ) {
+				RotateFile( );
+				SetCurrentFileSize( 0 );
 			}
-		}
-		if( ShouldRotate( ) ) {
-			RotateFile( );
-			SetCurrentFileSize( 0 );
-		}
-		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
-		SetCurrentFileSize( FileSize( ) + formatted.size( ) );
-		if( flushThread ) {
-			flushWorker.readWriteMutex.unlock( );
-		}
-		if( isMTSupportEnabled( ) ) {
-			rotateMutex.unlock( );
+			fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
+			SetCurrentFileSize( FileSize( ) + formatted.size( ) );
+		} else {
+			if( ShouldRotate( ) ) {
+				RotateFile( );
+				SetCurrentFileSize( 0 );
+			}
+			fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
+			SetCurrentFileSize( FileSize( ) + formatted.size( ) );
 		}
 	}
 
 	bool RotatingTarget::ShouldRotate( )
 	{
-		if( isMTSupportEnabled( ) ) {
-			while( !rotateMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
-			}
-		}
 		if( !shouldRotate ) return false;
 		// If previous file was empty - no need to rotate
 		if( FileSize( ) == 0 ) return false;
@@ -274,9 +225,6 @@ namespace serenity::experimental::targets {
 			case mode::file_size:
 			{
 				auto currentSize { FileSize( ) + MsgInfo( )->MessageSize( ) };
-				if( isMTSupportEnabled( ) ) {
-					rotateMutex.unlock( );
-				}
 				return ( currentSize >= fileSizeLimit );
 			} break;
 			case mode::hourly:
@@ -287,9 +235,6 @@ namespace serenity::experimental::targets {
 				}
 				if( IsIntervalRotationEnabled( ) ) {
 					InitFirstRotation( false );
-					if( isMTSupportEnabled( ) ) {
-						rotateMutex.unlock( );
-					}
 					return true;
 				}
 			} break;
@@ -301,9 +246,6 @@ namespace serenity::experimental::targets {
 				if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
 					if( IsIntervalRotationEnabled( ) ) {
 						InitFirstRotation( false );
-						if( isMTSupportEnabled( ) ) {
-							rotateMutex.unlock( );
-						}
 						return true;
 					}
 				}
@@ -317,9 +259,6 @@ namespace serenity::experimental::targets {
 					if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
 						if( IsIntervalRotationEnabled( ) ) {
 							InitFirstRotation( false );
-							if( isMTSupportEnabled( ) ) {
-								rotateMutex.unlock( );
-							}
 							return true;
 						}
 					}
@@ -354,9 +293,7 @@ namespace serenity::experimental::targets {
 					if( ( cache.tm_hour == dayModeSettingHour ) && ( cache.tm_min && dayModeSettingMinute ) ) {
 						if( IsIntervalRotationEnabled( ) ) {
 							InitFirstRotation( false );		
-							if( isMTSupportEnabled( ) ) {
-								rotateMutex.unlock( );
-							}
+							
 							return true;
 						}
 					}
@@ -364,26 +301,17 @@ namespace serenity::experimental::targets {
 			} break;
 		}
 		// If we got here, then rotation shouldn't occur since we return true in the case statements directly if we should rotate the file
-		if( isMTSupportEnabled( ) ) {
-			rotateMutex.unlock( );
-		}
 		return false;
 	}
 
 	void RotatingTarget::SetRotationSetting( IntervalMode mode, size_t setting, size_t secondSetting )
 	{
-		if( isMTSupportEnabled( ) ) {
-			while( !rotateMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
-			}
-		}
-
 		using mType = RotateSettings::IntervalMode;
 		switch( m_mode ) {
 			case mType::file_size: fileSizeLimit = setting; break;
 			// Including hourly just to avoid compiler whining. Since we check current hour value with internal cached
 			// hour value, there's no need to set anything or check anything here.
-			case mType::hourly: return; break;
+			case mType::hourly:  break;
 			case mType::daily:
 			{
 				if( ( setting > 23 ) || ( setting < 0 ) ) {
@@ -424,29 +352,15 @@ namespace serenity::experimental::targets {
 				monthModeSetting = setting;
 			} break;
 		}
-		if( isMTSupportEnabled( ) ) {
-			rotateMutex.unlock( );
-		}
 	}
 
 	void RotatingTarget::SetRotationMode( IntervalMode mode )
 	{
-		if( isMTSupportEnabled( ) ) {
-			while( !rotateMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::nanoseconds( 10 ) );
-			}
-		} 
-		m_mode = mode;
-		if( isMTSupportEnabled( ) ) {
-			rotateMutex.unlock( );
-		}
+			m_mode = mode;
 	}
-
-
 
 	const RotateSettings::IntervalMode RotatingTarget::RotationMode( )
 	{
-		std::scoped_lock<std::mutex> lock(rotateMutex);
 		return m_mode;
 	}
 }  // namespace serenity::experimental::targets

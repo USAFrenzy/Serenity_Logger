@@ -176,8 +176,8 @@ int main( )
 	settings.maxNumberOfFiles     = 10;
 	settings.monthModeSetting     = 9;
 	settings.weekModeSetting      = 3;
-	settings.dayModeSettingHour   = 8;
-	settings.dayModeSettingMinute = 30;
+	settings.dayModeSettingHour   = 19;
+	settings.dayModeSettingMinute = 15;
 
 	PeriodicSettings flushSettings = { };
 	flushSettings.flushEvery       = std::chrono::seconds( 60 );
@@ -235,7 +235,7 @@ int main( )
 	};
 
 	auto LogOnSize = [ & ]( ) {
-		for( int i = 1; i <= 5'000'000; ++i ) {
+		for( int i = 1; i <= rotationIterations; ++i ) {
 			rotatingLoggerOnSize.Info( "Logging message {} to rotating file based on file size mode", i );
 			std::string message = "Message ";
 			message.append( std::to_string( i ) ).append( " Logged To File For Rotate On Size\n" );

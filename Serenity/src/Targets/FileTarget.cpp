@@ -108,18 +108,15 @@ namespace serenity::targets {
 
 	const std::string FileTarget::FilePath( )
 	{
-		if( isMTSupportEnabled( ) ) std::scoped_lock lock( mtMutex );
 		return fileOptions.filePath.string( );
 	}
 	const std::string FileTarget::FileName( )
 	{
-		if( isMTSupportEnabled( ) ) std::scoped_lock lock( mtMutex );
 		return fileOptions.filePath.filename( ).string( );
 	}
 
 	bool FileTarget::OpenFile( bool truncate )
 	{
-		if( isMTSupportEnabled( ) ) std::scoped_lock lock( mtMutex );
 		CloseFile( );
 		try {
 #ifndef WINDOWS_PLATFORM
@@ -144,22 +141,19 @@ namespace serenity::targets {
 
 	bool FileTarget::CloseFile( )
 	{
-		if( isMTSupportEnabled( ) ) std::scoped_lock lock( mtMutex );
-
 		if( !fileHandle.is_open( ) ) return true;
-		std::scoped_lock lock( flushWorker.readWriteMutex );
 		try {
 			if( flushWorker.flushThread.joinable( ) ) {
 				flushWorker.cleanUpThreads.store( true );
 				flushWorker.cleanUpThreads.notify_one( );
 				flushWorker.flushThread.join( );
 			}
-		Flush( );
+			Flush( );
 
 			auto TryClose = [ &, this ]( ) {
 				fileHandle.close( );
 				std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
-				return !fileHandle.is_open();
+				return !fileHandle.is_open( );
 			};
 
 			for( tries; tries <= retryAttempt; ++tries ) {
@@ -167,7 +161,7 @@ namespace serenity::targets {
 					tries = 0;
 					break;
 				}
-				if(TryClose( )) break;
+				if( TryClose( ) ) break;
 			}
 		}
 		catch( const std::exception &e ) {
@@ -180,7 +174,6 @@ namespace serenity::targets {
 
 	bool FileTarget::RenameFile( std::string_view newFileName )
 	{
-		if( isMTSupportEnabled( ) ) std::scoped_lock lock( mtMutex );
 		try {
 			// make copy for old file conversion
 			std::filesystem::path newFile { fileOptions.filePath };
@@ -200,24 +193,20 @@ namespace serenity::targets {
 
 	void FileTarget::PrintMessage( std::string_view formatted )
 	{
-		if( isMTSupportEnabled( ) ) std::scoped_lock lock( mtMutex );
 		// naive guard from always trying to take a lock regardless of whether the background flush thread is running or not
 		// (using manual lock due to scoping here)
 		auto flushThread { flushWorker.flushThreadEnabled.load( std::memory_order::relaxed ) };
 		if( flushThread ) {
-			while( !flushWorker.readWriteMutex.try_lock( ) ) {
-				std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
-			}
-		}
-		fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
-		if( flushThread ) {
-			flushWorker.readWriteMutex.unlock( );
+			// this is where the locking would go --- placeholder ---
+			fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
+
+		} else {
+			fileHandle.rdbuf( )->sputn( formatted.data( ), formatted.size( ) );
 		}
 	}
 
 	void FileTarget::Flush( )
 	{
-		if( isMTSupportEnabled( ) ) std::scoped_lock lock( mtMutex );
 		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
 		if( Buffer( )->size( ) != 0 ) {
 			fileHandle.rdbuf( )->sputn( Buffer( )->data( ), Buffer( )->size( ) );
@@ -243,7 +232,6 @@ namespace serenity::targets {
 
 	void FileTarget::PolicyFlushOn( )
 	{
-		if( isMTSupportEnabled( ) ) std::scoped_lock lock( mtMutex );
 		if( policy.PrimarySetting( ) == serenity::experimental::FlushSetting::never ) return;
 		if( policy.PrimarySetting( ) == serenity::experimental::FlushSetting::always ) {
 			Flush( );
@@ -262,7 +250,7 @@ namespace serenity::targets {
 						auto elapsed = ch::duration_cast<ch::milliseconds>( now - lastTimePoint );
 						auto shouldFlush { elapsed >= policy.SecondarySettings( ).flushEvery };
 						if( shouldFlush ) {
-							std::scoped_lock<std::mutex> lock( flushWorker.readWriteMutex );
+							// this is where the locking would go --- placeholder ---
 							Flush( );
 						}
 						lastTimePoint = now;

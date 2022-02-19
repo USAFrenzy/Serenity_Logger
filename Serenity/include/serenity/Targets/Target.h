@@ -42,7 +42,6 @@ namespace serenity::targets {
 		const bool                           isWriteToBuf( );
 		std::string *const                   Buffer( );
 		serenity::experimental::Flush_Policy policy;
-		std::mutex                           mtMutex;
 
 	  private:
 		bool                           toBuffer;

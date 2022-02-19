@@ -40,7 +40,6 @@ namespace serenity::experimental::targets {
 		bool         shouldRotate;
 		IntervalMode m_mode;
 		int          currentDay, currentWeekday, currentHour;
-		std::mutex   rotateMutex;
 	};
 
 }  // namespace serenity::experimental::targets
