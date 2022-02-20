@@ -1,502 +1,554 @@
 #include <serenity/MessageDetails/Message_Formatter.h>
 
 namespace serenity::msg_details {
-	Message_Formatter::Message_Formatter( std::string_view pattern, Message_Info *details ) : msgInfo( *&details )
+	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info *details): msgInfo(*&details)
 	{
-		SetPattern( pattern );
+		SetPattern(pattern);
 	}
 
-	// Generally speaking, I would've liked to keep these as function pointers to formatting functions,
-	// but doing that led to a ~0.3us pessimization.
-	// TODO: See if I can still somehow make vector of function pointers just as fast as current vector of structs.
-	// TODO: Reason being that it would make life really easy to add custom formatting arguments from user later on...
-	// TODO: Not to mention, It would make upkeep a bit easier since I could rework this to take in a fptr and just
-	// TODO: focus on the actual function if changes need to be made (I guess it comes down to what's more convenient)
-	void Message_Formatter::FlagFormatter( size_t flag )
+	// Generally speaking, I would've liked to keep these as function pointers to
+	// formatting functions, but doing that led to a ~0.3us pessimization.
+	// TODO: See if I can still somehow make vector of function pointers just as
+	// fast as current vector of structs.
+	// TODO: Reason being that it would make life really easy to add custom
+	// formatting arguments from user later on...
+	// TODO: Not to mention, It would make upkeep a bit easier since I could rework
+	// this to take in a fptr and just
+	// TODO: focus on the actual function if changes need to be made (I guess it
+	// comes down to what's more convenient)
+	void Message_Formatter::FlagFormatter(size_t flag)
 	{
 		switch( flag ) {
-			case 0: formatter.Emplace_Back( std::make_unique<Format_Arg_a>( *msgInfo ) ); break;
-			case 1: formatter.Emplace_Back( std::make_unique<Format_Arg_b>( *msgInfo ) ); break;
-			case 2: formatter.Emplace_Back( std::make_unique<Format_Arg_d>( *msgInfo ) ); break;
-			case 3: formatter.Emplace_Back( std::make_unique<Format_Arg_l>( *msgInfo ) ); break;
-			case 4: formatter.Emplace_Back( std::make_unique<Format_Arg_n>( *msgInfo ) ); break;
-			case 5: formatter.Emplace_Back( std::make_unique<Format_Arg_t>( *msgInfo ) ); break;
-			case 6: formatter.Emplace_Back( std::make_unique<Format_Arg_w>( *msgInfo ) ); break;
-			case 7: formatter.Emplace_Back( std::make_unique<Format_Arg_x>( *msgInfo ) ); break;
-			case 8: formatter.Emplace_Back( std::make_unique<Format_Arg_y>( *msgInfo ) ); break;
-			case 9: formatter.Emplace_Back( std::make_unique<Format_Arg_A>( *msgInfo ) ); break;
-			case 10: formatter.Emplace_Back( std::make_unique<Format_Arg_B>( *msgInfo ) ); break;
-			case 11: formatter.Emplace_Back( std::make_unique<Format_Arg_D>( *msgInfo ) ); break;
-			case 12: formatter.Emplace_Back( std::make_unique<Format_Arg_F>( *msgInfo ) ); break;
-			case 13: formatter.Emplace_Back( std::make_unique<Format_Arg_H>( *msgInfo ) ); break;
-			case 14: formatter.Emplace_Back( std::make_unique<Format_Arg_L>( *msgInfo ) ); break;
-			case 15: formatter.Emplace_Back( std::make_unique<Format_Arg_M>( *msgInfo ) ); break;
-			case 16: formatter.Emplace_Back( std::make_unique<Format_Arg_N>( *msgInfo ) ); break;
-			case 17: formatter.Emplace_Back( std::make_unique<Format_Arg_S>( *msgInfo ) ); break;
-			case 18: formatter.Emplace_Back( std::make_unique<Format_Arg_T>( *msgInfo ) ); break;
-			case 19: formatter.Emplace_Back( std::make_unique<Format_Arg_X>( *msgInfo ) ); break;
-			case 20: formatter.Emplace_Back( std::make_unique<Format_Arg_Y>( *msgInfo ) ); break;
-			case 21: formatter.Emplace_Back( std::make_unique<Format_Arg_Message>( *msgInfo ) ); break;
+				case 0: formatter.Emplace_Back(std::make_unique<Format_Arg_a>(*msgInfo)); break;
+				case 1: formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo)); break;
+				case 2: formatter.Emplace_Back(std::make_unique<Format_Arg_d>(*msgInfo)); break;
+				case 3: formatter.Emplace_Back(std::make_unique<Format_Arg_l>(*msgInfo)); break;
+				case 4: formatter.Emplace_Back(std::make_unique<Format_Arg_n>(*msgInfo)); break;
+				case 5: formatter.Emplace_Back(std::make_unique<Format_Arg_t>(*msgInfo)); break;
+				case 6: formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo)); break;
+				case 7: formatter.Emplace_Back(std::make_unique<Format_Arg_x>(*msgInfo)); break;
+				case 8: formatter.Emplace_Back(std::make_unique<Format_Arg_y>(*msgInfo)); break;
+				case 9: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
+				case 10: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
+				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
+				case 12: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
+				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
+				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
+				case 15: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
+				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
+				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
+				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_X>(*msgInfo)); break;
+				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
+				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
 
-			default:
-				// if arg after "%" isn't a flag handled here, do nothing
-				// In the future, check to see if it's a user defined format func
-				break;
-		}
+				default:
+					// if arg after "%" isn't a flag handled here, do nothing
+					// In the future, check to see if it's a user defined format func
+					break;
+			}
 	}
 
-	void Message_Formatter::SetPattern( std::string_view pattern )
+	void Message_Formatter::SetPattern(std::string_view pattern)
 	{
-		fmtPattern.clear( );
-		fmtPattern.append( pattern.data( ), pattern.size( ) );
-		StoreFormat( );
+		fmtPattern.clear();
+		fmtPattern.append(pattern.data(), pattern.size());
+		StoreFormat();
 	}
 
-	Message_Formatter::Formatters &Message_Formatter::GetFormatters( )
+	Message_Formatter::Formatters &Message_Formatter::GetFormatters()
 	{
 		return formatter;
 	}
 
-	void Message_Formatter::Formatters::Clear( )
+	void Message_Formatter::Formatters::Clear()
 	{
-		m_Formatter.clear( );
+		m_Formatter.clear();
 	}
 
-	void Message_Formatter::StoreFormat( )
+	void Message_Formatter::StoreFormat()
 	{
 		std::string fmt { fmtPattern };
 		std::string flag;
-		// Initialize for no conflicts with FlagFormatter() or, later on, user defined format funcs
+		// Initialize for no conflicts with FlagFormatter() or, later on, user defined
+		// format funcs
 		size_t index { 9999 };
-		formatter.Clear( );
+		formatter.Clear();
 
-		while( !fmt.empty( ) ) {
-			if( fmt.front( ) == '%' ) {
-				flag.clear( );
-				flag.append( fmt.substr( 0, 2 ) );
-				auto position = std::find( SERENITY_LUTS::allValidFlags.begin( ), SERENITY_LUTS::allValidFlags.end( ), flag );
-				if( position != SERENITY_LUTS::allValidFlags.end( ) ) {
-					index = std::distance( SERENITY_LUTS::allValidFlags.begin( ), position );
-				}
-				FlagFormatter( index );
-				fmt.erase( 0, flag.size( ) );
-				if( fmt.empty( ) ) {
-					break;
-				}
-			} else {
-				formatter.Emplace_Back( std::make_unique<Format_Arg_Char>( fmt.substr( 0, 1 ) ) );
-				fmt.erase( 0, 1 );
-				if( fmt.empty( ) ) {
-					break;
-				}
+		while( !fmt.empty() ) {
+				if( fmt.front() == '%' ) {
+						flag.clear();
+						flag.append(fmt.substr(0, 2));
+						auto position = std::find(SERENITY_LUTS::allValidFlags.begin(), SERENITY_LUTS::allValidFlags.end(), flag);
+						if( position != SERENITY_LUTS::allValidFlags.end() ) {
+								index = std::distance(SERENITY_LUTS::allValidFlags.begin(), position);
+						}
+						FlagFormatter(index);
+						fmt.erase(0, flag.size());
+						if( fmt.empty() ) {
+								break;
+						}
+				} else {
+						formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(fmt.substr(0, 1)));
+						fmt.erase(0, 1);
+						if( fmt.empty() ) {
+								break;
+						}
+					}
 			}
-		}
 	}
 
-	Message_Info *Message_Formatter::MessageDetails( )
+	Message_Info *Message_Formatter::MessageDetails()
 	{
 		return msgInfo;
 	}
 
 	// Format_a Functions
-	Message_Formatter::Format_Arg_a::Format_Arg_a( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
+	Message_Formatter::Format_Arg_a::Format_Arg_a(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastHour(cacheRef.tm_hour)
 	{
-		hour = std::move( UpdateInternalView( ) );
+		hour = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_a::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_a::UpdateInternalView()
 	{
 		lastHour = cacheRef.tm_hour;
 		auto hr { lastHour };
-		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		std::string_view paddedHour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ]
-			                                      : SERENITY_LUTS::numberStr[ hr ] };
-		return std::string { paddedHour.data( ), paddedHour.size( ) };
+		// static_cast to 8 byte value to remove C2451's warning (which would never
+		// occur here anyways...)
+		std::string_view paddedHour { (hr > 12) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>(hr) - 12 ] : SERENITY_LUTS::numberStr[ hr ] };
+		return std::string { paddedHour.data(), paddedHour.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_a::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_a::Format()
 	{
-		return ( cacheRef.tm_hour != lastHour ) ? hour = std::move( UpdateInternalView( ) ) : hour;
+		return (cacheRef.tm_hour != lastHour) ? hour = std::move(UpdateInternalView()) : hour;
 	}
 
 	// Format_b Functions
-	Message_Formatter::Format_Arg_b::Format_Arg_b( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastMonth( cacheRef.tm_mon )
+	Message_Formatter::Format_Arg_b::Format_Arg_b(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastMonth(cacheRef.tm_mon)
 	{
-		month = std::move( UpdateInternalView( ) );
+		month = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_b::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_b::UpdateInternalView()
 	{
 		lastMonth = cacheRef.tm_mon;
 		std::string_view paddedMonth { SERENITY_LUTS::numberStr[ lastMonth ] };
-		return std::string { paddedMonth.data( ), paddedMonth.size( ) };
+		return std::string { paddedMonth.data(), paddedMonth.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_b::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_b::Format()
 	{
-		return ( cacheRef.tm_mon != lastMonth ) ? month = std::move( UpdateInternalView( ) ) : month;
+		return (cacheRef.tm_mon != lastMonth) ? month = std::move(UpdateInternalView()) : month;
 	}
 
 	// Format_d Functions
-	Message_Formatter::Format_Arg_d::Format_Arg_d( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastDay( cacheRef.tm_mday )
+	Message_Formatter::Format_Arg_d::Format_Arg_d(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastDay(cacheRef.tm_mday)
 	{
-		day = std::move( UpdateInternalView( ) );
+		day = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_d::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_d::UpdateInternalView()
 	{
 		lastDay = cacheRef.tm_mday;
 		std::string_view paddedDay { SERENITY_LUTS::numberStr[ lastDay ] };
-		return std::string { paddedDay.data( ), paddedDay.size( ) };
+		return std::string { paddedDay.data(), paddedDay.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_d::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_d::Format()
 	{
-		return ( cacheRef.tm_mday != lastDay ) ? day = std::move( UpdateInternalView( ) ) : day;
+		return (cacheRef.tm_mday != lastDay) ? day = std::move(UpdateInternalView()) : day;
 	}
 
 	// Format_l Functions
-	Message_Formatter::Format_Arg_l::Format_Arg_l( Message_Info &info ) : levelRef( info.MsgLevel( ) )
+	Message_Formatter::Format_Arg_l::Format_Arg_l(Message_Info &info): levelRef(info.MsgLevel())
 	{
-		levelStr = std::move( UpdateInternalView( ) );
+		levelStr = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_l::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_l::UpdateInternalView()
 	{
 		lastLevel = levelRef;
-		auto lvl { LevelToShortView( lastLevel ) };
-		return std::string { lvl.data( ), lvl.size( ) };
+		auto lvl { LevelToShortView(lastLevel) };
+		return std::string { lvl.data(), lvl.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_l::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_l::Format()
 	{
-		return ( levelRef != lastLevel ) ? levelStr = std::move( UpdateInternalView( ) ) : levelStr;
+		return (levelRef != lastLevel) ? levelStr = std::move(UpdateInternalView()) : levelStr;
 	}
 
 	// Format_n Functions
-	Message_Formatter::Format_Arg_n::Format_Arg_n( Message_Info &info )
-		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
+	Message_Formatter::Format_Arg_n::Format_Arg_n(Message_Info &info)
+		: timeRef(info.TimeDetails()), cacheRef(timeRef.Cache()), lastDay(cacheRef.tm_mday)
 	{
-		ddmmyy = std::move( UpdateInternalView( ) );
+		ddmmyy = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_n::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_n::UpdateInternalView()
 	{
 		lastDay = cacheRef.tm_mday;
 		std::string result;
-		auto        day { SERENITY_LUTS::numberStr[ cacheRef.tm_mday ] };
-		auto        month { SERENITY_LUTS::short_months[ cacheRef.tm_mon ] };
-		auto        year { timeRef.GetCurrentYearSV( cacheRef.tm_year, true ) };
-		return result.append( day ).append( month ).append( year );
+		auto day { SERENITY_LUTS::numberStr[ cacheRef.tm_mday ] };
+		auto month { SERENITY_LUTS::short_months[ cacheRef.tm_mon ] };
+		auto year { timeRef.GetCurrentYearSV(cacheRef.tm_year, true) };
+		return result.append(day).append(month).append(year);
 	}
-	std::string_view Message_Formatter::Format_Arg_n::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_n::Format()
 	{
-		return ( cacheRef.tm_mday != lastDay ) ? ddmmyy = std::move( UpdateInternalView( ) ) : ddmmyy;
+		return (cacheRef.tm_mday != lastDay) ? ddmmyy = std::move(UpdateInternalView()) : ddmmyy;
 	}
 
 	// Format_t Functions
-	Message_Formatter::Format_Arg_t::Format_Arg_t( Message_Info &info )
-		: cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( info.TimeDetails( ).Cache( ).tm_min )
+	Message_Formatter::Format_Arg_t::Format_Arg_t(Message_Info &info)
+		: cacheRef(info.TimeDetails().Cache()), lastMin(info.TimeDetails().Cache().tm_min)
 	{
-		hmStr = std::move( UpdateInternalView( ) );
+		hmStr = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_t::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_t::UpdateInternalView()
 	{
 		lastMin = cacheRef.tm_min;
-		auto hr { cacheRef.tm_hour };  // just to avoid another lookup, make local copy
-		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		auto        hour { ( hr > 12 ) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>( hr ) - 12 ] : SERENITY_LUTS::numberStr[ hr ] };
-		auto        min { SERENITY_LUTS::numberStr[ lastMin ] };
+		auto hr { cacheRef.tm_hour };    // just to avoid another lookup, make local copy
+		// static_cast to 8 byte value to remove C2451's warning (which would never
+		// occur here anyways...)
+		auto hour { (hr > 12) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>(hr) - 12 ] : SERENITY_LUTS::numberStr[ hr ] };
+		auto min { SERENITY_LUTS::numberStr[ lastMin ] };
 		std::string result;
-		return result.append( hour ).append( ":" ).append( min );
+		return result.append(hour).append(":").append(min);
 	}
-	std::string_view Message_Formatter::Format_Arg_t::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_t::Format()
 	{
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		if( cacheRef.tm_min != lastMin ) {
-			auto result { hmStr = std::move( UpdateInternalView( ) ) };
-			return result.append( ":" ).append( sec );
+				auto result { hmStr = std::move(UpdateInternalView()) };
+				return result.append(":").append(sec);
 		} else {
-			auto result { hmStr };
-			return result.append( ":" ).append( sec );
-		}
+				auto result { hmStr };
+				return result.append(":").append(sec);
+			}
 	}
 
 	// Format_w Functions
-	Message_Formatter::Format_Arg_w::Format_Arg_w( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) )
+	Message_Formatter::Format_Arg_w::Format_Arg_w(Message_Info &info): cacheRef(info.TimeDetails().Cache())
 	{
-		lastDecDay = std::move( UpdateInternalView( ) );
+		lastDecDay = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_w::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_w::UpdateInternalView()
 	{
 		lastDay = cacheRef.tm_wday;
-		return std::move( std::vformat( "{}", std::make_format_args( lastDay ) ) );
+		return std::move(std::vformat("{}", std::make_format_args(lastDay)));
 	}
-	std::string_view Message_Formatter::Format_Arg_w::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_w::Format()
 	{
-		return ( cacheRef.tm_wday != lastDay ) ? lastDecDay = std::move( UpdateInternalView( ) ) : lastDecDay;
+		return (cacheRef.tm_wday != lastDay) ? lastDecDay = std::move(UpdateInternalView()) : lastDecDay;
 	}
 
 	// Format_x Functions
-	Message_Formatter::Format_Arg_x::Format_Arg_x( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastWkday( cacheRef.tm_wday )
+	Message_Formatter::Format_Arg_x::Format_Arg_x(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastWkday(cacheRef.tm_wday)
 	{
-		wkday = std::move( UpdateInternalView( ) );
+		wkday = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_x::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_x::UpdateInternalView()
 	{
 		lastWkday = cacheRef.tm_wday;
 		std::string_view sWkday { SERENITY_LUTS::short_weekdays[ lastWkday ] };
-		return std::string { sWkday.data( ), sWkday.size( ) };
+		return std::string { sWkday.data(), sWkday.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_x::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_x::Format()
 	{
-		return ( lastWkday != cacheRef.tm_wday ) ? wkday = std::move( UpdateInternalView( ) ) : wkday;
+		return (lastWkday != cacheRef.tm_wday) ? wkday = std::move(UpdateInternalView()) : wkday;
 	}
 
 	// Format_y Functions
-	Message_Formatter::Format_Arg_y::Format_Arg_y( Message_Info &info )
-		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastYear( cacheRef.tm_year )
+	Message_Formatter::Format_Arg_y::Format_Arg_y(Message_Info &info)
+		: timeRef(info.TimeDetails()), cacheRef(timeRef.Cache()), lastYear(cacheRef.tm_year)
 	{
-		year = std::move( UpdateInternalView( ) );
+		year = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_y::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_y::UpdateInternalView()
 	{
 		lastYear = cacheRef.tm_year;
-		auto yr { timeRef.GetCurrentYearSV( lastYear, true ) };
-		return std::string { yr.data( ), yr.size( ) };
+		auto yr { timeRef.GetCurrentYearSV(lastYear, true) };
+		return std::string { yr.data(), yr.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_y::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_y::Format()
 	{
-		return ( cacheRef.tm_year != lastYear ) ? year = std::move( UpdateInternalView( ) ) : year;
+		return (cacheRef.tm_year != lastYear) ? year = std::move(UpdateInternalView()) : year;
 	}
 
 	// Format_A Functions
-	Message_Formatter::Format_Arg_A::Format_Arg_A( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
+	Message_Formatter::Format_Arg_A::Format_Arg_A(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastHour(cacheRef.tm_hour)
 	{
-		dayHalf = std::move( UpdateInternalView( ) );
+		dayHalf = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_A::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_A::UpdateInternalView()
 	{
 		lastHour = cacheRef.tm_hour;
-		std::string_view dHalf { ( lastHour >= 12 ) ? "PM" : "AM" };
-		return std::string { dHalf.data( ), dHalf.size( ) };
+		std::string_view dHalf { (lastHour >= 12) ? "PM" : "AM" };
+		return std::string { dHalf.data(), dHalf.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_A::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_A::Format()
 	{
-		return ( cacheRef.tm_hour != lastHour ) ? dayHalf = std::move( UpdateInternalView( ) ) : dayHalf;
+		return (cacheRef.tm_hour != lastHour) ? dayHalf = std::move(UpdateInternalView()) : dayHalf;
 	}
 
 	// Format_B Functions
-	Message_Formatter::Format_Arg_B::Format_Arg_B( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastMonth( cacheRef.tm_mon )
+	Message_Formatter::Format_Arg_B::Format_Arg_B(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastMonth(cacheRef.tm_mon)
 	{
-		month = std::move( UpdateInternalView( ) );
+		month = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_B::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_B::UpdateInternalView()
 	{
 		lastMonth = cacheRef.tm_mon;
 		std::string_view lMonth { SERENITY_LUTS::long_months[ lastMonth ] };
-		return std::string { lMonth.data( ), lMonth.size( ) };
+		return std::string { lMonth.data(), lMonth.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_B::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_B::Format()
 	{
-		return ( cacheRef.tm_mon != lastMonth ) ? month = std::move( UpdateInternalView( ) ) : month;
+		return (cacheRef.tm_mon != lastMonth) ? month = std::move(UpdateInternalView()) : month;
 	}
 
 	// Format_D Functions
-	Message_Formatter::Format_Arg_D::Format_Arg_D( Message_Info &info )
-		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
+	Message_Formatter::Format_Arg_D::Format_Arg_D(Message_Info &info)
+		: timeRef(info.TimeDetails()), cacheRef(timeRef.Cache()), lastDay(cacheRef.tm_mday)
 	{
-		mmddyy = std::move( UpdateInternalView( ) );
+		mmddyy = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_D::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_D::UpdateInternalView()
 	{
 		std::string result;
 		lastDay = cacheRef.tm_mday;
-		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>( cacheRef.tm_mon ) + 1 ] };
+		// static_cast to 8 byte value to remove C2451's warning (which would never
+		// occur here anyways...)
+		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>(cacheRef.tm_mon) + 1 ] };
 		auto d { SERENITY_LUTS::numberStr[ lastDay ] };
-		auto y { timeRef.GetCurrentYearSV( cacheRef.tm_year, true ) };
-		return result.append( m ).append( "/" ).append( d ).append( "/" ).append( y );
+		auto y { timeRef.GetCurrentYearSV(cacheRef.tm_year, true) };
+		return result.append(m).append("/").append(d).append("/").append(y);
 	}
-	std::string_view Message_Formatter::Format_Arg_D::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_D::Format()
 	{
-		return ( cacheRef.tm_mday != lastDay ) ? mmddyy = std::move( UpdateInternalView( ) ) : mmddyy;
+		return (cacheRef.tm_mday != lastDay) ? mmddyy = std::move(UpdateInternalView()) : mmddyy;
 	}
 
 	// Format_F Functions
-	Message_Formatter::Format_Arg_F::Format_Arg_F( Message_Info &info )
-		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastDay( cacheRef.tm_mday )
+	Message_Formatter::Format_Arg_F::Format_Arg_F(Message_Info &info)
+		: timeRef(info.TimeDetails()), cacheRef(timeRef.Cache()), lastDay(cacheRef.tm_mday)
 	{
-		yymmdd = std::move( UpdateInternalView( ) );
+		yymmdd = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_F::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_F::UpdateInternalView()
 	{
 		std::string result;
 		lastDay = cacheRef.tm_mday;
-		auto y { timeRef.GetCurrentYearSV( cacheRef.tm_year, true ) };
-		// static_cast to 8 byte value to remove C2451's warning (which would never occur here anyways...)
-		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>( cacheRef.tm_mon ) + 1 ] };
+		auto y { timeRef.GetCurrentYearSV(cacheRef.tm_year, true) };
+		// static_cast to 8 byte value to remove C2451's warning (which would never
+		// occur here anyways...)
+		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>(cacheRef.tm_mon) + 1 ] };
 		auto d { SERENITY_LUTS::numberStr[ lastDay ] };
-		return result.append( y ).append( "-" ).append( m ).append( "-" ).append( d );
+		return result.append(y).append("-").append(m).append("-").append(d);
 	}
-	std::string_view Message_Formatter::Format_Arg_F::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_F::Format()
 	{
-		return ( cacheRef.tm_mday != lastDay ) ? yymmdd = std::move( UpdateInternalView( ) ) : yymmdd;
+		return (cacheRef.tm_mday != lastDay) ? yymmdd = std::move(UpdateInternalView()) : yymmdd;
 	}
 
 	// Format_H Functions
-	Message_Formatter::Format_Arg_H::Format_Arg_H( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastHour( cacheRef.tm_hour )
+	Message_Formatter::Format_Arg_H::Format_Arg_H(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastHour(cacheRef.tm_hour)
 	{
-		hour = std::move( UpdateInternalView( ) );
+		hour = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_H::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_H::UpdateInternalView()
 	{
 		lastHour = cacheRef.tm_hour;
 		std::string_view hr { SERENITY_LUTS::numberStr[ lastHour ] };
-		return std::string { hr.data( ), hr.size( ) };
+		return std::string { hr.data(), hr.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_H::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_H::Format()
 	{
-		return ( cacheRef.tm_hour != lastHour ) ? hour = std::move( UpdateInternalView( ) ) : hour;
+		return (cacheRef.tm_hour != lastHour) ? hour = std::move(UpdateInternalView()) : hour;
 	}
 
 	// Format_L Functions
-	Message_Formatter::Format_Arg_L::Format_Arg_L( Message_Info &info ) : levelRef( info.MsgLevel( ) )
+	Message_Formatter::Format_Arg_L::Format_Arg_L(Message_Info &info): levelRef(info.MsgLevel())
 	{
-		levelStr = std::move( UpdateInternalView( ) );
+		levelStr = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_L::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_L::UpdateInternalView()
 	{
 		lastLevel = levelRef;
-		auto lvl { LevelToLongView( lastLevel ) };
-		return std::string { lvl.data( ), lvl.size( ) };
+		auto lvl { LevelToLongView(lastLevel) };
+		return std::string { lvl.data(), lvl.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_L::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_L::Format()
 	{
-		return ( levelRef != lastLevel ) ? levelStr = std::move( UpdateInternalView( ) ) : levelStr;
+		return (levelRef != lastLevel) ? levelStr = std::move(UpdateInternalView()) : levelStr;
 	}
 
 	// Format_M Functions
-	Message_Formatter::Format_Arg_M::Format_Arg_M( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( cacheRef.tm_min )
+	Message_Formatter::Format_Arg_M::Format_Arg_M(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastMin(cacheRef.tm_min)
 	{
-		min = std::move( UpdateInternalView( ) );
+		min = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_M::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_M::UpdateInternalView()
 	{
 		lastMin = cacheRef.tm_min;
 		std::string_view minute { SERENITY_LUTS::numberStr[ lastMin ] };
-		return std::string { minute.data( ), minute.size( ) };
+		return std::string { minute.data(), minute.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_M::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_M::Format()
 	{
-		return ( cacheRef.tm_min != lastMin ) ? min = std::move( UpdateInternalView( ) ) : min;
+		return (cacheRef.tm_min != lastMin) ? min = std::move(UpdateInternalView()) : min;
 	}
 
 	// Format_N Functions
-	Message_Formatter::Format_Arg_N::Format_Arg_N( Message_Info &info ) : name( info.Name( ) ) { }
-	std::string_view Message_Formatter::Format_Arg_N::Format( )
+	Message_Formatter::Format_Arg_N::Format_Arg_N(Message_Info &info): name(info.Name()) { }
+
+	std::string_view Message_Formatter::Format_Arg_N::Format()
 	{
 		return name;
 	}
 
 	// Format_S Functions
-	Message_Formatter::Format_Arg_S::Format_Arg_S( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastSec( cacheRef.tm_sec )
+	Message_Formatter::Format_Arg_S::Format_Arg_S(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastSec(cacheRef.tm_sec)
 	{
-		sec = std::move( UpdateInternalView( ) );
+		sec = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_S::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_S::UpdateInternalView()
 	{
 		lastSec = cacheRef.tm_sec;
 		std::string_view second { SERENITY_LUTS::numberStr[ lastSec ] };
-		return std::string { second.data( ), second.size( ) };
+		return std::string { second.data(), second.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_S::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_S::Format()
 	{
-		return ( cacheRef.tm_sec != lastSec ) ? sec = std::move( UpdateInternalView( ) ) : sec;
+		return (cacheRef.tm_sec != lastSec) ? sec = std::move(UpdateInternalView()) : sec;
 	}
 
 	// Format_T Functions
-	Message_Formatter::Format_Arg_T::Format_Arg_T( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastMin( cacheRef.tm_min )
+	Message_Formatter::Format_Arg_T::Format_Arg_T(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastMin(cacheRef.tm_min)
 	{
-		hmStr = UpdateInternalView( );
+		hmStr = UpdateInternalView();
 	}
-	std::string Message_Formatter::Format_Arg_T::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_T::UpdateInternalView()
 	{
 		lastMin = cacheRef.tm_min;
-		auto        hour { SERENITY_LUTS::numberStr[ cacheRef.tm_hour ] };
-		auto        min { SERENITY_LUTS::numberStr[ lastMin ] };
+		auto hour { SERENITY_LUTS::numberStr[ cacheRef.tm_hour ] };
+		auto min { SERENITY_LUTS::numberStr[ lastMin ] };
 		std::string result { hour };
-		return result.append( ":" ).append( min );
+		return result.append(":").append(min);
 	}
-	std::string_view Message_Formatter::Format_Arg_T::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_T::Format()
 	{
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		if( cacheRef.tm_min != lastMin ) {
-			hmStr = UpdateInternalView( );
+				hmStr = UpdateInternalView();
 		}
 		std::string result { hmStr };
-		return result.append( ":" ).append( sec );
+		return result.append(":").append(sec);
 	}
 
 	// Format_T Functions
-	Message_Formatter::Format_Arg_X::Format_Arg_X( Message_Info &info ) : cacheRef( info.TimeDetails( ).Cache( ) ), lastWkday( cacheRef.tm_wday )
+	Message_Formatter::Format_Arg_X::Format_Arg_X(Message_Info &info): cacheRef(info.TimeDetails().Cache()), lastWkday(cacheRef.tm_wday)
 	{
-		wkday = std::move( UpdateInternalView( ) );
+		wkday = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_X::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_X::UpdateInternalView()
 	{
 		lastWkday = cacheRef.tm_wday;
 		std::string_view lWkday { SERENITY_LUTS::long_weekdays[ lastWkday ] };
-		return std::string { lWkday.data( ), lWkday.size( ) };
+		return std::string { lWkday.data(), lWkday.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_X::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_X::Format()
 	{
-		return ( cacheRef.tm_wday != lastWkday ) ? wkday = std::move( UpdateInternalView( ) ) : wkday;
+		return (cacheRef.tm_wday != lastWkday) ? wkday = std::move(UpdateInternalView()) : wkday;
 	}
 
 	// Format_Y Functions
-	Message_Formatter::Format_Arg_Y::Format_Arg_Y( Message_Info &info )
-		: timeRef( info.TimeDetails( ) ), cacheRef( timeRef.Cache( ) ), lastYear( cacheRef.tm_year )
+	Message_Formatter::Format_Arg_Y::Format_Arg_Y(Message_Info &info)
+		: timeRef(info.TimeDetails()), cacheRef(timeRef.Cache()), lastYear(cacheRef.tm_year)
 	{
-		year = std::move( UpdateInternalView( ) );
+		year = std::move(UpdateInternalView());
 	}
-	std::string Message_Formatter::Format_Arg_Y::UpdateInternalView( )
+
+	std::string Message_Formatter::Format_Arg_Y::UpdateInternalView()
 	{
 		lastYear = cacheRef.tm_year;
-		auto yr { timeRef.GetCurrentYearSV( lastYear ) };
-		return std::string { yr.data( ), yr.size( ) };
+		auto yr { timeRef.GetCurrentYearSV(lastYear) };
+		return std::string { yr.data(), yr.size() };
 	}
-	std::string_view Message_Formatter::Format_Arg_Y::Format( )
+
+	std::string_view Message_Formatter::Format_Arg_Y::Format()
 	{
-		return ( cacheRef.tm_year != lastYear ) ? year = std::move( UpdateInternalView( ) ) : year;
+		return (cacheRef.tm_year != lastYear) ? year = std::move(UpdateInternalView()) : year;
 	}
 
 	// Format_Message Functions
-	Message_Formatter::Format_Arg_Message::Format_Arg_Message( Message_Info &info ) : message( info.Message( ) ) { }
-	std::string_view Message_Formatter::Format_Arg_Message::Format( )
+	Message_Formatter::Format_Arg_Message::Format_Arg_Message(Message_Info &info): message(info.Message()) { }
+
+	std::string_view Message_Formatter::Format_Arg_Message::Format()
 	{
 		return message;
 	}
 
 	// Format_Char Functions
-	Message_Formatter::Format_Arg_Char::Format_Arg_Char( std::string_view ch ) : m_char( ch.data( ), ch.size( ) ) { }
-	std::string_view Message_Formatter::Format_Arg_Char::Format( )
+	Message_Formatter::Format_Arg_Char::Format_Arg_Char(std::string_view ch): m_char(ch.data(), ch.size()) { }
+
+	std::string_view Message_Formatter::Format_Arg_Char::Format()
 	{
 		return m_char;
 	}
 
 	// Formatters Functions
-	Message_Formatter::Formatters::Formatters( std::vector<std::unique_ptr<Formatter>> &&container ) : m_Formatter( std::move( container ) )
+	Message_Formatter::Formatters::Formatters(std::vector<std::unique_ptr<Formatter>> &&container): m_Formatter(std::move(container))
 	{
 		// Reserve an estimated amount based off arg sizes
-		localBuffer.reserve( m_Formatter.size( ) * 32 );
+		localBuffer.reserve(m_Formatter.size() * 32);
 	}
 
-	void Message_Formatter::Formatters::Emplace_Back( std::unique_ptr<Formatter> &&formatter )
+	void Message_Formatter::Formatters::Emplace_Back(std::unique_ptr<Formatter> &&formatter)
 	{
-		m_Formatter.emplace_back( std::move( formatter ) );
+		m_Formatter.emplace_back(std::move(formatter));
 		// Reserve an estimated amount based off arg sizes
-		localBuffer.reserve( m_Formatter.size( ) * 32 );
+		localBuffer.reserve(m_Formatter.size() * 32);
 	}
-	std::string_view Message_Formatter::Formatters::Format( )
+
+	std::string_view Message_Formatter::Formatters::Format()
 	{
-		localBuffer.clear( );
-		for( auto &formatter : m_Formatter ) {
-			auto formatted { formatter->Format( ) };
-			localBuffer.append( formatted );
-		}
+		localBuffer.clear();
+		for( auto &formatter: m_Formatter ) {
+				auto formatted { formatter->Format() };
+				localBuffer.append(formatted);
+			}
 		return localBuffer;
 	}
 
-}  // namespace serenity::msg_details
+}    // namespace serenity::msg_details
