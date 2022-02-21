@@ -17,7 +17,6 @@ namespace serenity::targets {
 	class ColorConsole: public TargetBase
 	{
 		public:
-
 			ColorConsole();
 			explicit ColorConsole(std::string_view name);
 			explicit ColorConsole(std::string_view name, std::string_view msgPattern);
@@ -34,14 +33,13 @@ namespace serenity::targets {
 			void PrintMessage(std::string_view formatted) override;
 
 		private:
-
 			bool coloredOutput;
 			console_interface consoleMode;
 			std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 #ifdef WINDOWS_PLATFORM
 			HANDLE outputHandle;
 #else
-			FILE *outputHandle;
+			FILE* outputHandle;
 #endif    // WINDOWS_PLATFORM
 
 	};    // class ColorConsole

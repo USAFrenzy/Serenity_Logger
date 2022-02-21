@@ -1,15 +1,15 @@
 #pragma once
 
 #ifdef DOXYGEN_DOCUMENTATION
-	/// @brief If _WIN32 is defined, then this is also defined.
-    /// @details If this macro is defined, includes the Windows.h and io.h headers
-    /// as well as defines ISATTY to _isatty and FILENO to _fileno. If
-    /// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
+/// @brief If _WIN32 is defined, then this is also defined.
+/// @details If this macro is defined, includes the Windows.h and io.h headers
+/// as well as defines ISATTY to _isatty and FILENO to _fileno. If
+/// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
 	#define WINDOWS_PLATFORM
-	/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also
-    /// defined.
-    /// @details If this macro is defined, includes the unistd.h header and defines
-    /// ISATTY to isatty and FILENO to fileno
+/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also
+/// defined.
+/// @details If this macro is defined, includes the unistd.h header and defines
+/// ISATTY to isatty and FILENO to fileno
 	#define MAC_PLATFORM
 #endif
 
@@ -56,8 +56,7 @@
 #include <thread>
 
 // declaring for use later and for doc purposes
-namespace serenity::experimental {
-}
+namespace serenity::experimental { }
 
 namespace serenity {
 	enum class LineEnd
@@ -106,18 +105,18 @@ namespace serenity {
 			{ LineEnd::mac,     "\r"  },
 		};
 
-		constexpr int JANUARY           = 0;
-		constexpr int FEBRUARY       = 1;
-		constexpr int MARCH             = 2;
-		constexpr int APRIL                = 3;
-		constexpr int MAY                   = 4;
-		constexpr int JUNE                  = 5;
-		constexpr int JULY                   = 6;
-		constexpr int AUGUST            = 7;
-		constexpr int SEPTEMBER    = 8;
-		constexpr int OCTOBER         = 9;
-		constexpr int NOVEMBER     = 10;
-		constexpr int DECEMBER     = 11;
+		constexpr int JANUARY           =	 0;
+		constexpr int FEBRUARY			=	 1;
+		constexpr int MARCH				=	 2;
+		constexpr int APRIL					=	 3;
+		constexpr int MAY						=	 4;
+		constexpr int JUNE					=	 5;
+		constexpr int JULY						=	 6;
+		constexpr int AUGUST				=	 7;
+		constexpr int SEPTEMBER		=	 8;
+		constexpr int OCTOBER			=	 9;
+		constexpr int NOVEMBER		=	 10;
+		constexpr int DECEMBER		=	 11;
 
 		static std::unordered_map<int, int> daysPerMonth = {
 			{JANUARY,    31},
@@ -147,8 +146,7 @@ namespace serenity {
 		off     = 6,
 	};
 
-	static std::string_view LevelToShortView(LoggerLevel level)
-	{
+	static std::string_view LevelToShortView(LoggerLevel level) {
 		switch( level ) {
 				case LoggerLevel::info: return "I"; break;
 				case LoggerLevel::trace: return "T"; break;
@@ -160,8 +158,7 @@ namespace serenity {
 			}
 	}
 
-	static std::string_view LevelToLongView(LoggerLevel level)
-	{
+	static std::string_view LevelToLongView(LoggerLevel level) {
 		switch( level ) {
 				case LoggerLevel::info: return "Info"; break;
 				case LoggerLevel::trace: return "Trace"; break;
@@ -214,19 +211,17 @@ namespace serenity {
 				int monthModeSetting { 1 };
 
 			protected:
-
-				const std::filesystem::path &OriginalPath();
-				const std::filesystem::path &OriginalDirectory();
-				const std::string &OriginalName();
-				const std::string &OriginalExtension();
-				const size_t &FileSize();
+				const std::filesystem::path& OriginalPath();
+				const std::filesystem::path& OriginalDirectory();
+				const std::string& OriginalName();
+				const std::string& OriginalExtension();
+				const size_t& FileSize();
 				const bool IsIntervalRotationEnabled();
-				void CacheOriginalPathComponents(const std::filesystem::path &filePath);
+				void CacheOriginalPathComponents(const std::filesystem::path& filePath);
 				void SetCurrentFileSize(size_t currentSize);
 				void InitFirstRotation(bool enabled = true);
 
 			private:
-
 				size_t currentFileSize { 0 };
 				std::string ext, fileName;
 				std::filesystem::path path, directory;

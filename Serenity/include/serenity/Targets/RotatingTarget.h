@@ -6,16 +6,16 @@ namespace serenity::experimental::targets {
 	class RotatingTarget: public serenity::targets::FileTarget, serenity::experimental::RotateSettings
 	{
 		public:
-
 			RotatingTarget();
 			explicit RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
-			explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists = false);
-			RotatingTarget(const RotatingTarget &)            = delete;
-			RotatingTarget &operator=(const RotatingTarget &) = delete;
+			explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
+			                        bool replaceIfExists = false);
+			RotatingTarget(const RotatingTarget&)            = delete;
+			RotatingTarget& operator=(const RotatingTarget&) = delete;
 			~RotatingTarget();
 			void WriteToBaseBuffer(bool fmtToBuf = true);
 			const bool isWriteToBuf();
-			std::string *const Buffer();
+			std::string* const Buffer();
 			void EnableRotation(bool shouldRotate = true);
 			void SetRotateSettings(RotateSettings settings);
 			void RotateFile();
@@ -39,7 +39,6 @@ namespace serenity::experimental::targets {
 			const RotateSettings::IntervalMode RotationMode();
 
 		private:
-
 			void PrintMessage(std::string_view formatted) override;
 			bool shouldRotate;
 			IntervalMode m_mode;

@@ -3,8 +3,7 @@
 #include <iostream>
 
 namespace serenity::targets {
-	ColorConsole::ColorConsole(): TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false)
-	{
+	ColorConsole::ColorConsole(): TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false) {
 		WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -13,8 +12,7 @@ namespace serenity::targets {
 		}
 	}
 
-	ColorConsole::ColorConsole(std::string_view name): TargetBase(name), consoleMode(console_interface::std_out), coloredOutput(false)
-	{
+	ColorConsole::ColorConsole(std::string_view name): TargetBase(name), consoleMode(console_interface::std_out), coloredOutput(false) {
 		WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -24,8 +22,7 @@ namespace serenity::targets {
 	}
 
 	ColorConsole::ColorConsole(std::string_view name, std::string_view msgPattern)
-		: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false)
-	{
+		: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false) {
 		WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -34,8 +31,7 @@ namespace serenity::targets {
 		}
 	}
 
-	ColorConsole::~ColorConsole()
-	{
+	ColorConsole::~ColorConsole() {
 		// If console was redirected, flush output to destination
 #ifdef WINDOWS_PLATFORM
 		if( !IsTerminalType() ) {
@@ -52,11 +48,10 @@ namespace serenity::targets {
 		if( !IsTerminalType() ) {
 				fflush(outputHandle);
 		}
-#endif    // WINDOWS_PLATFORM
-	}     // ~ColorConsole
+#endif       // WINDOWS_PLATFORM
+	}    // ~ColorConsole
 
-	bool ColorConsole::IsValidHandle()
-	{
+	bool ColorConsole::IsValidHandle() {
 #ifdef WINDOWS_PLATFORM
 		return outputHandle != INVALID_HANDLE_VALUE;
 #else
@@ -64,26 +59,22 @@ namespace serenity::targets {
 #endif    // WINDOWS_PLATFORM
 	}
 
-	void ColorConsole::SetMsgColor(LoggerLevel level, std::string_view color)
-	{
+	void ColorConsole::SetMsgColor(LoggerLevel level, std::string_view color) {
 		msgLevelColors.at(level) = color;
 	}
 
-	std::string_view ColorConsole::GetMsgColor(LoggerLevel level)
-	{
+	std::string_view ColorConsole::GetMsgColor(LoggerLevel level) {
 		return msgLevelColors.at(level);
 	}
 
-	void ColorConsole::ColorizeOutput(bool colorize)
-	{
+	void ColorConsole::ColorizeOutput(bool colorize) {
 		coloredOutput = colorize;
 	}
 
 	// Other than some wierd color trailing on the right-hand side for some of the
 	// differently colored lines, This now ACTUALLY works as intended (color
 	// trailing might be result of known windows cell issue)
-	void ColorConsole::SetConsoleInterface(console_interface mode)
-	{
+	void ColorConsole::SetConsoleInterface(console_interface mode) {
 		consoleMode = mode;
 #ifdef WINDOWS_PLATFORM
 		if( mode == console_interface::std_out ) {
@@ -108,19 +99,16 @@ namespace serenity::targets {
 #endif    // WINDOWS_PLATFORM
 	}
 
-	const console_interface ColorConsole::ConsoleInterface()
-	{
+	const console_interface ColorConsole::ConsoleInterface() {
 		return consoleMode;
 	}
 
-	bool ColorConsole::IsTerminalType()
-	{
+	bool ColorConsole::IsTerminalType() {
 		auto consoleType { (consoleMode == console_interface::std_out) ? stdout : stderr };
 		return (ISATTY(FILENO(consoleType))) ? true : false;
 	}
 
-	void ColorConsole::PrintMessage(std::string_view formatted)
-	{
+	void ColorConsole::PrintMessage(std::string_view formatted) {
 		std::string message;
 		std::string_view msgColor { "" }, reset { "" };
 		if( IsValidHandle() ) {
@@ -138,12 +126,11 @@ namespace serenity::targets {
 					}
 #else
 				fwrite(message.data(), 1, message.size(), outputHandle);
-#endif       // WINDOWS_PLATFORM
+#endif               // WINDOWS_PLATFORM
 		}    // IsValidHandle() Check
-	}        // PrintMessage()
+	}            // PrintMessage()
 
-	void ColorConsole::SetOriginalColors()
-	{
+	void ColorConsole::SetOriginalColors() {
 		msgLevelColors = {
 			{LoggerLevel::trace,    se_colors::bright_colors::combos::white::on_black},
 			{ LoggerLevel::info,    se_colors::bright_colors::foreground::green      },

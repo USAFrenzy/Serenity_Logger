@@ -32,24 +32,21 @@ namespace serenity {
 		class Instrumentator
 		{
 			public:
-
 				Instrumentator();
 
 				void StopWatch_Reset();
 				void StopWatch_Stop();
 				float Elapsed_In(time_mode mode);
 
-				void *operator new(std::size_t n);
-				void operator delete(void *p) throw();
+				void* operator new(std::size_t n);
+				void operator delete(void* p) throw();
 
 				~Instrumentator();
 
 			public:
-
 				static Allocation_Statistics mem_tracker;
 
 			private:
-
 				std::chrono::time_point<std::chrono::steady_clock> m_Start, m_End;
 		};
 

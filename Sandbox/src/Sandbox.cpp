@@ -47,8 +47,7 @@ XX Format)
 
 // This is just used to write all logs in the same directory as the serenity
 // targets
-std::string SpdlogPath(bool rotate = false)
-{
+std::string SpdlogPath(bool rotate = false) {
 	if( !rotate ) {
 			auto filePath { std::filesystem::current_path() };
 			filePath /= "Logs/Spdlog_File.txt";
@@ -60,16 +59,14 @@ std::string SpdlogPath(bool rotate = false)
 		}
 }
 
-std::filesystem::path LogDirPath()
-{
+std::filesystem::path LogDirPath() {
 	return (std::filesystem::current_path() /= "Logs");
 }
 
 // This is from
 // (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128)
 // Just using this to set throughput precision
-template<typename T> std::string SetPrecision(const T value, const int precision = 3)
-{
+template<typename T> std::string SetPrecision(const T value, const int precision = 3) {
 	std::ostringstream temp;
 	temp.precision(precision);
 	temp << std::fixed << value;
@@ -78,8 +75,7 @@ template<typename T> std::string SetPrecision(const T value, const int precision
 
 #include <future>
 
-int main()
-{
+int main() {
 	std::vector<spdlog::sink_ptr> sinks;
 
 	auto stdoutSink { std::make_shared<spdlog::sinks::stdout_color_sink_st>() };
@@ -103,9 +99,8 @@ int main()
 	auto rotateOnOpen { false };
 	// above settings equivalent to default RotatingTarget Settings
 	bool isRotateFilePath { true };
-	auto rotatingSink {
-		std::make_shared<spdlog::sinks::rotating_file_sink_st>(SpdlogPath(isRotateFilePath), fileSize, numberOfFiles, rotateOnOpen)
-	};
+	auto rotatingSink { std::make_shared<spdlog::sinks::rotating_file_sink_st>(SpdlogPath(isRotateFilePath), fileSize, numberOfFiles,
+		                                                                   rotateOnOpen) };
 	sinks.clear();
 	sinks.emplace_back(rotatingSink);
 	auto spdlogRotatingLogger { std::make_shared<spdlog::logger>("Rotating_Logger", begin(sinks), end(sinks)) };
@@ -131,11 +126,11 @@ int main()
 
 #ifndef INSTRUMENTATION_ENABLED
 	std::cout << "###############################################################"
-				 "#####\n";
+		     "#####\n";
 	std::cout << "# This Will Be The Default Pattern Format And Message Level "
-				 "Colors #\n";
+		     "Colors #\n";
 	std::cout << "###############################################################"
-				 "#####\n";
+		     "#####\n";
 	// Trace Is Default Color
 	C.Trace("Trace");
 	// Info Is Light Green
@@ -149,13 +144,13 @@ int main()
 	// Fatal Is Light Yellow On Dark Red
 	C.Fatal("Fatal");
 	std::cout << "###############################################################"
-				 "#####\n\n";
+		     "#####\n\n";
 	std::cout << "###############################################################"
-				 "#########\n";
+		     "#########\n";
 	std::cout << "# Testing Some Basic Functions To Make Sure All Is Working As "
-				 "I Expect #\n";
+		     "I Expect #\n";
 	std::cout << "###############################################################"
-				 "#########\n";
+		     "#########\n";
 	C.SetPattern("%T [%N]: %+");
 	C.Info("Pattern String Has Been Changed To \"%T [%N]: %+\"");
 	C.ColorizeOutput(false);
@@ -232,7 +227,7 @@ int main()
 	};
 	// Some more crude tests - testing rotational marks
 	std::cout << "\n\nLogging messages to test rotation on hour mark, daily "
-				 "mark, and file size\n\n";
+		     "mark, and file size\n\n";
 	auto LogHourly = [ & ]() {
 		for( int i = 1; i <= rotationIterations; ++i ) {
 				rotatingLoggerHourly.Info("Logging message {} to rotating file based on hour mode", i);
@@ -285,7 +280,7 @@ int main()
 	Instrumentator spdlogRotateTester;
 	Instrumentator rotateTester;
 
-	const char *test = nullptr;
+	const char* test = nullptr;
 	// test string
 	std::string temp;
 	for( int h = 0; h < 399; h++ ) {
@@ -303,7 +298,7 @@ int main()
 	macroTester.StopWatch_Stop();
 	auto totalColorTime = macroTester.Elapsed_In(time_mode::ms);
 	std::cout << "\nColor Console Target Bench Finished. Benching Spdlog Color "
-				 "Console Sink...\n\n";
+		     "Console Sink...\n\n";
 
 	spdlogConsoleTester.StopWatch_Reset();
 	i = 0;    // reset
@@ -313,7 +308,7 @@ int main()
 	spdlogConsoleTester.StopWatch_Stop();
 	auto totalspdColorTime = spdlogConsoleTester.Elapsed_In(time_mode::ms);
 	std::cout << "\nSpdlog Color Console Sink Bench Finished.  Benching File "
-				 "Target...\n";
+		     "Target...\n";
 
 	i = 0;    // reset
 	macroTesterFile.StopWatch_Reset();
@@ -334,7 +329,7 @@ int main()
 	spdlogFileLogger->flush();
 	auto totalSpdFileTime = spdlogFileTester.Elapsed_In(time_mode::ms);
 	std::cout << "\nSpdlog Basic File Sink Bench Finished. Benching Rotating "
-				 "Target...\n";
+		     "Target...\n";
 
 	i = 0;    // reset
 	rotateTester.StopWatch_Reset();
@@ -391,94 +386,96 @@ int main()
 	std::cout << Tag::Yellow("\n\n*******************************************************"
 	                         "********************************\n"
 	                         "*************** Instrumentation Data (Averaged Over ")
-			  << Tag::Yellow(std::to_string(iterations) + " Iterations: ")
-			  << Tag::Yellow("***************\n"
+		  << Tag::Yellow(std::to_string(iterations) + " Iterations: ")
+		  << Tag::Yellow("***************\n"
 	                         "***************************************************"
 	                         "************************************\n");
 	std::cout << Tag::Bright_Yellow("Color Console Target (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
-			  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-			  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
+		  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
+		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
+		  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
+		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
+		  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
 
 	std::cout << Tag::Bright_Yellow("Spdlog Color Console Sink (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::us) / iterations) + " us"
+		  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::us) / iterations) + " us"
 	                                                                                                            "\n")
-			  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::ms) / iterations) + " ms"
+		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
+		  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::ms) / iterations) + " ms"
 	                                                                                                            "\n")
-			  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::sec) / iterations) + " s"
+		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
+		  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::sec) / iterations) + " s"
 	                                                                                                             "\n");
 
 	std::cout << Tag::Bright_Magenta("Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n");
 
 	std::cout << Tag::Bright_Yellow("File Target (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::us) / iterations) + " us\n")
-			  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-			  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::sec) / iterations) + " s\n");
+		  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::us) / iterations) + " us\n")
+		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
+		  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
+		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
+		  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::sec) / iterations) + " s\n");
 
 	std::cout << Tag::Bright_Yellow("Spdlog Basic File Sink (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
-			  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-			  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
+		  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
+		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
+		  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
+		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
+		  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
 
 	std::cout << Tag::Bright_Magenta("File Target Is " + filePercent + " Percent Of Spdlog's File Sink Speed\n");
 
 	std::cout << Tag::Bright_Yellow("Roating Target (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
-			  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-			  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
+		  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
+		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
+		  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
+		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
+		  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
 
 	std::cout << Tag::Bright_Yellow("Spdlog Rotating File Sink (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
-			  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-			  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::sec) / iterations) + " s"
+		  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
+		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
+		  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
+		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
+		  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::sec) / iterations) + " s"
 	                                                                                                            "\n");
 
 	std::cout << Tag::Bright_Magenta("Rotating Target Is " + rotatePercent + " Percent Of Spdlog's File Sink Speed\n");
 
 	std::cout << "\n";
 	std::cout << Tag::Bright_Yellow("Program Throughput :\n");
-	std::cout << Tag::Bright_Cyan("Color Console Target Throughput:") << "\n  " << Tag::Bright_Green(SetPrecision(ConsoleThroughput) + " MB/s\n");
+	std::cout << Tag::Bright_Cyan("Color Console Target Throughput:") << "\n  "
+		  << Tag::Bright_Green(SetPrecision(ConsoleThroughput) + " MB/s\n");
 	std::cout << Tag::Bright_Cyan("spdlog Color Sink Throughput:") << "\n  "
-			  << Tag::Bright_Green(SetPrecision(SpdlogConsoleThroughput) + " MB/s\n");
+		  << Tag::Bright_Green(SetPrecision(SpdlogConsoleThroughput) + " MB/s\n");
 	std::cout << Tag::Bright_Cyan("File Target Throughput:") << "\n  " << Tag::Bright_Green(SetPrecision(FileThroughput) + " MB/s\n");
-	std::cout << Tag::Bright_Cyan("spdlog File Sink Throughput:") << "\n  " << Tag::Bright_Green(SetPrecision(SpdlogFileThroughput) + " MB/s\n");
+	std::cout << Tag::Bright_Cyan("spdlog File Sink Throughput:") << "\n  "
+		  << Tag::Bright_Green(SetPrecision(SpdlogFileThroughput) + " MB/s\n");
 	std::cout << Tag::Bright_Cyan("Rotating Target Throughput:") << "\n  " << Tag::Bright_Green(SetPrecision(rotatingThroughput) + " MB/s\n");
 	std::cout << Tag::Bright_Cyan("spdlog Rotating File Sink Throughput:") << "\n  "
-			  << Tag::Bright_Green(SetPrecision(SpdlogRotatingThrouput) + " MB/s\n");
+		  << Tag::Bright_Green(SetPrecision(SpdlogRotatingThrouput) + " MB/s\n");
 	std::cout << "\n";
 
 	std::cout << Tag::Bright_Yellow("Size of Base Target Class:\t\t")
-			  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::TargetBase)) + "\tbytes ]\n");
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::TargetBase)) + "\tbytes ]\n");
 
 	std::cout << Tag::Bright_Yellow("Size of ColorConsole Target Class:\t")
-			  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::ColorConsole)) + "\tbytes ]\n");
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::ColorConsole)) + "\tbytes ]\n");
 
 	std::cout << Tag::Bright_Yellow("Size of File Target Class:\t\t")
-			  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::FileTarget)) + "\tbytes ]\n");
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::FileTarget)) + "\tbytes ]\n");
 
 	std::cout << Tag::Bright_Yellow("Size of Rotating Target Class:\t\t")
-			  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::experimental::targets::RotatingTarget)) + "\tbytes ]\n");
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::experimental::targets::RotatingTarget)) + "\tbytes ]\n");
 
 	std::cout << Tag::Bright_Yellow("Size of Message_Info Class:\t\t")
-			  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Info)) + "\tbytes ]\n");
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Info)) + "\tbytes ]\n");
 
 	std::cout << Tag::Bright_Yellow("Size of Message_Formatter Class:\t")
-			  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Formatter)) + "\tbytes ]\n");
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Formatter)) + "\tbytes ]\n");
 
 	std::cout << Tag::Bright_Yellow("Size of Message_Time Class:\t\t")
-			  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Time)) + "\tbytes ]\n");
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Time)) + "\tbytes ]\n");
 
 	std::cout << Tag::Yellow("***************************************************"
 	                         "************************************"

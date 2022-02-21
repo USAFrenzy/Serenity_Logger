@@ -5,9 +5,8 @@
 namespace serenity::experimental::targets {
 	using namespace serenity::targets;
 
-	RotatingTarget::RotatingTarget(): FileTarget("Rotating_Log.txt", true), shouldRotate(true), m_mode(IntervalMode::file_size)
-	{
-		auto &cache { MsgInfo()->TimeDetails().Cache() };
+	RotatingTarget::RotatingTarget(): FileTarget("Rotating_Log.txt", true), shouldRotate(true), m_mode(IntervalMode::file_size) {
+		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
@@ -29,9 +28,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-		: FileTarget(name, filePath, replaceIfExists), shouldRotate(true), m_mode(IntervalMode::file_size)
-	{
-		auto &cache { MsgInfo()->TimeDetails().Cache() };
+		: FileTarget(name, filePath, replaceIfExists), shouldRotate(true), m_mode(IntervalMode::file_size) {
+		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
@@ -53,9 +51,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-		: FileTarget(name, formatPattern, filePath, replaceIfExists), shouldRotate(true), m_mode(IntervalMode::file_size)
-	{
-		auto &cache { MsgInfo()->TimeDetails().Cache() };
+		: FileTarget(name, formatPattern, filePath, replaceIfExists), shouldRotate(true), m_mode(IntervalMode::file_size) {
+		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
@@ -76,28 +73,23 @@ namespace serenity::experimental::targets {
 		SetCurrentFileSize(std::filesystem::file_size(fileOptions.filePath));
 	}
 
-	RotatingTarget::~RotatingTarget()
-	{
+	RotatingTarget::~RotatingTarget() {
 		CloseFile();
 	}
 
-	void RotatingTarget::WriteToBaseBuffer(bool fmtToBuf)
-	{
+	void RotatingTarget::WriteToBaseBuffer(bool fmtToBuf) {
 		TargetBase::WriteToBaseBuffer(fmtToBuf);
 	}
 
-	const bool RotatingTarget::isWriteToBuf()
-	{
+	const bool RotatingTarget::isWriteToBuf() {
 		return TargetBase::isWriteToBuf();
 	}
 
-	std::string *const RotatingTarget::Buffer()
-	{
+	std::string* const RotatingTarget::Buffer() {
 		return TargetBase::Buffer();
 	}
 
-	bool RotatingTarget::RenameFile(std::string_view newFileName)
-	{
+	bool RotatingTarget::RenameFile(std::string_view newFileName) {
 		try {
 				// make copy for old file conversion and cache new values
 				std::filesystem::path newFile { fileOptions.filePath };
@@ -105,22 +97,21 @@ namespace serenity::experimental::targets {
 				CacheOriginalPathComponents(newFile);
 				RotateFile();
 				return true;
-		} catch( const std::exception &e ) {
+			}
+		catch( const std::exception& e ) {
 				std::cerr << "Error In Renaming File:\n";
 				std::cerr << e.what();
 				return false;
-		}
+			}
 	}
 
-	void RotatingTarget::EnableRotation(bool shouldRotate)
-	{
+	void RotatingTarget::EnableRotation(bool shouldRotate) {
 		this->shouldRotate = shouldRotate;
 		SetCurrentFileSize(std::filesystem::file_size(fileOptions.filePath));
 		InitFirstRotation(shouldRotate);
 	}
 
-	void RotatingTarget::SetRotateSettings(RotateSettings settings)
-	{
+	void RotatingTarget::SetRotateSettings(RotateSettings settings) {
 		fileSizeLimit        = settings.fileSizeLimit;
 		maxNumberOfFiles     = settings.maxNumberOfFiles;
 		dayModeSettingHour   = settings.dayModeSettingHour;
@@ -129,8 +120,7 @@ namespace serenity::experimental::targets {
 		weekModeSetting      = settings.weekModeSetting;
 	}
 
-	void RotatingTarget::RotateFile()
-	{
+	void RotatingTarget::RotateFile() {
 		if( !shouldRotate )
 			return;    // If this was explicitly called but rotatation is disabled, just
 			           // return
@@ -160,7 +150,7 @@ namespace serenity::experimental::targets {
 				std::filesystem::file_time_type oldestWriteTime { std::chrono::file_clock::now() };
 				std::string fileNameToFind { OriginalName() };
 				std::filesystem::path fileToReplace;
-				for( auto &file: logDirectory ) {
+				for( auto& file: logDirectory ) {
 						if( file.is_regular_file() ) {
 								if( file.path().filename().string().find(fileNameToFind) != std::string::npos ) {
 										if( file.last_write_time() < oldestWriteTime ) {
@@ -184,19 +174,19 @@ namespace serenity::experimental::targets {
 
 				if( !FileTarget::OpenFile(true) ) {
 						if( fileToReplace != previousFile ) {
-								std::cerr << std::vformat("Error: Unable To Finish Rotating From File \"{}\" To File "
-								                          "\"{}\"\n",
-								                          std::make_format_args(previousFile, fileOptions.filePath.filename().string()));
+								std::cerr << std::vformat(
+								"Error: Unable To Finish Rotating From File \"{}\" To File "
+								"\"{}\"\n",
+								std::make_format_args(previousFile, fileOptions.filePath.filename().string()));
 						} else {
-								std::cerr
-								<< std::vformat("Error: Unable To Open And Truncate File \"{}\"\n", std::make_format_args(previousFile));
+								std::cerr << std::vformat("Error: Unable To Open And Truncate File \"{}\"\n",
+								                          std::make_format_args(previousFile));
 							}
 				}
 		}
 	}
 
-	void RotatingTarget::PrintMessage(std::string_view formatted)
-	{
+	void RotatingTarget::PrintMessage(std::string_view formatted) {
 		auto flushThread { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
 		if( flushThread ) {
 				// this is where the locking would go --- placeholder ---
@@ -216,14 +206,13 @@ namespace serenity::experimental::targets {
 			}
 	}
 
-	bool RotatingTarget::ShouldRotate()
-	{
+	bool RotatingTarget::ShouldRotate() {
 		if( !shouldRotate ) return false;
 		// If previous file was empty - no need to rotate
 		if( FileSize() == 0 ) return false;
 
 		using mode  = RotateSettings::IntervalMode;
-		auto &cache = MsgInfo()->TimeDetails().Cache();
+		auto& cache = MsgInfo()->TimeDetails().Cache();
 
 		switch( RotationMode() ) {
 				case mode::file_size:

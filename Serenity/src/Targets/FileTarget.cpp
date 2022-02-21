@@ -6,8 +6,7 @@ namespace serenity::targets {
 
 	static int tries { 0 }, retryAttempt { 5 };
 
-	FileTarget::FileTarget(): TargetBase("File_Logger")
-	{
+	FileTarget::FileTarget(): TargetBase("File_Logger") {
 		fileOptions.fileBuffer.reserve(fileOptions.bufferSize);
 
 		std::filesystem::path fullFilePath = std::filesystem::current_path();
@@ -25,14 +24,14 @@ namespace serenity::targets {
 				} else {
 						OpenFile(true);
 					}
-		} catch( const std::exception &e ) {
+			}
+		catch( const std::exception& e ) {
 				std::cerr << e.what() << "\n";
 				CloseFile();
-		}
+			}
 	}
 
-	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists): TargetBase("File_Logger")
-	{
+	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists): TargetBase("File_Logger") {
 		fileOptions.fileBuffer.reserve(fileOptions.bufferSize);
 		std::filesystem::path fullFilePath = std::filesystem::current_path();
 		const auto logDir { "Logs" };
@@ -48,14 +47,14 @@ namespace serenity::targets {
 				} else {
 						OpenFile(true);
 					}
-		} catch( const std::exception &e ) {
+			}
+		catch( const std::exception& e ) {
 				std::cerr << e.what() << "\n";
 				CloseFile();
-		}
+			}
 	}
 
-	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists): TargetBase(name)
-	{
+	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists): TargetBase(name) {
 		fileOptions.fileBuffer.reserve(fileOptions.bufferSize);
 		fileOptions.filePath = fPath;
 		fileOptions.filePath.make_preferred();
@@ -69,15 +68,15 @@ namespace serenity::targets {
 				} else {
 						OpenFile(replaceIfExists);
 					}
-		} catch( const std::exception &e ) {
+			}
+		catch( const std::exception& e ) {
 				std::cerr << e.what() << "\n";
 				CloseFile();
-		}
+			}
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
-		: TargetBase(name, formatPattern)
-	{
+		: TargetBase(name, formatPattern) {
 		fileOptions.fileBuffer.reserve(fileOptions.bufferSize);
 		fileOptions.filePath = fPath;
 		fileOptions.filePath.make_preferred();
@@ -91,29 +90,26 @@ namespace serenity::targets {
 				} else {
 						OpenFile(replaceIfExists);
 					}
-		} catch( const std::exception &e ) {
+			}
+		catch( const std::exception& e ) {
 				std::cerr << e.what() << "\n";
 				CloseFile();
-		}
+			}
 	}
 
-	FileTarget::~FileTarget()
-	{
+	FileTarget::~FileTarget() {
 		CloseFile();
 	}
 
-	const std::string FileTarget::FilePath()
-	{
+	const std::string FileTarget::FilePath() {
 		return fileOptions.filePath.string();
 	}
 
-	const std::string FileTarget::FileName()
-	{
+	const std::string FileTarget::FileName() {
 		return fileOptions.filePath.filename().string();
 	}
 
-	bool FileTarget::OpenFile(bool truncate)
-	{
+	bool FileTarget::OpenFile(bool truncate) {
 		CloseFile();
 		try {
 #ifndef WINDOWS_PLATFORM
@@ -127,16 +123,16 @@ namespace serenity::targets {
 #ifdef WINDOWS_PLATFORM
 				fileHandle.rdbuf()->pubsetbuf(fileOptions.fileBuffer.data(), fileOptions.bufferSize);
 #endif    // WINDOWS_PLATFORM
-		} catch( const std::exception &e ) {
+			}
+		catch( const std::exception& e ) {
 				std::cerr << "Error In Opening File:\n";
 				std::cerr << e.what() << "\n";
 				return false;
-		}
+			}
 		return true;
 	}
 
-	bool FileTarget::CloseFile()
-	{
+	bool FileTarget::CloseFile() {
 		if( !fileHandle.is_open() ) return true;
 		try {
 				if( flushWorker.flushThread.joinable() ) {
@@ -159,16 +155,16 @@ namespace serenity::targets {
 						}
 						if( TryClose() ) break;
 					}
-		} catch( const std::exception &e ) {
+			}
+		catch( const std::exception& e ) {
 				std::cerr << "Error In Closing File:\n";
 				std::cerr << e.what() << "\n";
 				return false;
-		}
+			}
 		return true;
 	}
 
-	bool FileTarget::RenameFile(std::string_view newFileName)
-	{
+	bool FileTarget::RenameFile(std::string_view newFileName) {
 		try {
 				// make copy for old file conversion
 				std::filesystem::path newFile { fileOptions.filePath };
@@ -178,15 +174,15 @@ namespace serenity::targets {
 				fileOptions.filePath = std::move(newFile);
 				OpenFile();
 				return true;
-		} catch( const std::exception &e ) {
+			}
+		catch( const std::exception& e ) {
 				std::cerr << "Error In Renaming File:\n";
 				std::cerr << e.what();
 				return false;
-		}
+			}
 	}
 
-	void FileTarget::PrintMessage(std::string_view formatted)
-	{
+	void FileTarget::PrintMessage(std::string_view formatted) {
 		// naive guard from always trying to take a lock regardless of whether the
 		// background flush thread is running or not (using manual lock due to scoping
 		// here)
@@ -200,8 +196,7 @@ namespace serenity::targets {
 			}
 	}
 
-	void FileTarget::Flush()
-	{
+	void FileTarget::Flush() {
 		// If formatted message wasn't written to file and instead was written to the
 		// buffer, write to file now
 		if( Buffer()->size() != 0 ) {
@@ -211,23 +206,19 @@ namespace serenity::targets {
 		fileHandle.flush();
 	}
 
-	void FileTarget::WriteToBaseBuffer(bool fmtToBuf)
-	{
+	void FileTarget::WriteToBaseBuffer(bool fmtToBuf) {
 		TargetBase::WriteToBaseBuffer(fmtToBuf);
 	}
 
-	const bool FileTarget::isWriteToBuf()
-	{
+	const bool FileTarget::isWriteToBuf() {
 		return TargetBase::isWriteToBuf();
 	}
 
-	std::string *const FileTarget::Buffer()
-	{
+	std::string* const FileTarget::Buffer() {
 		return TargetBase::Buffer();
 	}
 
-	void FileTarget::PolicyFlushOn()
-	{
+	void FileTarget::PolicyFlushOn() {
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::never ) return;
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::always ) {
 				Flush();
@@ -242,7 +233,8 @@ namespace serenity::targets {
 							namespace ch = std::chrono;
 							static ch::milliseconds lastTimePoint {};
 							while( !flushWorker.cleanUpThreads.load(std::memory_order::relaxed) ) {
-									auto now     = ch::duration_cast<ch::milliseconds>(ch::system_clock::now().time_since_epoch());
+									auto now = ch::duration_cast<ch::milliseconds>(
+									ch::system_clock::now().time_since_epoch());
 									auto elapsed = ch::duration_cast<ch::milliseconds>(now - lastTimePoint);
 									auto shouldFlush { elapsed >= policy.SecondarySettings().flushEvery };
 									if( shouldFlush ) {
@@ -266,7 +258,7 @@ namespace serenity::targets {
 					}
 					break;
 				default: break;    // Don't bother with undef field
-			}                      // Sub Option Check
-	}                              // PolicyFlushOn( ) Function
+			}                          // Sub Option Check
+	}                                          // PolicyFlushOn( ) Function
 
 }    // namespace serenity::targets
