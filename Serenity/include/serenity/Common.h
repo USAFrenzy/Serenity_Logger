@@ -1,5 +1,13 @@
 #pragma once
 
+#include <string_view>
+#include <unordered_map>
+#include <array>
+#include <atomic>
+#include <filesystem>
+#include <mutex>
+#include <thread>
+
 #ifdef DOXYGEN_DOCUMENTATION
 /// @brief If _WIN32 is defined, then this is also defined.
 /// @details If this macro is defined, includes the Windows.h and io.h headers
@@ -15,6 +23,35 @@
 
 #ifdef _WIN32
 	#define WINDOWS_PLATFORM
+// I believe the below macro defines *should* cover some basic corner cases.
+// Mostly noticed this issue when I built this for VS 2022 to try out.
+	#if __has_include(<format>)
+		#include <format>
+		#define HAS_FORMAT_LIB 1
+	#else
+		#define HAS_FORMAT_LIB 0
+	#endif
+	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L) && (HAS_FORMAT_LIB)
+		#define VFORMAT_TO(container, message, ...)                                                                                     \
+			std::vformat_to(std::back_inserter(container), message, std::make_format_args(__VA_ARGS__))
+	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L) && (HAS_FORMAT_LIB)
+		#define CONTEXT std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
+		#define VFORMAT_TO(container, message, ...)                                                                                     \
+			std::vformat_to(std::back_inserter(container), message, std::make_format_args<CONTEXT>(__VA_ARGS__))
+	#else
+		#if( _MSC_VER < 1929 )
+			#error                                                                                                                  \
+			"MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"
+		#elif(_MSVC_LANG < 202002L)
+			#error                                                                                                                  \
+			"MSVC's Implementation Of <format> Not Fully Implemented Prior To C++20. Please Use The  C++ Latest Compiler Flag'"
+		#else    // This one is probably uneccessary, but it's here for completeness I guess
+			#error                                                                                                                  \
+			"Unkown Error: Compiler And Language Standard Being Used Should Include <format> Header, But No <format> Header Was Detected"
+		#endif
+
+	#endif
+
 #elif defined(__APPLE__) || defined(__MACH__)
 	#define MAC_PLATFORM
 #else
@@ -45,15 +82,6 @@
 #define MB                  (1024 * KB)
 #define GB                  (1024 * MB)
 #define DEFAULT_BUFFER_SIZE (64 * KB)
-
-#include <string_view>
-#include <unordered_map>
-#include <array>
-#include <atomic>
-#include <filesystem>
-#include <format>
-#include <mutex>
-#include <thread>
 
 // declaring for use later and for doc purposes
 namespace serenity::experimental { }

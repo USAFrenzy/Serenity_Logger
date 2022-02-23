@@ -121,11 +121,11 @@ namespace serenity::experimental::targets {
 	}
 
 	void RotatingTarget::RotateFile() {
-		if( !shouldRotate )
-			return;    // If this was explicitly called but rotatation is disabled, just
-			           // return
+		// If this was explicitly called but rotatation is disabled, return
+		if( !shouldRotate ) return;
 
 		CloseFile();
+
 		bool rotateSuccessful { false };
 		// make local copy of orginal path since we need to modify the path
 		auto newFilePath { OriginalPath() };
@@ -138,8 +138,8 @@ namespace serenity::experimental::targets {
 
 				if( !std::filesystem::exists(newFilePath) ) {
 						fileOptions.filePath = std::move(newFilePath);
-						if( OpenFile(true) ) {
-								rotateSuccessful = true;
+						rotateSuccessful     = OpenFile(true);
+						if( rotateSuccessful ) {
 								break;
 						}
 				}
@@ -171,8 +171,8 @@ namespace serenity::experimental::targets {
 						                          "Previous File, \"{}\"\n",
 						                          std::make_format_args(OriginalName(), previousFile));
 					}
-
-				if( !FileTarget::OpenFile(true) ) {
+				auto result { OpenFile(true) };
+				if( !result ) {
 						if( fileToReplace != previousFile ) {
 								std::cerr << std::vformat(
 								"Error: Unable To Finish Rotating From File \"{}\" To File "
@@ -189,26 +189,24 @@ namespace serenity::experimental::targets {
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
 		auto flushThread { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
 		if( flushThread ) {
-				// this is where the locking would go --- placeholder ---
-				if( ShouldRotate() ) {
-						RotateFile();
-						SetCurrentFileSize(0);
-				}
-				fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
-				SetCurrentFileSize(FileSize() + formatted.size());
-		} else {
-				if( ShouldRotate() ) {
-						RotateFile();
-						SetCurrentFileSize(0);
-				}
-				fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
-				SetCurrentFileSize(FileSize() + formatted.size());
-			}
+				while( !flushWorker.readWriteMutex.try_lock() ) {
+						std::this_thread::sleep_for(std::chrono::milliseconds(10));
+					}
+		}
+		if( ShouldRotate() ) {
+				RotateFile();
+				SetCurrentFileSize(0);
+		}
+		fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
+		SetCurrentFileSize(FileSize() + formatted.size());
+		if( flushThread ) {
+				flushWorker.readWriteMutex.unlock();
+		}
 	}
 
 	bool RotatingTarget::ShouldRotate() {
 		if( !shouldRotate ) return false;
-		// If previous file was empty - no need to rotate
+		// If file was empty - no need to rotate
 		if( FileSize() == 0 ) return false;
 
 		using mode  = RotateSettings::IntervalMode;

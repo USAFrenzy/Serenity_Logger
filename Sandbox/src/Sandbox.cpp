@@ -10,7 +10,7 @@
 // TODO: ####################################################################################################################################
 // clang-format on
 
-#define INSTRUMENT 0
+#define INSTRUMENT 1
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -115,7 +115,12 @@ int main() {
 
 	serenity::targets::ColorConsole C;
 	serenity::targets::FileTarget testFile;
+#ifndef INSTRUMENTATION_ENABLED
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Daily/DailyLog.txt";
+#else
+	std::filesystem::path dailyFilePath = LogDirPath() /= "Rotating_Log.txt";
+#endif    // !INSTRUMENTATION_ENABLED
+
 	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
 
 	// TODO: Fix this to work as expected
@@ -185,12 +190,12 @@ int main() {
 	testFile.Flush();
 
 	RotateSettings settings;
-	settings.fileSizeLimit         = 256 * KB;
+	settings.fileSizeLimit         = 128 * KB;
 	settings.maxNumberOfFiles      = 10;
 	settings.monthModeSetting      = 9;
 	settings.weekModeSetting       = 3;
-	settings.dayModeSettingHour    = 19;
-	settings.dayModeSettingMinute  = 15;
+	settings.dayModeSettingHour    = 10;
+	settings.dayModeSettingMinute  = 35;
 
 	PeriodicSettings flushSettings = {};
 	flushSettings.flushEvery       = std::chrono::seconds(60);
@@ -234,7 +239,7 @@ int main() {
 				std::string message = "Message ";
 				message.append(std::to_string(i)).append(" Logged To File For Rotate On Hourly\n");
 				NotifyConsole(message);
-				std::this_thread::sleep_for(std::chrono::minutes(2));
+				std::this_thread::sleep_for(std::chrono::minutes(1));
 			}
 	};
 
@@ -244,7 +249,7 @@ int main() {
 				std::string message = "Message ";
 				message.append(std::to_string(i)).append(" Logged To File For Rotate On Daily\n");
 				NotifyConsole(message);
-				std::this_thread::sleep_for(std::chrono::minutes(5));
+				std::this_thread::sleep_for(std::chrono::minutes(2));
 			}
 	};
 

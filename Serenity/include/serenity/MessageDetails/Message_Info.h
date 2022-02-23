@@ -27,10 +27,7 @@ namespace serenity::msg_details {
 
 			template<typename... Args> void SetMessage(const std::string_view message, Args&&... args) {
 				m_message.clear();
-				using iterator = std::back_insert_iterator<std::basic_string<char>>;
-				using context  = std::basic_format_context<iterator, char>;
-				std::vformat_to(std::back_inserter(m_message), message,
-				                std::make_format_args<context>(std::forward<Args>(args)...));
+				VFORMAT_TO(m_message, message, std::forward<Args>(args)...);
 				m_message.append(SERENITY_LUTS::line_ending.at(platformEOL));
 			}
 

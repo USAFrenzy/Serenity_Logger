@@ -5,6 +5,7 @@
 namespace serenity::targets {
 
 	static int tries { 0 }, retryAttempt { 5 };
+	static std::mutex dummyMutex;
 
 	FileTarget::FileTarget(): TargetBase("File_Logger") {
 		fileOptions.fileBuffer.reserve(fileOptions.bufferSize);
@@ -110,7 +111,6 @@ namespace serenity::targets {
 	}
 
 	bool FileTarget::OpenFile(bool truncate) {
-		CloseFile();
 		try {
 #ifndef WINDOWS_PLATFORM
 				fileHandle.rdbuf()->pubsetbuf(fileBuffer.data(), bufferSize);
@@ -133,47 +133,41 @@ namespace serenity::targets {
 	}
 
 	bool FileTarget::CloseFile() {
-		if( !fileHandle.is_open() ) return true;
-		try {
-				if( flushWorker.flushThread.joinable() ) {
-						flushWorker.cleanUpThreads.store(true);
-						flushWorker.cleanUpThreads.notify_one();
-						flushWorker.flushThread.join();
-				}
-				Flush();
-
-				auto TryClose = [ &, this ]() {
-					fileHandle.close();
-					std::this_thread::sleep_for(std::chrono::milliseconds(500));
-					return !fileHandle.is_open();
-				};
-
-				for( tries; tries <= retryAttempt; ++tries ) {
-						if( tries == retryAttempt ) {
-								tries = 0;
-								break;
-						}
-						if( TryClose() ) break;
+		if( flushWorker.flushThreadEnabled.load(std::memory_order_relaxed) ) {
+				flushWorker.cleanUpThreads.store(true);
+				flushWorker.cleanUpThreads.notify_one();
+				while( !flushWorker.flushThread.joinable() ) {
+						std::this_thread::sleep_for(std::chrono::milliseconds(10));
 					}
-			}
-		catch( const std::exception& e ) {
-				std::cerr << "Error In Closing File:\n";
-				std::cerr << e.what() << "\n";
-				return false;
+				flushWorker.flushThread.join();
+		}
+		Flush();
+
+		auto TryClose = [ this ]() {
+			fileHandle.close();
+			std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+			return !fileHandle.is_open();
+		};
+		for( tries = 0; tries < retryAttempt; ++tries ) {
+				fileHandle.clear();
+				if( tries == retryAttempt ) {
+						std::cerr << "Max Attempts At Closing File Reached - Unable To Close File\n";
+						return false;
+				}
+				if( TryClose() ) break;
 			}
 		return true;
 	}
 
 	bool FileTarget::RenameFile(std::string_view newFileName) {
 		try {
+				CloseFile();
 				// make copy for old file conversion
 				std::filesystem::path newFile { fileOptions.filePath };
 				newFile.replace_filename(newFileName);
-				CloseFile();
 				std::filesystem::rename(fileOptions.filePath, newFile);
 				fileOptions.filePath = std::move(newFile);
-				OpenFile();
-				return true;
+				return OpenFile();
 			}
 		catch( const std::exception& e ) {
 				std::cerr << "Error In Renaming File:\n";
@@ -183,22 +177,22 @@ namespace serenity::targets {
 	}
 
 	void FileTarget::PrintMessage(std::string_view formatted) {
-		// naive guard from always trying to take a lock regardless of whether the
-		// background flush thread is running or not (using manual lock due to scoping
-		// here)
+		// naive guard from always trying to take a lock regardless of whether the background flush thread is running or not
+		// (using manual lock due to scoping here)
 		auto flushThread { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
 		if( flushThread ) {
-				// this is where the locking would go --- placeholder ---
-				fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
-
-		} else {
-				fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
-			}
+				while( !flushWorker.readWriteMutex.try_lock() ) {
+						std::this_thread::sleep_for(std::chrono::milliseconds(10));
+					}
+		}
+		fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
+		if( flushThread ) {
+				flushWorker.readWriteMutex.unlock();
+		}
 	}
 
 	void FileTarget::Flush() {
-		// If formatted message wasn't written to file and instead was written to the
-		// buffer, write to file now
+		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
 		if( Buffer()->size() != 0 ) {
 				fileHandle.rdbuf()->sputn(Buffer()->data(), Buffer()->size());
 				Buffer()->clear();
@@ -219,6 +213,7 @@ namespace serenity::targets {
 	}
 
 	void FileTarget::PolicyFlushOn() {
+		auto policy { Policy() };
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::never ) return;
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::always ) {
 				Flush();
@@ -229,16 +224,18 @@ namespace serenity::targets {
 					{
 						if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) return;
 						// lambda that starts a background thread to flush on time interval given
-						auto periodic_flush = [ this ]() {
+						auto periodic_flush = [ this ](const serenity::experimental::Flush_Policy& policy) {
 							namespace ch = std::chrono;
 							static ch::milliseconds lastTimePoint {};
-							while( !flushWorker.cleanUpThreads.load(std::memory_order::relaxed) ) {
+							auto t_policy { policy };
+
+							while( !flushWorker.cleanUpThreads.load() ) {
 									auto now = ch::duration_cast<ch::milliseconds>(
 									ch::system_clock::now().time_since_epoch());
 									auto elapsed = ch::duration_cast<ch::milliseconds>(now - lastTimePoint);
-									auto shouldFlush { elapsed >= policy.SecondarySettings().flushEvery };
+									auto shouldFlush { elapsed >= t_policy.SecondarySettings().flushEvery };
+
 									if( shouldFlush ) {
-											// this is where the locking would go --- placeholder ---
 											Flush();
 									}
 									lastTimePoint = now;
@@ -246,7 +243,7 @@ namespace serenity::targets {
 						};    // periodic_flush lambda
 
 						if( !flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
-								flushWorker.flushThread = std::thread(periodic_flush);
+								flushWorker.flushThread = std::thread(periodic_flush, Policy());
 								flushWorker.flushThreadEnabled.store(true);
 						}
 					}
