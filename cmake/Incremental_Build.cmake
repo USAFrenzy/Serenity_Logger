@@ -49,7 +49,11 @@ string(REGEX MATCH "VERSION_MINOR ([0-9]*)" _ "${VERSION_FILE}")
 string(REGEX MATCH "VERSION_REVISION ([0-9]*)" _ "${VERSION_FILE}")
     set(version_revision ${CMAKE_MATCH_1})
     math(EXPR version_revision "${version_revision}+1")
-update_version_info(${version_major} ${version_minor} ${version_revision})
+update_version_info(
+    "${version_major}" 
+    "${version_minor}"
+    "${version_revision}"
+)
 set(SERENITY_FULL_VERSION "${version_major}.${version_minor}.${version_revision}" PARENT_SCOPE)
    
 elseif(EXISTS ${CACHE_FILE})
@@ -61,14 +65,22 @@ elseif(EXISTS ${CACHE_FILE})
     string(REGEX MATCH "Revision: ([0-9]*)" _ "${CACHE_VALUE}")
         set(version_revision ${CMAKE_MATCH_1})
     math(EXPR version_revision "${version_revision}+1")
-    update_version_info(${version_major} ${version_minor} ${version_revision})
+    update_version_info(
+        "${version_major}" 
+        "${version_minor}" 
+        "${version_revision}"
+    )
     set(SERENITY_FULL_VERSION "${version_major}.${version_minor}.${version_revision}" PARENT_SCOPE)
     
     else()
         set(version_major "0")
         set(version_minor "2")
         set(version_revision "0")
-        update_version_info(${version_major} ${version_minor} ${version_revision})
+        update_version_info(
+            "${version_major}" 
+            "${version_minor}" 
+            "${version_revision}"
+        )
         set(SERENITY_FULL_VERSION "${version_major}.${version_minor}.${version_revision}" PARENT_SCOPE)
     endif()
 endfunction()
