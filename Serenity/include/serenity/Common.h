@@ -38,8 +38,7 @@
 			#error                                                                                                                  \
 			"MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"
 		#elif(_MSVC_LANG < 202002L)
-			#error                                                                                                                  \
-			"MSVC's Implementation Of <format> Not Fully Implemented Prior To C++20. Please Use The  C++ Latest Compiler Flag'"
+			#error "MSVC's Implementation Of <format> Not Implemented Prior To C++20.'"
 		#endif
 
 	#endif

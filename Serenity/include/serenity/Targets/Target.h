@@ -54,7 +54,6 @@ namespace serenity::targets {
 			msg_details::Message_Formatter msgPattern;
 			std::string internalBuffer;
 			bool multiThreadSupport;
-			std::stringstream localeSupport;
 	};
 
 #include "Target-impl.h"

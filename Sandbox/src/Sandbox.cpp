@@ -122,14 +122,14 @@ int main() {
 	serenity::targets::FileTarget testFile;
 	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
 
-	/**********************************************************************************************************************
-	 *      This was to test locale setting (unfortunately slows logger down, but still minorly faster than the goal       *
+	/***********************************************************************************************************************
+	 *      This was to test locale setting (unfortunately slows logger down, but still 15-25% faster than the goal)       *
 	 ***********************************************************************************************************************
 	 * std::locale testLocale("de_AT.UTF-8");
-	 *	C.SetLocale(testLocale);
-	 *	testFile.SetLocale(testLocale);
-	 *	rotatingFile.SetLocale(testLocale);
-	 *********************************************************************************************************************/
+	 * C.SetLocale(testLocale);
+	 * testFile.SetLocale(testLocale);
+	 * rotatingFile.SetLocale(testLocale);
+	 /*********************************************************************************************************************/
 
 	// TODO: Fix this to work as expected
 	// PeriodicSettings settings;
