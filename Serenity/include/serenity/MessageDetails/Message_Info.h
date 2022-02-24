@@ -24,6 +24,8 @@ namespace serenity::msg_details {
 			std::tm& TimeInfo();
 			std::string& Message();
 			const size_t MessageSize();
+			const std::locale& GetLocale();
+			void SetLocale(std::locale locale);
 
 			template<typename... Args> void SetMessage(const std::string_view message, Args&&... args) {
 				m_message.clear();
@@ -37,5 +39,6 @@ namespace serenity::msg_details {
 			LoggerLevel m_msgLevel;
 			std::string m_message;
 			Message_Time m_msgTime;
+			std::locale m_locale;
 	};
 }    // namespace serenity::msg_details

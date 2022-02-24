@@ -11,7 +11,8 @@ namespace serenity::targets {
 		  pattern(DEFAULT_PATTERN),
 		  msgDetails("Base Logger", msgLevel, message_time_mode::local),
 		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false) { }
+		  multiThreadSupport(false),
+		  localeSupport(std::ios_base::in | std::ios_base::out) { }
 
 	TargetBase::TargetBase(std::string_view name)
 		: toBuffer(false),
@@ -21,7 +22,8 @@ namespace serenity::targets {
 		  pattern(DEFAULT_PATTERN),
 		  msgDetails(name, msgLevel, message_time_mode::local),
 		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false) { }
+		  multiThreadSupport(false),
+		  localeSupport(std::ios_base::in | std::ios_base::out) { }
 
 	TargetBase::TargetBase(std::string_view name, std::string_view fmtPattern)
 		: toBuffer(false),
@@ -31,7 +33,8 @@ namespace serenity::targets {
 		  pattern(fmtPattern),
 		  msgDetails(name, msgLevel, message_time_mode::local),
 		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false) { }
+		  multiThreadSupport(false),
+		  localeSupport(std::ios_base::in | std::ios_base::out) { }
 
 	void TargetBase::WriteToBaseBuffer(bool fmtToBuf) {
 		toBuffer = fmtToBuf;
@@ -79,6 +82,11 @@ namespace serenity::targets {
 
 	const LoggerLevel TargetBase::Level() {
 		return logLevel;
+	}
+
+	void TargetBase::SetLocale(std::locale locale) {
+		MsgInfo()->SetLocale(locale);
+		localeSupport.imbue(locale);
 	}
 
 	void TargetBase::SetLoggerName(std::string_view name) {

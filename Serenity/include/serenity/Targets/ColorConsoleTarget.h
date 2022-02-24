@@ -31,6 +31,7 @@ namespace serenity::targets {
 			bool IsTerminalType();
 			bool IsValidHandle();
 			void PrintMessage(std::string_view formatted) override;
+			void SetLocale(std::locale locale) override;
 
 		private:
 			bool coloredOutput;

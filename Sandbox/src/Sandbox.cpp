@@ -112,16 +112,24 @@ int main() {
 	using namespace se_utils;
 	using namespace se_colors;
 	using namespace experimental;
-
-	serenity::targets::ColorConsole C;
-	serenity::targets::FileTarget testFile;
 #ifndef INSTRUMENTATION_ENABLED
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Daily/DailyLog.txt";
 #else
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Rotating_Log.txt";
 #endif    // !INSTRUMENTATION_ENABLED
 
+	serenity::targets::ColorConsole C;
+	serenity::targets::FileTarget testFile;
 	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
+
+	/**********************************************************************************************************************
+	 *      This was to test locale setting (unfortunately slows logger down, but still minorly faster than the goal       *
+	 ***********************************************************************************************************************
+	 * std::locale testLocale("de_AT.UTF-8");
+	 *	C.SetLocale(testLocale);
+	 *	testFile.SetLocale(testLocale);
+	 *	rotatingFile.SetLocale(testLocale);
+	 *********************************************************************************************************************/
 
 	// TODO: Fix this to work as expected
 	// PeriodicSettings settings;

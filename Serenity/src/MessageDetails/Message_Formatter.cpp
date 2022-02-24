@@ -112,7 +112,7 @@ namespace serenity::msg_details {
 		return std::string { paddedHour.data(), paddedHour.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_a::Format() {
+	std::string Message_Formatter::Format_Arg_a::Format() {
 		return (cacheRef.tm_hour != lastHour) ? hour = std::move(UpdateInternalView()) : hour;
 	}
 
@@ -127,7 +127,7 @@ namespace serenity::msg_details {
 		return std::string { paddedMonth.data(), paddedMonth.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_b::Format() {
+	std::string Message_Formatter::Format_Arg_b::Format() {
 		return (cacheRef.tm_mon != lastMonth) ? month = std::move(UpdateInternalView()) : month;
 	}
 
@@ -142,7 +142,7 @@ namespace serenity::msg_details {
 		return std::string { paddedDay.data(), paddedDay.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_d::Format() {
+	std::string Message_Formatter::Format_Arg_d::Format() {
 		return (cacheRef.tm_mday != lastDay) ? day = std::move(UpdateInternalView()) : day;
 	}
 
@@ -157,7 +157,7 @@ namespace serenity::msg_details {
 		return std::string { lvl.data(), lvl.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_l::Format() {
+	std::string Message_Formatter::Format_Arg_l::Format() {
 		return (levelRef != lastLevel) ? levelStr = std::move(UpdateInternalView()) : levelStr;
 	}
 
@@ -176,7 +176,7 @@ namespace serenity::msg_details {
 		return result.append(day).append(month).append(year);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_n::Format() {
+	std::string Message_Formatter::Format_Arg_n::Format() {
 		return (cacheRef.tm_mday != lastDay) ? ddmmyy = std::move(UpdateInternalView()) : ddmmyy;
 	}
 
@@ -197,7 +197,7 @@ namespace serenity::msg_details {
 		return result.append(hour).append(":").append(min);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_t::Format() {
+	std::string Message_Formatter::Format_Arg_t::Format() {
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		if( cacheRef.tm_min != lastMin ) {
 				auto result { hmStr = std::move(UpdateInternalView()) };
@@ -218,7 +218,7 @@ namespace serenity::msg_details {
 		return std::move(std::vformat("{}", std::make_format_args(lastDay)));
 	}
 
-	std::string_view Message_Formatter::Format_Arg_w::Format() {
+	std::string Message_Formatter::Format_Arg_w::Format() {
 		return (cacheRef.tm_wday != lastDay) ? lastDecDay = std::move(UpdateInternalView()) : lastDecDay;
 	}
 
@@ -233,7 +233,7 @@ namespace serenity::msg_details {
 		return std::string { sWkday.data(), sWkday.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_x::Format() {
+	std::string Message_Formatter::Format_Arg_x::Format() {
 		return (lastWkday != cacheRef.tm_wday) ? wkday = std::move(UpdateInternalView()) : wkday;
 	}
 
@@ -249,7 +249,7 @@ namespace serenity::msg_details {
 		return std::string { yr.data(), yr.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_y::Format() {
+	std::string Message_Formatter::Format_Arg_y::Format() {
 		return (cacheRef.tm_year != lastYear) ? year = std::move(UpdateInternalView()) : year;
 	}
 
@@ -264,7 +264,7 @@ namespace serenity::msg_details {
 		return std::string { dHalf.data(), dHalf.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_A::Format() {
+	std::string Message_Formatter::Format_Arg_A::Format() {
 		return (cacheRef.tm_hour != lastHour) ? dayHalf = std::move(UpdateInternalView()) : dayHalf;
 	}
 
@@ -279,7 +279,7 @@ namespace serenity::msg_details {
 		return std::string { lMonth.data(), lMonth.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_B::Format() {
+	std::string Message_Formatter::Format_Arg_B::Format() {
 		return (cacheRef.tm_mon != lastMonth) ? month = std::move(UpdateInternalView()) : month;
 	}
 
@@ -300,7 +300,7 @@ namespace serenity::msg_details {
 		return result.append(m).append("/").append(d).append("/").append(y);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_D::Format() {
+	std::string Message_Formatter::Format_Arg_D::Format() {
 		return (cacheRef.tm_mday != lastDay) ? mmddyy = std::move(UpdateInternalView()) : mmddyy;
 	}
 
@@ -321,7 +321,7 @@ namespace serenity::msg_details {
 		return result.append(y).append("-").append(m).append("-").append(d);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_F::Format() {
+	std::string Message_Formatter::Format_Arg_F::Format() {
 		return (cacheRef.tm_mday != lastDay) ? yymmdd = std::move(UpdateInternalView()) : yymmdd;
 	}
 
@@ -336,7 +336,7 @@ namespace serenity::msg_details {
 		return std::string { hr.data(), hr.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_H::Format() {
+	std::string Message_Formatter::Format_Arg_H::Format() {
 		return (cacheRef.tm_hour != lastHour) ? hour = std::move(UpdateInternalView()) : hour;
 	}
 
@@ -351,7 +351,7 @@ namespace serenity::msg_details {
 		return std::string { lvl.data(), lvl.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_L::Format() {
+	std::string Message_Formatter::Format_Arg_L::Format() {
 		return (levelRef != lastLevel) ? levelStr = std::move(UpdateInternalView()) : levelStr;
 	}
 
@@ -366,14 +366,14 @@ namespace serenity::msg_details {
 		return std::string { minute.data(), minute.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_M::Format() {
+	std::string Message_Formatter::Format_Arg_M::Format() {
 		return (cacheRef.tm_min != lastMin) ? min = std::move(UpdateInternalView()) : min;
 	}
 
 	// Format_N Functions
 	Message_Formatter::Format_Arg_N::Format_Arg_N(Message_Info& info): name(info.Name()) { }
 
-	std::string_view Message_Formatter::Format_Arg_N::Format() {
+	std::string Message_Formatter::Format_Arg_N::Format() {
 		return name;
 	}
 
@@ -388,7 +388,7 @@ namespace serenity::msg_details {
 		return std::string { second.data(), second.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_S::Format() {
+	std::string Message_Formatter::Format_Arg_S::Format() {
 		return (cacheRef.tm_sec != lastSec) ? sec = std::move(UpdateInternalView()) : sec;
 	}
 
@@ -405,7 +405,7 @@ namespace serenity::msg_details {
 		return result.append(":").append(min);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_T::Format() {
+	std::string Message_Formatter::Format_Arg_T::Format() {
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		if( cacheRef.tm_min != lastMin ) {
 				hmStr = UpdateInternalView();
@@ -425,7 +425,7 @@ namespace serenity::msg_details {
 		return std::string { lWkday.data(), lWkday.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_X::Format() {
+	std::string Message_Formatter::Format_Arg_X::Format() {
 		return (cacheRef.tm_wday != lastWkday) ? wkday = std::move(UpdateInternalView()) : wkday;
 	}
 
@@ -441,21 +441,21 @@ namespace serenity::msg_details {
 		return std::string { yr.data(), yr.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_Y::Format() {
+	std::string Message_Formatter::Format_Arg_Y::Format() {
 		return (cacheRef.tm_year != lastYear) ? year = std::move(UpdateInternalView()) : year;
 	}
 
 	// Format_Message Functions
 	Message_Formatter::Format_Arg_Message::Format_Arg_Message(Message_Info& info): message(info.Message()) { }
 
-	std::string_view Message_Formatter::Format_Arg_Message::Format() {
+	std::string Message_Formatter::Format_Arg_Message::Format() {
 		return message;
 	}
 
 	// Format_Char Functions
 	Message_Formatter::Format_Arg_Char::Format_Arg_Char(std::string_view ch): m_char(ch.data(), ch.size()) { }
 
-	std::string_view Message_Formatter::Format_Arg_Char::Format() {
+	std::string Message_Formatter::Format_Arg_Char::Format() {
 		return m_char;
 	}
 
@@ -471,7 +471,7 @@ namespace serenity::msg_details {
 		localBuffer.reserve(m_Formatter.size() * 32);
 	}
 
-	std::string_view Message_Formatter::Formatters::Format() {
+	std::string& Message_Formatter::Formatters::Format() {
 		localBuffer.clear();
 		for( auto& formatter: m_Formatter ) {
 				auto formatted { formatter->Format() };

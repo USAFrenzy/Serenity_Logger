@@ -122,6 +122,7 @@ namespace serenity::targets {
 					}
 #ifdef WINDOWS_PLATFORM
 				fileHandle.rdbuf()->pubsetbuf(fileOptions.fileBuffer.data(), fileOptions.bufferSize);
+				fileHandle.imbue(MsgInfo()->GetLocale());
 #endif    // WINDOWS_PLATFORM
 			}
 		catch( const std::exception& e ) {
