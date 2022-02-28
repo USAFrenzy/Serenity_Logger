@@ -10,7 +10,6 @@ namespace serenity::targets {
 		if( IsValidHandle() && IsTerminalType() ) {
 				coloredOutput = true;
 		}
-		SetLocale(MsgInfo()->GetLocale());
 	}
 
 	ColorConsole::ColorConsole(std::string_view name): TargetBase(name), consoleMode(console_interface::std_out), coloredOutput(false) {
@@ -20,7 +19,6 @@ namespace serenity::targets {
 		if( IsValidHandle() && IsTerminalType() ) {
 				coloredOutput = true;
 		}
-		SetLocale(MsgInfo()->GetLocale());
 	}
 
 	ColorConsole::ColorConsole(std::string_view name, std::string_view msgPattern)
@@ -31,7 +29,6 @@ namespace serenity::targets {
 		if( IsValidHandle() && IsTerminalType() ) {
 				coloredOutput = true;
 		}
-		SetLocale(MsgInfo()->GetLocale());
 	}
 
 	ColorConsole::~ColorConsole() {
@@ -132,16 +129,6 @@ namespace serenity::targets {
 #endif               // WINDOWS_PLATFORM
 		}    // IsValidHandle() Check
 	}            // PrintMessage()
-
-	void ColorConsole::SetLocale(std::locale locale) {
-		MsgInfo()->SetLocale(locale);
-		std::cout.imbue(locale);
-		std::cerr.imbue(locale);
-		std::clog.imbue(locale);
-		std::wcout.imbue(locale);
-		std::wcerr.imbue(locale);
-		std::wclog.imbue(locale);
-	}
 
 	void ColorConsole::SetOriginalColors() {
 		msgLevelColors = {

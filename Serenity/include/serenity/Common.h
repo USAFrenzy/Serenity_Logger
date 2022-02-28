@@ -5,7 +5,6 @@
 #include <array>
 #include <atomic>
 #include <filesystem>
-#include <format>
 #include <mutex>
 #include <thread>
 
@@ -26,10 +25,16 @@
 	#define WINDOWS_PLATFORM
 // I believe the below macro defines *should* cover some basic corner cases.
 // Mostly noticed this issue when I built this for VS 2022 to try out.
-	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)    // VS 2022 17.0+ and c++20 support
+	#if __has_include(<format>)
+		#include <format>
+		#define HAS_FORMAT_LIB 1
+	#else
+		#define HAS_FORMAT_LIB 0
+	#endif
+	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L) && (HAS_FORMAT_LIB)
 		#define VFORMAT_TO(container, message, ...)                                                                                     \
 			std::vformat_to(std::back_inserter(container), message, std::make_format_args(__VA_ARGS__))
-	#elif(_MSC_VER == 1929) && (_MSVC_LANG >= 202002L)    // VS 2019 16.10/16.11+ and c++20 support
+	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L) && (HAS_FORMAT_LIB)
 		#define CONTEXT std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
 		#define VFORMAT_TO(container, message, ...)                                                                                     \
 			std::vformat_to(std::back_inserter(container), message, std::make_format_args<CONTEXT>(__VA_ARGS__))
@@ -38,7 +43,11 @@
 			#error                                                                                                                  \
 			"MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"
 		#elif(_MSVC_LANG < 202002L)
-			#error "MSVC's Implementation Of <format> Not Implemented Prior To C++20.'"
+			#error                                                                                                                  \
+			"MSVC's Implementation Of <format> Not Fully Implemented Prior To C++20. Please Use The  C++ Latest Compiler Flag'"
+		#else    // This one is probably uneccessary, but it's here for completeness I guess
+			#error                                                                                                                  \
+			"Unkown Error: Compiler And Language Standard Being Used Should Include <format> Header, But No <format> Header Was Detected"
 		#endif
 
 	#endif
@@ -50,13 +59,9 @@
 #endif
 
 #ifdef WINDOWS_PLATFORM
-	#ifndef DOXYGEN_DOCUMENTATION    // To avoid duplicate documentation
-		#ifndef WIN32_LEAN_AND_MEAN
-			#define WIN32_LEAN_AND_MEAN
-		#endif
-		#ifndef VC_EXTRALEAN
-			#define VC_EXTRALEAN
-		#endif
+	#ifndef DOXYGEN_DOCUMENTATION
+		#define WIN32_LEAN_AND_MEAN
+		#define VC_EXTRALEAN
 	#endif    // !DOXYGEN_DOCUMENTATION
 
 	#include <Windows.h>
@@ -82,13 +87,6 @@
 namespace serenity::experimental { }
 
 namespace serenity {
-
-	namespace globals {
-		// used to keep track of what original locale was and for logging functions check against whether or not to imbue the formatted
-		// message with a different locale
-		static std::locale defaultLocale("en_US.UTF-8");
-	}    // namespace globals
-
 	enum class LineEnd
 	{
 		linux   = 0,
@@ -262,8 +260,7 @@ namespace serenity {
 }    // namespace serenity
 
 #ifndef NDEBUG
-	#include <iostream>
-	#define DB_PRINT(msg, ...) (std::cout << std::format(msg, __VA_ARGS__) << "\n")
+	#define DB_PRINT(msg, ...) (std::cout << std::format(msg, __VA_ARGS__))
 #else
 	#define DB_PRINT(msg, ...)
 #endif    // !NDEBUG

@@ -81,10 +81,6 @@ namespace serenity::targets {
 		return logLevel;
 	}
 
-	void TargetBase::SetLocale(std::locale locale) {
-		MsgInfo()->SetLocale(locale);
-	}
-
 	void TargetBase::SetLoggerName(std::string_view name) {
 		msgDetails.SetName(name);
 	}

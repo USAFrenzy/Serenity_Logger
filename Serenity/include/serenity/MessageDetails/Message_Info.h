@@ -24,19 +24,10 @@ namespace serenity::msg_details {
 			std::tm& TimeInfo();
 			std::string& Message();
 			const size_t MessageSize();
-			const std::locale& GetLocale();
-			void SetLocale(std::locale locale);
 
 			template<typename... Args> void SetMessage(const std::string_view message, Args&&... args) {
 				m_message.clear();
-				if( m_locale.name() == globals::defaultLocale.name() ) {
-						VFORMAT_TO(m_message, message, std::forward<Args>(args)...);
-				} else {
-						localeSupport.str("");
-						localeSupport.clear();
-						localeSupport << message;
-						VFORMAT_TO(m_message, localeSupport.str(), std::forward<Args>(args)...);
-					}
+				VFORMAT_TO(m_message, message, std::forward<Args>(args)...);
 				m_message.append(SERENITY_LUTS::line_ending.at(platformEOL));
 			}
 
@@ -46,7 +37,5 @@ namespace serenity::msg_details {
 			LoggerLevel m_msgLevel;
 			std::string m_message;
 			Message_Time m_msgTime;
-			std::locale m_locale;
-			std::stringstream localeSupport;
 	};
 }    // namespace serenity::msg_details

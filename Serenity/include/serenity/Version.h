@@ -1,14 +1,19 @@
 #pragma once
 
-#define SERENITY_VERSION_MAJOR                        0
-#define SERENITY_VERSION_MINOR                        2
-#define SERENITY_VERSION_REVISION                     112
+// Clang format messes with the automated version update
+// clang-format off
 
-#define VERSION_STRING_FORMAT(major, minor, revision) #major "." #minor "." #revision
-#define VERSION_NUMBER(maj, min, rev)                 VERSION_STRING_FORMAT(maj, min, rev)
+#define SERENITY_VERSION_MAJOR 0
+#define SERENITY_VERSION_MINOR 2
+#define SERENITY_VERSION_REVISION 115
+
+// clang-format on
+
+#define VERSION_STRING_FORMAT( major, minor, revision ) #major "." #minor "." #revision
+#define VERSION_NUMBER( maj, min, rev )                 VERSION_STRING_FORMAT( maj, min, rev )
 
 // Last Built Statistics
-#define SE_DAY                                        23
-#define SE_MONTH                                      02
-#define SE_YEAR                                       2022
-#define SE_LAST_BUILT                                 "23:08:57"
+#define SE_DAY         26
+#define SE_MONTH       02
+#define SE_YEAR        2022
+#define SE_LAST_BUILT  "06:34:41"

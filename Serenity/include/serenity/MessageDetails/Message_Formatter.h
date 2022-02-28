@@ -18,7 +18,7 @@ namespace serenity::msg_details {
 
 			struct Formatter
 			{
-					virtual std::string Format() = 0;
+					virtual std::string_view Format() = 0;
 
 					virtual std::string UpdateInternalView() {
 						return "";
@@ -31,7 +31,7 @@ namespace serenity::msg_details {
 					Formatters(std::vector<std::unique_ptr<Formatter>>&& container);
 					Formatters() = default;
 					void Emplace_Back(std::unique_ptr<Formatter>&& formatter);
-					std::string& Format();
+					std::string_view Format();
 					void Clear();
 
 				private:
@@ -51,7 +51,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_a(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -63,7 +63,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_b(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -75,7 +75,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_d(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -87,7 +87,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_l(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					LoggerLevel& levelRef;
@@ -99,7 +99,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_n(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					Message_Time& timeRef;
@@ -112,7 +112,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_t(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -124,7 +124,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_w(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -136,7 +136,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_x(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -148,7 +148,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_y(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -161,7 +161,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_A(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -173,7 +173,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_B(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -185,7 +185,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_D(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					Message_Time& timeRef;
@@ -198,7 +198,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_F(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					Message_Time& timeRef;
@@ -211,7 +211,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_H(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -223,7 +223,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_L(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					LoggerLevel& levelRef;
@@ -235,7 +235,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_M(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -246,7 +246,7 @@ namespace serenity::msg_details {
 			struct Format_Arg_N: Formatter
 			{
 					Format_Arg_N(Message_Info& info);
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					std::string& name;
@@ -256,7 +256,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_S(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -268,7 +268,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_T(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -280,7 +280,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_X(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					const std::tm& cacheRef;
@@ -292,7 +292,7 @@ namespace serenity::msg_details {
 			{
 					Format_Arg_Y(Message_Info& info);
 					std::string UpdateInternalView() override;
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					Message_Time& timeRef;
@@ -304,7 +304,7 @@ namespace serenity::msg_details {
 			struct Format_Arg_Message: Formatter
 			{
 					Format_Arg_Message(Message_Info& info);
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					std::string& message;
@@ -313,7 +313,7 @@ namespace serenity::msg_details {
 			struct Format_Arg_Char: Formatter
 			{
 					Format_Arg_Char(std::string_view ch);
-					std::string Format() override;
+					std::string_view Format() override;
 
 				private:
 					std::string m_char;

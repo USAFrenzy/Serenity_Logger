@@ -25,7 +25,6 @@ namespace serenity::targets {
 			void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 			bool isMTSupportEnabled();
 			const LoggerLevel Level();
-			virtual void SetLocale(std::locale locale);
 			void SetLoggerName(std::string_view name);
 			template<typename... Args> void Trace(std::string_view msg, Args&&... args);
 			template<typename... Args> void Info(std::string_view msg, Args&&... args);
