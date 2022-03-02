@@ -21,6 +21,7 @@ namespace serenity::experimental::targets {
 			void RotateFile();
 			bool RenameFile(std::string_view newFileName) override;
 			bool ShouldRotate();
+			void SetLocale(const std::locale& loc) override;
 			// ################################# WIP #################################
 			// For IntervalMode::file_size -> interval is the file size limit
 			// For IntervalMode::daily, the interval is the hour the logger should rotate

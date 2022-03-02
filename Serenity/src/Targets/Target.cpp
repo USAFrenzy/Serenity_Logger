@@ -61,6 +61,16 @@ namespace serenity::targets {
 		return msgDetails.Name();
 	}
 
+	void TargetBase::SetLocale(const std::locale& loc) {
+		if( loc != MsgInfo()->GetLocale() ) {
+				MsgInfo()->SetLocale(loc);
+		}
+	}
+
+	const std::locale TargetBase::GetLocale() {
+		return MsgInfo()->GetLocale();
+	}
+
 	msg_details::Message_Formatter* TargetBase::MsgFmt() {
 		return &msgPattern;
 	}

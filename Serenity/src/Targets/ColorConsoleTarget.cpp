@@ -130,6 +130,34 @@ namespace serenity::targets {
 		}    // IsValidHandle() Check
 	}            // PrintMessage()
 
+	// TODO: Add a function that checks if locale needs to be swapped as well
+	// TODO: as reset the old mode to its default if mode is changed in SetConsoleMode()
+	void ColorConsole::SetLocale(const std::locale& loc) {
+		using enum console_interface;
+		switch( consoleMode ) {
+				case std_out:
+					if( std::cout.getloc() != loc ) {
+							std::cout.imbue(loc);
+							std::wcout.imbue(loc);
+					}
+					break;
+				case std_err:
+					if( std::cerr.getloc() != loc ) {
+							std::cerr.imbue(loc);
+							std::wcerr.imbue(loc);
+					}
+					break;
+				case std_log:
+					if( std::clog.getloc() != loc ) {
+							std::clog.imbue(loc);
+							std::wclog.imbue(loc);
+					}
+					break;
+			}
+
+		TargetBase::SetLocale(loc);
+	}
+
 	void ColorConsole::SetOriginalColors() {
 		msgLevelColors = {
 			{LoggerLevel::trace,    se_colors::bright_colors::combos::white::on_black},

@@ -297,6 +297,12 @@ namespace serenity::experimental::targets {
 		return false;
 	}
 
+	void RotatingTarget::SetLocale(const std::locale &loc)
+	{
+		// Explicitly stating the override to ensure file target's function is called rather that the base class
+		FileTarget::SetLocale(loc);
+	}
+
 	void RotatingTarget::SetRotationSetting( IntervalMode mode, size_t setting, size_t secondSetting )
 	{
 		using mType = RotateSettings::IntervalMode;

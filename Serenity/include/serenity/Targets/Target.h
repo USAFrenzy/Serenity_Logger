@@ -32,16 +32,18 @@ namespace serenity::targets {
 			template<typename... Args> void Warn(std::string_view msg, Args&&... args);
 			template<typename... Args> void Error(std::string_view msg, Args&&... args);
 			template<typename... Args> void Fatal(std::string_view msg, Args&&... args);
+			virtual void SetLocale(const std::locale& loc);
+			const std::locale GetLocale();
 
 		protected:
+			virtual void PolicyFlushOn() { }
+
 			msg_details::Message_Formatter* MsgFmt();
 			msg_details::Message_Info* MsgInfo();
 			void WriteToBaseBuffer(bool fmtToBuf = true);
 			const bool isWriteToBuf();
 			std::string* const Buffer();
 			virtual void PrintMessage(std::string_view formatted) = 0;
-
-			virtual void PolicyFlushOn() { }
 
 		private:
 			bool toBuffer;

@@ -22,6 +22,7 @@ namespace serenity::targets {
 			bool OpenFile(bool truncate = false);
 			bool CloseFile();
 			void Flush();
+			void SetLocale(const std::locale& loc) override;
 			void WriteToBaseBuffer(bool fmtToBuf = true);
 			const bool isWriteToBuf();
 			std::string* const Buffer();

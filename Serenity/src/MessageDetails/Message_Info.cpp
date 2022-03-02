@@ -2,7 +2,7 @@
 
 namespace serenity::msg_details {
 	Message_Info::Message_Info(std::string_view name, LoggerLevel level, message_time_mode mode)
-		: m_name(name), m_msgLevel(level), m_msgTime(mode) {
+		: m_name(name), m_msgLevel(level), m_msgTime(mode), m_locale(globals::default_locale) {
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;
 #elif defined MAC_PLATFORM
@@ -54,5 +54,13 @@ namespace serenity::msg_details {
 
 	const size_t Message_Info::MessageSize() {
 		return m_message.size();
+	}
+
+	void Message_Info::SetLocale(const std::locale& loc) {
+		m_locale = loc;
+	}
+
+	const std::locale Message_Info::GetLocale() {
+		return m_locale;
 	}
 }    // namespace serenity::msg_details

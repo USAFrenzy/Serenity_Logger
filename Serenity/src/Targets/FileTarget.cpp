@@ -4,8 +4,7 @@
 
 namespace serenity::targets {
 
-	static int tries { 0 }, retryAttempt { 5 };
-	static std::mutex dummyMutex;
+	static constexpr int retryAttempt { 5 };
 
 	FileTarget::FileTarget(): TargetBase("File_Logger") {
 		fileOptions.fileBuffer.reserve(fileOptions.bufferSize);
@@ -30,6 +29,9 @@ namespace serenity::targets {
 				std::cerr << e.what() << "\n";
 				CloseFile();
 			}
+		if( fileHandle.getloc() != MsgInfo()->GetLocale() ) {
+				fileHandle.imbue(MsgInfo()->GetLocale());
+		}
 	}
 
 	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists): TargetBase("File_Logger") {
@@ -53,6 +55,9 @@ namespace serenity::targets {
 				std::cerr << e.what() << "\n";
 				CloseFile();
 			}
+		if( fileHandle.getloc() != MsgInfo()->GetLocale() ) {
+				fileHandle.imbue(MsgInfo()->GetLocale());
+		}
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists): TargetBase(name) {
@@ -74,6 +79,9 @@ namespace serenity::targets {
 				std::cerr << e.what() << "\n";
 				CloseFile();
 			}
+		if( fileHandle.getloc() != MsgInfo()->GetLocale() ) {
+				fileHandle.imbue(MsgInfo()->GetLocale());
+		}
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
@@ -96,6 +104,9 @@ namespace serenity::targets {
 				std::cerr << e.what() << "\n";
 				CloseFile();
 			}
+		if( fileHandle.getloc() != MsgInfo()->GetLocale() ) {
+				fileHandle.imbue(MsgInfo()->GetLocale());
+		}
 	}
 
 	FileTarget::~FileTarget() {
@@ -137,7 +148,7 @@ namespace serenity::targets {
 				flushWorker.cleanUpThreads.store(true);
 				flushWorker.cleanUpThreads.notify_one();
 				while( !flushWorker.flushThread.joinable() ) {
-						std::this_thread::sleep_for(std::chrono::milliseconds(10));
+						std::this_thread::sleep_for(std::chrono::nanoseconds(50));
 					}
 				flushWorker.flushThread.join();
 		}
@@ -145,16 +156,16 @@ namespace serenity::targets {
 
 		auto TryClose = [ this ]() {
 			fileHandle.close();
-			std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 			return !fileHandle.is_open();
 		};
-		for( tries = 0; tries < retryAttempt; ++tries ) {
+		for( int tries = 0; tries < retryAttempt; ++tries ) {
 				fileHandle.clear();
 				if( tries == retryAttempt ) {
 						std::cerr << "Max Attempts At Closing File Reached - Unable To Close File\n";
 						return false;
 				}
 				if( TryClose() ) break;
+				std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 			}
 		return true;
 	}
@@ -198,6 +209,13 @@ namespace serenity::targets {
 				Buffer()->clear();
 		}
 		fileHandle.flush();
+	}
+
+	void FileTarget::SetLocale(const std::locale& loc) {
+		if( fileHandle.getloc() != loc ) {
+				fileHandle.imbue(loc);
+		}
+		TargetBase::SetLocale(loc);
 	}
 
 	void FileTarget::WriteToBaseBuffer(bool fmtToBuf) {
