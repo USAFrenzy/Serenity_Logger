@@ -187,11 +187,13 @@ namespace serenity::experimental::targets {
 	}
 
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
-		auto flushThread { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
-		if( flushThread ) {
-				while( !flushWorker.readWriteMutex.try_lock() ) {
-						std::this_thread::sleep_for(std::chrono::milliseconds(10));
-					}
+		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
+
+		if( flushThreadEnabled ) {
+				if( !flushWorker.flushComplete.load() ) {
+						flushWorker.flushComplete.wait(false);
+				}
+				flushWorker.threadWriting.store(true);
 		}
 		if( ShouldRotate() ) {
 				RotateFile();
@@ -199,8 +201,9 @@ namespace serenity::experimental::targets {
 		}
 		fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
 		SetCurrentFileSize(FileSize() + formatted.size());
-		if( flushThread ) {
-				flushWorker.readWriteMutex.unlock();
+		if( flushThreadEnabled ) {
+				flushWorker.threadWriting.store(false);
+				flushWorker.threadWriting.notify_one();
 		}
 	}
 

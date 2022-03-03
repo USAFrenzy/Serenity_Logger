@@ -194,17 +194,31 @@ namespace serenity::targets {
 	}
 
 	void FileTarget::PrintMessage(std::string_view formatted) {
-		std::unique_lock<std::mutex> lock(flushWorker.readWriteMutex, std::defer_lock);
-		if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
-				lock.lock();
+		//	std::unique_lock<std::mutex> lock(flushWorker.readWriteMutex, std::defer_lock);
+		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
+
+		if( flushThreadEnabled ) {
+				if( !flushWorker.flushComplete.load() ) {
+						flushWorker.flushComplete.wait(false);
+				}
+				flushWorker.threadWriting.store(true);
 		}
+
 		fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
+
+		if( flushThreadEnabled ) {
+				flushWorker.threadWriting.store(false);
+				flushWorker.threadWriting.notify_one();
+		}
 	}
 
 	void FileTarget::Flush() {
-		std::unique_lock<std::mutex> lock(flushWorker.readWriteMutex, std::defer_lock);
-		if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
-				lock.lock();
+		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
+		if( flushThreadEnabled ) {
+				if( flushWorker.threadWriting.load() ) {
+						flushWorker.threadWriting.wait(true);
+				}
+				flushWorker.flushComplete.store(false);
 		}
 		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
 		if( Buffer()->size() != 0 ) {
@@ -212,6 +226,10 @@ namespace serenity::targets {
 				Buffer()->clear();
 		}
 		fileHandle.flush();
+		if( flushThreadEnabled ) {
+				flushWorker.flushComplete.store(true);
+				flushWorker.flushComplete.notify_one();
+		}
 	}
 
 	void FileTarget::SetLocale(const std::locale& loc) {
@@ -237,7 +255,6 @@ namespace serenity::targets {
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::never ) return;
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::always ) {
 				Flush();
-				return;
 		}
 		switch( policy.SubSetting() ) {
 				case serenity::experimental::PeriodicOptions::timeBased:
@@ -247,6 +264,7 @@ namespace serenity::targets {
 						auto periodic_flush = [ this ]() {
 							namespace ch = std::chrono;
 							ch::milliseconds lastTimePoint { 0 };
+
 							while( !flushWorker.cleanUpThreads.load() ) {
 									auto now = ch::duration_cast<ch::milliseconds>(
 									ch::system_clock::now().time_since_epoch());
@@ -270,8 +288,7 @@ namespace serenity::targets {
 						Flush();
 					}
 					break;
-				default: break;    // Don't bother with undef field
-			}                          // Sub Option Check
-	}                                          // PolicyFlushOn( ) Function
+			}    // Sub Option Check
+	}                    // PolicyFlushOn( ) Function
 
 }    // namespace serenity::targets
