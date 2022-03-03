@@ -5,33 +5,33 @@ namespace serenity::targets {
 
 	TargetBase::TargetBase()
 		: toBuffer(false),
-		  policy(serenity::experimental::FlushSetting::never),
 		  logLevel(LoggerLevel::trace),
 		  msgLevel(LoggerLevel::trace),
 		  pattern(DEFAULT_PATTERN),
 		  msgDetails("Base Logger", msgLevel, message_time_mode::local),
 		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false) { }
+		  multiThreadSupport(false),
+		  policy(serenity::experimental::FlushSetting::never) { }
 
 	TargetBase::TargetBase(std::string_view name)
 		: toBuffer(false),
-		  policy(serenity::experimental::FlushSetting::never),
 		  logLevel(LoggerLevel::trace),
 		  msgLevel(LoggerLevel::trace),
 		  pattern(DEFAULT_PATTERN),
 		  msgDetails(name, msgLevel, message_time_mode::local),
 		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false) { }
+		  multiThreadSupport(false),
+		  policy(serenity::experimental::FlushSetting::never) { }
 
 	TargetBase::TargetBase(std::string_view name, std::string_view fmtPattern)
 		: toBuffer(false),
-		  policy(serenity::experimental::FlushSetting::never),
 		  logLevel(LoggerLevel::trace),
 		  msgLevel(LoggerLevel::trace),
 		  pattern(fmtPattern),
 		  msgDetails(name, msgLevel, message_time_mode::local),
 		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false) { }
+		  multiThreadSupport(false),
+		  policy(serenity::experimental::FlushSetting::never) { }
 
 	void TargetBase::WriteToBaseBuffer(bool fmtToBuf) {
 		toBuffer = fmtToBuf;
@@ -70,6 +70,9 @@ namespace serenity::targets {
 	const std::locale TargetBase::GetLocale() {
 		return MsgInfo()->GetLocale();
 	}
+
+	// Leaving empty for derived classes to implement
+	void TargetBase::PolicyFlushOn() { }
 
 	msg_details::Message_Formatter* TargetBase::MsgFmt() {
 		return &msgPattern;

@@ -29,10 +29,7 @@ namespace serenity::msg_details {
 
 			template<typename... Args> void SetMessage(const std::string_view message, Args&&... args) {
 				m_message.clear();
-
-				m_locale != globals::default_locale ? VFORMAT_TO_LOC(m_message, m_locale, message, std::forward<Args>(args)...)
-								    : VFORMAT_TO(m_message, message, std::forward<Args>(args)...);
-
+				VFORMAT_TO(m_message, m_locale, message, std::forward<Args>(args)...);
 				m_message.append(SERENITY_LUTS::line_ending.at(platformEOL));
 			}
 

@@ -36,18 +36,16 @@ namespace serenity::targets {
 			const std::locale GetLocale();
 
 		protected:
-			virtual void PolicyFlushOn() { }
-
 			msg_details::Message_Formatter* MsgFmt();
 			msg_details::Message_Info* MsgInfo();
 			void WriteToBaseBuffer(bool fmtToBuf = true);
 			const bool isWriteToBuf();
 			std::string* const Buffer();
 			virtual void PrintMessage(std::string_view formatted) = 0;
+			virtual void PolicyFlushOn();
 
 		private:
 			bool toBuffer;
-			serenity::experimental::Flush_Policy policy;
 			LoggerLevel logLevel;
 			LoggerLevel msgLevel;
 			std::string pattern;
@@ -55,6 +53,9 @@ namespace serenity::targets {
 			msg_details::Message_Formatter msgPattern;
 			std::string internalBuffer;
 			bool multiThreadSupport;
+
+		protected:
+			serenity::experimental::Flush_Policy policy;
 	};
 
 #include "Target-impl.h"

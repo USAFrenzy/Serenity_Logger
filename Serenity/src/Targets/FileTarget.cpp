@@ -122,23 +122,29 @@ namespace serenity::targets {
 	}
 
 	bool FileTarget::OpenFile(bool truncate) {
-		try {
+		auto TryOpen = [ &, this ]() {
 #ifndef WINDOWS_PLATFORM
-				fileHandle.rdbuf()->pubsetbuf(fileBuffer.data(), bufferSize);
+			fileHandle.rdbuf()->pubsetbuf(fileBuffer.data(), bufferSize);
 #endif    // !WINDOWS_PLATFORM
-				if( !truncate ) {
-						fileHandle.open(fileOptions.filePath.string(), std::ios_base::binary | std::ios_base::app);
-				} else {
-						fileHandle.open(fileOptions.filePath.string(), std::ios_base::binary | std::ios_base::trunc);
-					}
+			if( !truncate ) {
+					fileHandle.open(fileOptions.filePath.string(), std::ios_base::binary | std::ios_base::app);
+			} else {
+					fileHandle.open(fileOptions.filePath.string(), std::ios_base::binary | std::ios_base::trunc);
+				}
 #ifdef WINDOWS_PLATFORM
-				fileHandle.rdbuf()->pubsetbuf(fileOptions.fileBuffer.data(), fileOptions.bufferSize);
+			fileHandle.rdbuf()->pubsetbuf(fileOptions.fileBuffer.data(), fileOptions.bufferSize);
 #endif    // WINDOWS_PLATFORM
-			}
-		catch( const std::exception& e ) {
-				std::cerr << "Error In Opening File:\n";
-				std::cerr << e.what() << "\n";
-				return false;
+			return fileHandle.is_open();
+		};
+
+		for( int tries = 0; tries < retryAttempt; ++tries ) {
+				fileHandle.clear();
+				if( tries == retryAttempt ) {
+						std::cerr << "Max Attempts At Opening File Reached - Unable To Open File\n";
+						return false;
+				}
+				if( TryOpen() ) break;
+				std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 			}
 		return true;
 	}
@@ -188,21 +194,18 @@ namespace serenity::targets {
 	}
 
 	void FileTarget::PrintMessage(std::string_view formatted) {
-		// naive guard from always trying to take a lock regardless of whether the background flush thread is running or not
-		// (using manual lock due to scoping here)
-		auto flushThread { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
-		if( flushThread ) {
-				while( !flushWorker.readWriteMutex.try_lock() ) {
-						std::this_thread::sleep_for(std::chrono::milliseconds(10));
-					}
+		std::unique_lock<std::mutex> lock(flushWorker.readWriteMutex, std::defer_lock);
+		if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
+				lock.lock();
 		}
 		fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
-		if( flushThread ) {
-				flushWorker.readWriteMutex.unlock();
-		}
 	}
 
 	void FileTarget::Flush() {
+		std::unique_lock<std::mutex> lock(flushWorker.readWriteMutex, std::defer_lock);
+		if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
+				lock.lock();
+		}
 		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
 		if( Buffer()->size() != 0 ) {
 				fileHandle.rdbuf()->sputn(Buffer()->data(), Buffer()->size());
@@ -231,7 +234,6 @@ namespace serenity::targets {
 	}
 
 	void FileTarget::PolicyFlushOn() {
-		auto policy { Policy() };
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::never ) return;
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::always ) {
 				Flush();
@@ -242,18 +244,14 @@ namespace serenity::targets {
 					{
 						if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) return;
 						// lambda that starts a background thread to flush on time interval given
-						auto periodic_flush = [ this ](const serenity::experimental::Flush_Policy& policy) {
+						auto periodic_flush = [ this ]() {
 							namespace ch = std::chrono;
-							static ch::milliseconds lastTimePoint {};
-							auto t_policy { policy };
-
+							ch::milliseconds lastTimePoint { 0 };
 							while( !flushWorker.cleanUpThreads.load() ) {
 									auto now = ch::duration_cast<ch::milliseconds>(
 									ch::system_clock::now().time_since_epoch());
 									auto elapsed = ch::duration_cast<ch::milliseconds>(now - lastTimePoint);
-									auto shouldFlush { elapsed >= t_policy.SecondarySettings().flushEvery };
-
-									if( shouldFlush ) {
+									if( elapsed >= policy.SecondarySettings().flushEvery ) {
 											Flush();
 									}
 									lastTimePoint = now;
@@ -261,7 +259,7 @@ namespace serenity::targets {
 						};    // periodic_flush lambda
 
 						if( !flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
-								flushWorker.flushThread = std::thread(periodic_flush, Policy());
+								flushWorker.flushThread = std::thread(periodic_flush);
 								flushWorker.flushThreadEnabled.store(true);
 						}
 					}
