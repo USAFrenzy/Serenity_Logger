@@ -1,0 +1,4 @@
+1) If multiple runs are made, the rotating logger keeps the original named log txt
+  - i.e. if log_01.txt, log_02.txt, log_03.txt exist and 3 was the max files to create:
+    On multiple runs, the original log.txt is kept and not removed and the final result is that 
+    now we have 4 text files that are being rotated through despite 3 being the max.

@@ -43,5 +43,4 @@ namespace serenity::experimental {
 	const bool RotateSettings::IsIntervalRotationEnabled() {
 		return initalRotationEnabled;
 	}
-
 }    // namespace serenity::experimental

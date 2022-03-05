@@ -39,8 +39,10 @@ namespace serenity::experimental::targets {
 			void SetRotationMode(IntervalMode mode);
 			const RotateSettings::IntervalMode RotationMode();
 
-		private:
+		protected:
 			void PrintMessage(std::string_view formatted) override;
+
+		private:
 			bool shouldRotate;
 			IntervalMode m_mode;
 			int currentDay, currentWeekday, currentHour;

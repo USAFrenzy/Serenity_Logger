@@ -9,7 +9,7 @@
 #include <chrono>
 
 namespace serenity::targets {
-	class TargetBase
+	class TargetBase: public serenity::experimental::Flush_Policy
 	{
 		public:
 			TargetBase();

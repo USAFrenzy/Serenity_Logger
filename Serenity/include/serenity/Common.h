@@ -205,16 +205,11 @@ namespace serenity {
 		utc
 	};
 
-	// Possibly just turn this into a class given the idea of adding wrapper functions below
 	struct BackgroundThread
 	{
-			// TODO: Make flushThread a jthread object and make use of the stop_token functionality
-			// TODO: to possibly simplify this struct further. Add in some functions to wrap the
-			// TODO: atomic calls (notify/waiting/storing) so that I minimize leaving something out
-			// TODO: or incorrectly writing calls in other functions that would utilize this struct.
 			std::atomic<bool> cleanUpThreads { false };
 			std::atomic<bool> flushThreadEnabled { false };
-			std::atomic<bool> flushComplete { false };
+			std::atomic<bool> flushComplete { true };
 			std::atomic<bool> threadWriting { false };
 			std::thread flushThread;
 	};

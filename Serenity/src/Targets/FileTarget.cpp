@@ -149,15 +149,24 @@ namespace serenity::targets {
 		return true;
 	}
 
-	bool FileTarget::CloseFile() {
-		if( flushWorker.flushThreadEnabled.load(std::memory_order_relaxed) ) {
+	void serenity::targets::FileTarget::StopBackgroundThread() {
+		if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
 				flushWorker.cleanUpThreads.store(true);
 				flushWorker.cleanUpThreads.notify_one();
 				while( !flushWorker.flushThread.joinable() ) {
-						std::this_thread::sleep_for(std::chrono::nanoseconds(50));
+						std::this_thread::sleep_for(std::chrono::milliseconds(100));
 					}
 				flushWorker.flushThread.join();
+				// change the primary mode so as not to launch another thread upon a message log.
+				// Requires SetPrimaryMode(FlushSetting::Periodically) to be called again to
+				// re-enable when a new message is logged
+				policy.SetPrimaryMode(serenity::experimental::FlushSetting::never);
+				flushWorker.flushThreadEnabled.store(false);
 		}
+	}
+
+	bool FileTarget::CloseFile() {
+		StopBackgroundThread();
 		Flush();
 
 		auto TryClose = [ this ]() {
@@ -194,9 +203,7 @@ namespace serenity::targets {
 	}
 
 	void FileTarget::PrintMessage(std::string_view formatted) {
-		//	std::unique_lock<std::mutex> lock(flushWorker.readWriteMutex, std::defer_lock);
 		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) };
-
 		if( flushThreadEnabled ) {
 				if( !flushWorker.flushComplete.load() ) {
 						flushWorker.flushComplete.wait(false);

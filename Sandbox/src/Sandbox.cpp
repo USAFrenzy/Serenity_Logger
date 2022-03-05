@@ -124,7 +124,7 @@ int main() {
 	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
 
 	// ****************************** TEMPORARY TESTING ********************************************
-	// Even with the checks involved, only slows the file down from 35% faster to ~20% faster instead
+	// Even with the checks involved, only slows the file down from ~35% faster to ~25%-28% faster instead
 	PeriodicSettings flushSettings = {};
 	flushSettings.flushEvery       = std::chrono::milliseconds(500);
 	Flush_Policy flushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, flushSettings);
@@ -323,6 +323,7 @@ int main() {
 			testFile.Info("{}", test);
 		}
 	macroTesterFile.StopWatch_Stop();
+	testFile.StopBackgroundThread();
 	testFile.Flush();
 	auto totalFileTime = macroTesterFile.Elapsed_In(time_mode::ms);
 	std::cout << "\nFile Target Bench Finished. Benching Spdlog Basic File Sink...\n";

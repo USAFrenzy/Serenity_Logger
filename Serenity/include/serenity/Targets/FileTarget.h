@@ -26,6 +26,7 @@ namespace serenity::targets {
 			void WriteToBaseBuffer(bool fmtToBuf = true);
 			const bool isWriteToBuf();
 			std::string* const Buffer();
+			void StopBackgroundThread();
 
 		private:
 			LoggerLevel logLevel;
