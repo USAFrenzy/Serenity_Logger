@@ -10,22 +10,22 @@
 #include <thread>
 
 #ifdef DOXYGEN_DOCUMENTATION
-/// @brief If _WIN32 is defined, then this is also defined.
-/// @details If this macro is defined, includes the Windows.h and io.h headers
-/// as well as defines ISATTY to _isatty and FILENO to _fileno. If
-/// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
+	/// @brief If _WIN32 is defined, then this is also defined.
+        /// @details If this macro is defined, includes the Windows.h and io.h headers
+        /// as well as defines ISATTY to _isatty and FILENO to _fileno. If
+        /// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
 	#define WINDOWS_PLATFORM
-/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also
-/// defined.
-/// @details If this macro is defined, includes the unistd.h header and defines
-/// ISATTY to isatty and FILENO to fileno
+	/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also
+        /// defined.
+        /// @details If this macro is defined, includes the unistd.h header and defines
+        /// ISATTY to isatty and FILENO to fileno
 	#define MAC_PLATFORM
 #endif
 
 #ifdef _WIN32
 	#define WINDOWS_PLATFORM
-// I believe the below macro defines *should* cover some basic corner cases.
-// Mostly noticed this issue when I built this for VS 2022 to try out.
+	// I believe the below macro defines *should* cover some basic corner cases.
+        // Mostly noticed this issue when I built this for VS 2022 to try out.
 	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)
 		#define CONTEXT std::back_insert_iterator<std::basic_string<char>>
 		#define VFORMAT_TO(container, locale, message, ...)                                                                             \
@@ -99,25 +99,25 @@ namespace serenity {
 		// clang-format off
 
 		static constexpr std::array<std::string_view, 22> allValidFlags = {
-			"%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x", "%y", "%A", "%B", 
-			"%D", "%F", "%H", "%L", "%M", "%N", "%S", "%T", "%X", "%Y", "%+" 
+			"%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x", "%y", "%A", "%B",
+			"%D", "%F", "%H", "%L", "%M", "%N", "%S", "%T", "%X", "%Y", "%+"
 		};
 
-		static constexpr std::array<std::string_view, 7> short_weekdays = { 
-			"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" 
+		static constexpr std::array<std::string_view, 7> short_weekdays = {
+			"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 		};
 
-		static constexpr std::array<std::string_view, 7> long_weekdays = { 
-			"Sunday",   "Monday",  "Tuesday",  "Wednesday",  "Thursday",  "Friday",  "Saturday" 
+		static constexpr std::array<std::string_view, 7> long_weekdays = {
+			"Sunday",   "Monday",  "Tuesday",  "Wednesday",  "Thursday",  "Friday",  "Saturday"
 		};
 
-		static constexpr std::array<std::string_view, 12> short_months = { 
-			"Jan",  "Feb",  "Mar",  "Apr",  "May",  "Jun",  "Jul",  "Aug",  "Sep",  "Oct",  "Nov",  "Dec" 
+		static constexpr std::array<std::string_view, 12> short_months = {
+			"Jan",  "Feb",  "Mar",  "Apr",  "May",  "Jun",  "Jul",  "Aug",  "Sep",  "Oct",  "Nov",  "Dec"
 		};
 
-		static constexpr std::array<const char *, 12> long_months = { 
+		static constexpr std::array<const char*, 12> long_months = {
 			"January",   "February", "March",  "April",  "May",  "June",  "July",
-			"August",  "September",  "October",   "November",  "December" 
+			"August",  "September",  "October",   "November",  "December"
 		};
 
 		static constexpr std::array<std::string_view, 100> numberStr = {
@@ -134,32 +134,32 @@ namespace serenity {
 			{ LineEnd::mac,     "\r"  },
 		};
 
-		constexpr int JANUARY           =	 0;
-		constexpr int FEBRUARY			=	 1;
-		constexpr int MARCH				=	 2;
-		constexpr int APRIL					=	 3;
-		constexpr int MAY						=	 4;
-		constexpr int JUNE					=	 5;
-		constexpr int JULY						=	 6;
-		constexpr int AUGUST				=	 7;
-		constexpr int SEPTEMBER		=	 8;
-		constexpr int OCTOBER			=	 9;
-		constexpr int NOVEMBER		=	 10;
-		constexpr int DECEMBER		=	 11;
+		constexpr int JANUARY = 0;
+		constexpr int FEBRUARY = 1;
+		constexpr int MARCH = 2;
+		constexpr int APRIL = 3;
+		constexpr int MAY = 4;
+		constexpr int JUNE = 5;
+		constexpr int JULY = 6;
+		constexpr int AUGUST = 7;
+		constexpr int SEPTEMBER = 8;
+		constexpr int OCTOBER = 9;
+		constexpr int NOVEMBER = 10;
+		constexpr int DECEMBER = 11;
 
 		static std::unordered_map<int, int> daysPerMonth = {
 			{JANUARY,    31},
-            { FEBRUARY,  28},
-            { MARCH,     31},
-            { APRIL,     30},
-            { MAY,       31},
-            { JUNE,      30},
+			{ FEBRUARY,  28},
+			{ MARCH,     31},
+			{ APRIL,     30},
+			{ MAY,       31},
+			{ JUNE,      30},
 			{ JULY,      31},
-            { AUGUST,    31},
-            { SEPTEMBER, 30},
-            { OCTOBER,   31},
-            { NOVEMBER,  30},
-            { DECEMBER,  31},
+			{ AUGUST,    31},
+			{ SEPTEMBER, 30},
+			{ OCTOBER,   31},
+			{ NOVEMBER,  30},
+			{ DECEMBER,  31},
 		};
 		// clang-format on
 	}    // namespace SERENITY_LUTS
@@ -249,7 +249,7 @@ namespace serenity {
 				const bool IsIntervalRotationEnabled();
 				void CacheOriginalPathComponents(const std::filesystem::path& filePath);
 				void SetCurrentFileSize(size_t currentSize);
-				void InitFirstRotation(bool enabled = true);
+				void EnableFirstRotation(bool enabled = true);
 
 			private:
 				size_t currentFileSize { 0 };

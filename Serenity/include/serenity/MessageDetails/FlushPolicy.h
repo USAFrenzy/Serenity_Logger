@@ -21,14 +21,14 @@ namespace serenity::experimental {
 
 	struct PeriodicSettings
 	{
-			std::chrono::milliseconds flushEvery { std::chrono::milliseconds(500) };
+			std::chrono::milliseconds flushEvery { std::chrono::milliseconds(5000) };
 			LoggerLevel flushOn { LoggerLevel::trace };
 	};
 
 	class Flush_Policy
 	{
 		public:
-			Flush_Policy() = default;
+			Flush_Policy() = delete;
 			explicit Flush_Policy(FlushSetting primaryOpt);
 			explicit Flush_Policy(FlushSetting primaryOpt, PeriodicOptions secondaryOpt, PeriodicSettings settings);
 			explicit Flush_Policy(FlushSetting primaryOpt, PeriodicOptions secondaryOpt);
@@ -49,6 +49,5 @@ namespace serenity::experimental {
 			FlushSetting mainOpt;
 			PeriodicOptions subOpt;
 			PeriodicSettings subSettings;
-			std::mutex policyMutex;
 	};
 }    // namespace serenity::experimental

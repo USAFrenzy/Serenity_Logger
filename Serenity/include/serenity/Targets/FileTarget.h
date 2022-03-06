@@ -30,6 +30,7 @@ namespace serenity::targets {
 
 		private:
 			LoggerLevel logLevel;
+			mutable std::mutex fileMutex;
 
 		protected:
 			std::ofstream fileHandle;

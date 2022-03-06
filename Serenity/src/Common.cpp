@@ -36,7 +36,7 @@ namespace serenity::experimental {
 		return currentFileSize;
 	}
 
-	void RotateSettings::InitFirstRotation(bool enabled) {
+	void RotateSettings::EnableFirstRotation(bool enabled) {
 		initalRotationEnabled = enabled;
 	}
 

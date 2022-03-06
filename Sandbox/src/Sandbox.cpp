@@ -10,7 +10,7 @@
 // TODO: ####################################################################################################################################
 // clang-format on
 
-#define INSTRUMENT 1
+#define INSTRUMENT 0
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -20,20 +20,20 @@
 // TODO: and then figure a way to add user defined flags and formatting
 // callbacks
 /************************************************************************************************************
-                                       custom flags
-                            ************************************
-    - %N (Name)                   - %L (Full Message Level)      - %x (Short
+                                                                           custom flags
+                                                        ************************************
+        - %N (Name)                   - %L (Full Message Level)      - %x (Short
 Weekday String)
-    - %l (Short Message Level)	    - %n (DD/MMM/YY Date)          - %X (Long
+        - %l (Short Message Level)	    - %n (DD/MMM/YY Date)          - %X (Long
 Weekday String)
 
-                              The rest are strftime equivalents
-                         ******************************************
-    - %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
-    - %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year
+                                                          The rest are strftime equivalents
+                                                 ******************************************
+        - %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
+        - %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year
 XXXX)
-    - %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
-    - %B (Full Month Name)	   - %H (24hr Hour format)	         - %y (year
+        - %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
+        - %B (Full Month Name)	   - %H (24hr Hour format)	         - %y (year
 XX Format)
 ************************************************************************************************************/
 
@@ -125,10 +125,10 @@ int main() {
 
 	// ****************************** TEMPORARY TESTING ********************************************
 	// Even with the checks involved, only slows the file down from ~35% faster to ~25%-28% faster instead
-	PeriodicSettings flushSettings = {};
-	flushSettings.flushEvery       = std::chrono::milliseconds(500);
-	Flush_Policy flushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, flushSettings);
-	testFile.SetFlushPolicy(flushPolicy);
+	PeriodicSettings testFileFlushSettings = {};
+	testFileFlushSettings.flushEvery       = std::chrono::milliseconds(500);
+	Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
+	testFile.SetFlushPolicy(testFIleFlushPolicy);
 	// ****************************** TEMPORARY TESTING ********************************************
 
 #ifndef INSTRUMENTATION_ENABLED
@@ -189,15 +189,16 @@ int main() {
 	testFile.Fatal("This Is A Fatal Message To The File");
 	testFile.RenameFile("Renamed_File.txt");
 	testFile.Trace("File Should Have Been Renamed To \"Renamed_File.txt\"");
+	testFile.StopBackgroundThread();
 	testFile.Flush();
 
 	RotateSettings settings;
-	settings.fileSizeLimit         = 128 * KB;
+	settings.fileSizeLimit         = 512 * KB;
 	settings.maxNumberOfFiles      = 10;
-	settings.monthModeSetting      = 9;
-	settings.weekModeSetting       = 3;
-	settings.dayModeSettingHour    = 10;
-	settings.dayModeSettingMinute  = 35;
+	settings.monthModeSetting      = 3;
+	settings.weekModeSetting       = 5;
+	settings.dayModeSettingHour    = 19;
+	settings.dayModeSettingMinute  = 30;
 
 	PeriodicSettings flushSettings = {};
 	flushSettings.flushEvery       = std::chrono::seconds(60);
@@ -205,7 +206,6 @@ int main() {
 
 	rotatingFile.SetRotateSettings(settings);
 	rotatingFile.SetFlushPolicy(flushPolicy);
-
 	rotatingFile.SetRotationMode(RotateSettings::IntervalMode::daily);
 
 	auto onSizeFilePath = LogDirPath() /= "FileSize/OnSizeRotation.txt";
@@ -228,40 +228,48 @@ int main() {
 
 	size_t rotationIterations = 1'000'000;
 	std::mutex consoleMutex;
+
 	auto NotifyConsole = [ & ](std::string message) {
-		std::lock_guard lock(consoleMutex);
+		std::unique_lock<std::mutex> lock(consoleMutex);
 		std::cout << message;
 	};
+
 	// Some more crude tests - testing rotational marks
 	std::cout << "\n\nLogging messages to test rotation on hour mark, daily "
 		     "mark, and file size\n\n";
 	auto LogHourly = [ & ]() {
+		std::mutex hourlyMutex;
 		for( int i = 1; i <= rotationIterations; ++i ) {
+				std::unique_lock<std::mutex> lock(hourlyMutex);
 				rotatingLoggerHourly.Info("Logging message {} to rotating file based on hour mode", i);
 				std::string message = "Message ";
 				message.append(std::to_string(i)).append(" Logged To File For Rotate On Hourly\n");
 				NotifyConsole(message);
-				std::this_thread::sleep_for(std::chrono::minutes(1));
+				// std::this_thread::sleep_for(std::chrono::minutes(1));
 			}
 	};
 
 	auto LogOnDaily = [ & ]() {
+		std::mutex dailyMutex;
 		for( int i = 1; i <= rotationIterations; ++i ) {
+				std::unique_lock<std::mutex> lock(dailyMutex);
 				rotatingFile.Info("Logging message {} to rotating file based on daily mode", i);
 				std::string message = "Message ";
 				message.append(std::to_string(i)).append(" Logged To File For Rotate On Daily\n");
 				NotifyConsole(message);
-				std::this_thread::sleep_for(std::chrono::minutes(2));
+				//	std::this_thread::sleep_for(std::chrono::minutes(2));
 			}
 	};
 
 	auto LogOnSize = [ & ]() {
+		std::mutex fileSizeMutex;
 		for( int i = 1; i <= rotationIterations; ++i ) {
+				std::unique_lock<std::mutex> lock(fileSizeMutex);
 				rotatingLoggerOnSize.Info("Logging message {} to rotating file based on file size mode", i);
 				std::string message = "Message ";
 				message.append(std::to_string(i)).append(" Logged To File For Rotate On Size\n");
 				NotifyConsole(message);
-				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+				//	std::this_thread::sleep_for(std::chrono::milliseconds(400));
 			}
 	};
 
@@ -269,7 +277,7 @@ int main() {
 	std::thread t2 { LogHourly };
 	std::thread t3 { LogOnDaily };
 	while( !(t1.joinable()) || !(t2.joinable()) || !(t3.joinable()) ) {
-			std::this_thread::sleep_for(std::chrono::seconds(5));
+			std::this_thread::sleep_for(std::chrono::nanoseconds(50));
 		}
 	t1.join();
 	t2.join();
