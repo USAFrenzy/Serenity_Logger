@@ -10,7 +10,7 @@
 // TODO: ####################################################################################################################################
 // clang-format on
 
-#define INSTRUMENT 0
+#define INSTRUMENT 1
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -125,10 +125,10 @@ int main() {
 
 	// ****************************** TEMPORARY TESTING ********************************************
 	// Even with the checks involved, only slows the file down from ~35% faster to ~25%-28% faster instead
-	PeriodicSettings testFileFlushSettings = {};
-	testFileFlushSettings.flushEvery       = std::chrono::milliseconds(500);
-	Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
-	testFile.SetFlushPolicy(testFIleFlushPolicy);
+	// PeriodicSettings testFileFlushSettings = {};
+	// testFileFlushSettings.flushEvery       = std::chrono::milliseconds(500);
+	// Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
+	// testFile.SetFlushPolicy(testFIleFlushPolicy);
 	// ****************************** TEMPORARY TESTING ********************************************
 
 #ifndef INSTRUMENTATION_ENABLED
@@ -196,9 +196,9 @@ int main() {
 	settings.fileSizeLimit         = 512 * KB;
 	settings.maxNumberOfFiles      = 10;
 	settings.monthModeSetting      = 3;
-	settings.weekModeSetting       = 5;
-	settings.dayModeSettingHour    = 19;
-	settings.dayModeSettingMinute  = 30;
+	settings.weekModeSetting       = 6;
+	settings.dayModeSettingHour    = 17;
+	settings.dayModeSettingMinute  = 05;
 
 	PeriodicSettings flushSettings = {};
 	flushSettings.flushEvery       = std::chrono::seconds(60);
@@ -245,7 +245,7 @@ int main() {
 				std::string message = "Message ";
 				message.append(std::to_string(i)).append(" Logged To File For Rotate On Hourly\n");
 				NotifyConsole(message);
-				// std::this_thread::sleep_for(std::chrono::minutes(1));
+				std::this_thread::sleep_for(std::chrono::minutes(1));
 			}
 	};
 
@@ -257,7 +257,7 @@ int main() {
 				std::string message = "Message ";
 				message.append(std::to_string(i)).append(" Logged To File For Rotate On Daily\n");
 				NotifyConsole(message);
-				//	std::this_thread::sleep_for(std::chrono::minutes(2));
+				std::this_thread::sleep_for(std::chrono::minutes(2));
 			}
 	};
 
@@ -269,7 +269,7 @@ int main() {
 				std::string message = "Message ";
 				message.append(std::to_string(i)).append(" Logged To File For Rotate On Size\n");
 				NotifyConsole(message);
-				//	std::this_thread::sleep_for(std::chrono::milliseconds(400));
+				std::this_thread::sleep_for(std::chrono::milliseconds(400));
 			}
 	};
 

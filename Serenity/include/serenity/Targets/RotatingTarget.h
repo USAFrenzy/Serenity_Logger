@@ -42,15 +42,17 @@ namespace serenity::experimental::targets {
 
 	protected:
 		void PrintMessage(std::string_view formatted) override;
+		bool RenameFileInRotation(std::filesystem::path newFilePath);
+		bool ReplaceOldFIleInRotation();
+		void PolicyFlushOn() override;
+		void BackgroundFlush() override;
 
 	private:
 		bool rotationEnabled;
 		IntervalMode m_mode;
 		int currentDay, currentWeekday, currentHour;
-		bool RenameFileInRotation(std::filesystem::path newFilePath);
-		bool ReplaceOldFIleInRotation();
-		void PolicyFlushOn() override;
 		mutable std::mutex rotatingMutex;
+		std::atomic<bool>  currrentlyRotatingFile{false};
 	};
 
 }    // namespace serenity::experimental::targets

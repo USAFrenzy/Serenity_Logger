@@ -152,7 +152,7 @@ namespace serenity::targets {
 	void serenity::targets::FileTarget::StopBackgroundThread() {
 		if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
 				flushWorker.cleanUpThreads.store(true);
-				flushWorker.cleanUpThreads.notify_one();
+				flushWorker.cleanUpThreads.notify_all();
 				while( !flushWorker.flushThread.joinable() ) {
 						std::this_thread::sleep_for(std::chrono::milliseconds(100));
 					}
@@ -220,7 +220,7 @@ namespace serenity::targets {
 						lock.unlock();
 				}
 				flushWorker.threadWriting.store(false);
-				flushWorker.threadWriting.notify_one();
+				flushWorker.threadWriting.notify_all();
 		}
 	}
 
@@ -241,24 +241,13 @@ namespace serenity::targets {
 				fileHandle.rdbuf()->sputn(Buffer()->data(), Buffer()->size());
 				Buffer()->clear();
 		}
-		fileHandle.flush();
-#ifndef NDEBUG
-		if( fileHandle.rdbuf()->pubsync() == 0 ) {
-				DB_PRINT("File Contents Fushed And Synced To DIsk For File\n\t {}\n", FileName());
-				std::getchar();
-		} else {
-				DB_PRINT("File Contents Fushed But Not Synced To DIsk For File\n\t {}\n", FileName());
-				std::getchar();
-			}
-#else
 		fileHandle.rdbuf()->pubsync();
-#endif
 		if( flushThreadEnabled ) {
 				if( lock.owns_lock() ) {
 						lock.unlock();
 				}
 				flushWorker.flushComplete.store(true);
-				flushWorker.flushComplete.notify_one();
+				flushWorker.flushComplete.notify_all();
 		}
 	}
 
@@ -281,10 +270,13 @@ namespace serenity::targets {
 		return TargetBase::Buffer();
 	}
 
-	// TODO: Look into this and possibl how I'm waiting with the atomics and locking
-	// I genuinely believe this is where my issue is on timed flushing =/ the specific calls for everything else;
-	// level based, rotational based (even the sub setting rotations) all work -> however, I seem to be unable
-	// to flush the contents on a timed basis reliably
+	void FileTarget::BackgroundFlush() {
+		while( !flushWorker.cleanUpThreads.load() ) {
+				Flush();
+				std::this_thread::sleep_for(policy.SecondarySettings().flushEvery);
+			}
+	}
+
 	void FileTarget::PolicyFlushOn() {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
 		if( isMTSupportEnabled() ) {
@@ -297,27 +289,8 @@ namespace serenity::targets {
 		switch( policy.SubSetting() ) {
 				case serenity::experimental::PeriodicOptions::timeBased:
 					{
-						if( flushWorker.flushThreadEnabled.load() ) return;
-						// lambda that starts a background thread to flush on time interval given
-						auto periodic_flush = [ this ]() {
-							namespace ch = std::chrono;
-							ch::milliseconds lastTimePoint { 0 };
-							std::mutex threadMutex;
-
-							while( !flushWorker.cleanUpThreads.load() ) {
-									std::unique_lock<std::mutex> lock(threadMutex);
-									auto now = ch::duration_cast<ch::milliseconds>(
-									ch::system_clock::now().time_since_epoch());
-									auto elapsed = ch::duration_cast<ch::milliseconds>(now - lastTimePoint);
-									if( elapsed >= policy.SecondarySettings().flushEvery ) {
-											Flush();
-									}
-									lastTimePoint = now;
-								}
-						};    // periodic_flush lambda
-
 						if( !flushWorker.flushThreadEnabled.load() ) {
-								flushWorker.flushThread = std::thread(periodic_flush);
+								flushWorker.flushThread = std::thread(&FileTarget::BackgroundFlush, this);
 								flushWorker.flushThreadEnabled.store(true);
 						}
 					}

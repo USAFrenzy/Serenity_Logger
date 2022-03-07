@@ -33,10 +33,11 @@ namespace serenity::targets {
 			mutable std::mutex fileMutex;
 
 		protected:
+			BackgroundThread flushWorker;
 			std::ofstream fileHandle;
 			FileSettings fileOptions;
-			BackgroundThread flushWorker;
 			void PolicyFlushOn() override;
 			void PrintMessage(std::string_view formatted) override;
+			virtual void BackgroundFlush();
 	};
 }    // namespace serenity::targets

@@ -185,6 +185,7 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::RotateFile() {
 		if( !rotationEnabled ) return;
+		currrentlyRotatingFile.store(true);
 		CloseFile();
 		if( !RenameFileInRotation(OriginalPath()) ) {
 				if( !ReplaceOldFIleInRotation() ) {
@@ -194,6 +195,8 @@ namespace serenity::experimental::targets {
 				}
 		}
 		SetCurrentFileSize(0);
+		currrentlyRotatingFile.store(false);
+		currrentlyRotatingFile.notify_all();
 	}
 
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
@@ -215,11 +218,8 @@ namespace serenity::experimental::targets {
 		fileHandle.rdbuf()->sputn(formatted.data(), formattedSize);
 		SetCurrentFileSize(FileSize() + formattedSize);
 		if( flushThreadEnabled ) {
-				if( lock.owns_lock() ) {
-						lock.unlock();
-				}
 				flushWorker.threadWriting.store(false);
-				flushWorker.threadWriting.notify_one();
+				flushWorker.threadWriting.notify_all();
 		}
 	}
 
@@ -390,6 +390,41 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::PolicyFlushOn()
 	{
-		FileTarget::PolicyFlushOn();
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
+		if (policy.PrimarySetting() == serenity::experimental::FlushSetting::never) return;
+		if (policy.PrimarySetting() == serenity::experimental::FlushSetting::always) {
+			Flush();
+		}
+		switch (policy.SubSetting()) {
+		case serenity::experimental::PeriodicOptions::timeBased:
+		{
+			if (!flushWorker.flushThreadEnabled.load()) {
+				flushWorker.flushThread = std::thread(&RotatingTarget::BackgroundFlush, this);
+				flushWorker.flushThreadEnabled.store(true);
+			}
+		}
+		break;    // time based bounds
+		case serenity::experimental::PeriodicOptions::logLevelBased:
+		{
+			if (MsgInfo()->MsgLevel() < policy.SecondarySettings().flushOn) return;
+			Flush();
+		}
+		break;
+		}    // Sub Option Check
 	}
+
+	void RotatingTarget::BackgroundFlush()
+	{
+		while (!flushWorker.cleanUpThreads.load()) {
+				if (currrentlyRotatingFile.load()) {
+					currrentlyRotatingFile.wait(true);
+				}
+				Flush();
+				std::this_thread::sleep_for(policy.SecondarySettings().flushEvery);
+			}
+	}
+
 }  // namespace serenity::experimental::targets
