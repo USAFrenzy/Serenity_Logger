@@ -328,7 +328,7 @@ namespace serenity::experimental::targets {
 		FileTarget::SetLocale(loc);
 	}
 
-	void RotatingTarget::SetRotationSetting(IntervalMode mode, size_t setting, size_t secondSetting)
+	void RotatingTarget::SetRotationSetting(IntervalMode mode, int  setting, int secondSetting)
 	{
 		using mType = RotateSettings::IntervalMode;
 		switch (m_mode) {

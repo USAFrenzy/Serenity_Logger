@@ -120,9 +120,9 @@ namespace serenity::targets {
 				message.append(msgColor).append(formatted).append(reset);
 #ifdef WINDOWS_PLATFORM
 				if( IsTerminalType() ) {
-						WriteConsole(outputHandle, message.data(), message.size(), NULL, NULL);
+						WriteConsole(outputHandle, message.data(), static_cast<DWORD>(message.size()), NULL, NULL);
 				} else {
-						WriteFile(outputHandle, message.data(), message.size(), NULL, NULL);
+						WriteFile(outputHandle, message.data(), static_cast<DWORD>(message.size()), NULL, NULL);
 					}
 #else
 				fwrite(message.data(), 1, message.size(), outputHandle);

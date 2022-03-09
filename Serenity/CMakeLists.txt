@@ -38,9 +38,18 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 
 target_link_libraries(${PROJECT_NAME} spdlog)
 
+if (CMAKE_CXX_COMPILER_ID
+    STREQUAL
+    "MSVC"
+)
+    set(STANDARD 23)
+else ()
+    set(STANDARD 20)
+endif ()
+
 set_target_properties(
     ${PROJECT_NAME}
-    PROPERTIES CXX_STANDARD 20
+    PROPERTIES CXX_STANDARD ${STANDARD}
                CMAKE_ARCHIVE_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/lib
                CMAKE_LIBRARY_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/lib
                CMAKE_RUNTIME_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/bin

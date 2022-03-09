@@ -34,7 +34,7 @@ namespace serenity::experimental::targets {
 		// - SetRotationSetting(IntervalMode::file_size, 512*KB) -> rotate when file hits 512KB
 		// - SetRotationSetting(IntervalMode::weekly, 2) -> Rotate Every Tuesday
 		// - SetRotationSetting(IntervalMode::monthly, 24) -> Rotate Every Month on the 24th day of that month.
-		void SetRotationSetting(IntervalMode mode, size_t setting, size_t secondSetting = 0);
+		void SetRotationSetting(IntervalMode mode, int setting, int secondSetting = 0);
 		// clang-format on	
 
 		void SetRotationMode(IntervalMode mode);
