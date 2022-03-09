@@ -19,8 +19,6 @@ if (CMAKE_CXX_COMPILER_ID
     "MSVC"
 )
     set(UTF8_FLAG "/utf-8")
-else ()
-    set(UTF8_FLAG "-utf-8")
 endif ()
 
 option(
