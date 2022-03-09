@@ -11,9 +11,9 @@ namespace serenity::msg_details {
 	{
 		public:
 			explicit Message_Formatter(std::string_view pattern, Message_Info* details);
-			~Message_Formatter()                              = default;
-			Message_Formatter()                               = delete;
-			Message_Formatter(const Message_Formatter&)       = delete;
+			~Message_Formatter()                        = default;
+			Message_Formatter()                         = delete;
+			Message_Formatter(const Message_Formatter&) = delete;
 			Message_Formatter& operator=(const Message_Info&) = delete;
 
 			struct Formatter

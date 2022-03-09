@@ -11,7 +11,7 @@ namespace serenity::msg_details {
 		public:
 			Message_Time() = delete;
 			explicit Message_Time(message_time_mode mode);
-			Message_Time(const Message_Time&)            = delete;
+			Message_Time(const Message_Time&) = delete;
 			Message_Time& operator=(const Message_Time&) = delete;
 			~Message_Time()                              = default;
 

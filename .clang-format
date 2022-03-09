@@ -603,7 +603,7 @@ PPIndentWidth: -1
 #     : aaaaaaaaaaaaaaaaaaaa(),
 #       bbbbbbbbbbbbbbbbbbbb(),
 #       cccccccccccccccccccc()
-PackConstructorInitializers: NextLine
+# PackConstructorInitializers: NextLine # clang-format v14
 
 PenaltyBreakAssignment: 30
 PenaltyBreakBeforeFirstCallParameter: 35
@@ -621,7 +621,7 @@ PointerAlignment: Left
 # Don’t change specifiers/qualifiers to either Left or Right alignment (default).
 # int const a;
 # const int *a;
-QualifierAlignment: Leave
+# QualifierAlignment: Leave # clang-format v14
 # The order in which the qualifiers appear. Order is an array that can contain any of the following:
 # - const
 # - inline
@@ -691,7 +691,7 @@ ReflowComments: true
 # 
 #                                 class C {};
 #                                 }
-SeparateDefinitionBlocks: Always
+# SeparateDefinitionBlocks: Always # clang-format v14
 # The maximal number of unwrapped lines that a short namespace spans. Defaults to 1.
 # This determines the maximum length of short namespaces by counting unwrapped lines 
 # (i.e. containing neither opening nor closing namespace brace) and makes “FixNamespaceComments” 

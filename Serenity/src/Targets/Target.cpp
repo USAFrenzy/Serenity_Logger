@@ -4,33 +4,18 @@ namespace serenity::targets {
 	constexpr const char* DEFAULT_PATTERN = "|%l| %x %n %T [%N]: %+";
 
 	TargetBase::TargetBase()
-		: toBuffer(false),
-		  logLevel(LoggerLevel::trace),
-		  msgLevel(LoggerLevel::trace),
-		  pattern(DEFAULT_PATTERN),
-		  msgDetails("Base Logger", msgLevel, message_time_mode::local),
-		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false),
+		: toBuffer(false), logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
+		  msgDetails("Base Logger", msgLevel, message_time_mode::local), msgPattern(pattern, &msgDetails), multiThreadSupport(false),
 		  policy(serenity::experimental::FlushSetting::never) { }
 
 	TargetBase::TargetBase(std::string_view name)
-		: toBuffer(false),
-		  logLevel(LoggerLevel::trace),
-		  msgLevel(LoggerLevel::trace),
-		  pattern(DEFAULT_PATTERN),
-		  msgDetails(name, msgLevel, message_time_mode::local),
-		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false),
+		: toBuffer(false), logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
+		  msgDetails(name, msgLevel, message_time_mode::local), msgPattern(pattern, &msgDetails), multiThreadSupport(false),
 		  policy(serenity::experimental::FlushSetting::never) { }
 
 	TargetBase::TargetBase(std::string_view name, std::string_view fmtPattern)
-		: toBuffer(false),
-		  logLevel(LoggerLevel::trace),
-		  msgLevel(LoggerLevel::trace),
-		  pattern(fmtPattern),
-		  msgDetails(name, msgLevel, message_time_mode::local),
-		  msgPattern(pattern, &msgDetails),
-		  multiThreadSupport(false),
+		: toBuffer(false), logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(fmtPattern),
+		  msgDetails(name, msgLevel, message_time_mode::local), msgPattern(pattern, &msgDetails), multiThreadSupport(false),
 		  policy(serenity::experimental::FlushSetting::never) { }
 
 	void TargetBase::WriteToBaseBuffer(bool fmtToBuf) {

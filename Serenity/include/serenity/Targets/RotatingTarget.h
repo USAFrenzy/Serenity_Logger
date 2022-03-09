@@ -10,7 +10,7 @@ namespace serenity::experimental::targets {
 			explicit RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
 			explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
 			                        bool replaceIfExists = false);
-			RotatingTarget(const RotatingTarget&)            = delete;
+			RotatingTarget(const RotatingTarget&) = delete;
 			RotatingTarget& operator=(const RotatingTarget&) = delete;
 			~RotatingTarget();
 			void WriteToBaseBuffer(bool fmtToBuf = true);
