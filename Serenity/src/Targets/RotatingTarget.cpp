@@ -328,6 +328,13 @@ namespace serenity::experimental::targets {
 		FileTarget::SetLocale(loc);
 	}
 
+	// Might take a note from the interval flushing thread idea and make these a polling background thread as well.
+	// This way, no one has to explicitly wait for a new message to be logged before deciding whether the file should be rotated.
+	// Instead, after some sort of elapsed poll interval, the thread could check if the condition is met and rotate the file
+	// irregardless of whether a message needs to be logged or not - this way, it's consistent with what's expected for a 
+	// collection of logs. 
+	// * Polling is one idea; the other is somehow setting up a condition variable, but, I'm unsure of how to achieve this
+	//   without some form of polling anyways. So, for now anyways, I think a polling model will suffice.
 	void RotatingTarget::SetRotationSetting(IntervalMode mode, int  setting, int secondSetting)
 	{
 		using mType = RotateSettings::IntervalMode;

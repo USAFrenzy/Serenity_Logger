@@ -10,7 +10,7 @@ namespace serenity::experimental::targets {
 			explicit RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
 			explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
 			                        bool replaceIfExists = false);
-			RotatingTarget(const RotatingTarget&) = delete;
+			RotatingTarget(const RotatingTarget&)            = delete;
 			RotatingTarget& operator=(const RotatingTarget&) = delete;
 			~RotatingTarget();
 			void WriteToBaseBuffer(bool fmtToBuf = true);
@@ -34,7 +34,7 @@ namespace serenity::experimental::targets {
 		// - SetRotationSetting(IntervalMode::file_size, 512*KB) -> rotate when file hits 512KB
 		// - SetRotationSetting(IntervalMode::weekly, 2) -> Rotate Every Tuesday
 		// - SetRotationSetting(IntervalMode::monthly, 24) -> Rotate Every Month on the 24th day of that month.
-		void SetRotationSetting(IntervalMode mode, int setting, int secondSetting = 0);
+		void SetRotationSetting(IntervalMode mode, int setting = 0, int secondSetting = 0);
 		// clang-format on	
 
 		void SetRotationMode(IntervalMode mode);

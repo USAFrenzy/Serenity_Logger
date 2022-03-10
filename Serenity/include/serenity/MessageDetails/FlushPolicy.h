@@ -35,7 +35,7 @@ namespace serenity::experimental {
 			explicit Flush_Policy(PeriodicOptions secondaryOpt, PeriodicSettings settings);
 			Flush_Policy(const Flush_Policy& p);
 			Flush_Policy& operator=(const Flush_Policy& p);
-			~Flush_Policy()       = default;
+			~Flush_Policy() = default;
 
 			void SetPrimaryMode(FlushSetting primary);
 			void SetSecondaryMode(PeriodicOptions secondary);

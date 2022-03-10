@@ -12,14 +12,7 @@ include(cmake/CPM.cmake)
 cpmaddpackage("gh:gabime/spdlog@1.9.2")
 
 set(FLAG_STORAGE "")
-
-# Not sure if '/' or '-' really make a difference here could probably just simplify to '-utf-8'
-if (CMAKE_CXX_COMPILER_ID
-    STREQUAL
-    "MSVC"
-)
-    set(UTF8_FLAG "/utf-8")
-endif ()
+set(UTF8_FLAG "/utf-8")
 
 option(
     BUILD_SANDBOX
