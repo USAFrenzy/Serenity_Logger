@@ -46,3 +46,9 @@
 ###########################################################################################################################################################
 #     More to come as I look through what's been implemented, what can be simplified or expanded on, and what needs fixing, restructuring, or removal     #
 ###########################################################################################################################################################
+- In general, check out C++ 20's chrono additions in regards to calendar dates and times. After watching the Oct 2022 CppCon video on it, I believe I 
+  can move away from std::tm implementation in favor of this. I initially dabbled in it when first starting this project, but some support with <format> 
+  wasn't fully implemented yet. If it's fully supported now, I would love to move in that direction. I want to keep this project as close as possible to 
+  pure C++ constructs as possible without intermingling C if able to. This idea would translate into how the caching of variables in Message_Time and how 
+  the formatting in Message_Formatter class is handled and would have to be just as efficient and fast, if not better, than the current implementation.
+ 
