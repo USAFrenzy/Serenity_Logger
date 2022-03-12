@@ -3,21 +3,21 @@
 #include <iostream>
 
 namespace serenity::targets {
-	ColorConsole::ColorConsole(): TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false) {
+	ColorConsole::ColorConsole() : TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false) {
 		WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
-		if( IsValidHandle() && IsTerminalType() ) {
-				coloredOutput = true;
+		if (IsValidHandle() && IsTerminalType()) {
+			coloredOutput = true;
 		}
 	}
 
-	ColorConsole::ColorConsole(std::string_view name): TargetBase(name), consoleMode(console_interface::std_out), coloredOutput(false) {
+	ColorConsole::ColorConsole(std::string_view name) : TargetBase(name), consoleMode(console_interface::std_out), coloredOutput(false) {
 		WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
-		if( IsValidHandle() && IsTerminalType() ) {
-				coloredOutput = true;
+		if (IsValidHandle() && IsTerminalType()) {
+			coloredOutput = true;
 		}
 	}
 
@@ -26,27 +26,27 @@ namespace serenity::targets {
 		WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
-		if( IsValidHandle() && IsTerminalType() ) {
-				coloredOutput = true;
+		if (IsValidHandle() && IsTerminalType()) {
+			coloredOutput = true;
 		}
 	}
 
 	ColorConsole::~ColorConsole() {
 		// If console was redirected, flush output to destination
 #ifdef WINDOWS_PLATFORM
-		if( !IsTerminalType() ) {
-				FlushFileBuffers(outputHandle);
+		if (!IsTerminalType()) {
+			FlushFileBuffers(outputHandle);
 		}
-		DWORD opMode { 0 };
-		if( !GetConsoleMode(outputHandle, &opMode) ) {
-				exit(GetLastError());
+		DWORD opMode{ 0 };
+		if (!GetConsoleMode(outputHandle, &opMode)) {
+			exit(GetLastError());
 		}
-		if( !SetConsoleMode(outputHandle, opMode) ) {
-				exit(GetLastError());
+		if (!SetConsoleMode(outputHandle, opMode)) {
+			exit(GetLastError());
 		}
 #else
-		if( !IsTerminalType() ) {
-				fflush(outputHandle);
+		if (!IsTerminalType()) {
+			fflush(outputHandle);
 		}
 #endif       // WINDOWS_PLATFORM
 	}    // ~ColorConsole
@@ -60,14 +60,26 @@ namespace serenity::targets {
 	}
 
 	void ColorConsole::SetMsgColor(LoggerLevel level, std::string_view color) {
+		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		msgLevelColors.at(level) = color;
 	}
 
 	std::string_view ColorConsole::GetMsgColor(LoggerLevel level) {
+		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		return msgLevelColors.at(level);
 	}
 
 	void ColorConsole::ColorizeOutput(bool colorize) {
+		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		coloredOutput = colorize;
 	}
 
@@ -75,57 +87,72 @@ namespace serenity::targets {
 	// differently colored lines, This now ACTUALLY works as intended (color
 	// trailing might be result of known windows cell issue)
 	void ColorConsole::SetConsoleInterface(console_interface mode) {
+		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		consoleMode = mode;
 #ifdef WINDOWS_PLATFORM
-		if( mode == console_interface::std_out ) {
-				outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-		} else {
-				outputHandle = GetStdHandle(STD_ERROR_HANDLE);
-			}
-		DWORD opMode { 0 };
-		if( !GetConsoleMode(outputHandle, &opMode) ) {
-				exit(GetLastError());
+		if (mode == console_interface::std_out) {
+			outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		}
+		else {
+			outputHandle = GetStdHandle(STD_ERROR_HANDLE);
+		}
+		DWORD opMode{ 0 };
+		if (!GetConsoleMode(outputHandle, &opMode)) {
+			exit(GetLastError());
 		}
 		opMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-		if( !SetConsoleMode(outputHandle, opMode) ) {
-				exit(GetLastError());
+		if (!SetConsoleMode(outputHandle, opMode)) {
+			exit(GetLastError());
 		}
 #else
-		if( mode == console_interface::std_out ) {
-				outputHandle = stdout;
-		} else {
-				outputHandle = stderr;
-			}
+		if (mode == console_interface::std_out) {
+			outputHandle = stdout;
+		}
+		else {
+			outputHandle = stderr;
+		}
 #endif    // WINDOWS_PLATFORM
 	}
 
 	const console_interface ColorConsole::ConsoleInterface() {
+		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		return consoleMode;
 	}
 
 	bool ColorConsole::IsTerminalType() {
-		auto consoleType { (consoleMode == console_interface::std_out) ? stdout : stderr };
+		auto consoleType{ (consoleMode == console_interface::std_out) ? stdout : stderr };
 		return (ISATTY(FILENO(consoleType))) ? true : false;
 	}
 
 	void ColorConsole::PrintMessage(std::string_view formatted) {
+		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		std::string message;
-		std::string_view msgColor { "" }, reset { "" };
-		if( IsValidHandle() ) {
-				if( IsTerminalType() && coloredOutput ) {
-						msgColor = msgLevelColors.at(MsgInfo()->MsgLevel());
-						reset    = se_colors::formats::reset;
-				}
-				message.reserve(formatted.size() + msgColor.size() + reset.size());
-				message.append(msgColor).append(formatted).append(reset);
+		std::string_view msgColor{ "" }, reset{ "" };
+		if (IsValidHandle()) {
+			if (IsTerminalType() && coloredOutput) {
+				msgColor = msgLevelColors.at(MsgInfo()->MsgLevel());
+				reset = se_colors::formats::reset;
+			}
+			message.reserve(formatted.size() + msgColor.size() + reset.size());
+			message.append(msgColor).append(formatted).append(reset);
 #ifdef WINDOWS_PLATFORM
-				if( IsTerminalType() ) {
-						WriteConsole(outputHandle, message.data(), static_cast<DWORD>(message.size()), NULL, NULL);
-				} else {
-						WriteFile(outputHandle, message.data(), static_cast<DWORD>(message.size()), NULL, NULL);
-					}
+			if (IsTerminalType()) {
+				WriteConsole(outputHandle, message.data(), static_cast<DWORD>(message.size()), NULL, NULL);
+			}
+			else {
+				WriteFile(outputHandle, message.data(), static_cast<DWORD>(message.size()), NULL, NULL);
+			}
 #else
-				fwrite(message.data(), 1, message.size(), outputHandle);
+			fwrite(message.data(), 1, message.size(), outputHandle);
 #endif               // WINDOWS_PLATFORM
 		}    // IsValidHandle() Check
 	}            // PrintMessage()
@@ -133,32 +160,40 @@ namespace serenity::targets {
 	// TODO: Add a function that checks if locale needs to be swapped as well
 	// TODO: as reset the old mode to its default if mode is changed in SetConsoleMode()
 	void ColorConsole::SetLocale(const std::locale& loc) {
+		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		using enum console_interface;
-		switch( consoleMode ) {
-				case std_out:
-					if( std::cout.getloc() != loc ) {
-							std::cout.imbue(loc);
-							std::wcout.imbue(loc);
-					}
-					break;
-				case std_err:
-					if( std::cerr.getloc() != loc ) {
-							std::cerr.imbue(loc);
-							std::wcerr.imbue(loc);
-					}
-					break;
-				case std_log:
-					if( std::clog.getloc() != loc ) {
-							std::clog.imbue(loc);
-							std::wclog.imbue(loc);
-					}
-					break;
+		switch (consoleMode) {
+		case std_out:
+			if (std::cout.getloc() != loc) {
+				std::cout.imbue(loc);
+				std::wcout.imbue(loc);
 			}
+			break;
+		case std_err:
+			if (std::cerr.getloc() != loc) {
+				std::cerr.imbue(loc);
+				std::wcerr.imbue(loc);
+			}
+			break;
+		case std_log:
+			if (std::clog.getloc() != loc) {
+				std::clog.imbue(loc);
+				std::wclog.imbue(loc);
+			}
+			break;
+		}
 
 		TargetBase::SetLocale(loc);
 	}
 
 	void ColorConsole::SetOriginalColors() {
+		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		msgLevelColors = {
 			{LoggerLevel::trace,    se_colors::bright_colors::combos::white::on_black},
 			{ LoggerLevel::info,    se_colors::bright_colors::foreground::green      },

@@ -14,35 +14,35 @@ namespace serenity::targets {
 		std_log,
 	};
 
-	class ColorConsole: public TargetBase
+	class ColorConsole : public TargetBase
 	{
-		public:
-			ColorConsole();
-			explicit ColorConsole(std::string_view name);
-			explicit ColorConsole(std::string_view name, std::string_view msgPattern);
-			~ColorConsole();
+	public:
+		ColorConsole();
+		explicit ColorConsole(std::string_view name);
+		explicit ColorConsole(std::string_view name, std::string_view msgPattern);
+		~ColorConsole();
 
-			std::string_view GetMsgColor(LoggerLevel level);
-			void SetMsgColor(LoggerLevel level, std::string_view color);
-			void SetConsoleInterface(console_interface mode);
-			const console_interface ConsoleInterface();
-			void ColorizeOutput(bool colorize);
-			void SetOriginalColors();
-			bool IsTerminalType();
-			bool IsValidHandle();
-			void PrintMessage(std::string_view formatted) override;
-			void SetLocale(const std::locale& loc) override;
+		std::string_view GetMsgColor(LoggerLevel level);
+		void SetMsgColor(LoggerLevel level, std::string_view color);
+		void SetConsoleInterface(console_interface mode);
+		const console_interface ConsoleInterface();
+		void ColorizeOutput(bool colorize);
+		void SetOriginalColors();
+		bool IsTerminalType();
+		bool IsValidHandle();
+		void PrintMessage(std::string_view formatted) override;
+		void SetLocale(const std::locale& loc) override;
 
-		private:
-			bool coloredOutput;
-			console_interface consoleMode;
-			std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
+	private:
+		bool coloredOutput;
+		console_interface consoleMode;
+		std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
 #ifdef WINDOWS_PLATFORM
-			HANDLE outputHandle;
+		HANDLE outputHandle;
 #else
-			FILE* outputHandle;
+		FILE* outputHandle;
 #endif    // WINDOWS_PLATFORM
-
+		std::mutex consoleMutex;
 	};    // class ColorConsole
 
 }    // namespace serenity::targets
