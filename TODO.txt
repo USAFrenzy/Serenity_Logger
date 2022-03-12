@@ -1,6 +1,7 @@
 ######################
 # RotatingTarget.cpp #
 ######################
+- In general, add multi-threading support. The basic foundation is set but it still needs more work and actual implementing.
 - Test the other constructors to make sure they work as intended; I've only been messing around with the one.
 - SetRotationSetting():
   * Rework function to take after the background flushing thread model
@@ -16,6 +17,7 @@
 ##################
 # FileTarget.cpp #
 ##################
+- As with the RotatingTarget class, and even more so since the RotatingTarget class inherits from the FileTarget class, add multi-threading support.
 - Test the other constructors to make sure they work as intended; I've only been messing around with the one.
 
 ###############################
@@ -29,6 +31,7 @@
 ##########################
 - Rename class to something more consistent such as ConsoleTarget; since both color codes and default output is supported.
 - Test the other constructors to make sure they work as intended; I've only been messing around with the one.
+- As with RotatingTarget class, add multi-threading support; in same condition as the RotatingTarget class as well.
 - IsValidHandle():
   * Needs more testing to determine it does what it's supposed to do in a reliable manner.
 - IsTerminalType():

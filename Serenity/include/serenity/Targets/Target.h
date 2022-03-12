@@ -11,7 +11,7 @@
 namespace serenity::targets {
 	class TargetBase
 	{
-	public:
+	      public:
 		TargetBase();
 		TargetBase(std::string_view name);
 		TargetBase(std::string_view name, std::string_view msgPattern);
@@ -35,7 +35,7 @@ namespace serenity::targets {
 		virtual void SetLocale(const std::locale& loc);
 		const std::locale GetLocale();
 
-	protected:
+	      protected:
 		msg_details::Message_Formatter* MsgFmt();
 		msg_details::Message_Info* MsgInfo();
 		void WriteToBaseBuffer(bool fmtToBuf = true);
@@ -44,7 +44,7 @@ namespace serenity::targets {
 		virtual void PrintMessage(std::string_view formatted) = 0;
 		virtual void PolicyFlushOn();
 
-	private:
+	      private:
 		bool toBuffer;
 		LoggerLevel logLevel;
 		LoggerLevel msgLevel;
@@ -53,9 +53,8 @@ namespace serenity::targets {
 		msg_details::Message_Formatter msgPattern;
 		std::string internalBuffer;
 		bool multiThreadSupport;
-		std::mutex baseMutex;
 
-	protected:
+	      protected:
 		serenity::experimental::Flush_Policy policy;
 	};
 

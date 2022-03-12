@@ -24,30 +24,30 @@ namespace serenity {
 
 		struct Allocation_Statistics
 		{
-				uint64_t Allocated { 0 };
-				uint64_t Freed { 0 };
-				uint64_t Memory_Usage();
+			uint64_t Allocated { 0 };
+			uint64_t Freed { 0 };
+			uint64_t Memory_Usage();
 		};
 
 		class Instrumentator
 		{
-			public:
-				Instrumentator();
+		      public:
+			Instrumentator();
 
-				void StopWatch_Reset();
-				void StopWatch_Stop();
-				float Elapsed_In(time_mode mode);
+			void StopWatch_Reset();
+			void StopWatch_Stop();
+			float Elapsed_In(time_mode mode);
 
-				void* operator new(std::size_t n);
-				void operator delete(void* p) throw();
+			void* operator new(std::size_t n);
+			void operator delete(void* p) throw();
 
-				~Instrumentator();
+			~Instrumentator();
 
-			public:
-				static Allocation_Statistics mem_tracker;
+		      public:
+			static Allocation_Statistics mem_tracker;
 
-			private:
-				std::chrono::time_point<std::chrono::steady_clock> m_Start, m_End;
+		      private:
+			std::chrono::time_point<std::chrono::steady_clock> m_Start, m_End;
 		};
 
 		/// <summary>
@@ -60,17 +60,17 @@ namespace serenity {
 		namespace file_utils_results {
 			struct search_dir_entries
 			{
-					std::vector<std::filesystem::directory_entry> matchedResults;
-					bool fileFound { false };
-					float elapsedTime { 0 };
+				std::vector<std::filesystem::directory_entry> matchedResults;
+				bool fileFound { false };
+				float elapsedTime { 0 };
 			};
 
 			struct retrieve_dir_entries
 			{
-					int fileCount { 0 };
-					bool success { false };
-					static std::vector<std::filesystem::directory_entry> retrievedItems;
-					float elapsedTime { 0 };
+				int fileCount { 0 };
+				bool success { false };
+				static std::vector<std::filesystem::directory_entry> retrievedItems;
+				float elapsedTime { 0 };
 			};
 		}    // namespace file_utils_results
 
