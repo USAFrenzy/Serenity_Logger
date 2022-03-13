@@ -14,9 +14,9 @@ namespace serenity::targets {
 		std_log,
 	};
 
-	class ColorConsole: public TargetBase
+	class ColorConsole : public TargetBase
 	{
-	      public:
+	public:
 		ColorConsole();
 		explicit ColorConsole(std::string_view name);
 		explicit ColorConsole(std::string_view name, std::string_view msgPattern);
@@ -33,7 +33,7 @@ namespace serenity::targets {
 		void PrintMessage(std::string_view formatted) override;
 		void SetLocale(const std::locale& loc) override;
 
-	      private:
+	private:
 		bool coloredOutput;
 		console_interface consoleMode;
 		std::unordered_map<LoggerLevel, std::string_view> msgLevelColors;
@@ -42,7 +42,7 @@ namespace serenity::targets {
 #else
 		FILE* outputHandle;
 #endif    // WINDOWS_PLATFORM
-
+		std::mutex consoleMutex;
 	};    // class ColorConsole
 
 }    // namespace serenity::targets

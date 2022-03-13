@@ -20,20 +20,21 @@
 // TODO: and then figure a way to add user defined flags and formatting
 // callbacks
 /************************************************************************************************************
-                                                                           custom flags
-                                                        ************************************
-        - %N (Name)                   - %L (Full Message Level)      - %x (Short
+                                                                                                                                                   custom flags
+                                                                                                                ************************************
+                - %N (Name)                   - %L (Full Message Level)      - %x (Short
 Weekday String)
-        - %l (Short Message Level)	    - %n (DD/MMM/YY Date)          - %X (Long
+                - %l (Short Message Level)	    - %n (DD/MMM/YY Date)          - %X (Long
 Weekday String)
 
-                                                          The rest are strftime equivalents
-                                                 ******************************************
-        - %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
-        - %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year
+                                                                                                                  The rest are strftime
+equivalents
+                                                                                                 ******************************************
+                - %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
+                - %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year
 XXXX)
-        - %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
-        - %B (Full Month Name)	   - %H (24hr Hour format)	         - %y (year
+                - %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
+                - %B (Full Month Name)	   - %H (24hr Hour format)	         - %y (year
 XX Format)
 ************************************************************************************************************/
 
@@ -125,10 +126,15 @@ int main() {
 
 	// ****************************** TEMPORARY TESTING ********************************************
 	// Even with the checks involved, only slows the file down from ~35% faster to ~25%-28% faster instead
-	// PeriodicSettings testFileFlushSettings = {};
-	// testFileFlushSettings.flushEvery       = std::chrono::milliseconds(500);
-	// Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
-	// testFile.SetFlushPolicy(testFIleFlushPolicy);
+	PeriodicSettings testFileFlushSettings = {};
+	testFileFlushSettings.flushEvery       = std::chrono::milliseconds(500);
+	Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
+	testFile.SetFlushPolicy(testFIleFlushPolicy);
+	rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
+	C.SetFlushPolicy(testFIleFlushPolicy);
+	testFile.EnableMultiThreadingSupport();
+	rotatingFile.EnableMultiThreadingSupport();
+	C.EnableMultiThreadingSupport();
 	// ****************************** TEMPORARY TESTING ********************************************
 
 #ifndef INSTRUMENTATION_ENABLED

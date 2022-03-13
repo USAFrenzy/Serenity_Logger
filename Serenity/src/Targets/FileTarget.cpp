@@ -114,14 +114,26 @@ namespace serenity::targets {
 	}
 
 	const std::string FileTarget::FilePath() {
+		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		return fileOptions.filePath.string();
 	}
 
 	const std::string FileTarget::FileName() {
+		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		return fileOptions.filePath.filename().string();
 	}
 
 	bool FileTarget::OpenFile(bool truncate) {
+		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		auto TryOpen = [ &, this ]() {
 #ifndef WINDOWS_PLATFORM
 			fileHandle.rdbuf()->pubsetbuf(fileBuffer.data(), bufferSize);
@@ -252,6 +264,10 @@ namespace serenity::targets {
 	}
 
 	void FileTarget::SetLocale(const std::locale& loc) {
+		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		if( fileHandle.getloc() != loc ) {
 				fileHandle.imbue(loc);
 		}
@@ -259,10 +275,18 @@ namespace serenity::targets {
 	}
 
 	void FileTarget::WriteToBaseBuffer(bool fmtToBuf) {
+		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		TargetBase::WriteToBaseBuffer(fmtToBuf);
 	}
 
 	const bool FileTarget::isWriteToBuf() {
+		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		return TargetBase::isWriteToBuf();
 	}
 

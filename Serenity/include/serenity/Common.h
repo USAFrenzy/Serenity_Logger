@@ -207,55 +207,55 @@ namespace serenity {
 
 	struct BackgroundThread
 	{
-		std::atomic<bool> cleanUpThreads { false };
-		std::atomic<bool> flushThreadEnabled { false };
-		std::atomic<bool> flushComplete { true };
-		std::atomic<bool> threadWriting { false };
-		std::thread flushThread;
+			std::atomic<bool> cleanUpThreads { false };
+			std::atomic<bool> flushThreadEnabled { false };
+			std::atomic<bool> flushComplete { true };
+			std::atomic<bool> threadWriting { false };
+			std::thread flushThread;
 	};
 
 	struct FileSettings
 	{
-		std::filesystem::path filePath;
-		std::vector<char> fileBuffer;
-		size_t bufferSize { DEFAULT_BUFFER_SIZE };
+			std::filesystem::path filePath;
+			std::vector<char> fileBuffer;
+			size_t bufferSize { DEFAULT_BUFFER_SIZE };
 	};
 
 	namespace experimental {
 		struct RotateSettings
 		{
-			enum class IntervalMode
-			{
-				file_size = 0,
-				hourly    = 1,
-				daily     = 2,
-				weekly    = 3,
-				monthly   = 4,
-			};
+				enum class IntervalMode
+				{
+					file_size = 0,
+					hourly    = 1,
+					daily     = 2,
+					weekly    = 3,
+					monthly   = 4,
+				};
 
-			size_t maxNumberOfFiles { 5 };
-			size_t fileSizeLimit { 512 * KB };
-			int dayModeSettingHour { 0 };
-			int dayModeSettingMinute { 0 };
-			int weekModeSetting { 0 };
-			int monthModeSetting { 1 };
+				size_t maxNumberOfFiles { 5 };
+				size_t fileSizeLimit { 512 * KB };
+				int dayModeSettingHour { 0 };
+				int dayModeSettingMinute { 0 };
+				int weekModeSetting { 0 };
+				int monthModeSetting { 1 };
 
-		      protected:
-			const std::filesystem::path& OriginalPath();
-			const std::filesystem::path& OriginalDirectory();
-			const std::string& OriginalName();
-			const std::string& OriginalExtension();
-			const size_t& FileSize();
-			const bool IsIntervalRotationEnabled();
-			void CacheOriginalPathComponents(const std::filesystem::path& filePath);
-			void SetCurrentFileSize(size_t currentSize);
-			void EnableFirstRotation(bool enabled = true);
+			protected:
+				const std::filesystem::path& OriginalPath();
+				const std::filesystem::path& OriginalDirectory();
+				const std::string& OriginalName();
+				const std::string& OriginalExtension();
+				const size_t& FileSize();
+				const bool IsIntervalRotationEnabled();
+				void CacheOriginalPathComponents(const std::filesystem::path& filePath);
+				void SetCurrentFileSize(size_t currentSize);
+				void EnableFirstRotation(bool enabled = true);
 
-		      private:
-			size_t currentFileSize { 0 };
-			std::string ext, fileName;
-			std::filesystem::path path, directory;
-			bool initalRotationEnabled { true };
+			private:
+				size_t currentFileSize { 0 };
+				std::string ext, fileName;
+				std::filesystem::path path, directory;
+				bool initalRotationEnabled { true };
 		};
 
 	}    // namespace experimental

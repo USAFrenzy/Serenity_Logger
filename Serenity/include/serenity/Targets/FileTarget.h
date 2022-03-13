@@ -13,7 +13,7 @@ namespace serenity::targets {
 		explicit FileTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
 		explicit FileTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
 		                    bool replaceIfExists = false);
-		FileTarget(const FileTarget&)            = delete;
+		FileTarget(const FileTarget&) = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();
 		const std::string FilePath();

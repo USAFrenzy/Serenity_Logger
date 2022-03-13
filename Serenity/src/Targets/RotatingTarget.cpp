@@ -77,27 +77,47 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::~RotatingTarget() {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		CloseFile();
 	}
 
 	void RotatingTarget::WriteToBaseBuffer(bool fmtToBuf) {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		TargetBase::WriteToBaseBuffer(fmtToBuf);
 	}
 
 	const bool RotatingTarget::isWriteToBuf() {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		return TargetBase::isWriteToBuf();
 	}
 
 	std::string* const RotatingTarget::Buffer() {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		return TargetBase::Buffer();
 	}
 
 	bool RotatingTarget::RenameFile(std::string_view newFileName) {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		// make copy for old file conversion and cache new values
+		std::filesystem::path newFile { fileOptions.filePath };
+		newFile.replace_filename(newFileName);
+		CacheOriginalPathComponents(newFile);
 		try {
-				// make copy for old file conversion and cache new values
-				std::filesystem::path newFile { fileOptions.filePath };
-				newFile.replace_filename(newFileName);
-				CacheOriginalPathComponents(newFile);
 				RotateFile();
 				return true;
 			}
@@ -109,12 +129,20 @@ namespace serenity::experimental::targets {
 	}
 
 	void RotatingTarget::EnableRotation(bool rotationEnabled) {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		this->rotationEnabled = rotationEnabled;
 		SetCurrentFileSize(std::filesystem::file_size(fileOptions.filePath));
 		EnableFirstRotation(rotationEnabled);
 	}
 
 	void RotatingTarget::SetRotateSettings(RotateSettings settings) {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		fileSizeLimit        = settings.fileSizeLimit;
 		maxNumberOfFiles     = settings.maxNumberOfFiles;
 		dayModeSettingHour   = settings.dayModeSettingHour;
@@ -184,6 +212,10 @@ namespace serenity::experimental::targets {
 	}
 
 	void RotatingTarget::RotateFile() {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		if( !rotationEnabled ) return;
 		currrentlyRotatingFile.store(true);
 		CloseFile();
@@ -200,7 +232,6 @@ namespace serenity::experimental::targets {
 	}
 
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
-		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
 		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( !flushWorker.flushComplete.load() ) {
@@ -208,11 +239,12 @@ namespace serenity::experimental::targets {
 				}
 				flushWorker.threadWriting.store(true);
 		}
-		if( isMTSupportEnabled() ) {
-				lock.lock();
-		}
 		if( ShouldRotate() ) {
 				RotateFile();
+		}
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
 		}
 		auto formattedSize { formatted.size() };
 		fileHandle.rdbuf()->sputn(formatted.data(), formattedSize);
@@ -224,6 +256,10 @@ namespace serenity::experimental::targets {
 	}
 
 	bool RotatingTarget::ShouldRotate() {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		if( !rotationEnabled ) return false;
 		// If file was empty - no need to rotate
 		if( FileSize() == 0 ) return false;
@@ -324,19 +360,20 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::SetLocale(const std::locale& loc)
 	{
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		// Explicitly stating the override to ensure file target's function is called rather that the base class
 		FileTarget::SetLocale(loc);
 	}
 
-	// Might take a note from the interval flushing thread idea and make these a polling background thread as well.
-	// This way, no one has to explicitly wait for a new message to be logged before deciding whether the file should be rotated.
-	// Instead, after some sort of elapsed poll interval, the thread could check if the condition is met and rotate the file
-	// irregardless of whether a message needs to be logged or not - this way, it's consistent with what's expected for a 
-	// collection of logs. 
-	// * Polling is one idea; the other is somehow setting up a condition variable, but, I'm unsure of how to achieve this
-	//   without some form of polling anyways. So, for now anyways, I think a polling model will suffice.
 	void RotatingTarget::SetRotationSetting(IntervalMode mode, int  setting, int secondSetting)
 	{
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		using mType = RotateSettings::IntervalMode;
 		switch (m_mode) {
 		case mType::file_size: fileSizeLimit = setting; break;
@@ -387,6 +424,10 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::SetRotationMode(IntervalMode mode)
 	{
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if (isMTSupportEnabled()) {
+			lock.lock();
+		}
 		m_mode = mode;
 	}
 

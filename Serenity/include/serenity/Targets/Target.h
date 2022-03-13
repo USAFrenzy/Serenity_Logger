@@ -53,6 +53,7 @@ namespace serenity::targets {
 		msg_details::Message_Formatter msgPattern;
 		std::string internalBuffer;
 		bool multiThreadSupport;
+		mutable std::mutex baseMutex;
 
 	      protected:
 		serenity::experimental::Flush_Policy policy;

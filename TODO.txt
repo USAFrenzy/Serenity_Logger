@@ -1,7 +1,6 @@
 ######################
 # RotatingTarget.cpp #
 ######################
-- In general, add multi-threading support. The basic foundation is set but it still needs more work and actual implementing.
 - Test the other constructors to make sure they work as intended; I've only been messing around with the one.
 - SetRotationSetting():
   * Rework function to take after the background flushing thread model
@@ -10,6 +9,7 @@
     * needs to be logged or not - this way, it's consistent with what's expected for a collection of logs. 
   * Polling is one idea; the other is somehow setting up a condition variable, but, I'm unsure of how to achieve this without some form of polling anyways. 
     So, for now anyways, I think a polling model will suffice.
+  * EDIT: Initial Approach was a dud and failed miserably -> this may not be the approach to take
 - ShouldRotate():
   - Needs more testing. File size and hourly modes definitely work, daily mode seems to work, and the weekly and monthly modes are untested.
   - Should rework to keep logic for each switch case more consistent and less error prone.
@@ -17,7 +17,6 @@
 ##################
 # FileTarget.cpp #
 ##################
-- As with the RotatingTarget class, and even more so since the RotatingTarget class inherits from the FileTarget class, add multi-threading support.
 - Test the other constructors to make sure they work as intended; I've only been messing around with the one.
 
 ###############################
@@ -31,7 +30,6 @@
 ##########################
 - Rename class to something more consistent such as ConsoleTarget; since both color codes and default output is supported.
 - Test the other constructors to make sure they work as intended; I've only been messing around with the one.
-- As with RotatingTarget class, add multi-threading support; in same condition as the RotatingTarget class as well.
 - IsValidHandle():
   * Needs more testing to determine it does what it's supposed to do in a reliable manner.
 - IsTerminalType():
