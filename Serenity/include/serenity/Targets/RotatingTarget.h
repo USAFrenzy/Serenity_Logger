@@ -22,6 +22,7 @@ namespace serenity::experimental::targets {
 		bool RenameFile(std::string_view newFileName) override;
 		bool ShouldRotate();
 		void SetLocale(const std::locale& loc) override;
+		void StartBackgroundThread() override;
 		// clang-format off
 		// ################################# WIP #################################
 
@@ -36,7 +37,7 @@ namespace serenity::experimental::targets {
 		// - SetRotationSetting(IntervalMode::monthly, 24) -> Rotate Every Month on the 24th day of that month.
 		void SetRotationSetting(IntervalMode mode, int setting = 0, int secondSetting = 0);
 		// clang-format on	
-
+	
 		void SetRotationMode(IntervalMode mode);
 		const RotateSettings::IntervalMode RotationMode();
 
@@ -45,7 +46,7 @@ namespace serenity::experimental::targets {
 		bool RenameFileInRotation(std::filesystem::path newFilePath);
 		bool ReplaceOldFIleInRotation();
 		void PolicyFlushOn() override;
-		void BackgroundFlush() override;
+		void BackgroundFlushThread() override;
 
 	private:
 		bool rotationEnabled;

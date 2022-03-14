@@ -162,18 +162,20 @@ namespace serenity::targets {
 	}
 
 	void serenity::targets::FileTarget::StopBackgroundThread() {
-		if( flushWorker.flushThreadEnabled.load(std::memory_order::relaxed) ) {
+		if( flushWorker.flushThreadEnabled.load() ) {
 				flushWorker.cleanUpThreads.store(true);
-				flushWorker.cleanUpThreads.notify_all();
-				while( !flushWorker.flushThread.joinable() ) {
-						std::this_thread::sleep_for(std::chrono::milliseconds(100));
-					}
+				flushWorker.cleanUpThreads.notify_one();
 				flushWorker.flushThread.join();
-				// change the primary mode so as not to launch another thread upon a message log.
-				// Requires SetPrimaryMode(FlushSetting::Periodically) to be called again to
-				// re-enable when a new message is logged
 				policy.SetPrimaryMode(serenity::experimental::FlushSetting::never);
 				flushWorker.flushThreadEnabled.store(false);
+		}
+	}
+
+	void FileTarget::StartBackgroundThread() {
+		if( !flushWorker.flushThreadEnabled.load() ) {
+				policy.SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
+				flushWorker.flushThread = std::thread(&FileTarget::BackgroundFlushThread, this);
+				flushWorker.flushThreadEnabled.store(true);
 		}
 	}
 
@@ -192,7 +194,7 @@ namespace serenity::targets {
 						return false;
 				}
 				if( TryClose() ) break;
-				std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 		return true;
 	}
@@ -227,10 +229,10 @@ namespace serenity::targets {
 				lock.lock();
 		}
 		fileHandle.rdbuf()->sputn(formatted.data(), formatted.size());
+		if( lock.owns_lock() ) {
+				lock.unlock();
+		}
 		if( flushThreadEnabled ) {
-				if( lock.owns_lock() ) {
-						lock.unlock();
-				}
 				flushWorker.threadWriting.store(false);
 				flushWorker.threadWriting.notify_all();
 		}
@@ -238,9 +240,6 @@ namespace serenity::targets {
 
 	void FileTarget::Flush() {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
-				lock.lock();
-		}
 		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( flushWorker.threadWriting.load() ) {
@@ -248,16 +247,19 @@ namespace serenity::targets {
 				}
 				flushWorker.flushComplete.store(false);
 		}
+		if( isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
 		if( Buffer()->size() != 0 ) {
 				fileHandle.rdbuf()->sputn(Buffer()->data(), Buffer()->size());
 				Buffer()->clear();
 		}
-		fileHandle.rdbuf()->pubsync();
+		fileHandle.flush();
+		if( lock.owns_lock() ) {
+				lock.unlock();
+		}
 		if( flushThreadEnabled ) {
-				if( lock.owns_lock() ) {
-						lock.unlock();
-				}
 				flushWorker.flushComplete.store(true);
 				flushWorker.flushComplete.notify_all();
 		}
@@ -294,7 +296,7 @@ namespace serenity::targets {
 		return TargetBase::Buffer();
 	}
 
-	void FileTarget::BackgroundFlush() {
+	void FileTarget::BackgroundFlushThread() {
 		while( !flushWorker.cleanUpThreads.load() ) {
 				Flush();
 				std::this_thread::sleep_for(policy.SecondarySettings().flushEvery);
@@ -313,10 +315,7 @@ namespace serenity::targets {
 		switch( policy.SubSetting() ) {
 				case serenity::experimental::PeriodicOptions::timeBased:
 					{
-						if( !flushWorker.flushThreadEnabled.load() ) {
-								flushWorker.flushThread = std::thread(&FileTarget::BackgroundFlush, this);
-								flushWorker.flushThreadEnabled.store(true);
-						}
+						StartBackgroundThread();
 					}
 					break;    // time based bounds
 				case serenity::experimental::PeriodicOptions::logLevelBased:

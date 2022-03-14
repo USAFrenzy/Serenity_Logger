@@ -16,27 +16,19 @@
 	#define INSTRUMENTATION_ENABLED
 #endif
 
+// clang-format off
 // TODO: Finish adding strftime equivalent flags and the last two original flags
-// TODO: and then figure a way to add user defined flags and formatting
-// callbacks
-/************************************************************************************************************
-                                                                                                                                                   custom flags
-                                                                                                                ************************************
-                - %N (Name)                   - %L (Full Message Level)      - %x (Short
-Weekday String)
-                - %l (Short Message Level)	    - %n (DD/MMM/YY Date)          - %X (Long
-Weekday String)
-
-                                                                                                                  The rest are strftime
-equivalents
-                                                                                                 ******************************************
-                - %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
-                - %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year
-XXXX)
-                - %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
-                - %B (Full Month Name)	   - %H (24hr Hour format)	         - %y (year
-XX Format)
-************************************************************************************************************/
+// TODO: and then figure a way to add user defined flags and formatting callbacks
+/************************************** Custom flags **************************************
+ - %N (Name)                  - %L (Full Message Level)       - %x (Short Weekday String)
+ - %l (Short Message Level)   - %n (DD/MMM/YY Date)           - %X (Long Weekday String)
+**************************** The rest are strftime equivalents ****************************
+ - %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
+ - %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year XXXX)
+ - %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
+ - %B (Full Month Name)       - %H (24hr Hour format)         - %y (year XX Format)
+******************************************************************************************/
+// clang-format on
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
@@ -126,15 +118,15 @@ int main() {
 
 	// ****************************** TEMPORARY TESTING ********************************************
 	// Even with the checks involved, only slows the file down from ~35% faster to ~25%-28% faster instead
-	PeriodicSettings testFileFlushSettings = {};
-	testFileFlushSettings.flushEvery       = std::chrono::milliseconds(500);
-	Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
-	testFile.SetFlushPolicy(testFIleFlushPolicy);
-	rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
-	C.SetFlushPolicy(testFIleFlushPolicy);
-	testFile.EnableMultiThreadingSupport();
-	rotatingFile.EnableMultiThreadingSupport();
-	C.EnableMultiThreadingSupport();
+	// PeriodicSettings testFileFlushSettings = {};
+	// testFileFlushSettings.flushEvery       = std::chrono::milliseconds(100);
+	// Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
+	// testFile.SetFlushPolicy(testFIleFlushPolicy);
+	// rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
+	// C.SetFlushPolicy(testFIleFlushPolicy);
+	// testFile.EnableMultiThreadingSupport();
+	// rotatingFile.EnableMultiThreadingSupport();
+	// C.EnableMultiThreadingSupport();
 	// ****************************** TEMPORARY TESTING ********************************************
 
 #ifndef INSTRUMENTATION_ENABLED
@@ -203,8 +195,8 @@ int main() {
 	settings.maxNumberOfFiles      = 10;
 	settings.monthModeSetting      = 3;
 	settings.weekModeSetting       = 6;
-	settings.dayModeSettingHour    = 17;
-	settings.dayModeSettingMinute  = 05;
+	settings.dayModeSettingHour    = 19;
+	settings.dayModeSettingMinute  = 40;
 
 	PeriodicSettings flushSettings = {};
 	flushSettings.flushEvery       = std::chrono::seconds(60);
@@ -241,6 +233,9 @@ int main() {
 	};
 
 	// Some more crude tests - testing rotational marks
+	// TODO: Probably need to join threads and re-launch them, or otherwise somehow let the threads know when the
+	// TODO: file has changed. Works fine up until the rotation and then never flushes in the background.
+	// Above is still an issue... =/
 	std::cout << "\n\nLogging messages to test rotation on hour mark, daily "
 		     "mark, and file size\n\n";
 	auto LogHourly = [ & ]() {

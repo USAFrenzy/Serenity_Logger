@@ -218,6 +218,8 @@ namespace serenity::experimental::targets {
 		}
 		if( !rotationEnabled ) return;
 		currrentlyRotatingFile.store(true);
+		auto wasFlushThreadActive { flushWorker.flushThreadEnabled.load() };
+		auto originalPrimaryMode { policy.PrimarySetting() };
 		CloseFile();
 		if( !RenameFileInRotation(OriginalPath()) ) {
 				if( !ReplaceOldFIleInRotation() ) {
@@ -227,11 +229,17 @@ namespace serenity::experimental::targets {
 				}
 		}
 		SetCurrentFileSize(0);
+		if( wasFlushThreadActive ) {
+				// Reset of primary mode due to how CloseFile() stops the flush thread and sets it to never
+				policy.SetPrimaryMode(originalPrimaryMode);
+				StartBackgroundThread();
+		}
 		currrentlyRotatingFile.store(false);
-		currrentlyRotatingFile.notify_all();
+		currrentlyRotatingFile.notify_one();
 	}
 
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
+		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
 		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( !flushWorker.flushComplete.load() ) {
@@ -242,13 +250,15 @@ namespace serenity::experimental::targets {
 		if( ShouldRotate() ) {
 				RotateFile();
 		}
-		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
 		if( isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		auto formattedSize { formatted.size() };
 		fileHandle.rdbuf()->sputn(formatted.data(), formattedSize);
 		SetCurrentFileSize(FileSize() + formattedSize);
+		if( lock.owns_lock() ) {
+				lock.unlock();
+		}
 		if( flushThreadEnabled ) {
 				flushWorker.threadWriting.store(false);
 				flushWorker.threadWriting.notify_all();
@@ -257,17 +267,16 @@ namespace serenity::experimental::targets {
 
 	bool RotatingTarget::ShouldRotate() {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( !rotationEnabled ) return false;
+		if( FileSize() == 0 ) return false;
+
 		if( isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		if( !rotationEnabled ) return false;
-		// If file was empty - no need to rotate
-		if( FileSize() == 0 ) return false;
-
-		using mode  = RotateSettings::IntervalMode;
 		auto& cache = MsgInfo()->TimeDetails().Cache();
 
 		switch( RotationMode() ) {
+				using mode = RotateSettings::IntervalMode;
 				case mode::file_size:
 					{
 						if( IsIntervalRotationEnabled() ) {
@@ -449,10 +458,7 @@ namespace serenity::experimental::targets {
 		switch (policy.SubSetting()) {
 		case serenity::experimental::PeriodicOptions::timeBased:
 		{
-			if (!flushWorker.flushThreadEnabled.load()) {
-				flushWorker.flushThread = std::thread(&RotatingTarget::BackgroundFlush, this);
-				flushWorker.flushThreadEnabled.store(true);
-			}
+			StartBackgroundThread();
 		}
 		break;    // time based bounds
 		case serenity::experimental::PeriodicOptions::logLevelBased:
@@ -464,7 +470,16 @@ namespace serenity::experimental::targets {
 		}    // Sub Option Check
 	}
 
-	void RotatingTarget::BackgroundFlush()
+	void RotatingTarget::StartBackgroundThread()
+	{
+		if (!flushWorker.flushThreadEnabled.load()) {
+			policy.SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
+			flushWorker.flushThread = std::thread(&RotatingTarget::BackgroundFlushThread, this);
+			flushWorker.flushThreadEnabled.store(true);
+		}
+	}
+
+	void RotatingTarget::BackgroundFlushThread()
 	{
 		while (!flushWorker.cleanUpThreads.load()) {
 				if (currrentlyRotatingFile.load()) {

@@ -13,7 +13,7 @@ namespace serenity::targets {
 		explicit FileTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
 		explicit FileTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
 		                    bool replaceIfExists = false);
-		FileTarget(const FileTarget&) = delete;
+		FileTarget(const FileTarget&)            = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();
 		const std::string FilePath();
@@ -27,6 +27,7 @@ namespace serenity::targets {
 		const bool isWriteToBuf();
 		std::string* const Buffer();
 		void StopBackgroundThread();
+		virtual void StartBackgroundThread();
 
 	      private:
 		LoggerLevel logLevel;
@@ -38,6 +39,6 @@ namespace serenity::targets {
 		FileSettings fileOptions;
 		void PolicyFlushOn() override;
 		void PrintMessage(std::string_view formatted) override;
-		virtual void BackgroundFlush();
+		virtual void BackgroundFlushThread();
 	};
 }    // namespace serenity::targets
