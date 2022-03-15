@@ -217,7 +217,6 @@ namespace serenity::experimental::targets {
 				lock.lock();
 		}
 		if( !rotationEnabled ) return;
-		currrentlyRotatingFile.store(true);
 		auto wasFlushThreadActive { flushWorker.flushThreadEnabled.load() };
 		auto originalPrimaryMode { policy.PrimarySetting() };
 		CloseFile();
@@ -234,8 +233,6 @@ namespace serenity::experimental::targets {
 				policy.SetPrimaryMode(originalPrimaryMode);
 				StartBackgroundThread();
 		}
-		currrentlyRotatingFile.store(false);
-		currrentlyRotatingFile.notify_one();
 	}
 
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
@@ -458,7 +455,7 @@ namespace serenity::experimental::targets {
 		switch (policy.SubSetting()) {
 		case serenity::experimental::PeriodicOptions::timeBased:
 		{
-			StartBackgroundThread();
+			RotatingTarget::StartBackgroundThread();
 		}
 		break;    // time based bounds
 		case serenity::experimental::PeriodicOptions::logLevelBased:
@@ -468,26 +465,6 @@ namespace serenity::experimental::targets {
 		}
 		break;
 		}    // Sub Option Check
-	}
-
-	void RotatingTarget::StartBackgroundThread()
-	{
-		if (!flushWorker.flushThreadEnabled.load()) {
-			policy.SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
-			flushWorker.flushThread = std::thread(&RotatingTarget::BackgroundFlushThread, this);
-			flushWorker.flushThreadEnabled.store(true);
-		}
-	}
-
-	void RotatingTarget::BackgroundFlushThread()
-	{
-		while (!flushWorker.cleanUpThreads.load()) {
-				if (currrentlyRotatingFile.load()) {
-					currrentlyRotatingFile.wait(true);
-				}
-				Flush();
-				std::this_thread::sleep_for(policy.SecondarySettings().flushEvery);
-			}
 	}
 
 }  // namespace serenity::experimental::targets

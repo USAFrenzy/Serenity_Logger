@@ -22,7 +22,6 @@ namespace serenity::experimental::targets {
 		bool RenameFile(std::string_view newFileName) override;
 		bool ShouldRotate();
 		void SetLocale(const std::locale& loc) override;
-		void StartBackgroundThread() override;
 		// clang-format off
 		// ################################# WIP #################################
 
@@ -46,14 +45,12 @@ namespace serenity::experimental::targets {
 		bool RenameFileInRotation(std::filesystem::path newFilePath);
 		bool ReplaceOldFIleInRotation();
 		void PolicyFlushOn() override;
-		void BackgroundFlushThread() override;
 
 	private:
 		bool rotationEnabled;
 		IntervalMode m_mode;
 		int currentDay, currentWeekday, currentHour;
 		mutable std::mutex rotatingMutex;
-		std::atomic<bool>  currrentlyRotatingFile{false};
 	};
 
 }    // namespace serenity::experimental::targets

@@ -27,7 +27,7 @@ namespace serenity::targets {
 		const bool isWriteToBuf();
 		std::string* const Buffer();
 		void StopBackgroundThread();
-		virtual void StartBackgroundThread();
+		void StartBackgroundThread();
 
 	      private:
 		LoggerLevel logLevel;
@@ -39,6 +39,6 @@ namespace serenity::targets {
 		FileSettings fileOptions;
 		void PolicyFlushOn() override;
 		void PrintMessage(std::string_view formatted) override;
-		virtual void BackgroundFlushThread();
+		virtual void BackgroundFlushThread(std::stop_token stopToken);
 	};
 }    // namespace serenity::targets

@@ -207,11 +207,12 @@ namespace serenity {
 
 	struct BackgroundThread
 	{
+		std::jthread flushThread;
+		std::stop_token interruptThread {};
 		std::atomic<bool> cleanUpThreads { false };
 		std::atomic<bool> flushThreadEnabled { false };
 		std::atomic<bool> flushComplete { true };
 		std::atomic<bool> threadWriting { false };
-		std::thread flushThread;
 	};
 
 	struct FileSettings

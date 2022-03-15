@@ -10,7 +10,7 @@
 // TODO: ####################################################################################################################################
 // clang-format on
 
-#define INSTRUMENT 1
+#define INSTRUMENT 0
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -118,15 +118,15 @@ int main() {
 
 	// ****************************** TEMPORARY TESTING ********************************************
 	// Even with the checks involved, only slows the file down from ~35% faster to ~25%-28% faster instead
-	// PeriodicSettings testFileFlushSettings = {};
-	// testFileFlushSettings.flushEvery       = std::chrono::milliseconds(100);
-	// Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
-	// testFile.SetFlushPolicy(testFIleFlushPolicy);
-	// rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
-	// C.SetFlushPolicy(testFIleFlushPolicy);
-	// testFile.EnableMultiThreadingSupport();
-	// rotatingFile.EnableMultiThreadingSupport();
-	// C.EnableMultiThreadingSupport();
+	PeriodicSettings testFileFlushSettings = {};
+	testFileFlushSettings.flushEvery       = std::chrono::milliseconds(100);
+	Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
+	testFile.SetFlushPolicy(testFIleFlushPolicy);
+	rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
+	C.SetFlushPolicy(testFIleFlushPolicy);
+	testFile.EnableMultiThreadingSupport();
+	rotatingFile.EnableMultiThreadingSupport();
+	C.EnableMultiThreadingSupport();
 	// ****************************** TEMPORARY TESTING ********************************************
 
 #ifndef INSTRUMENTATION_ENABLED
@@ -195,8 +195,8 @@ int main() {
 	settings.maxNumberOfFiles      = 10;
 	settings.monthModeSetting      = 3;
 	settings.weekModeSetting       = 6;
-	settings.dayModeSettingHour    = 19;
-	settings.dayModeSettingMinute  = 40;
+	settings.dayModeSettingHour    = 21;
+	settings.dayModeSettingMinute  = 45;
 
 	PeriodicSettings flushSettings = {};
 	flushSettings.flushEvery       = std::chrono::seconds(60);
@@ -232,10 +232,6 @@ int main() {
 		std::cout << message;
 	};
 
-	// Some more crude tests - testing rotational marks
-	// TODO: Probably need to join threads and re-launch them, or otherwise somehow let the threads know when the
-	// TODO: file has changed. Works fine up until the rotation and then never flushes in the background.
-	// Above is still an issue... =/
 	std::cout << "\n\nLogging messages to test rotation on hour mark, daily "
 		     "mark, and file size\n\n";
 	auto LogHourly = [ & ]() {
@@ -262,25 +258,25 @@ int main() {
 			}
 	};
 
-	auto LogOnSize = [ & ]() {
-		std::mutex fileSizeMutex;
-		for( int i = 1; i <= rotationIterations; ++i ) {
-				std::unique_lock<std::mutex> lock(fileSizeMutex);
-				rotatingLoggerOnSize.Info("Logging message {} to rotating file based on file size mode", i);
-				std::string message = "Message ";
-				message.append(std::to_string(i)).append(" Logged To File For Rotate On Size\n");
-				NotifyConsole(message);
-				std::this_thread::sleep_for(std::chrono::milliseconds(400));
-			}
-	};
+	// auto LogOnSize = [ & ]() {
+	//	std::mutex fileSizeMutex;
+	//	for( int i = 1; i <= rotationIterations; ++i ) {
+	//			std::unique_lock<std::mutex> lock(fileSizeMutex);
+	//			rotatingLoggerOnSize.Info("Logging message {} to rotating file based on file size mode", i);
+	//			std::string message = "Message ";
+	//			message.append(std::to_string(i)).append(" Logged To File For Rotate On Size\n");
+	//			NotifyConsole(message);
+	//			std::this_thread::sleep_for(std::chrono::milliseconds(400));
+	//		}
+	// };
 
-	std::thread t1 { LogOnSize };
+	// std::thread t1 { LogOnSize };
 	std::thread t2 { LogHourly };
 	std::thread t3 { LogOnDaily };
-	while( !(t1.joinable()) || !(t2.joinable()) || !(t3.joinable()) ) {
+	while( /* !(t1.joinable()) ||*/ !(t2.joinable()) || !(t3.joinable()) ) {
 			std::this_thread::sleep_for(std::chrono::nanoseconds(50));
 		}
-	t1.join();
+	// t1.join();
 	t2.join();
 	t3.join();
 

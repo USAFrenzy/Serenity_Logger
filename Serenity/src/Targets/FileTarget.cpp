@@ -161,10 +161,13 @@ namespace serenity::targets {
 		return true;
 	}
 
+	// Source of possible bug here. Not sure about in regular use as it hasn't been tested for it, but in a rotation target,
+	// This function seems to hang when waiting on the background thread to stop and join and it never joins...
 	void serenity::targets::FileTarget::StopBackgroundThread() {
 		if( flushWorker.flushThreadEnabled.load() ) {
 				flushWorker.cleanUpThreads.store(true);
 				flushWorker.cleanUpThreads.notify_one();
+				flushWorker.flushThread.request_stop();
 				flushWorker.flushThread.join();
 				policy.SetPrimaryMode(serenity::experimental::FlushSetting::never);
 				flushWorker.flushThreadEnabled.store(false);
@@ -174,9 +177,32 @@ namespace serenity::targets {
 	void FileTarget::StartBackgroundThread() {
 		if( !flushWorker.flushThreadEnabled.load() ) {
 				policy.SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
-				flushWorker.flushThread = std::thread(&FileTarget::BackgroundFlushThread, this);
+				flushWorker.cleanUpThreads.store(false);
+				flushWorker.flushThread = std::jthread(&FileTarget::BackgroundFlushThread, this, flushWorker.interruptThread);
 				flushWorker.flushThreadEnabled.store(true);
 		}
+	}
+	/*
+	        Taken from modernescpp.com
+	        ##############################################
+	        cv.wait_until(lock, predicate, itoken);
+	                if (itoken.is_interrupted()){
+	                        // interrupt occurred
+	                }
+	        ##############################################
+	        The above might be a way to wait on elapsed time OR
+	        on a stop token and would be much more stream-lined
+	*/
+	void FileTarget::BackgroundFlushThread(std::stop_token stopToken) {
+		while( !flushWorker.cleanUpThreads.load() ) {
+				if( stopToken.stop_requested() ) {
+						// In the future, would like to just pause thread execution
+						// until signal to resume is recieved instead of joining the thread
+						break;
+				}
+				Flush();
+				std::this_thread::sleep_for(policy.SecondarySettings().flushEvery);
+			}
 	}
 
 	bool FileTarget::CloseFile() {
@@ -294,13 +320,6 @@ namespace serenity::targets {
 
 	std::string* const FileTarget::Buffer() {
 		return TargetBase::Buffer();
-	}
-
-	void FileTarget::BackgroundFlushThread() {
-		while( !flushWorker.cleanUpThreads.load() ) {
-				Flush();
-				std::this_thread::sleep_for(policy.SecondarySettings().flushEvery);
-			}
 	}
 
 	void FileTarget::PolicyFlushOn() {
