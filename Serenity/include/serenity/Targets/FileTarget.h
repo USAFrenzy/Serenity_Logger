@@ -28,6 +28,8 @@ namespace serenity::targets {
 		std::string* const Buffer();
 		void StopBackgroundThread();
 		void StartBackgroundThread();
+		void PauseBackgroundThread();
+		void ResumeBackgroundThread();
 
 	      private:
 		LoggerLevel logLevel;

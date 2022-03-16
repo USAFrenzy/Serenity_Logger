@@ -10,7 +10,7 @@
 // TODO: ####################################################################################################################################
 // clang-format on
 
-#define INSTRUMENT 0
+#define INSTRUMENT 1
 
 #if INSTRUMENT
 	#define INSTRUMENTATION_ENABLED
@@ -117,16 +117,17 @@ int main() {
 	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
 
 	// ****************************** TEMPORARY TESTING ********************************************
-	// Even with the checks involved, only slows the file down from ~35% faster to ~25%-28% faster instead
 	PeriodicSettings testFileFlushSettings = {};
-	testFileFlushSettings.flushEvery       = std::chrono::milliseconds(100);
+	testFileFlushSettings.flushEvery       = std::chrono::seconds(1);
 	Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
 	testFile.SetFlushPolicy(testFIleFlushPolicy);
 	rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
 	C.SetFlushPolicy(testFIleFlushPolicy);
-	testFile.EnableMultiThreadingSupport();
-	rotatingFile.EnableMultiThreadingSupport();
-	C.EnableMultiThreadingSupport();
+	// testFile.EnableMultiThreadingSupport();
+	// rotatingFile.EnableMultiThreadingSupport();
+	// C.EnableMultiThreadingSupport();
+	//  *********************************************************************************************
+	spdlog::flush_every(std::chrono::seconds(1));
 	// ****************************** TEMPORARY TESTING ********************************************
 
 #ifndef INSTRUMENTATION_ENABLED

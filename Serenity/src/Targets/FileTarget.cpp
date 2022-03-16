@@ -182,6 +182,14 @@ namespace serenity::targets {
 				flushWorker.flushThreadEnabled.store(true);
 		}
 	}
+
+	// Testing for the ability to just pause the thread and resume it instead of always destroying/re-creating thread
+	// TODO ******************************** IMPLEMENT THESE ********************************
+	void FileTarget::PauseBackgroundThread() { }
+
+	void FileTarget::ResumeBackgroundThread() { }
+	// TODO ******************************** IMPLEMENT THESE ********************************
+
 	/*
 	        Taken from modernescpp.com
 	        ##############################################

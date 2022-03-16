@@ -77,10 +77,7 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::~RotatingTarget() {
-		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
-				lock.lock();
-		}
+		StopBackgroundThread();
 		CloseFile();
 	}
 
@@ -440,31 +437,6 @@ namespace serenity::experimental::targets {
 	const RotateSettings::IntervalMode RotatingTarget::RotationMode()
 	{
 		return m_mode;
-	}
-
-	void RotatingTarget::PolicyFlushOn()
-	{
-		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (isMTSupportEnabled()) {
-			lock.lock();
-		}
-		if (policy.PrimarySetting() == serenity::experimental::FlushSetting::never) return;
-		if (policy.PrimarySetting() == serenity::experimental::FlushSetting::always) {
-			Flush();
-		}
-		switch (policy.SubSetting()) {
-		case serenity::experimental::PeriodicOptions::timeBased:
-		{
-			RotatingTarget::StartBackgroundThread();
-		}
-		break;    // time based bounds
-		case serenity::experimental::PeriodicOptions::logLevelBased:
-		{
-			if (MsgInfo()->MsgLevel() < policy.SecondarySettings().flushOn) return;
-			Flush();
-		}
-		break;
-		}    // Sub Option Check
 	}
 
 }  // namespace serenity::experimental::targets

@@ -213,6 +213,7 @@ namespace serenity {
 		std::atomic<bool> flushThreadEnabled { false };
 		std::atomic<bool> flushComplete { true };
 		std::atomic<bool> threadWriting { false };
+		std::atomic<bool> pauseThread { false };
 	};
 
 	struct FileSettings

@@ -44,12 +44,13 @@ namespace serenity::experimental::targets {
 		void PrintMessage(std::string_view formatted) override;
 		bool RenameFileInRotation(std::filesystem::path newFilePath);
 		bool ReplaceOldFIleInRotation();
-		void PolicyFlushOn() override;
 
 	private:
 		bool rotationEnabled;
 		IntervalMode m_mode;
-		int currentDay, currentWeekday, currentHour;
+		int currentDay;
+		int currentWeekday;
+		int currentHour;
 		mutable std::mutex rotatingMutex;
 	};
 
