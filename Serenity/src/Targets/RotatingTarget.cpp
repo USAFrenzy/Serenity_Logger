@@ -213,9 +213,13 @@ namespace serenity::experimental::targets {
 		if( isMTSupportEnabled() ) {
 				lock.lock();
 		}
+		static FlushSetting originalPrimaryMode { FlushSetting::never };
 		if( !rotationEnabled ) return;
 		auto wasFlushThreadActive { flushWorker.flushThreadEnabled.load() };
-		auto originalPrimaryMode { policy.PrimarySetting() };
+		if( wasFlushThreadActive ) {
+				originalPrimaryMode = policy.PrimarySetting();
+				PauseBackgroundThread();
+		}
 		CloseFile();
 		if( !RenameFileInRotation(OriginalPath()) ) {
 				if( !ReplaceOldFIleInRotation() ) {
@@ -226,23 +230,22 @@ namespace serenity::experimental::targets {
 		}
 		SetCurrentFileSize(0);
 		if( wasFlushThreadActive ) {
-				// Reset of primary mode due to how CloseFile() stops the flush thread and sets it to never
+				ResumeBackgroundThread();
 				policy.SetPrimaryMode(originalPrimaryMode);
-				StartBackgroundThread();
 		}
 	}
 
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
+		if( ShouldRotate() ) {
+				RotateFile();
+		}
 		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( !flushWorker.flushComplete.load() ) {
 						flushWorker.flushComplete.wait(false);
 				}
 				flushWorker.threadWriting.store(true);
-		}
-		if( ShouldRotate() ) {
-				RotateFile();
 		}
 		if( isMTSupportEnabled() ) {
 				lock.lock();

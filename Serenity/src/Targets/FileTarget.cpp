@@ -4,8 +4,6 @@
 
 namespace serenity::targets {
 
-	static constexpr int retryAttempt { 5 };
-
 	FileTarget::FileTarget(): TargetBase("File_Logger") {
 		fileOptions.fileBuffer.reserve(fileOptions.bufferSize);
 
@@ -110,6 +108,7 @@ namespace serenity::targets {
 	}
 
 	FileTarget::~FileTarget() {
+		StopBackgroundThread();
 		CloseFile();
 	}
 
@@ -161,8 +160,6 @@ namespace serenity::targets {
 		return true;
 	}
 
-	// Source of possible bug here. Not sure about in regular use as it hasn't been tested for it, but in a rotation target,
-	// This function seems to hang when waiting on the background thread to stop and join and it never joins...
 	void serenity::targets::FileTarget::StopBackgroundThread() {
 		if( flushWorker.flushThreadEnabled.load() ) {
 				flushWorker.cleanUpThreads.store(true);
@@ -185,9 +182,20 @@ namespace serenity::targets {
 
 	// Testing for the ability to just pause the thread and resume it instead of always destroying/re-creating thread
 	// TODO ******************************** IMPLEMENT THESE ********************************
-	void FileTarget::PauseBackgroundThread() { }
+	void FileTarget::PauseBackgroundThread() {
+		if( flushWorker.flushThreadEnabled.load() ) {
+				flushWorker.pauseThread.store(true);
+		}
+	}
 
-	void FileTarget::ResumeBackgroundThread() { }
+	void FileTarget::ResumeBackgroundThread() {
+		auto threadEnabled { flushWorker.flushThreadEnabled.load() };
+		auto threadPaused { flushWorker.pauseThread.load() };
+		if( threadEnabled && threadPaused ) {
+				flushWorker.pauseThread.store(false);
+				flushWorker.pauseThread.notify_one();
+		}
+	}
 	// TODO ******************************** IMPLEMENT THESE ********************************
 
 	/*
@@ -201,12 +209,14 @@ namespace serenity::targets {
 	        The above might be a way to wait on elapsed time OR
 	        on a stop token and would be much more stream-lined
 	*/
+
 	void FileTarget::BackgroundFlushThread(std::stop_token stopToken) {
 		while( !flushWorker.cleanUpThreads.load() ) {
 				if( stopToken.stop_requested() ) {
-						// In the future, would like to just pause thread execution
-						// until signal to resume is recieved instead of joining the thread
 						break;
+				}
+				if( flushWorker.pauseThread.load() ) {
+						flushWorker.pauseThread.wait(true);
 				}
 				Flush();
 				std::this_thread::sleep_for(policy.SecondarySettings().flushEvery);
@@ -214,7 +224,6 @@ namespace serenity::targets {
 	}
 
 	bool FileTarget::CloseFile() {
-		StopBackgroundThread();
 		Flush();
 
 		auto TryClose = [ this ]() {

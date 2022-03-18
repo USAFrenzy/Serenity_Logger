@@ -34,6 +34,7 @@ namespace serenity::targets {
 	      private:
 		LoggerLevel logLevel;
 		mutable std::mutex fileMutex;
+		int retryAttempt { 5 };
 
 	      protected:
 		BackgroundThread flushWorker;

@@ -123,10 +123,10 @@ int main() {
 	testFile.SetFlushPolicy(testFIleFlushPolicy);
 	rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
 	C.SetFlushPolicy(testFIleFlushPolicy);
-	// testFile.EnableMultiThreadingSupport();
-	// rotatingFile.EnableMultiThreadingSupport();
-	// C.EnableMultiThreadingSupport();
-	//  *********************************************************************************************
+	testFile.EnableMultiThreadingSupport();
+	rotatingFile.EnableMultiThreadingSupport();
+	C.EnableMultiThreadingSupport();
+	//   *********************************************************************************************
 	spdlog::flush_every(std::chrono::seconds(1));
 	// ****************************** TEMPORARY TESTING ********************************************
 
