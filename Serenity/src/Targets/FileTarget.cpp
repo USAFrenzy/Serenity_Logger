@@ -145,7 +145,12 @@ namespace serenity::targets {
 #ifdef WINDOWS_PLATFORM
 			fileHandle.rdbuf()->pubsetbuf(fileOptions.fileBuffer.data(), fileOptions.bufferSize);
 #endif    // WINDOWS_PLATFORM
-			return fileHandle.is_open();
+			auto fileOpen {fileHandle.is_open()};
+			if (fileOpen) {
+				ResumeBackgroundThread();
+				return true;
+			}
+				return false;
 		};
 
 		for( int tries = 0; tries < retryAttempt; ++tries ) {
@@ -162,10 +167,9 @@ namespace serenity::targets {
 
 	void serenity::targets::FileTarget::StopBackgroundThread() {
 		if( flushWorker.flushThreadEnabled.load() ) {
+				flushWorker.flushThread.request_stop();
 				flushWorker.cleanUpThreads.store(true);
 				flushWorker.cleanUpThreads.notify_one();
-				flushWorker.flushThread.request_stop();
-				flushWorker.flushThread.join();
 				policy.SetPrimaryMode(serenity::experimental::FlushSetting::never);
 				flushWorker.flushThreadEnabled.store(false);
 		}
@@ -180,8 +184,6 @@ namespace serenity::targets {
 		}
 	}
 
-	// Testing for the ability to just pause the thread and resume it instead of always destroying/re-creating thread
-	// TODO ******************************** IMPLEMENT THESE ********************************
 	void FileTarget::PauseBackgroundThread() {
 		if( flushWorker.flushThreadEnabled.load() ) {
 				flushWorker.pauseThread.store(true);
@@ -196,34 +198,23 @@ namespace serenity::targets {
 				flushWorker.pauseThread.notify_one();
 		}
 	}
-	// TODO ******************************** IMPLEMENT THESE ********************************
-
-	/*
-	        Taken from modernescpp.com
-	        ##############################################
-	        cv.wait_until(lock, predicate, itoken);
-	                if (itoken.is_interrupted()){
-	                        // interrupt occurred
-	                }
-	        ##############################################
-	        The above might be a way to wait on elapsed time OR
-	        on a stop token and would be much more stream-lined
-	*/
 
 	void FileTarget::BackgroundFlushThread(std::stop_token stopToken) {
+		auto flushInterval { policy.SecondarySettings().flushEvery };
 		while( !flushWorker.cleanUpThreads.load() ) {
-				if( stopToken.stop_requested() ) {
-						break;
-				}
-				if( flushWorker.pauseThread.load() ) {
-						flushWorker.pauseThread.wait(true);
-				}
-				Flush();
-				std::this_thread::sleep_for(policy.SecondarySettings().flushEvery);
+			if (stopToken.stop_requested()) {
+				break;
 			}
+			if (flushWorker.pauseThread.load()) {
+				flushWorker.pauseThread.wait(true);
+			}
+			Flush();
+			std::this_thread::sleep_for(flushInterval);
+		}
 	}
 
 	bool FileTarget::CloseFile() {
+		PauseBackgroundThread();
 		Flush();
 
 		auto TryClose = [ this ]() {
@@ -344,9 +335,18 @@ namespace serenity::targets {
 		if( isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::never ) return;
+		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::never )
+		{
+			// If the flush thread was active, no need to hog a thread if never flushing
+			StopBackgroundThread();
+		};
 		if( policy.PrimarySetting() == serenity::experimental::FlushSetting::always ) {
-				Flush();
+			// Similar reasoning as Never setting except for the fact of ALWAYS flushing
+			StopBackgroundThread();
+			if (lock.owns_lock()) {
+				lock.unlock();
+			}
+			Flush();
 		}
 		switch( policy.SubSetting() ) {
 				case serenity::experimental::PeriodicOptions::timeBased:

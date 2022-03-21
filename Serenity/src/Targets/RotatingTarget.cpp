@@ -213,8 +213,8 @@ namespace serenity::experimental::targets {
 		if( isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		static FlushSetting originalPrimaryMode { FlushSetting::never };
 		if( !rotationEnabled ) return;
+		static FlushSetting originalPrimaryMode { FlushSetting::periodically };
 		auto wasFlushThreadActive { flushWorker.flushThreadEnabled.load() };
 		if( wasFlushThreadActive ) {
 				originalPrimaryMode = policy.PrimarySetting();

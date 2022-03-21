@@ -123,9 +123,9 @@ int main() {
 	testFile.SetFlushPolicy(testFIleFlushPolicy);
 	rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
 	C.SetFlushPolicy(testFIleFlushPolicy);
-	testFile.EnableMultiThreadingSupport();
-	rotatingFile.EnableMultiThreadingSupport();
-	C.EnableMultiThreadingSupport();
+	//testFile.EnableMultiThreadingSupport();
+	//rotatingFile.EnableMultiThreadingSupport();
+	//C.EnableMultiThreadingSupport();
 	//   *********************************************************************************************
 	spdlog::flush_every(std::chrono::seconds(1));
 	// ****************************** TEMPORARY TESTING ********************************************
@@ -352,6 +352,7 @@ int main() {
 		}
 	rotateTester.StopWatch_Stop();
 	rotatingFile.Flush();
+	rotatingFile.StopBackgroundThread();
 	auto totalRotateTime = rotateTester.Elapsed_In(time_mode::ms);
 	std::cout << "\nRotating Target Bench Finished. Benching Spdlog Rotating Sink...\n";
 

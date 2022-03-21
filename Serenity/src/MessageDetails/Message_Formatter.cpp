@@ -1,5 +1,8 @@
 #include <serenity/MessageDetails/Message_Formatter.h>
 
+// Initialize for no conflicts with FlagFormatter() or, later on, user defined format funcs
+constexpr auto MAX_INDEX = 9999;
+
 namespace serenity::msg_details {
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details): msgInfo(*&details) {
 		SetPattern(pattern);
@@ -64,9 +67,7 @@ namespace serenity::msg_details {
 	void Message_Formatter::StoreFormat() {
 		std::string fmt { fmtPattern };
 		std::string flag;
-		// Initialize for no conflicts with FlagFormatter() or, later on, user defined
-		// format funcs
-		size_t index { 9999 };
+		size_t index { MAX_INDEX };
 		formatter.Clear();
 
 		while( !fmt.empty() ) {
@@ -414,7 +415,7 @@ namespace serenity::msg_details {
 		return result.append(":").append(sec);
 	}
 
-	// Format_T Functions
+	// Format_X Functions
 	Message_Formatter::Format_Arg_X::Format_Arg_X(Message_Info& info): cacheRef(info.TimeDetails().Cache()), lastWkday(cacheRef.tm_wday) {
 		wkday = std::move(UpdateInternalView());
 	}
