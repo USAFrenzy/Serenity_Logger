@@ -1,6 +1,7 @@
 #pragma once
 
 #include <serenity/Targets/Target.h>
+#include <serenity/Utilities/FileHelper.h>
 
 #include <fstream>
 
@@ -13,35 +14,26 @@ namespace serenity::targets {
 		explicit FileTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
 		explicit FileTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
 		                    bool replaceIfExists = false);
-		FileTarget(const FileTarget&)            = delete;
+		FileTarget(const FileTarget&) = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();
 		const std::string FilePath();
 		const std::string FileName();
 		virtual bool RenameFile(std::string_view newFileName);
-		bool OpenFile(bool truncate = false);
-		bool CloseFile();
-		void Flush();
 		void SetLocale(const std::locale& loc) override;
-		void WriteToBaseBuffer(bool fmtToBuf = true);
-		const bool isWriteToBuf();
-		std::string* const Buffer();
-		void StopBackgroundThread();
-		void StartBackgroundThread();
-		void PauseBackgroundThread();
-		void ResumeBackgroundThread();
+		bool OpenFIle(bool truncate = false);
+		bool CloseFIle();
+		void Flush();
 
 	      private:
 		LoggerLevel logLevel;
 		mutable std::mutex fileMutex;
-		int retryAttempt { 5 };
 
 	      protected:
-		BackgroundThread flushWorker;
-		std::ofstream fileHandle;
-		FileSettings fileOptions;
+		helpers::FIleHelper fileHelper;
+
+	      protected:
 		void PolicyFlushOn() override;
 		void PrintMessage(std::string_view formatted) override;
-		virtual void BackgroundFlushThread(std::stop_token stopToken);
 	};
 }    // namespace serenity::targets

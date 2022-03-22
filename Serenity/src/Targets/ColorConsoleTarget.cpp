@@ -4,7 +4,7 @@
 
 namespace serenity::targets {
 	ColorConsole::ColorConsole(): TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false) {
-		WriteToBaseBuffer(false);
+		BaseHelper().WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
 		if( IsValidHandle() && IsTerminalType() ) {
@@ -13,7 +13,7 @@ namespace serenity::targets {
 	}
 
 	ColorConsole::ColorConsole(std::string_view name): TargetBase(name), consoleMode(console_interface::std_out), coloredOutput(false) {
-		WriteToBaseBuffer(false);
+		BaseHelper().WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
 		if( IsValidHandle() && IsTerminalType() ) {
@@ -23,7 +23,7 @@ namespace serenity::targets {
 
 	ColorConsole::ColorConsole(std::string_view name, std::string_view msgPattern)
 		: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false) {
-		WriteToBaseBuffer(false);
+		BaseHelper().WriteToBaseBuffer(false);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
 		if( IsValidHandle() && IsTerminalType() ) {
@@ -61,7 +61,7 @@ namespace serenity::targets {
 
 	void ColorConsole::SetMsgColor(LoggerLevel level, std::string_view color) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( BaseHelper().isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		msgLevelColors.at(level) = color;
@@ -69,7 +69,7 @@ namespace serenity::targets {
 
 	std::string_view ColorConsole::GetMsgColor(LoggerLevel level) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( BaseHelper().isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		return msgLevelColors.at(level);
@@ -77,7 +77,7 @@ namespace serenity::targets {
 
 	void ColorConsole::ColorizeOutput(bool colorize) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( BaseHelper().isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		coloredOutput = colorize;
@@ -88,7 +88,7 @@ namespace serenity::targets {
 	// trailing might be result of known windows cell issue)
 	void ColorConsole::SetConsoleInterface(console_interface mode) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( BaseHelper().isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		consoleMode = mode;
@@ -117,7 +117,7 @@ namespace serenity::targets {
 
 	const console_interface ColorConsole::ConsoleInterface() {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( BaseHelper().isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		return consoleMode;
@@ -130,7 +130,7 @@ namespace serenity::targets {
 
 	void ColorConsole::PrintMessage(std::string_view formatted) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( BaseHelper().isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		std::string message;
@@ -158,7 +158,7 @@ namespace serenity::targets {
 	// TODO: as reset the old mode to its default if mode is changed in SetConsoleMode()
 	void ColorConsole::SetLocale(const std::locale& loc) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( BaseHelper().isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		using enum console_interface;
@@ -188,7 +188,7 @@ namespace serenity::targets {
 
 	void ColorConsole::SetOriginalColors() {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( BaseHelper().isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		msgLevelColors = {

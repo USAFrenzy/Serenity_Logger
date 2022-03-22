@@ -16,8 +16,8 @@ template<typename... Args> void TargetBase::Trace(std::string_view s, Args&&... 
 			msgDetails.SetMessage(s, std::forward<Args>(args)...);
 			auto formatted { MsgFmt()->GetFormatters().Format() };
 
-			if( isWriteToBuf() ) {
-					internalBuffer.append(formatted.data(), formatted.size());
+			if( targetHelper.isWriteToBuf() ) {
+					targetHelper.Buffer()->append(formatted.data(), formatted.size());
 					PolicyFlushOn();
 			} else {
 					PrintMessage(formatted);
@@ -38,8 +38,8 @@ template<typename... Args> void TargetBase::Info(std::string_view s, Args&&... a
 			msgDetails.SetMessage(s, std::forward<Args>(args)...);
 			auto formatted { MsgFmt()->GetFormatters().Format() };
 
-			if( isWriteToBuf() ) {
-					internalBuffer.append(formatted.data(), formatted.size());
+			if( targetHelper.isWriteToBuf() ) {
+					targetHelper.Buffer()->append(formatted.data(), formatted.size());
 					PolicyFlushOn();
 			} else {
 					PrintMessage(formatted);
@@ -60,8 +60,8 @@ template<typename... Args> void TargetBase::Debug(std::string_view s, Args&&... 
 			msgDetails.SetMessage(s, std::forward<Args>(args)...);
 			auto formatted { MsgFmt()->GetFormatters().Format() };
 
-			if( isWriteToBuf() ) {
-					internalBuffer.append(formatted.data(), formatted.size());
+			if( targetHelper.isWriteToBuf() ) {
+					targetHelper.Buffer()->append(formatted.data(), formatted.size());
 					PolicyFlushOn();
 			} else {
 					PrintMessage(formatted);
@@ -82,8 +82,8 @@ template<typename... Args> void TargetBase::Warn(std::string_view s, Args&&... a
 			msgDetails.SetMessage(s, std::forward<Args>(args)...);
 			auto formatted { MsgFmt()->GetFormatters().Format() };
 
-			if( isWriteToBuf() ) {
-					internalBuffer.append(formatted.data(), formatted.size());
+			if( targetHelper.isWriteToBuf() ) {
+					targetHelper.Buffer()->append(formatted.data(), formatted.size());
 					PolicyFlushOn();
 			} else {
 					PrintMessage(formatted);
@@ -104,8 +104,8 @@ template<typename... Args> void TargetBase::Error(std::string_view s, Args&&... 
 			msgDetails.SetMessage(s, std::forward<Args>(args)...);
 			auto formatted { MsgFmt()->GetFormatters().Format() };
 
-			if( isWriteToBuf() ) {
-					internalBuffer.append(formatted.data(), formatted.size());
+			if( targetHelper.isWriteToBuf() ) {
+					targetHelper.Buffer()->append(formatted.data(), formatted.size());
 					PolicyFlushOn();
 			} else {
 					PrintMessage(formatted);
@@ -126,8 +126,8 @@ template<typename... Args> void TargetBase::Fatal(std::string_view s, Args&&... 
 			msgDetails.SetMessage(s, std::forward<Args>(args)...);
 			auto formatted { MsgFmt()->GetFormatters().Format() };
 
-			if( isWriteToBuf() ) {
-					internalBuffer.append(formatted.data(), formatted.size());
+			if( targetHelper.isWriteToBuf() ) {
+					targetHelper.Buffer()->append(formatted.data(), formatted.size());
 					PolicyFlushOn();
 			} else {
 					PrintMessage(formatted);

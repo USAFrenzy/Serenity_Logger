@@ -98,8 +98,7 @@ int main() {
 	sinks.emplace_back(rotatingSink);
 	auto spdlogRotatingLogger { std::make_shared<spdlog::logger>("Rotating_Logger", begin(sinks), end(sinks)) };
 	spdlog::register_logger(spdlogRotatingLogger);
-	spdlogRotatingLogger->set_pattern("%^|%L| %a %d%b%C %T [%n]: %v%$");    // equivalent to Target's Default
-	                                                                        // Pattern
+	spdlogRotatingLogger->set_pattern("%^|%L| %a %d%b%C %T [%n]: %v%$");    // equivalent to Target's Default Pattern
 
 	using namespace serenity;
 	using namespace se_utils;
@@ -117,17 +116,17 @@ int main() {
 	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
 
 	// ****************************** TEMPORARY TESTING ********************************************
-	PeriodicSettings testFileFlushSettings = {};
-	testFileFlushSettings.flushEvery       = std::chrono::seconds(1);
-	Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
-	testFile.SetFlushPolicy(testFIleFlushPolicy);
-	rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
-	C.SetFlushPolicy(testFIleFlushPolicy);
-	//testFile.EnableMultiThreadingSupport();
-	//rotatingFile.EnableMultiThreadingSupport();
-	//C.EnableMultiThreadingSupport();
-	//   *********************************************************************************************
-	spdlog::flush_every(std::chrono::seconds(1));
+	// PeriodicSettings testFileFlushSettings = {};
+	// testFileFlushSettings.flushEvery       = std::chrono::seconds(1);
+	// Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
+	// testFile.SetFlushPolicy(testFIleFlushPolicy);
+	// rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
+	// C.SetFlushPolicy(testFIleFlushPolicy);
+	// testFile.EnableMultiThreadingSupport();
+	// rotatingFile.EnableMultiThreadingSupport();
+	// C.EnableMultiThreadingSupport();
+	//    *********************************************************************************************
+	//	spdlog::flush_every(std::chrono::seconds(1));
 	// ****************************** TEMPORARY TESTING ********************************************
 
 #ifndef INSTRUMENTATION_ENABLED
@@ -329,7 +328,6 @@ int main() {
 			testFile.Info("{}", test);
 		}
 	macroTesterFile.StopWatch_Stop();
-	testFile.StopBackgroundThread();
 	testFile.Flush();
 	auto totalFileTime = macroTesterFile.Elapsed_In(time_mode::ms);
 	std::cout << "\nFile Target Bench Finished. Benching Spdlog Basic File Sink...\n";
@@ -352,7 +350,6 @@ int main() {
 		}
 	rotateTester.StopWatch_Stop();
 	rotatingFile.Flush();
-	rotatingFile.StopBackgroundThread();
 	auto totalRotateTime = rotateTester.Elapsed_In(time_mode::ms);
 	std::cout << "\nRotating Target Bench Finished. Benching Spdlog Rotating Sink...\n";
 
