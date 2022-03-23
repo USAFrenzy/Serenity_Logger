@@ -9,7 +9,7 @@ namespace serenity::targets::helpers {
 	{
 	      public:
 		explicit BaseTargetHelper();
-		BaseTargetHelper(BaseTargetHelper&) = delete;
+		BaseTargetHelper(BaseTargetHelper&)            = delete;
 		BaseTargetHelper& operator=(BaseTargetHelper&) = delete;
 		~BaseTargetHelper()                            = default;
 

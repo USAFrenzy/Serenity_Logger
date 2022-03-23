@@ -12,6 +12,9 @@ set(SERENITY_SOURCE_FILES
     "src/Common.cpp"
     "src/Color/Color.cpp"
     "src/Utilities/Utilities.cpp"
+    "src/Utilities/FileHelper.cpp"
+    "src/Utilities/TargetHelper.cpp"
+
 )
 
 set(SERENITY_HEADER_FILES
@@ -28,6 +31,8 @@ set(SERENITY_HEADER_FILES
     "include/serenity/Targets/RotatingTarget.h"
     "include/serenity/Color/Color.h"
     "include/serenity/Utilities/Utilities.h"
+    "include/serenity/Utilities/FileHelper.h"
+    "include/serenity/Utilities/TargetHelper.h"
 )
 
 set(SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})

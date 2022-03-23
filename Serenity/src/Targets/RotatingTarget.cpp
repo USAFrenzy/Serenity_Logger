@@ -3,7 +3,6 @@
 #include <iostream>
 
 namespace serenity::experimental::targets {
-	using namespace serenity::targets;
 
 	RotatingTarget::RotatingTarget(): FileTarget("Rotating_Log.txt", true), rotationEnabled(true), m_mode(IntervalMode::file_size) {
 		fileHelper.CloseFile();
