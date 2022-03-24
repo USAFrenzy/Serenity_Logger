@@ -2,6 +2,50 @@
 
 #include <iostream>
 
+namespace serenity::experimental {
+
+	void RotateSettings::CacheOriginalPathComponents(const std::filesystem::path& filePath) {
+		path = filePath;
+		ext  = filePath.filename().extension().string();
+		auto fName { filePath.filename() };
+		fileName = fName.replace_extension().string();
+		auto dir { filePath };
+		directory = dir.remove_filename();
+	}
+
+	const std::filesystem::path& RotateSettings::OriginalPath() {
+		return path;
+	}
+
+	const std::filesystem::path& RotateSettings::OriginalDirectory() {
+		return directory;
+	}
+
+	const std::string& RotateSettings::OriginalName() {
+		return fileName;
+	}
+
+	void RotateSettings::SetCurrentFileSize(size_t currentSize) {
+		currentFileSize = currentSize;
+	}
+
+	const std::string& RotateSettings::OriginalExtension() {
+		return ext;
+	}
+
+	const size_t& RotateSettings::FileSize() {
+		return currentFileSize;
+	}
+
+	void RotateSettings::EnableFirstRotation(bool enabled) {
+		initalRotationEnabled = enabled;
+	}
+
+	const bool RotateSettings::IsIntervalRotationEnabled() {
+		return initalRotationEnabled;
+	}
+}    // namespace serenity::experimental
+
 namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget(): FileTarget("Rotating_Log.txt", true), rotationEnabled(true), m_mode(IntervalMode::file_size) {
@@ -200,7 +244,7 @@ namespace serenity::experimental::targets {
 				if( !ReplaceOldFIleInRotation() ) {
 						// If we can't rotate to a new file or replace the oldest file,
 						// then we can't log anthing so this would be considered fatal
-						throw std::runtime_error("Unable To Rotate File Or Repace Oldest File\n");
+						throw std::runtime_error("Unable To Rotate File Or Replace Oldest File\n");
 				}
 		}
 		SetCurrentFileSize(0);

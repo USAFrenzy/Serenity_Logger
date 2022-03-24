@@ -21,8 +21,8 @@ namespace serenity::targets {
 		const std::string LoggerName();
 		void SetPattern(std::string_view pattern);
 		void ResetPatternToDefault();
-		void SetLogFlushLevel(LoggerLevel level);
-		const LoggerLevel FlushLevel();
+		void SetLogLevel(LoggerLevel level);
+		const LoggerLevel Level();
 		void SetLoggerName(std::string_view name);
 		template<typename... Args> void Trace(std::string_view msg, Args&&... args);
 		template<typename... Args> void Info(std::string_view msg, Args&&... args);

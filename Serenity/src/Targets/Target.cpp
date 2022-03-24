@@ -88,7 +88,7 @@ namespace serenity::targets {
 		msgPattern.SetPattern(DEFAULT_PATTERN);
 	}
 
-	void TargetBase::SetLogFlushLevel(LoggerLevel level) {
+	void TargetBase::SetLogLevel(LoggerLevel level) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
 		if( targetHelper.isMTSupportEnabled() ) {
 				lock.lock();
@@ -96,7 +96,7 @@ namespace serenity::targets {
 		logLevel = level;
 	}
 
-	const LoggerLevel TargetBase::FlushLevel() {
+	const LoggerLevel TargetBase::Level() {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
 		if( targetHelper.isMTSupportEnabled() ) {
 				lock.lock();

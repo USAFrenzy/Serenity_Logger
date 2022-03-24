@@ -7,6 +7,29 @@
 
 // TODO: Finish abstracting these away so that any fIle-based target can add this helper class in composition rather than the current inheritance
 // model
+
+namespace serenity {
+
+	struct BackgroundThread
+	{
+		std::jthread flushThread;
+		std::stop_token interruptThread {};
+		std::atomic<bool> cleanUpThreads { false };
+		std::atomic<bool> flushThreadEnabled { false };
+		std::atomic<bool> flushComplete { true };
+		std::atomic<bool> threadWriting { false };
+		std::atomic<bool> pauseThread { false };
+	};
+
+	struct FileSettings
+	{
+		std::filesystem::path filePath;
+		std::vector<char> fileBuffer;
+		size_t bufferSize { DEFAULT_BUFFER_SIZE };
+	};
+
+}    // namespace serenity
+
 namespace serenity::targets::helpers {
 
 	class FIleHelper: public BaseTargetHelper

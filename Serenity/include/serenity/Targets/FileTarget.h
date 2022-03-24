@@ -26,7 +26,6 @@ namespace serenity::targets {
 		void Flush();
 
 	      private:
-		LoggerLevel logLevel;
 		mutable std::mutex fileMutex;
 
 	      protected:

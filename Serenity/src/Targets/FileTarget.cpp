@@ -6,15 +6,12 @@ namespace serenity::targets {
 
 	FileTarget::FileTarget(): TargetBase("File_Logger") {
 		fileHelper.FileOptions().fileBuffer.reserve(fileHelper.FileOptions().bufferSize);
-
 		std::filesystem::path fullFilePath = std::filesystem::current_path();
 		const auto logDir { "Logs" };
 		const auto logDirPath { fullFilePath };
 		fullFilePath /= logDir;
 		fullFilePath /= "Generic_Log.txt";
 		fileHelper.FileOptions().filePath = fullFilePath.make_preferred().string();
-		logLevel                          = LoggerLevel::trace;
-
 		try {
 				if( !std::filesystem::exists(logDirPath) ) {
 						std::filesystem::create_directories(logDirPath);
@@ -40,7 +37,6 @@ namespace serenity::targets {
 		fullFilePath /= logDir;
 		fullFilePath /= fileName;
 		fileHelper.FileOptions().filePath = fullFilePath.make_preferred().string();
-		logLevel                          = LoggerLevel::trace;
 		try {
 				if( !std::filesystem::exists(logDirPath) ) {
 						std::filesystem::create_directories(logDirPath);
@@ -62,7 +58,6 @@ namespace serenity::targets {
 		fileHelper.FileOptions().fileBuffer.reserve(fileHelper.FileOptions().bufferSize);
 		fileHelper.FileOptions().filePath = fPath;
 		fileHelper.FileOptions().filePath.make_preferred();
-		logLevel = LoggerLevel::trace;
 		try {
 				if( !std::filesystem::exists(fileHelper.FileOptions().filePath) ) {
 						auto dir { fileHelper.FileOptions().filePath };
@@ -87,7 +82,6 @@ namespace serenity::targets {
 		fileHelper.FileOptions().fileBuffer.reserve(fileHelper.FileOptions().bufferSize);
 		fileHelper.FileOptions().filePath = fPath;
 		fileHelper.FileOptions().filePath.make_preferred();
-		logLevel = LoggerLevel::trace;
 		try {
 				if( !std::filesystem::exists(fileHelper.FileOptions().filePath) ) {
 						auto dir { fileHelper.FileOptions().filePath };

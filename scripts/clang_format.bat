@@ -3,7 +3,6 @@
 echo -- Formatting Files...
 
 pushd ..
-		clang-format -i -style=file Serenity/src/*.cpp
 		clang-format -i -style=file Serenity/src/Color/*.cpp
 		clang-format -i -style=file Serenity/src/MessageDetails/*.cpp
 		clang-format -i -style=file Serenity/src/Targets/*.cpp

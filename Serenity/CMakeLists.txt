@@ -9,7 +9,6 @@ set(SERENITY_SOURCE_FILES
     "src/Targets/ColorConsoleTarget.cpp"
     "src/Targets/FileTarget.cpp"
     "src/Targets/RotatingTarget.cpp"
-    "src/Common.cpp"
     "src/Color/Color.cpp"
     "src/Utilities/Utilities.cpp"
     "src/Utilities/FileHelper.cpp"
