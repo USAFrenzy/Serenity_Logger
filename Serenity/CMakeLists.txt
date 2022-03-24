@@ -13,7 +13,6 @@ set(SERENITY_SOURCE_FILES
     "src/Utilities/Utilities.cpp"
     "src/Utilities/FileHelper.cpp"
     "src/Utilities/TargetHelper.cpp"
-
 )
 
 set(SERENITY_HEADER_FILES

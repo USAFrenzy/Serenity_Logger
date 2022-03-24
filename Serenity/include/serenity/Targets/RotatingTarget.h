@@ -1,11 +1,17 @@
 #pragma once
 
 #include <serenity/Targets/FileTarget.h>
+#include <serenity/Utilities/FileHelper.h>
 
 namespace serenity::experimental {
 
-	struct RotateSettings
+	struct RotateSettings: private serenity::FileSettings
 	{
+		explicit RotateSettings(const std::string_view& filePath);
+		RotateSettings(RotateSettings&)            = delete;
+		RotateSettings& operator=(RotateSettings&) = delete;
+		~RotateSettings()                          = default;
+
 		enum class IntervalMode
 		{
 			file_size = 0,
@@ -15,29 +21,27 @@ namespace serenity::experimental {
 			monthly   = 4,
 		};
 
-		size_t maxNumberOfFiles { 5 };
-		size_t fileSizeLimit { 512 * KB };
-		int dayModeSettingHour { 0 };
-		int dayModeSettingMinute { 0 };
-		int weekModeSetting { 0 };
-		int monthModeSetting { 1 };
+		size_t maxNumberOfFiles;
+		size_t fileSizeLimit;
+		int dayModeSettingHour;
+		int dayModeSettingMinute;
+		int weekModeSetting;
+		int monthModeSetting;
 
 	      protected:
-		const std::filesystem::path& OriginalPath();
-		const std::filesystem::path& OriginalDirectory();
-		const std::string& OriginalName();
-		const std::string& OriginalExtension();
-		const size_t& FileSize();
+		const std::filesystem::path OriginalPath();
+		const std::filesystem::path OriginalDirectory();
+		const std::string OriginalName();
+		const std::string OriginalExtension();
+		const size_t FileSize();
 		const bool IsIntervalRotationEnabled();
 		void CacheOriginalPathComponents(const std::filesystem::path& filePath);
 		void SetCurrentFileSize(size_t currentSize);
 		void EnableFirstRotation(bool enabled = true);
 
 	      private:
-		size_t currentFileSize { 0 };
-		std::string ext, fileName;
-		std::filesystem::path path, directory;
-		bool initalRotationEnabled { true };
+		size_t currentFileSize;
+		bool initalRotationEnabled;
 	};
 }    // namespace serenity::experimental
 

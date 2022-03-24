@@ -4,14 +4,13 @@
 
 namespace serenity::targets {
 
-	FileTarget::FileTarget(): TargetBase("File_Logger") {
-		fileHelper.FileOptions().fileBuffer.reserve(fileHelper.FileOptions().bufferSize);
+	FileTarget::FileTarget(): TargetBase("File_Logger"), fileMutex(std::mutex {}), fileHelper() {
 		std::filesystem::path fullFilePath = std::filesystem::current_path();
 		const auto logDir { "Logs" };
 		const auto logDirPath { fullFilePath };
 		fullFilePath /= logDir;
 		fullFilePath /= "Generic_Log.txt";
-		fileHelper.FileOptions().filePath = fullFilePath.make_preferred().string();
+		fileHelper.CacheFile(fullFilePath);
 		try {
 				if( !std::filesystem::exists(logDirPath) ) {
 						std::filesystem::create_directories(logDirPath);
@@ -29,14 +28,14 @@ namespace serenity::targets {
 		}
 	}
 
-	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists): TargetBase("File_Logger") {
-		fileHelper.FileOptions().fileBuffer.reserve(fileHelper.FileOptions().bufferSize);
+	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists)
+		: TargetBase("File_Logger"), fileMutex(std::mutex {}), fileHelper() {
 		std::filesystem::path fullFilePath = std::filesystem::current_path();
 		const auto logDir { "Logs" };
 		const auto logDirPath { fullFilePath };
 		fullFilePath /= logDir;
 		fullFilePath /= fileName;
-		fileHelper.FileOptions().filePath = fullFilePath.make_preferred().string();
+		fileHelper.CacheFile(fullFilePath);
 		try {
 				if( !std::filesystem::exists(logDirPath) ) {
 						std::filesystem::create_directories(logDirPath);
@@ -54,10 +53,8 @@ namespace serenity::targets {
 		}
 	}
 
-	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists): TargetBase(name) {
-		fileHelper.FileOptions().fileBuffer.reserve(fileHelper.FileOptions().bufferSize);
-		fileHelper.FileOptions().filePath = fPath;
-		fileHelper.FileOptions().filePath.make_preferred();
+	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists)
+		: TargetBase(name), fileMutex(std::mutex {}), fileHelper(fPath) {
 		try {
 				if( !std::filesystem::exists(fileHelper.FileOptions().filePath) ) {
 						auto dir { fileHelper.FileOptions().filePath };
@@ -78,10 +75,8 @@ namespace serenity::targets {
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
-		: TargetBase(name, formatPattern) {
+		: TargetBase(name, formatPattern), fileHelper(fPath) {
 		fileHelper.FileOptions().fileBuffer.reserve(fileHelper.FileOptions().bufferSize);
-		fileHelper.FileOptions().filePath = fPath;
-		fileHelper.FileOptions().filePath.make_preferred();
 		try {
 				if( !std::filesystem::exists(fileHelper.FileOptions().filePath) ) {
 						auto dir { fileHelper.FileOptions().filePath };

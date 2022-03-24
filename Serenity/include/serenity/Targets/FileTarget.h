@@ -25,14 +25,14 @@ namespace serenity::targets {
 		bool CloseFIle();
 		void Flush();
 
-	      private:
-		mutable std::mutex fileMutex;
-
-	      protected:
-		helpers::FIleHelper fileHelper;
-
 	      protected:
 		void PolicyFlushOn() override;
 		void PrintMessage(std::string_view formatted) override;
+
+	      protected:
+		helpers::FileHelper fileHelper;
+
+	      private:
+		mutable std::mutex fileMutex;
 	};
 }    // namespace serenity::targets

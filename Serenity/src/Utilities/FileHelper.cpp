@@ -2,8 +2,31 @@
 
 #include <iostream>
 
+namespace serenity {
+
+	FileSettings::FileSettings(): filePath(), fileDir(), fileName(), extension(), bufferSize(DEFAULT_BUFFER_SIZE), fileBuffer(bufferSize) { }
+}    // namespace serenity
+
 namespace serenity::targets::helpers {
-	bool FIleHelper::OpenFile(bool truncate) {
+
+	FileHelper::FileHelper(): BaseTargetHelper(), fileOptions(), retryAttempt(5) { }
+
+	FileHelper::FileHelper(const std::string_view fpath): BaseTargetHelper(), fileOptions(), retryAttempt(5) {
+		CacheFile(fpath);
+	}
+
+	void FileHelper::CacheFile(const std::filesystem::path& filePath) {
+		if( filePath.empty() ) return;
+		auto fPath { filePath };
+		auto directory { fPath };
+		fileOptions.filePath  = fPath.make_preferred().string();
+		fileOptions.fileName  = filePath.filename().string();
+		fileOptions.extension = fPath.extension().string();
+		directory._Remove_filename_and_separator();
+		fileOptions.fileDir = directory.stem().string();
+	}
+
+	bool FileHelper::OpenFile(bool truncate) {
 		std::unique_lock<std::mutex> lock(fileHelperMutex, std::defer_lock);
 		if( isMTSupportEnabled() ) {
 				lock.lock();
@@ -40,7 +63,7 @@ namespace serenity::targets::helpers {
 		return true;
 	}
 
-	bool FIleHelper::CloseFile() {
+	bool FileHelper::CloseFile() {
 		PauseBackgroundThread();
 		Flush();
 
@@ -60,7 +83,7 @@ namespace serenity::targets::helpers {
 		return true;
 	}
 
-	void FIleHelper::Flush() {
+	void FileHelper::Flush() {
 		std::unique_lock<std::mutex> lock(fileHelperMutex, std::defer_lock);
 		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
@@ -87,19 +110,19 @@ namespace serenity::targets::helpers {
 		}
 	}
 
-	std::ofstream& FIleHelper::FileHandle() {
+	std::ofstream& FileHelper::FileHandle() {
 		return fileHandle;
 	}
 
-	FileSettings& FIleHelper::FileOptions() {
+	FileSettings& FileHelper::FileOptions() {
 		return fileOptions;
 	}
 
-	BackgroundThread& FIleHelper::BackgoundThreadInfo() {
+	BackgroundThread& FileHelper::BackgoundThreadInfo() {
 		return flushWorker;
 	}
 
-	void FIleHelper::BackgroundFlushThread(std::stop_token stopToken) {
+	void FileHelper::BackgroundFlushThread(std::stop_token stopToken) {
 		auto flushInterval { policy.SecondarySettings().flushEvery };
 		while( !flushWorker.cleanUpThreads.load() ) {
 				if( stopToken.stop_requested() ) {
@@ -113,7 +136,7 @@ namespace serenity::targets::helpers {
 			}
 	}
 
-	void FIleHelper::StopBackgroundThread() {
+	void FileHelper::StopBackgroundThread() {
 		if( flushWorker.flushThreadEnabled.load() ) {
 				flushWorker.flushThread.request_stop();
 				flushWorker.cleanUpThreads.store(true);
@@ -123,22 +146,22 @@ namespace serenity::targets::helpers {
 		}
 	}
 
-	void FIleHelper::StartBackgroundThread() {
+	void FileHelper::StartBackgroundThread() {
 		if( !flushWorker.flushThreadEnabled.load() ) {
 				policy.SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
 				flushWorker.cleanUpThreads.store(false);
-				flushWorker.flushThread = std::jthread(&FIleHelper::BackgroundFlushThread, this, flushWorker.interruptThread);
+				flushWorker.flushThread = std::jthread(&FileHelper::BackgroundFlushThread, this, flushWorker.interruptThread);
 				flushWorker.flushThreadEnabled.store(true);
 		}
 	}
 
-	void FIleHelper::PauseBackgroundThread() {
+	void FileHelper::PauseBackgroundThread() {
 		if( flushWorker.flushThreadEnabled.load() ) {
 				flushWorker.pauseThread.store(true);
 		}
 	}
 
-	void FIleHelper::ResumeBackgroundThread() {
+	void FileHelper::ResumeBackgroundThread() {
 		auto threadEnabled { flushWorker.flushThreadEnabled.load() };
 		auto threadPaused { flushWorker.pauseThread.load() };
 		if( threadEnabled && threadPaused ) {

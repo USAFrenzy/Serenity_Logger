@@ -4,24 +4,34 @@
 
 namespace serenity::experimental {
 
+	RotateSettings::RotateSettings(const std::string_view& filePath)
+		: FileSettings(), maxNumberOfFiles(5), fileSizeLimit(512 * KB), dayModeSettingHour(0), dayModeSettingMinute(0),
+		  weekModeSetting(0), monthModeSetting(1), currentFileSize(0), initalRotationEnabled(true) {
+		std::filesystem::path fPath { filePath };
+		CacheOriginalPathComponents(fPath);
+	}
+
 	void RotateSettings::CacheOriginalPathComponents(const std::filesystem::path& filePath) {
-		path = filePath;
-		ext  = filePath.filename().extension().string();
-		auto fName { filePath.filename() };
-		fileName = fName.replace_extension().string();
-		auto dir { filePath };
-		directory = dir.remove_filename();
+		auto fPath { filePath };
+		auto directory { filePath };
+		this->filePath = fPath.make_preferred().string();
+		auto name { fPath.filename() };
+		name.replace_extension();
+		fileName  = name.string();
+		extension = fPath.extension().string();
+		directory._Remove_filename_and_separator();
+		fileDir = directory.stem().string();
 	}
 
-	const std::filesystem::path& RotateSettings::OriginalPath() {
-		return path;
+	const std::filesystem::path RotateSettings::OriginalPath() {
+		return filePath;
 	}
 
-	const std::filesystem::path& RotateSettings::OriginalDirectory() {
-		return directory;
+	const std::filesystem::path RotateSettings::OriginalDirectory() {
+		return fileDir;
 	}
 
-	const std::string& RotateSettings::OriginalName() {
+	const std::string RotateSettings::OriginalName() {
 		return fileName;
 	}
 
@@ -29,11 +39,11 @@ namespace serenity::experimental {
 		currentFileSize = currentSize;
 	}
 
-	const std::string& RotateSettings::OriginalExtension() {
-		return ext;
+	const std::string RotateSettings::OriginalExtension() {
+		return extension;
 	}
 
-	const size_t& RotateSettings::FileSize() {
+	const size_t RotateSettings::FileSize() {
 		return currentFileSize;
 	}
 
@@ -48,7 +58,8 @@ namespace serenity::experimental {
 
 namespace serenity::experimental::targets {
 
-	RotatingTarget::RotatingTarget(): FileTarget("Rotating_Log.txt", true), rotationEnabled(true), m_mode(IntervalMode::file_size) {
+	RotatingTarget::RotatingTarget()
+		: FileTarget("Rotating_Log.txt", true), RotateSettings(this->FilePath()), rotationEnabled(true), m_mode(IntervalMode::file_size) {
 		fileHelper.CloseFile();
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
@@ -56,7 +67,6 @@ namespace serenity::experimental::targets {
 		currentWeekday = cache.tm_wday;
 		std::filesystem::path rotationReadyFile { fileHelper.FileOptions().filePath };
 		rotationReadyFile.make_preferred();
-		CacheOriginalPathComponents(fileHelper.FileOptions().filePath);
 		std::string rotateFile { OriginalName() };
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
@@ -72,7 +82,7 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-		: FileTarget(name, filePath, replaceIfExists), rotationEnabled(true), m_mode(IntervalMode::file_size) {
+		: FileTarget(name, filePath, replaceIfExists), RotateSettings(filePath), rotationEnabled(true), m_mode(IntervalMode::file_size) {
 		fileHelper.CloseFile();
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
@@ -80,7 +90,6 @@ namespace serenity::experimental::targets {
 		currentWeekday = cache.tm_wday;
 		std::filesystem::path rotationReadyFile { filePath };
 		rotationReadyFile.make_preferred();
-		CacheOriginalPathComponents(filePath);
 		std::string rotateFile { OriginalName() };
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
@@ -96,7 +105,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-		: FileTarget(name, formatPattern, filePath, replaceIfExists), rotationEnabled(true), m_mode(IntervalMode::file_size) {
+		: FileTarget(name, formatPattern, filePath, replaceIfExists), RotateSettings(filePath), rotationEnabled(true),
+		  m_mode(IntervalMode::file_size) {
 		fileHelper.CloseFile();
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
@@ -104,7 +114,6 @@ namespace serenity::experimental::targets {
 		currentWeekday = cache.tm_wday;
 		std::filesystem::path rotationReadyFile { filePath };
 		rotationReadyFile.make_preferred();
-		CacheOriginalPathComponents(filePath);
 		std::string rotateFile { OriginalName() };
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);

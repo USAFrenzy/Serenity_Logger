@@ -5,9 +5,6 @@
 
 #include <fstream>
 
-// TODO: Finish abstracting these away so that any fIle-based target can add this helper class in composition rather than the current inheritance
-// model
-
 namespace serenity {
 
 	struct BackgroundThread
@@ -23,18 +20,33 @@ namespace serenity {
 
 	struct FileSettings
 	{
+		FileSettings();
+		FileSettings(FileSettings&)            = delete;
+		FileSettings& operator=(FileSettings&) = delete;
+		~FileSettings()                        = default;
+
 		std::filesystem::path filePath;
+		std::string fileDir;
+		std::string fileName;
+		std::string extension;
+		size_t bufferSize;
 		std::vector<char> fileBuffer;
-		size_t bufferSize { DEFAULT_BUFFER_SIZE };
 	};
 
 }    // namespace serenity
 
 namespace serenity::targets::helpers {
 
-	class FIleHelper: public BaseTargetHelper
+	class FileHelper: public BaseTargetHelper
 	{
 	      public:
+		FileHelper();
+		FileHelper(const std::string_view fpath);
+		FileHelper(FileHelper&)            = delete;
+		FileHelper& operator=(FileHelper&) = delete;
+		~FileHelper()                      = default;
+
+		void CacheFile(const std::filesystem::path& filePath);
 		bool OpenFile(bool truncate = false);
 		bool CloseFile();
 		void Flush();
@@ -48,10 +60,10 @@ namespace serenity::targets::helpers {
 		void ResumeBackgroundThread();
 
 	      private:
-		int retryAttempt { 5 };
+		FileSettings fileOptions;
+		int retryAttempt;
 		BackgroundThread flushWorker;
 		std::ofstream fileHandle;
-		FileSettings fileOptions;
 		std::mutex fileHelperMutex;
 	};
 
