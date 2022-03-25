@@ -5,7 +5,7 @@
 
 namespace serenity::experimental {
 
-	struct RotateSettings: private serenity::FileSettings
+	struct RotateSettings: public serenity::FileSettings
 	{
 		explicit RotateSettings(const std::string_view& filePath);
 		RotateSettings(RotateSettings&)            = delete;

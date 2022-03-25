@@ -4,7 +4,7 @@
 
 namespace serenity::targets {
 
-	FileTarget::FileTarget(): TargetBase("File_Logger"), fileMutex(std::mutex {}), fileHelper() {
+	FileTarget::FileTarget(): TargetBase("File_Logger"), fileMutex(std::mutex {}), fileHelper("") {
 		std::filesystem::path fullFilePath = std::filesystem::current_path();
 		const auto logDir { "Logs" };
 		const auto logDirPath { fullFilePath };
@@ -29,7 +29,7 @@ namespace serenity::targets {
 	}
 
 	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists)
-		: TargetBase("File_Logger"), fileMutex(std::mutex {}), fileHelper() {
+		: TargetBase("File_Logger"), fileMutex(std::mutex {}), fileHelper("") {
 		std::filesystem::path fullFilePath = std::filesystem::current_path();
 		const auto logDir { "Logs" };
 		const auto logDirPath { fullFilePath };

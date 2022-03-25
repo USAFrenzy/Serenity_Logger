@@ -9,8 +9,6 @@ namespace serenity {
 
 namespace serenity::targets::helpers {
 
-	FileHelper::FileHelper(): BaseTargetHelper(), fileOptions(), retryAttempt(5) { }
-
 	FileHelper::FileHelper(const std::string_view fpath): BaseTargetHelper(), fileOptions(), retryAttempt(5) {
 		CacheFile(fpath);
 	}
@@ -19,11 +17,11 @@ namespace serenity::targets::helpers {
 		if( filePath.empty() ) return;
 		auto fPath { filePath };
 		auto directory { fPath };
-		fileOptions.filePath  = fPath.make_preferred().string();
+		fileOptions.filePath = fPath.make_preferred().string();
+		directory._Remove_filename_and_separator();
+		fileOptions.fileDir   = directory.stem().string();
 		fileOptions.fileName  = filePath.filename().string();
 		fileOptions.extension = fPath.extension().string();
-		directory._Remove_filename_and_separator();
-		fileOptions.fileDir = directory.stem().string();
 	}
 
 	bool FileHelper::OpenFile(bool truncate) {

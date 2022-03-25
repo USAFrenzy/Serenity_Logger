@@ -40,8 +40,7 @@ namespace serenity::targets::helpers {
 	class FileHelper: public BaseTargetHelper
 	{
 	      public:
-		FileHelper();
-		FileHelper(const std::string_view fpath);
+		explicit FileHelper(const std::string_view fpath);
 		FileHelper(FileHelper&)            = delete;
 		FileHelper& operator=(FileHelper&) = delete;
 		~FileHelper()                      = default;
