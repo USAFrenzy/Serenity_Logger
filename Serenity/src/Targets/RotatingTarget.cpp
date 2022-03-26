@@ -4,11 +4,11 @@
 
 namespace serenity::experimental {
 
-	RotateSettings::RotateSettings(const std::string_view& filePath)
-		: FileSettings(), maxNumberOfFiles(5), fileSizeLimit(512 * KB), dayModeSettingHour(0), dayModeSettingMinute(0),
-		  weekModeSetting(0), monthModeSetting(1), currentFileSize(0), initalRotationEnabled(true) {
-		std::filesystem::path fPath { filePath };
-		CacheOriginalPathComponents(fPath);
+	RotateSettings::RotateSettings(const std::string& path)
+		: maxNumberOfFiles(5), fileSizeLimit(512 * KB), dayModeSettingHour(0), dayModeSettingMinute(0), weekModeSetting(0),
+		  monthModeSetting(1), currentFileSize(0), initalRotationEnabled(true) {
+		std::filesystem::path pathToCache { path };
+		CacheOriginalPathComponents(pathToCache);
 	}
 
 	void RotateSettings::CacheOriginalPathComponents(const std::filesystem::path& filePath) {
@@ -59,7 +59,7 @@ namespace serenity::experimental {
 namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
-		: FileTarget("Rotating_Log.txt", true), RotateSettings(this->FilePath()), rotationEnabled(true), m_mode(IntervalMode::file_size) {
+		: FileTarget("Rotating_Log.txt", true), RotateSettings(FilePath()), rotationEnabled(true), m_mode(IntervalMode::file_size) {
 		fileHelper.CloseFile();
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
@@ -82,7 +82,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-		: FileTarget(name, filePath, replaceIfExists), RotateSettings(filePath), rotationEnabled(true), m_mode(IntervalMode::file_size) {
+		: FileTarget(name, filePath, replaceIfExists), RotateSettings(std::string(filePath.data(), filePath.size())),
+		  rotationEnabled(true), m_mode(IntervalMode::file_size) {
 		fileHelper.CloseFile();
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
@@ -105,8 +106,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-		: FileTarget(name, formatPattern, filePath, replaceIfExists), RotateSettings(filePath), rotationEnabled(true),
-		  m_mode(IntervalMode::file_size) {
+		: FileTarget(name, formatPattern, filePath, replaceIfExists), RotateSettings(std::string(filePath.data(), filePath.size())),
+		  rotationEnabled(true), m_mode(IntervalMode::file_size) {
 		fileHelper.CloseFile();
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;

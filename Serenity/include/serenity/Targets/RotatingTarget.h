@@ -5,9 +5,10 @@
 
 namespace serenity::experimental {
 
-	struct RotateSettings: public serenity::FileSettings
+	class RotateSettings: public FileSettings
 	{
-		explicit RotateSettings(const std::string_view& filePath);
+	      public:
+		explicit RotateSettings(const std::string& path);
 		RotateSettings(RotateSettings&)            = delete;
 		RotateSettings& operator=(RotateSettings&) = delete;
 		~RotateSettings()                          = default;
