@@ -5,6 +5,14 @@ namespace serenity::targets::helpers {
 		: toBuffer(false), internalBuffer(std::string {}), multiThreadSupport(false),
 		  policy(serenity::experimental::FlushSetting::never) { }
 
+	BaseTargetHelper& serenity::targets::helpers::BaseTargetHelper::operator=(BaseTargetHelper& other) {
+		internalBuffer     = other.internalBuffer;
+		multiThreadSupport = other.multiThreadSupport;
+		policy             = other.policy;
+		toBuffer           = other.toBuffer;
+		return *this;
+	}
+
 	void BaseTargetHelper::EnableMultiThreadingSupport(bool enableMultiThreading) {
 		multiThreadSupport = enableMultiThreading;
 	}

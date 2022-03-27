@@ -17,7 +17,7 @@ namespace serenity::targets {
 
 	void TargetBase::SetPattern(std::string_view pattern) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		msgPattern.SetPattern(std::string { pattern.data(), pattern.size() });
@@ -25,15 +25,15 @@ namespace serenity::targets {
 
 	void TargetBase::SetFlushPolicy(const serenity::experimental::Flush_Policy& pPolicy) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		targetHelper.Policy() = pPolicy;
+		baseHelper.Policy() = pPolicy;
 	}
 
 	const std::string TargetBase::LoggerName() {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		return msgDetails.Name();
@@ -41,7 +41,7 @@ namespace serenity::targets {
 
 	void TargetBase::SetLocale(const std::locale& loc) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		if( loc != MsgInfo()->GetLocale() ) {
@@ -51,14 +51,10 @@ namespace serenity::targets {
 
 	const std::locale TargetBase::GetLocale() {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		return MsgInfo()->GetLocale();
-	}
-
-	helpers::BaseTargetHelper& TargetBase::BaseHelper() {
-		return targetHelper;
 	}
 
 	// Leaving empty for derived classes to implement
@@ -66,7 +62,7 @@ namespace serenity::targets {
 
 	msg_details::Message_Formatter* TargetBase::MsgFmt() {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		return &msgPattern;
@@ -74,7 +70,7 @@ namespace serenity::targets {
 
 	msg_details::Message_Info* TargetBase::MsgInfo() {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		return &msgDetails;
@@ -82,7 +78,7 @@ namespace serenity::targets {
 
 	void TargetBase::ResetPatternToDefault() {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		msgPattern.SetPattern(DEFAULT_PATTERN);
@@ -90,7 +86,7 @@ namespace serenity::targets {
 
 	void TargetBase::SetLogLevel(LoggerLevel level) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		logLevel = level;
@@ -98,7 +94,7 @@ namespace serenity::targets {
 
 	const LoggerLevel TargetBase::Level() {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		return logLevel;
@@ -106,10 +102,14 @@ namespace serenity::targets {
 
 	void TargetBase::SetLoggerName(std::string_view name) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( targetHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		msgDetails.SetName(name);
+	}
+
+	void TargetBase::EnableMultiThreadingSupport(bool enable) {
+		baseHelper.EnableMultiThreadingSupport(enable);
 	}
 
 }    // namespace serenity::targets

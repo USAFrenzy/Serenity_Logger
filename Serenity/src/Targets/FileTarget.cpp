@@ -5,12 +5,9 @@
 namespace serenity::targets {
 
 	FileTarget::FileTarget(): TargetBase("File_Logger"), fileMutex(std::mutex {}), fileHelper("") {
-		std::filesystem::path fullFilePath = std::filesystem::current_path();
-		const auto logDir { "Logs" };
-		const auto logDirPath { fullFilePath };
-		fullFilePath /= logDir;
-		fullFilePath /= "Generic_Log.txt";
-		fileHelper.CacheFile(fullFilePath);
+		fileHelper.BaseHelper() = baseHelper;
+		std::filesystem::path logDirPath { std::filesystem::current_path() /= "Logs" };
+		fileHelper.InitializeFilePath();
 		try {
 				if( !std::filesystem::exists(logDirPath) ) {
 						std::filesystem::create_directories(logDirPath);
@@ -30,18 +27,15 @@ namespace serenity::targets {
 
 	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists)
 		: TargetBase("File_Logger"), fileMutex(std::mutex {}), fileHelper("") {
-		std::filesystem::path fullFilePath = std::filesystem::current_path();
-		const auto logDir { "Logs" };
-		const auto logDirPath { fullFilePath };
-		fullFilePath /= logDir;
-		fullFilePath /= fileName;
-		fileHelper.CacheFile(fullFilePath);
+		fileHelper.BaseHelper() = baseHelper;
+		std::filesystem::path logDirPath { std::filesystem::current_path() /= "Logs" };
+		fileHelper.InitializeFilePath(fileName);
 		try {
 				if( !std::filesystem::exists(logDirPath) ) {
 						std::filesystem::create_directories(logDirPath);
-						fileHelper.OpenFile(true);
+						fileHelper.OpenFile(replaceIfExists);
 				} else {
-						fileHelper.OpenFile(true);
+						fileHelper.OpenFile(replaceIfExists);
 					}
 			}
 		catch( const std::exception& e ) {
@@ -55,6 +49,7 @@ namespace serenity::targets {
 
 	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists)
 		: TargetBase(name), fileMutex(std::mutex {}), fileHelper(fPath) {
+		fileHelper.BaseHelper() = baseHelper;
 		try {
 				if( !std::filesystem::exists(fileHelper.FileOptions().filePath) ) {
 						auto dir { fileHelper.FileOptions().filePath };
@@ -76,7 +71,7 @@ namespace serenity::targets {
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
 		: TargetBase(name, formatPattern), fileHelper(fPath) {
-		fileHelper.FileOptions().fileBuffer.reserve(fileHelper.FileOptions().bufferSize);
+		fileHelper.BaseHelper() = baseHelper;
 		try {
 				if( !std::filesystem::exists(fileHelper.FileOptions().filePath) ) {
 						auto dir { fileHelper.FileOptions().filePath };
@@ -101,37 +96,8 @@ namespace serenity::targets {
 		fileHelper.CloseFile();
 	}
 
-	const std::string FileTarget::FilePath() {
-		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
-		if( fileHelper.isMTSupportEnabled() ) {
-				lock.lock();
-		}
-		return fileHelper.FileOptions().filePath.string();
-	}
-
-	const std::string FileTarget::FileName() {
-		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
-		if( fileHelper.isMTSupportEnabled() ) {
-				lock.lock();
-		}
-		return fileHelper.FileOptions().filePath.filename().string();
-	}
-
 	bool FileTarget::RenameFile(std::string_view newFileName) {
-		try {
-				fileHelper.CloseFile();
-				// make copy for old file conversion
-				std::filesystem::path newFile { fileHelper.FileOptions().filePath };
-				newFile.replace_filename(newFileName);
-				std::filesystem::rename(fileHelper.FileOptions().filePath, newFile);
-				fileHelper.FileOptions().filePath = std::move(newFile);
-				return fileHelper.OpenFile();
-			}
-		catch( const std::exception& e ) {
-				std::cerr << "Error In Renaming File:\n";
-				std::cerr << e.what();
-				return false;
-			}
+		return fileHelper.RenameFile(newFileName);
 	}
 
 	void FileTarget::PrintMessage(std::string_view formatted) {
@@ -144,7 +110,7 @@ namespace serenity::targets {
 				}
 				backgroundThread.threadWriting.store(true);
 		}
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		fileHelper.FileHandle().rdbuf()->sputn(formatted.data(), formatted.size());
@@ -159,7 +125,7 @@ namespace serenity::targets {
 
 	void FileTarget::SetLocale(const std::locale& loc) {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		if( fileHelper.FileHandle().getloc() != loc ) {
@@ -170,19 +136,19 @@ namespace serenity::targets {
 
 	void FileTarget::PolicyFlushOn() {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		if( fileHelper.Policy().PrimarySetting() == serenity::experimental::FlushSetting::never ) {
+		if( baseHelper.Policy().PrimarySetting() == serenity::experimental::FlushSetting::never ) {
 				// If the flush thread was active, no need to hog a thread if never flushing
 				fileHelper.StopBackgroundThread();
 		};
-		if( fileHelper.Policy().PrimarySetting() == serenity::experimental::FlushSetting::always ) {
+		if( baseHelper.Policy().PrimarySetting() == serenity::experimental::FlushSetting::always ) {
 				// Similar reasoning as Never setting except for the fact of ALWAYS flushing
 				fileHelper.StopBackgroundThread();
 				fileHelper.Flush();
 		}
-		switch( fileHelper.Policy().SubSetting() ) {
+		switch( baseHelper.Policy().SubSetting() ) {
 				case serenity::experimental::PeriodicOptions::timeBased:
 					{
 						fileHelper.StartBackgroundThread();
@@ -190,7 +156,7 @@ namespace serenity::targets {
 					break;    // time based bounds
 				case serenity::experimental::PeriodicOptions::logLevelBased:
 					{
-						if( MsgInfo()->MsgLevel() < fileHelper.Policy().SecondarySettings().flushOn ) return;
+						if( MsgInfo()->MsgLevel() < baseHelper.Policy().SecondarySettings().flushOn ) return;
 						fileHelper.Flush();
 					}
 					break;

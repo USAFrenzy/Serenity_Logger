@@ -18,12 +18,13 @@ namespace serenity {
 		std::atomic<bool> pauseThread { false };
 	};
 
-	struct FileSettings
+	struct FileCache
 	{
-		FileSettings();
-		FileSettings(FileSettings&)            = delete;
-		FileSettings& operator=(FileSettings&) = delete;
-		~FileSettings()                        = default;
+		FileCache(std::string_view path);
+		FileCache(FileCache&)            = delete;
+		FileCache& operator=(FileCache&) = delete;
+		~FileCache()                     = default;
+		void CacheFile(std::string_view path);
 
 		std::filesystem::path filePath;
 		std::string fileDir;
@@ -37,7 +38,7 @@ namespace serenity {
 
 namespace serenity::targets::helpers {
 
-	class FileHelper: public BaseTargetHelper
+	class FileHelper
 	{
 	      public:
 		explicit FileHelper(const std::string_view fpath);
@@ -45,12 +46,16 @@ namespace serenity::targets::helpers {
 		FileHelper& operator=(FileHelper&) = delete;
 		~FileHelper()                      = default;
 
-		void CacheFile(const std::filesystem::path& filePath);
+		BaseTargetHelper& BaseHelper();
 		bool OpenFile(bool truncate = false);
 		bool CloseFile();
 		void Flush();
 		std::ofstream& FileHandle();
-		FileSettings& FileOptions();
+		void InitializeFilePath(std::string_view fileName = "");
+		const std::string FilePath();
+		const std::string FileName();
+		FileCache& FileOptions();
+		virtual bool RenameFile(std::string_view newFileName);
 		BackgroundThread& BackgoundThreadInfo();
 		void BackgroundFlushThread(std::stop_token stopToken);
 		void StopBackgroundThread();
@@ -59,11 +64,12 @@ namespace serenity::targets::helpers {
 		void ResumeBackgroundThread();
 
 	      private:
-		FileSettings fileOptions;
+		FileCache fileCache;
 		int retryAttempt;
 		BackgroundThread flushWorker;
 		std::ofstream fileHandle;
 		std::mutex fileHelperMutex;
+		BaseTargetHelper targetHelper;
 	};
 
 }    // namespace serenity::targets::helpers

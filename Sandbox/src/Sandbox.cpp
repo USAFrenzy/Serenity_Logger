@@ -116,17 +116,17 @@ int main() {
 	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
 
 	// ****************************** TEMPORARY TESTING ********************************************
-	// PeriodicSettings testFileFlushSettings = {};
-	// testFileFlushSettings.flushEvery       = std::chrono::seconds(1);
-	// Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
-	// testFile.SetFlushPolicy(testFIleFlushPolicy);
-	// rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
-	// C.SetFlushPolicy(testFIleFlushPolicy);
+	/* PeriodicSettings testFileFlushSettings = {};
+	 testFileFlushSettings.flushEvery       = std::chrono::seconds(1);
+	 Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
+	 testFile.SetFlushPolicy(testFIleFlushPolicy);
+	 rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
+	 C.SetFlushPolicy(testFIleFlushPolicy);*/
 	// testFile.EnableMultiThreadingSupport();
 	// rotatingFile.EnableMultiThreadingSupport();
 	// C.EnableMultiThreadingSupport();
 	//    *********************************************************************************************
-	//	spdlog::flush_every(std::chrono::seconds(1));
+	/*	spdlog::flush_every(std::chrono::seconds(1));*/
 	// ****************************** TEMPORARY TESTING ********************************************
 
 #ifndef INSTRUMENTATION_ENABLED

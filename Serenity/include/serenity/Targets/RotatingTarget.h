@@ -5,7 +5,7 @@
 
 namespace serenity::experimental {
 
-	class RotateSettings: public FileSettings
+	class RotateSettings: public FileCache
 	{
 	      public:
 		explicit RotateSettings(const std::string& path);
@@ -48,7 +48,7 @@ namespace serenity::experimental {
 
 namespace serenity::experimental::targets {
 
-	class RotatingTarget: public serenity::targets::FileTarget, serenity::experimental::RotateSettings
+	class RotatingTarget: public serenity::targets::TargetBase, serenity::experimental::RotateSettings
 	{
 	      public:
 		RotatingTarget();
@@ -61,9 +61,12 @@ namespace serenity::experimental::targets {
 		void EnableRotation(bool shouldRotate = true);
 		void SetRotateSettings(RotateSettings settings);
 		void RotateFile();
-		bool RenameFile(std::string_view newFileName) override;
+		bool RenameFile(std::string_view newFileName);
 		bool ShouldRotate();
 		void SetLocale(const std::locale& loc) override;
+		bool OpenFIle(bool truncate = false);
+		bool CloseFIle();
+		void Flush();
 		// clang-format off
 		// ################################# WIP #################################
 
@@ -94,6 +97,8 @@ namespace serenity::experimental::targets {
 		int currentWeekday;
 		int currentHour;
 		mutable std::mutex rotatingMutex;
+		serenity::targets::helpers::FileHelper fileHelper;
+
 	};
 
 }    // namespace serenity::experimental::targets

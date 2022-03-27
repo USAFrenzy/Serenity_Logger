@@ -9,9 +9,9 @@ namespace serenity::targets::helpers {
 	{
 	      public:
 		explicit BaseTargetHelper();
-		BaseTargetHelper(BaseTargetHelper&)            = delete;
-		BaseTargetHelper& operator=(BaseTargetHelper&) = delete;
-		~BaseTargetHelper()                            = default;
+		BaseTargetHelper(BaseTargetHelper&) = delete;
+		BaseTargetHelper& operator=(BaseTargetHelper&);
+		~BaseTargetHelper() = default;
 
 		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 		bool isMTSupportEnabled();

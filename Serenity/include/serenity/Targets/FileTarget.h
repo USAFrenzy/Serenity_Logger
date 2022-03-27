@@ -17,9 +17,7 @@ namespace serenity::targets {
 		FileTarget(const FileTarget&)            = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();
-		const std::string FilePath();
-		const std::string FileName();
-		virtual bool RenameFile(std::string_view newFileName);
+		bool RenameFile(std::string_view newFileName);
 		void SetLocale(const std::locale& loc) override;
 		bool OpenFIle(bool truncate = false);
 		bool CloseFIle();
@@ -29,10 +27,8 @@ namespace serenity::targets {
 		void PolicyFlushOn() override;
 		void PrintMessage(std::string_view formatted) override;
 
-	      protected:
-		helpers::FileHelper fileHelper;
-
 	      private:
+		helpers::FileHelper fileHelper;
 		mutable std::mutex fileMutex;
 	};
 }    // namespace serenity::targets

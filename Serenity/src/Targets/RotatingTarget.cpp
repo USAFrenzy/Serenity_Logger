@@ -5,8 +5,8 @@
 namespace serenity::experimental {
 
 	RotateSettings::RotateSettings(const std::string& path)
-		: maxNumberOfFiles(5), fileSizeLimit(512 * KB), dayModeSettingHour(0), dayModeSettingMinute(0), weekModeSetting(0),
-		  monthModeSetting(1), currentFileSize(0), initalRotationEnabled(true) {
+		: FileCache(path), maxNumberOfFiles(5), fileSizeLimit(512 * KB), dayModeSettingHour(0), dayModeSettingMinute(0),
+		  weekModeSetting(0), monthModeSetting(1), currentFileSize(0), initalRotationEnabled(true) {
 		std::filesystem::path pathToCache { path };
 		CacheOriginalPathComponents(pathToCache);
 	}
@@ -59,8 +59,9 @@ namespace serenity::experimental {
 namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
-		: FileTarget("Rotating_Log.txt", true), RotateSettings(FilePath()), rotationEnabled(true), m_mode(IntervalMode::file_size) {
-		fileHelper.CloseFile();
+		: TargetBase("Rotating_Log.txt"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size), fileHelper("") {
+		fileHelper.BaseHelper() = baseHelper;
+		fileHelper.InitializeFilePath();
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
@@ -82,9 +83,9 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-		: FileTarget(name, filePath, replaceIfExists), RotateSettings(std::string(filePath.data(), filePath.size())),
-		  rotationEnabled(true), m_mode(IntervalMode::file_size) {
-		fileHelper.CloseFile();
+		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		  fileHelper(filePath) {
+		fileHelper.BaseHelper() = baseHelper;
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
@@ -95,7 +96,6 @@ namespace serenity::experimental::targets {
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
 		if( !std::filesystem::exists(rotationReadyFile) ) {
-				std::filesystem::rename(fileHelper.FileOptions().filePath, rotationReadyFile);
 				fileHelper.FileOptions().filePath = std::move(rotationReadyFile);
 				fileHelper.OpenFile(replaceIfExists);
 		} else {
@@ -106,9 +106,9 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-		: FileTarget(name, formatPattern, filePath, replaceIfExists), RotateSettings(std::string(filePath.data(), filePath.size())),
-		  rotationEnabled(true), m_mode(IntervalMode::file_size) {
-		fileHelper.CloseFile();
+		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		  fileHelper(filePath) {
+		fileHelper.BaseHelper() = baseHelper;
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
@@ -136,7 +136,7 @@ namespace serenity::experimental::targets {
 
 	bool RotatingTarget::RenameFile(std::string_view newFileName) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		// make copy for old file conversion and cache new values
@@ -156,7 +156,7 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::EnableRotation(bool rotationEnabled) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		this->rotationEnabled = rotationEnabled;
@@ -166,7 +166,7 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::SetRotateSettings(RotateSettings settings) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		fileSizeLimit        = settings.fileSizeLimit;
@@ -239,14 +239,14 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::RotateFile() {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		if( !rotationEnabled ) return;
 		static FlushSetting originalPrimaryMode { FlushSetting::periodically };
 		auto wasFlushThreadActive { fileHelper.BackgoundThreadInfo().flushThreadEnabled.load() };
 		if( wasFlushThreadActive ) {
-				originalPrimaryMode = fileHelper.Policy().PrimarySetting();
+				originalPrimaryMode = baseHelper.Policy().PrimarySetting();
 				fileHelper.PauseBackgroundThread();
 		}
 		fileHelper.CloseFile();
@@ -260,7 +260,7 @@ namespace serenity::experimental::targets {
 		SetCurrentFileSize(0);
 		if( wasFlushThreadActive ) {
 				fileHelper.ResumeBackgroundThread();
-				fileHelper.Policy().SetPrimaryMode(originalPrimaryMode);
+				baseHelper.Policy().SetPrimaryMode(originalPrimaryMode);
 		}
 	}
 
@@ -277,7 +277,7 @@ namespace serenity::experimental::targets {
 				}
 				backgroundThread.threadWriting.store(true);
 		}
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		auto formattedSize { formatted.size() };
@@ -297,7 +297,7 @@ namespace serenity::experimental::targets {
 		if( !rotationEnabled ) return false;
 		if( FileSize() == 0 ) return false;
 
-		if( fileHelper.isMTSupportEnabled() ) {
+		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		auto& cache = MsgInfo()->TimeDetails().Cache();
@@ -397,17 +397,19 @@ namespace serenity::experimental::targets {
 	void RotatingTarget::SetLocale(const std::locale& loc)
 	{
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (fileHelper.isMTSupportEnabled()) {
+		if (baseHelper.isMTSupportEnabled()) {
 			lock.lock();
 		}
-		// Explicitly stating the override to ensure file target's function is called rather that the base class
-		FileTarget::SetLocale(loc);
+		if (fileHelper.FileHandle().getloc() != loc) {
+			fileHelper.FileHandle().imbue(loc);
+		}
+		TargetBase::SetLocale(loc);
 	}
 
 	void RotatingTarget::SetRotationSetting(IntervalMode mode, int  setting, int secondSetting)
 	{
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (fileHelper.isMTSupportEnabled()) {
+		if (baseHelper.isMTSupportEnabled()) {
 			lock.lock();
 		}
 		using mType = RotateSettings::IntervalMode;
@@ -461,7 +463,7 @@ namespace serenity::experimental::targets {
 	void RotatingTarget::SetRotationMode(IntervalMode mode)
 	{
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (fileHelper.isMTSupportEnabled()) {
+		if (baseHelper.isMTSupportEnabled()) {
 			lock.lock();
 		}
 		m_mode = mode;
@@ -470,6 +472,18 @@ namespace serenity::experimental::targets {
 	const RotateSettings::IntervalMode RotatingTarget::RotationMode()
 	{
 		return m_mode;
+	}
+
+	bool RotatingTarget::OpenFIle(bool truncate) {
+		return fileHelper.OpenFile(truncate);
+	}
+
+	bool RotatingTarget::CloseFIle() {
+		return fileHelper.CloseFile();
+	}
+
+	void RotatingTarget::Flush() {
+		fileHelper.Flush();
 	}
 
 }  // namespace serenity::experimental::targets

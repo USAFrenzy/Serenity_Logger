@@ -4,29 +4,39 @@
 
 namespace serenity {
 
-	FileSettings::FileSettings(): filePath(), fileDir(), fileName(), extension(), bufferSize(DEFAULT_BUFFER_SIZE), fileBuffer(bufferSize) { }
+	FileCache::FileCache(std::string_view path)
+		: filePath(), fileDir(), fileName(), extension(), bufferSize(DEFAULT_BUFFER_SIZE), fileBuffer(bufferSize) {
+		CacheFile(std::move(path));
+	}
+
+	void FileCache::CacheFile(std::string_view path) {
+		if( path.empty() ) return;
+		std::filesystem::path fPath = path;
+		auto directory { fPath };
+		filePath = fPath.make_preferred().string();
+		directory._Remove_filename_and_separator();
+		fileDir   = directory.stem().string();
+		fileName  = filePath.filename().string();
+		extension = fPath.extension().string();
+	}
+
 }    // namespace serenity
 
 namespace serenity::targets::helpers {
 
-	FileHelper::FileHelper(const std::string_view fpath): BaseTargetHelper(), fileOptions(), retryAttempt(5) {
-		CacheFile(fpath);
-	}
+	FileHelper::FileHelper(const std::string_view fpath): fileCache(fpath), retryAttempt(5) { }
 
-	void FileHelper::CacheFile(const std::filesystem::path& filePath) {
-		if( filePath.empty() ) return;
-		auto fPath { filePath };
-		auto directory { fPath };
-		fileOptions.filePath = fPath.make_preferred().string();
-		directory._Remove_filename_and_separator();
-		fileOptions.fileDir   = directory.stem().string();
-		fileOptions.fileName  = filePath.filename().string();
-		fileOptions.extension = fPath.extension().string();
+	void FileHelper::InitializeFilePath(std::string_view fileName) {
+		std::filesystem::path fullFilePath = std::filesystem::current_path();
+		const auto logDir { "Logs" };
+		fullFilePath /= logDir;
+		fileName.empty() ? fullFilePath /= "Generic_Log.txt" : fullFilePath /= fileName;
+		fileCache.CacheFile(fullFilePath.string());
 	}
 
 	bool FileHelper::OpenFile(bool truncate) {
 		std::unique_lock<std::mutex> lock(fileHelperMutex, std::defer_lock);
-		if( isMTSupportEnabled() ) {
+		if( targetHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		auto TryOpen = [ &, this ]() {
@@ -34,12 +44,12 @@ namespace serenity::targets::helpers {
 			fileHandle.rdbuf()->pubsetbuf(fileBuffer.data(), bufferSize);
 #endif    // !WINDOWS_PLATFORM
 			if( !truncate ) {
-					fileHandle.open(fileOptions.filePath.string(), std::ios_base::binary | std::ios_base::app);
+					fileHandle.open(fileCache.filePath.string(), std::ios_base::binary | std::ios_base::app);
 			} else {
-					fileHandle.open(fileOptions.filePath.string(), std::ios_base::binary | std::ios_base::trunc);
+					fileHandle.open(fileCache.filePath.string(), std::ios_base::binary | std::ios_base::trunc);
 				}
 #ifdef WINDOWS_PLATFORM
-			fileHandle.rdbuf()->pubsetbuf(fileOptions.fileBuffer.data(), fileOptions.bufferSize);
+			fileHandle.rdbuf()->pubsetbuf(fileCache.fileBuffer.data(), fileCache.bufferSize);
 #endif    // WINDOWS_PLATFORM
 			auto fileOpen { fileHandle.is_open() };
 			if( fileOpen ) {
@@ -81,6 +91,11 @@ namespace serenity::targets::helpers {
 		return true;
 	}
 
+	BaseTargetHelper& targets::helpers::FileHelper::BaseHelper() {
+		return targetHelper;
+		;
+	}
+
 	void FileHelper::Flush() {
 		std::unique_lock<std::mutex> lock(fileHelperMutex, std::defer_lock);
 		auto flushThreadEnabled { flushWorker.flushThreadEnabled.load() };
@@ -90,13 +105,14 @@ namespace serenity::targets::helpers {
 				}
 				flushWorker.flushComplete.store(false);
 		}
-		if( isMTSupportEnabled() ) {
+		if( targetHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
-		if( Buffer()->size() != 0 ) {
-				fileHandle.rdbuf()->sputn(Buffer()->data(), Buffer()->size());
-				Buffer()->clear();
+		if( targetHelper.Buffer()->size() != 0 ) {
+				auto& buffer { *targetHelper.Buffer() };
+				fileHandle.rdbuf()->sputn(buffer.data(), buffer.size());
+				buffer.clear();
 		}
 		fileHandle.flush();
 		if( lock.owns_lock() ) {
@@ -112,8 +128,8 @@ namespace serenity::targets::helpers {
 		return fileHandle;
 	}
 
-	FileSettings& FileHelper::FileOptions() {
-		return fileOptions;
+	FileCache& FileHelper::FileOptions() {
+		return fileCache;
 	}
 
 	BackgroundThread& FileHelper::BackgoundThreadInfo() {
@@ -121,7 +137,7 @@ namespace serenity::targets::helpers {
 	}
 
 	void FileHelper::BackgroundFlushThread(std::stop_token stopToken) {
-		auto flushInterval { policy.SecondarySettings().flushEvery };
+		auto flushInterval { targetHelper.Policy().SecondarySettings().flushEvery };
 		while( !flushWorker.cleanUpThreads.load() ) {
 				if( stopToken.stop_requested() ) {
 						break;
@@ -139,14 +155,14 @@ namespace serenity::targets::helpers {
 				flushWorker.flushThread.request_stop();
 				flushWorker.cleanUpThreads.store(true);
 				flushWorker.cleanUpThreads.notify_one();
-				policy.SetPrimaryMode(serenity::experimental::FlushSetting::never);
+				targetHelper.Policy().SetPrimaryMode(serenity::experimental::FlushSetting::never);
 				flushWorker.flushThreadEnabled.store(false);
 		}
 	}
 
 	void FileHelper::StartBackgroundThread() {
 		if( !flushWorker.flushThreadEnabled.load() ) {
-				policy.SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
+				targetHelper.Policy().SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
 				flushWorker.cleanUpThreads.store(false);
 				flushWorker.flushThread = std::jthread(&FileHelper::BackgroundFlushThread, this, flushWorker.interruptThread);
 				flushWorker.flushThreadEnabled.store(true);
@@ -166,6 +182,31 @@ namespace serenity::targets::helpers {
 				flushWorker.pauseThread.store(false);
 				flushWorker.pauseThread.notify_one();
 		}
+	}
+
+	const std::string FileHelper::FilePath() {
+		return fileCache.filePath.string();
+	}
+
+	const std::string FileHelper::FileName() {
+		return fileCache.filePath.filename().string();
+	}
+
+	bool FileHelper::RenameFile(std::string_view newFileName) {
+		try {
+				CloseFile();
+				// make copy for old file conversion
+				std::filesystem::path newFile { fileCache.filePath };
+				newFile.replace_filename(newFileName);
+				std::filesystem::rename(fileCache.filePath, newFile);
+				fileCache.filePath = std::move(newFile);
+				return OpenFile();
+			}
+		catch( const std::exception& e ) {
+				std::cerr << "Error In Renaming File:\n";
+				std::cerr << e.what();
+				return false;
+			}
 	}
 
 }    // namespace serenity::targets::helpers

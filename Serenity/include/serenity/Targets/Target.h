@@ -30,6 +30,7 @@ namespace serenity::targets {
 		template<typename... Args> void Warn(std::string_view msg, Args&&... args);
 		template<typename... Args> void Error(std::string_view msg, Args&&... args);
 		template<typename... Args> void Fatal(std::string_view msg, Args&&... args);
+		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 		virtual void SetLocale(const std::locale& loc);
 		const std::locale GetLocale();
 
@@ -38,7 +39,7 @@ namespace serenity::targets {
 		msg_details::Message_Info* MsgInfo();
 		virtual void PrintMessage(std::string_view formatted) = 0;
 		virtual void PolicyFlushOn();
-		helpers::BaseTargetHelper& BaseHelper();
+		helpers::BaseTargetHelper baseHelper;
 
 	      private:
 		LoggerLevel logLevel;
@@ -47,7 +48,6 @@ namespace serenity::targets {
 		msg_details::Message_Info msgDetails;
 		msg_details::Message_Formatter msgPattern;
 		mutable std::mutex baseMutex;
-		helpers::BaseTargetHelper targetHelper;
 	};
 
 #include "Target-impl.h"
