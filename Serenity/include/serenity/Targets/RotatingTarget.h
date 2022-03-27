@@ -58,6 +58,8 @@ namespace serenity::experimental::targets {
 		RotatingTarget(const RotatingTarget&)            = delete;
 		RotatingTarget& operator=(const RotatingTarget&) = delete;
 		~RotatingTarget();
+
+		void SetFileBufferSize(size_t newValue);
 		void EnableRotation(bool shouldRotate = true);
 		void SetRotateSettings(RotateSettings settings);
 		void RotateFile();

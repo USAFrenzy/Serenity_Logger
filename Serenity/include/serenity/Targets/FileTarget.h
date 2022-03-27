@@ -17,6 +17,8 @@ namespace serenity::targets {
 		FileTarget(const FileTarget&)            = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();
+
+		void SetFileBufferSize(size_t newValue);
 		bool RenameFile(std::string_view newFileName);
 		void SetLocale(const std::locale& loc) override;
 		bool OpenFIle(bool truncate = false);

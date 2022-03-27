@@ -18,14 +18,27 @@ namespace serenity {
 		std::atomic<bool> pauseThread { false };
 	};
 
-	struct FileCache
+	class FileCache
 	{
+	      public:
 		FileCache(std::string_view path);
 		FileCache(FileCache&)            = delete;
 		FileCache& operator=(FileCache&) = delete;
 		~FileCache()                     = default;
 		void CacheFile(std::string_view path);
+		std::vector<char>& FileBuffer();
+		const size_t FileBufferSize();
+		const std::filesystem::path FilePath();
+		void SetBufferSize(size_t value);
+		const std::string DirName();
 
+		// Helper Functions
+		void SetFilePath(const std::filesystem::path& newPath);
+		void SetFileDir(const std::string& newDir);
+		void SetFileName(const std::string& newName);
+		void SetExtension(const std::string& newExt);
+
+	      private:
 		std::filesystem::path filePath;
 		std::string fileDir;
 		std::string fileName;
@@ -50,12 +63,13 @@ namespace serenity::targets::helpers {
 		bool OpenFile(bool truncate = false);
 		bool CloseFile();
 		void Flush();
+		void SetFileBufferSize(size_t value);
 		std::ofstream& FileHandle();
 		void InitializeFilePath(std::string_view fileName = "");
 		const std::string FilePath();
 		const std::string FileName();
-		FileCache& FileOptions();
-		virtual bool RenameFile(std::string_view newFileName);
+		FileCache* FileCacheHelper();
+		bool RenameFile(std::string_view newFileName);
 		BackgroundThread& BackgoundThreadInfo();
 		void BackgroundFlushThread(std::stop_token stopToken);
 		void StopBackgroundThread();

@@ -14,25 +14,24 @@ namespace serenity::experimental {
 	void RotateSettings::CacheOriginalPathComponents(const std::filesystem::path& filePath) {
 		auto fPath { filePath };
 		auto directory { filePath };
-		this->filePath = fPath.make_preferred().string();
+		SetFilePath(fPath.make_preferred());
 		auto name { fPath.filename() };
-		name.replace_extension();
-		fileName  = name.string();
-		extension = fPath.extension().string();
+		SetFileName(name.replace_extension().string());
+		SetExtension(fPath.extension().string());
 		directory._Remove_filename_and_separator();
-		fileDir = directory.stem().string();
+		SetFileDir(directory.stem().string());
 	}
 
 	const std::filesystem::path RotateSettings::OriginalPath() {
-		return filePath;
+		return FilePath();
 	}
 
 	const std::filesystem::path RotateSettings::OriginalDirectory() {
-		return fileDir;
+		return DirName();
 	}
 
 	const std::string RotateSettings::OriginalName() {
-		return fileName;
+		return FilePath().filename().string();
 	}
 
 	void RotateSettings::SetCurrentFileSize(size_t currentSize) {
@@ -40,7 +39,7 @@ namespace serenity::experimental {
 	}
 
 	const std::string RotateSettings::OriginalExtension() {
-		return extension;
+		return FilePath().filename().extension().string();
 	}
 
 	const size_t RotateSettings::FileSize() {
@@ -66,20 +65,20 @@ namespace serenity::experimental::targets {
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
-		std::filesystem::path rotationReadyFile { fileHelper.FileOptions().filePath };
+		std::filesystem::path rotationReadyFile { fileHelper.FileCacheHelper()->FilePath() };
 		rotationReadyFile.make_preferred();
 		std::string rotateFile { OriginalName() };
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
 		if( !std::filesystem::exists(rotationReadyFile) ) {
-				std::filesystem::rename(fileHelper.FileOptions().filePath, rotationReadyFile);
-				fileHelper.FileOptions().filePath = std::move(rotationReadyFile);
+				std::filesystem::rename(fileHelper.FileCacheHelper()->FilePath(), rotationReadyFile);
+				fileHelper.FileCacheHelper()->SetFilePath(rotationReadyFile);
 				fileHelper.OpenFile(true);
 		} else {
-				std::filesystem::remove(fileHelper.FileOptions().filePath);
+				std::filesystem::remove(fileHelper.FileCacheHelper()->FilePath());
 				RotateFile();
 			}
-		SetCurrentFileSize(std::filesystem::file_size(fileHelper.FileOptions().filePath));
+		SetCurrentFileSize(std::filesystem::file_size(fileHelper.FileCacheHelper()->FilePath()));
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
@@ -90,19 +89,19 @@ namespace serenity::experimental::targets {
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
-		std::filesystem::path rotationReadyFile { filePath };
+		std::filesystem::path rotationReadyFile { FilePath() };
 		rotationReadyFile.make_preferred();
 		std::string rotateFile { OriginalName() };
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
 		if( !std::filesystem::exists(rotationReadyFile) ) {
-				fileHelper.FileOptions().filePath = std::move(rotationReadyFile);
+				fileHelper.FileCacheHelper()->SetFilePath(rotationReadyFile);
 				fileHelper.OpenFile(replaceIfExists);
 		} else {
-				std::filesystem::remove(fileHelper.FileOptions().filePath);
+				std::filesystem::remove(fileHelper.FileCacheHelper()->FilePath());
 				RotateFile();
 			}
-		SetCurrentFileSize(std::filesystem::file_size(fileHelper.FileOptions().filePath));
+		SetCurrentFileSize(std::filesystem::file_size(fileHelper.FileCacheHelper()->FilePath()));
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
@@ -113,20 +112,20 @@ namespace serenity::experimental::targets {
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
 		currentWeekday = cache.tm_wday;
-		std::filesystem::path rotationReadyFile { filePath };
+		std::filesystem::path rotationReadyFile { FilePath() };
 		rotationReadyFile.make_preferred();
 		std::string rotateFile { OriginalName() };
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
 		if( !std::filesystem::exists(rotationReadyFile) ) {
-				std::filesystem::rename(fileHelper.FileOptions().filePath, rotationReadyFile);
-				fileHelper.FileOptions().filePath = std::move(rotationReadyFile);
+				std::filesystem::rename(fileHelper.FileCacheHelper()->FilePath(), rotationReadyFile);
+				fileHelper.FileCacheHelper()->SetFilePath(rotationReadyFile);
 				fileHelper.OpenFile(replaceIfExists);
 		} else {
-				std::filesystem::remove(fileHelper.FileOptions().filePath);
+				std::filesystem::remove(fileHelper.FileCacheHelper()->FilePath());
 				RotateFile();
 			}
-		SetCurrentFileSize(std::filesystem::file_size(fileHelper.FileOptions().filePath));
+		SetCurrentFileSize(std::filesystem::file_size(fileHelper.FileCacheHelper()->FilePath()));
 	}
 
 	RotatingTarget::~RotatingTarget() {
@@ -140,7 +139,7 @@ namespace serenity::experimental::targets {
 				lock.lock();
 		}
 		// make copy for old file conversion and cache new values
-		std::filesystem::path newFile { fileHelper.FileOptions().filePath };
+		std::filesystem::path newFile { fileHelper.FileCacheHelper()->FilePath() };
 		newFile.replace_filename(newFileName);
 		CacheOriginalPathComponents(newFile);
 		try {
@@ -160,7 +159,7 @@ namespace serenity::experimental::targets {
 				lock.lock();
 		}
 		this->rotationEnabled = rotationEnabled;
-		SetCurrentFileSize(std::filesystem::file_size(fileHelper.FileOptions().filePath));
+		SetCurrentFileSize(std::filesystem::file_size(fileHelper.FileCacheHelper()->FilePath()));
 		EnableFirstRotation(rotationEnabled);
 	}
 
@@ -185,7 +184,7 @@ namespace serenity::experimental::targets {
 				newFile.append("_").append(SERENITY_LUTS::numberStr[ fileNumber ]).append(OriginalExtension());
 				newFilePath.replace_filename(newFile);
 				if( !std::filesystem::exists(newFilePath) ) {
-						fileHelper.FileOptions().filePath = newFilePath;
+						fileHelper.FileCacheHelper()->SetFilePath(newFilePath);
 						if( fileHelper.OpenFile(true) ) {
 								rotationRenameSuccessful = true;
 								break;
@@ -212,9 +211,9 @@ namespace serenity::experimental::targets {
 				}
 			}
 		std::filesystem::remove(fileToReplace);
-		auto previousFile { fileHelper.FileOptions().filePath.filename().string() };
+		auto previousFile { fileHelper.FileCacheHelper()->FilePath().filename().string() };
 		if( !fileToReplace.empty() ) {
-				fileHelper.FileOptions().filePath = std::move(fileToReplace);
+				fileHelper.FileCacheHelper()->SetFilePath(fileToReplace);
 		} else {
 				std::cerr << std::vformat("Warning: Unable To Locate Oldest File With Base Name \"{}\". "
 				                          "Opening And Truncating "
@@ -223,11 +222,12 @@ namespace serenity::experimental::targets {
 				success = false;
 			}
 		if( !fileHelper.OpenFile(true) ) {
-				if( fileHelper.FileOptions().filePath != previousFile ) {
-						std::cerr << std::vformat(
-						"Error: Unable To Finish Rotating From File \"{}\" To File "
-						"\"{}\"\n",
-						std::make_format_args(previousFile, fileHelper.FileOptions().filePath.filename().string()));
+				if( fileHelper.FileCacheHelper()->FilePath() != previousFile ) {
+						std::cerr
+						<< std::vformat("Error: Unable To Finish Rotating From File \"{}\" To File "
+						                "\"{}\"\n",
+						                std::make_format_args(
+								previousFile, fileHelper.FileCacheHelper()->FilePath().filename().string()));
 				} else {
 						std::cerr << std::vformat("Error: Unable To Open And Truncate File \"{}\"\n",
 						                          std::make_format_args(previousFile));
@@ -486,4 +486,7 @@ namespace serenity::experimental::targets {
 		fileHelper.Flush();
 	}
 
+	void RotatingTarget::SetFileBufferSize(size_t newValue) {
+		fileHelper.SetFileBufferSize(newValue);
+	}
 }  // namespace serenity::experimental::targets

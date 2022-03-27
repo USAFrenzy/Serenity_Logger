@@ -5,7 +5,8 @@
 namespace serenity {
 
 	FileCache::FileCache(std::string_view path)
-		: filePath(), fileDir(), fileName(), extension(), bufferSize(DEFAULT_BUFFER_SIZE), fileBuffer(bufferSize) {
+		: filePath(std::filesystem::path {}), fileDir(std::string {}), fileName(std::string {}), extension(std::string {}),
+		  bufferSize(DEFAULT_BUFFER_SIZE), fileBuffer(bufferSize) {
 		CacheFile(std::move(path));
 	}
 
@@ -18,6 +19,40 @@ namespace serenity {
 		fileDir   = directory.stem().string();
 		fileName  = filePath.filename().string();
 		extension = fPath.extension().string();
+	}
+
+	std::vector<char>& FileCache::FileBuffer() {
+		return fileBuffer;
+	}
+
+	const size_t FileCache::FileBufferSize() {
+		return bufferSize;
+	}
+
+	const std::filesystem::path FileCache::FilePath() {
+		return filePath;
+	}
+
+	void FileCache::SetBufferSize(size_t value) {
+		bufferSize = value;
+	}
+
+	const std::string FileCache::DirName() {
+		return fileDir;
+	}
+
+	// Helper Functions
+	void FileCache::SetFilePath(const std::filesystem::path& newPath) {
+		filePath = newPath;
+	}
+	void FileCache::SetFileDir(const std::string& newDir) {
+		fileDir = newDir;
+	}
+	void FileCache::SetFileName(const std::string& newName) {
+		fileName = newName;
+	}
+	void FileCache::SetExtension(const std::string& newExt) {
+		extension = newExt;
 	}
 
 }    // namespace serenity
@@ -34,6 +69,14 @@ namespace serenity::targets::helpers {
 		fileCache.CacheFile(fullFilePath.string());
 	}
 
+	void FileHelper::SetFileBufferSize(size_t value) {
+		if( fileHandle.is_open() ) {
+				CloseFile();
+		}
+		fileCache.SetBufferSize(value);
+		OpenFile();
+	}
+
 	bool FileHelper::OpenFile(bool truncate) {
 		std::unique_lock<std::mutex> lock(fileHelperMutex, std::defer_lock);
 		if( targetHelper.isMTSupportEnabled() ) {
@@ -44,12 +87,12 @@ namespace serenity::targets::helpers {
 			fileHandle.rdbuf()->pubsetbuf(fileBuffer.data(), bufferSize);
 #endif    // !WINDOWS_PLATFORM
 			if( !truncate ) {
-					fileHandle.open(fileCache.filePath.string(), std::ios_base::binary | std::ios_base::app);
+					fileHandle.open(FilePath(), std::ios_base::binary | std::ios_base::app);
 			} else {
-					fileHandle.open(fileCache.filePath.string(), std::ios_base::binary | std::ios_base::trunc);
+					fileHandle.open(FilePath(), std::ios_base::binary | std::ios_base::trunc);
 				}
 #ifdef WINDOWS_PLATFORM
-			fileHandle.rdbuf()->pubsetbuf(fileCache.fileBuffer.data(), fileCache.bufferSize);
+			fileHandle.rdbuf()->pubsetbuf(fileCache.FileBuffer().data(), fileCache.FileBufferSize());
 #endif    // WINDOWS_PLATFORM
 			auto fileOpen { fileHandle.is_open() };
 			if( fileOpen ) {
@@ -93,7 +136,6 @@ namespace serenity::targets::helpers {
 
 	BaseTargetHelper& targets::helpers::FileHelper::BaseHelper() {
 		return targetHelper;
-		;
 	}
 
 	void FileHelper::Flush() {
@@ -128,8 +170,8 @@ namespace serenity::targets::helpers {
 		return fileHandle;
 	}
 
-	FileCache& FileHelper::FileOptions() {
-		return fileCache;
+	FileCache* FileHelper::FileCacheHelper() {
+		return &fileCache;
 	}
 
 	BackgroundThread& FileHelper::BackgoundThreadInfo() {
@@ -185,21 +227,21 @@ namespace serenity::targets::helpers {
 	}
 
 	const std::string FileHelper::FilePath() {
-		return fileCache.filePath.string();
+		return fileCache.FilePath().string();
 	}
 
 	const std::string FileHelper::FileName() {
-		return fileCache.filePath.filename().string();
+		return fileCache.FilePath().filename().string();
 	}
 
 	bool FileHelper::RenameFile(std::string_view newFileName) {
 		try {
 				CloseFile();
 				// make copy for old file conversion
-				std::filesystem::path newFile { fileCache.filePath };
+				std::filesystem::path newFile { fileCache.FilePath() };
 				newFile.replace_filename(newFileName);
-				std::filesystem::rename(fileCache.filePath, newFile);
-				fileCache.filePath = std::move(newFile);
+				std::filesystem::rename(fileCache.FilePath(), newFile);
+				fileCache.SetFilePath(std::move(newFile));
 				return OpenFile();
 			}
 		catch( const std::exception& e ) {

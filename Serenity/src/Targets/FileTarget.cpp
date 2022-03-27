@@ -51,8 +51,8 @@ namespace serenity::targets {
 		: TargetBase(name), fileMutex(std::mutex {}), fileHelper(fPath) {
 		fileHelper.BaseHelper() = baseHelper;
 		try {
-				if( !std::filesystem::exists(fileHelper.FileOptions().filePath) ) {
-						auto dir { fileHelper.FileOptions().filePath };
+				if( !std::filesystem::exists(fileHelper.FileCacheHelper()->FilePath()) ) {
+						auto dir { fileHelper.FileCacheHelper()->FilePath() };
 						dir.remove_filename();
 						std::filesystem::create_directories(dir);
 						fileHelper.OpenFile(replaceIfExists);
@@ -73,8 +73,8 @@ namespace serenity::targets {
 		: TargetBase(name, formatPattern), fileHelper(fPath) {
 		fileHelper.BaseHelper() = baseHelper;
 		try {
-				if( !std::filesystem::exists(fileHelper.FileOptions().filePath) ) {
-						auto dir { fileHelper.FileOptions().filePath };
+				if( !std::filesystem::exists(fileHelper.FileCacheHelper()->FilePath()) ) {
+						auto dir { fileHelper.FileCacheHelper()->FilePath() };
 						dir.remove_filename();
 						std::filesystem::create_directories(dir);
 						fileHelper.OpenFile(replaceIfExists);
@@ -173,6 +173,10 @@ namespace serenity::targets {
 
 	void FileTarget::Flush() {
 		fileHelper.Flush();
+	}
+
+	void FileTarget::SetFileBufferSize(size_t newValue) {
+		fileHelper.SetFileBufferSize(newValue);
 	}
 
 }    // namespace serenity::targets
