@@ -10,15 +10,21 @@ namespace serenity {
 		CacheFile(std::move(path));
 	}
 
-	void FileCache::CacheFile(std::string_view path) {
+	void FileCache::CacheFile(std::string_view path, bool ignoreExtInFileName) {
 		if( path.empty() ) return;
 		std::filesystem::path fPath = path;
 		auto directory { fPath };
 		filePath = fPath.make_preferred().string();
 		directory._Remove_filename_and_separator();
 		fileDir   = directory.stem().string();
-		fileName  = filePath.filename().string();
 		extension = fPath.extension().string();
+		if( ignoreExtInFileName ) {
+				auto temp { filePath };
+				temp.replace_extension();
+				fileName = temp.filename().string();
+		} else {
+				fileName = filePath.filename().string();
+			}
 	}
 
 	std::vector<char>& FileCache::FileBuffer() {
@@ -39,6 +45,14 @@ namespace serenity {
 
 	const std::string FileCache::DirName() {
 		return fileDir;
+	}
+
+	const std::string FileCache::FileName() {
+		return fileName;
+	}
+
+	const std::string FileCache::Extenstion() {
+		return extension;
 	}
 
 	// Helper Functions
@@ -87,9 +101,9 @@ namespace serenity::targets::helpers {
 			fileHandle.rdbuf()->pubsetbuf(fileBuffer.data(), bufferSize);
 #endif    // !WINDOWS_PLATFORM
 			if( !truncate ) {
-					fileHandle.open(FilePath(), std::ios_base::binary | std::ios_base::app);
+					fileHandle.open(FileCacheHelper()->FilePath(), std::ios_base::binary | std::ios_base::app);
 			} else {
-					fileHandle.open(FilePath(), std::ios_base::binary | std::ios_base::trunc);
+					fileHandle.open(FileCacheHelper()->FilePath(), std::ios_base::binary | std::ios_base::trunc);
 				}
 #ifdef WINDOWS_PLATFORM
 			fileHandle.rdbuf()->pubsetbuf(fileCache.FileBuffer().data(), fileCache.FileBufferSize());
@@ -224,14 +238,6 @@ namespace serenity::targets::helpers {
 				flushWorker.pauseThread.store(false);
 				flushWorker.pauseThread.notify_one();
 		}
-	}
-
-	const std::string FileHelper::FilePath() {
-		return fileCache.FilePath().string();
-	}
-
-	const std::string FileHelper::FileName() {
-		return fileCache.FilePath().filename().string();
 	}
 
 	bool FileHelper::RenameFile(std::string_view newFileName) {

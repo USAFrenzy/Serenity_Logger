@@ -6,7 +6,7 @@
 #include <fstream>
 
 namespace serenity::targets {
-	class FileTarget: public TargetBase
+	class FileTarget: public TargetBase, public helpers::FileHelper
 	{
 	      public:
 		FileTarget();
@@ -17,20 +17,13 @@ namespace serenity::targets {
 		FileTarget(const FileTarget&)            = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();
-
-		void SetFileBufferSize(size_t newValue);
-		bool RenameFile(std::string_view newFileName);
 		void SetLocale(const std::locale& loc) override;
-		bool OpenFIle(bool truncate = false);
-		bool CloseFIle();
-		void Flush();
 
 	      protected:
 		void PolicyFlushOn() override;
 		void PrintMessage(std::string_view formatted) override;
 
 	      private:
-		helpers::FileHelper fileHelper;
 		mutable std::mutex fileMutex;
 	};
 }    // namespace serenity::targets

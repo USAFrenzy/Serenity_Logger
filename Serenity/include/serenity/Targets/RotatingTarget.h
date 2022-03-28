@@ -5,13 +5,19 @@
 
 namespace serenity::experimental {
 
-	class RotateSettings: public FileCache
+	class RotateSettings: public serenity::targets::helpers::FileHelper
 	{
 	      public:
 		explicit RotateSettings(const std::string& path);
 		RotateSettings(RotateSettings&)            = delete;
 		RotateSettings& operator=(RotateSettings&) = delete;
 		~RotateSettings()                          = default;
+		const std::filesystem::path OriginalPath();
+		const std::filesystem::path OriginalDirectory();
+		const std::string OriginalName();
+		const std::string OriginalExtension();
+		const size_t FileSize();
+		const bool IsIntervalRotationEnabled();
 
 		enum class IntervalMode
 		{
@@ -30,13 +36,6 @@ namespace serenity::experimental {
 		int monthModeSetting;
 
 	      protected:
-		const std::filesystem::path OriginalPath();
-		const std::filesystem::path OriginalDirectory();
-		const std::string OriginalName();
-		const std::string OriginalExtension();
-		const size_t FileSize();
-		const bool IsIntervalRotationEnabled();
-		void CacheOriginalPathComponents(const std::filesystem::path& filePath);
 		void SetCurrentFileSize(size_t currentSize);
 		void EnableFirstRotation(bool enabled = true);
 
@@ -48,7 +47,7 @@ namespace serenity::experimental {
 
 namespace serenity::experimental::targets {
 
-	class RotatingTarget: public serenity::targets::TargetBase, serenity::experimental::RotateSettings
+	class RotatingTarget: public serenity::targets::TargetBase, public serenity::experimental::RotateSettings
 	{
 	      public:
 		RotatingTarget();
@@ -59,16 +58,12 @@ namespace serenity::experimental::targets {
 		RotatingTarget& operator=(const RotatingTarget&) = delete;
 		~RotatingTarget();
 
-		void SetFileBufferSize(size_t newValue);
 		void EnableRotation(bool shouldRotate = true);
 		void SetRotateSettings(RotateSettings settings);
 		void RotateFile();
-		bool RenameFile(std::string_view newFileName);
+		bool RenameFile(std::string_view newFileName) override;
 		bool ShouldRotate();
 		void SetLocale(const std::locale& loc) override;
-		bool OpenFIle(bool truncate = false);
-		bool CloseFIle();
-		void Flush();
 		// clang-format off
 		// ################################# WIP #################################
 
@@ -89,6 +84,7 @@ namespace serenity::experimental::targets {
 
 	protected:
 		void PrintMessage(std::string_view formatted) override;
+		void PolicyFlushOn() override;
 		bool RenameFileInRotation(std::filesystem::path newFilePath);
 		bool ReplaceOldFIleInRotation();
 
@@ -99,8 +95,6 @@ namespace serenity::experimental::targets {
 		int currentWeekday;
 		int currentHour;
 		mutable std::mutex rotatingMutex;
-		serenity::targets::helpers::FileHelper fileHelper;
-
 	};
 
 }    // namespace serenity::experimental::targets

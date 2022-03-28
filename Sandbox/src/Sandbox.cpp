@@ -363,6 +363,7 @@ int main() {
 	auto totalSpdRotateTime = spdlogRotateTester.Elapsed_In(time_mode::ms);
 	std::cout << "\nSpdlog Rotating File Sink Bench Finished.\n";
 
+	// #################### Below is just the instrumentation print out section ####################
 	auto percentConsole = ((totalColorTime - totalspdColorTime) / totalspdColorTime) * 100;
 	std::string consolePercent;
 	if( percentConsole > 0 ) {
@@ -468,6 +469,7 @@ int main() {
 		  << Tag::Bright_Green(SetPrecision(SpdlogRotatingThrouput) + " MB/s\n");
 	std::cout << "\n";
 
+	// Size of various structs and classes. Not really neccessary, but adds some insight for where I might want to minimize footprints
 	std::cout << Tag::Bright_Yellow("Size of Base Target Class:\t\t")
 		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::TargetBase)) + "\tbytes ]\n");
 
@@ -488,6 +490,24 @@ int main() {
 
 	std::cout << Tag::Bright_Yellow("Size of Message_Time Class:\t\t")
 		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Time)) + "\tbytes ]\n");
+
+	std::cout << Tag::Bright_Yellow("Size of BackgroundThread struct:\t")
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::BackgroundThread)) + "\tbytes ]\n");
+
+	std::cout << Tag::Bright_Yellow("Size of FileCache Class:\t\t")
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::FileCache)) + "\tbytes ]\n");
+
+	std::cout << Tag::Bright_Yellow("Size of Flush_Policy Class:\t\t")
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::experimental::Flush_Policy)) + "\tbytes ]\n");
+
+	std::cout << Tag::Bright_Yellow("Size of RotateSettings Class:\t\t")
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::experimental::RotateSettings)) + "\tbytes ]\n");
+
+	std::cout << Tag::Bright_Yellow("Size of BaseTargetHelper Class:\t\t")
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::helpers::BaseTargetHelper)) + "\tbytes ]\n");
+
+	std::cout << Tag::Bright_Yellow("Size of FileHelper Class:\t\t")
+		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::helpers::FileHelper)) + "\tbytes ]\n");
 
 	std::cout << Tag::Yellow("***************************************************"
 	                         "************************************"
