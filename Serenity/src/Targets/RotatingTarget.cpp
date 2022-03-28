@@ -15,7 +15,7 @@ namespace serenity::experimental {
 				std::string logDir { "Logs" };
 				std::filesystem::path defaultPath { std::filesystem::current_path() };
 				defaultPath /= logDir;
-				if( std::filesystem::exists(defaultPath) ) {
+				if( !std::filesystem::exists(defaultPath) ) {
 						std::filesystem::create_directories(defaultPath);
 				}
 				defaultPath /= fileName;
