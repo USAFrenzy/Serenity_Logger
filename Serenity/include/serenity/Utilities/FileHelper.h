@@ -80,12 +80,12 @@ namespace serenity::targets::helpers {
 		void ResumeBackgroundThread();
 
 	      private:
-		FileCache fileCache;
 		int retryAttempt;
-		BackgroundThread flushWorker;
 		std::ofstream fileHandle;
 		std::mutex fileHelperMutex;
-		BaseTargetHelper targetHelper;
+		std::unique_ptr<FileCache> fileCache;
+		std::unique_ptr<BaseTargetHelper> targetHelper;
+		std::unique_ptr<BackgroundThread> flushWorker;
 	};
 
 }    // namespace serenity::targets::helpers

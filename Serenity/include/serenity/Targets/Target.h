@@ -45,9 +45,9 @@ namespace serenity::targets {
 		LoggerLevel logLevel;
 		LoggerLevel msgLevel;
 		std::string pattern;
-		msg_details::Message_Info msgDetails;
-		msg_details::Message_Formatter msgPattern;
 		mutable std::mutex baseMutex;
+		std::unique_ptr<msg_details::Message_Info> msgDetails;
+		std::unique_ptr<msg_details::Message_Formatter> msgPattern;
 	};
 
 #include "Target-impl.h"

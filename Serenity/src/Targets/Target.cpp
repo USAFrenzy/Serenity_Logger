@@ -3,24 +3,28 @@
 namespace serenity::targets {
 	constexpr const char* DEFAULT_PATTERN = "|%l| %x %n %T [%N]: %+";
 
-	TargetBase::TargetBase()
-		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
-		  msgDetails("Base Logger", msgLevel, message_time_mode::local), msgPattern(pattern, &msgDetails) { }
+	TargetBase::TargetBase(): logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN) {
+		msgDetails = std::make_unique<msg_details::Message_Info>("Base Logger", msgLevel, message_time_mode::local);
+		msgPattern = std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get());
+	}
 
-	TargetBase::TargetBase(std::string_view name)
-		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
-		  msgDetails(name, msgLevel, message_time_mode::local), msgPattern(pattern, &msgDetails) { }
+	TargetBase::TargetBase(std::string_view name): logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN) {
+		msgDetails = std::make_unique<msg_details::Message_Info>("Base Logger", msgLevel, message_time_mode::local);
+		msgPattern = std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get());
+	}
 
 	TargetBase::TargetBase(std::string_view name, std::string_view fmtPattern)
-		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(fmtPattern),
-		  msgDetails(name, msgLevel, message_time_mode::local), msgPattern(pattern, &msgDetails) { }
+		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(fmtPattern) {
+		msgDetails = std::make_unique<msg_details::Message_Info>("Base Logger", msgLevel, message_time_mode::local);
+		msgPattern = std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get());
+	}
 
 	void TargetBase::SetPattern(std::string_view pattern) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
 		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		msgPattern.SetPattern(std::string { pattern.data(), pattern.size() });
+		msgPattern->SetPattern(std::string { pattern.data(), pattern.size() });
 	}
 
 	void TargetBase::SetFlushPolicy(const serenity::experimental::Flush_Policy& pPolicy) {
@@ -36,7 +40,7 @@ namespace serenity::targets {
 		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		return msgDetails.Name();
+		return msgDetails->Name();
 	}
 
 	void TargetBase::SetLocale(const std::locale& loc) {
@@ -65,7 +69,7 @@ namespace serenity::targets {
 		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		return &msgPattern;
+		return msgPattern.get();
 	}
 
 	msg_details::Message_Info* TargetBase::MsgInfo() {
@@ -73,7 +77,7 @@ namespace serenity::targets {
 		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		return &msgDetails;
+		return msgDetails.get();
 	}
 
 	void TargetBase::ResetPatternToDefault() {
@@ -81,7 +85,7 @@ namespace serenity::targets {
 		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		msgPattern.SetPattern(DEFAULT_PATTERN);
+		msgPattern->SetPattern(DEFAULT_PATTERN);
 	}
 
 	void TargetBase::SetLogLevel(LoggerLevel level) {
@@ -105,7 +109,7 @@ namespace serenity::targets {
 		if( baseHelper.isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		msgDetails.SetName(name);
+		msgDetails->SetName(name);
 	}
 
 	void TargetBase::EnableMultiThreadingSupport(bool enable) {

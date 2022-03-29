@@ -15,7 +15,8 @@ namespace serenity::msg_details {
 		Message_Time& operator=(const Message_Time&) = delete;
 		~Message_Time()                              = default;
 
-		std::string_view GetCurrentYearSV(int yearOffset, bool shortened = false);
+		void CalculateCurrentYear(int yearOffset);
+		std::string_view GetCurrentYearSV(bool shortened) const;
 		void UpdateTimeDate(std::chrono::system_clock::time_point timePoint);
 		void UpdateCache(std::chrono::system_clock::time_point timePoint);
 		std::tm& Cache();
@@ -29,5 +30,8 @@ namespace serenity::msg_details {
 		std::tm m_cache;
 		std::chrono::seconds secsSinceLastLog;
 		bool leapYear;
+		int currentYear;
+		std::string_view cachedShortYear;
+		std::string_view cachedLongYear;
 	};
 }    // namespace serenity::msg_details

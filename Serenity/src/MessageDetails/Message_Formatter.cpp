@@ -173,7 +173,7 @@ namespace serenity::msg_details {
 		std::string result;
 		auto day { SERENITY_LUTS::numberStr[ cacheRef.tm_mday ] };
 		auto month { SERENITY_LUTS::short_months[ cacheRef.tm_mon ] };
-		auto year { timeRef.GetCurrentYearSV(cacheRef.tm_year, true) };
+		auto year { timeRef.GetCurrentYearSV(true) };
 		return result.append(day).append(month).append(year);
 	}
 
@@ -246,7 +246,7 @@ namespace serenity::msg_details {
 
 	std::string Message_Formatter::Format_Arg_y::UpdateInternalView() {
 		lastYear = cacheRef.tm_year;
-		auto yr { timeRef.GetCurrentYearSV(lastYear, true) };
+		auto yr { timeRef.GetCurrentYearSV(true) };
 		return std::string { yr.data(), yr.size() };
 	}
 
@@ -297,7 +297,7 @@ namespace serenity::msg_details {
 		// occur here anyways...)
 		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>(cacheRef.tm_mon) + 1 ] };
 		auto d { SERENITY_LUTS::numberStr[ lastDay ] };
-		auto y { timeRef.GetCurrentYearSV(cacheRef.tm_year, true) };
+		auto y { timeRef.GetCurrentYearSV(true) };
 		return result.append(m).append("/").append(d).append("/").append(y);
 	}
 
@@ -314,7 +314,7 @@ namespace serenity::msg_details {
 	std::string Message_Formatter::Format_Arg_F::UpdateInternalView() {
 		std::string result;
 		lastDay = cacheRef.tm_mday;
-		auto y { timeRef.GetCurrentYearSV(cacheRef.tm_year, true) };
+		auto y { timeRef.GetCurrentYearSV(true) };
 		// static_cast to 8 byte value to remove C2451's warning (which would never
 		// occur here anyways...)
 		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>(cacheRef.tm_mon) + 1 ] };
