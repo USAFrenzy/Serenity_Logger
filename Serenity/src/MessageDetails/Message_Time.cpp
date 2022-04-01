@@ -2,7 +2,6 @@
 
 namespace serenity::msg_details {
 	Message_Time::Message_Time(message_time_mode mode): m_mode(mode) {
-		m_mode = mode;
 		UpdateTimeDate(std::chrono::system_clock::now());
 		auto year { m_cache.tm_year };
 		if( (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 ) {

@@ -476,7 +476,7 @@ namespace serenity::msg_details {
 		localBuffer.clear();
 		for( auto& formatter: m_Formatter ) {
 				auto formatted { formatter->Format() };
-				localBuffer.append(formatted);
+				localBuffer.append(formatted.data(), formatted.size());
 			}
 		return localBuffer;
 	}

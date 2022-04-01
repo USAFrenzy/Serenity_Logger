@@ -1,6 +1,6 @@
 #pragma once
 
-#include <serenity/Targets/FileTarget.h>
+#include <serenity/Targets/Target.h>
 #include <serenity/Utilities/FileHelper.h>
 
 namespace serenity::experimental {
@@ -12,12 +12,12 @@ namespace serenity::experimental {
 		RotateSettings(RotateSettings&)            = delete;
 		RotateSettings& operator=(RotateSettings&) = delete;
 		~RotateSettings()                          = default;
-		const std::filesystem::path OriginalPath();
-		const std::filesystem::path OriginalDirectory();
-		const std::string OriginalName();
-		const std::string OriginalExtension();
-		const size_t FileSize();
-		const bool IsIntervalRotationEnabled();
+		std::filesystem::path OriginalPath() const;
+		std::filesystem::path OriginalDirectory() const;
+		std::string OriginalName() const;
+		std::string OriginalExtension() const;
+		size_t FileSize() const;
+		bool IsIntervalRotationEnabled() const;
 
 		enum class IntervalMode
 		{
@@ -80,7 +80,7 @@ namespace serenity::experimental::targets {
 		// clang-format on	
 	
 		void SetRotationMode(IntervalMode mode);
-		const RotateSettings::IntervalMode RotationMode();
+		RotateSettings::IntervalMode RotationMode() const;
 
 	protected:
 		void PrintMessage(std::string_view formatted) override;

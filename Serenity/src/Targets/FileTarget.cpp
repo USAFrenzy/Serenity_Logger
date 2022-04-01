@@ -5,7 +5,7 @@
 namespace serenity::targets {
 
 	FileTarget::FileTarget(): TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
-		BaseHelper() = baseHelper;
+		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path logDirPath { std::filesystem::current_path() /= "Logs" };
 		InitializeFilePath();
 		try {
@@ -27,7 +27,7 @@ namespace serenity::targets {
 
 	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists)
 		: TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
-		BaseHelper() = baseHelper;
+		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path logDirPath { std::filesystem::current_path() /= "Logs" };
 		InitializeFilePath(fileName);
 		try {
@@ -49,7 +49,7 @@ namespace serenity::targets {
 
 	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists)
 		: TargetBase(name), FileHelper(fPath), fileMutex(std::mutex {}) {
-		BaseHelper() = baseHelper;
+		SyncTargetHelpers(TargetHelper());
 		try {
 				if( !std::filesystem::exists(FileCacheHelper()->FilePath()) ) {
 						auto dir { FileCacheHelper()->FilePath() };
@@ -71,7 +71,7 @@ namespace serenity::targets {
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
 		: TargetBase(name, formatPattern), FileHelper(fPath), fileMutex(std::mutex {}) {
-		BaseHelper() = baseHelper;
+		SyncTargetHelpers(TargetHelper());
 		try {
 				if( !std::filesystem::exists(FileCacheHelper()->FilePath()) ) {
 						auto dir { FileCacheHelper()->FilePath() };
@@ -99,14 +99,14 @@ namespace serenity::targets {
 	void FileTarget::PrintMessage(std::string_view formatted) {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
 		auto& backgroundThread { BackgoundThreadInfo() };
-		auto flushThreadEnabled { backgroundThread.flushThreadEnabled.load() };
+		auto flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
-				if( !backgroundThread.flushComplete.load() ) {
-						backgroundThread.flushComplete.wait(false);
+				if( !backgroundThread->flushComplete.load() ) {
+						backgroundThread->flushComplete.wait(false);
 				}
-				backgroundThread.threadWriting.store(true);
+				backgroundThread->threadWriting.store(true);
 		}
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		FileHandle().rdbuf()->sputn(formatted.data(), formatted.size());
@@ -114,14 +114,14 @@ namespace serenity::targets {
 				lock.unlock();
 		}
 		if( flushThreadEnabled ) {
-				backgroundThread.threadWriting.store(false);
-				backgroundThread.threadWriting.notify_all();
+				backgroundThread->threadWriting.store(false);
+				backgroundThread->threadWriting.notify_all();
 		}
 	}
 
 	void FileTarget::SetLocale(const std::locale& loc) {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		if( FileHandle().getloc() != loc ) {
@@ -132,19 +132,20 @@ namespace serenity::targets {
 
 	void FileTarget::PolicyFlushOn() {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		if( baseHelper.Policy().PrimarySetting() == serenity::experimental::FlushSetting::never ) {
+		auto& policy { TargetHelper()->Policy() };
+		if( policy->PrimarySetting() == serenity::experimental::FlushSetting::never ) {
 				// If the flush thread was active, no need to hog a thread if never flushing
 				StopBackgroundThread();
 		};
-		if( baseHelper.Policy().PrimarySetting() == serenity::experimental::FlushSetting::always ) {
+		if( policy->PrimarySetting() == serenity::experimental::FlushSetting::always ) {
 				// Similar reasoning as Never setting except for the fact of ALWAYS flushing
 				StopBackgroundThread();
 				Flush();
 		}
-		switch( baseHelper.Policy().SubSetting() ) {
+		switch( policy->SubSetting() ) {
 				case serenity::experimental::PeriodicOptions::timeBased:
 					{
 						StartBackgroundThread();
@@ -152,7 +153,7 @@ namespace serenity::targets {
 					break;    // time based bounds
 				case serenity::experimental::PeriodicOptions::logLevelBased:
 					{
-						if( MsgInfo()->MsgLevel() < baseHelper.Policy().SecondarySettings().flushOn ) return;
+						if( MsgInfo()->MsgLevel() < policy->SecondarySettings().flushOn ) return;
 						Flush();
 					}
 					break;

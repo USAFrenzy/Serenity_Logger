@@ -18,11 +18,11 @@ namespace serenity::targets {
 		TargetBase(std::string_view name, std::string_view msgPattern);
 		~TargetBase() = default;
 		void SetFlushPolicy(const serenity::experimental::Flush_Policy& pPolicy);
-		const std::string LoggerName();
+		std::string LoggerName() const;
 		void SetPattern(std::string_view pattern);
 		void ResetPatternToDefault();
 		void SetLogLevel(LoggerLevel level);
-		const LoggerLevel Level();
+		LoggerLevel Level() const;
 		void SetLoggerName(std::string_view name);
 		template<typename... Args> void Trace(std::string_view msg, Args&&... args);
 		template<typename... Args> void Info(std::string_view msg, Args&&... args);
@@ -32,14 +32,14 @@ namespace serenity::targets {
 		template<typename... Args> void Fatal(std::string_view msg, Args&&... args);
 		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 		virtual void SetLocale(const std::locale& loc);
-		const std::locale GetLocale();
+		std::locale GetLocale() const;
 
 	      protected:
-		msg_details::Message_Formatter* MsgFmt();
-		msg_details::Message_Info* MsgInfo();
-		virtual void PrintMessage(std::string_view formatted) = 0;
+		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();
+		const std::unique_ptr<msg_details::Message_Formatter>& MsgFmt() const;
+		const std::unique_ptr<msg_details::Message_Info>& MsgInfo() const;
+		virtual void PrintMessage(std::string_view formatted);
 		virtual void PolicyFlushOn();
-		helpers::BaseTargetHelper baseHelper;
 
 	      private:
 		LoggerLevel logLevel;
@@ -48,6 +48,7 @@ namespace serenity::targets {
 		mutable std::mutex baseMutex;
 		std::unique_ptr<msg_details::Message_Info> msgDetails;
 		std::unique_ptr<msg_details::Message_Formatter> msgPattern;
+		std::shared_ptr<helpers::BaseTargetHelper> baseHelper;
 	};
 
 #include "Target-impl.h"

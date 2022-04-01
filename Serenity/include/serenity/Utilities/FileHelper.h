@@ -27,12 +27,12 @@ namespace serenity {
 		~FileCache()                     = default;
 		void CacheFile(std::string_view path, bool ignoreExtInFileName = false);
 		std::vector<char>& FileBuffer();
-		const size_t FileBufferSize();
-		const std::filesystem::path FilePath();
+		size_t FileBufferSize() const;
+		std::filesystem::path FilePath() const;
 		void SetBufferSize(size_t value);
-		const std::string DirName();
-		const std::string FileName();
-		const std::string Extenstion();
+		std::string DirName() const;
+		std::string FileName() const;
+		std::string Extenstion() const;
 
 		// Helper Functions
 		void SetFilePath(const std::filesystem::path& newPath);
@@ -63,28 +63,28 @@ namespace serenity::targets::helpers {
 		FileHelper& operator=(FileHelper&) = delete;
 		~FileHelper()                      = default;
 
-		BaseTargetHelper& BaseHelper();
 		bool OpenFile(bool truncate = false);
 		bool CloseFile();
 		void Flush();
 		void SetFileBufferSize(size_t value);
 		std::ofstream& FileHandle();
 		void InitializeFilePath(std::string_view fileName = "");
-		FileCache* FileCacheHelper();
 		virtual bool RenameFile(std::string_view newFileName);
-		BackgroundThread& BackgoundThreadInfo();
 		void BackgroundFlushThread(std::stop_token stopToken);
 		void StopBackgroundThread();
 		void StartBackgroundThread();
 		void PauseBackgroundThread();
 		void ResumeBackgroundThread();
+		void SyncTargetHelpers(std::shared_ptr<BaseTargetHelper>& syncToHelper);
+		const std::unique_ptr<FileCache>& FileCacheHelper() const;
+		const std::unique_ptr<BackgroundThread>& BackgoundThreadInfo() const;
 
 	      private:
 		int retryAttempt;
 		std::ofstream fileHandle;
 		std::mutex fileHelperMutex;
 		std::unique_ptr<FileCache> fileCache;
-		std::unique_ptr<BaseTargetHelper> targetHelper;
+		std::shared_ptr<BaseTargetHelper> targetHelper;
 		std::unique_ptr<BackgroundThread> flushWorker;
 	};
 

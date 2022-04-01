@@ -40,10 +40,10 @@ namespace serenity::experimental {
 		void SetPrimaryMode(FlushSetting primary);
 		void SetSecondaryMode(PeriodicOptions secondary);
 		void SetSecondarySettings(PeriodicSettings subSettings);
-		const FlushSetting PrimarySetting();
-		const PeriodicOptions SubSetting();
-		const Flush_Policy Policy();
-		const PeriodicSettings SecondarySettings();
+		FlushSetting PrimarySetting() const;
+		PeriodicOptions SubSetting() const;
+		Flush_Policy Policy() const;
+		PeriodicSettings SecondarySettings() const;
 
 	      private:
 		FlushSetting mainOpt;

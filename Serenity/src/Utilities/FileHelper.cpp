@@ -31,11 +31,11 @@ namespace serenity {
 		return fileBuffer;
 	}
 
-	const size_t FileCache::FileBufferSize() {
+	size_t FileCache::FileBufferSize() const {
 		return bufferSize;
 	}
 
-	const std::filesystem::path FileCache::FilePath() {
+	std::filesystem::path FileCache::FilePath() const {
 		return filePath;
 	}
 
@@ -43,15 +43,15 @@ namespace serenity {
 		bufferSize = value;
 	}
 
-	const std::string FileCache::DirName() {
+	std::string FileCache::DirName() const {
 		return fileDir;
 	}
 
-	const std::string FileCache::FileName() {
+	std::string FileCache::FileName() const {
 		return fileName;
 	}
 
-	const std::string FileCache::Extenstion() {
+	std::string FileCache::Extenstion() const {
 		return extension;
 	}
 
@@ -152,10 +152,6 @@ namespace serenity::targets::helpers {
 		return true;
 	}
 
-	BaseTargetHelper& targets::helpers::FileHelper::BaseHelper() {
-		return *targetHelper.get();
-	}
-
 	void FileHelper::Flush() {
 		std::unique_lock<std::mutex> lock(fileHelperMutex, std::defer_lock);
 		auto flushThreadEnabled { flushWorker->flushThreadEnabled.load() };
@@ -188,16 +184,20 @@ namespace serenity::targets::helpers {
 		return fileHandle;
 	}
 
-	FileCache* FileHelper::FileCacheHelper() {
-		return fileCache.get();
+	const std::unique_ptr<FileCache>& FileHelper::FileCacheHelper() const {
+		return fileCache;
 	}
 
-	BackgroundThread& FileHelper::BackgoundThreadInfo() {
-		return *flushWorker.get();
+	void FileHelper::SyncTargetHelpers(std::shared_ptr<BaseTargetHelper>& syncToHelper) {
+		targetHelper = syncToHelper;
+	}
+
+	const std::unique_ptr<BackgroundThread>& FileHelper::BackgoundThreadInfo() const {
+		return flushWorker;
 	}
 
 	void FileHelper::BackgroundFlushThread(std::stop_token stopToken) {
-		auto flushInterval { targetHelper->Policy().SecondarySettings().flushEvery };
+		auto flushInterval { targetHelper->Policy()->SecondarySettings().flushEvery };
 		while( !flushWorker->cleanUpThreads.load() ) {
 				if( stopToken.stop_requested() ) {
 						break;
@@ -215,14 +215,14 @@ namespace serenity::targets::helpers {
 				flushWorker->flushThread.request_stop();
 				flushWorker->cleanUpThreads.store(true);
 				flushWorker->cleanUpThreads.notify_one();
-				targetHelper->Policy().SetPrimaryMode(serenity::experimental::FlushSetting::never);
+				targetHelper->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::never);
 				flushWorker->flushThreadEnabled.store(false);
 		}
 	}
 
 	void FileHelper::StartBackgroundThread() {
 		if( !flushWorker->flushThreadEnabled.load() ) {
-				targetHelper->Policy().SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
+				targetHelper->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
 				flushWorker->cleanUpThreads.store(false);
 				flushWorker->flushThread = std::jthread(&FileHelper::BackgroundFlushThread, this, flushWorker->interruptThread);
 				flushWorker->flushThreadEnabled.store(true);

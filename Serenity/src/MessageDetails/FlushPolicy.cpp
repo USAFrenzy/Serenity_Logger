@@ -35,19 +35,19 @@ namespace serenity::experimental {
 		subSettings = settings;
 	}
 
-	const FlushSetting Flush_Policy::PrimarySetting() {
+	FlushSetting Flush_Policy::PrimarySetting() const {
 		return mainOpt;
 	}
 
-	const PeriodicOptions Flush_Policy::SubSetting() {
+	PeriodicOptions Flush_Policy::SubSetting() const {
 		return subOpt;
 	}
 
-	const PeriodicSettings Flush_Policy::SecondarySettings() {
+	PeriodicSettings Flush_Policy::SecondarySettings() const {
 		return subSettings;
 	}
 
-	const Flush_Policy Flush_Policy::Policy() {
+	Flush_Policy Flush_Policy::Policy() const {
 		return *this;
 	}
 }    // namespace serenity::experimental

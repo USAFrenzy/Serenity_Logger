@@ -23,15 +23,15 @@ namespace serenity::experimental {
 			}
 	}
 
-	const std::filesystem::path RotateSettings::OriginalPath() {
+	std::filesystem::path RotateSettings::OriginalPath() const {
 		return FileCacheHelper()->FilePath();
 	}
 
-	const std::filesystem::path RotateSettings::OriginalDirectory() {
+	std::filesystem::path RotateSettings::OriginalDirectory() const {
 		return FileCacheHelper()->DirName();
 	}
 
-	const std::string RotateSettings::OriginalName() {
+	std::string RotateSettings::OriginalName() const {
 		return FileCacheHelper()->FileName();
 	}
 
@@ -39,11 +39,11 @@ namespace serenity::experimental {
 		currentFileSize = currentSize;
 	}
 
-	const std::string RotateSettings::OriginalExtension() {
+	std::string RotateSettings::OriginalExtension() const {
 		return FileCacheHelper()->Extenstion();
 	}
 
-	const size_t RotateSettings::FileSize() {
+	size_t RotateSettings::FileSize() const {
 		return currentFileSize;
 	}
 
@@ -51,7 +51,7 @@ namespace serenity::experimental {
 		initalRotationEnabled = enabled;
 	}
 
-	const bool RotateSettings::IsIntervalRotationEnabled() {
+	bool RotateSettings::IsIntervalRotationEnabled() const {
 		return initalRotationEnabled;
 	}
 }    // namespace serenity::experimental
@@ -60,7 +60,7 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
 		: TargetBase("Rotating_Log.txt"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size) {
-		BaseHelper() = baseHelper;
+		SyncTargetHelpers(TargetHelper());
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
@@ -83,7 +83,7 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
 		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size) {
-		BaseHelper() = baseHelper;
+		SyncTargetHelpers(TargetHelper());
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
@@ -105,7 +105,7 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
 		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size) {
-		BaseHelper() = baseHelper;
+		SyncTargetHelpers(TargetHelper());
 		auto& cache { MsgInfo()->TimeDetails().Cache() };
 		currentHour    = cache.tm_hour;
 		currentDay     = cache.tm_mday;
@@ -133,7 +133,7 @@ namespace serenity::experimental::targets {
 
 	bool RotatingTarget::RenameFile(std::string_view newFileName) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		// make copy for old file conversion and cache new values
@@ -153,7 +153,7 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::EnableRotation(bool rotationEnabled) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		this->rotationEnabled = rotationEnabled;
@@ -163,7 +163,7 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::SetRotateSettings(RotateSettings settings) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		fileSizeLimit        = settings.fileSizeLimit;
@@ -235,14 +235,14 @@ namespace serenity::experimental::targets {
 
 	void RotatingTarget::RotateFile() {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		if( !rotationEnabled ) return;
 		static FlushSetting originalPrimaryMode { FlushSetting::periodically };
-		auto wasFlushThreadActive { BackgoundThreadInfo().flushThreadEnabled.load() };
+		auto wasFlushThreadActive { BackgoundThreadInfo()->flushThreadEnabled.load() };
 		if( wasFlushThreadActive ) {
-				originalPrimaryMode = baseHelper.Policy().PrimarySetting();
+				originalPrimaryMode = TargetHelper()->Policy()->PrimarySetting();
 				PauseBackgroundThread();
 		}
 		CloseFile();
@@ -256,7 +256,7 @@ namespace serenity::experimental::targets {
 		SetCurrentFileSize(0);
 		if( wasFlushThreadActive ) {
 				ResumeBackgroundThread();
-				baseHelper.Policy().SetPrimaryMode(originalPrimaryMode);
+				TargetHelper()->Policy()->SetPrimaryMode(originalPrimaryMode);
 		}
 	}
 
@@ -266,14 +266,14 @@ namespace serenity::experimental::targets {
 				RotateFile();
 		}
 		auto& backgroundThread { BackgoundThreadInfo() };
-		auto flushThreadEnabled { backgroundThread.flushThreadEnabled.load() };
+		auto flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
-				if( !backgroundThread.flushComplete.load() ) {
-						backgroundThread.flushComplete.wait(false);
+				if( !backgroundThread->flushComplete.load() ) {
+						backgroundThread->flushComplete.wait(false);
 				}
-				backgroundThread.threadWriting.store(true);
+				backgroundThread->threadWriting.store(true);
 		}
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		auto formattedSize { formatted.size() };
@@ -283,8 +283,8 @@ namespace serenity::experimental::targets {
 				lock.unlock();
 		}
 		if( flushThreadEnabled ) {
-				backgroundThread.threadWriting.store(false);
-				backgroundThread.threadWriting.notify_all();
+				backgroundThread->threadWriting.store(false);
+				backgroundThread->threadWriting.notify_all();
 		}
 	}
 
@@ -293,7 +293,7 @@ namespace serenity::experimental::targets {
 		if( !rotationEnabled ) return false;
 		if( FileSize() == 0 ) return false;
 
-		if( baseHelper.isMTSupportEnabled() ) {
+		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
 		auto& cache = MsgInfo()->TimeDetails().Cache();
@@ -393,7 +393,7 @@ namespace serenity::experimental::targets {
 	void RotatingTarget::SetLocale(const std::locale& loc)
 	{
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (baseHelper.isMTSupportEnabled()) {
+		if (TargetHelper()->isMTSupportEnabled()) {
 			lock.lock();
 		}
 		if (FileHandle().getloc() != loc) {
@@ -405,7 +405,7 @@ namespace serenity::experimental::targets {
 	void RotatingTarget::SetRotationSetting(IntervalMode mode, int  setting, int secondSetting)
 	{
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (baseHelper.isMTSupportEnabled()) {
+		if (TargetHelper()->isMTSupportEnabled()) {
 			lock.lock();
 		}
 		using mType = RotateSettings::IntervalMode;
@@ -459,13 +459,13 @@ namespace serenity::experimental::targets {
 	void RotatingTarget::SetRotationMode(IntervalMode mode)
 	{
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (baseHelper.isMTSupportEnabled()) {
+		if (TargetHelper()->isMTSupportEnabled()) {
 			lock.lock();
 		}
 		m_mode = mode;
 	}
 
-	const RotateSettings::IntervalMode RotatingTarget::RotationMode()
+	RotateSettings::IntervalMode RotatingTarget::RotationMode() const
 	{
 		return m_mode;
 	}
@@ -475,19 +475,20 @@ namespace serenity::experimental::targets {
 	void RotatingTarget::PolicyFlushOn()
 	{
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (baseHelper.isMTSupportEnabled()) {
+		if (TargetHelper()->isMTSupportEnabled()) {
 			lock.lock();
 		}
-		if (baseHelper.Policy().PrimarySetting() == serenity::experimental::FlushSetting::never) {
+		auto& policy{ TargetHelper()->Policy() };
+		if (policy->PrimarySetting() == serenity::experimental::FlushSetting::never) {
 			// If the flush thread was active, no need to hog a thread if never flushing
 			StopBackgroundThread();
 		};
-		if (baseHelper.Policy().PrimarySetting() == serenity::experimental::FlushSetting::always) {
+		if (policy->PrimarySetting() == serenity::experimental::FlushSetting::always) {
 			// Similar reasoning as Never setting except for the fact of ALWAYS flushing
 			StopBackgroundThread();
 			Flush();
 		}
-		switch (baseHelper.Policy().SubSetting()) {
+		switch (policy->SubSetting()) {
 		case serenity::experimental::PeriodicOptions::timeBased:
 		{
 			StartBackgroundThread();
@@ -495,7 +496,7 @@ namespace serenity::experimental::targets {
 		break;    // time based bounds
 		case serenity::experimental::PeriodicOptions::logLevelBased:
 		{
-			if (MsgInfo()->MsgLevel() < baseHelper.Policy().SecondarySettings().flushOn) return;
+			if (MsgInfo()->MsgLevel() < policy->SecondarySettings().flushOn) return;
 			Flush();
 		}
 		break;

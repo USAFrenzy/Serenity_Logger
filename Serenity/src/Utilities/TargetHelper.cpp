@@ -3,12 +3,12 @@
 namespace serenity::targets::helpers {
 	BaseTargetHelper::BaseTargetHelper()
 		: toBuffer(false), internalBuffer(std::string {}), multiThreadSupport(false),
-		  policy(serenity::experimental::FlushSetting::never) { }
+		  policy(std::make_unique<serenity::experimental::Flush_Policy>(serenity::experimental::FlushSetting::never)) { }
 
 	BaseTargetHelper& serenity::targets::helpers::BaseTargetHelper::operator=(BaseTargetHelper& other) {
 		internalBuffer     = other.internalBuffer;
 		multiThreadSupport = other.multiThreadSupport;
-		policy             = other.policy;
+		policy             = std::move(other.policy);
 		toBuffer           = other.toBuffer;
 		return *this;
 	}
@@ -25,15 +25,19 @@ namespace serenity::targets::helpers {
 		toBuffer = fmtToBuf;
 	}
 
-	const bool BaseTargetHelper::isWriteToBuf() {
+	bool BaseTargetHelper::isWriteToBuf() const {
 		return toBuffer;
+	}
+
+	void BaseTargetHelper::SetFlushPolicy(const serenity::experimental::Flush_Policy& fPolicy) {
+		policy = std::make_unique<serenity::experimental::Flush_Policy>(fPolicy);
 	}
 
 	std::string* BaseTargetHelper::Buffer() {
 		return &internalBuffer;
 	}
 
-	serenity::experimental::Flush_Policy& BaseTargetHelper::Policy() {
+	const std::unique_ptr<serenity::experimental::Flush_Policy>& BaseTargetHelper::Policy() const {
 		return policy;
 	}
 

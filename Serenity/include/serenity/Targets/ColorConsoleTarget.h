@@ -45,6 +45,7 @@ namespace serenity::targets {
 		FILE* outputHandle;
 #endif    // WINDOWS_PLATFORM
 		std::mutex consoleMutex;
+		std::string message;
 	};    // class ColorConsole
 
 }    // namespace serenity::targets
