@@ -5,59 +5,86 @@
 
 #include <string>
 #include <variant>
+namespace serenity {
+	static constexpr std::array<std::string_view, 2> delimiters = { "{}", "{ }" };
+}
 
 struct ArgContainer
 {
-	using LazilySupportedTypes = std::variant<std::string, const char*, std::string_view>;
+	using LazilySupportedTypes = std::variant<std::string, const char*, std::string_view /*, int, double, float*/>;
+
+	template<typename... Args> void EmplaceBackArgs(Args&&... args) {
+		(
+		// TODO: Figure a way to safely avoid trying to store an unsupported type and set the bool state
+		[ & ](auto& arg) {
+			if( std::is_convertible_v<typeid(arg), std::string_view> ) {
+					argContainer.emplace_back(arg);
+			} else {
+					containsAnUnsupprtedArg = true;
+				}
+		}(args),
+		...);
+	}
+
 	template<typename... Args> void CaptureArgs(Args&&... args) {
 		argContainer.clear();
 		counterPos = 0;
-		argContainer.emplace_back(std::forward<Args>(args)...);
-		numberOfArgs = argContainer.size();
-		originalSize = numberOfArgs;
+		endReached = false;
+		EmplaceBackArgs(std::forward<Args>(args)...);
+		originalSize = argContainer.size();
 	}
 	void AdvanceToNextArg() {
-		if( counterPos < numberOfArgs ) {
+		if( counterPos < originalSize ) {
 				++counterPos;
 		} else {
 				endReached = true;
 			}
 	}
 
+	bool ParseForArgSpecs(const std::string_view fmt) {
+		auto size { fmt.size() };
+		std::string_view argBraket;
+		bool containsSpecs { false };
+
+		for( size_t i { 0 }; i < size; ++i ) {
+				argBraket = "";
+				if( fmt.at(i) == '{' ) {
+						auto openBracketPos { fmt.find_first_of('{') };
+						auto endBracketPos { fmt.find_first_of('}') };
+						if( (openBracketPos != std::string_view::npos) && (endBracketPos != std::string_view::npos) ) {
+								argBraket = std::move(fmt.substr(openBracketPos, endBracketPos));
+						}
+						switch( argBraket.size() ) {
+								case 0:
+								case 1:
+								case 2: break;
+								case 3:
+									if( argBraket.at(1) != ' ' ) {
+											containsSpecs = true;
+									}
+									break;
+								default: containsSpecs = true; break;
+							}
+						if( containsSpecs ) {
+								return true;
+						}
+				}
+			}
+		return false;
+	}
+
 	bool EndReached() {
 		return endReached;
 	}
-	void RemoveArgFromContainer(size_t index) {
-		auto argOffset { (argContainer.end() - 1) - index };
-		argContainer.erase(argOffset);
-		numberOfArgs = argContainer.size();
-		endReached   = false;
-		counterPos   = 0;
-		indicesRemoved.push_back(index);
+	void PopArgFromFront() {
+		auto begin { argContainer.begin() };
+		argContainer.erase(begin, begin + 1);
 	}
 
-	std::string FormatRemainingArgs(std::string_view msg, const std::locale loc, std::format_args&& args) {
-		std::string result { msg.data(), msg.size() };
-		std::string temp;
-		for( size_t i { 0 }; i < originalSize; ++i ) {
-				temp.clear();
-				auto pos { std::find(indicesRemoved.begin(), indicesRemoved.end(), i) };
-				if( pos == indicesRemoved.end() ) {
-						try {
-								temp.append(std::vformat(loc, result, args));
-							}
-						catch( const std::format_error& ferr ) {
-								printf("%s\n", ferr.what());
-							}
-						result = temp;
-				}
-			}
-		return result;
-	}
-
-	std::tuple<bool, std::string_view, size_t> GetArgInfo() {
-		auto& arg { argContainer.at(counterPos) };
+	std::tuple<bool, std::string, size_t> GetArgInfo() {
+		auto& arg { argContainer[ 0 ] };
 		auto argIndex(counterPos);
+		std::string tmp;
 		switch( arg.index() ) {
 				case 0:
 					++counterPos;
@@ -69,18 +96,33 @@ struct ArgContainer
 					break;
 				case 2:
 					++counterPos;
-					return std::make_tuple(true, std::get<2>(arg), argIndex);
+					VFORMAT_TO(tmp, std::locale {}, "{}", std::get<2>(arg));
+					return std::make_tuple(true, tmp, argIndex);
 					break;
+				// case 3:
+				//	++counterPos;
+				//	VFORMAT_TO(tmp, std::locale {}, "{}", std::get<3>(arg));
+				//	return std::make_tuple(true, tmp, argIndex);
+				//	break;
+				// case 4:
+				//	++counterPos;
+				//	VFORMAT_TO(tmp, std::locale {}, "{}", std::get<4>(arg));
+				//	return std::make_tuple(true, tmp, argIndex);
+				//	break;
+				// case 5:
+				//	++counterPos;
+				//	VFORMAT_TO(tmp, std::locale {}, "{}", std::get<5>(arg));
+				//	return std::make_tuple(true, tmp, argIndex);
+				//	break;
 				default: return std::make_tuple(false, "", 50); break;
 			}
 	}
 
 	std::vector<LazilySupportedTypes> argContainer;
-	size_t numberOfArgs;
-	size_t originalSize;
+	size_t originalSize { 0 };
 	static size_t counterPos;
 	bool endReached { false };
-	std::vector<size_t> indicesRemoved;
+	bool containsAnUnsupprtedArg { false };
 };
 
 namespace serenity::msg_details {
@@ -107,64 +149,73 @@ namespace serenity::msg_details {
 		void SetLocale(const std::locale& loc);
 		std::locale GetLocale() const;
 
-		std::string LazySubstitute(const std::string_view msg, std::string_view arg, size_t index) {
-			size_t offset { 1 };
+		void LazySubstitute(std::string& msg, std::string_view arg, size_t index) {
 			std::string temp { msg.data(), msg.size() };
-			std::string parseString { msg.data(), msg.size() };
-			for( size_t i { 0 }; i < (index + offset); ++i ) {
-					temp.erase(0, temp.find_first_of("}") + offset);
-				}
-			auto tempOffset { temp.end() - temp.begin() };
-			auto argOffset { parseString.end() - tempOffset };
-			if( tempOffset != 0 ) {
-					parseString.erase(argOffset, parseString.end());
-					parseString.append(arg).append(temp.data(), temp.size());
+			m_parseString = msg;
+
+			auto closeBraketPos { temp.find_first_of("}") };
+			if( closeBraketPos != std::string::npos ) {
+					temp.erase(0, closeBraketPos + 1);
+			}
+
+			auto tempSize { temp.size() };
+			msg.clear();
+			if( (tempSize == 0) || (testContainer.argContainer.size() <= 1) ) {
+					msg.append(arg.data(), arg.size());
 			} else {
-					parseString = arg;
+					auto argOffset { m_parseString.end() - tempSize };
+					msg.append(std::move(m_parseString.replace(m_parseString.begin(), argOffset, arg)));
 				}
-			testContainer.RemoveArgFromContainer(index);
-			return parseString;
+			testContainer.PopArgFromFront();
 		}
 
 		template<typename... Args> void SetMessage(std::string_view message, Args&&... args) {
-			// ~75% of CPU cycles is spent parsing the string... the string is literally just "{}" -> should be way more efficient
 			// m_message.clear();
 			// VFORMAT_TO(m_message, m_locale, message, std::forward<Args>(args)...);
 			// m_message.append(SERENITY_LUTS::line_ending.at(platformEOL));
-			/*********************************************** Testing some stuff here ***********************************************/
-			/***********************************************************************************************************************
-			 * - So far, just capturing the arguments and taking note of the number of args passed in only takes ~2% CPU cycles
-			 *   vs the ~75% above.
-			 * - Given that the manual message stamp formatting only takes ~4% of CPU cycles and this takes ~75%, this is definitely
-			 *   where any optimizations for faster code would be.
-			 * - I would say this is a very good start for some lazy parsing and substitution. formatlib will still do the heavy
-			 *   lifting here, but it'll be nice if I can speed up large strings - algorithmic types, custom types, pointers, etc
-			 *   will default to formatlib as I don't see the need to re-implement their work for smaller args. (This is really all
-			 *   based off the notion that the format functions copy bytes to the output instead of a way to move them).
-			 * - Total Cpu cycles for GetArgTypes() is ~8%, which brings the total up to ~10%-11%
-			 ***********************************************************************************************************************/
 			m_message.clear();
 			lazy_message.clear();
-			testContainer.CaptureArgs(std::forward<Args>(args)...);
-			auto& argContainer { testContainer.argContainer };
-			for( const auto& arg: argContainer ) {
-					auto [ isStringType, argValue, argIndex ] = testContainer.GetArgInfo();
-					if( isStringType ) {
-							lazy_message = LazySubstitute(message, argValue, argIndex);
-					}
-					testContainer.AdvanceToNextArg();
-					if( testContainer.EndReached() ) {
-							break;
-					}
-				}
-			if( testContainer.numberOfArgs >= 1 ) {
-					for( auto& arg: argContainer ) {
-							lazy_message = testContainer.FormatRemainingArgs(
-							lazy_message, m_locale, std::make_format_args(std::forward<Args>(args)...));
+
+			if( testContainer.containsAnUnsupprtedArg || testContainer.ParseForArgSpecs(message) ) {
+					VFORMAT_TO(m_message, m_locale, message, std::forward<Args>(args)...);
+			} else {
+					testContainer.CaptureArgs(std::forward<Args>(args)...);
+					auto& argContainer { testContainer.argContainer };
+					std::string temp { message };
+
+					for( const auto& arg: argContainer ) {
+							auto [ isStringType, argValue, argIndex ] = testContainer.GetArgInfo();
+							if( isStringType ) {
+									LazySubstitute(temp, argValue, argIndex);
+									// assume that if '{}' is found for one argument, that it was intended,
+									// otherwise, remove it before continuing here
+									if( testContainer.originalSize > 1 ) {
+											lazy_message.append(TidyUpLazyString(temp));
+									} else {
+											lazy_message.append(temp);
+										}
+							}
+							testContainer.AdvanceToNextArg();
+							if( testContainer.EndReached() ) {
+									break;
+							}
 						}
-			}
-			m_message.append(lazy_message);
+					m_message.append(std::move(lazy_message));
+				}
 			m_message.append(SERENITY_LUTS::line_ending.at(platformEOL));
+		}
+
+		std::string TidyUpLazyString(const std::string& string) {
+			std::string temp { string };
+			auto pos = temp.find(delimiters[ 0 ]);
+			if( pos != std::string::npos ) {
+					temp.replace(pos, delimiters[ 0 ].size(), "");
+			}
+			pos = temp.find(delimiters[ 1 ]);
+			if( pos != std::string::npos ) {
+					temp.replace(pos, delimiters[ 1 ].size(), "");
+			}
+			return temp;
 		}
 
 	      private:
@@ -173,6 +224,7 @@ namespace serenity::msg_details {
 		LoggerLevel m_msgLevel;
 		std::string lazy_message;
 		std::string m_message;
+		std::string m_parseString;
 		Message_Time m_msgTime;
 		std::locale m_locale;
 		ArgContainer testContainer;

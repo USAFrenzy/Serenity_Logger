@@ -305,7 +305,7 @@ int main() {
 	macroTester.StopWatch_Reset();
 	std::cout << "Benching Color Console Target...\n\n";
 	for( i; i < iterations; i++ ) {
-			C.Info("{}", test);
+			C.Info("{} - {}", 42, test);
 		}
 	macroTester.StopWatch_Stop();
 	auto totalColorTime = macroTester.Elapsed_In(time_mode::ms);
