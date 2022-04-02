@@ -1,9 +1,10 @@
 #include <serenity/MessageDetails/Message_Formatter.h>
 
-// Initialize for no conflicts with FlagFormatter() or, later on, user defined format funcs
-constexpr auto MAX_INDEX = 9999;
-
 namespace serenity::msg_details {
+
+	// Initialize for no conflicts with FlagFormatter() or, later on, user defined format funcs
+	constexpr auto MAX_INDEX = 9999;
+
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details): msgInfo(*&details) {
 		SetPattern(pattern);
 	}

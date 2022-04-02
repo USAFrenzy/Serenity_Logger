@@ -304,8 +304,24 @@ int main() {
 	const unsigned long int iterations { 1'000'000 };
 	macroTester.StopWatch_Reset();
 	std::cout << "Benching Color Console Target...\n\n";
+	/////////////////////////////////////////////////////////////////////
+	//          TODO: Work on getting this supported:
+	/////////////////////////////////////////////////////////////////////
+	/*******************************************************************
+	 *              C.Info("{} - {}", 42, test);
+	 *******************************************************************/
+	/////////////////////////////////////////////////////////////////////
+	// This However does seem to work with the Specifier function given:
+	/////////////////////////////////////////////////////////////////////
+	/*******************************************************************
+	 * C.Info("{}", test);
+	 * C.Info("{:s}", test);
+	 * C.Info("{ }", test);
+	 * C.Info("{ :s }", test);
+	 * and any other variations of whitespace
+	 *******************************************************************/
 	for( i; i < iterations; i++ ) {
-			C.Info("{} - {}", 42, test);
+			C.Info("{}", test);
 		}
 	macroTester.StopWatch_Stop();
 	auto totalColorTime = macroTester.Elapsed_In(time_mode::ms);

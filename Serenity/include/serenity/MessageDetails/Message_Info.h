@@ -16,23 +16,30 @@ struct ArgContainer
 	template<typename... Args> void EmplaceBackArgs(Args&&... args) {
 		(
 		// TODO: Figure a way to safely avoid trying to store an unsupported type and set the bool state
+
 		[ & ](auto& arg) {
-			if( std::is_convertible_v<typeid(arg), std::string_view> ) {
-					argContainer.emplace_back(arg);
-			} else {
-					containsAnUnsupprtedArg = true;
-				}
+			// if supported type
+			argContainer.emplace_back(arg);
+			// else
+			// containsAnUnsupprtedArg = true;
+			// return;
 		}(args),
 		...);
 	}
 
-	template<typename... Args> void CaptureArgs(Args&&... args) {
+	void Reset() {
 		argContainer.clear();
-		counterPos = 0;
-		endReached = false;
+		counterPos              = 0;
+		endReached              = false;
+		containsAnUnsupprtedArg = false;
+	}
+
+	template<typename... Args> void CaptureArgs(Args&&... args) {
+		Reset();
 		EmplaceBackArgs(std::forward<Args>(args)...);
 		originalSize = argContainer.size();
 	}
+
 	void AdvanceToNextArg() {
 		if( counterPos < originalSize ) {
 				++counterPos;
@@ -43,31 +50,37 @@ struct ArgContainer
 
 	bool ParseForArgSpecs(const std::string_view fmt) {
 		auto size { fmt.size() };
-		std::string_view argBraket;
-		bool containsSpecs { false };
+		std::string_view argBracket;
 
 		for( size_t i { 0 }; i < size; ++i ) {
-				argBraket = "";
+				argBracket = "";
 				if( fmt.at(i) == '{' ) {
 						auto openBracketPos { fmt.find_first_of('{') };
 						auto endBracketPos { fmt.find_first_of('}') };
 						if( (openBracketPos != std::string_view::npos) && (endBracketPos != std::string_view::npos) ) {
-								argBraket = std::move(fmt.substr(openBracketPos, endBracketPos));
+								argBracket = std::move(fmt.substr(openBracketPos, endBracketPos + 1));
 						}
-						switch( argBraket.size() ) {
+						auto argBracketSize { argBracket.size() };
+						switch( argBracketSize ) {
 								case 0:
 								case 1:
 								case 2: break;
 								case 3:
-									if( argBraket.at(1) != ' ' ) {
-											containsSpecs = true;
+									if( argBracket.at(1) != ' ' ) {
+											return true;
 									}
 									break;
-								default: containsSpecs = true; break;
+								default:
+									argBracket.remove_prefix(1);
+									argBracket.remove_suffix(1);
+									for( auto& ch: argBracket ) {
+											if( ch != ' ' ) {
+													return true;
+											}
+										}
+									break;
 							}
-						if( containsSpecs ) {
-								return true;
-						}
+						if( argBracketSize == size ) break;
 				}
 			}
 		return false;
