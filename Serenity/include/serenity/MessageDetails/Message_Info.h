@@ -9,20 +9,43 @@ namespace serenity {
 	static constexpr std::array<std::string_view, 2> delimiters = { "{}", "{ }" };
 }
 
+// Answer From Barry on https://stackoverflow.com/questions/45892170/how-do-i-check-if-an-stdvariant-can-hold-a-certain-type
+// This definitely works, but I still can't seem to stop the compiler trying to store an unsupported type....
+template<class T, class U> struct variant_contains;
+template<class T, class... Ts> struct variant_contains<T, std::variant<Ts...>>: std::bool_constant<(std::is_same_v<T, Ts> || ...)>
+{
+};
+
 struct ArgContainer
 {
-	using LazilySupportedTypes = std::variant<std::string, const char*, std::string_view /*, int, double, float*/>;
+	using LazilySupportedTypes             = std::variant<std::string, const char*, std::string_view /*, int, double, float*/>;
+	template<class T> using type_supported = variant_contains<T, LazilySupportedTypes>;
+
+	template<typename... Args> constexpr void AllArgsSupportedImpl(bool& isSupported, Args&&... args) {
+		(
+		[ & ](auto& arg, auto& supported) {
+			if( !type_supported<decltype(arg)>::value ) {
+					isSupported = false;
+			}
+		}(args, isSupported),
+		...);
+	}
+
+	template<typename... Args> constexpr bool AllArgsSupported(Args&&... args) {
+		bool allSupported { true };
+		AllArgsSupportedImpl(allSupported, std::forward<Args>(args)...);
+		containsAnUnsupprtedArg = (!allSupported);
+		return allSupported;
+	}
 
 	template<typename... Args> void EmplaceBackArgs(Args&&... args) {
 		(
 		// TODO: Figure a way to safely avoid trying to store an unsupported type and set the bool state
-
 		[ & ](auto& arg) {
-			// if supported type
+			// if supported type ->
 			argContainer.emplace_back(arg);
-			// else
+			// else ->
 			// containsAnUnsupprtedArg = true;
-			// return;
 		}(args),
 		...);
 	}
@@ -189,7 +212,7 @@ namespace serenity::msg_details {
 			m_message.clear();
 			lazy_message.clear();
 
-			if( testContainer.containsAnUnsupprtedArg || testContainer.ParseForArgSpecs(message) ) {
+			if( !testContainer.AllArgsSupported() || testContainer.ParseForArgSpecs(message) ) {
 					VFORMAT_TO(m_message, m_locale, message, std::forward<Args>(args)...);
 			} else {
 					testContainer.CaptureArgs(std::forward<Args>(args)...);
