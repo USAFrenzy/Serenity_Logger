@@ -30,10 +30,16 @@
 		#define CONTEXT std::back_insert_iterator<std::basic_string<char>>
 		#define VFORMAT_TO(container, locale, message, ...)                                                                             \
 			std::vformat_to<CONTEXT>(std::back_inserter(container), locale, message, std::make_format_args(__VA_ARGS__))
+		#define VFORMAT(locale, message, ...) std::vformat<CONTEXT>(locale, message, std::make_format_args(__VA_ARGS__))
+
 	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
-		#define CONTEXT std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
+		#define CONTEXT    std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
+		#define CPNTEXT_SV std::basic_format_context<std::back_insert_iterator<std::string_view>, char>
 		#define VFORMAT_TO(container, locale, message, ...)                                                                             \
 			std::vformat_to(std::back_inserter(container), locale, message, std::make_format_args<CONTEXT>(__VA_ARGS__))
+		#define VFORMAT_TO_SV(container, locale, message, ...)                                                                          \
+			std::vformat_to(std::back_inserter(container), locale, message, std::make_format_args<CONTEXT>(__VA_ARGS__))
+
 	#else
 		#if( _MSC_VER < 1929 )
 			#error                                                                                                                  \
@@ -128,7 +134,7 @@ namespace serenity {
 			"80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"
 		};
 
-		static std::unordered_map<LineEnd, const char*> line_ending = {
+		static std::unordered_map<LineEnd, std::string_view> line_ending = {
 			{LineEnd::linux,    "\n"  },
 			{ LineEnd::windows, "\r\n"},
 			{ LineEnd::mac,     "\r"  },

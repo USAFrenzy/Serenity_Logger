@@ -1,7 +1,5 @@
 #include <serenity/MessageDetails/Message_Info.h>
 
-size_t ArgContainer::counterPos = 0;
-
 namespace serenity::msg_details {
 	Message_Info::Message_Info(std::string_view name, LoggerLevel level, message_time_mode mode)
 		: m_name(name), m_msgLevel(level), m_msgTime(mode), m_locale(globals::default_locale) {
