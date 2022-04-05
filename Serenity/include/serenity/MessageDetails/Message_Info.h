@@ -3,21 +3,37 @@
 #include <serenity/Common.h>
 #include <serenity/MessageDetails/Message_Time.h>
 
+#include <any>
+#include <charconv>    // to_chars
 #include <string>
 #include <variant>
 
+#define SERENITY_ARG_BUFFER_SIZE 24
+
 struct LazyParseHelper
 {
+	void ClearPartitions() {
+		partitionUpToArg.clear();
+		remainder.clear();
+	}
+
+	void ClearBuffer() {
+		resultBuffer.fill(0);
+	}
+
 	std::string partitionUpToArg;
 	std::string remainder;
 	std::string temp;
 	size_t openBracketPos { 0 };
 	size_t closeBracketPos { 0 };
-	void ClearAll() {
-		partitionUpToArg.clear();
-		remainder.clear();
-		temp.clear();
-	}
+	std::to_chars_result result                             = {};
+	std::array<char, SERENITY_ARG_BUFFER_SIZE> resultBuffer = {};
+};
+
+template<class T, class U> struct is_supported;
+
+template<class T, class... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
+{
 };
 
 struct ArgContainer
@@ -30,10 +46,20 @@ struct ArgContainer
 		return argContainer;
 	}
 
-	template<typename... Args> void EmplaceBackArgs(Args&&... args) {
+	LazyParseHelper& ParseHelper() {
+		return parseHelper;
+	}
+
+	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 		(
-		[ & ](auto&& arg) {
-			argContainer.emplace_back(std::move(arg));
+		[ = ](auto arg) {
+			auto typeFound = is_supported<decltype(arg), LazilySupportedTypes> {};
+			if constexpr( !typeFound.value ) {
+					containsUnknownType = true;
+			} else {
+					if( containsUnknownType ) return;
+					argContainer.emplace_back(std::move(arg));
+				}
 		}(args),
 		...);
 	}
@@ -47,7 +73,10 @@ struct ArgContainer
 	template<typename... Args> void CaptureArgs(Args&&... args) {
 		Reset();
 		EmplaceBackArgs(std::forward<Args>(args)...);
-		maxIndex = (argContainer.size() - 1);
+		size_t size { argContainer.size() };
+		if( size != 0 ) {
+				maxIndex = size - 1;
+		}
 	}
 
 	void AdvanceToNextArg() {
@@ -102,9 +131,13 @@ struct ArgContainer
 		return endReached;
 	}
 
+	bool ContainsUnsupportedType() const {
+		return containsUnknownType;
+	}
 	/*************************************** Variant Order *******************************************
-	 * std::monostate,std::string, const char*, std::string_view, int, unsigned int, long long,
-	 * unsigned long long, bool, char, float, double, long double, const void*
+	 * [0] std::monostate, [1] std::string, [2] const char*, [3] std::string_view, [4] int,
+	 * [5] unsigned int, [6] long long, [7] unsigned long long, [8] bool, [9] char, [10] float,
+	 * [11] double, [12] long double, [13] const void*
 	 ************************************************************************************************/
 	/*************************************************************************************************/
 	// TODO: As far as any more optimizations go, this function eats up ~3x more cpu cycles compared
@@ -115,54 +148,86 @@ struct ArgContainer
 	/*************************************************************************************************/
 
 	std::string&& GetArgValue() {
+		auto& strRef { parseHelper.temp };
+		strRef.clear();
+		parseHelper.ClearBuffer();
 		auto& arg { argContainer[ argIndex ] };
-		parseHelper.temp.clear();
+		auto& buffer { parseHelper.resultBuffer };
+		auto& result { parseHelper.result };
+
 		switch( arg.index() ) {
 				case 0: return std::move(parseHelper.temp); break;
 				case 1: return std::move(parseHelper.temp.append(std::move(std::get<1>(arg)))); break;
 				case 2: return std::move(parseHelper.temp.append(std::move(std::get<2>(arg)))); break;
 				case 3: return std::move(parseHelper.temp.append(std::move(std::get<3>(arg)))); break;
 				case 4:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<4>(arg)));
-					return std::move(parseHelper.temp);
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<4>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
 					break;
 				case 5:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<5>(arg)));
-					return std::move(parseHelper.temp);
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<5>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
 					break;
 				case 6:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<6>(arg)));
-					return std::move(parseHelper.temp);
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<6>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
 					break;
 				case 7:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<7>(arg)));
-					return std::move(parseHelper.temp);
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<7>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
 					break;
 				case 8:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<8>(arg)));
-					return std::move(parseHelper.temp);
+					strRef.append(std::get<8>(arg) == true ? "true" : "false");
+					return std::move(strRef);
 					break;
 				case 9:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<9>(arg)));
-					return std::move(parseHelper.temp);
+					strRef += std::move(std::get<9>(arg));
+					return std::move(strRef);
 					break;
 				case 10:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<10>(arg)));
-					return std::move(parseHelper.temp);
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<10>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
 					break;
 				case 11:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<11>(arg)));
-					return std::move(parseHelper.temp);
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<11>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
 					break;
 				case 12:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<12>(arg)));
-					return std::move(parseHelper.temp);
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<12>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
 					break;
 				case 13:
-					VFORMAT_TO(parseHelper.temp, std::locale {}, "{}", std::move(std::get<13>(arg)));
-					return std::move(parseHelper.temp);
+					// Couldn't get this to work with dynamic_cast, but reinterpret_cast at least isn't giving any issues.
+					// Still need to test that this works as intended; changed base 10 to 16 for 0-F addressing.
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					                       reinterpret_cast<size_t>(std::get<13>(arg)), 16);
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append("0x").append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
 					break;
-				default: return std::move(parseHelper.temp); break;
+				default: return std::move(strRef); break;
 			}
 	}
 
@@ -172,6 +237,7 @@ struct ArgContainer
 	size_t argIndex { 0 };
 	bool endReached { false };
 	LazyParseHelper parseHelper;
+	bool containsUnknownType { false };
 };
 
 namespace serenity::msg_details {
@@ -199,12 +265,14 @@ namespace serenity::msg_details {
 		void SetLocale(const std::locale& loc);
 		std::locale GetLocale() const;
 
-		void LazySubstitute(std::string& msg, std::string_view arg) {
+		void LazySubstitute(std::string& msg, std::string arg) {
 			std::string_view temp { msg };
-			parseHelper.ClearAll();
+			auto& parseHelper { testContainer.ParseHelper() };
+			parseHelper.ClearPartitions();
 			bool bracketPositionsValid;
-			parseHelper.openBracketPos  = temp.find_first_of("{");
-			parseHelper.closeBracketPos = temp.find_first_of("}");
+
+			parseHelper.openBracketPos  = temp.find_first_of(static_cast<char>('{'));
+			parseHelper.closeBracketPos = temp.find_first_of(static_cast<char>(' }'));
 			bracketPositionsValid       = ((parseHelper.openBracketPos != std::string::npos) &&
                                                  (parseHelper.closeBracketPos != std::string::npos));
 			if( bracketPositionsValid ) {
@@ -219,10 +287,10 @@ namespace serenity::msg_details {
 		template<typename... Args> void SetMessage(std::string_view message, Args&&... args) {
 			m_message.clear();
 			lazy_message.clear();
-			if( testContainer.ContainsArgSpecs(message) ) {
+			testContainer.CaptureArgs(std::forward<Args>(args)...);
+			if( testContainer.ContainsUnsupportedType() || testContainer.ContainsArgSpecs(message) ) {
 					VFORMAT_TO(m_message, m_locale, message, std::forward<Args>(args)...);
 			} else {
-					testContainer.CaptureArgs(std::forward<Args>(args)...);
 					lazy_message.append(message.data(), message.size());
 					for( ;; ) {
 							LazySubstitute(lazy_message, std::move(testContainer.GetArgValue()));
@@ -246,6 +314,5 @@ namespace serenity::msg_details {
 		Message_Time m_msgTime;
 		std::locale m_locale;
 		ArgContainer testContainer;
-		LazyParseHelper parseHelper;
 	};
 }    // namespace serenity::msg_details

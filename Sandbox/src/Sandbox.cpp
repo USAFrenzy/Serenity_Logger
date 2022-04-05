@@ -66,8 +66,6 @@ template<typename T> std::string SetPrecision(const T value, const int precision
 	return temp.str();
 }
 
-#include <future>
-
 int main() {
 	std::vector<spdlog::sink_ptr> sinks;
 
@@ -306,7 +304,7 @@ int main() {
 	std::cout << "Benching Color Console Target...\n\n";
 
 	for( i; i < iterations; i++ ) {
-			C.Info("{}", test);
+			C.Info("{} - {}", 43, test);
 		}
 	macroTester.StopWatch_Stop();
 	auto totalColorTime = macroTester.Elapsed_In(time_mode::ms);
@@ -454,7 +452,7 @@ int main() {
 		  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::sec) / iterations) + " s"
 	                                                                                                            "\n");
 
-	std::cout << Tag::Bright_Magenta("Rotating Target Is " + rotatePercent + " Percent Of Spdlog's File Sink Speed\n");
+	std::cout << Tag::Bright_Magenta("Rotating Target Is " + rotatePercent + " Percent Of Spdlog's Rotating File Sink Speed\n");
 
 	std::cout << "\n";
 	std::cout << Tag::Bright_Yellow("Program Throughput :\n");
