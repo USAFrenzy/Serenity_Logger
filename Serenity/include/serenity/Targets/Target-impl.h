@@ -12,9 +12,9 @@ template<typename... Args> void TargetBase::Trace(std::string_view s, Args&&... 
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
+			msgPattern->FmtMessage(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::trace);
-			msgDetails->SetMessage(s, std::forward<Args>(args)...);
-			auto formatted { msgPattern->GetFormatters().Format() };
+			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
 			if( baseHelper->isWriteToBuf() ) {
 					baseHelper->Buffer()->append(formatted.data(), formatted.size());
@@ -34,9 +34,9 @@ template<typename... Args> void TargetBase::Info(std::string_view s, Args&&... a
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
+			msgPattern->FmtMessage(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::info);
-			msgDetails->SetMessage(s, std::forward<Args>(args)...);
-			auto formatted { msgPattern->GetFormatters().Format() };
+			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
 			if( baseHelper->isWriteToBuf() ) {
 					baseHelper->Buffer()->append(formatted.data(), formatted.size());
@@ -56,9 +56,9 @@ template<typename... Args> void TargetBase::Debug(std::string_view s, Args&&... 
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
+			msgPattern->FmtMessage(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::debug);
-			msgDetails->SetMessage(s, std::forward<Args>(args)...);
-			auto formatted { msgPattern->GetFormatters().Format() };
+			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
 			if( baseHelper->isWriteToBuf() ) {
 					baseHelper->Buffer()->append(formatted.data(), formatted.size());
@@ -78,9 +78,9 @@ template<typename... Args> void TargetBase::Warn(std::string_view s, Args&&... a
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
+			msgPattern->FmtMessage(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::warning);
-			msgDetails->SetMessage(s, std::forward<Args>(args)...);
-			auto formatted { msgPattern->GetFormatters().Format() };
+			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
 			if( baseHelper->isWriteToBuf() ) {
 					baseHelper->Buffer()->append(formatted.data(), formatted.size());
@@ -100,9 +100,9 @@ template<typename... Args> void TargetBase::Error(std::string_view s, Args&&... 
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
+			msgPattern->FmtMessage(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::error);
-			msgDetails->SetMessage(s, std::forward<Args>(args)...);
-			auto formatted { msgPattern->GetFormatters().Format() };
+			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
 			if( baseHelper->isWriteToBuf() ) {
 					baseHelper->Buffer()->append(formatted.data(), formatted.size());
@@ -122,9 +122,9 @@ template<typename... Args> void TargetBase::Fatal(std::string_view s, Args&&... 
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
+			msgPattern->FmtMessage(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::fatal);
-			msgDetails->SetMessage(s, std::forward<Args>(args)...);
-			auto formatted { msgPattern->GetFormatters().Format() };
+			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
 			if( baseHelper->isWriteToBuf() ) {
 					baseHelper->Buffer()->append(formatted.data(), formatted.size());

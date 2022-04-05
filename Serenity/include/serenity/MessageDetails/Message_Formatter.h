@@ -3,10 +3,86 @@
 #include <serenity/Common.h>
 #include <serenity/MessageDetails/Message_Info.h>
 
+#include <charconv>    // to_chars
 #include <format>
 #include <string>
+#include <variant>
+
+// TODO: ###################################################################################################################
+// Not the biggest deal breaker, but might want to look into how to make Format_Arg_Char more efficient on allocations.
+// During the mem heap profiling, this function allocated the most bytes and more frequently than other functions,
+// which is kind of surprising to me. The next function to look at was the Formatters::FormatUserPattern() function and
+// its overloads. All-in-all though, it wasn't terrible. This lib runs faster than spdlog with, at times, less mem usage.
+// File targets used roughly the same amount of memory (this libs targets had only ~5 less allocations but total mem
+// allocated was about the same).
+// TODO: ###################################################################################################################
 
 namespace serenity::msg_details {
+
+	struct LazyParseHelper
+	{
+		void ClearPartitions();
+		void ClearBuffer();
+
+		std::string partitionUpToArg;
+		std::string remainder;
+		std::string temp;
+		size_t openBracketPos { 0 };
+		size_t closeBracketPos { 0 };
+		std::to_chars_result result                             = {};
+		std::array<char, SERENITY_ARG_BUFFER_SIZE> resultBuffer = {};
+	};
+
+	template<class T, class U> struct is_supported;
+	template<class T, class... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
+	{
+	};
+
+	struct ArgContainer
+	{
+	      public:
+		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int,
+		                                          long long, unsigned long long, bool, char, float, double, long double, const void*>;
+
+		const std::vector<LazilySupportedTypes>& ArgStorage() const;
+		LazyParseHelper& ParseHelper();
+		void Reset();
+		void AdvanceToNextArg();
+		bool ContainsArgSpecs(const std::string_view fmt);
+		bool EndReached() const;
+		bool ContainsUnsupportedType() const;
+		std::string&& GetArgValue();
+		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
+			(
+			[ = ](auto arg) {
+				auto typeFound = is_supported<decltype(arg), LazilySupportedTypes> {};
+				if constexpr( !typeFound.value ) {
+						containsUnknownType = true;
+				} else {
+						if( containsUnknownType ) return;
+						argContainer.emplace_back(std::move(arg));
+					}
+			}(args),
+			...);
+		}
+		template<typename... Args> void CaptureArgs(Args&&... args) {
+			Reset();
+			EmplaceBackArgs(std::forward<Args>(args)...);
+			size_t size { argContainer.size() };
+			if( size != 0 ) {
+					maxIndex = size - 1;
+			}
+		}
+
+	      private:
+		std::vector<LazilySupportedTypes> argContainer;
+		size_t maxIndex { 0 };
+		size_t argIndex { 0 };
+		bool endReached { false };
+		LazyParseHelper parseHelper;
+		bool containsUnknownType { false };
+	};
+
 	class Message_Formatter
 	{
 	      public:
@@ -18,11 +94,8 @@ namespace serenity::msg_details {
 
 		struct Formatter
 		{
-			virtual std::string_view Format() = 0;
-
-			virtual std::string UpdateInternalView() {
-				return "";
-			};
+			virtual std::string_view FormatUserPattern() = 0;
+			virtual std::string UpdateInternalView();
 		};
 
 		class Formatters
@@ -31,7 +104,7 @@ namespace serenity::msg_details {
 			Formatters(std::vector<std::unique_ptr<Formatter>>&& container);
 			Formatters() = default;
 			void Emplace_Back(std::unique_ptr<Formatter>&& formatter);
-			std::string_view Format();
+			std::string_view FormatUserPattern();
 			void Clear();
 
 		      private:
@@ -43,7 +116,26 @@ namespace serenity::msg_details {
 		void SetPattern(std::string_view pattern);
 		Formatters& GetFormatters();
 		void StoreFormat();
-		Message_Info* MessageDetails();
+		const Message_Info* MessageDetails();
+		void LazySubstitute(std::string& msg, std::string arg);
+		template<typename... Args> void FmtMessage(std::string_view message, Args&&... args) {
+			lazy_message.clear();
+			argStorage.CaptureArgs(std::forward<Args>(args)...);
+			if( argStorage.ContainsUnsupportedType() || argStorage.ContainsArgSpecs(message) ) {
+					VFORMAT_TO(lazy_message, *localeRef, message, std::forward<Args>(args)...);
+			} else {
+					lazy_message.append(message.data(), message.size());
+					for( ;; ) {
+							LazySubstitute(lazy_message, std::move(argStorage.GetArgValue()));
+							argStorage.AdvanceToNextArg();
+							if( argStorage.EndReached() ) {
+									break;
+							}
+						}
+				}
+			auto lineEnd { SERENITY_LUTS::line_ending.at(platformEOL) };
+			msgInfo->SetMessage(lazy_message.append(lineEnd.data(), lineEnd.size()));
+		}
 
 	      private:
 		// Formatting Structs For Flag Arguments
@@ -51,7 +143,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_a(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -63,7 +155,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_b(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -75,7 +167,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_d(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -87,7 +179,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_l(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			LoggerLevel& levelRef;
@@ -99,7 +191,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_n(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			Message_Time& timeRef;
@@ -112,7 +204,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_t(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -124,7 +216,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_w(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -136,7 +228,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_x(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -148,7 +240,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_y(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -161,7 +253,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_A(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -173,7 +265,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_B(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -185,7 +277,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_D(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			Message_Time& timeRef;
@@ -198,7 +290,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_F(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			Message_Time& timeRef;
@@ -211,7 +303,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_H(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -223,7 +315,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_L(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			LoggerLevel& levelRef;
@@ -235,7 +327,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_M(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -246,7 +338,7 @@ namespace serenity::msg_details {
 		struct Format_Arg_N: Formatter
 		{
 			Format_Arg_N(Message_Info& info);
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			std::string& name;
@@ -256,7 +348,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_S(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -268,7 +360,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_T(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -280,7 +372,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_X(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			const std::tm& cacheRef;
@@ -292,7 +384,7 @@ namespace serenity::msg_details {
 		{
 			Format_Arg_Y(Message_Info& info);
 			std::string UpdateInternalView() override;
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			Message_Time& timeRef;
@@ -304,7 +396,7 @@ namespace serenity::msg_details {
 		struct Format_Arg_Message: Formatter
 		{
 			Format_Arg_Message(Message_Info& info);
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			std::string& message;
@@ -313,7 +405,7 @@ namespace serenity::msg_details {
 		struct Format_Arg_Char: Formatter
 		{
 			Format_Arg_Char(std::string_view ch);
-			std::string_view Format() override;
+			std::string_view FormatUserPattern() override;
 
 		      private:
 			std::string m_char;
@@ -323,6 +415,10 @@ namespace serenity::msg_details {
 		Formatters formatter;
 		std::string fmtPattern;
 		Message_Info* msgInfo;
+		std::string lazy_message;
+		LineEnd platformEOL;
+		ArgContainer argStorage;
+		std::locale* localeRef;
 	};
 
 }    // namespace serenity::msg_details

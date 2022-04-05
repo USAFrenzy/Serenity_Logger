@@ -76,10 +76,11 @@
 	#define FILENO fileno
 #endif
 
-#define KB                  (1024)
-#define MB                  (1024 * KB)
-#define GB                  (1024 * MB)
-#define DEFAULT_BUFFER_SIZE (64 * KB)
+#define KB                       (1024)
+#define MB                       (1024 * KB)
+#define GB                       (1024 * MB)
+#define DEFAULT_BUFFER_SIZE      (64 * KB)
+#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)
 
 // declaring for use later and for doc purposes
 namespace serenity::experimental { }

@@ -2,11 +2,191 @@
 
 namespace serenity::msg_details {
 
-	// Initialize for no conflicts with FlagFormatter() or, later on, user defined format funcs
-	constexpr auto MAX_INDEX = 9999;
+	void LazyParseHelper::ClearBuffer() {
+		partitionUpToArg.clear();
+		remainder.clear();
+	}
 
-	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details): msgInfo(*&details) {
+	void LazyParseHelper::ClearPartitions() {
+		resultBuffer.fill(0);
+	}
+
+	const std::vector<ArgContainer::LazilySupportedTypes>& ArgContainer::ArgStorage() const {
+		return argContainer;
+	}
+
+	LazyParseHelper& ArgContainer::ParseHelper() {
+		return parseHelper;
+	}
+
+	void ArgContainer::Reset() {
+		argContainer.clear();
+		argIndex = maxIndex = 0;
+		endReached          = false;
+	}
+
+	void ArgContainer::AdvanceToNextArg() {
+		if( argIndex < maxIndex ) {
+				++argIndex;
+		} else {
+				endReached = true;
+			}
+	}
+
+	bool ArgContainer::ContainsArgSpecs(const std::string_view fmt) {
+		auto size { fmt.size() };
+		std::string_view argBracket;
+
+		for( size_t i { 0 }; i < size; ++i ) {
+				argBracket = "";
+				if( fmt.at(i) == '{' ) {
+						parseHelper.openBracketPos  = fmt.find_first_of('{');
+						parseHelper.closeBracketPos = fmt.find_first_of('}');
+						if( (parseHelper.openBracketPos != std::string_view::npos) &&
+						    (parseHelper.closeBracketPos != std::string_view::npos) ) {
+								argBracket = std::move(
+								fmt.substr(parseHelper.openBracketPos, parseHelper.closeBracketPos + 1));
+						}
+						auto argBracketSize { argBracket.size() };
+						switch( argBracketSize ) {
+								case 0: break;
+								case 1: break;
+								case 2: break;
+								case 3:
+									if( argBracket.at(1) != ' ' ) {
+											return true;
+									}
+									break;
+								default:
+									argBracket.remove_prefix(1);
+									argBracket.remove_suffix(1);
+									for( auto& ch: argBracket ) {
+											if( ch != ' ' ) {
+													return true;
+											}
+										}
+									break;
+							}
+						if( argBracketSize == size ) break;
+				}
+			}
+		return false;
+	}
+
+	/*************************************** Variant Order *******************************************
+	 * [0] std::monostate, [1] std::string, [2] const char*, [3] std::string_view, [4] int,
+	 * [5] unsigned int, [6] long long, [7] unsigned long long, [8] bool, [9] char, [10] float,
+	 * [11] double, [12] long double, [13] const void*
+	 ************************************************************************************************/
+	/*************************************************************************************************/
+	// TODO: As far as any more optimizations go, this function eats up ~3x more cpu cycles compared
+	// TODO: to the very next cpu hungry function given a test of 3 empty specifier arguments (an int,
+	// TODO: a float, and a string). Given the timings, this may not be any real issue, but it'd be
+	// TODO: cool to see how I may be able to speed this up as well since any gains here are massive
+	// TODO: gains everywhere else.
+	/*************************************************************************************************/
+	std::string&& ArgContainer::GetArgValue() {
+		auto& strRef { parseHelper.temp };
+		strRef.clear();
+		parseHelper.ClearBuffer();
+		auto& arg { argContainer[ argIndex ] };
+		auto& buffer { parseHelper.resultBuffer };
+		auto& result { parseHelper.result };
+
+		switch( arg.index() ) {
+				case 0: return std::move(parseHelper.temp); break;
+				case 1: return std::move(parseHelper.temp.append(std::move(std::get<1>(arg)))); break;
+				case 2: return std::move(parseHelper.temp.append(std::move(std::get<2>(arg)))); break;
+				case 3: return std::move(parseHelper.temp.append(std::move(std::get<3>(arg)))); break;
+				case 4:
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<4>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
+					break;
+				case 5:
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<5>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
+					break;
+				case 6:
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<6>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
+					break;
+				case 7:
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<7>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
+					break;
+				case 8:
+					strRef.append(std::get<8>(arg) == true ? "true" : "false");
+					return std::move(strRef);
+					break;
+				case 9:
+					strRef += std::move(std::get<9>(arg));
+					return std::move(strRef);
+					break;
+				case 10:
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<10>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
+					break;
+				case 11:
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<11>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
+					break;
+				case 12:
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<12>(arg));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
+					break;
+				case 13:
+					// Couldn't get this to work with dynamic_cast, but reinterpret_cast at least isn't giving any issues.
+					// Still need to test that this works as intended; changed base 10 to 16 for 0-F addressing.
+					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					                       reinterpret_cast<size_t>(std::get<13>(arg)), 16);
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append("0x").append(buffer.data(), buffer.size());
+					}
+					return std::move(strRef);
+					break;
+				default: return std::move(strRef); break;
+			}
+	}
+
+	bool ArgContainer::EndReached() const {
+		return endReached;
+	}
+
+	bool ArgContainer::ContainsUnsupportedType() const {
+		return containsUnknownType;
+	}
+
+	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
+		: msgInfo(*&details), localeRef(&details->GetLocale()) {
 		SetPattern(pattern);
+#ifdef WINDOWS_PLATFORM
+		platformEOL = LineEnd::windows;
+#elif defined MAC_PLATFORM
+		platformEOL = LineEnd::mac;
+#else
+		platformEOL = LineEnd::unix;
+#endif    // WINDOWS_PLATFORM
 	}
 
 	// Generally speaking, I would've liked to keep these as function pointers to
@@ -65,6 +245,9 @@ namespace serenity::msg_details {
 		m_Formatter.clear();
 	}
 
+	// Initialize for no conflicts with FlagFormatter() for user defined format funcs if implemented later on
+	constexpr unsigned int MAX_INDEX = 128;
+
 	void Message_Formatter::StoreFormat() {
 		std::string fmt { fmtPattern };
 		std::string flag;
@@ -95,8 +278,30 @@ namespace serenity::msg_details {
 			}
 	}
 
-	Message_Info* Message_Formatter::MessageDetails() {
+	void Message_Formatter::LazySubstitute(std::string& msg, std::string arg) {
+		std::string_view temp { msg };
+		auto& parseHelper { argStorage.ParseHelper() };
+		parseHelper.ClearPartitions();
+		bool bracketPositionsValid;
+
+		parseHelper.openBracketPos  = temp.find_first_of(static_cast<char>('{'));
+		parseHelper.closeBracketPos = temp.find_first_of(static_cast<char>(' }'));
+		bracketPositionsValid = ((parseHelper.openBracketPos != std::string::npos) && (parseHelper.closeBracketPos != std::string::npos));
+		if( bracketPositionsValid ) {
+				parseHelper.partitionUpToArg.append(std::move(temp.substr(0, parseHelper.openBracketPos)));
+				temp.remove_prefix(parseHelper.closeBracketPos + 1);
+				parseHelper.remainder.append(temp.data(), temp.size());
+		}
+		msg.clear();
+		msg.append(std::move(parseHelper.partitionUpToArg)).append(arg.data(), arg.size()).append(std::move(parseHelper.remainder));
+	}
+
+	const Message_Info* Message_Formatter::MessageDetails() {
 		return msgInfo;
+	}
+
+	std::string Message_Formatter::Formatter::UpdateInternalView() {
+		return "";
 	}
 
 	// Format_a Functions
@@ -114,7 +319,7 @@ namespace serenity::msg_details {
 		return std::string { paddedHour.data(), paddedHour.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_a::Format() {
+	std::string_view Message_Formatter::Format_Arg_a::FormatUserPattern() {
 		return (cacheRef.tm_hour != lastHour) ? hour = std::move(UpdateInternalView()) : hour;
 	}
 
@@ -129,7 +334,7 @@ namespace serenity::msg_details {
 		return std::string { paddedMonth.data(), paddedMonth.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_b::Format() {
+	std::string_view Message_Formatter::Format_Arg_b::FormatUserPattern() {
 		return (cacheRef.tm_mon != lastMonth) ? month = std::move(UpdateInternalView()) : month;
 	}
 
@@ -144,7 +349,7 @@ namespace serenity::msg_details {
 		return std::string { paddedDay.data(), paddedDay.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_d::Format() {
+	std::string_view Message_Formatter::Format_Arg_d::FormatUserPattern() {
 		return (cacheRef.tm_mday != lastDay) ? day = std::move(UpdateInternalView()) : day;
 	}
 
@@ -159,7 +364,7 @@ namespace serenity::msg_details {
 		return std::string { lvl.data(), lvl.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_l::Format() {
+	std::string_view Message_Formatter::Format_Arg_l::FormatUserPattern() {
 		return (levelRef != lastLevel) ? levelStr = std::move(UpdateInternalView()) : levelStr;
 	}
 
@@ -178,7 +383,7 @@ namespace serenity::msg_details {
 		return result.append(day).append(month).append(year);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_n::Format() {
+	std::string_view Message_Formatter::Format_Arg_n::FormatUserPattern() {
 		return (cacheRef.tm_mday != lastDay) ? ddmmyy = std::move(UpdateInternalView()) : ddmmyy;
 	}
 
@@ -199,7 +404,7 @@ namespace serenity::msg_details {
 		return result.append(hour).append(":").append(min);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_t::Format() {
+	std::string_view Message_Formatter::Format_Arg_t::FormatUserPattern() {
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		if( cacheRef.tm_min != lastMin ) {
 				auto result { hmStr = std::move(UpdateInternalView()) };
@@ -220,7 +425,7 @@ namespace serenity::msg_details {
 		return std::move(std::vformat("{}", std::make_format_args(lastDay)));
 	}
 
-	std::string_view Message_Formatter::Format_Arg_w::Format() {
+	std::string_view Message_Formatter::Format_Arg_w::FormatUserPattern() {
 		return (cacheRef.tm_wday != lastDay) ? lastDecDay = std::move(UpdateInternalView()) : lastDecDay;
 	}
 
@@ -235,7 +440,7 @@ namespace serenity::msg_details {
 		return std::string { sWkday.data(), sWkday.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_x::Format() {
+	std::string_view Message_Formatter::Format_Arg_x::FormatUserPattern() {
 		return (lastWkday != cacheRef.tm_wday) ? wkday = std::move(UpdateInternalView()) : wkday;
 	}
 
@@ -251,7 +456,7 @@ namespace serenity::msg_details {
 		return std::string { yr.data(), yr.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_y::Format() {
+	std::string_view Message_Formatter::Format_Arg_y::FormatUserPattern() {
 		return (cacheRef.tm_year != lastYear) ? year = std::move(UpdateInternalView()) : year;
 	}
 
@@ -266,7 +471,7 @@ namespace serenity::msg_details {
 		return std::string { dHalf.data(), dHalf.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_A::Format() {
+	std::string_view Message_Formatter::Format_Arg_A::FormatUserPattern() {
 		return (cacheRef.tm_hour != lastHour) ? dayHalf = std::move(UpdateInternalView()) : dayHalf;
 	}
 
@@ -281,7 +486,7 @@ namespace serenity::msg_details {
 		return std::string { lMonth.data(), lMonth.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_B::Format() {
+	std::string_view Message_Formatter::Format_Arg_B::FormatUserPattern() {
 		return (cacheRef.tm_mon != lastMonth) ? month = std::move(UpdateInternalView()) : month;
 	}
 
@@ -302,7 +507,7 @@ namespace serenity::msg_details {
 		return result.append(m).append("/").append(d).append("/").append(y);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_D::Format() {
+	std::string_view Message_Formatter::Format_Arg_D::FormatUserPattern() {
 		return (cacheRef.tm_mday != lastDay) ? mmddyy = std::move(UpdateInternalView()) : mmddyy;
 	}
 
@@ -323,7 +528,7 @@ namespace serenity::msg_details {
 		return result.append(y).append("-").append(m).append("-").append(d);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_F::Format() {
+	std::string_view Message_Formatter::Format_Arg_F::FormatUserPattern() {
 		return (cacheRef.tm_mday != lastDay) ? yymmdd = std::move(UpdateInternalView()) : yymmdd;
 	}
 
@@ -338,7 +543,7 @@ namespace serenity::msg_details {
 		return std::string { hr.data(), hr.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_H::Format() {
+	std::string_view Message_Formatter::Format_Arg_H::FormatUserPattern() {
 		return (cacheRef.tm_hour != lastHour) ? hour = std::move(UpdateInternalView()) : hour;
 	}
 
@@ -353,7 +558,7 @@ namespace serenity::msg_details {
 		return std::string { lvl.data(), lvl.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_L::Format() {
+	std::string_view Message_Formatter::Format_Arg_L::FormatUserPattern() {
 		return (levelRef != lastLevel) ? levelStr = std::move(UpdateInternalView()) : levelStr;
 	}
 
@@ -368,14 +573,14 @@ namespace serenity::msg_details {
 		return std::string { minute.data(), minute.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_M::Format() {
+	std::string_view Message_Formatter::Format_Arg_M::FormatUserPattern() {
 		return (cacheRef.tm_min != lastMin) ? min = std::move(UpdateInternalView()) : min;
 	}
 
 	// Format_N Functions
 	Message_Formatter::Format_Arg_N::Format_Arg_N(Message_Info& info): name(info.Name()) { }
 
-	std::string_view Message_Formatter::Format_Arg_N::Format() {
+	std::string_view Message_Formatter::Format_Arg_N::FormatUserPattern() {
 		return name;
 	}
 
@@ -390,7 +595,7 @@ namespace serenity::msg_details {
 		return std::string { second.data(), second.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_S::Format() {
+	std::string_view Message_Formatter::Format_Arg_S::FormatUserPattern() {
 		return (cacheRef.tm_sec != lastSec) ? sec = std::move(UpdateInternalView()) : sec;
 	}
 
@@ -407,7 +612,7 @@ namespace serenity::msg_details {
 		return result.append(":").append(min);
 	}
 
-	std::string_view Message_Formatter::Format_Arg_T::Format() {
+	std::string_view Message_Formatter::Format_Arg_T::FormatUserPattern() {
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		if( cacheRef.tm_min != lastMin ) {
 				hmStr = UpdateInternalView();
@@ -427,7 +632,7 @@ namespace serenity::msg_details {
 		return std::string { lWkday.data(), lWkday.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_X::Format() {
+	std::string_view Message_Formatter::Format_Arg_X::FormatUserPattern() {
 		return (cacheRef.tm_wday != lastWkday) ? wkday = std::move(UpdateInternalView()) : wkday;
 	}
 
@@ -443,21 +648,21 @@ namespace serenity::msg_details {
 		return std::string { yr.data(), yr.size() };
 	}
 
-	std::string_view Message_Formatter::Format_Arg_Y::Format() {
+	std::string_view Message_Formatter::Format_Arg_Y::FormatUserPattern() {
 		return (cacheRef.tm_year != lastYear) ? year = std::move(UpdateInternalView()) : year;
 	}
 
 	// Format_Message Functions
 	Message_Formatter::Format_Arg_Message::Format_Arg_Message(Message_Info& info): message(info.Message()) { }
 
-	std::string_view Message_Formatter::Format_Arg_Message::Format() {
+	std::string_view Message_Formatter::Format_Arg_Message::FormatUserPattern() {
 		return message;
 	}
 
 	// Format_Char Functions
 	Message_Formatter::Format_Arg_Char::Format_Arg_Char(std::string_view ch): m_char(ch.data(), ch.size()) { }
 
-	std::string_view Message_Formatter::Format_Arg_Char::Format() {
+	std::string_view Message_Formatter::Format_Arg_Char::FormatUserPattern() {
 		return m_char;
 	}
 
@@ -473,10 +678,10 @@ namespace serenity::msg_details {
 		localBuffer.reserve(m_Formatter.size() * 32);
 	}
 
-	std::string_view Message_Formatter::Formatters::Format() {
+	std::string_view Message_Formatter::Formatters::FormatUserPattern() {
 		localBuffer.clear();
 		for( auto& formatter: m_Formatter ) {
-				auto formatted { formatter->Format() };
+				auto formatted { formatter->FormatUserPattern() };
 				localBuffer.append(formatted.data(), formatted.size());
 			}
 		return localBuffer;
