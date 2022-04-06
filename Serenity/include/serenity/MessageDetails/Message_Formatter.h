@@ -19,11 +19,36 @@
 
 namespace serenity::msg_details {
 
-	struct LazyParseHelper
+	class LazyParseHelper
 	{
-		void ClearPartitions();
+	      public:
+		enum class bracket_type
+		{
+			open = 0,
+			close
+		};
+		enum class partition_type
+		{
+			primary = 0,
+			remainder
+		};
+
+		LazyParseHelper()                                  = default;
+		LazyParseHelper(const LazyParseHelper&)            = delete;
+		LazyParseHelper& operator=(const LazyParseHelper&) = delete;
+		~LazyParseHelper()                                 = default;
+
+		void SetBracketPosition(bracket_type bracket, const size_t& pos);
+		void SetConversionResult(const std::to_chars_result& convResult);
+		void SetPartition(partition_type pType, std::string_view sv);
+		std::array<char, SERENITY_ARG_BUFFER_SIZE>& ConversionResultBuffer();
+		const std::to_chars_result ConversionResultInfo() const;
+		size_t BracketPosition(bracket_type bracket) const;
+		std::string& PartitionString(partition_type pType);
+		std::string& StringBuffer();
 		void ClearBuffer();
 
+	      private:
 		std::string partitionUpToArg;
 		std::string remainder;
 		std::string temp;
@@ -38,11 +63,16 @@ namespace serenity::msg_details {
 	{
 	};
 
-	struct ArgContainer
+	class ArgContainer
 	{
 	      public:
-		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int,
-		                                          long long, unsigned long long, bool, char, float, double, long double, const void*>;
+		using LazilySupportedTypes        = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int,
+                                                          long long, unsigned long long, bool, char, float, double, long double, const void*>;
+
+		ArgContainer()                    = default;
+		ArgContainer(const ArgContainer&) = delete;
+		ArgContainer& operator=(const ArgContainer&) = delete;
+		~ArgContainer()                              = default;
 
 		const std::vector<LazilySupportedTypes>& ArgStorage() const;
 		LazyParseHelper& ParseHelper();

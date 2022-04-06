@@ -3,12 +3,59 @@
 namespace serenity::msg_details {
 
 	void LazyParseHelper::ClearBuffer() {
-		partitionUpToArg.clear();
-		remainder.clear();
+		resultBuffer.fill(0);
 	}
 
-	void LazyParseHelper::ClearPartitions() {
-		resultBuffer.fill(0);
+	void LazyParseHelper::SetBracketPosition(bracket_type bracket, const size_t& pos) {
+		switch( bracket ) {
+				case bracket_type::open: openBracketPos = pos; break;
+				case bracket_type::close: closeBracketPos = pos; break;
+				default: break;
+			}
+	}
+
+	size_t LazyParseHelper::BracketPosition(bracket_type bracket) const {
+		switch( bracket ) {
+				case bracket_type::open: return openBracketPos; break;
+				case bracket_type::close: return closeBracketPos; break;
+				default: break;
+			}
+	}
+
+	std::array<char, SERENITY_ARG_BUFFER_SIZE>& LazyParseHelper::ConversionResultBuffer() {
+		return resultBuffer;
+	}
+
+	const std::to_chars_result LazyParseHelper::ConversionResultInfo() const {
+		return result;
+	}
+
+	std::string& LazyParseHelper::StringBuffer() {
+		return temp;
+	}
+
+	void LazyParseHelper::SetConversionResult(const std::to_chars_result& convResult) {
+		result = convResult;
+	}
+
+	void LazyParseHelper::SetPartition(partition_type pType, std::string_view sv) {
+		switch( pType ) {
+				case partition_type::primary:
+					partitionUpToArg.clear();
+					partitionUpToArg.append(sv.data(), sv.size());
+					break;
+				case partition_type::remainder:
+					remainder.clear();
+					remainder.append(sv.data(), sv.size());
+					break;
+			}
+	}
+
+	std::string& LazyParseHelper::PartitionString(partition_type pType) {
+		switch( pType ) {
+				case partition_type::primary: return partitionUpToArg; break;
+				case partition_type::remainder: return remainder; break;
+			}
 	}
 
 	const std::vector<ArgContainer::LazilySupportedTypes>& ArgContainer::ArgStorage() const {
@@ -36,16 +83,18 @@ namespace serenity::msg_details {
 	bool ArgContainer::ContainsArgSpecs(const std::string_view fmt) {
 		auto size { fmt.size() };
 		std::string_view argBracket;
-
+		using B_Type = LazyParseHelper::bracket_type;
 		for( size_t i { 0 }; i < size; ++i ) {
 				argBracket = "";
 				if( fmt.at(i) == '{' ) {
-						parseHelper.openBracketPos  = fmt.find_first_of('{');
-						parseHelper.closeBracketPos = fmt.find_first_of('}');
-						if( (parseHelper.openBracketPos != std::string_view::npos) &&
-						    (parseHelper.closeBracketPos != std::string_view::npos) ) {
-								argBracket = std::move(
-								fmt.substr(parseHelper.openBracketPos, parseHelper.closeBracketPos + 1));
+						parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of('{'));
+						parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of('}'));
+
+						if( (parseHelper.BracketPosition(B_Type::open) != std::string_view::npos) &&
+						    (parseHelper.BracketPosition(B_Type::close) != std::string_view::npos) )
+							{
+								argBracket = std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open),
+								                                  parseHelper.BracketPosition(B_Type::close) + 1));
 						}
 						auto argBracketSize { argBracket.size() };
 						switch( argBracketSize ) {
@@ -86,41 +135,48 @@ namespace serenity::msg_details {
 	// TODO: gains everywhere else.
 	/*************************************************************************************************/
 	std::string&& ArgContainer::GetArgValue() {
-		auto& strRef { parseHelper.temp };
+		auto& strRef { parseHelper.StringBuffer() };
 		strRef.clear();
 		parseHelper.ClearBuffer();
 		auto& arg { argContainer[ argIndex ] };
-		auto& buffer { parseHelper.resultBuffer };
-		auto& result { parseHelper.result };
+		auto& buffer { parseHelper.ConversionResultBuffer() };
+		auto& result { parseHelper.ConversionResultInfo() };
 
 		switch( arg.index() ) {
-				case 0: return std::move(parseHelper.temp); break;
-				case 1: return std::move(parseHelper.temp.append(std::move(std::get<1>(arg)))); break;
-				case 2: return std::move(parseHelper.temp.append(std::move(std::get<2>(arg)))); break;
-				case 3: return std::move(parseHelper.temp.append(std::move(std::get<3>(arg)))); break;
+				case 0: return std::move(strRef); break;
+				case 1: return std::move(strRef.append(std::move(std::get<1>(arg)))); break;
+				case 2: return std::move(strRef.append(std::move(std::get<2>(arg)))); break;
+				case 3: return std::move(strRef.append(std::move(std::get<3>(arg)))); break;
 				case 4:
-					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<4>(arg));
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<4>(arg)));
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.size());
 					}
 					return std::move(strRef);
 					break;
 				case 5:
-					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<5>(arg));
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<5>(arg)));
+
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.size());
 					}
 					return std::move(strRef);
 					break;
 				case 6:
-					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<6>(arg));
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<6>(arg)));
+
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.size());
 					}
 					return std::move(strRef);
 					break;
 				case 7:
-					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<7>(arg));
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<7>(arg)));
+
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.size());
 					}
@@ -135,21 +191,26 @@ namespace serenity::msg_details {
 					return std::move(strRef);
 					break;
 				case 10:
-					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<10>(arg));
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<10>(arg)));
+
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.size());
 					}
 					return std::move(strRef);
 					break;
 				case 11:
-					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<11>(arg));
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<11>(arg)));
+
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.size());
 					}
 					return std::move(strRef);
 					break;
 				case 12:
-					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<12>(arg));
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::get<12>(arg)));
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.size());
 					}
@@ -158,8 +219,8 @@ namespace serenity::msg_details {
 				case 13:
 					// Couldn't get this to work with dynamic_cast, but reinterpret_cast at least isn't giving any issues.
 					// Still need to test that this works as intended; changed base 10 to 16 for 0-F addressing.
-					result = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
-					                       reinterpret_cast<size_t>(std::get<13>(arg)), 16);
+					parseHelper.SetConversionResult(std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					                                              reinterpret_cast<size_t>(std::get<13>(arg)), 16));
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append("0x").append(buffer.data(), buffer.size());
 					}
@@ -281,19 +342,23 @@ namespace serenity::msg_details {
 	void Message_Formatter::LazySubstitute(std::string& msg, std::string arg) {
 		std::string_view temp { msg };
 		auto& parseHelper { argStorage.ParseHelper() };
-		parseHelper.ClearPartitions();
 		bool bracketPositionsValid;
+		using B_Type = LazyParseHelper::bracket_type;
+		using P_Type = LazyParseHelper::partition_type;
 
-		parseHelper.openBracketPos  = temp.find_first_of(static_cast<char>('{'));
-		parseHelper.closeBracketPos = temp.find_first_of(static_cast<char>(' }'));
-		bracketPositionsValid = ((parseHelper.openBracketPos != std::string::npos) && (parseHelper.closeBracketPos != std::string::npos));
+		parseHelper.SetBracketPosition(B_Type::open, temp.find_first_of(static_cast<char>('{')));
+		parseHelper.SetBracketPosition(B_Type::close, temp.find_first_of(static_cast<char>(' }')));
+		bracketPositionsValid = ((parseHelper.BracketPosition(B_Type::open) != std::string::npos) &&
+		                         (parseHelper.BracketPosition(B_Type::close) != std::string::npos));
 		if( bracketPositionsValid ) {
-				parseHelper.partitionUpToArg.append(std::move(temp.substr(0, parseHelper.openBracketPos)));
-				temp.remove_prefix(parseHelper.closeBracketPos + 1);
-				parseHelper.remainder.append(temp.data(), temp.size());
+				parseHelper.SetPartition(P_Type::primary, temp.substr(0, parseHelper.BracketPosition(B_Type::open)));
+				temp.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
+				parseHelper.SetPartition(P_Type::remainder, temp);
 		}
 		msg.clear();
-		msg.append(std::move(parseHelper.partitionUpToArg)).append(arg.data(), arg.size()).append(std::move(parseHelper.remainder));
+		msg.append(std::move(parseHelper.PartitionString(P_Type::primary))
+		           .append(arg.data(), arg.size())
+		           .append(std::move(parseHelper.PartitionString(P_Type::remainder))));
 	}
 
 	const Message_Info* Message_Formatter::MessageDetails() {
