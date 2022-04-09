@@ -1,9 +1,11 @@
 #include <serenity/MessageDetails/Message_Time.h>
 
+#include <charconv>
+
 namespace serenity::msg_details {
 	Message_Time::Message_Time(message_time_mode mode): m_mode(mode) {
-		UpdateTimeDate(std::chrono::system_clock::now());
 		auto year { m_cache.tm_year };
+		UpdateTimeDate(std::chrono::system_clock::now());
 		if( (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 ) {
 				leapYear = true;
 		} else {
@@ -13,9 +15,13 @@ namespace serenity::msg_details {
 
 	void serenity::msg_details::Message_Time::CalculateCurrentYear(int yearOffset) {
 		auto longYear { 1900 + yearOffset };
-		cachedLongYear = std::move(std::vformat("{}", std::make_format_args(longYear)));
+		std::array<char, 4> buff {};
+		std::to_chars(buff.data(), buff.data() + buff.size(), longYear);
+		cachedLongYear.clear();
+		cachedLongYear.append(buff.data(), buff.size());
 		auto shortYear { yearOffset - 100 };
-		cachedShortYear = SERENITY_LUTS::numberStr[ shortYear ];
+		cachedShortYear.clear();
+		cachedShortYear.append(SERENITY_LUTS::numberStr[ shortYear ]);
 	}
 
 	std::string_view Message_Time::GetCurrentYearSV(bool shortened) const {
@@ -26,10 +32,8 @@ namespace serenity::msg_details {
 		auto time { std::chrono::system_clock::to_time_t(timePoint) };
 		secsSinceLastLog = std::chrono::duration_cast<std::chrono::seconds>(timePoint.time_since_epoch());
 		(m_mode == message_time_mode::local) ? localtime_s(&m_cache, &time) : gmtime_s(&m_cache, &time);
-		if( currentYear != m_cache.tm_year ) {
-				currentYear = m_cache.tm_year;
-				CalculateCurrentYear(currentYear);
-		}
+		currentYear = m_cache.tm_year;
+		CalculateCurrentYear(currentYear);
 	}
 
 	void Message_Time::UpdateCache(std::chrono::system_clock::time_point timePoint) {

@@ -101,9 +101,9 @@ namespace serenity {
 	namespace SERENITY_LUTS {
 		// clang-format off
 
-		static constexpr std::array<std::string_view, 22> allValidFlags = {
-			"%a", "%b", "%d", "%l", "%n", "%t", "%w", "%x", "%y", "%A", "%B",
-			"%D", "%F", "%H", "%L", "%M", "%N", "%S", "%T", "%X", "%Y", "%+"
+		static constexpr std::array<std::string_view, 25> allValidFlags = {
+			"%a", "%b", "%c", "%d", "%e", "%l", "%m", "%n", "%p", "%r", "%w", "%y", "%A", "%B",
+			"%D", "%F", "%H", "%I", "%L", "%M", "%N", "%S", "%T", "%Y", "%+"
 		};
 
 		static constexpr std::array<std::string_view, 7> short_weekdays = {

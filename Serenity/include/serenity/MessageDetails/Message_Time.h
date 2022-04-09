@@ -31,7 +31,7 @@ namespace serenity::msg_details {
 		std::chrono::seconds secsSinceLastLog;
 		bool leapYear;
 		int currentYear;
-		std::string_view cachedShortYear;
-		std::string_view cachedLongYear;
+		std::string cachedShortYear;
+		std::string cachedLongYear;
 	};
 }    // namespace serenity::msg_details

@@ -1,21 +1,13 @@
 #pragma once
 
 #include <serenity/Common.h>
+#include <serenity/MessageDetails/FormatterArgs.h>
 #include <serenity/MessageDetails/Message_Info.h>
 
-#include <charconv>    // to_chars
+#include <charconv>
 #include <format>
 #include <string>
 #include <variant>
-
-// TODO: ###################################################################################################################
-// Not the biggest deal breaker, but might want to look into how to make Format_Arg_Char more efficient on allocations.
-// During the mem heap profiling, this function allocated the most bytes and more frequently than other functions,
-// which is kind of surprising to me. The next function to look at was the Formatters::FormatUserPattern() function and
-// its overloads. All-in-all though, it wasn't terrible. This lib runs faster than spdlog with, at times, less mem usage.
-// File targets used roughly the same amount of memory (this libs targets had only ~5 less allocations but total mem
-// allocated was about the same).
-// TODO: ###################################################################################################################
 
 namespace serenity::msg_details {
 
@@ -116,19 +108,6 @@ namespace serenity::msg_details {
 	class Message_Formatter
 	{
 	      public:
-		explicit Message_Formatter(std::string_view pattern, Message_Info* details);
-		~Message_Formatter()                              = default;
-		Message_Formatter()                               = delete;
-		Message_Formatter(const Message_Formatter&)       = delete;
-		Message_Formatter& operator=(const Message_Info&) = delete;
-
-		struct Formatter
-		{
-			virtual std::string_view FormatUserPattern() = 0;
-			virtual std::string& UpdateInternalView();
-			std::string result;
-		};
-
 		class Formatters
 		{
 		      public:
@@ -140,8 +119,17 @@ namespace serenity::msg_details {
 
 		      private:
 			std::string localBuffer;
+			std::string temp;
 			std::vector<std::unique_ptr<Formatter>> m_Formatter;
 		};
+
+		explicit Message_Formatter(std::string_view pattern, Message_Info* details);
+		~Message_Formatter()                              = default;
+		Message_Formatter()                               = delete;
+		Message_Formatter(const Message_Formatter&)       = delete;
+		Message_Formatter& operator=(const Message_Info&) = delete;
+
+		void ParseAndSetPrecision(std::string& temp);
 
 		void FlagFormatter(size_t flag);
 		void SetPattern(std::string_view pattern);
@@ -169,270 +157,14 @@ namespace serenity::msg_details {
 		}
 
 	      private:
-		// Formatting Structs For Flag Arguments
-		struct Format_Arg_a: Formatter
-		{
-			Format_Arg_a(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastHour;
-		};
-
-		struct Format_Arg_b: Formatter
-		{
-			Format_Arg_b(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastMonth;
-		};
-
-		struct Format_Arg_d: Formatter
-		{
-			Format_Arg_d(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastDay;
-		};
-
-		struct Format_Arg_l: Formatter
-		{
-			Format_Arg_l(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			LoggerLevel& levelRef;
-			LoggerLevel lastLevel;
-		};
-
-		struct Format_Arg_n: Formatter
-		{
-			Format_Arg_n(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			Message_Time& timeRef;
-			const std::tm& cacheRef;
-			int lastDay;
-		};
-
-		struct Format_Arg_t: Formatter
-		{
-			Format_Arg_t(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastMin;
-			bool firstLookup;
-			std::string_view min;
-			std::string_view hour;
-		};
-
-		struct Format_Arg_w: Formatter
-		{
-			Format_Arg_w(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastDay { 0 };
-		};
-
-		struct Format_Arg_x: Formatter
-		{
-			Format_Arg_x(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastWkday { 0 };
-		};
-
-		struct Format_Arg_y: Formatter
-		{
-			Format_Arg_y(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			Message_Time& timeRef;
-			int lastYear;
-		};
-
-		struct Format_Arg_A: Formatter
-		{
-			Format_Arg_A(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastHour;
-		};
-
-		struct Format_Arg_B: Formatter
-		{
-			Format_Arg_B(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastMonth;
-		};
-
-		struct Format_Arg_D: Formatter
-		{
-			Format_Arg_D(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			Message_Time& timeRef;
-			const std::tm& cacheRef;
-			int lastDay;
-		};
-
-		struct Format_Arg_F: Formatter
-		{
-			Format_Arg_F(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			Message_Time& timeRef;
-			const std::tm& cacheRef;
-			int lastDay;
-		};
-
-		struct Format_Arg_H: Formatter
-		{
-			Format_Arg_H(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastHour;
-		};
-
-		struct Format_Arg_L: Formatter
-		{
-			Format_Arg_L(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			LoggerLevel& levelRef;
-			LoggerLevel lastLevel;
-		};
-
-		struct Format_Arg_M: Formatter
-		{
-			Format_Arg_M(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastMin;
-		};
-
-		struct Format_Arg_N: Formatter
-		{
-			Format_Arg_N(Message_Info& info);
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			std::string& name;
-		};
-
-		struct Format_Arg_S: Formatter
-		{
-			Format_Arg_S(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastSec;
-		};
-
-		struct Format_Arg_T: Formatter
-		{
-			Format_Arg_T(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastMin;
-			bool firstLookUp;
-			std::string_view min;
-			std::string hour;
-		};
-
-		struct Format_Arg_X: Formatter
-		{
-			Format_Arg_X(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			const std::tm& cacheRef;
-			int lastWkday;
-		};
-
-		struct Format_Arg_Y: Formatter
-		{
-			Format_Arg_Y(Message_Info& info);
-			std::string& UpdateInternalView() override;
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			Message_Time& timeRef;
-			const std::tm& cacheRef;
-			int lastYear;
-		};
-
-		struct Format_Arg_Message: Formatter
-		{
-			Format_Arg_Message(Message_Info& info);
-			std::string_view FormatUserPattern() override;
-
-		      private:
-			std::string& message;
-		};
-
-		struct Format_Arg_Char: Formatter
-		{
-			Format_Arg_Char(std::string_view ch);
-			std::string_view FormatUserPattern() override;
-		};
-
-	      private:
+		Message_Info* msgInfo;
+		std::locale* localeRef;
+		int ePrecision;
 		Formatters formatter;
 		std::string fmtPattern;
-		Message_Info* msgInfo;
 		std::string lazy_message;
 		LineEnd platformEOL;
 		ArgContainer argStorage;
-		std::locale* localeRef;
 		std::string temp;
 	};
 
