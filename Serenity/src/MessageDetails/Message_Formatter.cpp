@@ -256,37 +256,37 @@ namespace serenity::msg_details {
 #endif    // WINDOWS_PLATFORM
 	}
 
-	void Message_Formatter::FlagFormatter(size_t flag) {
+	void Message_Formatter::FlagFormatter(size_t flag, size_t precision) {
 		switch( flag ) {
 				case 0: formatter.Emplace_Back(std::make_unique<Format_Arg_a>(*msgInfo)); break;
 				case 1: formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo)); break;
 				case 2: formatter.Emplace_Back(std::make_unique<Format_Arg_c>(*msgInfo)); break;
 				case 3: formatter.Emplace_Back(std::make_unique<Format_Arg_d>(*msgInfo)); break;
-				case 4: formatter.Emplace_Back(std::make_unique<Format_Arg_e>(*msgInfo, ePrecision)); break;
+				case 4: formatter.Emplace_Back(std::make_unique<Format_Arg_e>(*msgInfo, precision)); break;
 				case 5: formatter.Emplace_Back(std::make_unique<Format_Arg_l>(*msgInfo)); break;
 				case 6: formatter.Emplace_Back(std::make_unique<Format_Arg_m>(*msgInfo)); break;
 				case 7: formatter.Emplace_Back(std::make_unique<Format_Arg_n>(*msgInfo)); break;
 				case 8: formatter.Emplace_Back(std::make_unique<Format_Arg_p>(*msgInfo)); break;
 				case 9: formatter.Emplace_Back(std::make_unique<Format_Arg_r>(*msgInfo)); break;
-				case 10: formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo)); break;
-				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_y>(*msgInfo)); break;
-				case 12: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
-				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
-				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
-				case 15: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
-				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
-				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
-				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
-				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
-				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
-				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
-				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
-				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
-				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
+				case 10: formatter.Emplace_Back(std::make_unique<Format_Arg_t>(precision)); break;
+				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo)); break;
+				case 12: formatter.Emplace_Back(std::make_unique<Format_Arg_y>(*msgInfo)); break;
+				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
+				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
+				case 15: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
+				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
+				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
+				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
+				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
+				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
+				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
+				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
+				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
+				case 25: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
 
 				default:
-					// if arg after "%" isn't a flag handled here, do nothing
-					// In the future, check to see if it's a user defined format func
+					// This function is only accessed if an index is found in allValidFlags array
 					break;
 			}
 	}
@@ -323,11 +323,9 @@ namespace serenity::msg_details {
 							                  SERENITY_LUTS::allValidFlags.end(), flag) };
 						if( position != SERENITY_LUTS::allValidFlags.end() ) {
 								index = std::distance(SERENITY_LUTS::allValidFlags.begin(), position);
-								if( index == 4 ) {
-										ParseAndSetPrecision(temp);
-								}
 						}
-						FlagFormatter(index);
+						auto precision { ParseForPrecisionSpec(temp, index) };
+						FlagFormatter(index, precision);
 				} else {
 						auto pos { temp.find_first_of('%') };
 						if( pos != std::string::npos ) {
@@ -345,25 +343,51 @@ namespace serenity::msg_details {
 			}
 	}
 
-	// currently only handling %e -> could use something similar in the Lazy_Substitute() function
-	void Message_Formatter::ParseAndSetPrecision(std::string& temp) {
+	// clang-format off
+
+	static constexpr std::array<std::string_view, 2> formatWarningMessage = 
+	{ 
+		"Warning: Format string token \"%e\" contains an invalid precision specifier. The default precision will be used instead.\n",
+        "Warning: Format string token \"%t\" contains an invalid precision specifier. The default precision will be used instead.\n" 
+	};
+	// clang-format on
+	static void ValidatePrecisionSpec(size_t& value, size_t index) {
+		switch( index ) {
+				case 4:
+					if( (value > 9) || (value < 0) ) {
+							std::cout << formatWarningMessage[ 0 ];
+							value = defaultSubSecondPrecision;
+					}
+					break;
+				case 10:
+					if( (value > 10) || (value < 0) ) {
+							std::cout << formatWarningMessage[ 1 ];
+							value = defaultThreadIdLength;
+					}
+					break;
+				default: break;
+			}
+	}
+
+	// currently handles %e and %t -> could use something similar in the Lazy_Substitute() function
+	size_t Message_Formatter::ParseForPrecisionSpec(std::string& temp, size_t index) {
+		size_t tmpValue {};
+		if( temp.size() == 0 ) return tmpValue;
 		if( temp.front() == ':' ) {
 				temp.erase(0, 1);
-				int tmpValue {};
-				std::string precision { temp.substr(0, 1) };
-				auto [ ptr, ec ] = std::from_chars(precision.data(), precision.data() + precision.size(), tmpValue);
-				if( (ec != std::errc::result_out_of_range) && (ec != std::errc::invalid_argument) ) {
-						if( (tmpValue > 6) || (tmpValue < 0) ) {
-								// clang-format off
-								std::cout << "Warning: Format string token \"%e\" contains an invalid precision "
-									                      "specifier. The default precision will be used instead.\n";
-								// clang-format on
-						} else {
-								ePrecision = tmpValue;
-								temp.erase(0, 1);
-							}
-				}
-		}
+				std::string precision;
+				for( ;; ) {
+						if( !std::isdigit(temp.front()) ) break;
+						precision += temp.front();
+						temp.erase(0, 1);
+					}
+				std::from_chars(precision.data(), precision.data() + precision.size(), tmpValue);
+				ValidatePrecisionSpec(tmpValue, index);
+		} else {
+				if( index == 4 ) tmpValue = defaultSubSecondPrecision;
+				if( index == 10 ) tmpValue = defaultThreadIdLength;
+			}
+		return tmpValue;
 	}
 
 	void Message_Formatter::LazySubstitute(std::string& msg, std::string&& arg) {

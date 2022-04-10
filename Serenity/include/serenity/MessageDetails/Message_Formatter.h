@@ -129,9 +129,9 @@ namespace serenity::msg_details {
 		Message_Formatter(const Message_Formatter&)       = delete;
 		Message_Formatter& operator=(const Message_Info&) = delete;
 
-		void ParseAndSetPrecision(std::string& temp);
+		size_t ParseForPrecisionSpec(std::string& temp, size_t index);
 
-		void FlagFormatter(size_t flag);
+		void FlagFormatter(size_t flag, size_t precision = 0);
 		void SetPattern(std::string_view pattern);
 		Formatters& GetFormatters();
 		void StoreFormat();

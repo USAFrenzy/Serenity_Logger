@@ -99,8 +99,9 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
-	static constexpr size_t defaultPrecision  = 6;
-	static constexpr size_t defaultBufferSize = 16;
+	static constexpr size_t maxPrecision              = 9;
+	static constexpr size_t defaultSubSecondPrecision = 3;
+	static constexpr size_t defaultBufferSize         = 24;
 	class Format_Arg_e: public Formatter
 	{
 	      public:
@@ -155,8 +156,6 @@ namespace serenity::msg_details {
 		int lastMonth;
 	};
 
-	// Missing the actual %n (newline character)
-
 	class Format_Arg_n: public Formatter
 	{
 	      public:
@@ -204,12 +203,24 @@ namespace serenity::msg_details {
 	      private:
 		const std::tm& cacheRef;
 		int lastMin;
-		bool firstLookup;
 		std::string_view min;
-		std::string_view hour;
+		std::string hour;
 	};
 
-	// Missing %t (tab character)
+	static constexpr size_t defaultThreadIdLength = 10;
+	class Format_Arg_t: public Formatter
+	{
+	      public:
+		Format_Arg_t(size_t precision);
+		Format_Arg_t(const Format_Arg_t&)            = delete;
+		Format_Arg_t& operator=(const Format_Arg_t&) = delete;
+		~Format_Arg_t()                              = default;
+
+		std::string_view FormatUserPattern() override;
+
+	      private:
+		size_t thread;
+	};
 
 	// Missing %u (weekday as a number with Monday as 1 (1-7))
 
@@ -282,7 +293,21 @@ namespace serenity::msg_details {
 		int lastMonth;
 	};
 
-	// Missing %C (Year Divided by 100 and truncated (00-99)
+	class Format_Arg_C: public Formatter
+	{
+	      public:
+		explicit Format_Arg_C(Message_Info& info);
+		Format_Arg_C(const Format_Arg_B&)            = delete;
+		Format_Arg_C& operator=(const Format_Arg_B&) = delete;
+		~Format_Arg_C()                              = default;
+
+		std::string& UpdateInternalView() override;
+		std::string_view FormatUserPattern() override;
+
+	      private:
+		const std::tm& cacheRef;
+		int lastYear;
+	};
 
 	class Format_Arg_D: public Formatter
 	{

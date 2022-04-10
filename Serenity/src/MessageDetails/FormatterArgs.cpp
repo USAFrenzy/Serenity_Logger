@@ -73,37 +73,6 @@ namespace serenity::msg_details {
 
 	/*********************************************************************************************************************/
 
-	// Format %e Functions
-	/*********************************************************************************************************************/
-	Format_Arg_e::Format_Arg_e(Message_Info& info, size_t precision)
-		: timeRef(info.TimeDetails()), buffer(std::array<char, 16> {}), m_precision(precision) { }
-
-	std::string_view Format_Arg_e::FormatUserPattern() {
-		result.clear();
-		buffer.fill(0);
-		namespace ch = std::chrono;
-
-		auto& cache { timeRef.Cache() };
-		auto hour { SERENITY_LUTS::numberStr[ cache.tm_hour ] };
-		auto min { SERENITY_LUTS::numberStr[ cache.tm_min ] };
-		auto sec { SERENITY_LUTS::numberStr[ cache.tm_sec ] };
-
-		auto msec { ch::duration_cast<ch::microseconds>(ch::system_clock::now().time_since_epoch()) };
-		std::to_chars(buffer.data(), buffer.data() + buffer.size(), msec.count());
-
-		std::string_view sv { buffer.data(), buffer.size() };
-		sv.remove_prefix(10);
-		sv.remove_suffix(defaultPrecision - m_precision);
-		return result.append(hour.data(), hour.size())
-		.append(":")
-		.append(min.data(), min.size())
-		.append(":")
-		.append(sec.data(), sec.size())
-		.append(":")
-		.append(sv.data(), sv.size());
-	}
-	/*********************************************************************************************************************/
-
 	// Format %d Functions
 	/*********************************************************************************************************************/
 	Format_Arg_d::Format_Arg_d(Message_Info& info): cacheRef(info.TimeInfo()), lastDay(cacheRef.tm_mday) {
@@ -119,6 +88,40 @@ namespace serenity::msg_details {
 
 	std::string_view Format_Arg_d::FormatUserPattern() {
 		return (cacheRef.tm_mday != lastDay) ? UpdateInternalView() : result;
+	}
+	/*********************************************************************************************************************/
+
+	// Format %e Functions
+	/*********************************************************************************************************************/
+	Format_Arg_e::Format_Arg_e(Message_Info& info, size_t precision)
+		: timeRef(info.TimeDetails()), buffer(std::array<char, defaultBufferSize> {}), m_precision(precision) {
+		result.reserve(20);
+	}
+
+	std::string_view Format_Arg_e::FormatUserPattern() {
+		result.clear();
+		buffer.fill(0);
+		std::fill(buffer.data(), buffer.data() + buffer.size(), '\0');
+
+		auto& cache { timeRef.Cache() };
+		auto hour { SERENITY_LUTS::numberStr[ cache.tm_hour ] };
+		auto min { SERENITY_LUTS::numberStr[ cache.tm_min ] };
+		auto sec { SERENITY_LUTS::numberStr[ cache.tm_sec ] };
+
+		namespace ch = std::chrono;
+		auto msec { ch::duration_cast<ch::nanoseconds>(ch::system_clock::now().time_since_epoch()) };
+		std::to_chars(buffer.data(), buffer.data() + buffer.size(), (msec.count()));
+
+		size_t i { 0 };
+		for( ;; ) {
+				if( buffer[ i ] == '\0' ) break;
+				++i;
+			}
+		auto startPoint { buffer.begin() };
+		auto midPointOffset { (i / 2) + (i % 2) };
+		std::string_view sv { startPoint + midPointOffset, startPoint + i };
+		sv.remove_suffix(maxPrecision - m_precision);
+		return result.append(hour).append(":").append(min).append(":").append(sec).append(":").append(sv.data(), sv.size());
 	}
 	/*********************************************************************************************************************/
 
@@ -198,16 +201,15 @@ namespace serenity::msg_details {
 
 	// Format %r Functions
 	/*********************************************************************************************************************/
-	Format_Arg_r::Format_Arg_r(Message_Info& info): cacheRef(info.TimeInfo()), lastMin(info.TimeInfo().tm_min), firstLookup(true) {
+	Format_Arg_r::Format_Arg_r(Message_Info& info): cacheRef(info.TimeInfo()), lastMin(0) {
 		UpdateInternalView();
 	}
 
 	std::string& Format_Arg_r::UpdateInternalView() {
 		auto hr { cacheRef.tm_hour };
-		if( (lastMin != cacheRef.tm_min) || firstLookup ) {
-				firstLookup = false;
-				hour    = (hr > 12) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>(hr) - 12 ] : SERENITY_LUTS::numberStr[ hr ];
+		if( lastMin != cacheRef.tm_min ) {
 				lastMin = cacheRef.tm_min;
+				hour    = (hr > 12) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>(hr) - 12 ] : SERENITY_LUTS::numberStr[ hr ];
 				min     = SERENITY_LUTS::numberStr[ lastMin ];
 		}
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
@@ -220,6 +222,19 @@ namespace serenity::msg_details {
 		return result;
 	}
 	/*********************************************************************************************************************/
+
+	// Format %t Functions
+	Format_Arg_t::Format_Arg_t(size_t precision): thread(std::hash<std::thread::id>()(std::this_thread::get_id())) {
+		std::array<char, 64> buf {};
+		std::to_chars(buf.data(), buf.data() + buf.size(), thread);
+		std::string_view sv { buf.data(), buf.size() };
+		(precision != 0) ? sv.remove_suffix(sv.size() - precision) : sv.remove_suffix(sv.size() - defaultThreadIdLength);
+		result.append(sv.data(), sv.size());
+	}
+
+	std::string_view Format_Arg_t::FormatUserPattern() {
+		return result;
+	}
 
 	// Format %w Functions
 	/*********************************************************************************************************************/
@@ -286,11 +301,29 @@ namespace serenity::msg_details {
 		result.clear();
 		return result.append(lMonth.data(), lMonth.size());
 	}
-	/*********************************************************************************************************************/
 
 	std::string_view Format_Arg_B::FormatUserPattern() {
 		return (cacheRef.tm_mon != lastMonth) ? UpdateInternalView() : result;
 	}
+	/*********************************************************************************************************************/
+
+	// Format %C Functions
+	/*********************************************************************************************************************/
+	Format_Arg_C::Format_Arg_C(Message_Info& info): cacheRef(info.TimeInfo()), lastYear(cacheRef.tm_year) {
+		UpdateInternalView();
+	}
+
+	std::string& Format_Arg_C::UpdateInternalView() {
+		lastYear = cacheRef.tm_year;
+		auto year { SERENITY_LUTS::numberStr[ lastYear % 100 ] };
+		result.clear();
+		return result.append(year.data(), year.size());
+	}
+
+	std::string_view Format_Arg_C::FormatUserPattern() {
+		return (cacheRef.tm_year != lastYear) ? UpdateInternalView() : result;
+	}
+	/*********************************************************************************************************************/
 
 	// Format %D Functions
 	/*********************************************************************************************************************/
@@ -363,8 +396,6 @@ namespace serenity::msg_details {
 	std::string& Format_Arg_I::UpdateInternalView() {
 		lastHour = cacheRef.tm_hour;
 		auto hr { lastHour };
-		// static_cast to 8 byte value to remove C2451's warning (which would never
-		// occur here anyways...)
 		auto paddedHour { (hr > 12) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>(hr) - 12 ] : SERENITY_LUTS::numberStr[ hr ] };
 		result.clear();
 		return result.append(paddedHour.data(), paddedHour.size());
@@ -446,8 +477,8 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_T::UpdateInternalView() {
 		if( lastMin != cacheRef.tm_min ) {
-				hour    = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
 				lastMin = cacheRef.tm_min;
+				hour    = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
 				min     = SERENITY_LUTS::numberStr[ lastMin ];
 		}
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
