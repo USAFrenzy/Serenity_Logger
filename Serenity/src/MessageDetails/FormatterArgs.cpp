@@ -100,7 +100,6 @@ namespace serenity::msg_details {
 
 	std::string_view Format_Arg_e::FormatUserPattern() {
 		result.clear();
-		buffer.fill(0);
 		std::fill(buffer.data(), buffer.data() + buffer.size(), '\0');
 
 		auto& cache { timeRef.Cache() };

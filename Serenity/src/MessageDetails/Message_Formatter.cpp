@@ -5,7 +5,12 @@
 namespace serenity::msg_details {
 
 	void LazyParseHelper::ClearBuffer() {
-		resultBuffer.fill(0);
+		std::fill(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), 0);
+	}
+
+	void serenity::msg_details::LazyParseHelper::ClearPartitions() {
+		partitionUpToArg.clear();
+		remainder.clear();
 	}
 
 	void LazyParseHelper::SetBracketPosition(bracket_type bracket, const size_t& pos) {
@@ -393,6 +398,7 @@ namespace serenity::msg_details {
 	void Message_Formatter::LazySubstitute(std::string& msg, std::string&& arg) {
 		std::string_view temp { msg };
 		auto& parseHelper { argStorage.ParseHelper() };
+		parseHelper.ClearPartitions();
 		bool bracketPositionsValid;
 		using B_Type = LazyParseHelper::bracket_type;
 		using P_Type = LazyParseHelper::partition_type;
