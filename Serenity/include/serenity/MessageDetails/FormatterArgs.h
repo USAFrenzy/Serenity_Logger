@@ -449,14 +449,10 @@ namespace serenity::msg_details {
 		Format_Arg_T& operator=(const Format_Arg_T&) = delete;
 		~Format_Arg_T()                              = default;
 
-		std::string& UpdateInternalView() override;
 		std::string_view FormatUserPattern() override;
 
 	      private:
 		const std::tm& cacheRef;
-		int lastMin;
-		std::string_view min;
-		std::string hour;
 	};
 
 	// Missing %U (week number with first Sunday as the first day of week one (00-53))

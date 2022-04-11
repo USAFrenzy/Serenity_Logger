@@ -1,6 +1,4 @@
 @echo off
-
-call clean
 popd
   git pull
 pushd

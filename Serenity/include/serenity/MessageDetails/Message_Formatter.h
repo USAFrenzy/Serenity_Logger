@@ -39,6 +39,7 @@ namespace serenity::msg_details {
 		std::string& PartitionString(partition_type pType);
 		std::string& StringBuffer();
 		void ClearBuffer();
+		void ClearPartitions();
 
 	      private:
 		std::string partitionUpToArg;

@@ -66,15 +66,24 @@ template<typename T> std::string SetPrecision(const T value, const int precision
 	return temp.str();
 }
 
+static constexpr std::string_view testView { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
+	                                     "aliquet ultrices nisl, porta "
+	                                     "eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam porta elit vitae eros "
+	                                     "dapibus, quis aliquet ante commodo. "
+	                                     "Pellentesque tempor a purus nec porta. Quisque vitae ullamcorper ante. Fusce ac mauris magna. In "
+	                                     "vulputate at leo vel dapibus. "
+	                                     "Ut ornare mi non odio." };
+
 int main() {
 	std::vector<spdlog::sink_ptr> sinks;
+	std::string spdlogPattern { "%^|%L| %a %d%b%C %T [%n]: %v%$" };
 
 	auto stdoutSink { std::make_shared<spdlog::sinks::stdout_color_sink_st>() };
 	sinks.emplace_back(stdoutSink);
 	auto spdlogConsoleLogger = std::make_shared<spdlog::logger>("Console Logger", begin(sinks), end(sinks));
 	spdlog::register_logger(spdlogConsoleLogger);
-	spdlogConsoleLogger->set_pattern("%^|%L| %a %d%b%C %T [%n]: %v%$");    // equivalent to Target's Default
-	                                                                       // Pattern
+	spdlogConsoleLogger->set_pattern(spdlogPattern);    // equivalent to Target's Default
+	                                                    // Pattern
 
 	bool truncate = true;
 	auto fileSink { std::make_shared<spdlog::sinks::basic_file_sink_st>(SpdlogPath(), truncate) };
@@ -82,8 +91,8 @@ int main() {
 	sinks.emplace_back(fileSink);
 	auto spdlogFileLogger = std::make_shared<spdlog::logger>("File Logger", begin(sinks), end(sinks));
 	spdlog::register_logger(spdlogFileLogger);
-	spdlogFileLogger->set_pattern("%^|%L| %a %d%b%C %T [%n]: %v%$");    // equivalent to Target's Default
-	                                                                    // Pattern
+	spdlogFileLogger->set_pattern(spdlogPattern);    // equivalent to Target's Default
+	                                                 // Pattern
 
 	auto fileSize { 512 * KB };
 	auto numberOfFiles { 5 };
@@ -96,7 +105,7 @@ int main() {
 	sinks.emplace_back(rotatingSink);
 	auto spdlogRotatingLogger { std::make_shared<spdlog::logger>("Rotating_Logger", begin(sinks), end(sinks)) };
 	spdlog::register_logger(spdlogRotatingLogger);
-	spdlogRotatingLogger->set_pattern("%^|%L| %a %d%b%C %T [%n]: %v%$");    // equivalent to Target's Default Pattern
+	spdlogRotatingLogger->set_pattern(spdlogPattern);    // equivalent to Target's Default Pattern
 
 	using namespace serenity;
 	using namespace se_utils;
@@ -292,10 +301,8 @@ int main() {
 
 	const char* test = nullptr;
 	// test string
-	std::string temp;
-	for( int h = 0; h < 399; h++ ) {
-			temp += "a";
-		}    // 400 chars = 400 bytes
+	static_assert(testView.size() == 400);
+	std::string temp { testView.data(), testView.size() };
 	test = temp.c_str();
 
 	unsigned long int i { 0 };
@@ -394,14 +401,11 @@ int main() {
 	auto SpdlogConsoleThroughput { (testStrInMB * iterations) / spdlogConsoleTester.Elapsed_In(time_mode::sec) };
 	auto rotatingThroughput { (testStrInMB * iterations) / rotateTester.Elapsed_In(time_mode::sec) };
 	auto SpdlogRotatingThrouput { (testStrInMB * iterations) / spdlogRotateTester.Elapsed_In(time_mode::sec) };
-
-	std::cout << Tag::Yellow("\n\n*******************************************************"
-	                         "********************************\n"
-	                         "*************** Instrumentation Data (Averaged Over ")
-		  << Tag::Yellow(std::to_string(iterations) + " Iterations: ")
-		  << Tag::Yellow("***************\n"
-	                         "***************************************************"
-	                         "************************************\n");
+	// clang-format off
+	std::cout << Tag::Yellow("\n\n***************************************************************************************\n"
+		              "*************** Instrumentation Data (Averaged Over ") << Tag::Yellow(std::to_string(iterations) + " Iterations: ")
+		             << Tag::Yellow("***************\n***************************************************************************************\n");
+	// clang-format on
 	std::cout << Tag::Bright_Yellow("Color Console Target (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
 		  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
 		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")

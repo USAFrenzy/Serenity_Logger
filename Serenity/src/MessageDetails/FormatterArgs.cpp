@@ -101,26 +101,20 @@ namespace serenity::msg_details {
 	std::string_view Format_Arg_e::FormatUserPattern() {
 		result.clear();
 		std::fill(buffer.data(), buffer.data() + buffer.size(), '\0');
-
-		auto& cache { timeRef.Cache() };
-		auto hour { SERENITY_LUTS::numberStr[ cache.tm_hour ] };
-		auto min { SERENITY_LUTS::numberStr[ cache.tm_min ] };
-		auto sec { SERENITY_LUTS::numberStr[ cache.tm_sec ] };
-
 		namespace ch = std::chrono;
-		auto msec { ch::duration_cast<ch::nanoseconds>(ch::system_clock::now().time_since_epoch()) };
-		std::to_chars(buffer.data(), buffer.data() + buffer.size(), (msec.count()));
-
-		size_t i { 0 };
+		auto subSeconds { (ch::high_resolution_clock::now() + ch::nanoseconds(0)).time_since_epoch() };
+		std::to_chars(buffer.data(), buffer.data() + buffer.size(), (subSeconds.count()));
+		// Note: ignoring the first 9 digits as those don't equate to the points of interest
+		size_t bufferOffset(7);
+		size_t i { bufferOffset };
 		for( ;; ) {
 				if( buffer[ i ] == '\0' ) break;
 				++i;
 			}
 		auto startPoint { buffer.begin() };
-		auto midPointOffset { (i / 2) + (i % 2) };
-		std::string_view sv { startPoint + midPointOffset, startPoint + i };
+		std::string_view sv { startPoint + bufferOffset, startPoint + i };
 		sv.remove_suffix(maxPrecision - m_precision);
-		return result.append(hour).append(":").append(min).append(":").append(sec).append(":").append(sv.data(), sv.size());
+		return result.append(sv.data(), sv.size());
 	}
 	/*********************************************************************************************************************/
 
@@ -470,24 +464,14 @@ namespace serenity::msg_details {
 
 	// Format %T Functions
 	/*********************************************************************************************************************/
-	Format_Arg_T::Format_Arg_T(Message_Info& info): cacheRef(info.TimeInfo()), lastMin(0) {
-		UpdateInternalView();
-	}
-
-	std::string& Format_Arg_T::UpdateInternalView() {
-		if( lastMin != cacheRef.tm_min ) {
-				lastMin = cacheRef.tm_min;
-				hour    = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
-				min     = SERENITY_LUTS::numberStr[ lastMin ];
-		}
-		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
-		result.clear();
-		return result.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size());
-	}
+	Format_Arg_T::Format_Arg_T(Message_Info& info): cacheRef(info.TimeInfo()) { }
 
 	std::string_view Format_Arg_T::FormatUserPattern() {
-		UpdateInternalView();
-		return result;
+		result.clear();
+		auto hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
+		auto min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
+		auto sec  = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
+		return result.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size());
 	}
 	/*********************************************************************************************************************/
 
