@@ -24,8 +24,12 @@ namespace serenity::msg_details {
 		m_msgLevel = level;
 	}
 
-	std::chrono::system_clock::time_point Message_Info::MessageTimePoint() {
-		return std::chrono::system_clock::now();
+	void Message_Info::SetTimePoint(std::chrono::system_clock::time_point tp) {
+		m_msgTimePoint = tp;
+	}
+
+	std::chrono::system_clock::time_point Message_Info::MessageTimePoint() const {
+		return m_msgTimePoint;
 	}
 
 	void Message_Info::SetTimeMode(const message_time_mode mode) {

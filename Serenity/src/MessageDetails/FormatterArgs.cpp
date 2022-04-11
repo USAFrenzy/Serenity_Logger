@@ -93,28 +93,26 @@ namespace serenity::msg_details {
 
 	// Format %e Functions
 	/*********************************************************************************************************************/
-	Format_Arg_e::Format_Arg_e(Message_Info& info, size_t precision)
-		: timeRef(info.TimeDetails()), buffer(std::array<char, defaultBufferSize> {}), m_precision(precision) {
-		result.reserve(20);
-	}
+	Format_Arg_e::Format_Arg_e(size_t precision): buffer(std::array<char, defaultBufferSize> {}), m_precision(precision) { }
 
 	std::string_view Format_Arg_e::FormatUserPattern() {
-		result.clear();
 		std::fill(buffer.data(), buffer.data() + buffer.size(), '\0');
-		namespace ch = std::chrono;
-		auto subSeconds { (ch::high_resolution_clock::now() + ch::nanoseconds(0)).time_since_epoch() };
-		std::to_chars(buffer.data(), buffer.data() + buffer.size(), (subSeconds.count()));
-		// Note: ignoring the first 9 digits as those don't equate to the points of interest
-		size_t bufferOffset(7);
-		size_t i { bufferOffset };
-		for( ;; ) {
-				if( buffer[ i ] == '\0' ) break;
-				++i;
-			}
+		// Note: It may be an OS thing or something I'm doing incorrectly, but ended up dividing
+		//       the subSecond count by 100 to limit it to usec precision since it was always a
+		//       trailing '00' value, no matter what I tried doing, for nanosecond precision.
+		// TODO: Look into the nanosecond precision problem and see if it's a limitation or not
+		auto subSecondsMicroPrecision {
+			std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count() / 100
+		};
+		std::to_chars(buffer.data(), buffer.data() + buffer.size(), (subSecondsMicroPrecision));
+		// Note: Ignoring the first 10 digits as those don't equate to the points of interest.
+		size_t bufferStartOffset { 10 };
+		// Note: The stop offset is set at 16 for microsecond precision [Change to 19 if above issue is resolved].
+		size_t bufferStopOffset { 16 };
 		auto startPoint { buffer.begin() };
-		std::string_view sv { startPoint + bufferOffset, startPoint + i };
+		std::string_view sv { startPoint + bufferStartOffset, startPoint + bufferStopOffset };
 		sv.remove_suffix(maxPrecision - m_precision);
-		return result.append(sv.data(), sv.size());
+		return std::move(sv);
 	}
 	/*********************************************************************************************************************/
 

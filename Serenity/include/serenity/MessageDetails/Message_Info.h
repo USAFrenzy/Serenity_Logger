@@ -22,7 +22,8 @@ namespace serenity::msg_details {
 		void SetMsgLevel(const LoggerLevel level);
 		void SetLocale(const std::locale& loc);
 		void SetTimeMode(const message_time_mode mode);
-		std::chrono::system_clock::time_point MessageTimePoint();
+		void SetTimePoint(std::chrono::system_clock::time_point tp = std::chrono::system_clock::now());
+		std::chrono::system_clock::time_point MessageTimePoint() const;
 		message_time_mode TimeMode();
 		std::tm& TimeInfo();
 		std::string& Message();
@@ -36,5 +37,6 @@ namespace serenity::msg_details {
 		std::string m_message;
 		Message_Time m_msgTime;
 		std::locale m_locale;
+		std::chrono::system_clock::time_point m_msgTimePoint;
 	};
 }    // namespace serenity::msg_details

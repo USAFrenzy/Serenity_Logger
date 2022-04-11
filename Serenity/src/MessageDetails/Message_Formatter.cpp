@@ -267,7 +267,7 @@ namespace serenity::msg_details {
 				case 1: formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo)); break;
 				case 2: formatter.Emplace_Back(std::make_unique<Format_Arg_c>(*msgInfo)); break;
 				case 3: formatter.Emplace_Back(std::make_unique<Format_Arg_d>(*msgInfo)); break;
-				case 4: formatter.Emplace_Back(std::make_unique<Format_Arg_e>(*msgInfo, precision)); break;
+				case 4: formatter.Emplace_Back(std::make_unique<Format_Arg_e>(precision)); break;
 				case 5: formatter.Emplace_Back(std::make_unique<Format_Arg_l>(*msgInfo)); break;
 				case 6: formatter.Emplace_Back(std::make_unique<Format_Arg_m>(*msgInfo)); break;
 				case 7: formatter.Emplace_Back(std::make_unique<Format_Arg_n>(*msgInfo)); break;
@@ -359,7 +359,7 @@ namespace serenity::msg_details {
 	static void ValidatePrecisionSpec(size_t& value, size_t index) {
 		switch( index ) {
 				case 4:
-					if( (value > 9) || (value < 0) ) {
+					if( (value > 6) || (value < 0) ) {
 							std::cout << formatWarningMessage[ 0 ];
 							value = defaultSubSecondPrecision;
 					}

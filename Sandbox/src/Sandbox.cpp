@@ -66,17 +66,19 @@ template<typename T> std::string SetPrecision(const T value, const int precision
 	return temp.str();
 }
 
-static constexpr std::string_view testView { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
-	                                     "aliquet ultrices nisl, porta "
-	                                     "eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam porta elit vitae eros "
-	                                     "dapibus, quis aliquet ante commodo. "
-	                                     "Pellentesque tempor a purus nec porta. Quisque vitae ullamcorper ante. Fusce ac mauris magna. In "
-	                                     "vulputate at leo vel dapibus. "
-	                                     "Ut ornare mi non odio." };
+// clang-format off
+static constexpr std::string_view testView { 
+	"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
+    "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
+    "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
+    " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
+   " mi non odio." 
+};
+// clang-format on
 
 int main() {
 	std::vector<spdlog::sink_ptr> sinks;
-	std::string spdlogPattern { "%^|%L| %a %d%b%C %T [%n]: %v%$" };
+	std::string spdlogPattern { "%^|%L| %a %d%b%C %T.%f [%n]: %v%$" };
 
 	auto stdoutSink { std::make_shared<spdlog::sinks::stdout_color_sink_st>() };
 	sinks.emplace_back(stdoutSink);
@@ -306,7 +308,7 @@ int main() {
 	test = temp.c_str();
 
 	unsigned long int i { 0 };
-	const unsigned long int iterations { 1'000'000 };
+	const unsigned long int iterations { 20'000'000 };
 	macroTester.StopWatch_Reset();
 	std::cout << "Benching Color Console Target...\n\n";
 

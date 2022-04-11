@@ -99,13 +99,13 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
-	static constexpr size_t maxPrecision              = 9;
+	static constexpr size_t maxPrecision              = 6;
 	static constexpr size_t defaultSubSecondPrecision = 3;
-	static constexpr size_t defaultBufferSize         = 24;
+	static constexpr size_t defaultBufferSize         = 19;
 	class Format_Arg_e: public Formatter
 	{
 	      public:
-		explicit Format_Arg_e(Message_Info& info, size_t precision);
+		explicit Format_Arg_e(size_t precision);
 		Format_Arg_e(const Format_Arg_e&)            = delete;
 		Format_Arg_e& operator=(const Format_Arg_e&) = delete;
 		~Format_Arg_e()                              = default;
@@ -113,7 +113,6 @@ namespace serenity::msg_details {
 		std::string_view FormatUserPattern() override;
 
 	      private:
-		Message_Time& timeRef;
 		std::array<char, defaultBufferSize> buffer;
 		size_t m_precision;
 	};
