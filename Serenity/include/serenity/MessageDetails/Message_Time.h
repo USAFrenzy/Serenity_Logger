@@ -23,7 +23,9 @@ namespace serenity::msg_details {
 		message_time_mode& Mode();
 		void SetTimeMode(message_time_mode mode);
 		std::chrono::seconds& LastLogPoint();
-		const bool isLeapYear();
+		bool isLeapYear() const;
+		int LeapYears(int yearIndex);
+		const std::chrono::time_zone* GetTimeZone();
 
 	      private:
 		message_time_mode m_mode;
@@ -33,5 +35,6 @@ namespace serenity::msg_details {
 		int currentYear;
 		std::string cachedShortYear;
 		std::string cachedLongYear;
+		const std::chrono::time_zone& m_timeZone;
 	};
 }    // namespace serenity::msg_details

@@ -276,19 +276,21 @@ namespace serenity::msg_details {
 				case 10: formatter.Emplace_Back(std::make_unique<Format_Arg_t>(precision)); break;
 				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo)); break;
 				case 12: formatter.Emplace_Back(std::make_unique<Format_Arg_y>(*msgInfo)); break;
-				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
-				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
-				case 15: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
-				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
-				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
-				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
-				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
-				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
-				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
-				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
-				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
-				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
-				case 25: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
+				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_z>(*msgInfo)); break;
+				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
+				case 15: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
+				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
+				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
+				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
+				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
+				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
+				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
+				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
+				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_R>(*msgInfo)); break;
+				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
+				case 25: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 26: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
+				case 27: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
 
 				default:
 					// This function is only accessed if an index is found in allValidFlags array
@@ -353,13 +355,13 @@ namespace serenity::msg_details {
 	static constexpr std::array<std::string_view, 2> formatWarningMessage = 
 	{ 
 		"Warning: Format string token \"%e\" contains an invalid precision specifier. The default precision will be used instead.\n",
-        "Warning: Format string token \"%t\" contains an invalid precision specifier. The default precision will be used instead.\n" 
+		"Warning: Format string token \"%t\" contains an invalid precision specifier. The default precision will be used instead.\n" 
 	};
 	// clang-format on
 	static void ValidatePrecisionSpec(size_t& value, size_t index) {
 		switch( index ) {
 				case 4:
-					if( (value > 6) || (value < 0) ) {
+					if( (value > 9) || (value < 0) ) {
 							std::cout << formatWarningMessage[ 0 ];
 							value = defaultSubSecondPrecision;
 					}
@@ -378,8 +380,10 @@ namespace serenity::msg_details {
 	size_t Message_Formatter::ParseForPrecisionSpec(std::string& temp, size_t index) {
 		size_t tmpValue {};
 		if( temp.size() == 0 ) return tmpValue;
-		if( temp.front() == ':' ) {
-				temp.erase(0, 1);
+		if( (temp.front() == ':') && (temp.size() >= 2) ) {
+				if( std::isdigit(temp[ 1 ]) ) {
+						temp.erase(0, 1);
+				}
 				std::string precision;
 				for( ;; ) {
 						if( !std::isdigit(temp.front()) ) break;

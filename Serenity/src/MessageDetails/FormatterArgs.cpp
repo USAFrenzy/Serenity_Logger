@@ -97,21 +97,24 @@ namespace serenity::msg_details {
 
 	std::string_view Format_Arg_e::FormatUserPattern() {
 		std::fill(buffer.data(), buffer.data() + buffer.size(), '\0');
-		// Note: It may be an OS thing or something I'm doing incorrectly, but ended up dividing
-		//       the subSecond count by 100 to limit it to usec precision since it was always a
-		//       trailing '00' value, no matter what I tried doing, for nanosecond precision.
-		// TODO: Look into the nanosecond precision problem and see if it's a limitation or not
-		auto subSecondsMicroPrecision {
-			std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count() / 100
+		// Note: It seems the trailing zeros are an OS limitation in how fine the clocks' granularity is.
+		//       I haven't tested this on other platforms other than Windows at the moment though.
+		auto subSeconds {
+			std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count()
 		};
-		std::to_chars(buffer.data(), buffer.data() + buffer.size(), (subSecondsMicroPrecision));
-		// Note: Ignoring the first 10 digits as those don't equate to the points of interest.
+		std::to_chars(buffer.data(), buffer.data() + buffer.size(), subSeconds);
+		// Note: Ignoring the first 10 digits as those don't equate to the points of interest. The 10th digit
+		//       is the second offset so start at the second offset and find the end of the precision digits.
 		size_t bufferStartOffset { 10 };
-		// Note: The stop offset is set at 16 for microsecond precision [Change to 19 if above issue is resolved].
-		size_t bufferStopOffset { 16 };
+		size_t i { bufferStartOffset };
+		for( ;; ) {
+				if( buffer[ i ] != '\0' )
+					++i;
+				else
+					break;
+			}
 		auto startPoint { buffer.begin() };
-		std::string_view sv { startPoint + bufferStartOffset, startPoint + bufferStopOffset };
-		sv.remove_suffix(maxPrecision - m_precision);
+		std::string_view sv { startPoint + bufferStartOffset, startPoint + i - (maxPrecision - m_precision) };
 		return std::move(sv);
 	}
 	/*********************************************************************************************************************/
@@ -259,6 +262,35 @@ namespace serenity::msg_details {
 
 	std::string_view Format_Arg_y::FormatUserPattern() {
 		return (cacheRef.tm_year != lastYear) ? UpdateInternalView() : result;
+	}
+	/*********************************************************************************************************************/
+
+	// Format %z Functions
+	/*********************************************************************************************************************/
+	Format_Arg_z::Format_Arg_z(Message_Info& info): infoRef(info), local(std::tm {}), gm(std::tm {}), lastMin(infoRef.TimeInfo().tm_min) {
+		UpdateInternalView();
+	}
+
+	std::string& Format_Arg_z::UpdateInternalView() {
+		result.clear();
+		auto& timeRef { infoRef.TimeDetails() };
+		auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
+		LOCAL_TIME(local, now);
+		GM_TIME(gm, now);
+		auto localLeap { timeRef.LeapYears(local.tm_year) };
+		auto gmLeap { timeRef.LeapYears(gm.tm_year) };
+
+		auto dayOffset((local.tm_yday - gm.tm_yday) + (365 * (local.tm_year - gm.tm_year) + (localLeap - gmLeap)));
+		auto hours { (24 * dayOffset) + (local.tm_hour - gm.tm_hour) };
+		auto mins { (60 * hours) + (local.tm_min - gm.tm_min) };
+		auto hour { serenity::SERENITY_LUTS::numberStr[ std::abs(hours) ] };
+		auto min { serenity::SERENITY_LUTS::numberStr[ std::abs(mins % 60) ] };
+		std::string_view sign { (dayOffset > 0) ? "+" : "-" };
+		return result.append(sign.data(), sign.size()).append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
+	}
+
+	std::string_view Format_Arg_z::FormatUserPattern() {
+		return (lastMin != infoRef.TimeInfo().tm_min) ? UpdateInternalView() : result;
 	}
 	/*********************************************************************************************************************/
 
@@ -439,6 +471,18 @@ namespace serenity::msg_details {
 
 	std::string_view Format_Arg_N::FormatUserPattern() {
 		return name;
+	}
+	/*********************************************************************************************************************/
+
+	// Format %R Functions
+	/*********************************************************************************************************************/
+	Format_Arg_R::Format_Arg_R(Message_Info& info): cacheRef(info.TimeInfo()) { }
+
+	std::string_view Format_Arg_R::FormatUserPattern() {
+		result.clear();
+		auto hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
+		auto min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
+		return result.append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
 	}
 	/*********************************************************************************************************************/
 

@@ -99,9 +99,9 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
-	static constexpr size_t maxPrecision              = 6;
+	static constexpr size_t maxPrecision              = 9;
 	static constexpr size_t defaultSubSecondPrecision = 3;
-	static constexpr size_t defaultBufferSize         = 19;
+	static constexpr size_t defaultBufferSize         = 24;
 	class Format_Arg_e: public Formatter
 	{
 	      public:
@@ -259,6 +259,22 @@ namespace serenity::msg_details {
 	};
 
 	// Missing %z (ISO 8601 offset from UTC (1 min 1, 1 hr = 100) ex: +100)
+	class Format_Arg_z: public Formatter
+	{
+	      public:
+		explicit Format_Arg_z(Message_Info& info);
+		Format_Arg_z(const Format_Arg_z&)            = delete;
+		Format_Arg_z& operator=(const Format_Arg_z&) = delete;
+		~Format_Arg_z()                              = default;
+
+		std::string_view FormatUserPattern() override;
+		std::string& UpdateInternalView() override;
+
+	      private:
+		Message_Info& infoRef;
+		std::tm local, gm;
+		int lastMin;
+	};
 
 	class Format_Arg_A: public Formatter
 	{
@@ -422,7 +438,19 @@ namespace serenity::msg_details {
 		std::string& name;
 	};
 
-	// Missing %R (24 hour time as HH:MM)
+	class Format_Arg_R: public Formatter
+	{
+	      public:
+		explicit Format_Arg_R(Message_Info& info);
+		Format_Arg_R(const Format_Arg_R&)            = delete;
+		Format_Arg_R& operator=(const Format_Arg_R&) = delete;
+		~Format_Arg_R()                              = default;
+
+		std::string_view FormatUserPattern() override;
+
+	      private:
+		const std::tm& cacheRef;
+	};
 
 	class Format_Arg_S: public Formatter
 	{

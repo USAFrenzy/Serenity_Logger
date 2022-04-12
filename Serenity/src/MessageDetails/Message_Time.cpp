@@ -3,14 +3,14 @@
 #include <charconv>
 
 namespace serenity::msg_details {
-	Message_Time::Message_Time(message_time_mode mode): m_mode(mode) {
-		auto year { m_cache.tm_year };
+	Message_Time::Message_Time(message_time_mode mode): m_mode(mode), m_timeZone(*std::chrono::current_zone()) {
 		UpdateTimeDate(std::chrono::system_clock::now());
-		if( (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 ) {
-				leapYear = true;
-		} else {
-				leapYear = false;
-			}
+		auto yr { m_cache.tm_year + 1900 };
+		((yr % 4 == 0 && yr % 100 != 0) || (yr % 400 == 0)) ? leapYear = true : leapYear = false;
+	}
+
+	const std::chrono::time_zone* Message_Time::GetTimeZone() {
+		return &m_timeZone;
 	}
 
 	void serenity::msg_details::Message_Time::CalculateCurrentYear(int yearOffset) {
@@ -31,7 +31,7 @@ namespace serenity::msg_details {
 	void Message_Time::UpdateTimeDate(std::chrono::system_clock::time_point timePoint) {
 		auto time { std::chrono::system_clock::to_time_t(timePoint) };
 		secsSinceLastLog = std::chrono::duration_cast<std::chrono::seconds>(timePoint.time_since_epoch());
-		(m_mode == message_time_mode::local) ? localtime_s(&m_cache, &time) : gmtime_s(&m_cache, &time);
+		(m_mode == message_time_mode::local) ? LOCAL_TIME(m_cache, time) : GM_TIME(m_cache, time);
 		currentYear = m_cache.tm_year;
 		CalculateCurrentYear(currentYear);
 	}
@@ -56,7 +56,17 @@ namespace serenity::msg_details {
 		return secsSinceLastLog;
 	}
 
-	const bool Message_Time::isLeapYear() {
+	int Message_Time::LeapYears(int yearIndex) {
+		int leapYears {};
+		for( int i { 0 }; i <= yearIndex; ++i ) {
+				if( (i % 4 == 0 && i % 100 != 0) || (i % 400 == 0) ) {
+						++leapYears;
+				}
+			}
+		return leapYears;
+	}
+
+	bool Message_Time::isLeapYear() const {
 		return leapYear;
 	}
 

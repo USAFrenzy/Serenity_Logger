@@ -70,10 +70,14 @@
 	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 	#endif
+	#define LOCAL_TIME(tmStruct, timeT) localtime_s(&tmStruct, &timeT)
+	#define GM_TIME(tmStruct, timeT)    gmtime_s(&tmStruct, &timeT)
 #else
 	#include <unistd.h>
-	#define ISATTY isatty
-	#define FILENO fileno
+	#define ISATTY                      isatty
+	#define FILENO                      fileno
+	#define LOCAL_TIME(tmStruct, timeT) localtime_r(&tmStruct, &timeT)
+	#define GM_TIME(tmStruct, timeT)    gmtime_r(&tmStruct, &timeT)
 #endif
 
 #define KB                       (1024)
@@ -101,9 +105,9 @@ namespace serenity {
 	namespace SERENITY_LUTS {
 		// clang-format off
 
-		static constexpr std::array<std::string_view, 26> allValidFlags = {
-			"%a", "%b", "%c", "%d", "%e", "%l", "%m", "%n", "%p", "%r", "%t", "%w", "%y", "%A", "%B",
-			"%D", "%F", "%H", "%I", "%L", "%M", "%N", "%S", "%T", "%Y", "%+"
+		static constexpr std::array<std::string_view, 28> allValidFlags = {
+			"%a", "%b", "%c", "%d", "%e", "%l", "%m", "%n", "%p", "%r", "%t", "%w", "%y", "%z", "%A", " %B",
+			"%D", "%F", "%H", "%I", "%L", "%M", "%N", "%R", "%S", "%T", "%Y", "%+"
 		};
 
 		static constexpr std::array<std::string_view, 7> short_weekdays = {
