@@ -56,14 +56,10 @@ namespace serenity::msg_details {
 		return secsSinceLastLog;
 	}
 
-	int Message_Time::LeapYears(int yearIndex) {
-		int leapYears {};
-		for( int i { 0 }; i <= yearIndex; ++i ) {
-				if( (i % 4 == 0 && i % 100 != 0) || (i % 400 == 0) ) {
-						++leapYears;
-				}
-			}
-		return leapYears;
+	// Using Ted's version is much faster than the iterative approach I was naively doing
+	// Ultra-fast-Algorithms-for-Working-with-Leap-Years Ted Nguyen (GNU license)
+	int Message_Time::LeapYearsSinceEpoch(int yearIndex) {
+		return (yearIndex / 4) - (yearIndex / 100) + (yearIndex / 400);
 	}
 
 	bool Message_Time::isLeapYear() const {

@@ -34,9 +34,9 @@ namespace serenity::msg_details {
 	      private:
 		std::string m_name;
 		LoggerLevel m_msgLevel;
-		std::string m_message;
 		Message_Time m_msgTime;
 		std::locale m_locale;
 		std::chrono::system_clock::time_point m_msgTimePoint;
+		std::string m_message;
 	};
 }    // namespace serenity::msg_details

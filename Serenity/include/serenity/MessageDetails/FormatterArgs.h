@@ -258,7 +258,6 @@ namespace serenity::msg_details {
 		int lastYear;
 	};
 
-	// Missing %z (ISO 8601 offset from UTC (1 min 1, 1 hr = 100) ex: +100)
 	class Format_Arg_z: public Formatter
 	{
 	      public:
@@ -268,7 +267,6 @@ namespace serenity::msg_details {
 		~Format_Arg_z()                              = default;
 
 		std::string_view FormatUserPattern() override;
-		std::string& UpdateInternalView() override;
 
 	      private:
 		Message_Info& infoRef;

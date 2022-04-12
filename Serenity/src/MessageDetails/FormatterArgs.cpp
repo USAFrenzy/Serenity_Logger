@@ -267,19 +267,21 @@ namespace serenity::msg_details {
 
 	// Format %z Functions
 	/*********************************************************************************************************************/
-	Format_Arg_z::Format_Arg_z(Message_Info& info): infoRef(info), local(std::tm {}), gm(std::tm {}), lastMin(infoRef.TimeInfo().tm_min) {
-		UpdateInternalView();
-	}
+	Format_Arg_z::Format_Arg_z(Message_Info& info): infoRef(info), local(std::tm {}), gm(std::tm {}), lastMin(0) { }
 
-	std::string& Format_Arg_z::UpdateInternalView() {
+	std::string_view Format_Arg_z::FormatUserPattern() {
+		auto currentMinute { infoRef.TimeInfo().tm_min };
+		if( lastMin == currentMinute ) return result;
+		lastMin = currentMinute;
 		result.clear();
-		auto& timeRef { infoRef.TimeDetails() };
-		auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
+		auto now { std::chrono::system_clock::to_time_t(infoRef.MessageTimePoint()) };
 		LOCAL_TIME(local, now);
 		GM_TIME(gm, now);
-		auto localLeap { timeRef.LeapYears(local.tm_year) };
-		auto gmLeap { timeRef.LeapYears(gm.tm_year) };
+		auto& timeRef { infoRef.TimeDetails() };
+		auto localLeap { timeRef.LeapYearsSinceEpoch(local.tm_year) };
+		auto gmLeap { timeRef.LeapYearsSinceEpoch(gm.tm_year) };
 
+		/**************** Current Day Of Year Delta ********** Days Per Year Delta ************ Leap Year Delta ********/
 		auto dayOffset((local.tm_yday - gm.tm_yday) + (365 * (local.tm_year - gm.tm_year) + (localLeap - gmLeap)));
 		auto hours { (24 * dayOffset) + (local.tm_hour - gm.tm_hour) };
 		auto mins { (60 * hours) + (local.tm_min - gm.tm_min) };
@@ -287,10 +289,6 @@ namespace serenity::msg_details {
 		auto min { serenity::SERENITY_LUTS::numberStr[ std::abs(mins % 60) ] };
 		std::string_view sign { (dayOffset > 0) ? "+" : "-" };
 		return result.append(sign.data(), sign.size()).append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
-	}
-
-	std::string_view Format_Arg_z::FormatUserPattern() {
-		return (lastMin != infoRef.TimeInfo().tm_min) ? UpdateInternalView() : result;
 	}
 	/*********************************************************************************************************************/
 
