@@ -1,7 +1,7 @@
 #include <serenity/Targets/Target.h>
 
 namespace serenity::targets {
-	constexpr const char* DEFAULT_PATTERN = "|%l| %a %n %R:%S.%e:3 %z [%N]: %+";
+	constexpr const char* DEFAULT_PATTERN = "|%l| %a %n %T [%N]: [%s:F(%s:l:%s:c)] %+";
 
 	TargetBase::TargetBase()
 		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),

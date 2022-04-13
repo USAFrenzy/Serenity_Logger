@@ -130,7 +130,7 @@ namespace serenity::msg_details {
 		Message_Formatter(const Message_Formatter&)       = delete;
 		Message_Formatter& operator=(const Message_Info&) = delete;
 
-		size_t ParseForPrecisionSpec(std::string& temp, size_t index);
+		size_t ParseForSpec(std::string& parseStr, size_t index);
 
 		void FlagFormatter(size_t flag, size_t precision = 0);
 		void SetPattern(std::string_view pattern);
@@ -138,13 +138,13 @@ namespace serenity::msg_details {
 		void StoreFormat();
 		const Message_Info* MessageDetails();
 		void LazySubstitute(std::string& msg, std::string&& arg);
-		template<typename... Args> void FmtMessage(std::string_view message, Args&&... args) {
+		template<typename... Args> void FmtMessage(serenity::MsgWithLoc message, Args&&... args) {
 			lazy_message.clear();
 			argStorage.CaptureArgs(std::forward<Args>(args)...);
-			if( argStorage.ContainsUnsupportedType() || argStorage.ContainsArgSpecs(message) ) {
-					VFORMAT_TO(lazy_message, *localeRef, message, std::forward<Args>(args)...);
+			if( argStorage.ContainsUnsupportedType() || argStorage.ContainsArgSpecs(message.msg) ) {
+					VFORMAT_TO(lazy_message, *localeRef, message.msg, std::forward<Args>(args)...);
 			} else {
-					lazy_message.append(message.data(), message.size());
+					lazy_message.append(message.msg);
 					for( ;; ) {
 							LazySubstitute(lazy_message, std::move(argStorage.GetArgValue()));
 							argStorage.AdvanceToNextArg();
@@ -154,7 +154,7 @@ namespace serenity::msg_details {
 						}
 				}
 			auto lineEnd { SERENITY_LUTS::line_ending.at(platformEOL) };
-			msgInfo->SetMessage(lazy_message.append(lineEnd.data(), lineEnd.size()));
+			msgInfo->SetMessage(lazy_message.append(lineEnd.data(), lineEnd.size()), message.source);
 		}
 
 	      private:

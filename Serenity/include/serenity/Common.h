@@ -1,5 +1,6 @@
 #pragma once
 
+#include <source_location>
 #include <string_view>
 #include <unordered_map>
 #include <array>
@@ -105,9 +106,10 @@ namespace serenity {
 	namespace SERENITY_LUTS {
 		// clang-format off
 
-		static constexpr std::array<std::string_view, 28> allValidFlags = {
-			"%a", "%b", "%c", "%d", "%e", "%l", "%m", "%n", "%p", "%r", "%t", "%w", "%y", "%z", "%A", " %B",
-			"%D", "%F", "%H", "%I", "%L", "%M", "%N", "%R", "%S", "%T", "%Y", "%+"
+		static constexpr std::array<std::string_view, 33> allValidFlags = {
+			"%a", "%b", "%c", "%d", "%e", "%h","%l", "%m", "%n", "%p", "%r", 
+			"%s" , "%t", "%w", "%x", "%y", "%z", "%A", " %B", "%D", "%F", "%H", 
+			"%I", "%L", "%M", "%N", "%R", "%S", "%T", "%X","%Y","%Z", "%+"
 		};
 
 		static constexpr std::array<std::string_view, 7> short_weekdays = {
@@ -206,15 +208,64 @@ namespace serenity {
 			}
 	}
 
+	static constexpr int sourceLineFormatting         = 1;
+	static constexpr int sourceColumnFormatting       = 2;
+	static constexpr int sourceFileFormatting         = 3;
+	static constexpr int sourceFunctionFormatting     = 4;
+	static constexpr int fullSourceFormatting         = 5;
+	static constexpr size_t maxPrecision              = 9;
+	static constexpr size_t defaultSubSecondPrecision = 3;
+	static constexpr size_t defaultBufferSize         = 24;
+	static constexpr size_t defaultThreadIdLength     = 10;
+
+	// clang-format off
+
+	static constexpr std::array<const char*, 2> formatWarningMessage =
+	{
+		"Warning: Format string token \"%e\" contains an invalid precision specifier. The default precision will be used instead.\n",
+		"Warning: Format string token \"%t\" contains an invalid precision specifier. The default precision will be used instead.\n"
+		"Warning: Format string token \"%s\" contains an invalid char specifier. The default specifier will be used instead.\n"
+	};
+	// clang-format on
+
+	// Currently only using in parsing user format pattern, but would like to extend these to the lazy substitution
+	static void ParsePrecisionSpec(std::string& specStr, size_t& value) {
+		std::string precision;
+		for( ;; ) {
+				if( !std::isdigit(specStr.front()) ) break;
+				precision += specStr.front();
+				specStr.erase(0, 1);
+			}
+		std::from_chars(precision.data(), precision.data() + precision.size(), value);
+	}
+
+	static constexpr std::array<char, 4> validCharSpecs = { 'l', 'c', 'f', 'F' };
+	static void ParseCharSpec(std::string& specStr, std::vector<char>& specs) {
+		if( specStr.size() == 0 ) return;
+		for( auto& ch: specStr ) {
+				if( !std::isalpha(ch) ) break;
+				if( std::find(validCharSpecs.begin(), validCharSpecs.end(), ch) != validCharSpecs.end() ) {
+						specs.emplace_back(ch);
+						specStr.erase(0, 1);
+				}
+			}
+	}
+
 	enum class message_time_mode
 	{
 		local,
 		utc
 	};
-}    // namespace serenity
 
-#ifndef NDEBUG
-	#define DB_PRINT(msg, ...) (std::cout << std::format(msg, __VA_ARGS__))
-#else
-	#define DB_PRINT(msg, ...)
-#endif    // !NDEBUG
+	// This lovely and amazing end to my headaches for getting the correct call site
+	// was provided by ivank at https://stackoverflow.com/a/66402319/11410972
+	struct MsgWithLoc
+	{
+		std::string msg;
+		std::source_location source;
+		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(std::string sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+	};
+
+}    // namespace serenity

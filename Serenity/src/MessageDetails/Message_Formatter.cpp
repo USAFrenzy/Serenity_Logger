@@ -268,30 +268,34 @@ namespace serenity::msg_details {
 				case 2: formatter.Emplace_Back(std::make_unique<Format_Arg_c>(*msgInfo)); break;
 				case 3: formatter.Emplace_Back(std::make_unique<Format_Arg_d>(*msgInfo)); break;
 				case 4: formatter.Emplace_Back(std::make_unique<Format_Arg_e>(precision)); break;
-				case 5: formatter.Emplace_Back(std::make_unique<Format_Arg_l>(*msgInfo)); break;
-				case 6: formatter.Emplace_Back(std::make_unique<Format_Arg_m>(*msgInfo)); break;
-				case 7: formatter.Emplace_Back(std::make_unique<Format_Arg_n>(*msgInfo)); break;
-				case 8: formatter.Emplace_Back(std::make_unique<Format_Arg_p>(*msgInfo)); break;
-				case 9: formatter.Emplace_Back(std::make_unique<Format_Arg_r>(*msgInfo)); break;
-				case 10: formatter.Emplace_Back(std::make_unique<Format_Arg_t>(precision)); break;
-				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo)); break;
-				case 12: formatter.Emplace_Back(std::make_unique<Format_Arg_y>(*msgInfo)); break;
-				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_z>(*msgInfo)); break;
-				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
-				case 15: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
-				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
-				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
-				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
-				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
-				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
-				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
-				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
-				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_R>(*msgInfo)); break;
-				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
-				case 25: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
-				case 26: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
-				case 27: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
-
+				case 5: formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo)); break;
+				case 6: formatter.Emplace_Back(std::make_unique<Format_Arg_l>(*msgInfo)); break;
+				case 7: formatter.Emplace_Back(std::make_unique<Format_Arg_m>(*msgInfo)); break;
+				case 8: formatter.Emplace_Back(std::make_unique<Format_Arg_n>(*msgInfo)); break;
+				case 9: formatter.Emplace_Back(std::make_unique<Format_Arg_p>(*msgInfo)); break;
+				case 10: formatter.Emplace_Back(std::make_unique<Format_Arg_r>(*msgInfo)); break;
+				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_s>(*msgInfo, precision)); break;
+				case 12: formatter.Emplace_Back(std::make_unique<Format_Arg_t>(precision)); break;
+				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo)); break;
+				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
+				case 15: formatter.Emplace_Back(std::make_unique<Format_Arg_y>(*msgInfo)); break;
+				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_z>(*msgInfo)); break;
+				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
+				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
+				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
+				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
+				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
+				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
+				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
+				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
+				case 25: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
+				case 26: formatter.Emplace_Back(std::make_unique<Format_Arg_R>(*msgInfo)); break;
+				case 27: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
+				case 28: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 29: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
+				case 30: formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(*msgInfo)); break;
+				case 31: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 32: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
 				default:
 					// This function is only accessed if an index is found in allValidFlags array
 					break;
@@ -331,7 +335,7 @@ namespace serenity::msg_details {
 						if( position != SERENITY_LUTS::allValidFlags.end() ) {
 								index = std::distance(SERENITY_LUTS::allValidFlags.begin(), position);
 						}
-						auto precision { ParseForPrecisionSpec(temp, index) };
+						auto precision { ParseForSpec(temp, index) };
 						FlagFormatter(index, precision);
 				} else {
 						auto pos { temp.find_first_of('%') };
@@ -350,25 +354,34 @@ namespace serenity::msg_details {
 			}
 	}
 
-	// clang-format off
+	// Currently overkill since it's just validating one token
+	static void ValidateCharSpec(size_t index, size_t& value, std::vector<char> specs) {
+		if( specs.size() == 0 ) return;
+		switch( index ) {
+				case 11:    // only handle one spec right now (would need to implement bit flag for combos
+					switch( specs.front() ) {
+							case 'l': value = sourceLineFormatting; break;
+							case 'c': value = sourceColumnFormatting; break;
+							case 'f': value = sourceFileFormatting; break;
+							case 'F': value = sourceFunctionFormatting; break;
+							default: printf("%s", formatWarningMessage[ 2 ]); break;
+						}
+					break;
+				default: break;
+			}
+	}
 
-	static constexpr std::array<std::string_view, 2> formatWarningMessage = 
-	{ 
-		"Warning: Format string token \"%e\" contains an invalid precision specifier. The default precision will be used instead.\n",
-		"Warning: Format string token \"%t\" contains an invalid precision specifier. The default precision will be used instead.\n" 
-	};
-	// clang-format on
-	static void ValidatePrecisionSpec(size_t& value, size_t index) {
+	static void ValidatePrecisionSpec(size_t index, size_t& value) {
 		switch( index ) {
 				case 4:
 					if( (value > 9) || (value < 0) ) {
-							std::cout << formatWarningMessage[ 0 ];
+							printf("%s", formatWarningMessage[ 0 ]);
 							value = defaultSubSecondPrecision;
 					}
 					break;
 				case 10:
 					if( (value > 10) || (value < 0) ) {
-							std::cout << formatWarningMessage[ 1 ];
+							printf("%s", formatWarningMessage[ 1 ]);
 							value = defaultThreadIdLength;
 					}
 					break;
@@ -376,25 +389,24 @@ namespace serenity::msg_details {
 			}
 	}
 
-	// currently handles %e and %t -> could use something similar in the Lazy_Substitute() function
-	size_t Message_Formatter::ParseForPrecisionSpec(std::string& temp, size_t index) {
+	// currently handling %e, %s, and %t
+	size_t Message_Formatter::ParseForSpec(std::string& parseStr, size_t index) {
 		size_t tmpValue {};
-		if( temp.size() == 0 ) return tmpValue;
-		if( (temp.front() == ':') && (temp.size() >= 2) ) {
-				if( std::isdigit(temp[ 1 ]) ) {
-						temp.erase(0, 1);
-				}
-				std::string precision;
-				for( ;; ) {
-						if( !std::isdigit(temp.front()) ) break;
-						precision += temp.front();
-						temp.erase(0, 1);
+		if( parseStr.size() == 0 ) return tmpValue;
+		if( (parseStr.front() == ':') && (parseStr.size() > 1) ) {
+				parseStr.erase(0, 1);
+				if( std::isdigit(parseStr.front()) ) {
+						ParsePrecisionSpec(parseStr, tmpValue);
+						ValidatePrecisionSpec(index, tmpValue);
+				} else {
+						std::vector<char> specsOutput {};
+						ParseCharSpec(parseStr, specsOutput);
+						ValidateCharSpec(index, tmpValue, specsOutput);
 					}
-				std::from_chars(precision.data(), precision.data() + precision.size(), tmpValue);
-				ValidatePrecisionSpec(tmpValue, index);
 		} else {
 				if( index == 4 ) tmpValue = defaultSubSecondPrecision;
 				if( index == 10 ) tmpValue = defaultThreadIdLength;
+				if( index == 11 ) tmpValue = fullSourceFormatting;
 			}
 		return tmpValue;
 	}

@@ -217,6 +217,71 @@ namespace serenity::msg_details {
 	}
 	/*********************************************************************************************************************/
 
+	// Format %s Functions
+	/*********************************************************************************************************************/
+	Format_Arg_s::Format_Arg_s(Message_Info& info, size_t flag)
+		: srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag) { }
+
+	size_t Format_Arg_s::FindEndPos() {
+		size_t pos {};
+		for( ;; ) {
+				if( buff[ pos ] == '\0' ) return pos;
+				++pos;
+			}
+	}
+
+	void Format_Arg_s::FormatAll() {
+		result.clear();
+
+		file = srcLocation.file_name();
+		result.append("[ ").append(file.filename().string()).append("(");
+
+		std::fill(buff.data(), buff.data() + buff.size(), '\0');
+		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
+		result.append(buff.data(), buff.data() + FindEndPos()).append(":");
+
+		std::fill(buff.data(), buff.data() + buff.size(), '\0');
+		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
+
+		result.append(buff.data(), buff.data() + FindEndPos()).append(") ");
+		result.append(srcLocation.function_name()).append(" ]");
+	}
+
+	void Format_Arg_s::FormatFile() {
+		result.clear();
+		file = srcLocation.file_name();
+		result.append(file.make_preferred().filename().string());
+	}
+	void Format_Arg_s::FormatLine() {
+		result.clear();
+		std::fill(buff.data(), buff.data() + buff.size(), '\0');
+		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
+		result.append(buff.data(), buff.data() + FindEndPos());
+	}
+	void Format_Arg_s::FormatColumn() {
+		result.clear();
+		std::fill(buff.data(), buff.data() + buff.size(), '\0');
+		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
+		result.append(buff.data(), buff.data() + FindEndPos());
+	}
+	void Format_Arg_s::FormatFunction() {
+		result.clear();
+		result.append(srcLocation.function_name());
+	}
+
+	std::string_view Format_Arg_s::FormatUserPattern() {
+		switch( spec ) {
+				case sourceLineFormatting: FormatLine(); break;
+				case sourceColumnFormatting: FormatColumn(); break;
+				case sourceFileFormatting: FormatFile(); break;
+				case sourceFunctionFormatting: FormatFunction(); break;
+				case fullSourceFormatting: FormatAll(); break;
+				default: result.clear(); break;
+			}
+		return result;
+	}
+	/*********************************************************************************************************************/
+
 	// Format %t Functions
 	Format_Arg_t::Format_Arg_t(size_t precision): thread(std::hash<std::thread::id>()(std::this_thread::get_id())) {
 		std::array<char, 64> buf {};
@@ -273,21 +338,20 @@ namespace serenity::msg_details {
 		auto currentMinute { infoRef.TimeInfo().tm_min };
 		if( lastMin == currentMinute ) return result;
 		lastMin = currentMinute;
-		result.clear();
 		auto now { std::chrono::system_clock::to_time_t(infoRef.MessageTimePoint()) };
 		LOCAL_TIME(local, now);
 		GM_TIME(gm, now);
 		auto& timeRef { infoRef.TimeDetails() };
 		auto localLeap { timeRef.LeapYearsSinceEpoch(local.tm_year) };
 		auto gmLeap { timeRef.LeapYearsSinceEpoch(gm.tm_year) };
-
-		/**************** Current Day Of Year Delta ********** Days Per Year Delta ************ Leap Year Delta ********/
+		/*********** Current Day Of Year Delta ******** Days Per Year Delta ****** Leap Year Delta ********/
 		auto dayOffset((local.tm_yday - gm.tm_yday) + (365 * (local.tm_year - gm.tm_year) + (localLeap - gmLeap)));
 		auto hours { (24 * dayOffset) + (local.tm_hour - gm.tm_hour) };
 		auto mins { (60 * hours) + (local.tm_min - gm.tm_min) };
 		auto hour { serenity::SERENITY_LUTS::numberStr[ std::abs(hours) ] };
 		auto min { serenity::SERENITY_LUTS::numberStr[ std::abs(mins % 60) ] };
-		std::string_view sign { (dayOffset > 0) ? "+" : "-" };
+		std::string_view sign { (dayOffset >= 0) ? "+" : "-" };
+		result.clear();
 		return result.append(sign.data(), sign.size()).append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
 	}
 	/*********************************************************************************************************************/
@@ -530,6 +594,25 @@ namespace serenity::msg_details {
 
 	std::string_view Format_Arg_Y::FormatUserPattern() {
 		return (cacheRef.tm_year != lastYear) ? UpdateInternalView() : result;
+	}
+	/*********************************************************************************************************************/
+
+	// Format %Z Functions
+	/*********************************************************************************************************************/
+	serenity::msg_details::Format_Arg_Z::Format_Arg_Z(Message_Info& info)
+		: timeRef(info.TimeDetails()), timeModeRef(timeRef.Mode()), cachedMode(timeModeRef) {
+		timeModeRef == message_time_mode::local
+		? result = info.TimeDetails().GetTimeZone()->get_info(std::chrono::system_clock::now()).abbrev
+		: result = "UTC";
+	}
+
+	std::string& serenity::msg_details::Format_Arg_Z::UpdateInternalView() {
+		return timeModeRef == message_time_mode::local ? result = timeRef.GetTimeZone()->get_info(std::chrono::system_clock::now()).abbrev
+		                                               : result = "UTC";
+	}
+
+	std::string_view serenity::msg_details::Format_Arg_Z::FormatUserPattern() {
+		return cachedMode == timeModeRef ? result : UpdateInternalView();
 	}
 	/*********************************************************************************************************************/
 

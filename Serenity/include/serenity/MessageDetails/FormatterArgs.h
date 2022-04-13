@@ -8,21 +8,19 @@
 #include <variant>
 
 namespace serenity::msg_details {
-	/************************************************************************************************/
-	//           I can not for the life of me get anything to be faster than this setup.
-	/************************************************************************************************/
-	// * Re-visiting std::variant option where each format arg is a type stored in the variant and
-	//   accessed by a switch on the index to a function call and optimizing it still saw ~6% losses.
-	// * Re-visiting non-functor styled function pointers where each format arg is a function call
-	//   and optimizing that saw ~8% losses
-	// * I haven't re-visited std::function yet, but I can't see that being much better than
-	//   function pointers
-	// * So for now, the winner is still this basic inheritance model and storing derived pointers
-	/************************************************************************************************/
-
-	// TODO:#############################################################################
-	// TODO:     Args in process of being renamed to mirror strftime tokens
-	// TODO:#############################################################################
+	/*********** Most All strftime Flags Have Been Added, Except For The Following ************/ /*
+	  * %g (week based year last 2 digits)
+	  * %h (short month abbrev on locale) //------------------------------ Using %b formatter
+	  * %j (Day of year (001-366)
+	  * %u (weekday as a number with Monday as 1 (1-7))
+	  * %x (Date Representation locale dependant) //---------------------- Using %D formatter
+	  * %U (week number with Sunday being the first day (00-53))
+	  * %V (ISO 8601 week number (01-53)
+	  * %W (week number as first Monday being the first daty (00-53))
+	  * %X (Time Representation locale dependant) //---------------------- Using %T formatter
+	  * %% (literal '%' sign)
+	  * %G (week-based year)
+	 //*******************************************************************************************/
 
 	class Formatter
 	{
@@ -99,9 +97,6 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
-	static constexpr size_t maxPrecision              = 9;
-	static constexpr size_t defaultSubSecondPrecision = 3;
-	static constexpr size_t defaultBufferSize         = 24;
 	class Format_Arg_e: public Formatter
 	{
 	      public:
@@ -116,12 +111,6 @@ namespace serenity::msg_details {
 		std::array<char, defaultBufferSize> buffer;
 		size_t m_precision;
 	};
-
-	// Missing %g (week based year last 2 digits)
-
-	// Missing %h (it's the same as %b though)
-
-	// Missing %j (Day of year (001-366)
 
 	class Format_Arg_l: public Formatter
 	{
@@ -206,7 +195,30 @@ namespace serenity::msg_details {
 		std::string hour;
 	};
 
-	static constexpr size_t defaultThreadIdLength = 10;
+	// TODO: Add bit field for combining specs
+	class Format_Arg_s: public Formatter
+	{
+	      public:
+		explicit Format_Arg_s(Message_Info& info, size_t flag);
+		Format_Arg_s(const Format_Arg_s&)            = delete;
+		Format_Arg_s& operator=(const Format_Arg_s&) = delete;
+		~Format_Arg_s()                              = default;
+
+		size_t FindEndPos();
+		void FormatAll();
+		void FormatLine();
+		void FormatColumn();
+		void FormatFile();
+		void FormatFunction();
+		std::string_view FormatUserPattern() override;
+
+	      private:
+		const std::source_location& srcLocation;
+		std::array<char, 6> buff;
+		std::filesystem::path file;
+		size_t spec;
+	};
+
 	class Format_Arg_t: public Formatter
 	{
 	      public:
@@ -220,8 +232,6 @@ namespace serenity::msg_details {
 	      private:
 		size_t thread;
 	};
-
-	// Missing %u (weekday as a number with Monday as 1 (1-7))
 
 	class Format_Arg_w: public Formatter
 	{
@@ -238,8 +248,6 @@ namespace serenity::msg_details {
 		const std::tm& cacheRef;
 		int lastDay { 0 };
 	};
-
-	// Missing %x (Date Representation); this is the same as %D but locale dependant
 
 	class Format_Arg_y: public Formatter
 	{
@@ -355,8 +363,6 @@ namespace serenity::msg_details {
 		const std::tm& cacheRef;
 		int lastDay;
 	};
-
-	// Missing %G (week-based year)
 
 	class Format_Arg_H: public Formatter
 	{
@@ -480,14 +486,6 @@ namespace serenity::msg_details {
 		const std::tm& cacheRef;
 	};
 
-	// Missing %U (week number with first Sunday as the first day of week one (00-53))
-
-	// Missing %V (ISO 8601 week number (01-53)
-
-	// Missing %W (week number with first Monday as the first day of week one (00-53))
-
-	// Missing %X (Time Representation) same as %T but locale dependant
-
 	class Format_Arg_Y: public Formatter
 	{
 	      public:
@@ -505,9 +503,22 @@ namespace serenity::msg_details {
 		int lastYear;
 	};
 
-	// Missing %Z (Timezone name or abbreviation)
+	class Format_Arg_Z: public Formatter
+	{
+	      public:
+		explicit Format_Arg_Z(Message_Info& info);
+		Format_Arg_Z(const Format_Arg_Z&)            = delete;
+		Format_Arg_Z& operator=(const Format_Arg_Z&) = delete;
+		~Format_Arg_Z()                              = default;
 
-	// Missing %% (literal '%' sign)
+		std::string& UpdateInternalView() override;
+		std::string_view FormatUserPattern() override;
+
+	      private:
+		Message_Time& timeRef;
+		message_time_mode& timeModeRef;
+		message_time_mode cachedMode;
+	};
 
 	class Format_Arg_Message: public Formatter
 	{

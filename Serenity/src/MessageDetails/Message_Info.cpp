@@ -65,8 +65,13 @@ namespace serenity::msg_details {
 		return m_locale;
 	}
 
-	void Message_Info::SetMessage(std::string_view msg) {
+	const std::source_location& Message_Info::SourceLocation() const {
+		return source;
+	}
+
+	void Message_Info::SetMessage(std::string_view msg, const std::source_location& src) {
 		m_message.clear();
 		m_message.append(msg.data(), msg.size());
+		source = src;
 	}
 }    // namespace serenity::msg_details

@@ -10,6 +10,7 @@
 #include <chrono>
 
 namespace serenity::targets {
+
 	class TargetBase
 	{
 	      public:
@@ -24,12 +25,12 @@ namespace serenity::targets {
 		void SetLogLevel(LoggerLevel level);
 		LoggerLevel Level() const;
 		void SetLoggerName(std::string_view name);
-		template<typename... Args> void Trace(std::string_view msg, Args&&... args);
-		template<typename... Args> void Info(std::string_view msg, Args&&... args);
-		template<typename... Args> void Debug(std::string_view msg, Args&&... args);
-		template<typename... Args> void Warn(std::string_view msg, Args&&... args);
-		template<typename... Args> void Error(std::string_view msg, Args&&... args);
-		template<typename... Args> void Fatal(std::string_view msg, Args&&... args);
+		template<typename... Args> void Trace(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Info(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Debug(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Warn(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Error(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Fatal(MsgWithLoc msg, Args&&... args);
 		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 		virtual void SetLocale(const std::locale& loc);
 		std::locale GetLocale() const;

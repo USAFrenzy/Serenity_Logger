@@ -6,7 +6,7 @@ namespace serenity::msg_details {
 	Message_Time::Message_Time(message_time_mode mode): m_mode(mode), m_timeZone(*std::chrono::current_zone()) {
 		UpdateTimeDate(std::chrono::system_clock::now());
 		auto yr { m_cache.tm_year + 1900 };
-		((yr % 4 == 0 && yr % 100 != 0) || (yr % 400 == 0)) ? leapYear = true : leapYear = false;
+		(yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0)) ? leapYear = true : leapYear = false;
 	}
 
 	const std::chrono::time_zone* Message_Time::GetTimeZone() {
@@ -56,8 +56,9 @@ namespace serenity::msg_details {
 		return secsSinceLastLog;
 	}
 
-	// Using Ted's version is much faster than the iterative approach I was naively doing
-	// Ultra-fast-Algorithms-for-Working-with-Leap-Years Ted Nguyen (GNU license)
+	// This much faster implementation than iterating naively in a loop was found at the following:
+	// Ultra-fast-Algorithms-for-Working-with-Leap-Years blog by Ted Nguyen
+	// https://stackoverflow.com/questions/4587513/how-to-calculate-number-of-leap-years-between-two-years-in-c-sharp Victor Haydin's answer
 	int Message_Time::LeapYearsSinceEpoch(int yearIndex) {
 		return (yearIndex / 4) - (yearIndex / 100) + (yearIndex / 400);
 	}
