@@ -56,6 +56,8 @@ namespace serenity::msg_details {
 	{
 	};
 
+	// TODO: Look at possibly adding pointer types (where user passes in pointer and ArgContainer contains
+	// TODO: the value at the address - which is currently unsupported) and other derivitives
 	class ArgContainer
 	{
 	      public:
@@ -139,7 +141,7 @@ namespace serenity::msg_details {
 		void StoreFormat();
 		const Message_Info* MessageDetails();
 		void LazySubstitute(std::string& msg, std::string&& arg);
-		template<typename... Args> void FmtMessage(serenity::MsgWithLoc message, Args&&... args) {
+		template<typename... Args> void FmtMessage(MsgWithLoc message, Args&&... args) {
 			lazy_message.clear();
 			argStorage.CaptureArgs(std::forward<Args>(args)...);
 			if( argStorage.ContainsUnsupportedType() || argStorage.ContainsArgSpecs(message.msg) ) {

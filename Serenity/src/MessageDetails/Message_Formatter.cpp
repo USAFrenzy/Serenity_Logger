@@ -234,6 +234,9 @@ namespace serenity::msg_details {
 					                                              reinterpret_cast<size_t>(std::move(std::get<13>(arg))), 16));
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append("0x").append(buffer.data(), buffer.size());
+							for( auto& ch: strRef ) {
+									if( std::isalpha(ch) ) ch = std::toupper(ch);
+								}
 					}
 					return std::move(strRef);
 					break;
@@ -282,20 +285,21 @@ namespace serenity::msg_details {
 				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_z>(*msgInfo)); break;
 				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
 				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
-				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
-				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
-				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
-				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
-				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
-				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
-				case 25: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
-				case 26: formatter.Emplace_Back(std::make_unique<Format_Arg_R>(*msgInfo)); break;
-				case 27: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
-				case 28: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
-				case 29: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
-				case 30: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
-				case 31: formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(*msgInfo)); break;
-				case 32: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
+				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_C>(*msgInfo)); break;
+				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
+				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
+				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
+				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
+				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
+				case 25: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
+				case 26: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
+				case 27: formatter.Emplace_Back(std::make_unique<Format_Arg_R>(*msgInfo)); break;
+				case 28: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
+				case 29: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 30: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
+				case 31: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 32: formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(*msgInfo)); break;
+				case 33: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
 				default:
 					// This function is only accessed if an index is found in allValidFlags array
 					break;

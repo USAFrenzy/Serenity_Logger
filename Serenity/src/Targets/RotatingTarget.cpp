@@ -192,7 +192,7 @@ namespace serenity::experimental::targets {
 		return rotationRenameSuccessful;
 	}
 
-	bool RotatingTarget::ReplaceOldFIleInRotation() {
+	bool RotatingTarget::ReplaceOldFileInRotation() {
 		bool success { true };
 		auto logDirectory { std::filesystem::directory_iterator(OriginalDirectory()) };
 		std::filesystem::file_time_type oldestWriteTime { std::chrono::file_clock::now() };
@@ -247,7 +247,7 @@ namespace serenity::experimental::targets {
 		}
 		CloseFile();
 		if( !RenameFileInRotation(OriginalPath()) ) {
-				if( !ReplaceOldFIleInRotation() ) {
+				if( !ReplaceOldFileInRotation() ) {
 						// If we can't rotate to a new file or replace the oldest file,
 						// then we can't log anthing so this would be considered fatal
 						throw std::runtime_error("Unable To Rotate File Or Replace Oldest File\n");

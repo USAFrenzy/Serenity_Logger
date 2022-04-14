@@ -84,8 +84,8 @@
 #define KB                       (1024)
 #define MB                       (1024 * KB)
 #define GB                       (1024 * MB)
-#define DEFAULT_BUFFER_SIZE      (64 * KB)
-#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)
+#define DEFAULT_BUFFER_SIZE      (64 * KB)                  // used for file buffers
+#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)    // used for lazy parsing
 
 // declaring for use later and for doc purposes
 namespace serenity::experimental { }
@@ -106,12 +106,15 @@ namespace serenity {
 	namespace SERENITY_LUTS {
 		// clang-format off
 
-		static constexpr std::array<std::string_view, 33> allValidFlags = {
+		static constexpr std::array<std::string_view, 34> allValidFlags = {
 			"%a", "%b", "%c", "%d", "%e", "%h","%l", "%m", "%n", "%p", "%r", 
-			"%s" , "%t", "%w", "%x", "%y", "%z", "%A", " %B", "%D", "%F", "%H", 
-			"%I", "%L", "%M", "%N", "%R", "%S", "%T", "%X","%Y","%Z", "%+"
+			"%s" , "%t", "%w", "%x", "%y", "%z", "%A", " %B", "%C", "%D", "%F", "%H", 
+			"%I", "%L", "%M", "%N", "%R", "%S", "%T", "%X","%Y", "%Z", "%+"
 		};
 
+		// TODO: Look at using C++20's new date related functions and update the formatting arguments 
+		// TODO: appropriately based on ease and performance. Already using chrono's time_zone type for %Z.
+		// TODO: Also, using %w's FormatUserPattern() as an example, possibly eliminate the numberStr LUT
 		static constexpr std::array<std::string_view, 7> short_weekdays = {
 			"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 		};
@@ -208,11 +211,6 @@ namespace serenity {
 			}
 	}
 
-	static constexpr size_t maxPrecision              = 9;
-	static constexpr size_t defaultSubSecondPrecision = 3;
-	static constexpr size_t defaultBufferSize         = 24;
-	static constexpr size_t defaultThreadIdLength     = 10;
-
 	enum class source_flag
 	{
 		empty    = 0,
@@ -222,20 +220,14 @@ namespace serenity {
 		function = 8,
 		all      = 16,
 	};
-
 	constexpr source_flag operator|(source_flag lhs, source_flag rhs) {
 		return static_cast<source_flag>(static_cast<std::underlying_type<source_flag>::type>(lhs) |
 		                                static_cast<std::underlying_type<source_flag>::type>(rhs));
 	}
-
-	constexpr source_flag operator&(source_flag lhs, source_flag rhs) {
-		return static_cast<source_flag>(static_cast<std::underlying_type<source_flag>::type>(lhs) &
-		                                static_cast<std::underlying_type<source_flag>::type>(rhs));
-	}
-
 	constexpr source_flag operator|=(source_flag& lhs, source_flag rhs) {
 		return static_cast<source_flag>(lhs = lhs | rhs);
 	}
+
 	// clang-format off
 	
 	// Warning Messages Specific To The User Supplied Format Pattern
@@ -244,6 +236,7 @@ namespace serenity {
 		"Warning: Format string token \"%e\" contains an invalid precision specifier.",
 		"Warning: Format string token \"%t\" contains an invalid precision specifier.",
 	};
+
 	// clang-format on
 
 	// Currently only using in parsing user format pattern, but would like to extend these to the lazy substitution
@@ -282,7 +275,8 @@ namespace serenity {
 	{
 		std::string msg;
 		std::source_location source;
-		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current())
+			: msg(sv.data(), sv.size()), source(src) { }
 		MsgWithLoc(std::string sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
 		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
 	};

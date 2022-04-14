@@ -201,6 +201,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_r::UpdateInternalView() {
 		auto hr { cacheRef.tm_hour };
+		auto ampm { hr >= 12 ? "pm" : "am" };
 		if( lastMin != cacheRef.tm_min ) {
 				lastMin = cacheRef.tm_min;
 				hour    = (hr > 12) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>(hr) - 12 ] : SERENITY_LUTS::numberStr[ hr ];
@@ -208,7 +209,13 @@ namespace serenity::msg_details {
 		}
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		result.clear();
-		return result.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size());
+		return result.append(hour.data(), hour.size())
+		.append(":")
+		.append(min.data(), min.size())
+		.append(":")
+		.append(sec.data(), sec.size())
+		.append(" ")
+		.append(ampm);
 	}
 
 	std::string_view Format_Arg_r::FormatUserPattern() {
@@ -303,14 +310,20 @@ namespace serenity::msg_details {
 
 	// Format %w Functions
 	/*********************************************************************************************************************/
-	Format_Arg_w::Format_Arg_w(Message_Info& info): cacheRef(info.TimeInfo()) {
+	Format_Arg_w::Format_Arg_w(Message_Info& info): cacheRef(info.TimeInfo()), buff(std::array<char, 3> {}) {
+		buff[ 0 ] = '0';
 		UpdateInternalView();
 	}
 
+	// Since tm_wkday is one digit, it's possible to manually pad the first index, leave the third index as null
+	// terminator, and only ever have to change the second index by offsetting to_chars to affect only that index
+	// TODO: Take this as an example and possibly eliminate the usage of lookup tables from Common.h
 	std::string& Format_Arg_w::UpdateInternalView() {
-		lastDay = cacheRef.tm_wday;
 		result.clear();
-		return result.append(std::move(std::vformat("{}", std::make_format_args(lastDay))));
+		lastDay   = cacheRef.tm_wday;
+		buff[ 1 ] = '\0';
+		std::to_chars(buff.data() + 1, buff.data() + 2, lastDay);
+		return result.append(std::move(buff.data()), 3);
 	}
 
 	std::string_view Format_Arg_w::FormatUserPattern() {

@@ -86,7 +86,7 @@ namespace serenity::experimental::targets {
 		void PrintMessage(std::string_view formatted) override;
 		void PolicyFlushOn() override;
 		bool RenameFileInRotation(std::filesystem::path newFilePath);
-		bool ReplaceOldFIleInRotation();
+		bool ReplaceOldFileInRotation();
 
 	private:
 		bool rotationEnabled;

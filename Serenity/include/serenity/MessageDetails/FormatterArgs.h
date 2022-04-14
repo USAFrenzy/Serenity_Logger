@@ -33,8 +33,7 @@ namespace serenity::msg_details {
 		std::string result;
 	};
 
-	// Formatting Structs For Flag Arguments
-
+	// Abbreviated weekday name
 	class Format_Arg_a: public Formatter
 	{
 	      public:
@@ -51,6 +50,7 @@ namespace serenity::msg_details {
 		int lastWkday { 0 };
 	};
 
+	// Abbreviated month name
 	class Format_Arg_b: public Formatter
 	{
 	      public:
@@ -67,6 +67,7 @@ namespace serenity::msg_details {
 		int lastMonth;
 	};
 
+	// 	Date and time representation
 	class Format_Arg_c: public Formatter
 	{
 	      public:
@@ -81,6 +82,7 @@ namespace serenity::msg_details {
 		Message_Time& timeRef;
 	};
 
+	// Day of the month, zero - padded
 	class Format_Arg_d: public Formatter
 	{
 	      public:
@@ -97,6 +99,10 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
+	// Subsecond precision of current time (0-9 digit precision | ms->ns)
+	static constexpr size_t maxPrecision              = 9;
+	static constexpr size_t defaultSubSecondPrecision = 3;
+	static constexpr size_t defaultBufferSize         = 24;
 	class Format_Arg_e: public Formatter
 	{
 	      public:
@@ -112,6 +118,7 @@ namespace serenity::msg_details {
 		size_t m_precision;
 	};
 
+	// Short message level represntation (I,T,D,W,E,F)
 	class Format_Arg_l: public Formatter
 	{
 	      public:
@@ -128,6 +135,7 @@ namespace serenity::msg_details {
 		LoggerLevel lastLevel;
 	};
 
+	// Month as a decimal number
 	class Format_Arg_m: public Formatter
 	{
 	      public:
@@ -144,6 +152,7 @@ namespace serenity::msg_details {
 		int lastMonth;
 	};
 
+	// ddmmyy (14Apr22)
 	class Format_Arg_n: public Formatter
 	{
 	      public:
@@ -161,6 +170,7 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
+	// AM or PM designation
 	class Format_Arg_p: public Formatter
 	{
 	      public:
@@ -177,6 +187,7 @@ namespace serenity::msg_details {
 		int lastHour;
 	};
 
+	// 12-hour clock time
 	class Format_Arg_r: public Formatter
 	{
 	      public:
@@ -195,6 +206,14 @@ namespace serenity::msg_details {
 		std::string hour;
 	};
 
+	/********************************************** source location **********************************************/
+	/*************************************************************************************************************
+	 * Using ':' and any of 'f','l','c','F' specifiers in almost any combo after the flag provides:
+	 * File, Line, Column, and Function sources
+	 * If only ':' is present or if nothing is present after the flag, formats as if source_flag::all was set.
+	 * The only cases not present are File/Column and Function/Column combos (If these are the only specifiers
+	 * present, will default to formatting as if source_flag::all was set).
+	 ************************************************************************************************************/
 	class Format_Arg_s: public Formatter
 	{
 	      public:
@@ -218,6 +237,9 @@ namespace serenity::msg_details {
 		source_flag spec;
 	};
 
+	// Thread id
+	// Precision argument dictates the length of the hashed id returned (0-10)
+	static constexpr size_t defaultThreadIdLength = 10;
 	class Format_Arg_t: public Formatter
 	{
 	      public:
@@ -232,6 +254,7 @@ namespace serenity::msg_details {
 		size_t thread;
 	};
 
+	// Weekday as a decimal number with Sunday as 0 (0-6)
 	class Format_Arg_w: public Formatter
 	{
 	      public:
@@ -245,9 +268,11 @@ namespace serenity::msg_details {
 
 	      private:
 		const std::tm& cacheRef;
+		std::array<char, 3> buff;
 		int lastDay { 0 };
 	};
 
+	// Year, last two digits (00-99)
 	class Format_Arg_y: public Formatter
 	{
 	      public:
@@ -265,6 +290,7 @@ namespace serenity::msg_details {
 		int lastYear;
 	};
 
+	// offset from UTC in timezone
 	class Format_Arg_z: public Formatter
 	{
 	      public:
@@ -281,6 +307,7 @@ namespace serenity::msg_details {
 		int lastMin;
 	};
 
+	// Full weekday name
 	class Format_Arg_A: public Formatter
 	{
 	      public:
@@ -297,6 +324,7 @@ namespace serenity::msg_details {
 		int lastWkday;
 	};
 
+	// Full month name
 	class Format_Arg_B: public Formatter
 	{
 	      public:
@@ -313,6 +341,7 @@ namespace serenity::msg_details {
 		int lastMonth;
 	};
 
+	// Year modulo 100 (same effect - gives YY)
 	class Format_Arg_C: public Formatter
 	{
 	      public:
@@ -329,6 +358,7 @@ namespace serenity::msg_details {
 		int lastYear;
 	};
 
+	//	Short MM/DD/YY date, equivalent to %m/%d/%y
 	class Format_Arg_D: public Formatter
 	{
 	      public:
@@ -346,6 +376,7 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
+	// Short YYYY-MM-DD date, equivalent to %Y-%m-%d
 	class Format_Arg_F: public Formatter
 	{
 	      public:
@@ -363,6 +394,7 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
+	// Hour in 24h format (00-23)
 	class Format_Arg_H: public Formatter
 	{
 	      public:
@@ -379,6 +411,7 @@ namespace serenity::msg_details {
 		int lastHour;
 	};
 
+	// Hour in 12h format (01-12)
 	class Format_Arg_I: public Formatter
 	{
 	      public:
@@ -394,7 +427,7 @@ namespace serenity::msg_details {
 		const std::tm& cacheRef;
 		int lastHour;
 	};
-
+	// Long message level represntation (INFO,TRACE,DEBUG,WARN,ERROR,FATAL)
 	class Format_Arg_L: public Formatter
 	{
 	      public:
@@ -411,6 +444,7 @@ namespace serenity::msg_details {
 		LoggerLevel lastLevel;
 	};
 
+	// 	Minute (00-59)
 	class Format_Arg_M: public Formatter
 	{
 	      public:
@@ -427,6 +461,7 @@ namespace serenity::msg_details {
 		int lastMin;
 	};
 
+	// Target's Name
 	class Format_Arg_N: public Formatter
 	{
 	      public:
@@ -441,6 +476,7 @@ namespace serenity::msg_details {
 		std::string& name;
 	};
 
+	// 24-hour HH : MM time, equivalent to %H:%M
 	class Format_Arg_R: public Formatter
 	{
 	      public:
@@ -455,6 +491,7 @@ namespace serenity::msg_details {
 		const std::tm& cacheRef;
 	};
 
+	// 	Second (00-61)
 	class Format_Arg_S: public Formatter
 	{
 	      public:
@@ -471,6 +508,7 @@ namespace serenity::msg_details {
 		int lastSec;
 	};
 
+	// ISO 8601 time format (HH:MM:SS), equivalent to %H:%M:%S
 	class Format_Arg_T: public Formatter
 	{
 	      public:
@@ -485,6 +523,7 @@ namespace serenity::msg_details {
 		const std::tm& cacheRef;
 	};
 
+	// Year in YYYY format
 	class Format_Arg_Y: public Formatter
 	{
 	      public:
@@ -502,6 +541,7 @@ namespace serenity::msg_details {
 		int lastYear;
 	};
 
+	// Timezone abbreviation
 	class Format_Arg_Z: public Formatter
 	{
 	      public:
@@ -519,6 +559,7 @@ namespace serenity::msg_details {
 		message_time_mode cachedMode;
 	};
 
+	// The actual message placement
 	class Format_Arg_Message: public Formatter
 	{
 	      public:
@@ -533,6 +574,7 @@ namespace serenity::msg_details {
 		std::string& message;
 	};
 
+	// Anything not covered by the above formatters
 	class Format_Arg_Char: public Formatter
 	{
 	      public:
