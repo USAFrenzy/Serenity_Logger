@@ -9,6 +9,10 @@ configuration:
 platform: x64
 build_script:
 - cmd: >-
-    mkdir build
+    mkdir build2019
 
-    cmake -B build  -G "Visual Studio 16 2019" -A x64 -D CMAKE_BUILD_TYPE=Release -S .
+    cmake -B build2019  -G "Visual Studio 16 2019" -A x64 -D CMAKE_BUILD_TYPE=Release -S .
+
+    mkdir build2022
+
+    cmake -B build2022  -G "Visual Studio 17 2022" -A x64 -D CMAKE_BUILD_TYPE=Release -S .
