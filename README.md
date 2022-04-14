@@ -1,5 +1,5 @@
 [![](https://tokei.rs/b1/github/USAFrenzy/Serenity_Logger?category=code)](https://github.com/USAFrenzy/Serenity_Logger/tree/dev)
-
+[![Build status](https://ci.appveyor.com/api/projects/status/3yywxhc5bc4gq6hr/branch/dev?svg=true)](https://ci.appveyor.com/project/USAFrenzy/serenity-logger/branch/dev)
 
 ### For all current details about the library, check out the documentation [HERE](https://usafrenzy.github.io/Serenity_Logger/) ###
 

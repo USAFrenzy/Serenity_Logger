@@ -7,9 +7,10 @@ image:
 configuration:
 - Release
 platform: x64
-clone_folder: Serenity/build
 build_script:
 - cmd: >-
     mkdir build
-    cmake -G %generator% -D CMAKE_BUILD_TYPE=%build_type%
-    cmake -B build --config %build_type% -S .
+
+    cmake -G "Visual Studio 16 2019" -A x64 -D CMAKE_BUILD_TYPE=Release
+
+    cmake -B build --config Release -S .
