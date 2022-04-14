@@ -1,27 +1,13 @@
 version: 0.2.{build}
 branches:
   only:
-  - main
   - dev
 image:
 - Visual Studio 2019
-environment:
-  matrix:
-    - GENERATOR: '"Visual Studio 16 2019" -A x64'
-      BUILD_CONFIG: Release
-      BUILD_SANDBOX: 'OFF'
-      ENABLE_UTF8_FLAG: 'OFF'
-      BUILD_DEMOS: 'OFF'     
-      CXX_STANDARD: 23
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    - GENERATOR: '"Visual Studio 17 2022" -A x64'
-      BUILD_CONFIG: Release
-      BUILD_SANDBOX: 'OFF'
-      ENABLE_UTF8_FLAG: 'OFF'
-      BUILD_DEMOS: 'OFF'
-      CXX_STANDARD: 23
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-
+configuration:
+- Debug
+- Release
+platform: x64
 clone_folder: Serenity/build
 build_script:
 - cmd: >-
