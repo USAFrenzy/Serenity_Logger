@@ -1,13 +1,8 @@
 version: 0.2.{build}
 branches:
   only:
+  - main
   - dev
-image:
-- Visual Studio 2019
-- Visual Studio 2022
-configuration:
-- Release
-platform: x64
 environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
@@ -15,7 +10,7 @@ environment:
     GENERATOR: '"Visual Studio 16 2019" -A x64'
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     BUILD_DIR: "build2022"
-    GENERATOR: '"Visual Studio 16 2022" -A x64'
+    GENERATOR: '"Visual Studio 17 2022" -A x64'
 
 
 build_script:
