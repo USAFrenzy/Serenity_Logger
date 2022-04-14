@@ -1,0 +1,35 @@
+version: 0.2.{build}
+branches:
+  only:
+  - main
+  - dev
+image:
+- Visual Studio 2019
+- Visual Studio 2022
+environment:
+  matrix:
+    - GENERATOR: '"Visual Studio 16 2019" -A x64'
+      BUILD_CONFIG: Release
+      BUILD_SANDBOX: 'OFF'
+      ENABLE_UTF8_FLAG: 'OFF'
+      BUILD_DEMOS: 'OFF'     
+      CXX_STANDARD: 23
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    - GENERATOR: '"Visual Studio 17 2022" -A x64'
+      BUILD_CONFIG: Release
+      BUILD_SANDBOX: 'OFF'
+      ENABLE_UTF8_FLAG: 'OFF'
+      BUILD_DEMOS: 'OFF'
+      CXX_STANDARD: 23
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+
+clone_folder: Build
+build_script:
+- cmd: >-
+    mkdir build
+
+    cd build
+
+    cmake -G %GENERATOR% -D CMAKE_BUILD_TYPE=%BUILD_CONFIG% -D BUILD_SANDBOX=%BUILD_SANDBOX% -D BUILD_DEMOS=%BUILD_DEMOS% -D ENABLE_UTF8_FLAG=%ENABLE_UTF8_FLAG% -D CMAKE_CXX_STANDARD=%CXX_STANDARD% ..
+
+    cmake --build . --config %BUILD_TYPE% 
