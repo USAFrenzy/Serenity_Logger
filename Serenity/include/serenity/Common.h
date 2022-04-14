@@ -208,23 +208,42 @@ namespace serenity {
 			}
 	}
 
-	static constexpr int sourceLineFormatting         = 1;
-	static constexpr int sourceColumnFormatting       = 2;
-	static constexpr int sourceFileFormatting         = 3;
-	static constexpr int sourceFunctionFormatting     = 4;
-	static constexpr int fullSourceFormatting         = 5;
 	static constexpr size_t maxPrecision              = 9;
 	static constexpr size_t defaultSubSecondPrecision = 3;
 	static constexpr size_t defaultBufferSize         = 24;
 	static constexpr size_t defaultThreadIdLength     = 10;
 
-	// clang-format off
-
-	static constexpr std::array<const char*, 2> formatWarningMessage =
+	enum class source_flag
 	{
-		"Warning: Format string token \"%e\" contains an invalid precision specifier. The default precision will be used instead.\n",
-		"Warning: Format string token \"%t\" contains an invalid precision specifier. The default precision will be used instead.\n"
-		"Warning: Format string token \"%s\" contains an invalid char specifier. The default specifier will be used instead.\n"
+		empty    = 0,
+		line     = 1,
+		column   = 2,
+		file     = 4,
+		function = 8,
+		all      = 16,
+	};
+
+	constexpr source_flag operator|(source_flag lhs, source_flag rhs) {
+		return static_cast<source_flag>(static_cast<std::underlying_type<source_flag>::type>(lhs) |
+		                                static_cast<std::underlying_type<source_flag>::type>(rhs));
+	}
+
+	constexpr source_flag operator&(source_flag lhs, source_flag rhs) {
+		return static_cast<source_flag>(static_cast<std::underlying_type<source_flag>::type>(lhs) &
+		                                static_cast<std::underlying_type<source_flag>::type>(rhs));
+	}
+
+	constexpr source_flag operator|=(source_flag& lhs, source_flag rhs) {
+		return static_cast<source_flag>(lhs = lhs | rhs);
+	}
+	// clang-format off
+	
+	// Warning Messages Specific To The User Supplied Format Pattern
+	static constexpr std::array<const char*, 3> formatWarningMessage =
+	{
+		"Warning: Format string token \"%e\" contains an invalid precision specifier.",
+		"Warning: Format string token \"%t\" contains an invalid precision specifier.",
+		"Warning: Format string token \"%s\" contains an invalid char specifier."
 	};
 	// clang-format on
 
@@ -242,7 +261,8 @@ namespace serenity {
 	static constexpr std::array<char, 4> validCharSpecs = { 'l', 'c', 'f', 'F' };
 	static void ParseCharSpec(std::string& specStr, std::vector<char>& specs) {
 		if( specStr.size() == 0 ) return;
-		for( auto& ch: specStr ) {
+		for( ;; ) {
+				auto ch { specStr.front() };
 				if( !std::isalpha(ch) ) break;
 				if( std::find(validCharSpecs.begin(), validCharSpecs.end(), ch) != validCharSpecs.end() ) {
 						specs.emplace_back(ch);

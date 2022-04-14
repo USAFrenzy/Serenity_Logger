@@ -70,8 +70,8 @@ namespace serenity::msg_details {
 	}
 
 	void Message_Info::SetMessage(std::string_view msg, const std::source_location& src) {
+		source = src;
 		m_message.clear();
 		m_message.append(msg.data(), msg.size());
-		source = src;
 	}
 }    // namespace serenity::msg_details

@@ -78,7 +78,7 @@ static constexpr std::string_view testView {
 
 int main() {
 	std::vector<spdlog::sink_ptr> sinks;
-	std::string spdlogPattern { "%^|%L| %a %d%b%C %T.%e %z [%n]: %v%$" };
+	std::string spdlogPattern { "%^|%L| %a %d%b%C %T [%n]: %v%$" };
 
 	auto stdoutSink { std::make_shared<spdlog::sinks::stdout_color_sink_st>() };
 	sinks.emplace_back(stdoutSink);

@@ -250,7 +250,7 @@ namespace serenity::msg_details {
 	}
 
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
-		: msgInfo(*&details), localeRef(&details->GetLocale()), ePrecision(6) {
+		: msgInfo(*&details), localeRef(&details->GetLocale()), ePrecision(6), sourceFlag(source_flag::empty) {
 		SetPattern(pattern);
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;
@@ -261,8 +261,8 @@ namespace serenity::msg_details {
 #endif    // WINDOWS_PLATFORM
 	}
 
-	void Message_Formatter::FlagFormatter(size_t flag, size_t precision) {
-		switch( flag ) {
+	void Message_Formatter::FlagFormatter(size_t index, size_t precision) {
+		switch( index ) {
 				case 0: formatter.Emplace_Back(std::make_unique<Format_Arg_a>(*msgInfo)); break;
 				case 1: formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo)); break;
 				case 2: formatter.Emplace_Back(std::make_unique<Format_Arg_c>(*msgInfo)); break;
@@ -274,7 +274,7 @@ namespace serenity::msg_details {
 				case 8: formatter.Emplace_Back(std::make_unique<Format_Arg_n>(*msgInfo)); break;
 				case 9: formatter.Emplace_Back(std::make_unique<Format_Arg_p>(*msgInfo)); break;
 				case 10: formatter.Emplace_Back(std::make_unique<Format_Arg_r>(*msgInfo)); break;
-				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_s>(*msgInfo, precision)); break;
+				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_s>(*msgInfo, sourceFlag)); break;
 				case 12: formatter.Emplace_Back(std::make_unique<Format_Arg_t>(precision)); break;
 				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo)); break;
 				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
@@ -293,8 +293,8 @@ namespace serenity::msg_details {
 				case 27: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
 				case 28: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
 				case 29: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
-				case 30: formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(*msgInfo)); break;
-				case 31: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 30: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
+				case 31: formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(*msgInfo)); break;
 				case 32: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
 				default:
 					// This function is only accessed if an index is found in allValidFlags array
@@ -355,33 +355,37 @@ namespace serenity::msg_details {
 	}
 
 	// Currently overkill since it's just validating one token
-	static void ValidateCharSpec(size_t index, size_t& value, std::vector<char> specs) {
+	void Message_Formatter::ValidateCharSpec(size_t index, size_t& value, std::vector<char> specs) {
 		if( specs.size() == 0 ) return;
 		switch( index ) {
-				case 11:    // only handle one spec right now (would need to implement bit flag for combos
-					switch( specs.front() ) {
-							case 'l': value = sourceLineFormatting; break;
-							case 'c': value = sourceColumnFormatting; break;
-							case 'f': value = sourceFileFormatting; break;
-							case 'F': value = sourceFunctionFormatting; break;
-							default: printf("%s", formatWarningMessage[ 2 ]); break;
+				case 11:
+					for( auto& spec: specs ) {
+							switch( spec ) {
+									case 'l': sourceFlag |= source_flag::line; break;
+									case 'c': sourceFlag |= source_flag::column; break;
+									case 'f': sourceFlag |= source_flag::file; break;
+									case 'F': sourceFlag |= source_flag::function; break;
+									default:
+										printf("%s : Specifier \"%c\"", formatWarningMessage[ 2 ], spec);
+										break;
+								}
 						}
 					break;
 				default: break;
 			}
 	}
 
-	static void ValidatePrecisionSpec(size_t index, size_t& value) {
+	void Message_Formatter::ValidatePrecisionSpec(size_t index, size_t& value) {
 		switch( index ) {
 				case 4:
 					if( (value > 9) || (value < 0) ) {
-							printf("%s", formatWarningMessage[ 0 ]);
+							printf("%s : Specifier \"%zu\"", formatWarningMessage[ 0 ], value);
 							value = defaultSubSecondPrecision;
 					}
 					break;
 				case 10:
 					if( (value > 10) || (value < 0) ) {
-							printf("%s", formatWarningMessage[ 1 ]);
+							printf("%s : Specifier \"%zu\"", formatWarningMessage[ 1 ], value);
 							value = defaultThreadIdLength;
 					}
 					break;
@@ -406,7 +410,7 @@ namespace serenity::msg_details {
 		} else {
 				if( index == 4 ) tmpValue = defaultSubSecondPrecision;
 				if( index == 10 ) tmpValue = defaultThreadIdLength;
-				if( index == 11 ) tmpValue = fullSourceFormatting;
+				if( index == 11 ) sourceFlag = source_flag::all;
 			}
 		return tmpValue;
 	}

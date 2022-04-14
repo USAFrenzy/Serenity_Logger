@@ -219,7 +219,7 @@ namespace serenity::msg_details {
 
 	// Format %s Functions
 	/*********************************************************************************************************************/
-	Format_Arg_s::Format_Arg_s(Message_Info& info, size_t flag)
+	Format_Arg_s::Format_Arg_s(Message_Info& info, source_flag flag)
 		: srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag) { }
 
 	size_t Format_Arg_s::FindEndPos() {
@@ -231,8 +231,6 @@ namespace serenity::msg_details {
 	}
 
 	void Format_Arg_s::FormatAll() {
-		result.clear();
-
 		file = srcLocation.file_name();
 		result.append("[ ").append(file.filename().string()).append("(");
 
@@ -247,38 +245,46 @@ namespace serenity::msg_details {
 		result.append(srcLocation.function_name()).append(" ]");
 	}
 
-	void Format_Arg_s::FormatFile() {
-		result.clear();
+	std::string Format_Arg_s::FormatFile() {
 		file = srcLocation.file_name();
-		result.append(file.make_preferred().filename().string());
+		return file.make_preferred().filename().string();
 	}
-	void Format_Arg_s::FormatLine() {
-		result.clear();
+	std::string Format_Arg_s::FormatLine() {
 		std::fill(buff.data(), buff.data() + buff.size(), '\0');
 		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-		result.append(buff.data(), buff.data() + FindEndPos());
+		return std::string(buff.data(), buff.data() + FindEndPos());
 	}
-	void Format_Arg_s::FormatColumn() {
-		result.clear();
+	std::string Format_Arg_s::FormatColumn() {
 		std::fill(buff.data(), buff.data() + buff.size(), '\0');
 		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
-		result.append(buff.data(), buff.data() + FindEndPos());
+		return std::string(buff.data(), buff.data() + FindEndPos());
 	}
-	void Format_Arg_s::FormatFunction() {
-		result.clear();
-		result.append(srcLocation.function_name());
+	std::string Format_Arg_s::FormatFunction() {
+		return std::string(srcLocation.function_name());
 	}
 
+	// NOTE: cases 6 (File and Column) and 10 (Function and Column) seemed useless so they were left out of here
 	std::string_view Format_Arg_s::FormatUserPattern() {
-		switch( spec ) {
-				case sourceLineFormatting: FormatLine(); break;
-				case sourceColumnFormatting: FormatColumn(); break;
-				case sourceFileFormatting: FormatFile(); break;
-				case sourceFunctionFormatting: FormatFunction(); break;
-				case fullSourceFormatting: FormatAll(); break;
-				default: result.clear(); break;
-			}
+		using enum source_flag;
+		result.clear();
+		// clang-format off
+		switch (static_cast<int>(spec))
+		{
+			case 0:   return ""; break;
+			case 1:   result.append(FormatLine()); break;
+			case 2:   result.append(FormatColumn()); break;
+			case 3:   result.append(FormatLine()).append(":").append(FormatColumn()); break;
+			case 4:   result.append(FormatFile()); break;
+			case 5:   result.append(FormatFile()).append(" ").append(FormatLine()); break;
+			case 7:   result.append(FormatFile()).append("(").append(FormatLine()).append(":").append(FormatColumn()).append(")"); break;
+			case 8:   result.append(FormatFunction()); break;
+			case 9:   result.append(FormatFunction()).append(" ").append(FormatLine()); break;
+			case 11: result.append(FormatFunction()).append("(").append(FormatLine()).append(":").append(FormatColumn()).append(")"); break;
+			case 12: result.append(FormatFile()).append(" ").append(FormatFunction()); break;
+			default: FormatAll(); break;
+		}
 		return result;
+		// clang-format on
 	}
 	/*********************************************************************************************************************/
 

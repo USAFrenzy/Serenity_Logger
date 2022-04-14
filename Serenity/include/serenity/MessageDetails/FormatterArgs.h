@@ -199,24 +199,24 @@ namespace serenity::msg_details {
 	class Format_Arg_s: public Formatter
 	{
 	      public:
-		explicit Format_Arg_s(Message_Info& info, size_t flag);
+		explicit Format_Arg_s(Message_Info& info, source_flag flag);
 		Format_Arg_s(const Format_Arg_s&)            = delete;
 		Format_Arg_s& operator=(const Format_Arg_s&) = delete;
 		~Format_Arg_s()                              = default;
 
 		size_t FindEndPos();
 		void FormatAll();
-		void FormatLine();
-		void FormatColumn();
-		void FormatFile();
-		void FormatFunction();
+		std::string FormatLine();
+		std::string FormatColumn();
+		std::string FormatFile();
+		std::string FormatFunction();
 		std::string_view FormatUserPattern() override;
 
 	      private:
 		const std::source_location& srcLocation;
 		std::array<char, 6> buff;
 		std::filesystem::path file;
-		size_t spec;
+		source_flag spec;
 	};
 
 	class Format_Arg_t: public Formatter

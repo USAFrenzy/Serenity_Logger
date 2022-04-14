@@ -131,8 +131,9 @@ namespace serenity::msg_details {
 		Message_Formatter& operator=(const Message_Info&) = delete;
 
 		size_t ParseForSpec(std::string& parseStr, size_t index);
-
-		void FlagFormatter(size_t flag, size_t precision = 0);
+		void ValidateCharSpec(size_t index, size_t& value, std::vector<char> specs);
+		void ValidatePrecisionSpec(size_t index, size_t& value);
+		void FlagFormatter(size_t index, size_t precision = 0);
 		void SetPattern(std::string_view pattern);
 		Formatters& GetFormatters();
 		void StoreFormat();
@@ -154,7 +155,8 @@ namespace serenity::msg_details {
 						}
 				}
 			auto lineEnd { SERENITY_LUTS::line_ending.at(platformEOL) };
-			msgInfo->SetMessage(lazy_message.append(lineEnd.data(), lineEnd.size()), message.source);
+			lazy_message.append(lineEnd.data(), lineEnd.size());
+			msgInfo->SetMessage(lazy_message, message.source);
 		}
 
 	      private:
@@ -167,6 +169,7 @@ namespace serenity::msg_details {
 		LineEnd platformEOL;
 		ArgContainer argStorage;
 		std::string temp;
+		source_flag sourceFlag;
 	};
 
 }    // namespace serenity::msg_details
