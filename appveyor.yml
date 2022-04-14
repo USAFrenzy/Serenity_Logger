@@ -11,7 +11,5 @@ clone_folder: Serenity/build
 build_script:
 - cmd: >-
     mkdir build
-
-    cd build
-   
-    cmake --build . --config %build_type% -G %generator% -D CMAKE_BUILD_TYPE=%build_type% ..
+    cmake -G %generator% -D CMAKE_BUILD_TYPE=%build_type%
+    cmake -B build --config %build_type% -S .
