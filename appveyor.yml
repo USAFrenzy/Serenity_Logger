@@ -4,6 +4,7 @@ branches:
   - dev
 image:
 - Visual Studio 2019
+- Visual Studio 2022
 configuration:
 - Release
 platform: x64
