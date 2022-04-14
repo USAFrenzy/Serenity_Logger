@@ -5,7 +5,6 @@ branches:
   - dev
 image:
 - Visual Studio 2019
-- Visual Studio 2022
 environment:
   matrix:
     - GENERATOR: '"Visual Studio 16 2019" -A x64'
@@ -23,15 +22,7 @@ environment:
       CXX_STANDARD: 23
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
 
-clone_folder: Build
+clone_folder: Serenity/build
 build_script:
 - cmd: >-
-    mkdir build
-
-    cd build
-
-    cmake -G %GENERATOR% -D CMAKE_BUILD_TYPE=%BUILD_CONFIG% -D BUILD_SANDBOX=%BUILD_SANDBOX% -D BUILD_DEMOS=%BUILD_DEMOS% -D ENABLE_UTF8_FLAG=%ENABLE_UTF8_FLAG% -D CMAKE_CXX_STANDARD=%CXX_STANDARD% 
-
-    cd ..
-    
-    cmake --build . --config %BUILD_TYPE% 
+   scripts/build.bat
