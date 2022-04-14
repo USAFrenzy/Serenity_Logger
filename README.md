@@ -1,7 +1,8 @@
 
 
-[![](https://tokei.rs/b1/github/XAMPPRocky/tokei)](https://github.com/XAMPPRocky/tokei)
-
+[![](https://tokei.rs/b1/github/XAMPPRocky/tokei?category=lines)](https://github.com/XAMPPRocky/tokei)
+[![](https://tokei.rs/b1/github/XAMPPRocky/tokei?category=comments)](https://github.com/XAMPPRocky/tokei)
+[![](https://tokei.rs/b1/github/XAMPPRocky/tokei?category=code)](https://github.com/XAMPPRocky/tokei)
 
 ### For all current details about the library, check out the documentation [HERE](https://usafrenzy.github.io/Serenity_Logger/) ###
 
