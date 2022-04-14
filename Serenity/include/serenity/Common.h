@@ -239,11 +239,10 @@ namespace serenity {
 	// clang-format off
 	
 	// Warning Messages Specific To The User Supplied Format Pattern
-	static constexpr std::array<const char*, 3> formatWarningMessage =
+	static constexpr std::array<const char*, 2> precisionWarningMessage =
 	{
 		"Warning: Format string token \"%e\" contains an invalid precision specifier.",
 		"Warning: Format string token \"%t\" contains an invalid precision specifier.",
-		"Warning: Format string token \"%s\" contains an invalid char specifier."
 	};
 	// clang-format on
 
