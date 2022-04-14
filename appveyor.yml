@@ -8,6 +8,11 @@ image:
 configuration:
 - Release
 platform: x64
+environment:
+  matrix:
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+
 build_script:
 - cmd: >-
     mkdir build2019
