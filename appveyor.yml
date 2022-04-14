@@ -4,7 +4,6 @@ branches:
   - dev
 image:
 - Visual Studio 2019
-platform: x64
 clone_folder: Serenity/build
 environment:
   matrix:
@@ -16,4 +15,4 @@ build_script:
 
    cd build
    
-   cmake -B build -G %generator% -D CMAKE_BUILD_TYPE=build_type ../
+   cmake --build . --config %build_type% -G %generator% -D CMAKE_BUILD_TYPE=%build_type% ..
