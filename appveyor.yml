@@ -14,7 +14,7 @@ environment:
       ENABLE_UTF8_FLAG: 'OFF'
       BUILD_DEMOS: 'OFF'     
       CXX_STANDARD: 23
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     - GENERATOR: '"Visual Studio 17 2022" -A x64'
       BUILD_CONFIG: Release
       BUILD_SANDBOX: 'OFF'
