@@ -5,10 +5,17 @@ branches:
 image:
 - Visual Studio 2019
 configuration:
-- Debug
 - Release
 platform: x64
 clone_folder: Serenity/build
+environment:
+  matrix:
+  - generator: '"Visual Studio 16 2019" -A x64'
+  - build_type: "RELEASE"
 build_script:
 - cmd: >-
-   scripts/build.bat
+   mkdir build
+
+   cd build
+   
+   cmake -G %generator% -D CMAKE_BUILD_TYPE=%build_type% ..
