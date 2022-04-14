@@ -318,25 +318,31 @@ namespace serenity::msg_details {
 
 	// Initialize for no conflicts with FlagFormatter() for user defined format funcs if implemented later on
 	constexpr unsigned int MAX_INDEX = 128;
-
+	// Made some changes to address some buggy behavior
+	// TODO: Look at how to clean this up, this is starting to be a nightmare of if/else
 	void Message_Formatter::StoreFormat() {
+		namespace lut = SERENITY_LUTS;
 		temp.clear();
 		temp.append(fmtPattern);
 		std::string flag;
 		size_t index { MAX_INDEX };
 		formatter.Clear();
 		while( !temp.empty() ) {
+				index = MAX_INDEX;
 				if( temp.front() == '%' ) {
 						flag.clear();
 						flag.append(temp.substr(0, 2));
 						temp.erase(0, flag.size());
-						auto position { std::find(SERENITY_LUTS::allValidFlags.begin(),
-							                  SERENITY_LUTS::allValidFlags.end(), flag) };
-						if( position != SERENITY_LUTS::allValidFlags.end() ) {
-								index = std::distance(SERENITY_LUTS::allValidFlags.begin(), position);
+						auto position { std::find(lut::allValidFlags.begin(), lut::allValidFlags.end(), flag) };
+						if( position != lut::allValidFlags.end() ) {
+								index = std::distance(lut::allValidFlags.begin(), position);
+						} else {
+								formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(flag));
+							}
+						if( index != MAX_INDEX ) {
+								auto precision { ParseForSpec(temp, index) };
+								FlagFormatter(index, precision);
 						}
-						auto precision { ParseForSpec(temp, index) };
-						FlagFormatter(index, precision);
 				} else {
 						auto pos { temp.find_first_of('%') };
 						if( pos != std::string::npos ) {
@@ -355,10 +361,13 @@ namespace serenity::msg_details {
 	}
 
 	// Currently overkill since it's just validating one token
-	void Message_Formatter::ValidateCharSpec(size_t index, size_t& value, std::vector<char> specs) {
-		if( specs.size() == 0 ) return;
+	void Message_Formatter::ValidateCharSpec(size_t index, std::vector<char> specs) {
 		switch( index ) {
 				case 11:
+					if( specs.size() == 0 ) {
+							sourceFlag |= source_flag::all;
+							return;
+					}
 					for( auto& spec: specs ) {
 							switch( spec ) {
 									case 'l': sourceFlag |= source_flag::line; break;
@@ -398,20 +407,22 @@ namespace serenity::msg_details {
 		size_t tmpValue {};
 		if( parseStr.size() == 0 ) return tmpValue;
 		if( (parseStr.front() == ':') && (parseStr.size() > 1) ) {
-				parseStr.erase(0, 1);
-				if( std::isdigit(parseStr.front()) ) {
+				auto ch { parseStr.at(1) };
+				if( std::isdigit(ch) ) {
+						parseStr.erase(0, 1);
 						ParsePrecisionSpec(parseStr, tmpValue);
 						ValidatePrecisionSpec(index, tmpValue);
-				} else {
+				} else if( std::isalpha(ch) ) {
+						parseStr.erase(0, 1);
 						std::vector<char> specsOutput {};
 						ParseCharSpec(parseStr, specsOutput);
-						ValidateCharSpec(index, tmpValue, specsOutput);
+						ValidateCharSpec(index, specsOutput);
+				} else {
+						if( index == 4 ) tmpValue = defaultSubSecondPrecision;
+						if( index == 10 ) tmpValue = defaultThreadIdLength;
+						if( index == 11 ) sourceFlag = source_flag::all;
 					}
-		} else {
-				if( index == 4 ) tmpValue = defaultSubSecondPrecision;
-				if( index == 10 ) tmpValue = defaultThreadIdLength;
-				if( index == 11 ) sourceFlag = source_flag::all;
-			}
+		}
 		return tmpValue;
 	}
 

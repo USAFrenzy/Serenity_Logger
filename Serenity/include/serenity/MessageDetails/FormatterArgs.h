@@ -195,7 +195,6 @@ namespace serenity::msg_details {
 		std::string hour;
 	};
 
-	// TODO: Add bit field for combining specs
 	class Format_Arg_s: public Formatter
 	{
 	      public:

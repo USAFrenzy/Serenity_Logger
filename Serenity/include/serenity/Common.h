@@ -263,11 +263,11 @@ namespace serenity {
 		if( specStr.size() == 0 ) return;
 		for( ;; ) {
 				auto ch { specStr.front() };
+				auto end { validCharSpecs.end() };
 				if( !std::isalpha(ch) ) break;
-				if( std::find(validCharSpecs.begin(), validCharSpecs.end(), ch) != validCharSpecs.end() ) {
-						specs.emplace_back(ch);
-						specStr.erase(0, 1);
-				}
+				if( std::find(validCharSpecs.begin(), end, ch) == end ) break;
+				specs.emplace_back(ch);
+				specStr.erase(0, 1);
 			}
 	}
 

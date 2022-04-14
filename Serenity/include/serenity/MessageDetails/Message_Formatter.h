@@ -131,7 +131,7 @@ namespace serenity::msg_details {
 		Message_Formatter& operator=(const Message_Info&) = delete;
 
 		size_t ParseForSpec(std::string& parseStr, size_t index);
-		void ValidateCharSpec(size_t index, size_t& value, std::vector<char> specs);
+		void ValidateCharSpec(size_t index, std::vector<char> specs);
 		void ValidatePrecisionSpec(size_t index, size_t& value);
 		void FlagFormatter(size_t index, size_t precision = 0);
 		void SetPattern(std::string_view pattern);
