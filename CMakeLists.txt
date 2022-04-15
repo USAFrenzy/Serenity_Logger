@@ -36,11 +36,11 @@ endif ()
 
 add_subdirectory(Serenity)
 
-if (BUILD_SANDBOX)
-    add_subdirectory(Sandbox)
-endif ()
-
 if (BUILD_DEMOS)
     add_subdirectory(Demos)
 endif ()
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Sandbox)
+
+if (BUILD_SANDBOX)
+    add_subdirectory(Sandbox)
+    set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Sandbox)
+endif ()
