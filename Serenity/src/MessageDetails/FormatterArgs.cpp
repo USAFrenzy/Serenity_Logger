@@ -312,6 +312,7 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	Format_Arg_w::Format_Arg_w(Message_Info& info): cacheRef(info.TimeInfo()), buff(std::array<char, 3> {}) {
 		buff[ 0 ] = '0';
+		buff[ 2 ] = '\0';
 		UpdateInternalView();
 	}
 
@@ -323,7 +324,7 @@ namespace serenity::msg_details {
 		lastDay   = cacheRef.tm_wday;
 		buff[ 1 ] = '\0';
 		std::to_chars(buff.data() + 1, buff.data() + 2, lastDay);
-		return result.append(std::move(buff.data()), 3);
+		return result.append(buff.data(), buff.size());
 	}
 
 	std::string_view Format_Arg_w::FormatUserPattern() {

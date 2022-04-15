@@ -76,7 +76,8 @@
 --------------------------------------
 <h1 align="center"> Motivation </h1>
 
-<p align="center">One often doesn't think of logging as a fun endeavor, but my goal here is to have just that - a logger that's highly 
+<p align="center">Starting from commit 037a0d2, this project shifted from being solely a wrapper to one of being a home-brewed logging framework.
+As for the motivation, one often doesn't think of logging as a fun endeavor, but my goal here is to have just that - a logger that's highly 
 efficient, fast, customizable, fun, and easy to use. I wanted to make a logger that had several color choices to pick from 
 (More than a user may ever need, while still modularizing components for choices a user may not want). I plan on extending 
 this to cover some basic RGB color combos as well and add user defined formatting call backs and a way to add user defined flags. </p> 
