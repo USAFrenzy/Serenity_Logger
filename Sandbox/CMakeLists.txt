@@ -15,9 +15,7 @@ else ()
     set(STANDARD 20)
 endif ()
 
-set_target_properties(
-    ${PROJECT_NAME} PROPERTIES CXX_STANDARD ${STANDARD} COMPILE_FLAGS ${FLAG_STORAGE}
-)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD ${STANDARD})
 
 target_link_libraries(
     ${PROJECT_NAME}
