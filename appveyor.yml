@@ -6,15 +6,28 @@ branches:
 environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    BUILD_DIR: "build2019"
     GENERATOR: '"Visual Studio 16 2019" -A x64'
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'OFF'
+    ENABLE_UTF8_FLAG: 'OFF'
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    GENERATOR: '"Visual Studio 16 2019" -A x64'
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'OFF'
+    ENABLE_UTF8_FLAG: 'ON'
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    BUILD_DIR: "build2022"
     GENERATOR: '"Visual Studio 17 2022" -A x64'
-
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'OFF'
+    ENABLE_UTF8_FLAG: 'OFF'
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    GENERATOR: '"Visual Studio 17 2022" -A x64'
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'OFF'
+    ENABLE_UTF8_FLAG: 'ON'
 
 build_script:
 - cmd: >-
-    mkdir %BUILD_DIR%
+    mkdir build
 
-    cmake -B %BUILD_DIR%  -G %GENERATOR% -D CMAKE_BUILD_TYPE=Release -S .
+    cmake -B build -G %GENERATOR% -D BUILD_SANDBOX=%BUILD_SANDBOX% -D BUILD_DEMOS=%BUILD_DEMOS% -D ENABLE_UTF8_FLAG=%ENABLE_UTF8_FLAG% -D CMAKE_BUILD_TYPE=Release -S .
