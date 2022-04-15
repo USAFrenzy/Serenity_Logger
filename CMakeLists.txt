@@ -11,9 +11,6 @@ message("-- ${PROJECT_NAME} Building Version: ${SERENITY_FULL_VERSION}")
 include(cmake/CPM.cmake)
 cpmaddpackage("gh:gabime/spdlog@1.9.2")
 
-set(FLAG_STORAGE "")
-set(UTF8_FLAG "/utf-8")
-
 option(
     BUILD_SANDBOX
     "Build The Sandbox Project Alongside The Library"
@@ -24,15 +21,6 @@ option(
     "Build The Demo Projects Alongside The Library"
     ON
 )
-option(
-    ENABLE_UTF8_FLAG
-    "Equivalent To /utf-8 For MSVC"
-    ON
-)
-
-if (ENABLE_UTF8_FLAG)
-    set(FLAG_STORAGE "${FLAG_STORAGE} ${UTF8_FLAG}")
-endif ()
 
 add_subdirectory(Serenity)
 

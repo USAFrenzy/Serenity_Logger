@@ -60,5 +60,4 @@ set_target_properties(
                CMAKE_RUNTIME_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/bin
                OUTPUT_NAME "serenity"
                DEBUG_POSTFIX "_d"
-               COMPILE_FLAGS ${FLAG_STORAGE}
 )
