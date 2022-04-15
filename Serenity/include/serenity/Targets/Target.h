@@ -1,55 +1,56 @@
 #pragma once
 
 #include <serenity/Common.h>
+#include <serenity/MessageDetails/FlushPolicy.h>
+#include <serenity/MessageDetails/Message_Formatter.h>
 #include <serenity/MessageDetails/Message_Info.h>
 #include <serenity/MessageDetails/Message_Time.h>
-#include <serenity/MessageDetails/Message_Formatter.h>
-#include <serenity/MessageDetails/FlushPolicy.h>
+#include <serenity/Utilities/TargetHelper.h>
 
 #include <chrono>
 
-namespace serenity::targets
-{
+namespace serenity::targets {
+
 	class TargetBase
 	{
-	  public:
-		TargetBase( );
-		TargetBase( std::string_view name );
-		TargetBase( std::string_view name, std::string_view msgPattern );
-		~TargetBase( ) = default;
-		void                                  SetFlushPolicy( serenity::experimental::Flush_Policy pPolicy );
-		serenity::experimental::Flush_Policy &Policy( );
-		const std::string                     LoggerName( );
-		void                                  SetPattern( std::string_view pattern );
-		void                                  ResetPatternToDefault( );
-		void                                  SetLogLevel( LoggerLevel level );
-		void                                  WriteToBaseBuffer( bool fmtToBuf = true );
-		bool                                  isWriteToBuf( );
-		std::string *                         Buffer( );
-		const LoggerLevel                     Level( );
-		void                                  SetLoggerName( std::string_view name );
-		template <typename... Args> void      Trace( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Info( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Debug( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Warn( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Error( std::string_view msg, Args &&...args );
-		template <typename... Args> void      Fatal( std::string_view msg, Args &&...args );
+	      public:
+		TargetBase();
+		TargetBase(std::string_view name);
+		TargetBase(std::string_view name, std::string_view msgPattern);
+		~TargetBase() = default;
+		void SetFlushPolicy(const serenity::experimental::Flush_Policy& pPolicy);
+		std::string LoggerName() const;
+		void SetPattern(std::string_view pattern);
+		void ResetPatternToDefault();
+		void SetLogLevel(LoggerLevel level);
+		LoggerLevel Level() const;
+		void SetLoggerName(std::string_view name);
+		template<typename... Args> void Trace(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Info(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Debug(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Warn(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Error(MsgWithLoc msg, Args&&... args);
+		template<typename... Args> void Fatal(MsgWithLoc msg, Args&&... args);
+		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
+		virtual void SetLocale(const std::locale& loc);
+		std::locale GetLocale() const;
 
-	  protected:
-		virtual void                    PrintMessage( std::string_view formatted ) = 0;
-		virtual void                    PolicyFlushOn( ) { }
-		msg_details::Message_Formatter *MsgFmt( );
-		msg_details::Message_Info *     MsgInfo( );
+	      protected:
+		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();
+		const std::unique_ptr<msg_details::Message_Formatter>& MsgFmt() const;
+		const std::unique_ptr<msg_details::Message_Info>& MsgInfo() const;
+		virtual void PrintMessage(std::string_view formatted);
+		virtual void PolicyFlushOn();
 
-	  private:
-		bool                                 toBuffer;
-		serenity::experimental::Flush_Policy policy;
-		LoggerLevel                          logLevel;
-		LoggerLevel                          msgLevel;
-		std::string                          pattern;
-		msg_details::Message_Info            msgDetails;
-		msg_details::Message_Formatter       msgPattern;
-		std::string                          internalBuffer;
+	      private:
+		LoggerLevel logLevel;
+		LoggerLevel msgLevel;
+		std::string pattern;
+		mutable std::mutex baseMutex;
+		std::unique_ptr<msg_details::Message_Info> msgDetails;
+		std::unique_ptr<msg_details::Message_Formatter> msgPattern;
+		std::shared_ptr<helpers::BaseTargetHelper> baseHelper;
 	};
+
 #include "Target-impl.h"
-}  // namespace serenity::targets
+}    // namespace serenity::targets

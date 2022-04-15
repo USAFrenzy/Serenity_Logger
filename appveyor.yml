@@ -1,0 +1,29 @@
+version: 0.2.{build}
+branches:
+  only:
+  - main
+  - dev
+environment:
+  matrix:
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    GENERATOR: '"Visual Studio 16 2019" -A x64'
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'OFF'
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    GENERATOR: '"Visual Studio 16 2019" -A x64'
+    BUILD_SANDBOX: 'ON'
+    BUILD_DEMOS: 'ON'
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    GENERATOR: '"Visual Studio 17 2022" -A x64'
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'OFF'
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    GENERATOR: '"Visual Studio 17 2022" -A x64'
+    BUILD_SANDBOX: 'ON'
+    BUILD_DEMOS: 'ON'
+
+build_script:
+- cmd: >-
+    mkdir build
+
+    cmake -B build -G %GENERATOR% -D BUILD_SANDBOX=%BUILD_SANDBOX% -D BUILD_DEMOS=%BUILD_DEMOS% -D CMAKE_BUILD_TYPE=Release -S .

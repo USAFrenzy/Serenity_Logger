@@ -1,101 +1,128 @@
 #include <serenity/Targets/Target.h>
 
-namespace serenity::targets
-{
-	TargetBase::TargetBase( )
-	  : toBuffer( false ),
-		policy( serenity::experimental::Flush::never ),
-		logLevel( LoggerLevel::trace ),
-		msgLevel( LoggerLevel::trace ),
-		pattern( "|%l| %x %n %T [%N]: %+" ),
-		msgDetails( "Base Logger", msgLevel, message_time_mode::local ),
-		msgPattern( pattern, &msgDetails )
-	{
+namespace serenity::targets {
+	constexpr const char* DEFAULT_PATTERN = "|%l| %a %n %T %z [%N]: %+";
+
+	TargetBase::TargetBase()
+		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
+		  msgDetails(std::make_unique<msg_details::Message_Info>("Base Logger", msgLevel, message_time_mode::local)),
+		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())),
+		  baseHelper(std::make_unique<helpers::BaseTargetHelper>()) { }
+
+	TargetBase::TargetBase(std::string_view name)
+		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
+		  msgDetails(std::make_unique<msg_details::Message_Info>(name, msgLevel, message_time_mode::local)),
+		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())),
+		  baseHelper(std::make_unique<helpers::BaseTargetHelper>()) { }
+
+	TargetBase::TargetBase(std::string_view name, std::string_view fmtPattern)
+		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(fmtPattern),
+		  msgDetails(std::make_unique<msg_details::Message_Info>(name, msgLevel, message_time_mode::local)),
+		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())),
+		  baseHelper(std::make_unique<helpers::BaseTargetHelper>()) { }
+
+	void TargetBase::SetPattern(std::string_view pattern) {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		msgPattern->SetPattern(std::string { pattern.data(), pattern.size() });
 	}
 
-	TargetBase::TargetBase( std::string_view name )
-	  : toBuffer( false ),
-		policy( serenity::experimental::Flush::never ),
-		logLevel( LoggerLevel::trace ),
-		msgLevel( LoggerLevel::trace ),
-		pattern( "|%l| %x %n %T [%N]: %+" ),
-		msgDetails( name, msgLevel, message_time_mode::local ),
-		msgPattern( pattern, &msgDetails )
-	{
+	void TargetBase::SetFlushPolicy(const serenity::experimental::Flush_Policy& pPolicy) {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+
+		baseHelper->SetFlushPolicy(pPolicy);
 	}
 
-	TargetBase::TargetBase( std::string_view name, std::string_view fmtPattern )
-	  : toBuffer( false ),
-		policy( serenity::experimental::Flush::never ),
-		logLevel( LoggerLevel::trace ),
-		msgLevel( LoggerLevel::trace ),
-		pattern( fmtPattern ),
-		msgDetails( name, msgLevel, message_time_mode::local ),
-		msgPattern( pattern, &msgDetails )
-	{
+	std::string TargetBase::LoggerName() const {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		return msgDetails->Name();
 	}
 
-	void TargetBase::WriteToBaseBuffer( bool fmtToBuf )
-	{
-		toBuffer = fmtToBuf;
+	void TargetBase::SetLocale(const std::locale& loc) {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		if( loc != MsgInfo()->GetLocale() ) {
+				MsgInfo()->SetLocale(loc);
+		}
 	}
 
-	bool TargetBase::isWriteToBuf( )
-	{
-		return toBuffer;
+	std::locale TargetBase::GetLocale() const {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		return MsgInfo()->GetLocale();
 	}
 
-	std::string *TargetBase::Buffer( )
-	{
-		return &internalBuffer;
+	std::shared_ptr<helpers::BaseTargetHelper>& TargetBase::TargetHelper() {
+		return baseHelper;
 	}
 
-	void TargetBase::SetPattern( std::string_view pattern )
-	{
-		msgPattern.SetPattern( std::string { pattern.data( ), pattern.size( ) } );
+	void TargetBase::PrintMessage(std::string_view formatted) { }
+
+	// Leaving empty for derived classes to implement
+	void TargetBase::PolicyFlushOn() { }
+
+	const std::unique_ptr<msg_details::Message_Formatter>& TargetBase::MsgFmt() const {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		return msgPattern;
 	}
 
-	void TargetBase::SetFlushPolicy( serenity::experimental::Flush_Policy pPolicy )
-	{
-		policy = pPolicy;
+	const std::unique_ptr<msg_details::Message_Info>& TargetBase::MsgInfo() const {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		return msgDetails;
 	}
 
-	serenity::experimental::Flush_Policy &TargetBase::Policy( )
-	{
-		return policy;
+	void TargetBase::ResetPatternToDefault() {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		msgPattern->SetPattern(DEFAULT_PATTERN);
 	}
 
-	const std::string TargetBase::LoggerName( )
-	{
-		return msgDetails.Name( );
-	}
-
-	msg_details::Message_Formatter *TargetBase::MsgFmt( )
-	{
-		return &msgPattern;
-	}
-
-	msg_details::Message_Info *TargetBase::MsgInfo( )
-	{
-		return &msgDetails;
-	}
-
-	void TargetBase::ResetPatternToDefault( )
-	{
-		msgPattern.SetPattern( "|%l| %x %n %T [%N]: %+" );
-	}
-	void TargetBase::SetLogLevel( LoggerLevel level )
-	{
+	void TargetBase::SetLogLevel(LoggerLevel level) {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		logLevel = level;
 	}
-	const LoggerLevel TargetBase::Level( )
-	{
+
+	LoggerLevel TargetBase::Level() const {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		return logLevel;
 	}
 
-	void TargetBase::SetLoggerName( std::string_view name )
-	{
-		msgDetails.SetName( name );
+	void TargetBase::SetLoggerName(std::string_view name) {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		msgDetails->SetName(name);
 	}
 
-}  // namespace serenity::experimental::targets
+	void TargetBase::EnableMultiThreadingSupport(bool enable) {
+		baseHelper->EnableMultiThreadingSupport(enable);
+	}
+
+}    // namespace serenity::targets

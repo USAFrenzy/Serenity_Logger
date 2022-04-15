@@ -4,10 +4,8 @@
 #include <filesystem>
 #include <mutex>
 
-namespace serenity
-{
-	namespace se_utils
-	{
+namespace serenity {
+	namespace se_utils {
 		enum class time_mode
 		{
 			us,
@@ -18,63 +16,63 @@ namespace serenity
 		};
 
 		// for more precision
-		template <class T> using pMicro = std::chrono::duration<T, std::micro>;
-		template <class T> using pMilli = std::chrono::duration<T, std::milli>;
-		template <class T> using pSec   = std::chrono::duration<T, std::ratio<1>>;
-		template <class T> using pMin   = std::chrono::duration<T, std::ratio<1, 60>>;
-		template <class T> using pHour  = std::chrono::duration<T, std::ratio<1, 3600>>;
+		template<class T> using pMicro = std::chrono::duration<T, std::micro>;
+		template<class T> using pMilli = std::chrono::duration<T, std::milli>;
+		template<class T> using pSec   = std::chrono::duration<T, std::ratio<1>>;
+		template<class T> using pMin   = std::chrono::duration<T, std::ratio<1, 60>>;
+		template<class T> using pHour  = std::chrono::duration<T, std::ratio<1, 3600>>;
 
 		struct Allocation_Statistics
 		{
 			uint64_t Allocated { 0 };
 			uint64_t Freed { 0 };
-			uint64_t Memory_Usage( );
+			uint64_t Memory_Usage();
 		};
 
 		class Instrumentator
 		{
-		  public:
-			Instrumentator( );
+		      public:
+			Instrumentator();
 
-			void  StopWatch_Reset( );
-			void  StopWatch_Stop( );
-			float Elapsed_In( time_mode mode );
+			void StopWatch_Reset();
+			void StopWatch_Stop();
+			float Elapsed_In(time_mode mode);
 
-			void *operator new( std::size_t n );
-			void  operator delete( void *p ) throw( );
+			void* operator new(std::size_t n);
+			void operator delete(void* p) throw();
 
-			~Instrumentator( );
+			~Instrumentator();
 
-		  public:
+		      public:
 			static Allocation_Statistics mem_tracker;
 
-		  private:
+		      private:
 			std::chrono::time_point<std::chrono::steady_clock> m_Start, m_End;
 		};
+
 		/// <summary>
 		/// A wrapper for thread sleeping
 		/// </summary>
-		void SleepFor( time_mode mode, int time );
-	}  // namespace se_utils
+		void SleepFor(time_mode mode, int time);
+	}    // namespace se_utils
 
-	namespace file_utils
-	{
-		namespace file_utils_results
-		{
+	namespace file_utils {
+		namespace file_utils_results {
 			struct search_dir_entries
 			{
 				std::vector<std::filesystem::directory_entry> matchedResults;
-				bool                                          fileFound { false };
-				float                                         elapsedTime { 0 };
+				bool fileFound { false };
+				float elapsedTime { 0 };
 			};
+
 			struct retrieve_dir_entries
 			{
-				int                                                  fileCount { 0 };
-				bool                                                 success { false };
+				int fileCount { 0 };
+				bool success { false };
 				static std::vector<std::filesystem::directory_entry> retrievedItems;
-				float                                                elapsedTime { 0 };
+				float elapsedTime { 0 };
 			};
-		}  // namespace file_utils_results
+		}    // namespace file_utils_results
 
 		/* clang-format off */
 		/// <summary>
@@ -110,35 +108,40 @@ namespace serenity
 		bool const ValidateFileName( std::string fileName );
 		/* clang-format on */
 		/// <summary>
-		/// Validates The Extension String Follows A "." And Is At Most, Seven Characters Long
+		/// Validates The Extension String Follows A "." And Is At Most, Seven
+		/// Characters Long
 		/// </summary>
-		bool const ValidateExtension( std::string fileName );
+		bool const ValidateExtension(std::string fileName);
 		/// <summary>
 		/// Compares The Input Extensions And Returns True If Identical Or False If Not.
 		/// </summary>
-		bool const CompareExtensions( std::string oldFile, std::string newFile );
-		/// <summary>Takes A Path To The Old File To Be Renamed And A Path To The New File To Be Renamed.
-		/// Renames The Old Path To The New Path. </summary>
-		/// <returns>Returns False If The Old Path Doesn't Exist, If New Path Contains Illegal Characters In
-		/// The File Name Or In The Extension, Or If The File Size After Renaming Changed.
-		/// Returns True On Success Or If The New Path Already Exists.</returns>
-		bool RenameFile( std::filesystem::path oldFile, std::filesystem::path newFile );
-		/// <returns>Returns True On Success Or If Already Exists, False Otherwise</returns>
-		bool CreateDir( std::filesystem::path dirPath );
-		/// <returns>Returns True On Success Or If 'entry' Doesn't Exist, False Otherwise</returns>
-		bool RemoveEntry( std::filesystem::path entry );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
-		/// Any, To The Console</returns>
-		bool ChangeDir( std::filesystem::path dirPath );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
-		/// Any, To The Console</returns>
-		bool CopyContents( std::filesystem::path source, std::filesystem::path destination );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
-		/// Any, To The Console. By Default, Creates A File With Full Permissions If It Doesn't Exist And Opens It In Append
-		/// Mode</returns>
-		bool OpenFile( std::filesystem::path file, bool truncate );
-		/// <returns>Returns True On Success, False Otherwise. Catches And Prints Exceptions Thrown From This Function, If
-		/// Any, To The Console</returns>
-		bool CloseFile( std::filesystem::path file );
-	}  // namespace file_utils
-}  // namespace serenity
+		bool const CompareExtensions(std::string oldFile, std::string newFile);
+		/// <summary>Takes A Path To The Old File To Be Renamed And A Path To The New
+		/// File To Be Renamed. Renames The Old Path To The New Path. </summary>
+		/// <returns>Returns False If The Old Path Doesn't Exist, If New Path Contains
+		/// Illegal Characters In The File Name Or In The Extension, Or If The File Size
+		/// After Renaming Changed. Returns True On Success Or If The New Path Already
+		/// Exists.</returns>
+		bool RenameFile(std::filesystem::path oldFile, std::filesystem::path newFile);
+		/// <returns>Returns True On Success Or If Already Exists, False
+		/// Otherwise</returns>
+		bool CreateDir(std::filesystem::path dirPath);
+		/// <returns>Returns True On Success Or If 'entry' Doesn't Exist, False
+		/// Otherwise</returns>
+		bool RemoveEntry(std::filesystem::path entry);
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints
+		/// Exceptions Thrown From This Function, If Any, To The Console</returns>
+		bool ChangeDir(std::filesystem::path dirPath);
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints
+		/// Exceptions Thrown From This Function, If Any, To The Console</returns>
+		bool CopyContents(std::filesystem::path source, std::filesystem::path destination);
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints
+		/// Exceptions Thrown From This Function, If Any, To The Console. By Default,
+		/// Creates A File With Full Permissions If It Doesn't Exist And Opens It In
+		/// Append Mode</returns>
+		bool OpenFile(std::filesystem::path file, bool truncate);
+		/// <returns>Returns True On Success, False Otherwise. Catches And Prints
+		/// Exceptions Thrown From This Function, If Any, To The Console</returns>
+		bool CloseFile(std::filesystem::path file);
+	}    // namespace file_utils
+}    // namespace serenity

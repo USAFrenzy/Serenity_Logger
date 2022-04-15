@@ -1,3 +1,4 @@
+@echo -- Running cmake_format script...
 @echo off
 REM #####################################################################
 REM #        Requires cmakelang to be installed and added to PATH       #
@@ -11,3 +12,4 @@ cmake-format -i "CMakeLists.txt" -c "cmake-format.yaml"
 		cmake-format -i "CMakeLists.txt" -c "../cmake-format.yaml"
 	popd
 popd
+@echo -- Finished running cmake_format script
