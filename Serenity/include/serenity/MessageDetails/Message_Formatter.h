@@ -56,8 +56,6 @@ namespace serenity::msg_details {
 	{
 	};
 
-	// TODO: Look at possibly adding pointer types (where user passes in pointer and ArgContainer contains
-	// TODO: the value at the address - which is currently unsupported) and other derivitives
 	class ArgContainer
 	{
 	      public:

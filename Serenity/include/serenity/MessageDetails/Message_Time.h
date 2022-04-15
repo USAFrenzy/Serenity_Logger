@@ -26,6 +26,9 @@ namespace serenity::msg_details {
 		bool isLeapYear() const;
 		int LeapYearsSinceEpoch(int yearIndex);
 		const std::chrono::time_zone* GetTimeZone();
+		bool IsDaylightSavings() const;
+		int DaylightSavingsOffsetMin() const;
+		int UtcOffset() const;
 
 	      private:
 		message_time_mode m_mode;
@@ -36,5 +39,8 @@ namespace serenity::msg_details {
 		std::string cachedShortYear;
 		std::string cachedLongYear;
 		const std::chrono::time_zone& m_timeZone;
+		int daylightSavingsOffsetMin;
+		bool isDaylightSavings;
+		int utcOffset;
 	};
 }    // namespace serenity::msg_details

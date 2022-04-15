@@ -354,22 +354,21 @@ namespace serenity::msg_details {
 	Format_Arg_z::Format_Arg_z(Message_Info& info): infoRef(info), local(std::tm {}), gm(std::tm {}), lastMin(0) { }
 
 	std::string_view Format_Arg_z::FormatUserPattern() {
+		auto& timeRef { infoRef.TimeDetails() };
 		auto currentMinute { infoRef.TimeInfo().tm_min };
 		if( lastMin == currentMinute ) return result;
 		lastMin = currentMinute;
-		auto now { std::chrono::system_clock::to_time_t(infoRef.MessageTimePoint()) };
-		LOCAL_TIME(local, now);
-		GM_TIME(gm, now);
-		auto& timeRef { infoRef.TimeDetails() };
-		auto localLeap { timeRef.LeapYearsSinceEpoch(local.tm_year) };
-		auto gmLeap { timeRef.LeapYearsSinceEpoch(gm.tm_year) };
-		/*********** Current Day Of Year Delta ******** Days Per Year Delta ****** Leap Year Delta ********/
-		auto dayOffset((local.tm_yday - gm.tm_yday) + (365 * (local.tm_year - gm.tm_year) + (localLeap - gmLeap)));
-		auto hours { (24 * dayOffset) + (local.tm_hour - gm.tm_hour) };
-		auto mins { (60 * hours) + (local.tm_min - gm.tm_min) };
+		auto offset { timeRef.UtcOffset() };
+		auto mins { offset / 60 };
+		auto hours { offset / 3600 };
+		if( !timeRef.IsDaylightSavings() ) {
+				auto savingsOffset { timeRef.DaylightSavingsOffsetMin() };
+				hours -= (savingsOffset / 60);
+				mins -= (savingsOffset % 60);
+		}
 		auto hour { serenity::SERENITY_LUTS::numberStr[ std::abs(hours) ] };
 		auto min { serenity::SERENITY_LUTS::numberStr[ std::abs(mins % 60) ] };
-		std::string_view sign { (dayOffset >= 0) ? "+" : "-" };
+		std::string_view sign { (offset >= 0) ? "+" : "-" };
 		result.clear();
 		return result.append(sign.data(), sign.size()).append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
 	}

@@ -2,11 +2,23 @@
 
 #include <charconv>
 
+#define C20_CHRONO_TEST 1
+
 namespace serenity::msg_details {
 	Message_Time::Message_Time(message_time_mode mode): m_mode(mode), m_timeZone(*std::chrono::current_zone()) {
-		UpdateTimeDate(std::chrono::system_clock::now());
+		auto currentTimePoint { std::chrono::system_clock::now() };
+		UpdateTimeDate(currentTimePoint);
 		auto yr { m_cache.tm_year + 1900 };
 		(yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0)) ? leapYear = true : leapYear = false;
+
+#if C20_CHRONO_TEST
+		auto timeInfo { m_timeZone.get_info(currentTimePoint) };
+		utcOffset = static_cast<int>(timeInfo.offset.count());
+		if( timeInfo.save != std::chrono::minutes(0) ) {
+				isDaylightSavings        = true;
+				daylightSavingsOffsetMin = static_cast<int>(timeInfo.save.count());
+		}
+#endif
 	}
 
 	const std::chrono::time_zone* Message_Time::GetTimeZone() {
@@ -67,4 +79,15 @@ namespace serenity::msg_details {
 		return leapYear;
 	}
 
+	bool Message_Time::IsDaylightSavings() const {
+		return isDaylightSavings;
+	}
+
+	int Message_Time::DaylightSavingsOffsetMin() const {
+		return daylightSavingsOffsetMin;
+	}
+
+	int Message_Time::UtcOffset() const {
+		return utcOffset;
+	}
 }    // namespace serenity::msg_details
