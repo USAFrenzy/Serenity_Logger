@@ -271,14 +271,16 @@ namespace serenity {
 
 	// This lovely and amazing end to my headaches for getting the correct call site
 	// was provided by ivank at https://stackoverflow.com/a/66402319/11410972
+	template<typename T> constexpr bool is_convertible_to_string(T arg) {
+		return std::is_convertible_v<T, std::string>;
+	}
+
 	struct MsgWithLoc
 	{
 		std::string msg;
 		std::source_location source;
-		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current())
-			: msg(sv.data(), sv.size()), source(src) { }
-		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(auto &&sv, const std::source_location& src = std::source_location::current())
+			: msg(is_convertible_to_string(decltype(sv)) ? sv : ""), source(src) { }
 	};
 
 }    // namespace serenity

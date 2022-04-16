@@ -22,6 +22,7 @@ set(SERENITY_HEADER_FILES
     "include/serenity/MessageDetails/Message_Info.h"
     "include/serenity/MessageDetails/Message_Time.h"
     "include/serenity/MessageDetails/Message_Formatter.h"
+    "include/serenity/MessageDetails/Message_Formatter_Impl.h"
     "include/serenity/MessageDetails/FormatterArgs.h"
     "include/serenity/MessageDetails/FlushPolicy.h"
     "include/serenity/Targets/Target.h"

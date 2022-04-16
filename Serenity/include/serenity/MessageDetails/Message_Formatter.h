@@ -75,27 +75,8 @@ namespace serenity::msg_details {
 		bool EndReached() const;
 		bool ContainsUnsupportedType() const;
 		std::string&& GetArgValue();
-		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
-			(
-			[ = ](auto arg) {
-				auto typeFound = is_supported<decltype(arg), LazilySupportedTypes> {};
-				if constexpr( !typeFound.value ) {
-						containsUnknownType = true;
-				} else {
-						if( containsUnknownType ) return;
-						argContainer.emplace_back(std::move(arg));
-					}
-			}(args),
-			...);
-		}
-		template<typename... Args> void CaptureArgs(Args&&... args) {
-			Reset();
-			EmplaceBackArgs(std::forward<Args>(args)...);
-			size_t size { argContainer.size() };
-			if( size != 0 ) {
-					maxIndex = size - 1;
-			}
-		}
+		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
+		template<typename... Args> void CaptureArgs(Args&&... args);
 
 	      private:
 		std::vector<LazilySupportedTypes> argContainer;
@@ -139,25 +120,7 @@ namespace serenity::msg_details {
 		void StoreFormat();
 		const Message_Info* MessageDetails();
 		void LazySubstitute(std::string& msg, std::string&& arg);
-		template<typename... Args> void FmtMessage(MsgWithLoc message, Args&&... args) {
-			lazy_message.clear();
-			argStorage.CaptureArgs(std::forward<Args>(args)...);
-			if( argStorage.ContainsUnsupportedType() || argStorage.ContainsArgSpecs(message.msg) ) {
-					VFORMAT_TO(lazy_message, *localeRef, message.msg, std::forward<Args>(args)...);
-			} else {
-					lazy_message.append(message.msg);
-					for( ;; ) {
-							LazySubstitute(lazy_message, std::move(argStorage.GetArgValue()));
-							argStorage.AdvanceToNextArg();
-							if( argStorage.EndReached() ) {
-									break;
-							}
-						}
-				}
-			auto lineEnd { SERENITY_LUTS::line_ending.at(platformEOL) };
-			lazy_message.append(lineEnd.data(), lineEnd.size());
-			msgInfo->SetMessage(lazy_message, message.source);
-		}
+		template<typename... Args> void FmtMessage(MsgWithLoc& message, Args&&... args);
 
 	      private:
 		Message_Info* msgInfo;
@@ -171,5 +134,5 @@ namespace serenity::msg_details {
 		std::string temp;
 		source_flag sourceFlag;
 	};
-
+#include <serenity/MessageDetails/Message_Formatter_Impl.h>
 }    // namespace serenity::msg_details

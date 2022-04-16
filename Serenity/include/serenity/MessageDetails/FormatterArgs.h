@@ -8,19 +8,19 @@
 #include <variant>
 
 namespace serenity::msg_details {
-	/*********** Most All strftime Flags Have Been Added, Except For The Following ************/ /*
-	  * %g (week based year last 2 digits)
-	  * %h (short month abbrev on locale) //------------------------------ Using %b formatter
-	  * %j (Day of year (001-366)
-	  * %u (weekday as a number with Monday as 1 (1-7))
-	  * %x (Date Representation locale dependant) //---------------------- Using %D formatter
-	  * %U (week number with Sunday being the first day (00-53))
-	  * %V (ISO 8601 week number (01-53)
-	  * %W (week number as first Monday being the first daty (00-53))
-	  * %X (Time Representation locale dependant) //---------------------- Using %T formatter
-	  * %% (literal '%' sign)
-	  * %G (week-based year)
-	 //*******************************************************************************************/
+	/********************** Most All strftime Flags Have Been Added, Except For The Following ***********************/ /*
+	  * %g (week based year last 2 digits) //---------------------------------- Genuinely See No Need To Support?
+	  * %h (short month abbrev on locale) //----------------------------------- Using %b formatter
+	  * %j (Day of year (001-366) //------------------------------------------- Could Be Useful In Terms Of Leap Year
+	  * %u (weekday as a number with Monday as 1 (1-7)) //--------------------- Genuinely See No Need To Support?
+	  * %x (Date Representation locale dependant) //--------------------------- Using %D formatter
+	  * %U (week number with Sunday being the first day (00-53)) //------------ Genuinely See No Need To Support?
+	  * %V (ISO 8601 week number (01-53) //------------------------------------ Genuinely See No Need To Support?
+	  * %W (week number as first Monday being the first daty (00-53)) //------- Genuinely See No Need To Support?
+	  * %X (Time Representation locale dependant) //--------------------------- Using %T formatter
+	  * %% (literal '%' sign) //----------------------------------------------- Not Needed As It Is Properly Handled
+	  * %G (week-based year) //------------------------------------------------ Genuinely See No Need To Support?
+	 //*****************************************************************************************************************/
 
 	class Formatter
 	{
