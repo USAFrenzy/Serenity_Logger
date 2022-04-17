@@ -352,7 +352,9 @@ namespace serenity::msg_details {
 
 	// Format %z Functions
 	/*********************************************************************************************************************/
-	Format_Arg_z::Format_Arg_z(Message_Info& info): infoRef(info), local(std::tm {}), gm(std::tm {}), lastMin(0) { }
+	Format_Arg_z::Format_Arg_z(Message_Info& info): infoRef(info), lastMin(0) {
+		info.TimeDetails().EnableZoneThread();
+	}
 
 	std::string_view Format_Arg_z::FormatUserPattern() {
 		auto& timeRef { infoRef.TimeDetails() };
@@ -615,6 +617,7 @@ namespace serenity::msg_details {
 	serenity::msg_details::Format_Arg_Z::Format_Arg_Z(Message_Info& info)
 		: timeRef(info.TimeDetails()), timeModeRef(timeRef.Mode()), cachedMode(timeModeRef) {
 		timeModeRef == message_time_mode::local ? result = timeRef.TimeZoneAbbrev() : result = "UTC";
+		timeRef.EnableZoneThread();
 	}
 
 	std::string& serenity::msg_details::Format_Arg_Z::UpdateInternalView() {

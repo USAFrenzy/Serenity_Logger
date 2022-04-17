@@ -303,7 +303,6 @@ namespace serenity::msg_details {
 
 	      private:
 		Message_Info& infoRef;
-		std::tm local, gm;
 		int lastMin;
 	};
 
@@ -555,7 +554,7 @@ namespace serenity::msg_details {
 
 	      private:
 		Message_Time& timeRef;
-		message_time_mode& timeModeRef;
+		const message_time_mode& timeModeRef;
 		message_time_mode cachedMode;
 	};
 

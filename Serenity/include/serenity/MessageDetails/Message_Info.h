@@ -26,7 +26,7 @@ namespace serenity::msg_details {
 		std::chrono::system_clock::time_point MessageTimePoint() const;
 		const std::source_location& SourceLocation() const;
 		message_time_mode TimeMode();
-		std::tm& TimeInfo();
+		const std::tm& TimeInfo() const;
 		std::string& Message();
 		size_t MessageSize() const;
 		std::locale GetLocale() const;

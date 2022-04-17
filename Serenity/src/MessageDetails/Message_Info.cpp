@@ -41,7 +41,7 @@ namespace serenity::msg_details {
 		return m_msgTime.Mode();
 	}
 
-	std::tm& Message_Info::TimeInfo() {
+	const std::tm& Message_Info::TimeInfo() const {
 		return m_msgTime.Cache();
 	}
 

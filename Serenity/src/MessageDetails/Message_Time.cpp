@@ -2,15 +2,17 @@
 
 #include <charconv>
 
-#define C20_CHRONO_TEST 1
-#if C20_CHRONO_TEST
-	#include <iostream>
-#endif
 namespace serenity::msg_details {
 
-	void Message_Time::UpdateTimeZoneInfoThread() {
-		std::unique_lock<std::mutex> lock(zoneHelper->timeMutex);
-		auto stopToken = zoneHelper->tzUpdateThread.get_stop_token();
+	ZoneThread::ZoneThread(const std::chrono::tzdb& db)
+		: timezoneDB(db), timeMutex(std::mutex {}), sysCache(std::chrono::sys_info {}), isThreadActive(false), isDaylightSavings(false) {
+		sysCache          = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
+		isDaylightSavings = (sysCache.save != std::chrono::minutes(0));
+	}
+
+	void ZoneThread::UpdateTimeZoneInfoThread() {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		auto stopToken = tzUpdateThread.get_stop_token();
 		const int maxAttempt { 3 };
 		bool success { false };
 
@@ -24,12 +26,10 @@ namespace serenity::msg_details {
 				}
 		};
 
-		while( !stopToken.stop_requested() ) {
-				zoneHelper->cv.wait_until(lock, zoneHelper->sysCache.end, [ &, this ]() { return stopToken.stop_requested(); });
+		while( stopToken.stop_requested() ) {
+				cv.wait_until(lock, sysCache.end, [ &, this ]() { return stopToken.stop_requested(); });
 				for( int tries { 0 }; tries < maxAttempt; ++tries ) {
-						// explicit lock/unlock calls only due to thread sleep call between each attempt
-						if( !lock.owns_lock() ) lock.lock();
-						// Check on each attempt if the thread is supposed to be wrapping up before retrying again
+						// Check on each attempt if the thread is supposed to be wrapping up before trying to update
 						if( stopToken.stop_requested() ) return;
 						auto [ result, errStr ] = tryUpdating();
 						success                 = result;
@@ -39,42 +39,77 @@ namespace serenity::msg_details {
 								printf("Zone Update Thread Will Now Terminate Itself\n");
 								break;
 						}
-						lock.unlock();
-						std::this_thread::sleep_for(std::chrono::milliseconds(100));
 					}
 				if( !success ) return;
-				zoneHelper->sysCache = zoneHelper->timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
-				isDaylightSavings    = (zoneHelper->sysCache.save != std::chrono::minutes(0));
-				success              = false;    // reset for next iteration
+				sysCache          = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
+				isDaylightSavings = (sysCache.save != std::chrono::minutes(0));
+				success           = false;    // reset for next iteration
 			}
 	}
 
-	// TODO: Probably should move some of the now migrated 'ZoneThread' aspects into 'ZoneThread' functions. Also should add
-	// TODO: something similar to the file's 'BackgroundThread' for enabling/disabling the background thread here; that way
-	// TODO: only the aspects of this library that need zone info will initiate the thread (obviously checking that the thread
-	// TODO: hasn't already been launched first) like the 'RotatingTarget' on anything but file size and like the %z/%Z flags.
+	void ZoneThread::StartZoneThread() {
+		if( !isThreadActive.load() ) {
+				tzUpdateThread = std::jthread { &ZoneThread::UpdateTimeZoneInfoThread, this };
+				isThreadActive.store(true);
+		}
+	}
+
+	void ZoneThread::StopZoneThread() {
+		if( isThreadActive.load() && tzUpdateThread.joinable() ) {
+				tzUpdateThread.request_stop();
+				cv.notify_one();
+				tzUpdateThread.join();
+				isThreadActive.store(false);
+		}
+	}
+
+	bool ZoneThread::IsDayLightSavings() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return isDaylightSavings;
+	}
+
+	std::chrono::minutes ZoneThread::DaylightSavingsOffsetMin() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return sysCache.save;
+	}
+
+	std::chrono::seconds ZoneThread::UtcOffset() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return sysCache.offset;
+	}
+
+	const std::string& ZoneThread::TimeZoneAbbrev() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return sysCache.abbrev;
+	}
+
+	void ZoneThread::EnableZoneThread(bool enabled) {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		enabled ? StartZoneThread() : StopZoneThread();
+	}
+
+	bool ZoneThread::IsZoneThreadActive() const {
+		return isThreadActive.load();
+	}
+
+	const std::chrono::time_zone* ZoneThread::TimeZone() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return timezoneDB.current_zone();
+	}
+
 	Message_Time::Message_Time(message_time_mode mode): m_mode(mode), zoneHelper(std::make_unique<ZoneThread>(std::chrono::get_tzdb())) {
 		auto currentTimePoint { std::chrono::system_clock::now() };
 		UpdateTimeDate(currentTimePoint);
 		auto yr { m_cache.tm_year + 1900 };
 		(yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0)) ? leapYear = true : leapYear = false;
-		zoneHelper->sysCache       = zoneHelper->timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
-		isDaylightSavings          = (zoneHelper->sysCache.save != std::chrono::minutes(0));
-		// With the above TODO statements, probably should abstract this to only launch when needed
-		zoneHelper->tzUpdateThread = std::jthread { &Message_Time::UpdateTimeZoneInfoThread, this };
 	}
 
 	Message_Time::~Message_Time() {
-		// TODO: Abstract this to something like a 'CleanUpZoneThread()'
-		if( zoneHelper->tzUpdateThread.joinable() ) {
-				zoneHelper->tzUpdateThread.request_stop();
-				zoneHelper->cv.notify_one();
-		}
+		zoneHelper->EnableZoneThread(false);
 	}
 
-	const std::chrono::time_zone* Message_Time::GetTimeZone() {
-		std::unique_lock<std::mutex> lock(zoneHelper->timeMutex);
-		return zoneHelper->timezoneDB.current_zone();
+	const std::chrono::time_zone* Message_Time::GetTimeZone() const {
+		return zoneHelper->TimeZone();
 	}
 
 	void serenity::msg_details::Message_Time::CalculateCurrentYear(int yearOffset) {
@@ -104,11 +139,11 @@ namespace serenity::msg_details {
 		UpdateTimeDate(timePoint);
 	}
 
-	std::tm& Message_Time::Cache() {
+	const std::tm& Message_Time::Cache() const {
 		return m_cache;
 	}
 
-	message_time_mode& Message_Time::Mode() {
+	const message_time_mode& Message_Time::Mode() const {
 		return m_mode;
 	}
 
@@ -116,7 +151,7 @@ namespace serenity::msg_details {
 		m_mode = mode;
 	}
 
-	std::chrono::seconds& Message_Time::LastLogPoint() {
+	const std::chrono::seconds& Message_Time::LastLogPoint() const {
 		return secsSinceLastLog;
 	}
 
@@ -132,22 +167,24 @@ namespace serenity::msg_details {
 	}
 
 	bool Message_Time::IsDaylightSavings() const {
-		std::unique_lock<std::mutex> lock(zoneHelper->timeMutex);
-		return isDaylightSavings;
+		return zoneHelper->IsDayLightSavings();
 	}
 
 	std::chrono::minutes Message_Time::DaylightSavingsOffsetMin() const {
-		std::unique_lock<std::mutex> lock(zoneHelper->timeMutex);
-		return zoneHelper->sysCache.save;
+		return zoneHelper->DaylightSavingsOffsetMin();
 	}
 
 	std::chrono::seconds Message_Time::UtcOffset() const {
-		std::unique_lock<std::mutex> lock(zoneHelper->timeMutex);
-		return zoneHelper->sysCache.offset;
+		return zoneHelper->UtcOffset();
 	}
 
 	const std::string& serenity::msg_details::Message_Time::TimeZoneAbbrev() const {
-		std::unique_lock<std::mutex> lock(zoneHelper->timeMutex);
-		return zoneHelper->sysCache.abbrev;
+		return zoneHelper->TimeZoneAbbrev();
+	}
+	void Message_Time::EnableZoneThread(bool enabled) {
+		zoneHelper->EnableZoneThread(enabled);
+	}
+	bool Message_Time::IsZoneThreadActive() const {
+		return zoneHelper->IsZoneThreadActive();
 	}
 }    // namespace serenity::msg_details
