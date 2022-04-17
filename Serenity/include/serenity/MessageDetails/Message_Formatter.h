@@ -9,6 +9,12 @@
 #include <string>
 #include <variant>
 
+#ifdef WINDOWS_PLATFORM
+	#ifdef FormatMessage
+		#undef FormatMessage
+	#endif    // FORMATMESSAGE
+#endif
+
 namespace serenity::msg_details {
 
 	class LazyParseHelper
@@ -120,7 +126,7 @@ namespace serenity::msg_details {
 		void StoreFormat();
 		const Message_Info* MessageDetails();
 		void LazySubstitute(std::string& msg, std::string&& arg);
-		template<typename... Args> void FmtMessage(MsgWithLoc& message, Args&&... args);
+		template<typename... Args> void FormatMessage(MsgWithLoc& message, Args&&... args);
 
 	      private:
 		Message_Info* msgInfo;

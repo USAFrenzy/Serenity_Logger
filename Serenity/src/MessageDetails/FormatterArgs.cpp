@@ -614,14 +614,11 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	serenity::msg_details::Format_Arg_Z::Format_Arg_Z(Message_Info& info)
 		: timeRef(info.TimeDetails()), timeModeRef(timeRef.Mode()), cachedMode(timeModeRef) {
-		timeModeRef == message_time_mode::local
-		? result = info.TimeDetails().GetTimeZone()->get_info(std::chrono::system_clock::now()).abbrev
-		: result = "UTC";
+		timeModeRef == message_time_mode::local ? result = timeRef.TimeZoneAbbrev() : result = "UTC";
 	}
 
 	std::string& serenity::msg_details::Format_Arg_Z::UpdateInternalView() {
-		return timeModeRef == message_time_mode::local ? result = timeRef.GetTimeZone()->get_info(std::chrono::system_clock::now()).abbrev
-		                                               : result = "UTC";
+		return timeModeRef == message_time_mode::local ? result = timeRef.TimeZoneAbbrev() : result = "UTC";
 	}
 
 	std::string_view serenity::msg_details::Format_Arg_Z::FormatUserPattern() {

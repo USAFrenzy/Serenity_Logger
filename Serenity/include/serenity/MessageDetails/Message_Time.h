@@ -7,6 +7,24 @@
 #include <chrono>
 
 namespace serenity::msg_details {
+
+	struct ZoneThread
+	{
+		ZoneThread() = delete;
+		explicit ZoneThread(const std::chrono::tzdb& db): timezoneDB(db), timeMutex(std::mutex {}), sysCache(std::chrono::sys_info {}) {
+			sysCache = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
+		}
+		ZoneThread(const ZoneThread&)            = delete;
+		ZoneThread& operator=(const ZoneThread&) = delete;
+		~ZoneThread()                            = default;
+
+		const std::chrono::tzdb& timezoneDB;
+		mutable std::mutex timeMutex;
+		std::chrono::sys_info sysCache;
+		std::jthread tzUpdateThread;
+		std::condition_variable_any cv;
+	};
+
 	class Message_Time
 	{
 	      public:
@@ -30,7 +48,7 @@ namespace serenity::msg_details {
 		bool IsDaylightSavings() const;
 		std::chrono::minutes DaylightSavingsOffsetMin() const;
 		std::chrono::seconds UtcOffset() const;
-		void UpdateTimeZoneInfoThread();
+		const std::string& TimeZoneAbbrev() const;
 
 	      private:
 		message_time_mode m_mode;
@@ -41,11 +59,9 @@ namespace serenity::msg_details {
 		std::string cachedShortYear;
 		std::string cachedLongYear;
 		bool isDaylightSavings;
-		std::chrono::sys_info sysCache;
-		const std::chrono::tzdb& timezoneDB;
-		mutable std::mutex timeMutex;
-		std::jthread tzUpdateThread;
-		std::atomic<bool> cleanUpThread { false };
-		std::condition_variable_any cv;
+		std::unique_ptr<ZoneThread> zoneHelper;
+
+	      private:
+		void UpdateTimeZoneInfoThread();
 	};
 }    // namespace serenity::msg_details

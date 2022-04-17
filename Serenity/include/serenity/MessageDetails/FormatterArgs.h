@@ -99,10 +99,10 @@ namespace serenity::msg_details {
 		int lastDay;
 	};
 
-	// Subsecond precision of current time (0-9 digit precision | ms->ns)
 	static constexpr size_t maxPrecision              = 9;
 	static constexpr size_t defaultSubSecondPrecision = 3;
 	static constexpr size_t defaultBufferSize         = 24;
+	// Subsecond precision of current time (0-9 digit precision | ms->ns)
 	class Format_Arg_e: public Formatter
 	{
 	      public:
