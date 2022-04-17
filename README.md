@@ -3,6 +3,7 @@
 
 Main Branch <br>
 [![Microsoft C++ Code Analysis](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml/badge.svg?branch=main)](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml)
+
 Dev Branch <br>
 [![Microsoft C++ Code Analysis](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml/badge.svg?branch=dev)](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml)
 
