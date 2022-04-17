@@ -358,19 +358,13 @@ namespace serenity::msg_details {
 		auto& timeRef { infoRef.TimeDetails() };
 		auto currentMinute { infoRef.TimeInfo().tm_min };
 		if( lastMin == currentMinute ) return result;
+		result.clear();
 		lastMin = currentMinute;
 		auto offset { timeRef.UtcOffset() };
-		auto mins { offset / 60 };
-		auto hours { offset / 3600 };
-		if( !timeRef.IsDaylightSavings() ) {
-				auto savingsOffset { timeRef.DaylightSavingsOffsetMin() };
-				hours -= (savingsOffset / 60);
-				mins -= (savingsOffset % 60);
-		}
-		auto hour { serenity::SERENITY_LUTS::numberStr[ std::abs(hours) ] };
-		auto min { serenity::SERENITY_LUTS::numberStr[ std::abs(mins % 60) ] };
-		std::string_view sign { (offset >= 0) ? "+" : "-" };
-		result.clear();
+		auto hours { std::abs(std::chrono::duration_cast<std::chrono::hours>(offset).count()) };
+		std::string_view sign { (offset.count() >= 0) ? "+" : "-" };
+		auto hour { serenity::SERENITY_LUTS::numberStr[ hours ] };
+		auto min { serenity::SERENITY_LUTS::numberStr[ hours / 60 ] };
 		return result.append(sign.data(), sign.size()).append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
 	}
 	/*********************************************************************************************************************/

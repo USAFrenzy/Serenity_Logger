@@ -2,6 +2,7 @@
 
 #include <serenity/Common.h>
 
+#include <condition_variable>
 #include <string_view>
 #include <chrono>
 
@@ -13,7 +14,7 @@ namespace serenity::msg_details {
 		explicit Message_Time(message_time_mode mode);
 		Message_Time(const Message_Time&)            = delete;
 		Message_Time& operator=(const Message_Time&) = delete;
-		~Message_Time()                              = default;
+		~Message_Time();
 
 		void CalculateCurrentYear(int yearOffset);
 		std::string_view GetCurrentYearSV(bool shortened) const;
@@ -27,8 +28,9 @@ namespace serenity::msg_details {
 		int LeapYearsSinceEpoch(int yearIndex);
 		const std::chrono::time_zone* GetTimeZone();
 		bool IsDaylightSavings() const;
-		int DaylightSavingsOffsetMin() const;
-		int UtcOffset() const;
+		std::chrono::minutes DaylightSavingsOffsetMin() const;
+		std::chrono::seconds UtcOffset() const;
+		void UpdateTimeZoneInfoThread();
 
 	      private:
 		message_time_mode m_mode;
@@ -38,9 +40,12 @@ namespace serenity::msg_details {
 		int currentYear;
 		std::string cachedShortYear;
 		std::string cachedLongYear;
-		const std::chrono::time_zone& m_timeZone;
-		int daylightSavingsOffsetMin;
 		bool isDaylightSavings;
-		int utcOffset;
+		std::chrono::sys_info sysCache;
+		const std::chrono::tzdb& timezoneDB;
+		mutable std::mutex timeMutex;
+		std::jthread tzUpdateThread;
+		std::atomic<bool> cleanUpThread { false };
+		std::condition_variable_any cv;
 	};
 }    // namespace serenity::msg_details

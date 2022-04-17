@@ -3,26 +3,47 @@
 #include <charconv>
 
 #define C20_CHRONO_TEST 1
-
+#if C20_CHRONO_TEST
+	#include <iostream>
+#endif
 namespace serenity::msg_details {
-	Message_Time::Message_Time(message_time_mode mode): m_mode(mode), m_timeZone(*std::chrono::current_zone()) {
+
+	void Message_Time::UpdateTimeZoneInfoThread() {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		auto stopToken   = tzUpdateThread.get_stop_token();
+		auto stopWaiting = [ &, this ]() {
+			return ((stopToken.stop_requested()) || (cleanUpThread.load()));
+		};
+		// TODO: Figure out how to handle any error that may be returned by reload_tzdb()
+		while( !cleanUpThread.load() ) {
+				cv.wait_until(lock, sysCache.end, stopWaiting);
+				if( (stopToken.stop_requested() || cleanUpThread.load()) ) return;
+				std::chrono::reload_tzdb();
+				sysCache          = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
+				isDaylightSavings = (sysCache.save != std::chrono::minutes(0));
+			}
+	}
+
+	Message_Time::Message_Time(message_time_mode mode): m_mode(mode), timezoneDB(std::chrono::get_tzdb()) {
 		auto currentTimePoint { std::chrono::system_clock::now() };
 		UpdateTimeDate(currentTimePoint);
 		auto yr { m_cache.tm_year + 1900 };
 		(yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0)) ? leapYear = true : leapYear = false;
+		sysCache          = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
+		isDaylightSavings = (sysCache.save != std::chrono::minutes(0));
+		tzUpdateThread    = std::jthread { &Message_Time::UpdateTimeZoneInfoThread, this };
+	}
 
-#if C20_CHRONO_TEST
-		auto timeInfo { m_timeZone.get_info(currentTimePoint) };
-		utcOffset = static_cast<int>(timeInfo.offset.count());
-		if( timeInfo.save != std::chrono::minutes(0) ) {
-				isDaylightSavings        = true;
-				daylightSavingsOffsetMin = static_cast<int>(timeInfo.save.count());
-		}
-#endif
+	Message_Time::~Message_Time() {
+		cleanUpThread.store(true);
+		cleanUpThread.notify_one();
+		tzUpdateThread.request_stop();
+		cv.notify_one();
 	}
 
 	const std::chrono::time_zone* Message_Time::GetTimeZone() {
-		return &m_timeZone;
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return timezoneDB.current_zone();
 	}
 
 	void serenity::msg_details::Message_Time::CalculateCurrentYear(int yearOffset) {
@@ -80,14 +101,17 @@ namespace serenity::msg_details {
 	}
 
 	bool Message_Time::IsDaylightSavings() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
 		return isDaylightSavings;
 	}
 
-	int Message_Time::DaylightSavingsOffsetMin() const {
-		return daylightSavingsOffsetMin;
+	std::chrono::minutes Message_Time::DaylightSavingsOffsetMin() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return sysCache.save;
 	}
 
-	int Message_Time::UtcOffset() const {
-		return utcOffset;
+	std::chrono::seconds Message_Time::UtcOffset() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return sysCache.offset;
 	}
 }    // namespace serenity::msg_details
