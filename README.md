@@ -1,6 +1,8 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/3yywxhc5bc4gq6hr/branch/dev?svg=true)](https://ci.appveyor.com/project/USAFrenzy/serenity-logger/branch/dev)
-[![Microsoft C++ Code Analysis(Main)](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml/badge.svg?branch=main)](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml)
-[![Microsoft C++ Code Analysis(Dev)](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml/badge.svg?branch=dev)](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml)
+Main Branch
+[![Microsoft C++ Code Analysis](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml/badge.svg?branch=main)](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml)
+Dev Branch
+[![Microsoft C++ Code Analysis](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml/badge.svg?branch=dev)](https://github.com/USAFrenzy/Serenity_Logger/actions/workflows/msvc.yml)
 [![](https://tokei.rs/b1/github/USAFrenzy/Serenity_Logger?category=code)](https://github.com/USAFrenzy/Serenity_Logger/tree/dev)
 
 ### For all current details about the library, check out the documentation [HERE](https://usafrenzy.github.io/Serenity_Logger/) ###
