@@ -26,7 +26,7 @@ namespace serenity::msg_details {
 				}
 		};
 
-		while( stopToken.stop_requested() ) {
+		while( !stopToken.stop_requested() ) {
 				cv.wait_until(lock, sysCache.end, [ &, this ]() { return stopToken.stop_requested(); });
 				for( int tries { 0 }; tries < maxAttempt; ++tries ) {
 						// Check on each attempt if the thread is supposed to be wrapping up before trying to update
@@ -58,7 +58,6 @@ namespace serenity::msg_details {
 		if( isThreadActive.load() && tzUpdateThread.joinable() ) {
 				tzUpdateThread.request_stop();
 				cv.notify_one();
-				tzUpdateThread.join();
 				isThreadActive.store(false);
 		}
 	}
