@@ -2,7 +2,6 @@
 
 #include <serenity/Common.h>
 
-#include <condition_variable>
 #include <string_view>
 #include <chrono>
 
@@ -35,7 +34,7 @@ namespace serenity::msg_details {
 		std::atomic<bool> isThreadActive;
 		bool isDaylightSavings;
 		std::jthread tzUpdateThread;
-		std::condition_variable_any cv;
+		std::condition_variable cv;
 	};
 
 	class Message_Time
@@ -50,7 +49,6 @@ namespace serenity::msg_details {
 		void CalculateCurrentYear(int yearOffset);
 		std::string_view GetCurrentYearSV(bool shortened) const;
 		bool isLeapYear() const;
-		int LeapYearsSinceEpoch(int yearIndex);
 		bool IsDaylightSavings() const;
 		void UpdateTimeDate(std::chrono::system_clock::time_point timePoint);
 		void UpdateCache(std::chrono::system_clock::time_point timePoint);

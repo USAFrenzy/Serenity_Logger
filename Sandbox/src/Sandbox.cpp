@@ -106,7 +106,7 @@ int main() {
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Rotating_Log.txt";
 #endif    // !INSTRUMENTATION_ENABLED
 
-	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
+	serenity::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", dailyFilePath.string(), true);
 
 	// ****************************** TEMPORARY TESTING ********************************************
 	/* PeriodicSettings testFileFlushSettings = {};
@@ -374,7 +374,7 @@ int main() {
 	if( percentConsole > 0 ) {
 			consolePercent = "- " + std::to_string(std::abs(percentConsole));
 	} else {
-			consolePercent = "+ " + std::to_string(percentConsole);
+			consolePercent = "+ " + std::to_string(std::abs(percentConsole));
 		}
 
 	auto percentFile = ((fileMicroSec - spdlogFileMicroSec) / spdlogFileMicroSec) * 100;
@@ -382,7 +382,7 @@ int main() {
 	if( percentFile > 0 ) {
 			filePercent = "-" + std::to_string(std::abs(percentFile));
 	} else {
-			filePercent = "+" + std::to_string(percentFile);
+			filePercent = "+" + std::to_string(std::abs(percentFile));
 		}
 
 	auto percentRotating = ((rotateMicroSec - spdlogRotateMicroSec) / spdlogRotateMicroSec) * 100;
@@ -390,7 +390,7 @@ int main() {
 	if( percentRotating > 0 ) {
 			rotatePercent = "-" + std::to_string(std::abs(percentRotating));
 	} else {
-			rotatePercent = "+" + std::to_string(percentRotating);
+			rotatePercent = "+" + std::to_string(std::abs(percentRotating));
 		}
 
 	// clang-format off

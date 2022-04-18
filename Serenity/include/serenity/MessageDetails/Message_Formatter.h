@@ -131,7 +131,6 @@ namespace serenity::msg_details {
 	      private:
 		Message_Info* msgInfo;
 		std::locale* localeRef;
-		int ePrecision;
 		Formatters formatter;
 		std::string fmtPattern;
 		std::string lazy_message;

@@ -17,7 +17,6 @@ namespace serenity::experimental {
 		std::string OriginalName() const;
 		std::string OriginalExtension() const;
 		size_t FileSize() const;
-		bool IsIntervalRotationEnabled() const;
 
 		enum class IntervalMode
 		{
@@ -37,7 +36,6 @@ namespace serenity::experimental {
 
 	      protected:
 		void SetCurrentFileSize(size_t currentSize);
-		void EnableFirstRotation(bool enabled = true);
 
 	      private:
 		size_t currentFileSize;
@@ -89,12 +87,18 @@ namespace serenity::experimental::targets {
 		bool ReplaceOldFileInRotation();
 
 	private:
+		// added these to account for premessage stamp size when checking in ShouldRotate(),
+		// which was unaccounted for with original usage of MsgInfo()->MessageSize()
+		void SetMessageSize(size_t size); 
+		size_t MessageSize() const; 
+
+	private:
 		bool rotationEnabled;
 		IntervalMode m_mode;
-		int currentDay;
-		int currentWeekday;
-		int currentHour;
+		std::tm currentCache;
 		mutable std::mutex rotatingMutex;
+		bool shouldRotate;
+		size_t messageSize;
 	};
 
 }    // namespace serenity::experimental::targets

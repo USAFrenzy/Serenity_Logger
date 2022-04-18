@@ -273,12 +273,14 @@ namespace serenity {
 	// was provided by ivank at https://stackoverflow.com/a/66402319/11410972
 	struct MsgWithLoc
 	{
-		std::string msg;
+		std::string_view msg;
 		std::source_location source;
 		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current())
-			: msg(sv.data(), sv.size()), source(src) { }
-		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+			: msg(std::move(sv)), source(src) { }
+		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current())
+			: msg(std::move(sv)), source(src) { }
+		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current())
+			: msg(std::move(sv)), source(src) { }
 	};
 
 }    // namespace serenity

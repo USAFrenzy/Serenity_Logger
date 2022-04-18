@@ -13,8 +13,7 @@ namespace serenity::msg_details {
 	void ZoneThread::UpdateTimeZoneInfoThread() {
 		std::unique_lock<std::mutex> lock(timeMutex);
 		auto stopToken = tzUpdateThread.get_stop_token();
-		const int maxAttempt { 3 };
-		bool success { false };
+		const int maxAttempt { 2 };
 
 		auto tryUpdating = [ &, this ]() {
 			try {
@@ -28,22 +27,20 @@ namespace serenity::msg_details {
 
 		while( !stopToken.stop_requested() ) {
 				cv.wait_until(lock, sysCache.end, [ &, this ]() { return stopToken.stop_requested(); });
-				for( int tries { 0 }; tries < maxAttempt; ++tries ) {
+				for( int tries { 0 }; tries < +maxAttempt; ++tries ) {
 						// Check on each attempt if the thread is supposed to be wrapping up before trying to update
 						if( stopToken.stop_requested() ) return;
 						auto [ result, errStr ] = tryUpdating();
-						success                 = result;
-						if( success ) break;
+						if( result ) break;
 						if( tries == maxAttempt ) {
 								printf("%s\n", errStr.c_str());
-								printf("Zone Update Thread Will Now Terminate Itself\n");
-								break;
+								printf("Max Attempts Reached. Zone Update Thread Will Now Terminate Itself.\n");
+								return;
 						}
+						printf("%s\nRetrying...\n", errStr.c_str());
 					}
-				if( !success ) return;
 				sysCache          = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
 				isDaylightSavings = (sysCache.save != std::chrono::minutes(0));
-				success           = false;    // reset for next iteration
 			}
 	}
 
@@ -152,13 +149,6 @@ namespace serenity::msg_details {
 
 	const std::chrono::seconds& Message_Time::LastLogPoint() const {
 		return secsSinceLastLog;
-	}
-
-	// This much faster implementation than iterating naively in a loop was found at the following:
-	// Ultra-fast-Algorithms-for-Working-with-Leap-Years blog by Ted Nguyen
-	// https://stackoverflow.com/questions/4587513/how-to-calculate-number-of-leap-years-between-two-years-in-c-sharp Victor Haydin's answer
-	int Message_Time::LeapYearsSinceEpoch(int yearIndex) {
-		return (yearIndex / 4) - (yearIndex / 100) + (yearIndex / 400);
 	}
 
 	bool Message_Time::isLeapYear() const {

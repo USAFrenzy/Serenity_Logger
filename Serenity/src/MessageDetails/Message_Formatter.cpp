@@ -253,7 +253,7 @@ namespace serenity::msg_details {
 	}
 
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
-		: msgInfo(*&details), localeRef(&details->GetLocale()), ePrecision(6), sourceFlag(source_flag::empty) {
+		: msgInfo(*&details), localeRef(&details->GetLocale()), sourceFlag(source_flag::empty) {
 		SetPattern(pattern);
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;
@@ -423,7 +423,6 @@ namespace serenity::msg_details {
 	void Message_Formatter::LazySubstitute(std::string& msg, std::string&& arg) {
 		std::string_view temp { msg };
 		auto& parseHelper { argStorage.ParseHelper() };
-		parseHelper.ClearPartitions();
 		bool bracketPositionsValid;
 		using B_Type = LazyParseHelper::bracket_type;
 		using P_Type = LazyParseHelper::partition_type;
