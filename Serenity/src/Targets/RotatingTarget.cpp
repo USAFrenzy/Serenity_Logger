@@ -294,7 +294,9 @@ namespace serenity::experimental::targets {
 						if( currentCache.tm_mday != cache.tm_mday ) {
 								currentCache.tm_mday = cache.tm_mday;
 								shouldRotate         = true;
-						}
+						} else {
+								shouldRotate = false;
+							}
 						bool isSameHour { dayModeSettingHour == cache.tm_hour };
 						bool meetsThreshold { cache.tm_min >= dayModeSettingMinute };
 						return (shouldRotate && isSameHour && meetsThreshold);
@@ -305,7 +307,9 @@ namespace serenity::experimental::targets {
 						if( currentCache.tm_wday != cache.tm_wday ) {
 								currentCache.tm_wday = cache.tm_wday;
 								shouldRotate         = true;
-						}
+						} else {
+								shouldRotate = false;
+							}
 						bool isSameWkDay { currentCache.tm_wday == weekModeSetting };
 						bool isSameHour { cache.tm_hour == dayModeSettingHour };
 						bool meetsThreshold { cache.tm_min >= dayModeSettingMinute };
@@ -317,7 +321,9 @@ namespace serenity::experimental::targets {
 						if( currentCache.tm_mday != cache.tm_mday ) {
 								currentCache.tm_mday = cache.tm_mday;
 								shouldRotate         = true;
-						}
+						} else {
+								shouldRotate = false;
+							}
 						int numberOfDays { SERENITY_LUTS::daysPerMonth.at(cache.tm_mon) };
 						int rotationDay { monthModeSetting };
 						// This tidbit is here to make sure a month isn't accidentally skipped
