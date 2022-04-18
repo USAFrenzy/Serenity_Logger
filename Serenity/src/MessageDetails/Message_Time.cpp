@@ -27,7 +27,7 @@ namespace serenity::msg_details {
 
 		while( !stopToken.stop_requested() ) {
 				cv.wait_until(lock, sysCache.end, [ &, this ]() { return stopToken.stop_requested(); });
-				for( int tries { 0 }; tries < +maxAttempt; ++tries ) {
+				for( int tries { 0 }; tries <=maxAttempt; ++tries ) {
 						// Check on each attempt if the thread is supposed to be wrapping up before trying to update
 						if( stopToken.stop_requested() ) return;
 						auto [ result, errStr ] = tryUpdating();
