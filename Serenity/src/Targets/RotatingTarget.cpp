@@ -53,7 +53,8 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
 		: TargetBase("Rotating_Log.txt"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size),
-		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0) {
+		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0), dsCache(RotatingDaylightCache {}) {
+		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
 		rotationReadyFile.make_preferred();
@@ -73,7 +74,9 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
 		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
-		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0) {
+		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0), dsCache(RotatingDaylightCache {}) {
+		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
+
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
 		rotationReadyFile.make_preferred();
@@ -92,7 +95,8 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
 		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
-		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0) {
+		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0), dsCache(RotatingDaylightCache {}) {
+		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
 		rotationReadyFile.make_preferred();
@@ -196,20 +200,16 @@ namespace serenity::experimental::targets {
 		if( !fileToReplace.empty() ) {
 				FileCacheHelper()->SetFilePath(fileToReplace);
 		} else {
-				std::cerr << std::vformat("Warning: Unable To Locate Oldest File With Base Name \"{}\". "
-				                          "Opening And Truncating "
-				                          "Previous File, \"{}\"\n",
-				                          std::make_format_args(OriginalName(), previousFile));
+				std::cerr << "Warning: Unable To Locate Oldest File With Base Name \"" << OriginalName()
+					  << "\". Opening And Truncating Previous File, \"" << previousFile << "\"\n";
 				success = false;
 			}
 		if( !OpenFile(true) ) {
 				if( FileCacheHelper()->FilePath() != previousFile ) {
-						std::cerr << std::vformat("Error: Unable To Finish Rotating From File \"{}\" To File "
-						                          "\"{}\"\n",
-						                          std::make_format_args(previousFile, FileCacheHelper()->FileName()));
+						std::cerr << "Error: Unable To Finish Rotating From File \"" << previousFile << "\" To File \""
+							  << FileCacheHelper()->FileName() << "\"\n";
 				} else {
-						std::cerr << std::vformat("Error: Unable To Open And Truncate File \"{}\"\n",
-						                          std::make_format_args(previousFile));
+						std::cerr << "Error: Unable To Open And Truncate File \"" << previousFile << "\"\n";
 					}
 				success = false;
 		}
@@ -268,6 +268,7 @@ namespace serenity::experimental::targets {
 		}
 	}
 
+	// TODO: Test the added Daylight Savings logic, flesh it out, and then add to the other fields
 	bool RotatingTarget::ShouldRotate() {
 		using mode = RotateSettings::IntervalMode;
 
@@ -283,7 +284,29 @@ namespace serenity::experimental::targets {
 					break;
 				case mode::hourly:
 					{
-						if( currentCache.tm_hour != cache.tm_hour ) {
+						/************************ This DEFINITELY needs to be tested: ************************
+						 * - UTC never takes DS into account so If logs are being created with Local Time,
+						 *   perform the comparison check on the cached DS value to the current value and:
+						 *   - If they don't match, cache the DS hour into dsCache, otherwise do nothing
+						 * - If the cached hour != both the current hour AND the DS offset hour, returns true
+						 *   - the offset hour is initialized to a negative value so this condition will pass if
+						 *     the DS modes match and the check hasn't initially been performed
+						 *   - If cached hour != current hour AND == the offset hour, breaks and returns false
+						 *   - If cached hour == current hour but != the offset hour, breaks and returns false
+						 *   - Finally, if the cached hour == both values, still returns false
+						 * - In essence, the only time this SHOULD be true, causing a rotate to happen, is if:
+						 *   - the cached hour != either the offset AND the current hour value
+						 **************************************************************************************/
+						auto currentDSValue { MsgInfo()->TimeDetails().IsDaylightSavings() };
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) &&
+						    (dsCache.initialDSValue != currentDSValue) ) {
+								auto offset { MsgInfo()->TimeDetails().DaylightSavingsOffsetMin() };
+								dsCache.initialDSValue
+								? dsCache.dsHour = cache.tm_hour - (std::abs(offset.count()) / 60)
+								: dsCache.dsHour = cache.tm_hour + (std::abs(offset.count()) / 60);
+								dsCache.initialDSValue = currentDSValue;
+						}
+						if( (currentCache.tm_hour != cache.tm_hour) && (currentCache.tm_hour != dsCache.dsHour) ) {
 								currentCache.tm_hour = cache.tm_hour;
 								return true;
 						}
@@ -296,6 +319,7 @@ namespace serenity::experimental::targets {
 								shouldRotate         = true;
 						} else {
 								shouldRotate = false;
+								break;
 							}
 						bool isSameHour { dayModeSettingHour == cache.tm_hour };
 						bool meetsThreshold { cache.tm_min >= dayModeSettingMinute };
@@ -309,6 +333,7 @@ namespace serenity::experimental::targets {
 								shouldRotate         = true;
 						} else {
 								shouldRotate = false;
+								break;
 							}
 						bool isSameWkDay { currentCache.tm_wday == weekModeSetting };
 						bool isSameHour { cache.tm_hour == dayModeSettingHour };
@@ -323,6 +348,7 @@ namespace serenity::experimental::targets {
 								shouldRotate         = true;
 						} else {
 								shouldRotate = false;
+								break;
 							}
 						int numberOfDays { SERENITY_LUTS::daysPerMonth.at(cache.tm_mon) };
 						int rotationDay { monthModeSetting };

@@ -45,6 +45,16 @@ namespace serenity::experimental {
 
 namespace serenity::experimental::targets {
 
+	// Initialize to negative values so condition checks pass if isn't DS and these haven't been
+	// updated rather than zero-initializing them and causing a potential false positive conditional check
+
+	struct RotatingDaylightCache
+	{
+		bool initialDSValue { false };
+		int dsHour { -1 };
+		int dsMinute { -1 };
+	};
+
 	class RotatingTarget: public serenity::targets::TargetBase, public serenity::experimental::RotateSettings
 	{
 	      public:
@@ -99,6 +109,7 @@ namespace serenity::experimental::targets {
 		mutable std::mutex rotatingMutex;
 		bool shouldRotate;
 		size_t messageSize;
+		RotatingDaylightCache dsCache;
 	};
 
 }    // namespace serenity::experimental::targets
