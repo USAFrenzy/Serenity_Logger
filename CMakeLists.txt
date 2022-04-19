@@ -28,7 +28,7 @@ endif ()
 
 if (BUILD_SANDBOX)
     include(cmake/CPM.cmake)
-    cpmaddpackage("gh:gabime/spdlog@1.9.2")
+    cpmaddpackage("gh:gabime/spdlog@1.10.0")
     add_subdirectory(Sandbox)
     set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Sandbox)
 endif ()
