@@ -53,6 +53,7 @@ namespace serenity::experimental::targets {
 		bool initialDSValue { false };
 		int dsHour { -1 };
 		int dsMinute { -1 };
+		int dsMDay { -1 };
 	};
 
 	class RotatingTarget: public serenity::targets::TargetBase, public serenity::experimental::RotateSettings
