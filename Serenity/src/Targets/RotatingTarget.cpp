@@ -301,13 +301,18 @@ namespace serenity::experimental::targets {
 								dsCache.initialDSValue = !dsCache.initialDSValue;
 								auto offset { std::abs(
 								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								int tempHr {}, tempMin {};
 								if( dsCache.initialDSValue ) {
-										dsCache.dsHour         = cache.tm_hour - (offset / 60);
-										dsCache.dsMinute       = cache.tm_min - (offset % 60);
+										tempHr                 = cache.tm_hour - (offset / 60);
+										tempMin                = cache.tm_min - (offset % 60);
+										dsCache.dsHour         = tempHr >= 0 ? tempHr : 0;
+										dsCache.dsMinute       = tempMin >= 0 ? tempMin : 0;
 										dsCache.dsShouldRotate = !(dsCache.dsHour == dayModeSettingHour);
 								} else {
-										dsCache.dsHour         = cache.tm_hour + (offset / 60);
-										dsCache.dsMinute       = cache.tm_min + (offset % 60);
+										tempHr                 = cache.tm_hour + (offset / 60);
+										tempMin                = cache.tm_min + (offset % 60);
+										dsCache.dsHour         = tempHr <= 23 ? tempHr : 0;
+										dsCache.dsMinute       = tempMin <= 59 ? tempMin : 0;
 										dsCache.dsShouldRotate = (dsCache.dsHour == dayModeSettingHour);
 									}
 						}
@@ -335,18 +340,22 @@ namespace serenity::experimental::targets {
 								dsCache.initialDSValue = !dsCache.initialDSValue;
 								auto offset { std::abs(
 								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
-								int wkDay {};
+								int wkDay {}, tempHr {}, tempMin {};
 								if( dsCache.initialDSValue ) {
-										dsCache.dsHour   = cache.tm_hour - (offset / 60);
-										dsCache.dsMinute = cache.tm_min - (offset % 60);
+										tempHr           = cache.tm_hour - (offset / 60);
+										tempMin          = cache.tm_min - (offset % 60);
+										dsCache.dsHour   = tempHr >= 0 ? tempHr : 0;
+										dsCache.dsMinute = tempMin >= 0 ? tempMin : 0;
 										cache.tm_wday < 6 ? wkDay = (cache.tm_wday + 1) : wkDay = 0;
 										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay
 												   : dsCache.dsWkDay = cache.tm_wday;
 										dsCache.dsShouldRotate = ((dsCache.dsHour != dayModeSettingHour) ||
 										                          (dsCache.dsWkDay != cache.tm_wday));
 								} else {
-										dsCache.dsHour   = cache.tm_hour + (offset / 60);
-										dsCache.dsMinute = cache.tm_min + (offset % 60);
+										tempHr           = cache.tm_hour + (offset / 60);
+										tempMin          = cache.tm_min + (offset % 60);
+										dsCache.dsHour   = tempHr <= 23 ? tempHr : 0;
+										dsCache.dsMinute = tempMin <= 59 ? tempMin : 0;
 										cache.tm_wday > 0 ? wkDay = (cache.tm_wday - 1) : wkDay = 6;
 										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay
 												   : dsCache.dsWkDay = cache.tm_wday;
@@ -392,18 +401,32 @@ namespace serenity::experimental::targets {
 								auto offset { std::abs(
 								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
 								dsCache.dsDayOfMonth = cache.tm_mday;
+								int tempHr {}, tempMin {};
 								if( dsCache.initialDSValue ) {
-										dsCache.dsHour   = cache.tm_hour - (offset / 60);
-										dsCache.dsMinute = cache.tm_min - (offset % 60);
-										dsCache.dsHour == 0 ? --dsCache.dsDayOfMonth
-												    : dsCache.dsDayOfMonth;
+										tempHr           = cache.tm_hour - (offset / 60);
+										tempMin          = cache.tm_min - (offset % 60);
+										dsCache.dsHour   = tempHr >= 0 ? tempHr : 0;
+										dsCache.dsMinute = tempMin >= 0 ? tempMin : 0;
+										if( dsCache.dsHour == 0 ) {
+												--dsCache.dsDayOfMonth;
+										}
+										if( dsCache.dsDayOfMonth < 1 ) {
+												dsCache.dsDayOfMonth =
+												SERENITY_LUTS::daysPerMonth.at(
+												(cache.tm_mon > 0 ? cache.tm_mon - 1 : 0));
+										}
 										dsCache.dsShouldRotate = (dsCache.dsHour != dayModeSettingHour) &&
 										                         (dsCache.dsDayOfMonth != rotationDay);
 								} else {
-										dsCache.dsHour   = cache.tm_hour + (offset / 60);
-										dsCache.dsMinute = cache.tm_min + (offset % 60);
-										dsCache.dsHour == 0 ? ++dsCache.dsDayOfMonth
-												    : dsCache.dsDayOfMonth;
+										tempHr           = cache.tm_hour + (offset / 60);
+										tempMin          = cache.tm_min + (offset % 60);
+										dsCache.dsHour   = tempHr <= 23 ? tempHr : 0;
+										dsCache.dsMinute = tempMin <= 59 ? tempMin : 0;
+										if( dsCache.dsHour == 0 ) {
+												++dsCache.dsDayOfMonth;
+										}
+										if( dsCache.dsDayOfMonth > numberOfDays )
+											dsCache.dsDayOfMonth = 1;
 										dsCache.dsShouldRotate = (dsCache.dsHour == dayModeSettingHour) &&
 										                         (dsCache.dsDayOfMonth == rotationDay);
 									}
