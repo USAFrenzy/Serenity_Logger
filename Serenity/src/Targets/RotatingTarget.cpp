@@ -52,8 +52,8 @@ namespace serenity::experimental {
 namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
-		: TargetBase("Rotating_Log.txt"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::hourly),
-		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0), dsCache(RotatingDaylightCache {}) {
+		: TargetBase("Rotating_Log.txt"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
@@ -73,8 +73,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::hourly),
-		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0), dsCache(RotatingDaylightCache {}) {
+		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 
 		SyncTargetHelpers(TargetHelper());
@@ -94,8 +94,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::hourly),
-		  currentCache(MsgInfo()->TimeInfo()), shouldRotate(false), messageSize(0), dsCache(RotatingDaylightCache {}) {
+		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
@@ -268,33 +268,6 @@ namespace serenity::experimental::targets {
 		}
 	}
 
-	// TODO: Test the added Daylight Savings logic, flesh it out, and then add to the other fields
-	// EDIT #1: Hourly seems to work when manipulated to change in mock DS change setting, but the other
-	//          fields are probably going to require a little bit more in depth offsets to check
-	// EDIT #2: Trying to reason about the daily case with regards to DS changes. If Daylights value
-	//          changes, take the offset and if we're coming from DS, subtract the offset, otherwise,
-	//          add the offset to the hour and minutes field of the dsCache. If we're coming from DS
-	//          and the offset hour == the rotation hour, then we shouldn't rotate. However, if we're
-	//          going to DS, if the offset hour == the rotation hour, then we SHOULD rotate do to time
-	//          springing forward.
-	//          - Therefore:
-	//            - if we should rotate based on the dsShouldRotate value, we set shouldRotate to true
-	//            - if the current day of the month != what the cached value is, we set shouldRotate
-	//              to true
-	//            - if the current day of the month == what the cached value is AND dsShouldRotate is
-	//              false, then we set shouldRotate to false
-	//          - THEN depending on the value of shouldRotate, if its false, short-circuit the checks and
-	//            break, returning false, otherwise, if shouldRotate is true, check if we've meet the
-	//            conditions for rotating based on the normal settings OR, if dsShouldRotate was set to
-	//            true, check the conditions based on the daylight savings offsets
-	//          - If dsShouldRotate is set to false (whether the condition proved that we shouldn't
-	//            rotate or whether the check was circumvented all-together by already being run last
-	//            iteration), then the conditional check for rotation compares that the rotation settings
-	//            are equal to current time AND not equal to the DS settings in order to prevent double
-	//            rotations for the same condition already being met by the Daylight Savings check.
-	//            - If the conditions are met, returns true, otherwise, returns false.
-	//          I believe this might cover all bases but I need to think this through just in case I'm
-	//          missing something.
 	bool RotatingTarget::ShouldRotate() {
 		using mode = RotateSettings::IntervalMode;
 
@@ -323,62 +296,86 @@ namespace serenity::experimental::targets {
 					break;
 				case mode::daily:
 					{
-						bool dsShouldRotate { false };
 						if( (MsgInfo()->TimeMode() == message_time_mode::local) &&
 						    (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
 								dsCache.initialDSValue = !dsCache.initialDSValue;
 								auto offset { std::abs(
 								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
 								if( dsCache.initialDSValue ) {
-										dsCache.dsHour   = cache.tm_hour - (offset / 60);
-										dsCache.dsMinute = cache.tm_min - (offset % 60);
-										dsShouldRotate   = !(dsCache.dsHour == dayModeSettingHour);
+										dsCache.dsHour         = cache.tm_hour - (offset / 60);
+										dsCache.dsMinute       = cache.tm_min - (offset % 60);
+										dsCache.dsShouldRotate = !(dsCache.dsHour == dayModeSettingHour);
 								} else {
-										dsCache.dsHour   = cache.tm_hour + (offset / 60);
-										dsCache.dsMinute = cache.tm_min + (offset % 60);
-										dsShouldRotate   = (dsCache.dsHour == dayModeSettingHour);
+										dsCache.dsHour         = cache.tm_hour + (offset / 60);
+										dsCache.dsMinute       = cache.tm_min + (offset % 60);
+										dsCache.dsShouldRotate = (dsCache.dsHour == dayModeSettingHour);
 									}
 						}
-						if( (currentCache.tm_mday != cache.tm_mday) || (dsShouldRotate) ) {
+						if( (currentCache.tm_mday != cache.tm_mday) || (dsCache.dsShouldRotate) ) {
 								currentCache.tm_mday = cache.tm_mday;
-								shouldRotate         = true;
-						} else {
-								shouldRotate = false;
-								break;
-							}
-						bool isSameHour { ((dayModeSettingHour == cache.tm_hour) &&
-							           (dayModeSettingHour != dsCache.dsHour)) ||
-							          (dsShouldRotate && (dsCache.dsHour == dayModeSettingHour)) };
-						bool meetsThreshold { ((dayModeSettingMinute != dsCache.dsMinute) &&
-							               (cache.tm_min >= dayModeSettingMinute)) ||
-							              (dsShouldRotate && (dsCache.dsMinute >= dayModeSettingMinute)) };
-						return (shouldRotate && isSameHour && meetsThreshold);
+								bool isSameHour { false }, meetsThreshold { false };
+								if( !dsCache.dsShouldRotate ) {
+										isSameHour = (dayModeSettingHour == cache.tm_hour) &&
+										             (dayModeSettingHour != dsCache.dsHour);
+										meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) &&
+										                 (cache.tm_min >= dayModeSettingMinute);
+								} else {
+										isSameHour     = dsCache.dsHour == dayModeSettingHour;
+										meetsThreshold = dsCache.dsMinute >= dayModeSettingMinute;
+										dsCache.dsShouldRotate = false;
+									}
+								return (isSameHour && meetsThreshold);
+						}
 					}
 					break;
 				case mode::weekly:
 					{
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) &&
+						    (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
+								dsCache.initialDSValue = !dsCache.initialDSValue;
+								auto offset { std::abs(
+								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								int wkDay {};
+								if( dsCache.initialDSValue ) {
+										dsCache.dsHour   = cache.tm_hour - (offset / 60);
+										dsCache.dsMinute = cache.tm_min - (offset % 60);
+										cache.tm_wday < 6 ? wkDay = (cache.tm_wday + 1) : wkDay = 0;
+										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay
+												   : dsCache.dsWkDay = cache.tm_wday;
+										dsCache.dsShouldRotate = ((dsCache.dsHour != dayModeSettingHour) ||
+										                          (dsCache.dsWkDay != cache.tm_wday));
+								} else {
+										dsCache.dsHour   = cache.tm_hour + (offset / 60);
+										dsCache.dsMinute = cache.tm_min + (offset % 60);
+										cache.tm_wday > 0 ? wkDay = (cache.tm_wday - 1) : wkDay = 6;
+										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay
+												   : dsCache.dsWkDay = cache.tm_wday;
+										dsCache.dsShouldRotate = ((dsCache.dsHour == dayModeSettingHour) ||
+										                          (dsCache.dsWkDay == cache.tm_wday));
+									}
+						}
 						if( currentCache.tm_wday != cache.tm_wday ) {
 								currentCache.tm_wday = cache.tm_wday;
-								shouldRotate         = true;
-						} else {
-								shouldRotate = false;
-								break;
-							}
-						bool isSameWkDay { currentCache.tm_wday == weekModeSetting };
-						bool isSameHour { cache.tm_hour == dayModeSettingHour };
-						bool meetsThreshold { cache.tm_min >= dayModeSettingMinute };
-						if( shouldRotate && isSameWkDay && isSameHour && meetsThreshold ) return true;
+								bool isSameWkday { false }, isSameHour { false }, meetsThreshold { false };
+								if( !dsCache.dsShouldRotate ) {
+										isSameWkday = (currentCache.tm_wday == weekModeSetting) &&
+										              (dsCache.dsWkDay != weekModeSetting);
+										isSameHour = (dayModeSettingHour == cache.tm_hour) &&
+										             (dayModeSettingHour != dsCache.dsHour);
+										meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) &&
+										                 (cache.tm_min >= dayModeSettingMinute);
+								} else {
+										isSameWkday    = dsCache.dsWkDay == weekModeSetting;
+										isSameHour     = dsCache.dsHour == dayModeSettingHour;
+										meetsThreshold = dsCache.dsMinute >= dayModeSettingMinute;
+										dsCache.dsShouldRotate = false;
+									}
+								return (isSameWkday && isSameHour && meetsThreshold);
+						}
 					}
 					break;
 				case mode::monthly:
 					{
-						if( currentCache.tm_mday != cache.tm_mday ) {
-								currentCache.tm_mday = cache.tm_mday;
-								shouldRotate         = true;
-						} else {
-								shouldRotate = false;
-								break;
-							}
 						int numberOfDays { SERENITY_LUTS::daysPerMonth.at(cache.tm_mon) };
 						int rotationDay { monthModeSetting };
 						// This tidbit is here to make sure a month isn't accidentally skipped
@@ -389,10 +386,45 @@ namespace serenity::experimental::targets {
 										rotationDay = 29;
 								}
 						}
-						bool isRotationDay { currentCache.tm_mday == rotationDay };
-						bool isRotationHour { cache.tm_hour == dayModeSettingHour };
-						bool meetsThreshold { cache.tm_min >= dayModeSettingMinute };
-						return (shouldRotate && isRotationDay && isRotationHour && meetsThreshold);
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) &&
+						    (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
+								dsCache.initialDSValue = !dsCache.initialDSValue;
+								auto offset { std::abs(
+								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								dsCache.dsDayOfMonth = cache.tm_mday;
+								if( dsCache.initialDSValue ) {
+										dsCache.dsHour   = cache.tm_hour - (offset / 60);
+										dsCache.dsMinute = cache.tm_min - (offset % 60);
+										dsCache.dsHour == 0 ? --dsCache.dsDayOfMonth
+												    : dsCache.dsDayOfMonth;
+										dsCache.dsShouldRotate = (dsCache.dsHour != dayModeSettingHour) &&
+										                         (dsCache.dsDayOfMonth != rotationDay);
+								} else {
+										dsCache.dsHour   = cache.tm_hour + (offset / 60);
+										dsCache.dsMinute = cache.tm_min + (offset % 60);
+										dsCache.dsHour == 0 ? ++dsCache.dsDayOfMonth
+												    : dsCache.dsDayOfMonth;
+										dsCache.dsShouldRotate = (dsCache.dsHour == dayModeSettingHour) &&
+										                         (dsCache.dsDayOfMonth == rotationDay);
+									}
+						}
+						if( currentCache.tm_mday != cache.tm_mday ) {
+								currentCache.tm_mday = cache.tm_mday;
+								bool isRotationDay { false }, isRotationHour { false }, meetsThreshold { false };
+								if( !dsCache.dsShouldRotate ) {
+										isRotationDay  = currentCache.tm_mday == rotationDay;
+										isRotationHour = (dayModeSettingHour == cache.tm_hour) &&
+										                 (dayModeSettingHour != dsCache.dsHour);
+										meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) &&
+										                 (cache.tm_min >= dayModeSettingMinute);
+								} else {
+										isRotationDay  = dsCache.dsDayOfMonth == rotationDay;
+										isRotationHour = dsCache.dsHour == dayModeSettingHour;
+										meetsThreshold = dsCache.dsMinute >= dayModeSettingMinute;
+										dsCache.dsShouldRotate = false;
+									}
+								return (isRotationDay && isRotationHour && meetsThreshold);
+						}
 					}
 					break;
 				default: break;

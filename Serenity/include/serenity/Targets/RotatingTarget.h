@@ -51,9 +51,11 @@ namespace serenity::experimental::targets {
 	struct RotatingDaylightCache
 	{
 		bool initialDSValue { false };
+		bool dsShouldRotate { false };
 		int dsHour { -1 };
 		int dsMinute { -1 };
-		int dsMDay { -1 };
+		int dsWkDay { -1 };
+		int dsDayOfMonth { -1 };
 	};
 
 	class RotatingTarget: public serenity::targets::TargetBase, public serenity::experimental::RotateSettings
@@ -108,7 +110,6 @@ namespace serenity::experimental::targets {
 		IntervalMode m_mode;
 		std::tm currentCache;
 		mutable std::mutex rotatingMutex;
-		bool shouldRotate;
 		size_t messageSize;
 		RotatingDaylightCache dsCache;
 	};

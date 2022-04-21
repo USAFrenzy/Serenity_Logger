@@ -290,9 +290,9 @@ int main() {
 	const unsigned long int iterations { 1'000'000 };
 	std::cout << "Benching Color Console Target...\n\n";
 
-	// for( i; i < iterations; i++ ) {
-	//		C.Info("{}", test);
-	//	}
+	for( i; i < iterations; i++ ) {
+			C.Info("{}", test);
+		}
 	timer.StopWatch_Stop();
 	auto consoleSeconds { timer.Elapsed_In(time_mode::sec) };
 	auto consoleMillSec { timer.Elapsed_In(time_mode::ms) };
@@ -303,9 +303,9 @@ int main() {
 
 	i = 0;    // reset
 	timer.StopWatch_Reset();
-	// for( i; i < iterations; i++ ) {
-	//		spdlogConsoleLogger->info("{}", test);
-	//	}
+	for( i; i < iterations; i++ ) {
+			spdlogConsoleLogger->info("{}", test);
+		}
 	timer.StopWatch_Stop();
 	auto spdlogConsoleSeconds { timer.Elapsed_In(time_mode::sec) };
 	auto spdlogConsoleMillSec { timer.Elapsed_In(time_mode::ms) };
@@ -316,9 +316,9 @@ int main() {
 
 	i = 0;    // reset
 	timer.StopWatch_Reset();
-	// for( i; i < iterations; i++ ) {
-	//		testFile.Info("{}", test);
-	//	}
+	for( i; i < iterations; i++ ) {
+			testFile.Info("{}", test);
+		}
 	timer.StopWatch_Stop();
 	testFile.Flush();
 	auto fileSeconds { timer.Elapsed_In(time_mode::sec) };
@@ -330,9 +330,9 @@ int main() {
 
 	i = 0;    // reset
 	timer.StopWatch_Reset();
-	// for( i; i < iterations; i++ ) {
-	//		spdlogFileLogger->info("{}", test);
-	//	}
+	for( i; i < iterations; i++ ) {
+			spdlogFileLogger->info("{}", test);
+		}
 	timer.StopWatch_Stop();
 	spdlogFileLogger->flush();
 	auto spdlogFileSeconds { timer.Elapsed_In(time_mode::sec) };
