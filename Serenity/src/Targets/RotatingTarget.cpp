@@ -268,6 +268,7 @@ namespace serenity::experimental::targets {
 		}
 	}
 
+	// TODO: Test That The Daylight Savings Logic Actually Works As Intended
 	bool RotatingTarget::ShouldRotate() {
 		using mode = RotateSettings::IntervalMode;
 
@@ -320,14 +321,14 @@ namespace serenity::experimental::targets {
 								currentCache.tm_mday = cache.tm_mday;
 								bool isSameHour { false }, meetsThreshold { false };
 								if( !dsCache.dsShouldRotate ) {
-										isSameHour = (dayModeSettingHour == cache.tm_hour) &&
-										             (dayModeSettingHour != dsCache.dsHour);
-										meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) &&
-										                 (cache.tm_min >= dayModeSettingMinute);
+										// clang-format off
+									isSameHour = (dayModeSettingHour == cache.tm_hour) && (dayModeSettingHour != dsCache.dsHour);
+									meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) && (cache.tm_min >= dayModeSettingMinute);
+										// clang-format on
 								} else {
 										isSameHour     = dsCache.dsHour == dayModeSettingHour;
 										meetsThreshold = dsCache.dsMinute >= dayModeSettingMinute;
-										dsCache.dsShouldRotate = false;
+										dsCache.dsShouldRotate = !(isSameHour && meetsThreshold);
 									}
 								return (isSameHour && meetsThreshold);
 						}
@@ -347,37 +348,36 @@ namespace serenity::experimental::targets {
 										dsCache.dsHour   = tempHr >= 0 ? tempHr : 0;
 										dsCache.dsMinute = tempMin >= 0 ? tempMin : 0;
 										cache.tm_wday < 6 ? wkDay = (cache.tm_wday + 1) : wkDay = 0;
-										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay
-												   : dsCache.dsWkDay = cache.tm_wday;
-										dsCache.dsShouldRotate = ((dsCache.dsHour != dayModeSettingHour) ||
-										                          (dsCache.dsWkDay != cache.tm_wday));
+										// clang-format off
+										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay : dsCache.dsWkDay = cache.tm_wday;
+										dsCache.dsShouldRotate = ((dsCache.dsHour != dayModeSettingHour) || (dsCache.dsWkDay != cache.tm_wday));
+										// clang-format on
 								} else {
 										tempHr           = cache.tm_hour + (offset / 60);
 										tempMin          = cache.tm_min + (offset % 60);
 										dsCache.dsHour   = tempHr <= 23 ? tempHr : 0;
 										dsCache.dsMinute = tempMin <= 59 ? tempMin : 0;
 										cache.tm_wday > 0 ? wkDay = (cache.tm_wday - 1) : wkDay = 6;
-										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay
-												   : dsCache.dsWkDay = cache.tm_wday;
-										dsCache.dsShouldRotate = ((dsCache.dsHour == dayModeSettingHour) ||
-										                          (dsCache.dsWkDay == cache.tm_wday));
+										// clang-format off
+										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay : dsCache.dsWkDay = cache.tm_wday;
+										dsCache.dsShouldRotate = ((dsCache.dsHour == dayModeSettingHour) || (dsCache.dsWkDay == cache.tm_wday));
+										// clang-format on
 									}
 						}
 						if( currentCache.tm_wday != cache.tm_wday ) {
 								currentCache.tm_wday = cache.tm_wday;
 								bool isSameWkday { false }, isSameHour { false }, meetsThreshold { false };
 								if( !dsCache.dsShouldRotate ) {
-										isSameWkday = (currentCache.tm_wday == weekModeSetting) &&
-										              (dsCache.dsWkDay != weekModeSetting);
-										isSameHour = (dayModeSettingHour == cache.tm_hour) &&
-										             (dayModeSettingHour != dsCache.dsHour);
-										meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) &&
-										                 (cache.tm_min >= dayModeSettingMinute);
+										// clang-format off
+										isSameWkday = (currentCache.tm_wday == weekModeSetting) && (dsCache.dsWkDay != weekModeSetting);
+										isSameHour = (dayModeSettingHour == cache.tm_hour) && (dayModeSettingHour != dsCache.dsHour);
+										meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) && (cache.tm_min >= dayModeSettingMinute);
+										// clang-format on
 								} else {
 										isSameWkday    = dsCache.dsWkDay == weekModeSetting;
 										isSameHour     = dsCache.dsHour == dayModeSettingHour;
 										meetsThreshold = dsCache.dsMinute >= dayModeSettingMinute;
-										dsCache.dsShouldRotate = false;
+										dsCache.dsShouldRotate = !(isSameWkday && isSameHour && meetsThreshold);
 									}
 								return (isSameWkday && isSameHour && meetsThreshold);
 						}
@@ -411,12 +411,11 @@ namespace serenity::experimental::targets {
 												--dsCache.dsDayOfMonth;
 										}
 										if( dsCache.dsDayOfMonth < 1 ) {
-												dsCache.dsDayOfMonth =
-												SERENITY_LUTS::daysPerMonth.at(
-												(cache.tm_mon > 0 ? cache.tm_mon - 1 : 0));
+												// clang-format off
+											dsCache.dsDayOfMonth = SERENITY_LUTS::daysPerMonth.at((cache.tm_mon > 0 ? cache.tm_mon - 1 : 0));
 										}
-										dsCache.dsShouldRotate = (dsCache.dsHour != dayModeSettingHour) &&
-										                         (dsCache.dsDayOfMonth != rotationDay);
+										dsCache.dsShouldRotate = (dsCache.dsHour != dayModeSettingHour) && (dsCache.dsDayOfMonth != rotationDay);
+										// clang-format on
 								} else {
 										tempHr           = cache.tm_hour + (offset / 60);
 										tempMin          = cache.tm_min + (offset % 60);
@@ -427,8 +426,9 @@ namespace serenity::experimental::targets {
 										}
 										if( dsCache.dsDayOfMonth > numberOfDays )
 											dsCache.dsDayOfMonth = 1;
-										dsCache.dsShouldRotate = (dsCache.dsHour == dayModeSettingHour) &&
-										                         (dsCache.dsDayOfMonth == rotationDay);
+										// clang-format off
+										dsCache.dsShouldRotate = (dsCache.dsHour == dayModeSettingHour) && (dsCache.dsDayOfMonth == rotationDay);
+										// clang-format on
 									}
 						}
 						if( currentCache.tm_mday != cache.tm_mday ) {
@@ -436,15 +436,15 @@ namespace serenity::experimental::targets {
 								bool isRotationDay { false }, isRotationHour { false }, meetsThreshold { false };
 								if( !dsCache.dsShouldRotate ) {
 										isRotationDay  = currentCache.tm_mday == rotationDay;
-										isRotationHour = (dayModeSettingHour == cache.tm_hour) &&
-										                 (dayModeSettingHour != dsCache.dsHour);
-										meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) &&
-										                 (cache.tm_min >= dayModeSettingMinute);
+										// clang-format off
+										isRotationHour = (dayModeSettingHour == cache.tm_hour) && (dayModeSettingHour != dsCache.dsHour);
+										meetsThreshold = (dayModeSettingMinute != dsCache.dsMinute) && (cache.tm_min >= dayModeSettingMinute);
+										// clang-format on
 								} else {
 										isRotationDay  = dsCache.dsDayOfMonth == rotationDay;
 										isRotationHour = dsCache.dsHour == dayModeSettingHour;
 										meetsThreshold = dsCache.dsMinute >= dayModeSettingMinute;
-										dsCache.dsShouldRotate = false;
+										dsCache.dsShouldRotate = !(isRotationDay && isRotationHour && meetsThreshold);
 									}
 								return (isRotationDay && isRotationHour && meetsThreshold);
 						}
@@ -483,17 +483,19 @@ namespace serenity::experimental::targets {
 					{
 						if( (setting > 23) || (setting < 0) ) {
 								setting = 0;
-								std::cerr << "Hour setting passed in for IntervalMode::daily is out of bounds. "
-									     "\nValue expected is "
-									     "between 0-23 where 0 is 12AM and 23 is 11PM. \nValue passed in: "
-									  << setting << " \n";
+								// clang-format off
+								std::cerr <<  "Hour setting passed in for IntervalMode::daily is out of bounds.\n";
+								std::cerr <<  "Value expected is between 0-23 where 0 is 12AM and 23 is 11PM.\n";
+								std::cerr <<  "Value passed in: " << setting << " \n";
+								// clang-format on
 						}
 						if( (secondSetting > 59) || (secondSetting < 0) ) {
 								secondSetting = 0;
-								std::cerr << "Minute setting passed in for IntervalMode::daily is out of "
-									     "bounds. \nValue expected is "
-									     "between 0-59. \nValue passed in: "
-									  << secondSetting << " \n";
+								// clang-format off
+								std::cerr <<  "Minute setting passed in for IntervalMode::daily is out of bounds.\n";
+								std::cerr <<  "Value expected is between 0-59.\n";
+								std::cerr <<  "Value passed in: " << secondSetting << " \n";
+								// clang-format on
 						}
 						dayModeSettingHour   = setting;
 						dayModeSettingMinute = secondSetting;
@@ -503,11 +505,11 @@ namespace serenity::experimental::targets {
 					{
 						if( (setting > 6) || (setting < 0) ) {
 								setting = 0;
-								std::cerr << "Weekday setting passed in for IntervalMode::weekly is out of "
-									     "bounds. \nValue expected is "
-									     "between 0-6 where 0 is Sunday and 6 is Saturday. \nValue passed "
-									     "in: "
-									  << setting << " \n";
+								// clang-format off
+								std::cerr <<  "Weekday setting passed in for IntervalMode::weekly is out of bounds.\n";
+								std::cerr <<  "Value expected is between 0-6 where 0 is Sunday and 6 is Saturday.\n";
+								std::cerr <<  "Value passed in: " << setting << " \n";
+								// clang-format on
 						}
 						weekModeSetting = setting;
 					}
@@ -516,12 +518,12 @@ namespace serenity::experimental::targets {
 					{
 						if( (setting > 31) || (setting < 1) ) {
 								setting = 1;
-								std::cerr << "Day setting passed in for IntervalMode::monthly is out of bounds. "
-									     "\nValue expected is "
-									     "between 1-31 where 1 is the first day of the month and 31 is the "
-									     "max value of possible "
-									     "days in a month. \nValue passed in: "
-									  << setting << " \n";
+								// clang-format off
+								std::cerr <<  "Day setting passed in for IntervalMode::monthly is out of bounds.\n";
+								std::cerr <<  "Value expected is between 1-31 where 1 is the first day of the "
+								                          "month and 31 is the max value of possible days in a month.\n";
+								std::cerr <<  "Value passed in: " << setting << " \n";
+								// clang-format on
 						}
 						monthModeSetting = setting;
 					}
