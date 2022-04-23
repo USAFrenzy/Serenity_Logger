@@ -21,6 +21,12 @@ static auto RotatingLogPath() {
 	return rotatingPath;
 }
 
+static void RemoveAllFiles() {
+	std::filesystem::remove_all(BaseLogPath().make_preferred());
+	std::filesystem::remove_all((std::filesystem::current_path() /= "Logs").make_preferred());
+}
+
+using namespace serenity;
 using namespace serenity::experimental;
 using namespace serenity::experimental::targets;
 using namespace serenity::SERENITY_LUTS;
@@ -36,7 +42,7 @@ static constexpr std::string_view testView{
 // clang-format on
 
 TEST_CASE("RotateLimits Construction") {
-	CHECK_NOTHROW(RotateLimits());
+	REQUIRE_NOTHROW(RotateLimits());
 }
 
 TEST_CASE("RotateLimits Construction Default Values") {
@@ -49,39 +55,39 @@ TEST_CASE("RotateLimits Construction Default Values") {
 	REQUIRE(temp.monthModeSetting == 1);
 }
 
-TEST_CASE("Rotate Target Constructor [1/3]") {
+TEST_CASE("Rotate Target Constructor [1/3]", "[Rotate Constructors]") {
 	REQUIRE_NOTHROW(RotatingTarget());
 }
 
-TEST_CASE("Rotate Target Constructor [2/3] - 1") {
+TEST_CASE("Rotate Target Constructor [2/3] - 1", "[Rotate Constructors]") {
 	REQUIRE_NOTHROW(RotatingTarget("Constructor 2", (RotatingLogPath() /= "Constructor(2-1).txt").make_preferred().string(), false));
 }
 
-TEST_CASE("Rotate Target Constructor [2/3] - 2") {
+TEST_CASE("Rotate Target Constructor [2/3] - 2", "[Rotate Constructors]") {
 	REQUIRE_NOTHROW(RotatingTarget("Constructor 2", (RotatingLogPath() /= "Constructor(2-2).txt").make_preferred().string(), true));
 }
 
-TEST_CASE("Rotate Target Constructor [2/3] - 3  (Default File If Path Doesn't Include File)") {
+TEST_CASE("Rotate Target Constructor [2/3] - 3  (Default File If Path Doesn't Include File)", "[Rotate Constructors]") {
 	RotatingTarget temp("Constructor 2", (RotatingLogPath()).make_preferred().string(), false);
 	REQUIRE(temp.FileCacheHelper()->FileName() == "Rotating_Log");
 }
 
-TEST_CASE("Rotate Target Constructor [3/3] - 1") {
+TEST_CASE("Rotate Target Constructor [3/3] - 1", "[Rotate Constructors]") {
 	REQUIRE_NOTHROW(RotatingTarget("Constructor 2", "|%l| %a %n %T [%N]: %+",
-	                             (RotatingLogPath() /= "Constructor(3-1).txt").make_preferred().string(), true));
+	                               (RotatingLogPath() /= "Constructor(3-1).txt").make_preferred().string(), true));
 }
 
-TEST_CASE("Rotate Target Constructor [3/3] - 2") {
+TEST_CASE("Rotate Target Constructor [3/3] - 2", "[Rotate Constructors]") {
 	REQUIRE_NOTHROW(RotatingTarget("Constructor 2", "|%l| %a %n %T [%N]: %+",
-	                             (RotatingLogPath() /= "Constructor(3-2).txt").make_preferred().string(), false));
+	                               (RotatingLogPath() /= "Constructor(3-2).txt").make_preferred().string(), false));
 }
 
-TEST_CASE("Rotate Target Constructor [3/3] - 3 (Default File If Path Doesn't Include File)") {
+TEST_CASE("Rotate Target Constructor [3/3] - 3 (Default File If Path Doesn't Include File)", "[Rotate Constructors]") {
 	RotatingTarget temp("Constructor 3", (RotatingLogPath()).make_preferred().string(), false);
 	REQUIRE(temp.FileCacheHelper()->FileName() == "Rotating_Log");
 }
 
-TEST_CASE("SetRotationLimits - 1") {
+TEST_CASE("SetRotationLimits - 1", "[RotateTarget Functions]") {
 	RotatingTarget temp;
 	RotateLimits limits {};
 	temp.SetRotationLimits(limits);
@@ -94,7 +100,7 @@ TEST_CASE("SetRotationLimits - 1") {
 	REQUIRE(tempLimits.weekModeSetting == limits.weekModeSetting);
 }
 
-TEST_CASE("SetRotationLimits - 2") {
+TEST_CASE("SetRotationLimits - 2", "[RotateTarget Functions]") {
 	RotatingTarget temp;
 	RotateLimits limits {};
 	limits.dayModeSettingHour   = 2;
@@ -113,7 +119,7 @@ TEST_CASE("SetRotationLimits - 2") {
 	REQUIRE(tempLimits.weekModeSetting == limits.weekModeSetting);
 }
 
-TEST_CASE("Rotate On File Size Test [Without Truncation]") {
+TEST_CASE("Rotate On File Size Test (Without Truncation)", "[RotateTarget Functions][Rotation On]") {
 	auto path { RotatingLogPath() /= "FileSize.txt" };
 	auto fileName { path };
 	fileName.replace_extension();
@@ -142,7 +148,7 @@ TEST_CASE("Rotate On File Size Test [Without Truncation]") {
 	REQUIRE(fileCount <= limits.maxNumberOfFiles);
 }
 
-TEST_CASE("Rotate On File Size Test [With Truncation]") {
+TEST_CASE("Rotate On File Size Test (With Truncation)", "[RotateTarget Functions][Rotation On]") {
 	auto path { RotatingLogPath() /= "FileSize.txt" };
 	auto fileName { path };
 	fileName.replace_extension();
@@ -169,7 +175,104 @@ TEST_CASE("Rotate On File Size Test [With Truncation]") {
 			fileCount++;
 		}
 	REQUIRE(fileCount <= limits.maxNumberOfFiles);
-	// Remove files created up to this point
-	std::filesystem::remove_all(BaseLogPath().make_preferred());
-	std::filesystem::remove_all((std::filesystem::current_path() /= "Logs").make_preferred());
+	RemoveAllFiles();
+}
+
+#include <serenity/MessageDetails/Message_Info.h>
+
+TEST_CASE("Rotate On Hourly Mark - 1", "[RotateTarget Functions] [Rotation On] [Local Time]") {
+	serenity::msg_details::Message_Info info("Test", LoggerLevel::trace, message_time_mode::local);
+	RotatingDaylightCache dsCache {};
+	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
+	auto cache { info.TimeInfo() };
+
+	int counter{ 0 }, dsCounter{ 0 };
+	for( int i { 0 }; i <= 23; ++i ) {
+			bool previousDSValue { dsCache.initialDSValue };
+			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
+			{
+				dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - 1) : dsCache.dsHour = cache.tm_hour;
+				dsCache.initialDSValue = !dsCache.initialDSValue;
+				++dsCounter;
+			}
+			if( (cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour) ) {
+					cache.tm_hour = i;
+					++counter;
+			}
+		}
+	REQUIRE(counter == 24);
+	REQUIRE(dsCounter == 0);
+}
+
+TEST_CASE("Rotate On Hourly Mark - 2", "[RotateTarget Functions] [Rotation On] [Local Time]") {
+	serenity::msg_details::Message_Info info("Test", LoggerLevel::trace, message_time_mode::local);
+	RotatingDaylightCache dsCache {};
+	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
+	auto cache { info.TimeInfo() };
+
+	int counter { 0 }, dsCounter { 0 };
+	for( int i { 0 }; i <= 23; ++i ) {
+			if( i % 2 == 0 ) dsCache.initialDSValue = !dsCache.initialDSValue;    // toggle every other run
+			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
+			{
+					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - 1) : dsCache.dsHour = cache.tm_hour;
+					dsCache.initialDSValue = !dsCache.initialDSValue;
+					++dsCounter;
+			}
+			if( (cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour) ) {
+					++counter;
+					cache.tm_hour = i;
+			}
+		}
+	REQUIRE(counter == 24);
+	REQUIRE(dsCounter == 12);
+}
+
+TEST_CASE("Rotate On Hourly Mark - 3", "[RotateTarget Functions] [Rotation On] [UTC Time]") {
+	serenity::msg_details::Message_Info info("Test", LoggerLevel::trace, message_time_mode::utc);
+	RotatingDaylightCache dsCache {};
+	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
+	auto cache { info.TimeInfo() };
+
+	int counter{ 0 }, dsCounter{ 0 };
+	for( int i { 0 }; i <= 23; ++i ) {
+			bool previousDSValue { dsCache.initialDSValue };
+			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
+			{
+				dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - 1) : dsCache.dsHour = cache.tm_hour;
+				dsCache.initialDSValue = !dsCache.initialDSValue;
+				++dsCounter;
+			}
+			if( (cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour)) {
+				cache.tm_hour = i;
+				++counter;
+			}
+	}
+	REQUIRE(counter == 24);
+	REQUIRE(dsCounter == 0);
+}
+
+TEST_CASE("Rotate On Hourly Mark - 4", "[RotateTarget Functions] [Rotation On] [UTC Time]") {
+	serenity::msg_details::Message_Info info("Test", LoggerLevel::trace, message_time_mode::utc);
+	RotatingDaylightCache dsCache{};
+	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
+	auto cache{ info.TimeInfo() };
+
+	int counter{ 0 }, dsCounter{ 0 };
+	for (int i{ 0 }; i <= 23; ++i) {
+		bool previousDSValue{ dsCache.initialDSValue };
+		if (i % 2 == 0) dsCache.initialDSValue = !dsCache.initialDSValue;    // toggle every other run
+		if ((info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()))
+		{
+			dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - 1) : dsCache.dsHour = cache.tm_hour;
+			dsCache.initialDSValue = !dsCache.initialDSValue;
+			++dsCounter;
+		}
+		if ((cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour) ) {
+					if( cache.tm_hour != i ) ++counter;
+					cache.tm_hour = i;
+			}
+		}
+	REQUIRE(counter == 24);
+	REQUIRE(dsCounter == 0);
 }
