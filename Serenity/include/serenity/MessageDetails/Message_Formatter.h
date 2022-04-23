@@ -77,7 +77,7 @@ namespace serenity::msg_details {
 		LazyParseHelper& ParseHelper();
 		void Reset();
 		void AdvanceToNextArg();
-		bool ContainsArgSpecs(const std::string_view fmt);
+		bool ContainsUnsupportedSpecs(const std::string_view fmt);
 		bool EndReached() const;
 		bool ContainsUnsupportedType() const;
 		std::string&& GetArgValue();

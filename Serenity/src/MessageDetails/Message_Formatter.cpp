@@ -91,7 +91,35 @@ namespace serenity::msg_details {
 			}
 	}
 
-	bool ArgContainer::ContainsArgSpecs(const std::string_view fmt) {
+	static bool AreSpecsSupported(std::string_view argBracket) {
+		// remove '{' & '}'
+		argBracket.remove_prefix(1);
+		argBracket.remove_suffix(1);
+		for( size_t i { 0 }; i < argBracket.size(); ++i ) {
+				switch( argBracket.at(i) ) {
+						case ' ': break;
+						case ':':
+							if( argBracket.size() > i + 1 ) {
+									// This is overkill right now but as support grows, this will become its
+									// own function. For now though, just setting it up for future logical
+									// expansion of spec parsing
+									switch( argBracket[ i + 1 ] ) {
+												// handle ':s' like it was an empty spec since
+												// it's effectively equalivalent
+											case 's': return true; break;
+											default: return false; break;
+										}
+							}
+							break;
+						default: return false;
+					}
+			}
+		// This shouldn't be reached since we return directly from a confined loop;
+		// just adding to stop compiler from issuing a warning on return paths
+		return false;
+	}
+
+	bool ArgContainer::ContainsUnsupportedSpecs(const std::string_view fmt) {
 		auto size { fmt.size() };
 		std::string_view argBracket;
 		using B_Type = LazyParseHelper::bracket_type;
@@ -107,32 +135,17 @@ namespace serenity::msg_details {
 								argBracket = std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open),
 								                                  parseHelper.BracketPosition(B_Type::close) + 1));
 						}
+						// clang-format off
 						auto argBracketSize { argBracket.size() };
 						switch( argBracketSize ) {
 								case 0: break;
 								case 1: break;
 								case 2: break;
-								case 3:
-									// specs need a ':' and a specifier
-									if( argBracket.at(1) != ' ' )
-										throw std::runtime_error("Not A Valid Specifier");
-									break;
-								default:
-									// remove '{' & '}'
-									argBracket.remove_prefix(1);
-									argBracket.remove_suffix(1);
-									for( size_t i { 0 }; i < argBracket.size(); ++i ) {
-											auto ch { argBracket.at(i) };
-											// clang-format off
-											if( (ch == ':') && (argBracket.size() > i + 1) ) {
-												// handle this like it was an empty spec
-												if( argBracket[ i + static_cast<size_t>(1 )] == 's' ) break;
-											}
-											// clang-format on
-											return true;
-										}
-									break;
+								// specs need a ':' and a specifier
+								case 3: if( argBracket.at(1) != ' ' ) throw std::runtime_error("Not A Valid Specifier"); break;
+								default: if( !AreSpecsSupported(argBracket) ) return true; break;
 							}
+						// clang-format on
 						if( argBracketSize == size ) break;
 				}
 			}

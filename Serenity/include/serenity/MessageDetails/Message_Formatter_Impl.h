@@ -26,7 +26,7 @@ template<typename... Args> void ArgContainer::CaptureArgs(Args&&... args) {
 template<typename... Args> void Message_Formatter::FormatMessage(MsgWithLoc& message, Args&&... args) {
 	lazy_message.clear();
 	argStorage.CaptureArgs(std::forward<Args>(args)...);
-	if( argStorage.ContainsUnsupportedType() || argStorage.ContainsArgSpecs(message.msg) ) {
+	if( argStorage.ContainsUnsupportedType() || argStorage.ContainsUnsupportedSpecs(message.msg) ) {
 			localeRef == nullptr ? VFORMAT_TO(lazy_message, message.msg, std::forward<Args>(args)...)
 					     : L_VFORMAT_TO(lazy_message, *localeRef, message.msg, std::forward<Args>(args)...);
 	} else {
