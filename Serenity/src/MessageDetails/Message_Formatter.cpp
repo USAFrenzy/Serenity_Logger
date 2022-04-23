@@ -252,8 +252,12 @@ namespace serenity::msg_details {
 		return containsUnknownType;
 	}
 
+	void Message_Formatter::SetLocaleReference(std::locale* loc) {
+		localeRef = *&loc;
+	}
+
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
-		: msgInfo(*&details), localeRef(&details->GetLocale()), sourceFlag(source_flag::empty) {
+		: msgInfo(*&details), localeRef(nullptr), sourceFlag(source_flag::empty) {
 		SetPattern(pattern);
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;
@@ -468,4 +472,7 @@ namespace serenity::msg_details {
 		return localBuffer;
 	}
 
+	std::string_view serenity::msg_details::Message_Formatter::LineEnding() const {
+		return SERENITY_LUTS::line_ending.at(platformEOL);
+	}
 }    // namespace serenity::msg_details

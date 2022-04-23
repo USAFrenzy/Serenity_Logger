@@ -15,6 +15,12 @@ option(
 )
 
 option(
+    BUILD_TESTS
+    "Build Test Suite Alongside The Library"
+    ON
+)
+
+option(
     BUILD_DEMOS
     "Build The Demo Projects Alongside The Library"
     ON
@@ -31,4 +37,9 @@ if (BUILD_SANDBOX)
     cpmaddpackage("gh:gabime/spdlog@1.10.0")
     add_subdirectory(Sandbox)
     set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Sandbox)
+endif ()
+
+if (BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
 endif ()

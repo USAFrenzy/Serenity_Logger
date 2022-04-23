@@ -29,6 +29,7 @@ namespace serenity {
 		std::vector<char>& FileBuffer();
 		size_t FileBufferSize() const;
 		std::filesystem::path FilePath() const;
+		std::filesystem::path DirPath() const;
 		void SetBufferSize(size_t value);
 		std::string DirName() const;
 		std::string FileName() const;
@@ -45,6 +46,7 @@ namespace serenity {
 		std::string fileDir;
 		std::string fileName;
 		std::string extension;
+		std::filesystem::path dirPath;
 
 	      private:
 		size_t bufferSize;

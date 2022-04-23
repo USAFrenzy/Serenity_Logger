@@ -53,6 +53,7 @@ namespace serenity::targets {
 		}
 		if( loc != MsgInfo()->GetLocale() ) {
 				MsgInfo()->SetLocale(loc);
+				MsgFmt()->SetLocaleReference(&MsgInfo()->GetLocale());
 		}
 	}
 

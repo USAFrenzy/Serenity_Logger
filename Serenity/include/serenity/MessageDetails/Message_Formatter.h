@@ -127,6 +127,8 @@ namespace serenity::msg_details {
 		const Message_Info* MessageDetails();
 		void LazySubstitute(std::string& msg, std::string&& arg);
 		template<typename... Args> void FormatMessage(MsgWithLoc& message, Args&&... args);
+		void SetLocaleReference(std::locale* loc);
+		std::string_view LineEnding() const;
 
 	      private:
 		Message_Info* msgInfo;

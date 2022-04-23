@@ -5,39 +5,50 @@
 
 namespace serenity::experimental {
 
+	struct RotateLimits
+	{
+		size_t maxNumberOfFiles { 5 };
+		size_t fileSizeLimit { 512 * KB };
+		int dayModeSettingHour { 0 };
+		int dayModeSettingMinute { 0 };
+		int weekModeSetting { 0 };
+		int monthModeSetting { 1 };
+	};
+
+	enum class IntervalMode
+	{
+		file_size = 0,
+		hourly    = 1,
+		daily     = 2,
+		weekly    = 3,
+		monthly   = 4,
+	};
+
 	class RotateSettings: public serenity::targets::helpers::FileHelper
 	{
 	      public:
 		explicit RotateSettings(const std::string& path);
+		explicit RotateSettings(const RotateLimits& limits);
+		explicit RotateSettings(const std::string& path, const RotateLimits& limits);
 		RotateSettings(RotateSettings&)            = delete;
 		RotateSettings& operator=(RotateSettings&) = delete;
 		~RotateSettings()                          = default;
+
 		std::filesystem::path OriginalPath() const;
-		std::filesystem::path OriginalDirectory() const;
+		std::filesystem::path OriginalDirectoryPath() const;
+		std::string OriginalDirName() const;
+
 		std::string OriginalName() const;
 		std::string OriginalExtension() const;
 		size_t FileSize() const;
-
-		enum class IntervalMode
-		{
-			file_size = 0,
-			hourly    = 1,
-			daily     = 2,
-			weekly    = 3,
-			monthly   = 4,
-		};
-
-		size_t maxNumberOfFiles;
-		size_t fileSizeLimit;
-		int dayModeSettingHour;
-		int dayModeSettingMinute;
-		int weekModeSetting;
-		int monthModeSetting;
+		void SetRotationLimits(const RotateLimits& limits);
+		RotateLimits RotationLimits() const;
 
 	      protected:
 		void SetCurrentFileSize(size_t currentSize);
 
 	      private:
+		RotateLimits settingLimits;
 		size_t currentFileSize;
 		bool initalRotationEnabled;
 	};
@@ -70,11 +81,15 @@ namespace serenity::experimental::targets {
 		~RotatingTarget();
 
 		void EnableRotation(bool shouldRotate = true);
-		void SetRotateSettings(RotateSettings settings);
+		void SetRotationLimits(const RotateLimits& limits);
+		RotateLimits RotationLimits() const;
+
 		void RotateFile();
 		bool RenameFile(std::string_view newFileName) override;
 		bool ShouldRotate();
 		void SetLocale(const std::locale& loc) override;
+		void TruncLogOnFileSize(bool truncate);
+
 		// clang-format off
 		// ################################# WIP #################################
 
@@ -91,7 +106,7 @@ namespace serenity::experimental::targets {
 		// clang-format on	
 	
 		void SetRotationMode(IntervalMode mode);
-		RotateSettings::IntervalMode RotationMode() const;
+		IntervalMode RotationMode() const;
 
 	protected:
 		void PrintMessage(std::string_view formatted) override;
@@ -112,6 +127,8 @@ namespace serenity::experimental::targets {
 		mutable std::mutex rotatingMutex;
 		size_t messageSize;
 		RotatingDaylightCache dsCache;
+		bool isAboveMsgLimit;
+		bool truncateMessage;
 	};
 
 }    // namespace serenity::experimental::targets

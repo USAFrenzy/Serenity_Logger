@@ -287,8 +287,11 @@ int main() {
 	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
 
 	unsigned long int i { 0 };
-	const unsigned long int iterations { 1'000'000 };
-	std::cout << "Benching Color Console Target...\n\n";
+	const unsigned long int iterations { 2'000'000 };
+	C.SetLogLevel(LoggerLevel::off);
+	spdlogConsoleLogger->set_level(spdlog::level::off);
+
+	std::cout << "Benching Color Console Target...\n";
 
 	for( i; i < iterations; i++ ) {
 			C.Info("{}", test);
@@ -299,7 +302,7 @@ int main() {
 	auto consoleMicroSec { timer.Elapsed_In(time_mode::us) };
 	auto ConsoleThroughput { (testStrInMB * iterations) / consoleSeconds };
 	std::cout << "\nColor Console Target Bench Finished. Benching Spdlog Color "
-		     "Console Sink...\n\n";
+		     "Console Sink...\n";
 
 	i = 0;    // reset
 	timer.StopWatch_Reset();

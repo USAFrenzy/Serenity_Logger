@@ -32,11 +32,14 @@
 		#define VFORMAT_TO(container, locale, message, ...)                                                                             \
 			std::vformat_to<CONTEXT>(std::back_inserter(container), locale, message, std::make_format_args(__VA_ARGS__))
 		#define VFORMAT(locale, message, ...) std::vformat<CONTEXT>(locale, message, std::make_format_args(__VA_ARGS__))
-
+		#define VFORMAT_TO(container, message, ...)                                                                                     \
+			std::vformat_to<CONTEXT>(std::back_inserter(container), message, std::make_format_args(__VA_ARGS__))
 	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
 		#define CONTEXT std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
-		#define VFORMAT_TO(container, locale, message, ...)                                                                             \
+		#define L_VFORMAT_TO(container, locale, message, ...)                                                                           \
 			std::vformat_to(std::back_inserter(container), locale, message, std::make_format_args<CONTEXT>(__VA_ARGS__))
+		#define VFORMAT_TO(container, message, ...)                                                                                     \
+			std::vformat_to(std::back_inserter(container), message, std::make_format_args<CONTEXT>(__VA_ARGS__))
 	#else
 		#if( _MSC_VER < 1929 )
 			#error                                                                                                                  \

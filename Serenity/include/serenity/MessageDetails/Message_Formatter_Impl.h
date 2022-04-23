@@ -27,7 +27,8 @@ template<typename... Args> void Message_Formatter::FormatMessage(MsgWithLoc& mes
 	lazy_message.clear();
 	argStorage.CaptureArgs(std::forward<Args>(args)...);
 	if( argStorage.ContainsUnsupportedType() || argStorage.ContainsArgSpecs(message.msg) ) {
-			VFORMAT_TO(lazy_message, *localeRef, message.msg, std::forward<Args>(args)...);
+			localeRef == nullptr ? VFORMAT_TO(lazy_message, message.msg, std::forward<Args>(args)...)
+					     : L_VFORMAT_TO(lazy_message, *localeRef, message.msg, std::forward<Args>(args)...);
 	} else {
 			lazy_message.append(message.msg);
 			for( ;; ) {
@@ -38,7 +39,7 @@ template<typename... Args> void Message_Formatter::FormatMessage(MsgWithLoc& mes
 					}
 				}
 		}
-	auto lineEnd { SERENITY_LUTS::line_ending.at(platformEOL) };
+	auto lineEnd { LineEnding() };
 	lazy_message.append(lineEnd.data(), lineEnd.size());
 	msgInfo->SetMessage(lazy_message, message.source);
 }
