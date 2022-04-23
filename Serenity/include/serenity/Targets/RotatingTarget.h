@@ -72,7 +72,7 @@ namespace serenity::experimental::targets {
 	class RotatingTarget: public serenity::targets::TargetBase, public serenity::experimental::RotateSettings
 	{
 	      public:
-		RotatingTarget();
+		explicit RotatingTarget();
 		explicit RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
 		explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
 		                        bool replaceIfExists = false);

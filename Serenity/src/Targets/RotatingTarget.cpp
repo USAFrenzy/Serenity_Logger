@@ -8,6 +8,10 @@ namespace serenity::experimental {
 		: FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(RotateLimits {}) {
 		if( !path.empty() ) {
 				std::filesystem::path pathToCache = path;
+				std::filesystem::directory_entry dirCheck { pathToCache };
+				if( dirCheck.is_directory() ) {
+						pathToCache /= "Rotating_Log.txt";
+				}
 				FileCacheHelper()->CacheFile(pathToCache.string(), true);
 		} else {
 				std::string fileName { "Rotating_Log.txt" };
@@ -95,7 +99,7 @@ namespace serenity::experimental {
 namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
-		: TargetBase("Rotating_Log.txt"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		: TargetBase("Rotating_Logger"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size),
 		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false),
 		  truncateMessage(true) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
@@ -106,7 +110,6 @@ namespace serenity::experimental::targets {
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
 		if( !std::filesystem::exists(rotationReadyFile) ) {
-				std::filesystem::rename(FileCacheHelper()->FilePath(), rotationReadyFile);
 				FileCacheHelper()->SetFilePath(rotationReadyFile);
 				OpenFile(true);
 		} else {
@@ -150,7 +153,6 @@ namespace serenity::experimental::targets {
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
 		if( !std::filesystem::exists(rotationReadyFile) ) {
-				std::filesystem::rename(FileCacheHelper()->FilePath(), rotationReadyFile);
 				FileCacheHelper()->SetFilePath(rotationReadyFile);
 				OpenFile(replaceIfExists);
 		} else {
@@ -545,19 +547,19 @@ namespace serenity::experimental::targets {
 				case IntervalMode::daily:
 					{
 						if( (setting > 23) || (setting < 0) ) {
-								setting = 0;
 								// clang-format off
 						std::cerr << "Hour setting passed in for IntervalMode::daily is out of bounds.\n";
 						std::cerr << "Value expected is between 0-23 where 0 is 12AM and 23 is 11PM.\n";
 						std::cerr << "Value passed in: " << setting << " \n";
+						setting = 0;
 								// clang-format on
 						}
 						if( (secondSetting > 59) || (secondSetting < 0) ) {
-								secondSetting = 0;
 								// clang-format off
 						std::cerr << "Minute setting passed in for IntervalMode::daily is out of bounds.\n";
 						std::cerr << "Value expected is between 0-59.\n";
 						std::cerr << "Value passed in: " << secondSetting << " \n";
+						secondSetting = 0;
 								// clang-format on
 						}
 						limits.dayModeSettingHour   = setting;
@@ -567,11 +569,11 @@ namespace serenity::experimental::targets {
 				case IntervalMode::weekly:
 					{
 						if( (setting > 6) || (setting < 0) ) {
-								setting = 0;
 								// clang-format off
 						std::cerr << "Weekday setting passed in for IntervalMode::weekly is out of bounds.\n";
 						std::cerr << "Value expected is between 0-6 where 0 is Sunday and 6 is Saturday.\n";
 						std::cerr << "Value passed in: " << setting << " \n";
+						setting = 0;
 								// clang-format on
 						}
 						limits.weekModeSetting = setting;
@@ -580,12 +582,12 @@ namespace serenity::experimental::targets {
 				case IntervalMode::monthly:
 					{
 						if( (setting > 31) || (setting < 1) ) {
-								setting = 1;
 								// clang-format off
 						std::cerr << "Day setting passed in for IntervalMode::monthly is out of bounds.\n";
 						std::cerr << "Value expected is between 1-31 where 1 is the first day of the "
 							"month and 31 is the max value of possible days in a month.\n";
 						std::cerr << "Value passed in: " << setting << " \n";
+						setting = 1;
 								// clang-format on
 						}
 						limits.monthModeSetting = setting;
