@@ -186,14 +186,16 @@ TEST_CASE("Rotate On Hourly Mark - 1", "[RotateTarget Functions] [Rotation On] [
 	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
 	auto cache { info.TimeInfo() };
 
-	int counter{ 0 }, dsCounter{ 0 };
+	int counter { 0 }, dsCounter { 0 };
 	for( int i { 0 }; i <= 23; ++i ) {
 			bool previousDSValue { dsCache.initialDSValue };
 			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
 			{
-				dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - 1) : dsCache.dsHour = cache.tm_hour;
-				dsCache.initialDSValue = !dsCache.initialDSValue;
-				++dsCounter;
+					namespace ch = std::chrono;
+					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() };
+					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
+					dsCache.initialDSValue = !dsCache.initialDSValue;
+					++dsCounter;
 			}
 			if( (cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour) ) {
 					cache.tm_hour = i;
@@ -215,7 +217,9 @@ TEST_CASE("Rotate On Hourly Mark - 2", "[RotateTarget Functions] [Rotation On] [
 			if( i % 2 == 0 ) dsCache.initialDSValue = !dsCache.initialDSValue;    // toggle every other run
 			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
 			{
-					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - 1) : dsCache.dsHour = cache.tm_hour;
+					namespace ch = std::chrono;
+					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() };
+					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
 					dsCache.initialDSValue = !dsCache.initialDSValue;
 					++dsCounter;
 			}
@@ -234,41 +238,45 @@ TEST_CASE("Rotate On Hourly Mark - 3", "[RotateTarget Functions] [Rotation On] [
 	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
 	auto cache { info.TimeInfo() };
 
-	int counter{ 0 }, dsCounter{ 0 };
+	int counter { 0 }, dsCounter { 0 };
 	for( int i { 0 }; i <= 23; ++i ) {
 			bool previousDSValue { dsCache.initialDSValue };
 			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
 			{
-				dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - 1) : dsCache.dsHour = cache.tm_hour;
-				dsCache.initialDSValue = !dsCache.initialDSValue;
-				++dsCounter;
+					namespace ch = std::chrono;
+					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() };
+					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
+					dsCache.initialDSValue = !dsCache.initialDSValue;
+					++dsCounter;
 			}
-			if( (cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour)) {
-				cache.tm_hour = i;
-				++counter;
+			if( (cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour) ) {
+					cache.tm_hour = i;
+					++counter;
 			}
-	}
+		}
 	REQUIRE(counter == 24);
 	REQUIRE(dsCounter == 0);
 }
 
 TEST_CASE("Rotate On Hourly Mark - 4", "[RotateTarget Functions] [Rotation On] [UTC Time]") {
 	serenity::msg_details::Message_Info info("Test", LoggerLevel::trace, message_time_mode::utc);
-	RotatingDaylightCache dsCache{};
+	RotatingDaylightCache dsCache {};
 	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
-	auto cache{ info.TimeInfo() };
+	auto cache { info.TimeInfo() };
 
-	int counter{ 0 }, dsCounter{ 0 };
-	for (int i{ 0 }; i <= 23; ++i) {
-		bool previousDSValue{ dsCache.initialDSValue };
-		if (i % 2 == 0) dsCache.initialDSValue = !dsCache.initialDSValue;    // toggle every other run
-		if ((info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()))
-		{
-			dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - 1) : dsCache.dsHour = cache.tm_hour;
-			dsCache.initialDSValue = !dsCache.initialDSValue;
-			++dsCounter;
-		}
-		if ((cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour) ) {
+	int counter { 0 }, dsCounter { 0 };
+	for( int i { 0 }; i <= 23; ++i ) {
+			bool previousDSValue { dsCache.initialDSValue };
+			if( i % 2 == 0 ) dsCache.initialDSValue = !dsCache.initialDSValue;    // toggle every other run
+			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
+			{
+					namespace ch = std::chrono;
+					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() };
+					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
+					dsCache.initialDSValue = !dsCache.initialDSValue;
+					++dsCounter;
+			}
+			if( (cache.tm_hour != i) || (cache.tm_hour == dsCache.dsHour) ) {
 					if( cache.tm_hour != i ) ++counter;
 					cache.tm_hour = i;
 			}

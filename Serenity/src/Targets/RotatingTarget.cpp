@@ -349,10 +349,13 @@ namespace serenity::experimental::targets {
 				case IntervalMode::hourly:
 					{
 						bool previousDSValue { dsCache.initialDSValue };
+						auto& details { MsgInfo()->TimeDetails() };
 						// clang-format off
-						bool dsChanged { dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings() };
+						bool dsChanged { dsCache.initialDSValue != details.IsDaylightSavings() };
 						if(MsgInfo()->TimeMode() == message_time_mode::local && dsChanged ) {
-								dsCache.initialDSValue ? dsCache.dsHour = cache.tm_hour - 1: dsCache.dsHour = cache.tm_hour;
+							namespace ch = std::chrono;
+							auto hours{ ch::duration_cast<ch::hours>(details.DaylightSavingsOffsetMin()).count() };
+							dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
 								// clang-format on
 								dsCache.initialDSValue = !dsCache.initialDSValue;
 						}
