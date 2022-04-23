@@ -275,6 +275,8 @@ int main() {
 
 #endif    // !INSTRUMENTATION_ENABLED
 
+	constexpr const char* msg { "{:s}" };
+
 #ifdef INSTRUMENTATION_ENABLED
 
 	Instrumentator timer;
@@ -285,7 +287,6 @@ int main() {
 	std::string temp { testView.data(), testView.size() };
 	test = temp.c_str();
 	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
-	const std::string msg { "{:s}" };
 
 	unsigned long int i { 0 };
 	const unsigned long int iterations { 2'000'000 };
