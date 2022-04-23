@@ -283,6 +283,8 @@ namespace serenity {
 			: msg(std::move(sv)), source(src) { }
 		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current())
 			: msg(std::move(sv)), source(src) { }
+		MsgWithLoc(const std::string &sv, const std::source_location& src = std::source_location::current())
+			: msg(sv), source(src) { }
 	};
 
 }    // namespace serenity
