@@ -113,17 +113,23 @@ namespace serenity::msg_details {
 								case 1: break;
 								case 2: break;
 								case 3:
-									if( argBracket.at(1) != ' ' ) {
-											return true;
-									}
+									// specs need a ':' and a specifier
+									if( argBracket.at(1) != ' ' )
+										throw std::runtime_error("Not A Valid Specifier");
 									break;
 								default:
+									// remove '{' & '}'
 									argBracket.remove_prefix(1);
 									argBracket.remove_suffix(1);
-									for( auto& ch: argBracket ) {
-											if( ch != ' ' ) {
-													return true;
+									for( size_t i { 0 }; i < argBracket.size(); ++i ) {
+											auto ch { argBracket.at(i) };
+											// clang-format off
+											if( (ch == ':') && (argBracket.size() > i + 1) ) {
+												// handle this like it was an empty spec
+												if( argBracket[ i + static_cast<size_t>(1 )] == 's' ) break;
 											}
+											// clang-format on
+											return true;
 										}
 									break;
 							}

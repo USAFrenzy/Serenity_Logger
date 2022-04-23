@@ -285,6 +285,7 @@ int main() {
 	std::string temp { testView.data(), testView.size() };
 	test = temp.c_str();
 	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
+	std::string_view msg { "{:s}" };
 
 	unsigned long int i { 0 };
 	const unsigned long int iterations { 2'000'000 };
@@ -294,7 +295,7 @@ int main() {
 	std::cout << "Benching Color Console Target...\n";
 
 	for( i; i < iterations; i++ ) {
-			C.Info("{}", test);
+			C.Info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	auto consoleSeconds { timer.Elapsed_In(time_mode::sec) };
@@ -307,7 +308,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogConsoleLogger->info("{}", test);
+			spdlogConsoleLogger->info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	auto spdlogConsoleSeconds { timer.Elapsed_In(time_mode::sec) };
@@ -320,7 +321,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			testFile.Info("{}", test);
+			testFile.Info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	testFile.Flush();
@@ -334,7 +335,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogFileLogger->info("{}", test);
+			spdlogFileLogger->info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	spdlogFileLogger->flush();
@@ -348,7 +349,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			rotatingFile.Info("{}", test);
+			rotatingFile.Info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	rotatingFile.Flush();
@@ -361,7 +362,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogRotatingLogger->info("{}", test);
+			spdlogRotatingLogger->info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	spdlogRotatingLogger->flush();

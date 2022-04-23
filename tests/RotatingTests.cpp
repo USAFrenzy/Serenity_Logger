@@ -192,7 +192,7 @@ TEST_CASE("Rotate On Hourly Mark - 1", "[RotateTarget Functions] [Rotation On] [
 			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
 			{
 					namespace ch = std::chrono;
-					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() };
+					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() / 60 };
 					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
 					dsCache.initialDSValue = !dsCache.initialDSValue;
 					++dsCounter;
@@ -218,7 +218,7 @@ TEST_CASE("Rotate On Hourly Mark - 2", "[RotateTarget Functions] [Rotation On] [
 			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
 			{
 					namespace ch = std::chrono;
-					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() };
+					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() / 60 };
 					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
 					dsCache.initialDSValue = !dsCache.initialDSValue;
 					++dsCounter;
@@ -244,7 +244,7 @@ TEST_CASE("Rotate On Hourly Mark - 3", "[RotateTarget Functions] [Rotation On] [
 			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
 			{
 					namespace ch = std::chrono;
-					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() };
+					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() / 60 };
 					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
 					dsCache.initialDSValue = !dsCache.initialDSValue;
 					++dsCounter;
@@ -271,7 +271,7 @@ TEST_CASE("Rotate On Hourly Mark - 4", "[RotateTarget Functions] [Rotation On] [
 			if( (info.TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != info.TimeDetails().IsDaylightSavings()) )
 			{
 					namespace ch = std::chrono;
-					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() };
+					auto hours { ch::duration_cast<ch::hours>(info.TimeDetails().DaylightSavingsOffsetMin()).count() / 60 };
 					dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
 					dsCache.initialDSValue = !dsCache.initialDSValue;
 					++dsCounter;
