@@ -46,6 +46,7 @@ namespace serenity::msg_details {
 		std::string& StringBuffer();
 		void ClearBuffer();
 		void ClearPartitions();
+		size_t FindEndPos();
 
 	      private:
 		std::string partitionUpToArg;
@@ -65,11 +66,56 @@ namespace serenity::msg_details {
 	class ArgContainer
 	{
 	      public:
-		using LazilySupportedTypes        = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int,
-                                                          long long, unsigned long long, bool, char, float, double, long double, const void*>;
+		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long,
+		                                          unsigned long long, bool, char, float, double, long double, const void*, void*>;
 
-		ArgContainer()                    = default;
-		ArgContainer(const ArgContainer&) = delete;
+		enum class SpecType
+		{
+			MonoType         = 0,
+			StringType       = 1,
+			CharPointerType  = 2,
+			StringViewType   = 3,
+			IntType          = 4,
+			U_IntType        = 5,
+			LongLongType     = 6,
+			U_LongLongType   = 7,
+			BoolType         = 8,
+			CharType         = 9,
+			FloatType        = 10,
+			DoubleType       = 11,
+			LongDoubleType   = 12,
+			ConstVoidPtrType = 13,
+			VoidPtrType      = 14,
+		};
+
+		std::unordered_map<size_t, SpecType> typeMap = {
+			{ 0, SpecType::MonoType },        { 1, SpecType::StringType },        { 2, SpecType::CharPointerType },
+			{ 3, SpecType::StringViewType },  { 4, SpecType::IntType },           { 5, SpecType::U_IntType },
+			{ 6, SpecType::LongLongType },    { 7, SpecType::U_LongLongType },    { 8, SpecType::BoolType },
+			{ 9, SpecType::CharType },        { 10, SpecType::FloatType },        { 11, SpecType::DoubleType },
+			{ 12, SpecType::LongDoubleType }, { 13, SpecType::ConstVoidPtrType }, { 14, SpecType::VoidPtrType },
+		};
+
+		std::vector<SpecType> argSpecTypes;
+
+		// Moved this here while I work on some things
+		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
+			(
+			[ = ](auto arg) {
+				auto typeFound = is_supported<decltype(arg), LazilySupportedTypes> {};
+				if constexpr( !typeFound.value ) {
+						containsUnknownType = true;
+				} else {
+						if( containsUnknownType ) return;
+						argContainer.emplace_back(std::move(arg));
+						argSpecTypes.emplace_back(typeMap[ argContainer.back().index() ]);
+					}
+			}(args),
+			...);
+		}
+
+		ArgContainer()                               = default;
+		ArgContainer(const ArgContainer&)            = delete;
 		ArgContainer& operator=(const ArgContainer&) = delete;
 		~ArgContainer()                              = default;
 
@@ -81,8 +127,11 @@ namespace serenity::msg_details {
 		bool EndReached() const;
 		bool ContainsUnsupportedType() const;
 		std::string&& GetArgValue();
-		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
+		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
 		template<typename... Args> void CaptureArgs(Args&&... args);
+
+		// May not remain here
+		void ParseForSpecifiers(const std::string_view);
 
 	      private:
 		std::vector<LazilySupportedTypes> argContainer;

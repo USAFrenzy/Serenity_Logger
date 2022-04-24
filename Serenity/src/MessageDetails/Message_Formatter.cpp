@@ -79,6 +79,7 @@ namespace serenity::msg_details {
 
 	void ArgContainer::Reset() {
 		argContainer.clear();
+		argSpecTypes.clear();
 		argIndex = maxIndex = 0;
 		endReached          = false;
 	}
@@ -91,7 +92,7 @@ namespace serenity::msg_details {
 			}
 	}
 
-	static bool AreSpecsSupported(std::string_view argBracket) {
+	static constexpr bool AreSpecsSupported(std::string_view argBracket) {
 		// remove '{' & '}'
 		argBracket.remove_prefix(1);
 		argBracket.remove_suffix(1);
@@ -117,6 +118,84 @@ namespace serenity::msg_details {
 		// This shouldn't be reached since we return directly from a confined loop;
 		// just adding to stop compiler from issuing a warning on return paths
 		return false;
+	}
+
+	// TODO:**********************************************************************************************************
+	// ParseForSpecifiers() And HandleArgBracket() are similar to ContainsUnsupportedSpecs() and AreSpecsSupported()
+	// at the moment. What I would Like to do is have the later functions run at compile time (lots of work needs
+	// to be done for that) and to have the former match the specs to the args and format accordingly.
+	//
+	// I could use a counter that increments when AdvanceToNextArg() is called in order to index
+	// into the spec type vector to retrieve the type of the next arg and pass that to GetArgValue():
+	// 1.) Bypassing the need in GetArgValue() for the switch since the type will already be known
+	// 2.) Allows directly calling std::get<typeMappedToIndex>(arg) instead (simplfying some upkeep)
+	// 3.) This type can then also be used to index into a map to retrieve the valid specifiers
+	//     allowed for that type (Probably using ParseForSpecs() in CaptureArgs() to verify that specs
+	//     found are actually valid (Using HandleArgBracket() when a bracket is found) and then storing
+	//     those specs into a container (still need to create the container for specifiers):
+	//     - Would require adding the format string as an argument to CaptureArgs()
+	// 4.) THEN when converting the arg to a string, the specifiers found can be indexed by the
+	//     same counter and used to format the arg value accordingly
+	// - Already storing arg type in specType vector
+	// - Still need to validate specifiers found and then add them to some sort of container
+	// - Still need to create another map to get index from
+	// TODO:**********************************************************************************************************
+
+	static void HandleArgBracket(std::string_view argBracket) {
+		// remove '{' & '}'
+		argBracket.remove_prefix(1);
+		argBracket.remove_suffix(1);
+		for( size_t i { 0 }; i < argBracket.size(); ++i ) {
+				switch( argBracket.at(i) ) {
+						case ' ': break;
+						case ':':
+							if( argBracket.size() > i + 1 ) {
+									switch( argBracket[ i + 1 ] ) {
+												// handle ':s' like it was an empty spec since
+												// it's effectively equalivalent
+											case 's': break;
+											default: break;
+										}
+							} else {
+									throw std::runtime_error("There Was No Argument Specifier Found After "
+									                         "':' In Format Pattern\n");
+								}
+							break;
+						default: break;
+					}
+			}
+	}
+
+	void ArgContainer::ParseForSpecifiers(const std::string_view fmt) {
+		auto size { fmt.size() };
+		std::string_view argBracket;
+		using B_Type = LazyParseHelper::bracket_type;
+		for( size_t i { 0 }; i < size; ++i ) {
+				argBracket = "";
+				if( fmt.at(i) == '{' ) {
+						parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of('{'));
+						parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of('}'));
+
+						if( (parseHelper.BracketPosition(B_Type::open) != std::string_view::npos) &&
+						    (parseHelper.BracketPosition(B_Type::close) != std::string_view::npos) )
+							{
+								argBracket = std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open),
+								                                  parseHelper.BracketPosition(B_Type::close) + 1));
+						}
+						// clang-format off
+				auto argBracketSize{ argBracket.size() };
+				switch (argBracketSize) {
+				case 0: break;
+				case 1: break;
+				case 2: break;
+					// specs need a ':' and a specifier
+				case 3: if (argBracket.at(1) != ' ') throw std::runtime_error("Not A Valid Specifier"); break;
+				default: HandleArgBracket(argBracket); break;
+				}
+
+			}
+		}
+
 	}
 
 	bool ArgContainer::ContainsUnsupportedSpecs(const std::string_view fmt) {
@@ -152,10 +231,18 @@ namespace serenity::msg_details {
 		return false;
 	}
 
+	size_t LazyParseHelper::FindEndPos() {
+		size_t pos {};
+		for( ;; ) {
+				if( resultBuffer[ pos ] == '\0' ) return pos;
+				++pos;
+			}
+	}
+
 	/*************************************** Variant Order *******************************************
 	 * [0] std::monostate, [1] std::string, [2] const char*, [3] std::string_view, [4] int,
 	 * [5] unsigned int, [6] long long, [7] unsigned long long, [8] bool, [9] char, [10] float,
-	 * [11] double, [12] long double, [13] const void*
+	 * [11] double, [12] long double, [13] const void* [14] void*
 	 ************************************************************************************************/
 	/*************************************************************************************************/
 	// TODO: As far as any more optimizations go, this function eats up ~3x more cpu cycles compared
@@ -181,7 +268,7 @@ namespace serenity::msg_details {
 					parseHelper.SetConversionResult(
 					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<4>(arg))));
 					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.size());
+							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
@@ -190,7 +277,7 @@ namespace serenity::msg_details {
 					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<5>(arg))));
 
 					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.size());
+							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
@@ -199,7 +286,7 @@ namespace serenity::msg_details {
 					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<6>(arg))));
 
 					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.size());
+							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
@@ -208,7 +295,7 @@ namespace serenity::msg_details {
 					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<7>(arg))));
 
 					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.size());
+							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
@@ -225,7 +312,7 @@ namespace serenity::msg_details {
 					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<10>(arg))));
 
 					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.size());
+							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
@@ -234,7 +321,7 @@ namespace serenity::msg_details {
 					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<11>(arg))));
 
 					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.size());
+							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
@@ -242,20 +329,23 @@ namespace serenity::msg_details {
 					parseHelper.SetConversionResult(
 					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<12>(arg))));
 					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.size());
+							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
 				case 13:
-					// Couldn't get this to work with dynamic_cast, but reinterpret_cast at least isn't giving any issues.
-					// Still need to test that this works as intended; changed base 10 to 16 for 0-F addressing.
 					parseHelper.SetConversionResult(std::to_chars(buffer.data(), buffer.data() + buffer.size(),
 					                                              reinterpret_cast<size_t>(std::move(std::get<13>(arg))), 16));
 					if( result.ec != std::errc::value_too_large ) {
-							strRef.append("0x").append(buffer.data(), buffer.size());
-							for( auto& ch: strRef ) {
-									if( std::isalpha(ch) ) ch = std::toupper(ch);
-								}
+							strRef.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
+					}
+					return std::move(strRef);
+					break;
+				case 14:
+					parseHelper.SetConversionResult(std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					                                              reinterpret_cast<size_t>(std::move(std::get<14>(arg))), 16));
+					if( result.ec != std::errc::value_too_large ) {
+							strRef.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;

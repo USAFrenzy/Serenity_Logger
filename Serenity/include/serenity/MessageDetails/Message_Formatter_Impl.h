@@ -1,18 +1,20 @@
 #pragma once
 
-template<typename... Args> constexpr void ArgContainer::EmplaceBackArgs(Args&&... args) {
-	(
-	[ = ](auto arg) {
-		auto typeFound = is_supported<decltype(arg), LazilySupportedTypes> {};
-		if constexpr( !typeFound.value ) {
-				containsUnknownType = true;
-		} else {
-				if( containsUnknownType ) return;
-				argContainer.emplace_back(std::move(arg));
-			}
-	}(args),
-	...);
-}
+// TODO: Uncomment when done testing in Message_Formatter.h
+//
+// template<typename... Args> constexpr void ArgContainer::EmplaceBackArgs(Args&&... args) {
+//	(
+//	[ = ](auto arg) {
+//		auto typeFound = is_supported<decltype(arg), LazilySupportedTypes> {};
+//		if constexpr( !typeFound.value ) {
+//				containsUnknownType = true;
+//		} else {
+//				if( containsUnknownType ) return;
+//				argContainer.emplace_back(std::move(arg));
+//			}
+//	}(args),
+//	...);
+//}
 
 template<typename... Args> void ArgContainer::CaptureArgs(Args&&... args) {
 	Reset();
