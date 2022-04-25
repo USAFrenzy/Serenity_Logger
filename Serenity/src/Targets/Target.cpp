@@ -126,4 +126,7 @@ namespace serenity::targets {
 		baseHelper->EnableMultiThreadingSupport(enable);
 	}
 
+	void TargetBase::EnableFallbackToStd(bool enable) {
+		MsgFmt()->EnableFallbackToStd(enable);
+	}
 }    // namespace serenity::targets

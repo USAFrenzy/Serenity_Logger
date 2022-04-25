@@ -9,12 +9,6 @@
 #include <string>
 #include <variant>
 
-#ifdef WINDOWS_PLATFORM
-	#ifdef FormatMessage
-		#undef FormatMessage
-	#endif    // FORMATMESSAGE
-#endif
-
 namespace serenity::msg_details {
 
 	class LazyParseHelper
@@ -62,6 +56,55 @@ namespace serenity::msg_details {
 	template<class T, class... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
 	{
 	};
+	enum class SpecValue
+	{
+		none         = 0,
+		s            = 1,
+		a            = 2,
+		A            = 3,
+		b            = 4,
+		B            = 5,
+		c            = 6,
+		d            = 7,
+		e            = 8,
+		E            = 9,
+		f            = 10,
+		F            = 11,
+		g            = 12,
+		G            = 13,
+		o            = 14,
+		x            = 15,
+		X            = 16,
+		p            = 17,
+		std_fallback = 18,
+	};
+
+	enum class SpecType
+	{
+		MonoType         = 0,
+		StringType       = 1,
+		CharPointerType  = 2,
+		StringViewType   = 3,
+		IntType          = 4,
+		U_IntType        = 5,
+		LongLongType     = 6,
+		U_LongLongType   = 7,
+		BoolType         = 8,
+		CharType         = 9,
+		FloatType        = 10,
+		DoubleType       = 11,
+		LongDoubleType   = 12,
+		ConstVoidPtrType = 13,
+		VoidPtrType      = 14,
+	};
+
+	static std::unordered_map<size_t, SpecType> mapIndexToType = {
+		{ 0, SpecType::MonoType },        { 1, SpecType::StringType },        { 2, SpecType::CharPointerType },
+		{ 3, SpecType::StringViewType },  { 4, SpecType::IntType },           { 5, SpecType::U_IntType },
+		{ 6, SpecType::LongLongType },    { 7, SpecType::U_LongLongType },    { 8, SpecType::BoolType },
+		{ 9, SpecType::CharType },        { 10, SpecType::FloatType },        { 11, SpecType::DoubleType },
+		{ 12, SpecType::LongDoubleType }, { 13, SpecType::ConstVoidPtrType }, { 14, SpecType::VoidPtrType },
+	};
 
 	class ArgContainer
 	{
@@ -69,49 +112,46 @@ namespace serenity::msg_details {
 		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long,
 		                                          unsigned long long, bool, char, float, double, long double, const void*, void*>;
 
-		enum class SpecType
-		{
-			MonoType         = 0,
-			StringType       = 1,
-			CharPointerType  = 2,
-			StringViewType   = 3,
-			IntType          = 4,
-			U_IntType        = 5,
-			LongLongType     = 6,
-			U_LongLongType   = 7,
-			BoolType         = 8,
-			CharType         = 9,
-			FloatType        = 10,
-			DoubleType       = 11,
-			LongDoubleType   = 12,
-			ConstVoidPtrType = 13,
-			VoidPtrType      = 14,
-		};
-
-		std::unordered_map<size_t, SpecType> typeMap = {
-			{ 0, SpecType::MonoType },        { 1, SpecType::StringType },        { 2, SpecType::CharPointerType },
-			{ 3, SpecType::StringViewType },  { 4, SpecType::IntType },           { 5, SpecType::U_IntType },
-			{ 6, SpecType::LongLongType },    { 7, SpecType::U_LongLongType },    { 8, SpecType::BoolType },
-			{ 9, SpecType::CharType },        { 10, SpecType::FloatType },        { 11, SpecType::DoubleType },
-			{ 12, SpecType::LongDoubleType }, { 13, SpecType::ConstVoidPtrType }, { 14, SpecType::VoidPtrType },
-		};
-
 		std::vector<SpecType> argSpecTypes;
+		std::vector<SpecValue> argSpecValue;
 
-		// Moved this here while I work on some things
+		void HandleStringSpec(char spec);
+		void HandleIntSpec(char spec);
+		void HandleBoolSpec(char spec);
+		void HandleFloatingPointSpec(char spec);
+		void HandleCharSpec(char spec);
+		void VerifySpec(SpecType type, char spec);
+		void VerifySpecWithPrecision(SpecType type, std::string_view spec);
+		std::tuple<std::string, char> SplitPrecisionAndSpec(SpecType type, std::string_view spec);
+		void HandleArgBracket(std::string_view argBracket, int counterToIndex);
+		void EnableFallbackToStd(bool enable);
+
+		// Moved Formatting Templates Here While I Work On Some Things
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 			(
 			[ = ](auto arg) {
 				auto typeFound = is_supported<decltype(arg), LazilySupportedTypes> {};
+				auto size { 0 };
 				if constexpr( !typeFound.value ) {
 						containsUnknownType = true;
 				} else {
 						if( containsUnknownType ) return;
 						argContainer.emplace_back(std::move(arg));
-						argSpecTypes.emplace_back(typeMap[ argContainer.back().index() ]);
+						argSpecTypes.emplace_back(mapIndexToType[ argContainer[ size ].index() ]);
+						++size;
 					}
 			}(args),
 			...);
+		}
+
+		template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args) {
+			Reset();
+			EmplaceBackArgs(std::forward<Args>(args)...);
+			ParseForSpecifiers(formatString);
+			size_t size { argContainer.size() };
+			if( size != 0 ) {
+					maxIndex = size - 1;
+			}
 		}
 
 		ArgContainer()                               = default;
@@ -128,10 +168,10 @@ namespace serenity::msg_details {
 		bool ContainsUnsupportedType() const;
 		std::string&& GetArgValue();
 		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
-		template<typename... Args> void CaptureArgs(Args&&... args);
+		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
 
 		// May not remain here
-		void ParseForSpecifiers(const std::string_view);
+		void ParseForSpecifiers(std::string_view);
 
 	      private:
 		std::vector<LazilySupportedTypes> argContainer;
@@ -140,6 +180,7 @@ namespace serenity::msg_details {
 		bool endReached { false };
 		LazyParseHelper parseHelper;
 		bool containsUnknownType { false };
+		bool isStdFallbackEnabled { false };
 	};
 
 	class Message_Formatter
@@ -175,9 +216,38 @@ namespace serenity::msg_details {
 		void StoreFormat();
 		const Message_Info* MessageDetails();
 		void LazySubstitute(std::string& msg, std::string&& arg);
-		template<typename... Args> void FormatMessage(MsgWithLoc& message, Args&&... args);
+		// template<typename... Args> void FormatMessage(MsgWithLoc& message, Args&&... args);
+		template<typename... Args> void FormatMessageArgs(MsgWithLoc& message, Args&&... args) {
+			lazy_message.clear();
+			argStorage.CaptureArgs(message.msg, std::forward<Args>(args)...);
+			// This check currently slows everything down if there are specs or types I don't support
+			// due to unfortunately still not being able to take advantage of compile time parsing
+			// and <format>'s compile time features yet...
+			// TODO: Implement a relatively straight-forward approach to parsing arg types and specs
+			// TODO: at compile time and use an if constexpr expression to toggle usage here
+			// - I can easily parse the specs but the message needs to be known at compile time first
+			// - For the arg types, std::variant is compile time already, so it really *shouldn't* be
+			//   all that hard to implement (Then I can get rid of ArgContainer versions here)
+			if( argStorage.ContainsUnsupportedType() || argStorage.ContainsUnsupportedSpecs(message.msg) ) {
+					localeRef == nullptr ? VFORMAT_TO(lazy_message, message.msg, std::forward<Args>(args)...)
+							     : L_VFORMAT_TO(lazy_message, *localeRef, message.msg, std::forward<Args>(args)...);
+			} else {
+					lazy_message.append(message.msg);
+					for( ;; ) {
+							LazySubstitute(lazy_message, std::move(argStorage.GetArgValue()));
+							argStorage.AdvanceToNextArg();
+							if( argStorage.EndReached() ) {
+									break;
+							}
+						}
+				}
+			auto lineEnd { LineEnding() };
+			lazy_message.append(lineEnd.data(), lineEnd.size());
+			msgInfo->SetMessage(lazy_message, message.source);
+		}
 		void SetLocaleReference(std::locale* loc);
 		std::string_view LineEnding() const;
+		void EnableFallbackToStd(bool enable);
 
 	      private:
 		Message_Info* msgInfo;

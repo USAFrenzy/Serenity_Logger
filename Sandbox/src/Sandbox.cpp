@@ -275,9 +275,16 @@ int main() {
 
 #endif    // !INSTRUMENTATION_ENABLED
 
-	constexpr const char* msg { "{:s}" };
+	// NOTE: precision fields for strings not yet implemented
+	// Forcing a throw to prevent usage at the moment
+	constexpr const char* msg { "{}" };
 
 #ifdef INSTRUMENTATION_ENABLED
+
+	// Currently the fallback isn't implemented
+	C.EnableFallbackToStd(true);
+	testFile.EnableFallbackToStd(true);
+	rotatingFile.EnableFallbackToStd(true);
 
 	Instrumentator timer;
 

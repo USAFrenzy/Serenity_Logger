@@ -13,7 +13,7 @@ template<typename... Args> void TargetBase::Trace(serenity::MsgWithLoc s, Args&&
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessage(s, std::forward<Args>(args)...);
+			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::trace);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
@@ -36,7 +36,7 @@ template<typename... Args> void TargetBase::Info(serenity::MsgWithLoc s, Args&&.
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessage(s, std::forward<Args>(args)...);
+			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::info);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
@@ -59,7 +59,7 @@ template<typename... Args> void TargetBase::Debug(serenity::MsgWithLoc s, Args&&
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessage(s, std::forward<Args>(args)...);
+			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::debug);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
@@ -82,7 +82,7 @@ template<typename... Args> void TargetBase::Warn(serenity::MsgWithLoc s, Args&&.
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessage(s, std::forward<Args>(args)...);
+			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::warning);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
@@ -105,7 +105,7 @@ template<typename... Args> void TargetBase::Error(serenity::MsgWithLoc s, Args&&
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessage(s, std::forward<Args>(args)...);
+			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::error);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
@@ -128,7 +128,7 @@ template<typename... Args> void TargetBase::Fatal(serenity::MsgWithLoc s, Args&&
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessage(s, std::forward<Args>(args)...);
+			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::fatal);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
