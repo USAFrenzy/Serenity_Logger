@@ -276,8 +276,22 @@ int main() {
 #endif    // !INSTRUMENTATION_ENABLED
 
 	// NOTE: precision fields for strings not yet implemented
-	// Forcing a throw to prevent usage at the moment
-	constexpr const char* msg { "{}" };
+	// Forcing a throw to prevent usage at the moment as the fallback
+	// has yet to be implemented
+	// TODO: Add Progress trackers here to make sure I don't miss anything
+	/***************************** Current Progress *****************************/ /*
+	                                                                                * [X] Fill and Alignment check:
+	                                                                                * - {:*<12d} // and any other additional specs in place
+	                                                                                *of 'd'
+	                                                                                * - {:*<6}
+	                                                                                * - {:*>6}
+	                                                                                * - {:*^6}
+	                                                                                * - {:6d}
+	                                                                                * - {:6}
+	                                                                                * Just need to map it over to how the arguments are
+	                                                                                *formatted now [ ]
+	                                                                                *****************************************************************************/
+	constexpr const char* msg { "{0:0}" };
 
 #ifdef INSTRUMENTATION_ENABLED
 
@@ -288,11 +302,12 @@ int main() {
 
 	Instrumentator timer;
 
-	const char* test = nullptr;
-	// test string
+	// const char* test = nullptr;
+	//  test string
 	static_assert(testView.size() == 400);
 	std::string temp { testView.data(), testView.size() };
-	test = temp.c_str();
+	//	test = temp.c_str();
+	auto test = 42;
 	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
 
 	unsigned long int i { 0 };

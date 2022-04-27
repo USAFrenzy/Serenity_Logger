@@ -58,25 +58,34 @@ namespace serenity::msg_details {
 	};
 	enum class SpecValue
 	{
-		none         = 0,
-		s            = 1,
-		a            = 2,
-		A            = 3,
-		b            = 4,
-		B            = 5,
-		c            = 6,
-		d            = 7,
-		e            = 8,
-		E            = 9,
-		f            = 10,
-		F            = 11,
-		g            = 12,
-		G            = 13,
-		o            = 14,
-		x            = 15,
-		X            = 16,
-		p            = 17,
-		std_fallback = 18,
+		none = 0,
+		s    = 1,
+		a    = 2,
+		A    = 3,
+		b    = 4,
+		B    = 5,
+		c    = 6,
+		d    = 7,
+		e    = 8,
+		E    = 9,
+		f    = 10,
+		F    = 11,
+		g    = 12,
+		G    = 13,
+		o    = 14,
+		x    = 15,
+		X    = 16,
+		p    = 17,
+	};
+
+	enum class SpecValueModifiers
+	{
+		fill_align   = 0,
+		width        = 1,
+		sign         = 2,
+		hash         = 3,
+		zero_pad     = 4,
+		std_fallback = 5,
 	};
 
 	enum class SpecType
@@ -108,22 +117,35 @@ namespace serenity::msg_details {
 
 	class ArgContainer
 	{
+	      private:
+		struct PrecSpec
+		{
+			std::string precision;
+			char spec { '\0' };
+		};
+
 	      public:
 		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long,
 		                                          unsigned long long, bool, char, float, double, long double, const void*, void*>;
 
 		std::vector<SpecType> argSpecTypes;
 		std::vector<SpecValue> argSpecValue;
+		std::vector<SpecValueModifiers> argSpecValueModifiers;
 
-		void HandleStringSpec(char spec);
-		void HandleIntSpec(char spec);
-		void HandleBoolSpec(char spec);
-		void HandleFloatingPointSpec(char spec);
-		void HandleCharSpec(char spec);
-		void VerifySpec(SpecType type, char spec);
+		bool HandleStringSpec(char spec);
+		bool HandleIntSpec(char spec);
+		bool HandleBoolSpec(char spec);
+		bool HandleFloatingPointSpec(char spec);
+		bool HandleCharSpec(char spec);
+		bool VerifySpec(SpecType type, char spec);
 		void VerifySpecWithPrecision(SpecType type, std::string_view spec);
-		std::tuple<std::string, char> SplitPrecisionAndSpec(SpecType type, std::string_view spec);
-		void HandleArgBracket(std::string_view argBracket, int counterToIndex);
+		void HandleFillAndAlignSpec(char preSpecChar, char fillAlignSpec);
+		void HandleWidthSpec(char spec);
+		void HandleSignSpec(char spec);
+		void HandleHashSpec(char spec);
+		bool VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView);
+		void SplitPrecisionAndSpec(SpecType type, std::string_view spec);
+		bool HandleArgBracket(std::string_view argBracket, int counterToIndex);
 		void EnableFallbackToStd(bool enable);
 
 		// Moved Formatting Templates Here While I Work On Some Things
@@ -181,6 +203,9 @@ namespace serenity::msg_details {
 		LazyParseHelper parseHelper;
 		bool containsUnknownType { false };
 		bool isStdFallbackEnabled { false };
+
+	      protected:
+		PrecSpec precisionSpecHelper;
 	};
 
 	class Message_Formatter

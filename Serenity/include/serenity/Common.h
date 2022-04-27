@@ -265,6 +265,14 @@ namespace serenity {
 			}
 	}
 
+	static bool IsDigit(char ch) {
+		return ((ch >= '0') && (ch <= '9'));
+	}
+
+	static bool IsAlpha(char ch) {
+		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+	}
+
 	enum class message_time_mode
 	{
 		local,

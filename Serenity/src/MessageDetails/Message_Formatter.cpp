@@ -94,16 +94,22 @@ namespace serenity::msg_details {
 
 	static constexpr bool AreSpecsSupported(std::string_view argBracket) {
 		size_t pos { 1 };    // ignore '{'
+		const size_t argBracketSize { argBracket.size() };
+		// don't currently positional specs
+		if( argBracketSize >= 3 ) {
+				if( argBracket.at(2) >= '0' && argBracket.at(2) <= '9' ) {
+						return false;
+				}
+		}
 		for( ;; ) {
-				if( pos >= argBracket.size() ) break;
+				if( pos >= argBracketSize ) break;
 				auto ch { argBracket.at(pos) };
-				// don't currently positional specs
-				if( std::isdigit(ch) ) return false;
 				if( ch == ':' ) {
 						// Not a valid specifier
 						if( argBracket.size() < pos + 1 ) return false;
 						// don't currently support width specs
-						if( std::isdigit(argBracket.at(pos + 1)) ) return false;
+						auto potentialWidthSpec { argBracket.at(pos + 1) };
+						if( (potentialWidthSpec >= '0') && (potentialWidthSpec <= '9') ) return false;
 						// clang-format off
 						switch( ch ) {
 								// don't currently support precision yet
@@ -117,9 +123,9 @@ namespace serenity::msg_details {
 								case '-': [[fallthrough]];
 								case ' ': [[fallthrough]];
 									// don't currently support fill and align specs
-								case '<': [[fallthrough]];
-								case '>': [[fallthrough]];
-								case '^': [[fallthrough]];
+							//	case '<': [[fallthrough]];
+							//	case '>': [[fallthrough]];
+							//	case '^': [[fallthrough]];
 									// don't currently support alternative form specs
 								case '#': return false; break;
 								default:  break;
@@ -161,29 +167,38 @@ namespace serenity::msg_details {
 	//         current setup
 	// TODO:**********************************************************************************************************
 
-	void ArgContainer::HandleStringSpec(char spec) {
-		if( spec != 's' ) {
-				// clang-format off
-			std::cerr << "Warning: Arg Specifier Being Used On String Type Argument Is A Non-String Type Specifier\n";
-				// clang-format on
-		} else {
+	bool ArgContainer::HandleStringSpec(char spec) {
+		if( spec == 's' ) {
 				argSpecValue.emplace_back(SpecValue::s);
+				return true;
+		} else {
+				std::string throwMessage { "Arg Specifier '" };
+				throwMessage += spec;
+				throwMessage.append("' For A String Is Not A Valid Spec Argument\n");
+				throw(std::move(throwMessage));
 			}
 	}
 
-	void ArgContainer::HandleIntSpec(char spec) {
+	bool ArgContainer::HandleIntSpec(char spec) {
 		switch( spec ) {
 				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
 				case 'B': argSpecValue.emplace_back(SpecValue::B); break;
 				case 'c': argSpecValue.emplace_back(SpecValue::c); break;
+				case 'd': argSpecValue.emplace_back(SpecValue::d); break;
 				case 'o': argSpecValue.emplace_back(SpecValue::o); break;
 				case 'x': argSpecValue.emplace_back(SpecValue::x); break;
 				case 'X': argSpecValue.emplace_back(SpecValue::X); break;
-				default: std::cerr << "Warning: Arg Specifier For Int Is Not A Valid Spec Argument\n"; break;
+				default:
+					std::string throwMessage { "Arg Specifier '" };
+					throwMessage += spec;
+					throwMessage.append("' For An Int Is Not A Valid Spec Argument\n");
+					throw(std::move(throwMessage));
+					break;
 			}
+		return true;
 	}
 
-	void ArgContainer::HandleBoolSpec(char spec) {
+	bool ArgContainer::HandleBoolSpec(char spec) {
 		switch( spec ) {
 				case 's': argSpecValue.emplace_back(SpecValue::s); break;
 				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
@@ -192,11 +207,17 @@ namespace serenity::msg_details {
 				case 'o': argSpecValue.emplace_back(SpecValue::o); break;
 				case 'x': argSpecValue.emplace_back(SpecValue::x); break;
 				case 'X': argSpecValue.emplace_back(SpecValue::X); break;
-				default: std::cerr << "Warning: Arg Specifier For Bool Is Not A Valid Spec Argument\n"; break;
+				default:
+					std::string throwMessage { "Arg Specifier '" };
+					throwMessage += spec;
+					throwMessage.append("' For A Bool Is Not A Valid Spec Argument\n");
+					throw(std::move(throwMessage));
+					break;
 			}
+		return true;
 	}
 
-	void ArgContainer::HandleFloatingPointSpec(char spec) {
+	bool ArgContainer::HandleFloatingPointSpec(char spec) {
 		switch( spec ) {
 				case 'a': argSpecValue.emplace_back(SpecValue::a); break;
 				case 'A': argSpecValue.emplace_back(SpecValue::A); break;
@@ -206,11 +227,17 @@ namespace serenity::msg_details {
 				case 'F': argSpecValue.emplace_back(SpecValue::F); break;
 				case 'g': argSpecValue.emplace_back(SpecValue::g); break;
 				case 'G': argSpecValue.emplace_back(SpecValue::G); break;
-				default: break;
+				default:
+					std::string throwMessage { "Arg Specifier '" };
+					throwMessage += spec;
+					throwMessage.append("' For A Floating Point/Double Type Is Not A Valid Spec Argument\n");
+					throw(std::move(throwMessage));
+					break;
 			}
+		return true;
 	}
 
-	void ArgContainer::HandleCharSpec(char spec) {
+	bool ArgContainer::HandleCharSpec(char spec) {
 		switch( spec ) {
 				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
 				case 'B': argSpecValue.emplace_back(SpecValue::B); break;
@@ -219,8 +246,14 @@ namespace serenity::msg_details {
 				case 'o': argSpecValue.emplace_back(SpecValue::o); break;
 				case 'x': argSpecValue.emplace_back(SpecValue::x); break;
 				case 'X': argSpecValue.emplace_back(SpecValue::X); break;
-				default: std::cerr << "Warning: Arg Specifier For Char Is Not A Valid Spec Argument\n"; break;
+				default:
+					std::string throwMessage { "Arg Specifier '" };
+					throwMessage += spec;
+					throwMessage.append("' For A Char Is Not A Valid Spec Argument\n");
+					throw(std::move(throwMessage));
+					break;
 			}
+		return true;
 	}
 
 	void Message_Formatter::EnableFallbackToStd(bool enable) {
@@ -231,34 +264,30 @@ namespace serenity::msg_details {
 		isStdFallbackEnabled = enable;
 	}
 
-	std::tuple<std::string, char> ArgContainer::SplitPrecisionAndSpec(SpecType type, std::string_view spec) {
-		std::string prec;
-		char actualSpec { '\0' };
+	void ArgContainer::SplitPrecisionAndSpec(SpecType type, std::string_view spec) {
+		precisionSpecHelper.precision.clear();
 		for( ;; ) {
 				if( spec.size() == 0 ) break;
-				if( std::isdigit(spec.front()) ) {
-						prec += spec.front();
+				auto ch { spec.front() };
+				if( IsDigit(ch) ) {
+						precisionSpecHelper.precision += spec.front();
 						spec.remove_prefix(1);
 						continue;
 				}
-				if( std::isalpha(spec.front()) ) {
+				if( IsAlpha(ch) ) {
 						using enum SpecType;
 						if( type == StringType || type == CharPointerType || type == StringViewType ) break;
-						actualSpec = spec.front();
+						precisionSpecHelper.spec = spec.front();
 						break;
 				}
-				if( prec.size() == 0 ) {
+				if( precisionSpecHelper.precision.size() == 0 ) {
 						std::cerr << "Warning: Nothing Found For The Precision Field After\".\"\n";
 				}
 				break;
 			}
-		return std::make_tuple(prec, actualSpec);
 	}
 
 	void ArgContainer::VerifySpecWithPrecision(SpecType type, std::string_view spec) {
-		// If !isStdFallbackEnabled for string types, just issue the warning,
-		// return from this function, and proceed as if spec field was empty.
-		// Otherwise, Follow through with SplitPrecisionAndSpec().
 		switch( type ) {
 				case SpecType::CharPointerType: [[fallthrough]];
 				case SpecType::StringViewType: [[fallthrough]];
@@ -274,14 +303,14 @@ namespace serenity::msg_details {
 				default: break;
 			}
 
-		auto [ precStr, chSpec ] = SplitPrecisionAndSpec(type, spec);
+		SplitPrecisionAndSpec(type, spec);
 		// Now just need a way to store and somehow map the precision with the argument
 		switch( type ) {
 				case SpecType::CharPointerType: [[fallthrough]];
 				case SpecType::StringViewType: [[fallthrough]];
 				case SpecType::StringType:
-					// argSpecValue.emplace_back(SpecValue::std_fallback);
-					// throw std::runtime_error("Fallback Not Yet Implemented\n");
+					argSpecValueModifiers.emplace_back(SpecValueModifiers::std_fallback);
+					throw std::runtime_error("Fallback Not Yet Implemented\n");
 					break;                           // Still Need To Implement
 				case SpecType::FloatType: break;         // Still Need To Implement
 				case SpecType::DoubleType: break;        // Still Need To Implement
@@ -290,96 +319,332 @@ namespace serenity::msg_details {
 			}
 	}
 
-	void ArgContainer::VerifySpec(SpecType type, char spec) {
+	bool ArgContainer::VerifySpec(SpecType type, char spec) {
 		using enum SpecType;
-		if( spec == '\0' ) return;
+		if( spec == '\0' ) return false;
 		switch( type ) {
-				case MonoType: break;
+				case MonoType: return true; break;
 				case StringType: [[fallthrough]];
 				case CharPointerType: [[fallthrough]];
-				case StringViewType: HandleStringSpec(spec); break;
+				case StringViewType:
+					if( HandleStringSpec(spec) ) return true;
+					break;
 				case IntType: [[fallthrough]];
 				case U_IntType: [[fallthrough]];
 				case LongLongType: [[fallthrough]];
-				case U_LongLongType: HandleIntSpec(spec); break;
-				case BoolType: HandleBoolSpec(spec); break;
-				case CharType: HandleCharSpec(spec); break;
+				case U_LongLongType:
+					if( HandleIntSpec(spec) ) return true;
+					break;
+				case BoolType:
+					if( HandleBoolSpec(spec) ) return true;
+					break;
+				case CharType:
+					if( HandleCharSpec(spec) ) return true;
+					break;
 				case FloatType: [[fallthrough]];
 				case DoubleType: [[fallthrough]];
-				case LongDoubleType: HandleFloatingPointSpec(spec); break;
+				case LongDoubleType:
+					if( HandleFloatingPointSpec(spec) ) return true;
+					break;
 				case ConstVoidPtrType: [[fallthrough]];
-				case VoidPtrType: argSpecValue.emplace_back(SpecValue::p); break;
-				default: break;
+				case VoidPtrType:
+					argSpecValue.emplace_back(SpecValue::p);
+					return true;
+					break;
+				default: return false; break;
 			}
+		return false;
 	}
 
-	void ArgContainer::HandleArgBracket(std::string_view argBracket, int counterToIndex) {
+	void ArgContainer::HandleFillAndAlignSpec(char preSpecChar, char fillAlignSpec) {
+		// TODO: implement this fully
+		argSpecValueModifiers.emplace_back(SpecValueModifiers::fill_align);
+	}
+
+	void ArgContainer::HandleWidthSpec(char spec) {
+		// TODO: implement this fully
+		argSpecValueModifiers.emplace_back(SpecValueModifiers::width);
+	}
+
+	static constexpr std::array<char, 3> faSpecs   = { '<', '>', '^' };
+	static constexpr std::array<char, 3> signSpecs = { '+', '-', ' ' };
+	struct FillAlignValues
+	{
+		std::string digitSpec;
+		char fillSpec { '\0' };
+		char fillAlignSpec { '<' };
+		char additionalSpec { '\0' };
+	};
+
+	// TODO: Update this function to work properly after the parsing function is finished
+	// Changing how the parse function currently works, will definitely
+	// NEED to look at and update this function afterwards
+	bool ArgContainer::VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView) {
 		size_t pos { 1 };    // start at 1 to ignore '{'
-		SpecType argType;
-		// clang-format off
-		argSpecTypes.size() >= counterToIndex ? argType = argSpecTypes.at(counterToIndex) 
-			                                                                            : argType = SpecType::MonoType;
-		// clang-format on
-		if( argType == SpecType::MonoType ) return;
-		// Setting up for future expansion for support with std::format specifiers
-		// i.e. (fill & align, width, positional specs, etc)
+		SpecType argT;
+		FillAlignValues temp = {};
+		auto argBracketSize { specView.size() };
+
+		// Not handling zero-padding here
+		if( specView[ 0 ] == '0' ) return false;
+
 		for( ;; ) {
-				switch( argBracket[ pos ] ) {
-						case ':':
-							++pos;
-							continue;
-							break;
-						case '.':
-							++pos;
-							VerifySpecWithPrecision(argType, std::move(argBracket.substr(pos, argBracket.size())));
-							break;
-						default: VerifySpec(argType, argBracket[ pos ]); break;
-					}
-				return;
+				if( pos >= argBracketSize - 1 ) break;
+				auto ch { specView[ pos ] };
+
+				if( IsDigit(ch) ) {
+						temp.digitSpec += ch;
+						auto tempPos { pos + 1 };
+						for( ;; ) {
+								if( tempPos >= argBracketSize ) break;
+								auto nextCh { specView[ tempPos ] };
+								if( IsDigit(nextCh) ) {
+										temp.digitSpec += nextCh;
+										++tempPos;
+								} else {
+										break;
+									}
+							}
+						pos = tempPos;
+						continue;
+				}
+
+				if( IsAlpha(ch) ) {
+						auto tempPos { pos + 1 };
+						char nextCh;
+						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
+						if( !std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
+								if( VerifySpec(argT, ch) ) temp.additionalSpec = ch;
+						} else {
+								if( ch != '{' && ch != '}' ) {
+										temp.fillSpec = ch;
+								}
+								temp.fillAlignSpec = nextCh;
+								break;
+							}
+						++pos;
+						continue;
+				}
+
+				if( ch != '{' && ch != '}' ) {
+						auto tempPos { pos + 1 };
+						char nextCh;
+						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
+						if( std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
+								temp.fillSpec      = ch;
+								temp.fillAlignSpec = nextCh;
+								pos += 2;
+						} else {
+								if( IsAlpha(ch) ) {
+										if( VerifySpec(argT, ch) ) {
+												temp.additionalSpec = ch;
+										}
+										++pos;
+								}
+							}
+						continue;
+				}    // for loop
 			}
+		return (temp.digitSpec.size() != 0);
 	}
 
-	// This doesn't break with an arbitrary amount of spaces in brackets
-	// (surprisingly, spdlog didn't handle an arbitrary amount of spaces,
-	//  though that might be a fmtlib limitation instead)
+	void ArgContainer::HandleSignSpec(char spec) {
+		// TODO: implement this fully
+		argSpecValueModifiers.emplace_back(SpecValueModifiers::sign);
+	}
+
+	void ArgContainer::HandleHashSpec(char spec) {
+		argSpecValueModifiers.emplace_back(SpecValueModifiers::hash);
+	}
+
+	// Reading the spec standard, I will need to rework this quite a bit already...
+	// (Not as straight-forward as I originally thought)
+	// EDIT: This function is now already obsolete due to how the parsing function
+	//       is currently being reworked
+	bool ArgContainer::HandleArgBracket(std::string_view argBracket, int index) {
+		size_t pos { 1 };    // start at 1 to ignore '{'
+		SpecType argT { SpecType::MonoType };
+		FillAlignValues temp = {};
+		auto argBracketSize { argBracket.size() };
+
+		if( argBracket[ 1 ] == ':' ) {
+				for( ;; ) {
+						if( pos >= argBracketSize - 1 ) break;
+						auto ch { argBracket[ pos ] };
+
+						if( IsDigit(ch) ) {
+								temp.digitSpec += ch;
+								auto tempPos { pos + 1 };
+								for( ;; ) {
+										if( tempPos >= argBracketSize ) break;
+										auto nextCh { argBracket[ tempPos ] };
+										if( IsDigit(nextCh) ) {
+												temp.digitSpec += nextCh;
+												++tempPos;
+										} else {
+												break;
+											}
+									}
+								pos = tempPos;
+								continue;
+						}
+
+						if( IsAlpha(ch) ) {
+								auto tempPos { pos + 1 };
+								char nextCh;
+								if( tempPos <= argBracketSize ) nextCh = argBracket[ tempPos ];
+								if( !std::any_of(faSpecs.begin(), faSpecs.end(),
+								                 [ & ](char chSp) { return nextCh == chSp; }) ) {
+										if( VerifySpec(argT, ch) ) temp.additionalSpec = ch;
+								} else {
+										if( ch != '{' && ch != '}' ) {
+												temp.fillSpec = ch;
+										}
+										temp.fillAlignSpec = nextCh;
+										break;
+									}
+								++pos;
+								continue;
+						}
+
+						if( ch != '{' && ch != '}' ) {
+								auto tempPos { pos + 1 };
+								char nextCh;
+								if( tempPos <= argBracketSize ) nextCh = argBracket[ tempPos ];
+								if( std::any_of(faSpecs.begin(), faSpecs.end(),
+								                [ & ](char chSp) { return nextCh == chSp; }) ) {
+										temp.fillSpec      = ch;
+										temp.fillAlignSpec = nextCh;
+										pos += 2;
+								} else {
+										if( IsAlpha(ch) ) {
+												if( VerifySpec(argT, ch) ) {
+														temp.additionalSpec = ch;
+												}
+												++pos;
+										}
+									}
+								continue;
+						}    // for loop
+					}
+		}    // ':' if statement
+		return (temp.digitSpec.size() != 0);
+	}
+
+	// Instead of in CaptureArgs(), this function should be in FormatMessageArgs()
+	// so that I can directly format the args without having to worry about storing
+	// the spec types and modifiers around... Kind of sucks to have this thought NOW,
+	// but it would probably save on all the enum vector storage as I could then just
+	// handle the actual formatting of the arg in the Handle'x'Spec functions and return
+	// the formatted value directly to substitute into the message or throw on error
 	void ArgContainer::ParseForSpecifiers(std::string_view fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
 		std::string_view argBracket;
-		int argCounter { 0 };    // used to map our current arg to its type in HandleArgBracket()
-		for( ;; ) {
-				if( fmt.size() <= 2 ) return;    // Definitely don't have another '{}'
-				argBracket = "";                 // reset for proper fmt prefix removal
-				auto specFieldPresent { fmt[ 1 ] == ':' };
-				if( fmt[ 0 ] == '{' && !specFieldPresent ) {
-						argSpecValue.emplace_back(SpecValue::none);
-						fmt.remove_prefix(1);
-						++argCounter;
-						continue;
-				}
-				if( specFieldPresent ) {
-						parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of('{'));
-						parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of('}'));
+		size_t argCounter { 0 };    // used to map our current arg to its type
 
-						if( (parseHelper.BracketPosition(B_Type::open) != std::string_view::npos) &&
-						    (parseHelper.BracketPosition(B_Type::close) != std::string_view::npos) )
-							{
-								argBracket = std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open),
-								                                  parseHelper.BracketPosition(B_Type::close) + 1));
+		// clang-format off
+		// ******************************************** WIP ********************************************
+		// clang-format on
+
+		SpecType argT;
+		for( ;; ) {
+				if( fmt.size() == 0 ) break;
+				auto openBracket { fmt.find_first_of('{') };
+				auto closeBracket { fmt.find_first_of('}') };
+				// no spec so return
+				if( (openBracket == std::string_view::npos) || (closeBracket == std::string_view::npos) ) return;
+				argBracket = fmt.substr(openBracket + 1, closeBracket + 1);
+				auto token { argBracket[ 0 ] };
+				// handle positional arg type here and then continue
+				if( IsDigit(token) ) {
+						std::from_chars(argBracket.data(), argBracket.data() + 1, argCounter);
+						if( argCounter <= argSpecTypes.size() ) {
+								argT = argSpecTypes.at(argCounter);
+								argBracket.remove_prefix(1);
 						} else {
-								// return if we don't have a closing bracket position
-								return;
+								// clang-format off
+					throw std::runtime_error("Positional Argument Notated Doesn't Match The Number Of Arguments Supplied\n");
+								// clang-format on
 							}
-						if( argBracket.size() == 3 ) {
-								// specs need a ':' and a specifier
-								throw std::runtime_error("Not A Valid Specifier");
-						} else {
-								HandleArgBracket(argBracket, argCounter);
-								++argCounter;
-							}
-				}
-				argBracket.size() == 0 ? fmt.remove_prefix(1) : fmt.remove_prefix(argBracket.size());
-			}
-	}
+				} else {
+						argT = argSpecTypes.at(0);
+						if( argT == SpecType::MonoType ) return;
+					}
+
+				// empty spec field
+				if( argBracket[ 0 ] != ':' ) {
+						argSpecValue.emplace_back(SpecValue::none);
+						argBracket.remove_prefix(argBracket.find_first_of('}') + 1);
+						continue;
+				} else {
+						argBracket.remove_prefix(1);
+					}
+				// Parse the rest of the argument bracket
+				for( ;; ) {
+						auto token { argBracket[ 0 ] };
+						if( token == '0' ) {
+								// HandleZeroPadding();
+								fmt.remove_prefix(fmt.find_first_of('}') + 1);
+								break;
+						}
+						if( IsDigit(token) || ((token != '{') && (token != '}')) ) {
+								if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
+										// do something for fill and align here
+
+										// Remove partition up to the first arg processed
+										fmt.remove_prefix(fmt.find_first_of('}') + 1);
+										break;
+								}
+						}
+					}    // argument bracket processing loop
+				continue;
+			}    // fmt processing loop
+
+	}    // parsing fmt loop
+
+	// clang-format off
+		 // ******************************************** WIP ********************************************
+	// clang-format on
+
+	//
+	//
+	//
+	// ************************************ OLD METHOD ************************************
+	// for( ;; ) {
+	//		if( fmt.size() <= 2 ) return;    // Definitely don't have another '{}'
+	//		argBracket = "";                 // reset for proper fmt prefix removal
+
+	//		auto specFieldPresent { fmt[ 1 ] == ':' };
+	//		if( fmt[ 0 ] == '{' && !specFieldPresent ) {
+	//				argSpecValue.emplace_back(SpecValue::none);
+	//				fmt.remove_prefix(1);
+	//				++argCounter;
+	//				continue;
+	//		}
+	//		if( specFieldPresent ) {
+	//				parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of('{'));
+	//				parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of('}'));
+
+	//				if( (parseHelper.BracketPosition(B_Type::open) != std::string_view::npos) &&
+	//				    (parseHelper.BracketPosition(B_Type::close) != std::string_view::npos) )
+	//					{
+	//						argBracket = std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open),
+	//						                                  parseHelper.BracketPosition(B_Type::close) + 1));
+	//				} else {
+	//						// return if we don't have a closing bracket position
+	//						return;
+	//					}
+	//				if( argBracket.size() == 3 ) {
+	//						// specs need a ':' and a specifier
+	//						throw std::runtime_error("Not A Valid Specifier");
+	//				} else {
+	//						HandleArgBracket(argBracket, argCounter);
+	//						++argCounter;
+	//					}
+	//		}
+	//		argBracket.size() == 0 ? fmt.remove_prefix(1) : fmt.remove_prefix(argBracket.size());
+	//	}
+	//}
 
 	bool ArgContainer::ContainsUnsupportedSpecs(const std::string_view fmt) {
 		auto size { fmt.size() };
