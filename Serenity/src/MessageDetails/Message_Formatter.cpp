@@ -380,8 +380,7 @@ namespace serenity::msg_details {
 	// Changing how the parse function currently works, will definitely
 	// NEED to look at and update this function afterwards
 	bool ArgContainer::VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView) {
-		size_t pos { 1 };    // start at 1 to ignore '{'
-		SpecType argT;
+		size_t pos { 0 };
 		FillAlignValues temp = {};
 		auto argBracketSize { specView.size() };
 
@@ -414,7 +413,7 @@ namespace serenity::msg_details {
 						char nextCh;
 						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
 						if( !std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
-								if( VerifySpec(argT, ch) ) temp.additionalSpec = ch;
+								if( VerifySpec(type, ch) ) temp.additionalSpec = ch;
 						} else {
 								if( ch != '{' && ch != '}' ) {
 										temp.fillSpec = ch;
@@ -436,7 +435,7 @@ namespace serenity::msg_details {
 								pos += 2;
 						} else {
 								if( IsAlpha(ch) ) {
-										if( VerifySpec(argT, ch) ) {
+										if( VerifySpec(type, ch) ) {
 												temp.additionalSpec = ch;
 										}
 										++pos;
@@ -539,14 +538,14 @@ namespace serenity::msg_details {
 	// the formatted value directly to substitute into the message or throw on error
 
 	/********************************************************************************
-		First step is to get the parser up and running, next step is to add in the 
-		logic of the parsing function to work with FormatMessageArgs(),then implement
-		fully the Handle'x'Spec() type functions and add those in where appropriate
-		to the parsing function (returning the argument values, whether they needed
-		formatting from the Handle'x'Spec() line of functions or if they were just
-		being directly substituted in as a string representation of their value).
+	        First step is to get the parser up and running, next step is to add in the
+	        logic of the parsing function to work with FormatMessageArgs(),then implement
+	        fully the Handle'x'Spec() type functions and add those in where appropriate
+	        to the parsing function (returning the argument values, whether they needed
+	        formatting from the Handle'x'Spec() line of functions or if they were just
+	        being directly substituted in as a string representation of their value).
 	********************************************************************************/
-	
+
 	/******************************************************************************************
 	The function flow goal here is:
 	- Parse up until an argument bracket is found
@@ -554,14 +553,14 @@ namespace serenity::msg_details {
 	- Parse the argument bracket:
   - Verify the specs in the bracket accurately correlate to the type of argument
   - Format the argument based on those specs
-  - If the specs are valid (throwing a runtime error if they aren't): 
+  - If the specs are valid (throwing a runtime error if they aren't):
     - Erase the format string up until that the end of the first argument processed
     - Append the argument value to the lazy_message variable
-    - Repeat until the format string is either empty or no more argument brackets are found. 
+    - Repeat until the format string is either empty or no more argument brackets are found.
     - If no more argument bracket are found, should append whatever is left of the
       format string to the lazy_message variable.
 	******************************************************************************************/
-	
+
 	void ArgContainer::ParseForSpecifiers(std::string_view fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
 		std::string_view argBracket;
@@ -579,16 +578,39 @@ namespace serenity::msg_details {
 				// no spec so return
 				if( (openBracket == std::string_view::npos) || (closeBracket == std::string_view::npos) ) return;
 				argBracket = fmt.substr(openBracket + 1, closeBracket + 1);
-				auto token { argBracket[ 0 ] };
+				// handle empty arg brackets no matter the amount of whitespace,
+				// but skip the processing step if it only contains whitespace
+				auto emptyArg { true };
+				size_t pos { 0 };
+				char firstToken;
+				for( ;; ) {
+						if( (argBracket[ pos ] != ' ') || (pos >= argBracket.size()) ) {
+								firstToken = argBracket[ pos ];
+								emptyArg   = false;
+								break;
+						}
+						++pos;
+					}
+				if( emptyArg ) {
+						fmt.remove_prefix(closeBracket + 1);
+						continue;
+				}
+
 				// handle positional arg type here and then continue
-				if( IsDigit(token) ) {
-						std::from_chars(argBracket.data(), argBracket.data() + 1, argCounter);
+				if( IsDigit(firstToken) ) {
+						auto initialPos { pos };
+						++pos;
+						for( ;; ) {
+								if( !IsDigit(argBracket[ pos ]) ) break;
+								++pos;
+							}
+						std::from_chars(argBracket.data() + initialPos, argBracket.data() + pos, argCounter);
 						if( argCounter <= argSpecTypes.size() ) {
 								argT = argSpecTypes.at(argCounter);
-								argBracket.remove_prefix(1);
+								argBracket.remove_prefix(pos);
 						} else {
 								// clang-format off
-					throw std::runtime_error("Positional Argument Notated Doesn't Match The Number Of Arguments Supplied\n");
+								throw std::runtime_error("Positional Argument Notated Doesn't Match The Number Of Arguments Supplied\n");
 								// clang-format on
 							}
 				} else {
@@ -606,13 +628,13 @@ namespace serenity::msg_details {
 					}
 				// Parse the rest of the argument bracket
 				for( ;; ) {
-						auto token { argBracket[ 0 ] };
-						if( token == '0' ) {
+						firstToken = argBracket[ 0 ];
+						if( firstToken == '0' ) {
 								// HandleZeroPadding();
 								fmt.remove_prefix(fmt.find_first_of('}') + 1);
 								break;
 						}
-						if( IsDigit(token) || ((token != '{') && (token != '}')) ) {
+						if( IsDigit(firstToken) || ((firstToken != '{') && (firstToken != '}')) ) {
 								if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
 										// do something for fill and align here
 
@@ -654,8 +676,8 @@ namespace serenity::msg_details {
 	//				    (parseHelper.BracketPosition(B_Type::close) != std::string_view::npos) )
 	//					{
 	//						argBracket = std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open),
-	//						                                  parseHelper.BracketPosition(B_Type::close) + 1));
-	//				} else {
+	//						                                  parseHelper.BracketPosition(B_Type::close) +
+	// 1)); 				} else {
 	//						// return if we don't have a closing bracket position
 	//						return;
 	//					}

@@ -274,24 +274,25 @@ int main() {
 	t3.join();
 
 #endif    // !INSTRUMENTATION_ENABLED
-
+	// clang-format off
 	// NOTE: precision fields for strings not yet implemented
 	// Forcing a throw to prevent usage at the moment as the fallback
 	// has yet to be implemented
 	// TODO: Add Progress trackers here to make sure I don't miss anything
 	/***************************** Current Progress *****************************/ /*
-	                                                                                * [X] Fill and Alignment check:
-	                                                                                * - {:*<12d} // and any other additional specs in place
-	                                                                                *of 'd'
-	                                                                                * - {:*<6}
-	                                                                                * - {:*>6}
-	                                                                                * - {:*^6}
-	                                                                                * - {:6d}
-	                                                                                * - {:6}
-	                                                                                * Just need to map it over to how the arguments are
-	                                                                                *formatted now [ ]
-	                                                                                *****************************************************************************/
-	constexpr const char* msg { "{0:0}" };
+	 * [X] Fill and Alignment check:
+	 * - {:*<12d} // and any other additional specs in place
+	 *of 'd'
+	 * - {:*<6}
+	 * - {:*>6}
+	 * - {:*^6}
+	 * - {:6d}
+	 * - {:6}
+	 * Just need to map it over to how the arguments are formatted now [ ]
+	 *****************************************************************************/
+	// clang-format on
+
+	constexpr const char* msg { "{0:*<6d}" };
 
 #ifdef INSTRUMENTATION_ENABLED
 

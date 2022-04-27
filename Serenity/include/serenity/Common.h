@@ -241,13 +241,21 @@ namespace serenity {
 
 	// clang-format on
 
+	static bool IsDigit(char ch) {
+		return ((ch >= '0') && (ch <= '9'));
+	}
+
+	static bool IsAlpha(char ch) {
+		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+	}
+
 	// Currently only using in parsing user format pattern, but would like to extend these to the lazy substitution
-	static void ParsePrecisionSpec(std::string& specStr, size_t& value) {
+	static void ParsePrecisionSpec(std::string_view specStr, size_t& value) {
 		std::string precision;
 		for( ;; ) {
-				if( !std::isdigit(specStr.front()) ) break;
+				if( !IsDigit(specStr.front()) ) break;
 				precision += specStr.front();
-				specStr.erase(0, 1);
+				specStr.remove_prefix(1);
 			}
 		std::from_chars(precision.data(), precision.data() + precision.size(), value);
 	}
@@ -258,19 +266,11 @@ namespace serenity {
 		for( ;; ) {
 				auto ch { specStr.front() };
 				auto end { validCharSpecs.end() };
-				if( !std::isalpha(ch) ) break;
+				if( !IsAlpha(ch) ) break;
 				if( std::find(validCharSpecs.begin(), end, ch) == end ) break;
 				specs.emplace_back(ch);
 				specStr.erase(0, 1);
 			}
-	}
-
-	static bool IsDigit(char ch) {
-		return ((ch >= '0') && (ch <= '9'));
-	}
-
-	static bool IsAlpha(char ch) {
-		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 	}
 
 	enum class message_time_mode
