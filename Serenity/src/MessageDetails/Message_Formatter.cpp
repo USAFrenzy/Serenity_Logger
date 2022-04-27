@@ -537,6 +537,31 @@ namespace serenity::msg_details {
 	// but it would probably save on all the enum vector storage as I could then just
 	// handle the actual formatting of the arg in the Handle'x'Spec functions and return
 	// the formatted value directly to substitute into the message or throw on error
+
+	/********************************************************************************
+		First step is to get the parser up and running, next step is to add in the 
+		logic of the parsing function to work with FormatMessageArgs(),then implement
+		fully the Handle'x'Spec() type functions and add those in where appropriate
+		to the parsing function (returning the argument values, whether they needed
+		formatting from the Handle'x'Spec() line of functions or if they were just
+		being directly substituted in as a string representation of their value).
+	********************************************************************************/
+	
+	/******************************************************************************************
+	The function flow goal here is:
+	- Parse up until an argument bracket is found
+	- Take the log message up until that point and append it to the lazy_message variable
+	- Parse the argument bracket:
+  - Verify the specs in the bracket accurately correlate to the type of argument
+  - Format the argument based on those specs
+  - If the specs are valid (throwing a runtime error if they aren't): 
+    - Erase the format string up until that the end of the first argument processed
+    - Append the argument value to the lazy_message variable
+    - Repeat until the format string is either empty or no more argument brackets are found. 
+    - If no more argument bracket are found, should append whatever is left of the
+      format string to the lazy_message variable.
+	******************************************************************************************/
+	
 	void ArgContainer::ParseForSpecifiers(std::string_view fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
 		std::string_view argBracket;
