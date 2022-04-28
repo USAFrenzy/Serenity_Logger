@@ -380,12 +380,9 @@ namespace serenity::msg_details {
 	// Changing how the parse function currently works, will definitely
 	// NEED to look at and update this function afterwards
 	bool ArgContainer::VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView) {
-		size_t pos { 0 };
+		size_t pos { 1 };
 		FillAlignValues temp = {};
 		auto argBracketSize { specView.size() };
-
-		// Not handling zero-padding here
-		if( specView[ 0 ] == '0' ) return false;
 
 		for( ;; ) {
 				if( pos >= argBracketSize - 1 ) break;
@@ -561,6 +558,9 @@ namespace serenity::msg_details {
       format string to the lazy_message variable.
 	******************************************************************************************/
 
+	// spec standard
+	//  [fill - and -align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional) type(optional)]
+
 	void ArgContainer::ParseForSpecifiers(std::string_view fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
 		std::string_view argBracket;
@@ -570,13 +570,16 @@ namespace serenity::msg_details {
 		// ******************************************** WIP ********************************************
 		// clang-format on
 
-		SpecType argT;
 		for( ;; ) {
 				if( fmt.size() == 0 ) break;
 				auto openBracket { fmt.find_first_of('{') };
 				auto closeBracket { fmt.find_first_of('}') };
 				// no spec so return
 				if( (openBracket == std::string_view::npos) || (closeBracket == std::string_view::npos) ) return;
+
+				if( fmt[ openBracket + 1 ] == '{' && fmt[ closeBracket + 1 ] == '}' ) return;    // return for now
+				// Handle the case of '{{}}' here where in formatting, it should just be '{}'
+
 				argBracket = fmt.substr(openBracket + 1, closeBracket + 1);
 				// handle empty arg brackets no matter the amount of whitespace,
 				// but skip the processing step if it only contains whitespace
@@ -584,7 +587,8 @@ namespace serenity::msg_details {
 				size_t pos { 0 };
 				char firstToken;
 				for( ;; ) {
-						if( (argBracket[ pos ] != ' ') || (pos >= argBracket.size()) ) {
+						if( (pos >= argBracket.size() - 1) || (argBracket[ pos ] != ' ') && (argBracket[ pos ] != '}') )
+						{
 								firstToken = argBracket[ pos ];
 								emptyArg   = false;
 								break;
@@ -593,10 +597,12 @@ namespace serenity::msg_details {
 					}
 				if( emptyArg ) {
 						fmt.remove_prefix(closeBracket + 1);
+						++argCounter;
 						continue;
 				}
 
 				// handle positional arg type here and then continue
+				SpecType argT;
 				if( IsDigit(firstToken) ) {
 						auto initialPos { pos };
 						++pos;
@@ -610,7 +616,7 @@ namespace serenity::msg_details {
 								argBracket.remove_prefix(pos);
 						} else {
 								// clang-format off
-								throw std::runtime_error("Positional Argument Notated Doesn't Match The Number Of Arguments Supplied\n");
+								throw std::runtime_error("Positional Argument Notated Exceeds The Number Of Arguments Supplied\n");
 								// clang-format on
 							}
 				} else {
@@ -618,32 +624,51 @@ namespace serenity::msg_details {
 						if( argT == SpecType::MonoType ) return;
 					}
 
-				// empty spec field
+				// May be a valid spec field but user forgot ':'.
+				// Don't need to worry if the arg bracket is empty as that should have been caught earlier up and skipped.
 				if( argBracket[ 0 ] != ':' ) {
-						argSpecValue.emplace_back(SpecValue::none);
-						argBracket.remove_prefix(argBracket.find_first_of('}') + 1);
-						continue;
-				} else {
-						argBracket.remove_prefix(1);
-					}
+						if( argBracket[ 0 ] == '}' ) break;
+						std::string throwMsg { "Missing ':' In Argument Specifier Field For Argument " };
+						std::array<char, 2> buff { '\0', '\0' };
+						std::to_chars(buff.data(), buff.data() + 2, (argCounter + 1));
+						throwMsg.append(buff.data(), buff.size()).append("\n");
+						throw std::runtime_error(std::move(throwMsg));
+				}
+
 				// Parse the rest of the argument bracket
 				for( ;; ) {
-						firstToken = argBracket[ 0 ];
-						if( firstToken == '0' ) {
-								// HandleZeroPadding();
-								fmt.remove_prefix(fmt.find_first_of('}') + 1);
-								break;
-						}
-						if( IsDigit(firstToken) || ((firstToken != '{') && (firstToken != '}')) ) {
-								if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
-										// do something for fill and align here
+						firstToken = argBracket[ 1 ];
+						switch( firstToken ) {
+								case '+': [[fallthrough]];
+								case '-': [[fallthrough]];
+								case ' ': HandleSignSpec(firstToken); break;
+								case '#': HandleHashSpec(firstToken); break;
+								case '0': /*HandleZeroPadding();*/ break;
+								case '.': VerifySpecWithPrecision(argT, argBracket); break;
+								case 'L': /*LocaleFallBack() */ break;
+								default:
+									auto nextToken = argBracket[ 2 ];
+									if( nextToken == '}' ) nextToken = '<';
+									bool isFirstTokenDigit { IsDigit(firstToken) };
+									bool isFASpec { std::any_of(faSpecs.begin(), faSpecs.end(),
+										                    [ & ](auto ch) { return nextToken == ch; }) };
+									bool isFAFillSpec { (firstToken != '{') && (firstToken != '}') };
+									if( isFAFillSpec && isFASpec ) {
+											if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
+													// do something for fill and align here
+											}
+									} else if( isFirstTokenDigit ) {
+											HandleWidthSpec(firstToken);
+									} else {
+											VerifySpec(argT, firstToken);
+										}
+									break;
+							}    // switch statement
 
-										// Remove partition up to the first arg processed
-										fmt.remove_prefix(fmt.find_first_of('}') + 1);
-										break;
-								}
-						}
-					}    // argument bracket processing loop
+						// Remove partition up to the first arg processed
+						fmt.remove_prefix(fmt.find_first_of('}') + 1);
+						break;
+					}    // argument bracket processing for-loop
 				continue;
 			}    // fmt processing loop
 
