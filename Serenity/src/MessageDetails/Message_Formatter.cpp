@@ -563,7 +563,6 @@ namespace serenity::msg_details {
 
 	void ArgContainer::ParseForSpecifiers(std::string_view fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
-		std::string_view argBracket;
 		size_t argCounter { 0 };    // used to map our current arg to its type
 
 		// clang-format off
@@ -572,23 +571,30 @@ namespace serenity::msg_details {
 
 		for( ;; ) {
 				if( fmt.size() == 0 ) break;
-				auto openBracket { fmt.find_first_of('{') };
-				auto closeBracket { fmt.find_first_of('}') };
-				// no spec so return
-				if( (openBracket == std::string_view::npos) || (closeBracket == std::string_view::npos) ) return;
+				parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of('{'));
+				parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of('}'));
+				// no substitution needed so return
+				if( (parseHelper.BracketPosition(B_Type::open) == std::string_view::npos) ||
+				    (parseHelper.BracketPosition(B_Type::close) == std::string_view::npos) )
+					{
+						return;
+				}
+				auto argBracket { std::move(
+				fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1)) };
 
-				if( fmt[ openBracket + 1 ] == '{' && fmt[ closeBracket + 1 ] == '}' ) return;    // return for now
+				if( fmt[ parseHelper.BracketPosition(B_Type::open) + 1 ] == '{' &&
+				    fmt[ parseHelper.BracketPosition(B_Type::close) + 1 ] == '}' )
+					return;    // return for now
 				// Handle the case of '{{}}' here where in formatting, it should just be '{}'
 
-				argBracket = fmt.substr(openBracket + 1, closeBracket + 1);
 				// handle empty arg brackets no matter the amount of whitespace,
 				// but skip the processing step if it only contains whitespace
 				auto emptyArg { true };
 				size_t pos { 0 };
 				char firstToken;
 				for( ;; ) {
-						if( (pos >= argBracket.size() - 1) || (argBracket[ pos ] != ' ') && (argBracket[ pos ] != '}') )
-						{
+						if( argBracket[ pos ] == '}' ) break;
+						if( ((pos >= argBracket.size() - 1) || (argBracket[ pos ] != ' ')) ) {
 								firstToken = argBracket[ pos ];
 								emptyArg   = false;
 								break;
@@ -596,7 +602,7 @@ namespace serenity::msg_details {
 						++pos;
 					}
 				if( emptyArg ) {
-						fmt.remove_prefix(closeBracket + 1);
+						fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
 						++argCounter;
 						continue;
 				}
@@ -615,9 +621,18 @@ namespace serenity::msg_details {
 								argT = argSpecTypes.at(argCounter);
 								argBracket.remove_prefix(pos);
 						} else {
-								// clang-format off
-								throw std::runtime_error("Positional Argument Notated Exceeds The Number Of Arguments Supplied\n");
-								// clang-format on
+								std::array<char, 2> buff { '\0', '\0' };
+								std::string throwMsg { "Positional Argument \"" };
+								std::to_chars(buff.data(), buff.data() + buff.size(), argCounter);
+								auto endPos { buff[ 1 ] == '\0' ? 1 : 2 };
+								throwMsg.append(buff.data(), endPos);
+								throwMsg.append("\" Exceeds The Number Of Arguments Supplied. ");
+								buff[ 0 ] = buff[ 1 ] = '\0';
+								std::to_chars(buff.data(), buff.data() + buff.size(), argContainer.size());
+								endPos = buff[ 1 ] == '\0' ? 1 : 2;
+								throwMsg.append("Number Of Arguments Supplied: \"");
+								throwMsg.append(buff.data(), endPos).append("\"\n");
+								throw std::runtime_error(std::move(throwMsg));
 							}
 				} else {
 						argT = argSpecTypes.at(0);
@@ -647,13 +662,13 @@ namespace serenity::msg_details {
 								case '.': VerifySpecWithPrecision(argT, argBracket); break;
 								case 'L': /*LocaleFallBack() */ break;
 								default:
-									auto nextToken = argBracket[ 2 ];
-									if( nextToken == '}' ) nextToken = '<';
 									bool isFirstTokenDigit { IsDigit(firstToken) };
+									auto nextToken = argBracket[ 2 ];
 									bool isFASpec { std::any_of(faSpecs.begin(), faSpecs.end(),
 										                    [ & ](auto ch) { return nextToken == ch; }) };
 									bool isFAFillSpec { (firstToken != '{') && (firstToken != '}') };
 									if( isFAFillSpec && isFASpec ) {
+											if( nextToken == '}' ) nextToken = '<';
 											if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
 													// do something for fill and align here
 											}
@@ -677,46 +692,6 @@ namespace serenity::msg_details {
 	// clang-format off
 		 // ******************************************** WIP ********************************************
 	// clang-format on
-
-	//
-	//
-	//
-	// ************************************ OLD METHOD ************************************
-	// for( ;; ) {
-	//		if( fmt.size() <= 2 ) return;    // Definitely don't have another '{}'
-	//		argBracket = "";                 // reset for proper fmt prefix removal
-
-	//		auto specFieldPresent { fmt[ 1 ] == ':' };
-	//		if( fmt[ 0 ] == '{' && !specFieldPresent ) {
-	//				argSpecValue.emplace_back(SpecValue::none);
-	//				fmt.remove_prefix(1);
-	//				++argCounter;
-	//				continue;
-	//		}
-	//		if( specFieldPresent ) {
-	//				parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of('{'));
-	//				parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of('}'));
-
-	//				if( (parseHelper.BracketPosition(B_Type::open) != std::string_view::npos) &&
-	//				    (parseHelper.BracketPosition(B_Type::close) != std::string_view::npos) )
-	//					{
-	//						argBracket = std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open),
-	//						                                  parseHelper.BracketPosition(B_Type::close) +
-	// 1)); 				} else {
-	//						// return if we don't have a closing bracket position
-	//						return;
-	//					}
-	//				if( argBracket.size() == 3 ) {
-	//						// specs need a ':' and a specifier
-	//						throw std::runtime_error("Not A Valid Specifier");
-	//				} else {
-	//						HandleArgBracket(argBracket, argCounter);
-	//						++argCounter;
-	//					}
-	//		}
-	//		argBracket.size() == 0 ? fmt.remove_prefix(1) : fmt.remove_prefix(argBracket.size());
-	//	}
-	//}
 
 	bool ArgContainer::ContainsUnsupportedSpecs(const std::string_view fmt) {
 		auto size { fmt.size() };
