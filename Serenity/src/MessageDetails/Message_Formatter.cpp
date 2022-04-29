@@ -84,12 +84,13 @@ namespace serenity::msg_details {
 		endReached          = false;
 	}
 
-	void ArgContainer::AdvanceToNextArg() {
+	size_t ArgContainer::AdvanceToNextArg() {
 		if( argIndex < maxIndex ) {
 				++argIndex;
 		} else {
 				endReached = true;
 			}
+		return argIndex;
 	}
 
 	static constexpr bool AreSpecsSupported(std::string_view argBracket) {
@@ -368,20 +369,13 @@ namespace serenity::msg_details {
 
 	static constexpr std::array<char, 3> faSpecs   = { '<', '>', '^' };
 	static constexpr std::array<char, 3> signSpecs = { '+', '-', ' ' };
-	struct FillAlignValues
-	{
-		std::string digitSpec;
-		char fillSpec { '\0' };
-		char fillAlignSpec { '<' };
-		char additionalSpec { '\0' };
-	};
 
 	// TODO: Update this function to work properly after the parsing function is finished
 	// Changing how the parse function currently works, will definitely
 	// NEED to look at and update this function afterwards
 	bool ArgContainer::VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView) {
 		size_t pos { 1 };
-		FillAlignValues temp = {};
+		fillAlignValues.Reset();
 		auto argBracketSize { specView.size() };
 
 		for( ;; ) {
@@ -389,18 +383,25 @@ namespace serenity::msg_details {
 				auto ch { specView[ pos ] };
 
 				if( IsDigit(ch) ) {
-						temp.digitSpec += ch;
+						std::string digitCount { ch };
 						auto tempPos { pos + 1 };
 						for( ;; ) {
 								if( tempPos >= argBracketSize ) break;
 								auto nextCh { specView[ tempPos ] };
 								if( IsDigit(nextCh) ) {
-										temp.digitSpec += nextCh;
+										digitCount += nextCh;
 										++tempPos;
 								} else {
 										break;
 									}
 							}
+						if( digitCount.size() > 2 ) {
+								// clang-format off
+								throw std::runtime_error("Digit Spec For Fill/Align Cannot Be Greater Than Two Digits\n");
+								// clang-format on
+						}
+						std::from_chars(digitCount.data(), digitCount.data() + digitCount.size(),
+						                fillAlignValues.digitSpec);
 						pos = tempPos;
 						continue;
 				}
@@ -410,12 +411,12 @@ namespace serenity::msg_details {
 						char nextCh;
 						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
 						if( !std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
-								if( VerifySpec(type, ch) ) temp.additionalSpec = ch;
+								if( VerifySpec(type, ch) ) fillAlignValues.additionalSpec = ch;
 						} else {
 								if( ch != '{' && ch != '}' ) {
-										temp.fillSpec = ch;
+										fillAlignValues.fillSpec = ch;
 								}
-								temp.fillAlignSpec = nextCh;
+								fillAlignValues.fillAlignSpec = nextCh;
 								break;
 							}
 						++pos;
@@ -427,13 +428,13 @@ namespace serenity::msg_details {
 						char nextCh;
 						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
 						if( std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
-								temp.fillSpec      = ch;
-								temp.fillAlignSpec = nextCh;
+								fillAlignValues.fillSpec      = ch;
+								fillAlignValues.fillAlignSpec = nextCh;
 								pos += 2;
 						} else {
 								if( IsAlpha(ch) ) {
 										if( VerifySpec(type, ch) ) {
-												temp.additionalSpec = ch;
+												fillAlignValues.additionalSpec = ch;
 										}
 										++pos;
 								}
@@ -441,7 +442,7 @@ namespace serenity::msg_details {
 						continue;
 				}    // for loop
 			}
-		return (temp.digitSpec.size() != 0);
+		return (fillAlignValues.digitSpec != 0);
 	}
 
 	void ArgContainer::HandleSignSpec(char spec) {
@@ -524,7 +525,7 @@ namespace serenity::msg_details {
 						}    // for loop
 					}
 		}    // ':' if statement
-		return (temp.digitSpec.size() != 0);
+		return (temp.digitSpec != 0);
 	}
 
 	// Instead of in CaptureArgs(), this function should be in FormatMessageArgs()
@@ -561,6 +562,28 @@ namespace serenity::msg_details {
 	// spec standard
 	//  [fill - and -align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional) type(optional)]
 
+	std::string ArgContainer::AlignLeft(SpecType argType) {
+		std::string temp { GetArgValue(argType, fillAlignValues.additionalSpec) };
+		if( fillAlignValues.fillSpec != '\0' ) {
+				for( int i { 0 }; i < fillAlignValues.digitSpec; ++i ) {
+						temp += fillAlignValues.fillSpec;
+					}
+		} else {
+				for( int i { 0 }; i < fillAlignValues.digitSpec; ++i ) {
+						temp += ' ';
+					}
+			}
+		return std::move(temp);
+	}
+
+	std::string ArgContainer::AlignRight(SpecType argType) {
+		return std::string();
+	}
+
+	std::string ArgContainer::AlignCenter(SpecType argType) {
+		return std::string();
+	}
+
 	void ArgContainer::ParseForSpecifiers(std::string_view fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
 		size_t argCounter { 0 };    // used to map our current arg to its type
@@ -579,13 +602,13 @@ namespace serenity::msg_details {
 					{
 						return;
 				}
-				auto argBracket { std::move(
-				fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1)) };
+				auto argBracket { fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1,
+					                     parseHelper.BracketPosition(B_Type::close) + 1) };
 
 				if( fmt[ parseHelper.BracketPosition(B_Type::open) + 1 ] == '{' &&
 				    fmt[ parseHelper.BracketPosition(B_Type::close) + 1 ] == '}' )
 					return;    // return for now
-				// Handle the case of '{{}}' here where in formatting, it should just be '{}'
+				// Handle the case of nested brackets
 
 				// handle empty arg brackets no matter the amount of whitespace,
 				// but skip the processing step if it only contains whitespace
@@ -670,7 +693,16 @@ namespace serenity::msg_details {
 									if( isFAFillSpec && isFASpec ) {
 											if( nextToken == '}' ) nextToken = '<';
 											if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
-													// do something for fill and align here
+													// clang-format off
+												std::string formattedArg;
+													switch( fillAlignValues.fillAlignSpec ) {
+															case '<':  formattedArg.append(AlignLeft(argT)); break;
+															case '>': formattedArg.append(AlignRight(argT)); break;
+															case '^': formattedArg.append(AlignCenter(argT)); break;
+															default: break;
+														}
+													// add to formatted string here when set
+													// clang-format on
 											}
 									} else if( isFirstTokenDigit ) {
 											HandleWidthSpec(firstToken);
@@ -746,7 +778,7 @@ namespace serenity::msg_details {
 	// TODO: cool to see how I may be able to speed this up as well since any gains here are massive
 	// TODO: gains everywhere else.
 	/*************************************************************************************************/
-	std::string&& ArgContainer::GetArgValue() {
+	std::string&& ArgContainer::GetArgValue(SpecType argType, char additionalSpec) {
 		auto& strRef { parseHelper.StringBuffer() };
 		strRef.clear();
 		parseHelper.ClearBuffer();
@@ -754,7 +786,7 @@ namespace serenity::msg_details {
 		auto& buffer { parseHelper.ConversionResultBuffer() };
 		auto& result { parseHelper.ConversionResultInfo() };
 
-		switch( arg.index() ) {
+		switch( mapTypeToIndex[ argType ] ) {
 				case 0: return std::move(strRef); break;
 				case 1: return std::move(strRef.append(std::move(std::get<1>(arg)))); break;
 				case 2: return std::move(strRef.append(std::move(std::get<2>(arg)))); break;

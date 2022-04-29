@@ -115,8 +115,29 @@ namespace serenity::msg_details {
 		{ 12, SpecType::LongDoubleType }, { 13, SpecType::ConstVoidPtrType }, { 14, SpecType::VoidPtrType },
 	};
 
+	static std::unordered_map<SpecType, size_t> mapTypeToIndex = {
+		{ SpecType::MonoType, 0 },        { SpecType::StringType, 1 },        { SpecType::CharPointerType, 2 },
+		{ SpecType::StringViewType, 3 },  { SpecType::IntType, 4 },           { SpecType::U_IntType, 5 },
+		{ SpecType::LongLongType, 6 },    { SpecType::U_LongLongType, 7 },    { SpecType::BoolType, 8 },
+		{ SpecType::CharType, 9 },        { SpecType::FloatType, 10 },        { SpecType::DoubleType, 11 },
+		{ SpecType::LongDoubleType, 12 }, { SpecType::ConstVoidPtrType, 13 }, { SpecType::VoidPtrType, 14 },
+	};
+
 	class ArgContainer
 	{
+		struct FillAlignValues
+		{
+			size_t digitSpec;
+			char fillSpec { '\0' };
+			char fillAlignSpec { '<' };
+			char additionalSpec { '\0' };
+			void Reset() {
+				digitSpec = 0;
+				fillSpec = additionalSpec = '\0';
+				fillAlignSpec             = '<';
+			}
+		};
+
 	      private:
 		struct PrecSpec
 		{
@@ -147,6 +168,9 @@ namespace serenity::msg_details {
 		void SplitPrecisionAndSpec(SpecType type, std::string_view spec);
 		bool HandleArgBracket(std::string_view argBracket, int counterToIndex);
 		void EnableFallbackToStd(bool enable);
+		std::string AlignLeft(SpecType argType);
+		std::string AlignRight(SpecType argType);
+		std::string AlignCenter(SpecType argType);
 
 		// Moved Formatting Templates Here While I Work On Some Things
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
@@ -184,11 +208,11 @@ namespace serenity::msg_details {
 		const std::vector<LazilySupportedTypes>& ArgStorage() const;
 		LazyParseHelper& ParseHelper();
 		void Reset();
-		void AdvanceToNextArg();
+		size_t AdvanceToNextArg();
 		bool ContainsUnsupportedSpecs(const std::string_view fmt);
 		bool EndReached() const;
 		bool ContainsUnsupportedType() const;
-		std::string&& GetArgValue();
+		std::string&& GetArgValue(SpecType argType, char additionalSpec = '\0');
 		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
 		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
 
@@ -203,6 +227,7 @@ namespace serenity::msg_details {
 		LazyParseHelper parseHelper;
 		bool containsUnknownType { false };
 		bool isStdFallbackEnabled { false };
+		FillAlignValues fillAlignValues;
 
 	      protected:
 		PrecSpec precisionSpecHelper;
@@ -258,9 +283,11 @@ namespace serenity::msg_details {
 							     : L_VFORMAT_TO(lazy_message, *localeRef, message.msg, std::forward<Args>(args)...);
 			} else {
 					lazy_message.append(message.msg);
+					size_t index { 0 };
 					for( ;; ) {
-							LazySubstitute(lazy_message, std::move(argStorage.GetArgValue()));
-							argStorage.AdvanceToNextArg();
+							LazySubstitute(lazy_message,
+							               std::move(argStorage.GetArgValue(argStorage.argSpecTypes.at(index))));
+							index = argStorage.AdvanceToNextArg();
 							if( argStorage.EndReached() ) {
 									break;
 							}
