@@ -128,7 +128,7 @@ namespace serenity::msg_details {
 		struct FillAlignValues
 		{
 			std::string temp;
-			size_t digitSpec;
+			size_t digitSpec { 0 };
 			char fillSpec { '\0' };
 			char fillAlignSpec { '<' };
 			char additionalSpec { '\0' };
@@ -136,17 +136,6 @@ namespace serenity::msg_details {
 				digitSpec = 0;
 				fillSpec = additionalSpec = '\0';
 				fillAlignSpec             = '<';
-			}
-		};
-
-		struct FormattedArg
-		{
-			std::string formattedArg;
-			size_t beginPos { 0 };
-			size_t endPos { 0 };
-			void Reset() {
-				formattedArg.clear();
-				beginPos = endPos = 0;
 			}
 		};
 
@@ -163,7 +152,6 @@ namespace serenity::msg_details {
 
 		std::vector<SpecType> argSpecTypes;
 		std::vector<SpecValue> argSpecValue;
-		std::vector<SpecValueModifiers> argSpecValueModifiers;
 
 		bool HandleStringSpec(char spec);
 		bool HandleIntSpec(char spec);
@@ -178,23 +166,22 @@ namespace serenity::msg_details {
 		void HandleHashSpec(char spec);
 		bool VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView);
 		void SplitPrecisionAndSpec(SpecType type, std::string_view spec);
-		bool HandleArgBracket(std::string_view argBracket, int counterToIndex);
 		void EnableFallbackToStd(bool enable);
-		std::string&& AlignLeft(SpecType argType);
-		std::string&& AlignRight(SpecType argType);
-		std::string&& AlignCenter(SpecType argType);
+		std::string&& AlignLeft(size_t index);
+		std::string&& AlignRight(size_t index);
+		std::string&& AlignCenter(size_t index);
 
 		// Moved Formatting Templates Here While I Work On Some Things
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 			(
-			[ = ](auto arg) {
-				auto typeFound = is_supported<decltype(arg), LazilySupportedTypes> {};
+			[ = ](auto&& arg) {
+				auto typeFound = is_supported<std::remove_reference_t<decltype(arg)>, LazilySupportedTypes> {};
 				auto size { 0 };
 				if constexpr( !typeFound.value ) {
 						containsUnknownType = true;
 				} else {
 						if( containsUnknownType ) return;
-						argContainer.emplace_back(std::move(arg));
+						argContainer.emplace_back(std::remove_reference_t<decltype(arg)>(arg));
 						argSpecTypes.emplace_back(mapIndexToType[ argContainer[ size ].index() ]);
 						++size;
 					}
@@ -205,7 +192,6 @@ namespace serenity::msg_details {
 		template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args) {
 			Reset();
 			EmplaceBackArgs(std::forward<Args>(args)...);
-			// ParseForSpecifiers(formatString);
 			size_t size { argContainer.size() };
 			if( size != 0 ) {
 					maxIndex = size - 1;
@@ -221,15 +207,14 @@ namespace serenity::msg_details {
 		LazyParseHelper& ParseHelper();
 		void Reset();
 		size_t AdvanceToNextArg();
-		bool ContainsUnsupportedSpecs(const std::string_view fmt);
 		bool EndReached() const;
 		bool ContainsUnsupportedType() const;
-		std::string&& GetArgValue(SpecType argType, char additionalSpec = '\0');
+		std::string&& GetArgValue(size_t positionIndex, char additionalSpec = '\0');
 		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
 		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
 
 		// May not remain here
-		FormattedArg&& ParseForSpecifiers(std::string_view);
+		std::string&& ParseForSpecifiers(std::string_view&);
 
 	      private:
 		std::vector<LazilySupportedTypes> argContainer;
@@ -240,7 +225,7 @@ namespace serenity::msg_details {
 		bool containsUnknownType { false };
 		bool isStdFallbackEnabled { false };
 		FillAlignValues fillAlignValues;
-		FormattedArg finalArgValue;
+		std::string finalArgValue;
 		std::string tempStorage;
 
 	      protected:
@@ -279,28 +264,17 @@ namespace serenity::msg_details {
 		Formatters& GetFormatters();
 		void StoreFormat();
 		const Message_Info* MessageDetails();
-		void LazySubstitute(std::string& msg, std::string&& arg, size_t argBeginPos, size_t argEndPos);
+		void LazySubstitute(std::string& msg, std::string&& arg);
 		// template<typename... Args> void FormatMessage(MsgWithLoc& message, Args&&... args);
 		template<typename... Args> void FormatMessageArgs(MsgWithLoc& message, Args&&... args) {
 			lazy_message.clear();
 			argStorage.CaptureArgs(message.msg, std::forward<Args>(args)...);
-			// This check currently slows everything down if there are specs or types I don't support
-			// due to unfortunately still not being able to take advantage of compile time parsing
-			// and <format>'s compile time features yet...
-			// TODO: Implement a relatively straight-forward approach to parsing arg types and specs
-			// TODO: at compile time and use an if constexpr expression to toggle usage here
-			// - I can easily parse the specs but the message needs to be known at compile time first
-			// - For the arg types, std::variant is compile time already, so it really *shouldn't* be
-			//   all that hard to implement (Then I can get rid of ArgContainer versions here)
-			if( argStorage.ContainsUnsupportedType() || argStorage.ContainsUnsupportedSpecs(message.msg) ) {
-					localeRef == nullptr ? VFORMAT_TO(lazy_message, message.msg, std::forward<Args>(args)...)
-							     : L_VFORMAT_TO(lazy_message, *localeRef, message.msg, std::forward<Args>(args)...);
+			if( argStorage.ContainsUnsupportedType() ) {
+					VFORMAT_TO(lazy_message, message.msg, std::forward<Args>(args)...);
 			} else {
 					lazy_message.append(message.msg);
-					size_t index { 0 };
 					for( ;; ) {
-							auto [ formattedArg, beginPos, endPos ] { argStorage.ParseForSpecifiers(message.msg) };
-							LazySubstitute(lazy_message, std::move(formattedArg), beginPos, endPos);
+							LazySubstitute(lazy_message, std::move(argStorage.ParseForSpecifiers(message.msg)));
 							argStorage.AdvanceToNextArg();
 							if( argStorage.EndReached() ) {
 									break;

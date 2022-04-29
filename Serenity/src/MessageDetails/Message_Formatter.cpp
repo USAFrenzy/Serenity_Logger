@@ -9,6 +9,7 @@ namespace serenity::msg_details {
 	}
 
 	void serenity::msg_details::LazyParseHelper::ClearPartitions() {
+		openBracketPos = closeBracketPos = 0;
 		partitionUpToArg.clear();
 		remainder.clear();
 	}
@@ -92,81 +93,6 @@ namespace serenity::msg_details {
 			}
 		return argIndex;
 	}
-
-	static constexpr bool AreSpecsSupported(std::string_view argBracket) {
-		size_t pos { 1 };    // ignore '{'
-		const size_t argBracketSize { argBracket.size() };
-		// don't currently positional specs
-		if( argBracketSize >= 3 ) {
-				if( argBracket.at(2) >= '0' && argBracket.at(2) <= '9' ) {
-						return false;
-				}
-		}
-		for( ;; ) {
-				if( pos >= argBracketSize ) break;
-				auto ch { argBracket.at(pos) };
-				if( ch == ':' ) {
-						// Not a valid specifier
-						if( argBracket.size() < pos + 1 ) return false;
-						// don't currently support width specs
-						auto potentialWidthSpec { argBracket.at(pos + 1) };
-						if( (potentialWidthSpec >= '0') && (potentialWidthSpec <= '9') ) return false;
-						// clang-format off
-						switch( ch ) {
-								// don't currently support precision yet
-								case '.': [[fallthrough]];
-								// don't currently support localization 
-								case 'L': [[fallthrough]];
-									// don't currently support nested fields
-								case '{': [[fallthrough]];
-									// don't currently support signed specs
-								case '+': [[fallthrough]];
-								case '-': [[fallthrough]];
-								case ' ': [[fallthrough]];
-									// don't currently support fill and align specs
-							//	case '<': [[fallthrough]];
-							//	case '>': [[fallthrough]];
-							//	case '^': [[fallthrough]];
-									// don't currently support alternative form specs
-								case '#': return false; break;
-								default:  break;
-							}
-						// clang-format on
-				}
-				++pos;
-			}
-		return true;
-	}
-
-	// TODO:**********************************************************************************************************
-	// ParseForSpecifiers() And HandleArgBracket() are similar to ContainsUnsupportedSpecs() and AreSpecsSupported()
-	// at the moment. What I would Like to do is have the later functions run at compile time (lots of work needs
-	// to be done for that) and to have the former match the specs to the args and format accordingly.
-	//
-	// I could use a counter that increments when AdvanceToNextArg() is called in order to index
-	// into the spec type vector to retrieve the type of the next arg and pass that to GetArgValue():
-	// x 1.) Bypassing the need in GetArgValue() for the switch since the type will already be known
-	// x 2.) Allows directly calling std::get<typeMappedToIndex>(arg) instead (simplfying some upkeep)
-	// 3.) This type can then also be used to index into a map to retrieve the valid specifiers
-	//     allowed for that type (Probably using ParseForSpecs() in CaptureArgs() to verify that specs
-	//     found are actually valid (Using HandleArgBracket() when a bracket is found) and then storing
-	//     those specs into a container (still need to create the container for specifiers):
-	//     - Would require adding the format string as an argument to CaptureArgs()
-	// 4.) THEN when converting the arg to a string, the specifiers found can be indexed by the
-	//     same counter and used to format the arg value accordingly
-	// - Already storing arg type in specType vector
-	// - Still need to validate specifiers found and then add them to some sort of container
-	// - Still need to create another map to get index from
-	// - EDIT: Points #1 & #2 are a no-go as I didn't realize until after the fact that std::get<>
-	//         requires a compile time constant...which kinda sucks for this use case. But I can
-	//         still map the index to the type being stored and use that to retrieve only the type
-	//         value in HandleArgBracket() in order to check specs against that type - so that's
-	//         still a plus in my opinion.
-	// - EDIT: After some searching around, using make_index_sequence and index_sequence in a templated
-	//         manner might work for points #1 & #2. The thing is, adding more complexity might not be
-	//         worth it just for simplfying upkeep if performance doesn't either match or exceed the
-	//         current setup
-	// TODO:**********************************************************************************************************
 
 	bool ArgContainer::HandleStringSpec(char spec) {
 		if( spec == 's' ) {
@@ -310,7 +236,6 @@ namespace serenity::msg_details {
 				case SpecType::CharPointerType: [[fallthrough]];
 				case SpecType::StringViewType: [[fallthrough]];
 				case SpecType::StringType:
-					argSpecValueModifiers.emplace_back(SpecValueModifiers::std_fallback);
 					throw std::runtime_error("Fallback Not Yet Implemented\n");
 					break;                           // Still Need To Implement
 				case SpecType::FloatType: break;         // Still Need To Implement
@@ -359,12 +284,10 @@ namespace serenity::msg_details {
 
 	void ArgContainer::HandleFillAndAlignSpec(char preSpecChar, char fillAlignSpec) {
 		// TODO: implement this fully
-		argSpecValueModifiers.emplace_back(SpecValueModifiers::fill_align);
 	}
 
 	void ArgContainer::HandleWidthSpec(char spec) {
 		// TODO: implement this fully
-		argSpecValueModifiers.emplace_back(SpecValueModifiers::width);
 	}
 
 	static constexpr std::array<char, 3> faSpecs   = { '<', '>', '^' };
@@ -374,7 +297,7 @@ namespace serenity::msg_details {
 	// Changing how the parse function currently works, will definitely
 	// NEED to look at and update this function afterwards
 	bool ArgContainer::VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView) {
-		size_t pos { 1 };
+		size_t pos { 0 };
 		fillAlignValues.Reset();
 		auto argBracketSize { specView.size() };
 
@@ -439,7 +362,9 @@ namespace serenity::msg_details {
 												fillAlignValues.additionalSpec = ch;
 										}
 										++pos;
-								}
+								} else {
+										++pos;
+									}
 							}
 						continue;
 				}    // for loop
@@ -450,124 +375,15 @@ namespace serenity::msg_details {
 
 	void ArgContainer::HandleSignSpec(char spec) {
 		// TODO: implement this fully
-		argSpecValueModifiers.emplace_back(SpecValueModifiers::sign);
 	}
 
-	void ArgContainer::HandleHashSpec(char spec) {
-		argSpecValueModifiers.emplace_back(SpecValueModifiers::hash);
-	}
-
-	// Reading the spec standard, I will need to rework this quite a bit already...
-	// (Not as straight-forward as I originally thought)
-	// EDIT: This function is now already obsolete due to how the parsing function
-	//       is currently being reworked
-	bool ArgContainer::HandleArgBracket(std::string_view argBracket, int index) {
-		size_t pos { 1 };    // start at 1 to ignore '{'
-		SpecType argT { SpecType::MonoType };
-		FillAlignValues temp = {};
-		auto argBracketSize { argBracket.size() };
-
-		if( argBracket[ 1 ] == ':' ) {
-				for( ;; ) {
-						if( pos >= argBracketSize - 1 ) break;
-						auto ch { argBracket[ pos ] };
-
-						if( IsDigit(ch) ) {
-								temp.digitSpec += ch;
-								auto tempPos { pos + 1 };
-								for( ;; ) {
-										if( tempPos >= argBracketSize ) break;
-										auto nextCh { argBracket[ tempPos ] };
-										if( IsDigit(nextCh) ) {
-												temp.digitSpec += nextCh;
-												++tempPos;
-										} else {
-												break;
-											}
-									}
-								pos = tempPos;
-								continue;
-						}
-
-						if( IsAlpha(ch) ) {
-								auto tempPos { pos + 1 };
-								char nextCh;
-								if( tempPos <= argBracketSize ) nextCh = argBracket[ tempPos ];
-								if( !std::any_of(faSpecs.begin(), faSpecs.end(),
-								                 [ & ](char chSp) { return nextCh == chSp; }) ) {
-										if( VerifySpec(argT, ch) ) temp.additionalSpec = ch;
-								} else {
-										if( ch != '{' && ch != '}' ) {
-												temp.fillSpec = ch;
-										}
-										temp.fillAlignSpec = nextCh;
-										break;
-									}
-								++pos;
-								continue;
-						}
-
-						if( ch != '{' && ch != '}' ) {
-								auto tempPos { pos + 1 };
-								char nextCh;
-								if( tempPos <= argBracketSize ) nextCh = argBracket[ tempPos ];
-								if( std::any_of(faSpecs.begin(), faSpecs.end(),
-								                [ & ](char chSp) { return nextCh == chSp; }) ) {
-										temp.fillSpec      = ch;
-										temp.fillAlignSpec = nextCh;
-										pos += 2;
-								} else {
-										if( IsAlpha(ch) ) {
-												if( VerifySpec(argT, ch) ) {
-														temp.additionalSpec = ch;
-												}
-												++pos;
-										}
-									}
-								continue;
-						}    // for loop
-					}
-		}    // ':' if statement
-		return (temp.digitSpec != 0);
-	}
-
-	// Instead of in CaptureArgs(), this function should be in FormatMessageArgs()
-	// so that I can directly format the args without having to worry about storing
-	// the spec types and modifiers around... Kind of sucks to have this thought NOW,
-	// but it would probably save on all the enum vector storage as I could then just
-	// handle the actual formatting of the arg in the Handle'x'Spec functions and return
-	// the formatted value directly to substitute into the message or throw on error
-
-	/********************************************************************************
-	        First step is to get the parser up and running, next step is to add in the
-	        logic of the parsing function to work with FormatMessageArgs(),then implement
-	        fully the Handle'x'Spec() type functions and add those in where appropriate
-	        to the parsing function (returning the argument values, whether they needed
-	        formatting from the Handle'x'Spec() line of functions or if they were just
-	        being directly substituted in as a string representation of their value).
-	********************************************************************************/
-
-	/******************************************************************************************
-	The function flow goal here is:
-	- Parse up until an argument bracket is found
-	- Take the log message up until that point and append it to the lazy_message variable
-	- Parse the argument bracket:
-  - Verify the specs in the bracket accurately correlate to the type of argument
-  - Format the argument based on those specs
-  - If the specs are valid (throwing a runtime error if they aren't):
-    - Erase the format string up until that the end of the first argument processed
-    - Append the argument value to the lazy_message variable
-    - Repeat until the format string is either empty or no more argument brackets are found.
-    - If no more argument bracket are found, should append whatever is left of the
-      format string to the lazy_message variable.
-	******************************************************************************************/
+	void ArgContainer::HandleHashSpec(char spec) { }
 
 	// spec standard
 	//  [fill - and -align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional) type(optional)]
-
-	std::string&& ArgContainer::AlignLeft(SpecType argType) {
+	std::string&& ArgContainer::AlignLeft(size_t index) {
 		fillAlignValues.temp.clear();
-		fillAlignValues.temp = std::move(GetArgValue(argType, fillAlignValues.additionalSpec));
+		fillAlignValues.temp.append(std::move(GetArgValue(index, fillAlignValues.additionalSpec)));
 		auto fillAmount { (fillAlignValues.digitSpec - fillAlignValues.temp.size()) };
 		if( fillAlignValues.fillSpec != '\0' ) {
 				for( int i { 0 }; i < fillAmount; ++i ) {
@@ -581,9 +397,9 @@ namespace serenity::msg_details {
 		return std::move(fillAlignValues.temp);
 	}
 
-	std::string&& ArgContainer::AlignRight(SpecType argType) {
+	std::string&& ArgContainer::AlignRight(size_t index) {
 		fillAlignValues.temp.clear();
-		auto argValue { std::move(GetArgValue(argType, fillAlignValues.additionalSpec)) };
+		auto argValue { std::move(GetArgValue(index, fillAlignValues.additionalSpec)) };
 		auto fillAmount { (fillAlignValues.digitSpec - argValue.size()) };
 		if( fillAlignValues.fillSpec != '\0' ) {
 				for( int i { 0 }; i < fillAmount; ++i ) {
@@ -598,9 +414,9 @@ namespace serenity::msg_details {
 		return std::move(fillAlignValues.temp);
 	}
 
-	std::string&& ArgContainer::AlignCenter(SpecType argType) {
+	std::string&& ArgContainer::AlignCenter(size_t index) {
 		bool hasFillSpec { fillAlignValues.fillSpec != '\0' };
-		auto argValue { GetArgValue(argType, fillAlignValues.additionalSpec) };
+		auto argValue { GetArgValue(index, fillAlignValues.additionalSpec) };
 		auto halfFill { (fillAlignValues.digitSpec - argValue.size()) / 2 };
 		fillAlignValues.temp.clear();
 		if( hasFillSpec ) {
@@ -617,32 +433,33 @@ namespace serenity::msg_details {
 		return std::move(fillAlignValues.temp);
 	}
 
-	ArgContainer::FormattedArg&& ArgContainer::ParseForSpecifiers(std::string_view fmt) {
-		using B_Type = LazyParseHelper::bracket_type;
-		size_t argCounter { 0 };    // used to map our current arg to its type
-
+	std::string&& ArgContainer::ParseForSpecifiers(std::string_view& fmt) {
 		// clang-format off
 		// ******************************************** WIP ********************************************
 		// clang-format on
-		finalArgValue.Reset();
+		auto argCounter { argIndex };
+		finalArgValue.clear();
 		if( fmt.size() == 0 ) {
 				return std::move(finalArgValue);
 		}
-		finalArgValue.beginPos = fmt.find_first_of('{');
-		finalArgValue.endPos   = fmt.find_first_of('}');
 
+		using B_Type = LazyParseHelper::bracket_type;
+		using P_Type = LazyParseHelper::partition_type;
+		parseHelper.ClearPartitions();
+		parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of(static_cast<char>('{')));
+		parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of(static_cast<char>(' }')));
 		// clang-format off
 		// no substitution needed so return
-		if( (finalArgValue.beginPos == std::string_view::npos) || (finalArgValue.endPos == std::string_view::npos) )
+		if( (parseHelper.BracketPosition(B_Type::open) == std::string_view::npos) || (parseHelper.BracketPosition(B_Type::close) == std::string_view::npos) )
 		{
 			return std::move(finalArgValue);
 		}
 		// clang-format off
 
-		auto argBracket { fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1) };
+		auto argBracket { std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1) )};
 
 		// Handle the case of nested brackets
-		if( fmt[ parseHelper.BracketPosition(B_Type::open) + 1 ] == '{' && fmt[ parseHelper.BracketPosition(B_Type::close) + 1 ] == '}' )
+		if( fmt[parseHelper.BracketPosition(B_Type::open) + 1] == '{' && fmt[parseHelper.BracketPosition(B_Type::close) + 1] == '}' )
 		{
 				return std::move(finalArgValue);    // return for now
 		}
@@ -663,7 +480,8 @@ namespace serenity::msg_details {
 			}
 		if( emptyArg ) {
 				// fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
-				finalArgValue.formattedArg = GetArgValue(argSpecTypes[ 0 ]);
+				finalArgValue.append(std::move(GetArgValue(argCounter)));
+				fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) +1);
 				return std::move(finalArgValue);
 		}
 
@@ -677,7 +495,7 @@ namespace serenity::msg_details {
 						++pos;
 					}
 				std::from_chars(argBracket.data() + initialPos, argBracket.data() + pos, argCounter);
-				if( argCounter <= argSpecTypes.size() ) {
+				if(argCounter <= argSpecTypes.size() ) {
 						argT = argSpecTypes.at(argCounter);
 						argBracket.remove_prefix(pos);
 				} else {
@@ -697,24 +515,34 @@ namespace serenity::msg_details {
 		} else {
 				argT = argSpecTypes.at(0);
 				if( argT == SpecType::MonoType ) {
-						finalArgValue.formattedArg = GetArgValue(argSpecTypes[ 0 ]);
+						finalArgValue.append(std::move(GetArgValue(argCounter)));
+						fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) +1);
 						return std::move(finalArgValue);
 				}
 			}
 
 		// May be a valid spec field but user forgot ':'.
 		// Don't need to worry if the arg bracket is empty as that should have been caught earlier up and skipped.
-		if( (argBracket[ 0 ] != ':') || (argBracket[ 0 ] == '}') ) {
+		if( (argBracket[ 0 ] != ':') && (argBracket[ 0 ] != '}') ) {
 				std::string throwMsg { "Missing ':' In Argument Specifier Field For Argument " };
 				std::array<char, 2> buff { '\0', '\0' };
 				std::to_chars(buff.data(), buff.data() + 2, (argCounter + 1));
 				throwMsg.append(buff.data(), buff.size()).append("\n");
 				throw std::runtime_error(std::move(throwMsg));
 		}
+		else if (argBracket[0] == '}') {
+			// Otherwise, if we reached the end, get the supposed value and return
+			finalArgValue.append(std::move(GetArgValue(argCounter)));
+			fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) +1);
+			return std::move(finalArgValue);
+		}else{
+		// else remove the next char and continue onward
+			argBracket.remove_prefix(1);
+		}
 
 		// Parse the rest of the argument bracket
 		for( ;; ) {
-				firstToken = argBracket[ 1 ];
+				firstToken = argBracket[ 0 ];
 				switch( firstToken ) {
 						case '+': [[fallthrough]];
 						case '-': [[fallthrough]];
@@ -725,7 +553,7 @@ namespace serenity::msg_details {
 						case 'L': /*LocaleFallBack() */ break;
 						default:
 							bool isFirstTokenDigit { IsDigit(firstToken) };
-							auto nextToken = argBracket[ 2 ];
+							auto nextToken = argBracket[ 1 ];
 							bool isFASpec { std::any_of(faSpecs.begin(), faSpecs.end(),
 								                    [ & ](auto ch) { return nextToken == ch; }) };
 							bool isFAFillSpec { (firstToken != '{') && (firstToken != '}') };
@@ -735,12 +563,12 @@ namespace serenity::msg_details {
 											// clang-format off
 										tempStorage.clear();
 													switch( fillAlignValues.fillAlignSpec ) {
-															case '<':  tempStorage.append(AlignLeft(argT)); break;
-															case '>': tempStorage.append(AlignRight(argT)); break;
-															case '^': tempStorage.append(AlignCenter(argT)); break;
+															case '<':  tempStorage.append(std::move(AlignLeft(argCounter))); break;
+															case '>': tempStorage.append(std::move(AlignRight(argCounter))); break;
+															case '^': tempStorage.append(std::move(AlignCenter(argCounter))); break;
 															default: break;
 														}
-													finalArgValue.formattedArg = std::move(tempStorage);
+													finalArgValue.append(std::move(tempStorage));
 													return std::move(finalArgValue);
 													// add to formatted string here when set
 											// clang-format on
@@ -757,7 +585,7 @@ namespace serenity::msg_details {
 				fmt.remove_prefix(fmt.find_first_of('}') + 1);
 				break;
 			}    // argument bracket processing for-loop
-		finalArgValue.formattedArg = GetArgValue(argSpecTypes[ 0 ]);
+		finalArgValue.append(std::move(GetArgValue(argCounter)));
 		return std::move(finalArgValue);
 
 	}    // parsing fmt loop
@@ -765,39 +593,6 @@ namespace serenity::msg_details {
 	// clang-format off
 		 // ******************************************** WIP ********************************************
 	// clang-format on
-
-	bool ArgContainer::ContainsUnsupportedSpecs(const std::string_view fmt) {
-		auto size { fmt.size() };
-		std::string_view argBracket;
-		using B_Type = LazyParseHelper::bracket_type;
-		for( size_t i { 0 }; i < size; ++i ) {
-				argBracket = "";
-				if( fmt.at(i) == '{' ) {
-						parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of('{'));
-						parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of('}'));
-
-						if( (parseHelper.BracketPosition(B_Type::open) != std::string_view::npos) &&
-						    (parseHelper.BracketPosition(B_Type::close) != std::string_view::npos) )
-							{
-								argBracket = std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open),
-								                                  parseHelper.BracketPosition(B_Type::close) + 1));
-						}
-						// clang-format off
-						auto argBracketSize { argBracket.size() };
-						switch( argBracketSize ) {
-								case 0: break;
-								case 1: break;
-								case 2: break;
-								// specs need a ':' and a specifier
-								case 3: if( argBracket.at(1) != ' ' ) throw std::runtime_error("Not A Valid Specifier"); break;
-								default: if( !AreSpecsSupported(argBracket) ) return true; break;
-							}
-						// clang-format on
-						if( argBracketSize == size ) break;
-				}
-			}
-		return false;
-	}
 
 	size_t LazyParseHelper::FindEndPos() {
 		size_t pos {};
@@ -819,15 +614,16 @@ namespace serenity::msg_details {
 	// TODO: cool to see how I may be able to speed this up as well since any gains here are massive
 	// TODO: gains everywhere else.
 	/*************************************************************************************************/
-	std::string&& ArgContainer::GetArgValue(SpecType argType, char additionalSpec) {
+	std::string&& ArgContainer::GetArgValue(size_t positionIndex, char additionalSpec) {
 		auto& strRef { parseHelper.StringBuffer() };
 		strRef.clear();
 		parseHelper.ClearBuffer();
-		auto& arg { argContainer[ argIndex ] };
+		// need a proper way to find the type or the spec index that maps to the location in argContainer
+		auto& arg { argContainer[ positionIndex ] };
 		auto& buffer { parseHelper.ConversionResultBuffer() };
 		auto& result { parseHelper.ConversionResultInfo() };
 
-		switch( mapTypeToIndex[ argType ] ) {
+		switch( arg.index() ) {
 				case 0: return std::move(strRef); break;
 				case 1: return std::move(strRef.append(std::move(std::get<1>(arg)))); break;
 				case 2: return std::move(strRef.append(std::move(std::get<2>(arg)))); break;
@@ -1101,17 +897,20 @@ namespace serenity::msg_details {
 		return tmpValue;
 	}
 
-	void Message_Formatter::LazySubstitute(std::string& msg, std::string&& arg, size_t argBeginPos, size_t argEndPos) {
+	void Message_Formatter::LazySubstitute(std::string& msg, std::string&& arg) {
 		std::string_view temp { msg };
 		auto& parseHelper { argStorage.ParseHelper() };
 		parseHelper.ClearPartitions();
 		using B_Type = LazyParseHelper::bracket_type;
 		using P_Type = LazyParseHelper::partition_type;
 
-		if( argBeginPos != 0 ) {
-				parseHelper.SetPartition(P_Type::primary, temp.substr(0, argBeginPos));
+		parseHelper.SetBracketPosition(B_Type::open, temp.find_first_of(static_cast<char>('{')));
+		parseHelper.SetBracketPosition(B_Type::close, temp.find_first_of(static_cast<char>(' }')));
+
+		if( parseHelper.BracketPosition(B_Type::open) != 0 ) {
+				parseHelper.SetPartition(P_Type::primary, temp.substr(0, parseHelper.BracketPosition(B_Type::open)));
 		}
-		temp.remove_prefix(argEndPos + 1);
+		temp.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
 		parseHelper.SetPartition(P_Type::remainder, temp);
 
 		msg.clear();

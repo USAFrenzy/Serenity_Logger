@@ -291,7 +291,7 @@ int main() {
 	 *****************************************************************************/
 	// clang-format on
 
-	constexpr const char* msg { "Test with other characters present: [{:*^12d}]" };
+	constexpr const char* msg { "{1}:Test with other characters present: [{0:*<12d}]" };
 
 #ifdef INSTRUMENTATION_ENABLED
 
@@ -307,7 +307,9 @@ int main() {
 	static_assert(testView.size() == 400);
 	std::string temp { testView.data(), testView.size() };
 	// test = temp.c_str();
-	auto test = 42;
+	auto test         = 42;
+	std::string test2 = "[Placement Test]";
+
 	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
 
 	unsigned long int i { 0 };
@@ -318,7 +320,7 @@ int main() {
 	std::cout << "Benching Color Console Target...\n";
 
 	for( i; i < iterations; i++ ) {
-			C.Info(msg, test);
+			C.Info(msg, test, test2);
 		}
 	timer.StopWatch_Stop();
 	auto consoleSeconds { timer.Elapsed_In(time_mode::sec) };
@@ -331,7 +333,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogConsoleLogger->info(msg, test);
+			spdlogConsoleLogger->info(msg, test, test2);
 		}
 	timer.StopWatch_Stop();
 	auto spdlogConsoleSeconds { timer.Elapsed_In(time_mode::sec) };
@@ -344,7 +346,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			testFile.Info(msg, test);
+			testFile.Info(msg, test, test2);
 		}
 	timer.StopWatch_Stop();
 	testFile.Flush();
@@ -358,7 +360,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogFileLogger->info(msg, test);
+			spdlogFileLogger->info(msg, test, test2);
 		}
 	timer.StopWatch_Stop();
 	spdlogFileLogger->flush();
@@ -372,7 +374,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			rotatingFile.Info(msg, test);
+			rotatingFile.Info(msg, test, test2);
 		}
 	timer.StopWatch_Stop();
 	rotatingFile.Flush();
@@ -385,7 +387,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogRotatingLogger->info(msg, test);
+			spdlogRotatingLogger->info(msg, test, test2);
 		}
 	timer.StopWatch_Stop();
 	spdlogRotatingLogger->flush();
