@@ -127,6 +127,7 @@ namespace serenity::msg_details {
 	{
 		struct FillAlignValues
 		{
+			std::string temp;
 			size_t digitSpec;
 			char fillSpec { '\0' };
 			char fillAlignSpec { '<' };
@@ -135,6 +136,17 @@ namespace serenity::msg_details {
 				digitSpec = 0;
 				fillSpec = additionalSpec = '\0';
 				fillAlignSpec             = '<';
+			}
+		};
+
+		struct FormattedArg
+		{
+			std::string formattedArg;
+			size_t beginPos { 0 };
+			size_t endPos { 0 };
+			void Reset() {
+				formattedArg.clear();
+				beginPos = endPos = 0;
 			}
 		};
 
@@ -168,9 +180,9 @@ namespace serenity::msg_details {
 		void SplitPrecisionAndSpec(SpecType type, std::string_view spec);
 		bool HandleArgBracket(std::string_view argBracket, int counterToIndex);
 		void EnableFallbackToStd(bool enable);
-		std::string AlignLeft(SpecType argType);
-		std::string AlignRight(SpecType argType);
-		std::string AlignCenter(SpecType argType);
+		std::string&& AlignLeft(SpecType argType);
+		std::string&& AlignRight(SpecType argType);
+		std::string&& AlignCenter(SpecType argType);
 
 		// Moved Formatting Templates Here While I Work On Some Things
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
@@ -193,7 +205,7 @@ namespace serenity::msg_details {
 		template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args) {
 			Reset();
 			EmplaceBackArgs(std::forward<Args>(args)...);
-			ParseForSpecifiers(formatString);
+			// ParseForSpecifiers(formatString);
 			size_t size { argContainer.size() };
 			if( size != 0 ) {
 					maxIndex = size - 1;
@@ -217,7 +229,7 @@ namespace serenity::msg_details {
 		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
 
 		// May not remain here
-		void ParseForSpecifiers(std::string_view);
+		FormattedArg&& ParseForSpecifiers(std::string_view);
 
 	      private:
 		std::vector<LazilySupportedTypes> argContainer;
@@ -228,6 +240,8 @@ namespace serenity::msg_details {
 		bool containsUnknownType { false };
 		bool isStdFallbackEnabled { false };
 		FillAlignValues fillAlignValues;
+		FormattedArg finalArgValue;
+		std::string tempStorage;
 
 	      protected:
 		PrecSpec precisionSpecHelper;
@@ -265,7 +279,7 @@ namespace serenity::msg_details {
 		Formatters& GetFormatters();
 		void StoreFormat();
 		const Message_Info* MessageDetails();
-		void LazySubstitute(std::string& msg, std::string&& arg);
+		void LazySubstitute(std::string& msg, std::string&& arg, size_t argBeginPos, size_t argEndPos);
 		// template<typename... Args> void FormatMessage(MsgWithLoc& message, Args&&... args);
 		template<typename... Args> void FormatMessageArgs(MsgWithLoc& message, Args&&... args) {
 			lazy_message.clear();
@@ -285,9 +299,9 @@ namespace serenity::msg_details {
 					lazy_message.append(message.msg);
 					size_t index { 0 };
 					for( ;; ) {
-							LazySubstitute(lazy_message,
-							               std::move(argStorage.GetArgValue(argStorage.argSpecTypes.at(index))));
-							index = argStorage.AdvanceToNextArg();
+							auto [ formattedArg, beginPos, endPos ] { argStorage.ParseForSpecifiers(message.msg) };
+							LazySubstitute(lazy_message, std::move(formattedArg), beginPos, endPos);
+							argStorage.AdvanceToNextArg();
 							if( argStorage.EndReached() ) {
 									break;
 							}

@@ -383,24 +383,26 @@ namespace serenity::msg_details {
 				auto ch { specView[ pos ] };
 
 				if( IsDigit(ch) ) {
-						std::string digitCount { ch };
+						fillAlignValues.temp.clear();
+						fillAlignValues.temp += ch;
 						auto tempPos { pos + 1 };
 						for( ;; ) {
 								if( tempPos >= argBracketSize ) break;
 								auto nextCh { specView[ tempPos ] };
 								if( IsDigit(nextCh) ) {
-										digitCount += nextCh;
+										fillAlignValues.temp += nextCh;
 										++tempPos;
 								} else {
 										break;
 									}
 							}
-						if( digitCount.size() > 2 ) {
+						if( fillAlignValues.temp.size() > 2 ) {
 								// clang-format off
 								throw std::runtime_error("Digit Spec For Fill/Align Cannot Be Greater Than Two Digits\n");
 								// clang-format on
 						}
-						std::from_chars(digitCount.data(), digitCount.data() + digitCount.size(),
+						std::from_chars(fillAlignValues.temp.data(),
+						                fillAlignValues.temp.data() + fillAlignValues.temp.size(),
 						                fillAlignValues.digitSpec);
 						pos = tempPos;
 						continue;
@@ -441,6 +443,7 @@ namespace serenity::msg_details {
 							}
 						continue;
 				}    // for loop
+				++pos;
 			}
 		return (fillAlignValues.digitSpec != 0);
 	}
@@ -562,162 +565,200 @@ namespace serenity::msg_details {
 	// spec standard
 	//  [fill - and -align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional) type(optional)]
 
-	std::string ArgContainer::AlignLeft(SpecType argType) {
-		std::string temp { GetArgValue(argType, fillAlignValues.additionalSpec) };
+	std::string&& ArgContainer::AlignLeft(SpecType argType) {
+		fillAlignValues.temp.clear();
+		fillAlignValues.temp = std::move(GetArgValue(argType, fillAlignValues.additionalSpec));
+		auto fillAmount { (fillAlignValues.digitSpec - fillAlignValues.temp.size()) };
 		if( fillAlignValues.fillSpec != '\0' ) {
-				for( int i { 0 }; i < fillAlignValues.digitSpec; ++i ) {
-						temp += fillAlignValues.fillSpec;
+				for( int i { 0 }; i < fillAmount; ++i ) {
+						fillAlignValues.temp += fillAlignValues.fillSpec;
 					}
 		} else {
-				for( int i { 0 }; i < fillAlignValues.digitSpec; ++i ) {
-						temp += ' ';
+				for( int i { 0 }; i < fillAmount; ++i ) {
+						fillAlignValues.temp += ' ';
 					}
 			}
-		return std::move(temp);
+		return std::move(fillAlignValues.temp);
 	}
 
-	std::string ArgContainer::AlignRight(SpecType argType) {
-		return std::string();
+	std::string&& ArgContainer::AlignRight(SpecType argType) {
+		fillAlignValues.temp.clear();
+		auto argValue { std::move(GetArgValue(argType, fillAlignValues.additionalSpec)) };
+		auto fillAmount { (fillAlignValues.digitSpec - argValue.size()) };
+		if( fillAlignValues.fillSpec != '\0' ) {
+				for( int i { 0 }; i < fillAmount; ++i ) {
+						fillAlignValues.temp += fillAlignValues.fillSpec;
+					}
+		} else {
+				for( int i { 0 }; i < fillAmount; ++i ) {
+						fillAlignValues.temp += ' ';
+					}
+			}
+		fillAlignValues.temp.append(std::move(argValue));
+		return std::move(fillAlignValues.temp);
 	}
 
-	std::string ArgContainer::AlignCenter(SpecType argType) {
-		return std::string();
+	std::string&& ArgContainer::AlignCenter(SpecType argType) {
+		bool hasFillSpec { fillAlignValues.fillSpec != '\0' };
+		auto argValue { GetArgValue(argType, fillAlignValues.additionalSpec) };
+		auto halfFill { (fillAlignValues.digitSpec - argValue.size()) / 2 };
+		fillAlignValues.temp.clear();
+		if( hasFillSpec ) {
+				for( int i { 0 }; i < halfFill; ++i ) {
+						fillAlignValues.temp += fillAlignValues.fillSpec;
+					}
+		} else {
+				for( int i { 0 }; i < halfFill; ++i ) {
+						fillAlignValues.temp += ' ';
+					}
+			}
+		auto fillPartition { fillAlignValues.temp };
+		fillAlignValues.temp.append(std::move(argValue)).append(std::move(fillPartition));
+		return std::move(fillAlignValues.temp);
 	}
 
-	void ArgContainer::ParseForSpecifiers(std::string_view fmt) {
+	ArgContainer::FormattedArg&& ArgContainer::ParseForSpecifiers(std::string_view fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
 		size_t argCounter { 0 };    // used to map our current arg to its type
 
 		// clang-format off
 		// ******************************************** WIP ********************************************
 		// clang-format on
+		finalArgValue.Reset();
+		if( fmt.size() == 0 ) {
+				return std::move(finalArgValue);
+		}
+		finalArgValue.beginPos = fmt.find_first_of('{');
+		finalArgValue.endPos   = fmt.find_first_of('}');
 
+		// clang-format off
+		// no substitution needed so return
+		if( (finalArgValue.beginPos == std::string_view::npos) || (finalArgValue.endPos == std::string_view::npos) )
+		{
+			return std::move(finalArgValue);
+		}
+		// clang-format off
+
+		auto argBracket { fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1) };
+
+		// Handle the case of nested brackets
+		if( fmt[ parseHelper.BracketPosition(B_Type::open) + 1 ] == '{' && fmt[ parseHelper.BracketPosition(B_Type::close) + 1 ] == '}' )
+		{
+				return std::move(finalArgValue);    // return for now
+		}
+
+		// handle empty arg brackets no matter the amount of whitespace,
+		// but skip the processing step if it only contains whitespace
+		auto emptyArg { true };
+		size_t pos { 0 };
+		char firstToken;
 		for( ;; ) {
-				if( fmt.size() == 0 ) break;
-				parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of('{'));
-				parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of('}'));
-				// no substitution needed so return
-				if( (parseHelper.BracketPosition(B_Type::open) == std::string_view::npos) ||
-				    (parseHelper.BracketPosition(B_Type::close) == std::string_view::npos) )
-					{
-						return;
+				if( argBracket[ pos ] == '}' ) break;
+				if( ((pos >= argBracket.size() - 1) || (argBracket[ pos ] != ' ')) ) {
+						firstToken = argBracket[ pos ];
+						emptyArg   = false;
+						break;
 				}
-				auto argBracket { fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1,
-					                     parseHelper.BracketPosition(B_Type::close) + 1) };
+				++pos;
+			}
+		if( emptyArg ) {
+				// fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
+				finalArgValue.formattedArg = GetArgValue(argSpecTypes[ 0 ]);
+				return std::move(finalArgValue);
+		}
 
-				if( fmt[ parseHelper.BracketPosition(B_Type::open) + 1 ] == '{' &&
-				    fmt[ parseHelper.BracketPosition(B_Type::close) + 1 ] == '}' )
-					return;    // return for now
-				// Handle the case of nested brackets
-
-				// handle empty arg brackets no matter the amount of whitespace,
-				// but skip the processing step if it only contains whitespace
-				auto emptyArg { true };
-				size_t pos { 0 };
-				char firstToken;
+		// handle positional arg type here and then continue
+		SpecType argT;
+		if( IsDigit(firstToken) ) {
+				auto initialPos { pos };
+				++pos;
 				for( ;; ) {
-						if( argBracket[ pos ] == '}' ) break;
-						if( ((pos >= argBracket.size() - 1) || (argBracket[ pos ] != ' ')) ) {
-								firstToken = argBracket[ pos ];
-								emptyArg   = false;
-								break;
-						}
+						if( !IsDigit(argBracket[ pos ]) ) break;
 						++pos;
 					}
-				if( emptyArg ) {
-						fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
-						++argCounter;
-						continue;
-				}
-
-				// handle positional arg type here and then continue
-				SpecType argT;
-				if( IsDigit(firstToken) ) {
-						auto initialPos { pos };
-						++pos;
-						for( ;; ) {
-								if( !IsDigit(argBracket[ pos ]) ) break;
-								++pos;
-							}
-						std::from_chars(argBracket.data() + initialPos, argBracket.data() + pos, argCounter);
-						if( argCounter <= argSpecTypes.size() ) {
-								argT = argSpecTypes.at(argCounter);
-								argBracket.remove_prefix(pos);
-						} else {
-								std::array<char, 2> buff { '\0', '\0' };
-								std::string throwMsg { "Positional Argument \"" };
-								std::to_chars(buff.data(), buff.data() + buff.size(), argCounter);
-								auto endPos { buff[ 1 ] == '\0' ? 1 : 2 };
-								throwMsg.append(buff.data(), endPos);
-								throwMsg.append("\" Exceeds The Number Of Arguments Supplied. ");
-								buff[ 0 ] = buff[ 1 ] = '\0';
-								std::to_chars(buff.data(), buff.data() + buff.size(), argContainer.size());
-								endPos = buff[ 1 ] == '\0' ? 1 : 2;
-								throwMsg.append("Number Of Arguments Supplied: \"");
-								throwMsg.append(buff.data(), endPos).append("\"\n");
-								throw std::runtime_error(std::move(throwMsg));
-							}
+				std::from_chars(argBracket.data() + initialPos, argBracket.data() + pos, argCounter);
+				if( argCounter <= argSpecTypes.size() ) {
+						argT = argSpecTypes.at(argCounter);
+						argBracket.remove_prefix(pos);
 				} else {
-						argT = argSpecTypes.at(0);
-						if( argT == SpecType::MonoType ) return;
-					}
-
-				// May be a valid spec field but user forgot ':'.
-				// Don't need to worry if the arg bracket is empty as that should have been caught earlier up and skipped.
-				if( argBracket[ 0 ] != ':' ) {
-						if( argBracket[ 0 ] == '}' ) break;
-						std::string throwMsg { "Missing ':' In Argument Specifier Field For Argument " };
 						std::array<char, 2> buff { '\0', '\0' };
-						std::to_chars(buff.data(), buff.data() + 2, (argCounter + 1));
-						throwMsg.append(buff.data(), buff.size()).append("\n");
+						std::string throwMsg { "Positional Argument \"" };
+						std::to_chars(buff.data(), buff.data() + buff.size(), argCounter);
+						auto endPos { buff[ 1 ] == '\0' ? 1 : 2 };
+						throwMsg.append(buff.data(), endPos);
+						throwMsg.append("\" Exceeds The Number Of Arguments Supplied. ");
+						buff[ 0 ] = buff[ 1 ] = '\0';
+						std::to_chars(buff.data(), buff.data() + buff.size(), argContainer.size());
+						endPos = buff[ 1 ] == '\0' ? 1 : 2;
+						throwMsg.append("Number Of Arguments Supplied: \"");
+						throwMsg.append(buff.data(), endPos).append("\"\n");
 						throw std::runtime_error(std::move(throwMsg));
+					}
+		} else {
+				argT = argSpecTypes.at(0);
+				if( argT == SpecType::MonoType ) {
+						finalArgValue.formattedArg = GetArgValue(argSpecTypes[ 0 ]);
+						return std::move(finalArgValue);
 				}
+			}
 
-				// Parse the rest of the argument bracket
-				for( ;; ) {
-						firstToken = argBracket[ 1 ];
-						switch( firstToken ) {
-								case '+': [[fallthrough]];
-								case '-': [[fallthrough]];
-								case ' ': HandleSignSpec(firstToken); break;
-								case '#': HandleHashSpec(firstToken); break;
-								case '0': /*HandleZeroPadding();*/ break;
-								case '.': VerifySpecWithPrecision(argT, argBracket); break;
-								case 'L': /*LocaleFallBack() */ break;
-								default:
-									bool isFirstTokenDigit { IsDigit(firstToken) };
-									auto nextToken = argBracket[ 2 ];
-									bool isFASpec { std::any_of(faSpecs.begin(), faSpecs.end(),
-										                    [ & ](auto ch) { return nextToken == ch; }) };
-									bool isFAFillSpec { (firstToken != '{') && (firstToken != '}') };
-									if( isFAFillSpec && isFASpec ) {
-											if( nextToken == '}' ) nextToken = '<';
-											if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
-													// clang-format off
-												std::string formattedArg;
+		// May be a valid spec field but user forgot ':'.
+		// Don't need to worry if the arg bracket is empty as that should have been caught earlier up and skipped.
+		if( (argBracket[ 0 ] != ':') || (argBracket[ 0 ] == '}') ) {
+				std::string throwMsg { "Missing ':' In Argument Specifier Field For Argument " };
+				std::array<char, 2> buff { '\0', '\0' };
+				std::to_chars(buff.data(), buff.data() + 2, (argCounter + 1));
+				throwMsg.append(buff.data(), buff.size()).append("\n");
+				throw std::runtime_error(std::move(throwMsg));
+		}
+
+		// Parse the rest of the argument bracket
+		for( ;; ) {
+				firstToken = argBracket[ 1 ];
+				switch( firstToken ) {
+						case '+': [[fallthrough]];
+						case '-': [[fallthrough]];
+						case ' ': HandleSignSpec(firstToken); break;
+						case '#': HandleHashSpec(firstToken); break;
+						case '0': /*HandleZeroPadding();*/ break;
+						case '.': VerifySpecWithPrecision(argT, argBracket); break;
+						case 'L': /*LocaleFallBack() */ break;
+						default:
+							bool isFirstTokenDigit { IsDigit(firstToken) };
+							auto nextToken = argBracket[ 2 ];
+							bool isFASpec { std::any_of(faSpecs.begin(), faSpecs.end(),
+								                    [ & ](auto ch) { return nextToken == ch; }) };
+							bool isFAFillSpec { (firstToken != '{') && (firstToken != '}') };
+							if( isFAFillSpec && isFASpec ) {
+									if( nextToken == '}' ) nextToken = '<';
+									if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
+											// clang-format off
+										tempStorage.clear();
 													switch( fillAlignValues.fillAlignSpec ) {
-															case '<':  formattedArg.append(AlignLeft(argT)); break;
-															case '>': formattedArg.append(AlignRight(argT)); break;
-															case '^': formattedArg.append(AlignCenter(argT)); break;
+															case '<':  tempStorage.append(AlignLeft(argT)); break;
+															case '>': tempStorage.append(AlignRight(argT)); break;
+															case '^': tempStorage.append(AlignCenter(argT)); break;
 															default: break;
 														}
+													finalArgValue.formattedArg = std::move(tempStorage);
+													return std::move(finalArgValue);
 													// add to formatted string here when set
-													// clang-format on
-											}
-									} else if( isFirstTokenDigit ) {
-											HandleWidthSpec(firstToken);
-									} else {
-											VerifySpec(argT, firstToken);
-										}
-									break;
-							}    // switch statement
+											// clang-format on
+									}
+							} else if( isFirstTokenDigit ) {
+									HandleWidthSpec(firstToken);
+							} else {
+									VerifySpec(argT, firstToken);
+								}
+							break;
+					}    // switch statement
 
-						// Remove partition up to the first arg processed
-						fmt.remove_prefix(fmt.find_first_of('}') + 1);
-						break;
-					}    // argument bracket processing for-loop
-				continue;
-			}    // fmt processing loop
+				// Remove partition up to the first arg processed
+				fmt.remove_prefix(fmt.find_first_of('}') + 1);
+				break;
+			}    // argument bracket processing for-loop
+		finalArgValue.formattedArg = GetArgValue(argSpecTypes[ 0 ]);
+		return std::move(finalArgValue);
 
 	}    // parsing fmt loop
 
@@ -1060,22 +1101,19 @@ namespace serenity::msg_details {
 		return tmpValue;
 	}
 
-	void Message_Formatter::LazySubstitute(std::string& msg, std::string&& arg) {
+	void Message_Formatter::LazySubstitute(std::string& msg, std::string&& arg, size_t argBeginPos, size_t argEndPos) {
 		std::string_view temp { msg };
 		auto& parseHelper { argStorage.ParseHelper() };
-		bool bracketPositionsValid;
+		parseHelper.ClearPartitions();
 		using B_Type = LazyParseHelper::bracket_type;
 		using P_Type = LazyParseHelper::partition_type;
 
-		parseHelper.SetBracketPosition(B_Type::open, temp.find_first_of(static_cast<char>('{')));
-		parseHelper.SetBracketPosition(B_Type::close, temp.find_first_of(static_cast<char>(' }')));
-		bracketPositionsValid = ((parseHelper.BracketPosition(B_Type::open) != std::string::npos) &&
-		                         (parseHelper.BracketPosition(B_Type::close) != std::string::npos));
-		if( bracketPositionsValid ) {
-				parseHelper.SetPartition(P_Type::primary, temp.substr(0, parseHelper.BracketPosition(B_Type::open)));
-				temp.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
-				parseHelper.SetPartition(P_Type::remainder, temp);
+		if( argBeginPos != 0 ) {
+				parseHelper.SetPartition(P_Type::primary, temp.substr(0, argBeginPos));
 		}
+		temp.remove_prefix(argEndPos + 1);
+		parseHelper.SetPartition(P_Type::remainder, temp);
+
 		msg.clear();
 		auto size { arg.size() };
 		msg.append(std::move(parseHelper.PartitionString(P_Type::primary))

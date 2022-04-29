@@ -291,7 +291,7 @@ int main() {
 	 *****************************************************************************/
 	// clang-format on
 
-	constexpr const char* msg { "{:*<12d}" };
+	constexpr const char* msg { "Test with other characters present: [{:*^12d}]" };
 
 #ifdef INSTRUMENTATION_ENABLED
 
