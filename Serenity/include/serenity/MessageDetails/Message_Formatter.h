@@ -153,19 +153,74 @@ namespace serenity::msg_details {
 		std::vector<SpecType> argSpecTypes;
 		std::vector<SpecValue> argSpecValue;
 
-		bool HandleStringSpec(char spec);
-		bool HandleIntSpec(char spec);
-		bool HandleBoolSpec(char spec);
-		bool HandleFloatingPointSpec(char spec);
-		bool HandleCharSpec(char spec);
+		bool IsValidStringSpec(char spec);
+		bool IsValidIntSpec(char spec);
+		bool IsValidBoolSpec(char spec);
+		bool IsValidFloatingPointSpec(char spec);
+		bool IsValidCharSpec(char spec);
 		bool VerifySpec(SpecType type, char spec);
-		void VerifySpecWithPrecision(SpecType type, std::string_view spec);
-		void HandleFillAndAlignSpec(char preSpecChar, char fillAlignSpec);
+		bool VerifySpecWithPrecision(size_t index, SpecType type, std::string_view spec);
 		void HandleWidthSpec(char spec);
 		void HandleSignSpec(char spec);
 		void HandleHashSpec(char spec);
+		void HandlePrecisionSpec(size_t index, SpecType type);
 		bool VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView);
-		void SplitPrecisionAndSpec(SpecType type, std::string_view spec);
+		void SplitPrecisionAndSpec(size_t index, SpecType type, std::string_view spec);
+
+		template<typename T> void FormatFloatTypeArg(char spec, T value) {
+			std::chars_format format { std::chars_format::general };
+			int precisionValue { 0 };
+			auto& buffer { parseHelper.ConversionResultBuffer() };
+			auto& strRef { parseHelper.StringBuffer() };
+
+			if( precisionSpecHelper.precision.size() != 0 ) {
+					std::from_chars(precisionSpecHelper.precision.data(),
+					                precisionSpecHelper.precision.data() + precisionSpecHelper.precision.size(),
+					                precisionValue);
+			}
+			if( spec != '\0' ) {
+					switch( spec ) {
+							case 'a': [[fallthrough]];
+							case 'A':
+								strRef.append("0x");
+								format = std::chars_format::hex;
+								break;
+							case 'e': format = std::chars_format::scientific; break;
+							case 'E': format = std::chars_format::scientific; break;
+							case 'f': [[fallthrough]];
+							case 'F': format = std::chars_format::fixed; break;
+							case 'g': format = std::chars_format::general; break;
+							case 'G': format = std::chars_format::general; break;
+							default: break;
+						}
+			}
+			if( precisionValue != 0 ) {
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), value, format, precisionValue));
+			} else {
+					parseHelper.SetConversionResult(
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), value, format));
+				}
+			switch( spec ) {
+					case 'A': [[fallthrough]];
+					case 'E': [[fallthrough]];
+					case 'G':
+						for( auto& ch: strRef ) {
+								if( IsAlpha(ch) ) {
+										ch -= 32;
+								}
+							}
+						for( auto& ch: buffer ) {
+								if( ch == '\0' ) break;
+								if( IsAlpha(ch) ) {
+										ch -= 32;
+								}
+							}
+						break;
+					default: break;
+				}    // capitilization
+		}
+
 		void EnableFallbackToStd(bool enable);
 		std::string&& AlignLeft(size_t index);
 		std::string&& AlignRight(size_t index);
@@ -256,9 +311,9 @@ namespace serenity::msg_details {
 		Message_Formatter(const Message_Formatter&)       = delete;
 		Message_Formatter& operator=(const Message_Info&) = delete;
 
-		size_t ParseForSpec(std::string& parseStr, size_t index);
-		void ValidateCharSpec(size_t index, std::vector<char> specs);
-		void ValidatePrecisionSpec(size_t index, size_t& value);
+		size_t ParseUserPatternForSpec(std::string& parseStr, size_t index);
+		void ValidateUserCharSpec(size_t index, std::vector<char> specs);
+		void ValidateUserPrecisionSpec(size_t index, size_t& value);
 		void FlagFormatter(size_t index, size_t precision = 0);
 		void SetPattern(std::string_view pattern);
 		Formatters& GetFormatters();

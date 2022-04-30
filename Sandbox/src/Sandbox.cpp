@@ -291,7 +291,7 @@ int main() {
 	 *****************************************************************************/
 	// clang-format on
 
-	constexpr const char* msg { "{1}:Test with other characters present: [{0:*<12d}]" };
+	constexpr const char* msg { "{1}:Test with other characters present: [{0:.2A}]" };
 
 #ifdef INSTRUMENTATION_ENABLED
 
@@ -307,7 +307,7 @@ int main() {
 	static_assert(testView.size() == 400);
 	std::string temp { testView.data(), testView.size() };
 	// test = temp.c_str();
-	auto test         = 42;
+	auto test         = 9875.76;
 	std::string test2 = "[Placement Test]";
 
 	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };

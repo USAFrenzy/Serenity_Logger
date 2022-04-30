@@ -249,30 +249,6 @@ namespace serenity {
 		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 	}
 
-	// Currently only using in parsing user format pattern, but would like to extend these to the lazy substitution
-	static void ParsePrecisionSpec(std::string_view specStr, size_t& value) {
-		std::string precision;
-		for( ;; ) {
-				if( !IsDigit(specStr.front()) ) break;
-				precision += specStr.front();
-				specStr.remove_prefix(1);
-			}
-		std::from_chars(precision.data(), precision.data() + precision.size(), value);
-	}
-
-	static constexpr std::array<char, 4> validCharSpecs = { 'l', 'c', 'f', 'F' };
-	static void ParseCharSpec(std::string& specStr, std::vector<char>& specs) {
-		if( specStr.size() == 0 ) return;
-		for( ;; ) {
-				auto ch { specStr.front() };
-				auto end { validCharSpecs.end() };
-				if( !IsAlpha(ch) ) break;
-				if( std::find(validCharSpecs.begin(), end, ch) == end ) break;
-				specs.emplace_back(ch);
-				specStr.erase(0, 1);
-			}
-	}
-
 	enum class message_time_mode
 	{
 		local,

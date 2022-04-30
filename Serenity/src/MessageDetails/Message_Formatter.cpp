@@ -94,7 +94,7 @@ namespace serenity::msg_details {
 		return argIndex;
 	}
 
-	bool ArgContainer::HandleStringSpec(char spec) {
+	bool ArgContainer::IsValidStringSpec(char spec) {
 		if( spec == 's' ) {
 				argSpecValue.emplace_back(SpecValue::s);
 				return true;
@@ -106,7 +106,7 @@ namespace serenity::msg_details {
 			}
 	}
 
-	bool ArgContainer::HandleIntSpec(char spec) {
+	bool ArgContainer::IsValidIntSpec(char spec) {
 		switch( spec ) {
 				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
 				case 'B': argSpecValue.emplace_back(SpecValue::B); break;
@@ -125,7 +125,7 @@ namespace serenity::msg_details {
 		return true;
 	}
 
-	bool ArgContainer::HandleBoolSpec(char spec) {
+	bool ArgContainer::IsValidBoolSpec(char spec) {
 		switch( spec ) {
 				case 's': argSpecValue.emplace_back(SpecValue::s); break;
 				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
@@ -144,7 +144,7 @@ namespace serenity::msg_details {
 		return true;
 	}
 
-	bool ArgContainer::HandleFloatingPointSpec(char spec) {
+	bool ArgContainer::IsValidFloatingPointSpec(char spec) {
 		switch( spec ) {
 				case 'a': argSpecValue.emplace_back(SpecValue::a); break;
 				case 'A': argSpecValue.emplace_back(SpecValue::A); break;
@@ -164,7 +164,7 @@ namespace serenity::msg_details {
 		return true;
 	}
 
-	bool ArgContainer::HandleCharSpec(char spec) {
+	bool ArgContainer::IsValidCharSpec(char spec) {
 		switch( spec ) {
 				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
 				case 'B': argSpecValue.emplace_back(SpecValue::B); break;
@@ -191,8 +191,26 @@ namespace serenity::msg_details {
 		isStdFallbackEnabled = enable;
 	}
 
-	void ArgContainer::SplitPrecisionAndSpec(SpecType type, std::string_view spec) {
+	void ArgContainer::HandlePrecisionSpec(size_t index, SpecType type) {
+		finalArgValue.clear();
+		switch( type ) {
+				case SpecType::CharPointerType: [[fallthrough]];
+				case SpecType::StringViewType: [[fallthrough]];
+				case SpecType::StringType:
+					throw std::runtime_error("Fallback Not Yet Implemented\n");
+					break;    // Still Need To Implement
+				case SpecType::FloatType: [[fallthrough]];
+				case SpecType::DoubleType: [[fallthrough]];
+				case SpecType::LongDoubleType:
+					finalArgValue.append(std::move(GetArgValue(index, precisionSpecHelper.spec)));
+					break;    // Still Need To Implement
+				default: break;
+			}
+	}
+
+	void ArgContainer::SplitPrecisionAndSpec(size_t index, SpecType type, std::string_view spec) {
 		precisionSpecHelper.precision.clear();
+		precisionSpecHelper.spec = '\0';
 		for( ;; ) {
 				if( spec.size() == 0 ) break;
 				auto ch { spec.front() };
@@ -201,20 +219,27 @@ namespace serenity::msg_details {
 						spec.remove_prefix(1);
 						continue;
 				}
+
 				if( IsAlpha(ch) ) {
 						using enum SpecType;
 						if( type == StringType || type == CharPointerType || type == StringViewType ) break;
 						precisionSpecHelper.spec = spec.front();
 						break;
 				}
-				if( precisionSpecHelper.precision.size() == 0 ) {
-						std::cerr << "Warning: Nothing Found For The Precision Field After\".\"\n";
+				// possibly nested field
+				if( ch == '{' ) {
+						// implement nested field logic here
 				}
-				break;
+
+				spec.remove_prefix(1);
 			}
+
+		if( precisionSpecHelper.precision.size() == 0 ) {
+				std::cerr << "Error In Precision Field: No Precision Was Found\n";
+		}
 	}
 
-	void ArgContainer::VerifySpecWithPrecision(SpecType type, std::string_view spec) {
+	bool ArgContainer::VerifySpecWithPrecision(size_t index, SpecType type, std::string_view spec) {
 		switch( type ) {
 				case SpecType::CharPointerType: [[fallthrough]];
 				case SpecType::StringViewType: [[fallthrough]];
@@ -224,53 +249,43 @@ namespace serenity::msg_details {
 							std::cerr <<  "Warning: Precision Field For String Types Not Currently Supported Natively.\n"
 					                                   "Set \"EnableFallBackToStd(true)\" To Let The Standard Deal With This Argument.\n";
 							// clang-format on
-							return;
+							return false;
 					}
 					break;
 				default: break;
 			}
-
-		SplitPrecisionAndSpec(type, spec);
-		// Now just need a way to store and somehow map the precision with the argument
-		switch( type ) {
-				case SpecType::CharPointerType: [[fallthrough]];
-				case SpecType::StringViewType: [[fallthrough]];
-				case SpecType::StringType:
-					throw std::runtime_error("Fallback Not Yet Implemented\n");
-					break;                           // Still Need To Implement
-				case SpecType::FloatType: break;         // Still Need To Implement
-				case SpecType::DoubleType: break;        // Still Need To Implement
-				case SpecType::LongDoubleType: break;    // Still Need To Implement
-				default: break;
-			}
+		spec.remove_prefix(1);    // remove '.'
+		SplitPrecisionAndSpec(index, type, spec);
+		bool isValidSpec { VerifySpec(type, precisionSpecHelper.spec) && (precisionSpecHelper.precision.size() != 0) };
+		return isValidSpec;
 	}
 
 	bool ArgContainer::VerifySpec(SpecType type, char spec) {
 		using enum SpecType;
-		if( spec == '\0' ) return false;
+		if( spec == '\0' ) return true;
 		switch( type ) {
 				case MonoType: return true; break;
 				case StringType: [[fallthrough]];
 				case CharPointerType: [[fallthrough]];
 				case StringViewType:
-					if( HandleStringSpec(spec) ) return true;
+					if( IsValidStringSpec(spec) ) return true;
 					break;
 				case IntType: [[fallthrough]];
 				case U_IntType: [[fallthrough]];
 				case LongLongType: [[fallthrough]];
 				case U_LongLongType:
-					if( HandleIntSpec(spec) ) return true;
+					if( IsValidIntSpec(spec) ) return true;
 					break;
 				case BoolType:
-					if( HandleBoolSpec(spec) ) return true;
+					if( IsValidBoolSpec(spec) ) return true;
 					break;
 				case CharType:
-					if( HandleCharSpec(spec) ) return true;
+					if( IsValidCharSpec(spec) ) return true;
 					break;
 				case FloatType: [[fallthrough]];
 				case DoubleType: [[fallthrough]];
 				case LongDoubleType:
-					if( HandleFloatingPointSpec(spec) ) return true;
+					if( IsValidFloatingPointSpec(spec) ) return true;
 					break;
 				case ConstVoidPtrType: [[fallthrough]];
 				case VoidPtrType:
@@ -282,10 +297,6 @@ namespace serenity::msg_details {
 		return false;
 	}
 
-	void ArgContainer::HandleFillAndAlignSpec(char preSpecChar, char fillAlignSpec) {
-		// TODO: implement this fully
-	}
-
 	void ArgContainer::HandleWidthSpec(char spec) {
 		// TODO: implement this fully
 	}
@@ -293,9 +304,6 @@ namespace serenity::msg_details {
 	static constexpr std::array<char, 3> faSpecs   = { '<', '>', '^' };
 	static constexpr std::array<char, 3> signSpecs = { '+', '-', ' ' };
 
-	// TODO: Update this function to work properly after the parsing function is finished
-	// Changing how the parse function currently works, will definitely
-	// NEED to look at and update this function afterwards
 	bool ArgContainer::VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView) {
 		size_t pos { 0 };
 		fillAlignValues.Reset();
@@ -305,6 +313,7 @@ namespace serenity::msg_details {
 				if( pos >= argBracketSize - 1 ) break;
 				auto ch { specView[ pos ] };
 
+				// deal with padding spec
 				if( IsDigit(ch) ) {
 						fillAlignValues.temp.clear();
 						fillAlignValues.temp += ch;
@@ -321,7 +330,8 @@ namespace serenity::msg_details {
 							}
 						if( fillAlignValues.temp.size() > 2 ) {
 								// clang-format off
-								throw std::runtime_error("Digit Spec For Fill/Align Cannot Be Greater Than Two Digits\n");
+								throw std::runtime_error("Digit Spec For Fill/Align Cannot Be Greater Than Two "
+								                         "Digits\n");
 								// clang-format on
 						}
 						std::from_chars(fillAlignValues.temp.data(),
@@ -331,45 +341,37 @@ namespace serenity::msg_details {
 						continue;
 				}
 
+				// Specifically for additional specifiers in the type-field
 				if( IsAlpha(ch) ) {
 						auto tempPos { pos + 1 };
 						char nextCh;
 						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
 						if( !std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
 								if( VerifySpec(type, ch) ) fillAlignValues.additionalSpec = ch;
-						} else {
-								if( ch != '{' && ch != '}' ) {
-										fillAlignValues.fillSpec = ch;
-								}
-								fillAlignValues.fillAlignSpec = nextCh;
-								break;
-							}
+						}
+						if( nextCh == '}' ) break;
 						++pos;
 						continue;
 				}
 
+				// Deal with fill spec and alignment spec
 				if( ch != '{' && ch != '}' ) {
-						auto tempPos { pos + 1 };
-						char nextCh;
-						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
+						char nextCh { '<' };
+						if( (pos + 1) <= argBracketSize ) nextCh = specView[ pos + 1 ];
+						if( nextCh == '}' ) nextCh = '<';
 						if( std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
 								fillAlignValues.fillSpec      = ch;
 								fillAlignValues.fillAlignSpec = nextCh;
 								pos += 2;
-						} else {
-								if( IsAlpha(ch) ) {
-										if( VerifySpec(type, ch) ) {
-												fillAlignValues.additionalSpec = ch;
-										}
-										++pos;
-								} else {
-										++pos;
-									}
-							}
-						continue;
-				}    // for loop
-				++pos;
-			}
+								continue;
+						}
+				}
+
+				std::string throwMsg { "Error In Fill And Align Field: Invalid Specifier \"" };
+				throwMsg += ch;
+				throwMsg.append("\" Found\n");
+				throw std::runtime_error(std::move(throwMsg));
+			}    // for loop
 		return (fillAlignValues.digitSpec != 0);
 	}
 
@@ -377,10 +379,13 @@ namespace serenity::msg_details {
 		// TODO: implement this fully
 	}
 
-	void ArgContainer::HandleHashSpec(char spec) { }
+	void ArgContainer::HandleHashSpec(char spec) {
+		// TODO: implement this fully
+	}
 
 	// spec standard
 	//  [fill - and -align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional) type(optional)]
+
 	std::string&& ArgContainer::AlignLeft(size_t index) {
 		fillAlignValues.temp.clear();
 		fillAlignValues.temp.append(std::move(GetArgValue(index, fillAlignValues.additionalSpec)));
@@ -398,15 +403,14 @@ namespace serenity::msg_details {
 	}
 
 	std::string&& ArgContainer::AlignRight(size_t index) {
-		fillAlignValues.temp.clear();
 		auto argValue { std::move(GetArgValue(index, fillAlignValues.additionalSpec)) };
-		auto fillAmount { (fillAlignValues.digitSpec - argValue.size()) };
+		fillAlignValues.temp.clear();
 		if( fillAlignValues.fillSpec != '\0' ) {
-				for( int i { 0 }; i < fillAmount; ++i ) {
+				for( int i { 0 }; i < (fillAlignValues.digitSpec - argValue.size()); ++i ) {
 						fillAlignValues.temp += fillAlignValues.fillSpec;
 					}
 		} else {
-				for( int i { 0 }; i < fillAmount; ++i ) {
+				for( int i { 0 }; i < (fillAlignValues.digitSpec - argValue.size()); ++i ) {
 						fillAlignValues.temp += ' ';
 					}
 			}
@@ -415,16 +419,14 @@ namespace serenity::msg_details {
 	}
 
 	std::string&& ArgContainer::AlignCenter(size_t index) {
-		bool hasFillSpec { fillAlignValues.fillSpec != '\0' };
-		auto argValue { GetArgValue(index, fillAlignValues.additionalSpec) };
-		auto halfFill { (fillAlignValues.digitSpec - argValue.size()) / 2 };
+		auto argValue { std::move(GetArgValue(index, fillAlignValues.additionalSpec)) };
 		fillAlignValues.temp.clear();
-		if( hasFillSpec ) {
-				for( int i { 0 }; i < halfFill; ++i ) {
+		if( fillAlignValues.fillSpec != '\0' ) {
+				for( int i { 0 }; i < (fillAlignValues.digitSpec - argValue.size()) / 2; ++i ) {
 						fillAlignValues.temp += fillAlignValues.fillSpec;
 					}
 		} else {
-				for( int i { 0 }; i < halfFill; ++i ) {
+				for( int i { 0 }; i < (fillAlignValues.digitSpec - argValue.size()) / 2; ++i ) {
 						fillAlignValues.temp += ' ';
 					}
 			}
@@ -455,11 +457,11 @@ namespace serenity::msg_details {
 			return std::move(finalArgValue);
 		}
 		// clang-format off
-
 		auto argBracket { std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1) )};
+		// clang-format on
 
 		// Handle the case of nested brackets
-		if( fmt[parseHelper.BracketPosition(B_Type::open) + 1] == '{' && fmt[parseHelper.BracketPosition(B_Type::close) + 1] == '}' )
+		if( fmt[ parseHelper.BracketPosition(B_Type::open) + 1 ] == '{' && fmt[ parseHelper.BracketPosition(B_Type::close) + 1 ] == '}' )
 		{
 				return std::move(finalArgValue);    // return for now
 		}
@@ -481,7 +483,7 @@ namespace serenity::msg_details {
 		if( emptyArg ) {
 				// fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
 				finalArgValue.append(std::move(GetArgValue(argCounter)));
-				fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) +1);
+				fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
 				return std::move(finalArgValue);
 		}
 
@@ -495,7 +497,7 @@ namespace serenity::msg_details {
 						++pos;
 					}
 				std::from_chars(argBracket.data() + initialPos, argBracket.data() + pos, argCounter);
-				if(argCounter <= argSpecTypes.size() ) {
+				if( argCounter <= argSpecTypes.size() ) {
 						argT = argSpecTypes.at(argCounter);
 						argBracket.remove_prefix(pos);
 				} else {
@@ -516,7 +518,7 @@ namespace serenity::msg_details {
 				argT = argSpecTypes.at(0);
 				if( argT == SpecType::MonoType ) {
 						finalArgValue.append(std::move(GetArgValue(argCounter)));
-						fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) +1);
+						fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
 						return std::move(finalArgValue);
 				}
 			}
@@ -529,16 +531,15 @@ namespace serenity::msg_details {
 				std::to_chars(buff.data(), buff.data() + 2, (argCounter + 1));
 				throwMsg.append(buff.data(), buff.size()).append("\n");
 				throw std::runtime_error(std::move(throwMsg));
-		}
-		else if (argBracket[0] == '}') {
-			// Otherwise, if we reached the end, get the supposed value and return
-			finalArgValue.append(std::move(GetArgValue(argCounter)));
-			fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) +1);
-			return std::move(finalArgValue);
-		}else{
-		// else remove the next char and continue onward
-			argBracket.remove_prefix(1);
-		}
+		} else if( argBracket[ 0 ] == '}' ) {
+				// Otherwise, if we reached the end, get the supposed value and return
+				finalArgValue.append(std::move(GetArgValue(argCounter)));
+				fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
+				return std::move(finalArgValue);
+		} else {
+				// else remove the next char and continue onward
+				argBracket.remove_prefix(1);
+			}
 
 		// Parse the rest of the argument bracket
 		for( ;; ) {
@@ -549,7 +550,12 @@ namespace serenity::msg_details {
 						case ' ': HandleSignSpec(firstToken); break;
 						case '#': HandleHashSpec(firstToken); break;
 						case '0': /*HandleZeroPadding();*/ break;
-						case '.': VerifySpecWithPrecision(argT, argBracket); break;
+						case '.':
+							if( VerifySpecWithPrecision(argCounter, argT, argBracket) ) {
+									HandlePrecisionSpec(argCounter, argT);
+									return std::move(finalArgValue);
+							}
+							break;
 						case 'L': /*LocaleFallBack() */ break;
 						default:
 							bool isFirstTokenDigit { IsDigit(firstToken) };
@@ -607,13 +613,6 @@ namespace serenity::msg_details {
 	 * [5] unsigned int, [6] long long, [7] unsigned long long, [8] bool, [9] char, [10] float,
 	 * [11] double, [12] long double, [13] const void* [14] void*
 	 ************************************************************************************************/
-	/*************************************************************************************************/
-	// TODO: As far as any more optimizations go, this function eats up ~3x more cpu cycles compared
-	// TODO: to the very next cpu hungry function given a test of 3 empty specifier arguments (an int,
-	// TODO: a float, and a string). Given the timings, this may not be any real issue, but it'd be
-	// TODO: cool to see how I may be able to speed this up as well since any gains here are massive
-	// TODO: gains everywhere else.
-	/*************************************************************************************************/
 	std::string&& ArgContainer::GetArgValue(size_t positionIndex, char additionalSpec) {
 		auto& strRef { parseHelper.StringBuffer() };
 		strRef.clear();
@@ -672,26 +671,21 @@ namespace serenity::msg_details {
 					return std::move(strRef);
 					break;
 				case 10:
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<10>(arg))));
-
+					FormatFloatTypeArg(additionalSpec, std::move(std::get<10>(arg)));
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
 				case 11:
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<11>(arg))));
-
+					FormatFloatTypeArg(additionalSpec, std::move(std::get<11>(arg)));
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
 					return std::move(strRef);
 					break;
 				case 12:
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<12>(arg))));
+					FormatFloatTypeArg(additionalSpec, std::move(std::get<12>(arg)));
 					if( result.ec != std::errc::value_too_large ) {
 							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					}
@@ -812,7 +806,7 @@ namespace serenity::msg_details {
 								continue;
 						}
 						size_t index { static_cast<size_t>(std::distance(lut::allValidFlags.begin(), position)) };
-						FlagFormatter(index, ParseForSpec(temp, index));
+						FlagFormatter(index, ParseUserPatternForSpec(temp, index));
 				} else {
 						auto pos { temp.find_first_of('%') };
 						if( pos == std::string::npos ) {
@@ -828,7 +822,7 @@ namespace serenity::msg_details {
 	}
 
 	// Currently overkill since it's just validating one token
-	void Message_Formatter::ValidateCharSpec(size_t index, std::vector<char> specs) {
+	void Message_Formatter::ValidateUserCharSpec(size_t index, std::vector<char> specs) {
 		switch( index ) {
 				case 11:
 					if( specs.size() == 0 ) {
@@ -849,7 +843,7 @@ namespace serenity::msg_details {
 			}
 	}
 
-	void Message_Formatter::ValidatePrecisionSpec(size_t index, size_t& value) {
+	void Message_Formatter::ValidateUserPrecisionSpec(size_t index, size_t& value) {
 		switch( index ) {
 				case 4:
 					if( (value > 9) || (value < 0) ) {
@@ -867,23 +861,37 @@ namespace serenity::msg_details {
 			}
 	}
 
-	// currently handling %e, %s, and %t
-	size_t Message_Formatter::ParseForSpec(std::string& parseStr, size_t index) {
+	static constexpr std::array<char, 4> validCharSpecs = { 'l', 'c', 'f', 'F' };
+
+	size_t Message_Formatter::ParseUserPatternForSpec(std::string& parseStr, size_t index) {
 		size_t tmpValue { 0 };
 		if( parseStr.size() == 0 ) return tmpValue;
 		std::vector<char> specsOutput {};
 
 		if( parseStr.front() == ':' ) {
 				auto ch { parseStr.at(1) };
-				if( std::isdigit(ch) ) {
+				if( IsDigit(ch) ) {
 						parseStr.erase(0, 1);
-						ParsePrecisionSpec(parseStr, tmpValue);
-						ValidatePrecisionSpec(index, tmpValue);
+						std::string precision;
+						for( ;; ) {
+								if( !IsDigit(parseStr.front()) ) break;
+								precision += parseStr.front();
+								parseStr.erase(0, 1);
+							}
+						std::from_chars(precision.data(), precision.data() + precision.size(), tmpValue);
+						ValidateUserPrecisionSpec(index, tmpValue);
 				}
 				if( std::isalpha(ch) ) {
 						parseStr.erase(0, 1);
-						ParseCharSpec(parseStr, specsOutput);
-						ValidateCharSpec(index, specsOutput);
+						for( ;; ) {
+								auto ch { parseStr.front() };
+								auto end { validCharSpecs.end() };
+								if( !IsAlpha(ch) ) break;
+								if( std::find(validCharSpecs.begin(), end, ch) == end ) break;
+								specsOutput.emplace_back(ch);
+								parseStr.erase(0, 1);
+							}
+						ValidateUserCharSpec(index, specsOutput);
 				}
 		}
 		if( (specsOutput.size() == 0) && (tmpValue == 0) ) {
@@ -918,7 +926,6 @@ namespace serenity::msg_details {
 		msg.append(std::move(parseHelper.PartitionString(P_Type::primary))
 		           .append(std::move(arg.data()), size)
 		           .append(std::move(parseHelper.PartitionString(P_Type::remainder))));
-		return;
 	}
 
 	const Message_Info* Message_Formatter::MessageDetails() {
