@@ -304,7 +304,7 @@ namespace serenity::msg_details {
 	static constexpr std::array<char, 3> faSpecs   = { '<', '>', '^' };
 	static constexpr std::array<char, 3> signSpecs = { '+', '-', ' ' };
 
-	bool ArgContainer::VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView) {
+	bool ArgContainer::VerifyIfFillAndAlignSpec(size_t index, SpecType type, std::string_view specView) {
 		size_t pos { 0 };
 		fillAlignValues.Reset();
 		auto argBracketSize { specView.size() };
@@ -342,15 +342,29 @@ namespace serenity::msg_details {
 				}
 
 				// Specifically for additional specifiers in the type-field
-				if( IsAlpha(ch) ) {
+				if( IsAlpha(ch) || (ch == '}') ) {
 						auto tempPos { pos + 1 };
 						char nextCh;
 						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
 						if( !std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
+								if( ch == '}' ) break;
 								if( VerifySpec(type, ch) ) fillAlignValues.additionalSpec = ch;
 						}
 						if( nextCh == '}' ) break;
 						++pos;
+						continue;
+				}
+
+				if( ch == '.' ) {
+						// this is where presision should be handled (WIP)
+						if( VerifySpecWithPrecision(index, type, specView.substr(pos, specView.size())) ) {
+								fillAlignValues.additionalSpec = precisionSpecHelper.spec;
+						}
+						pos += (precisionSpecHelper.precision.size());
+						if( precisionSpecHelper.spec != '\0' ) {
+								++pos;
+						}
+						++pos;    // this one specifically to account for '.'
 						continue;
 				}
 
@@ -565,7 +579,7 @@ namespace serenity::msg_details {
 							bool isFAFillSpec { (firstToken != '{') && (firstToken != '}') };
 							if( isFAFillSpec && isFASpec ) {
 									if( nextToken == '}' ) nextToken = '<';
-									if( VerifyIfFillAndAlignSpec(argT, argBracket) ) {
+									if( VerifyIfFillAndAlignSpec(argCounter, argT, argBracket) ) {
 											// clang-format off
 										tempStorage.clear();
 													switch( fillAlignValues.fillAlignSpec ) {

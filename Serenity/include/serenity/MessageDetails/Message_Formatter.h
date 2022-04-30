@@ -164,7 +164,7 @@ namespace serenity::msg_details {
 		void HandleSignSpec(char spec);
 		void HandleHashSpec(char spec);
 		void HandlePrecisionSpec(size_t index, SpecType type);
-		bool VerifyIfFillAndAlignSpec(SpecType type, std::string_view specView);
+		bool VerifyIfFillAndAlignSpec(size_t index, SpecType type, std::string_view specView);
 		void SplitPrecisionAndSpec(size_t index, SpecType type, std::string_view spec);
 
 		template<typename T> void FormatFloatTypeArg(char spec, T value) {

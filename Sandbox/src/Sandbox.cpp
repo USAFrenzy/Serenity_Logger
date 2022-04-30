@@ -291,7 +291,7 @@ int main() {
 	 *****************************************************************************/
 	// clang-format on
 
-	constexpr const char* msg { "{1}:Test with other characters present: [{0:.2A}]" };
+	constexpr const char* msg { "{1}:Test with other characters present: [{0:*^12.2A}]" };
 
 #ifdef INSTRUMENTATION_ENABLED
 
