@@ -28,7 +28,7 @@ namespace serenity::msg_details {
 		Formatter()                                  = default;
 		~Formatter()                                 = default;
 
-		virtual std::string_view FormatUserPattern() = 0;
+		virtual void FormatUserPattern(std::string&) = 0;
 		virtual std::string& UpdateInternalView();
 		std::string result;
 	};
@@ -43,7 +43,7 @@ namespace serenity::msg_details {
 		~Format_Arg_a()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -60,7 +60,7 @@ namespace serenity::msg_details {
 		~Format_Arg_b()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -76,7 +76,7 @@ namespace serenity::msg_details {
 		Format_Arg_c& operator=(const Format_Arg_c&) = delete;
 		~Format_Arg_c()                              = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		Message_Time& timeRef;
@@ -92,7 +92,7 @@ namespace serenity::msg_details {
 		~Format_Arg_d()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -111,7 +111,7 @@ namespace serenity::msg_details {
 		Format_Arg_e& operator=(const Format_Arg_e&) = delete;
 		~Format_Arg_e()                              = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		std::array<char, defaultBufferSize> buffer;
@@ -128,7 +128,7 @@ namespace serenity::msg_details {
 		~Format_Arg_l()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		LoggerLevel& levelRef;
@@ -145,7 +145,7 @@ namespace serenity::msg_details {
 		~Format_Arg_m()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -162,7 +162,7 @@ namespace serenity::msg_details {
 		~Format_Arg_n()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		Message_Time& timeRef;
@@ -180,7 +180,7 @@ namespace serenity::msg_details {
 		~Format_Arg_p()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -197,7 +197,7 @@ namespace serenity::msg_details {
 		~Format_Arg_r()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -223,12 +223,12 @@ namespace serenity::msg_details {
 		~Format_Arg_s()                              = default;
 
 		size_t FindEndPos();
-		void FormatAll();
-		std::string FormatLine();
-		std::string FormatColumn();
-		std::string FormatFile();
-		std::string FormatFunction();
-		std::string_view FormatUserPattern() override;
+		void FormatAll(std::string& container);
+		void FormatLine(std::string& container);
+		void FormatColumn(std::string& container);
+		void FormatFile(std::string& container);
+		void FormatFunction(std::string& container);
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::source_location& srcLocation;
@@ -248,7 +248,7 @@ namespace serenity::msg_details {
 		Format_Arg_t& operator=(const Format_Arg_t&) = delete;
 		~Format_Arg_t()                              = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		size_t thread;
@@ -264,7 +264,7 @@ namespace serenity::msg_details {
 		~Format_Arg_w()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -282,7 +282,7 @@ namespace serenity::msg_details {
 		~Format_Arg_y()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -299,7 +299,7 @@ namespace serenity::msg_details {
 		Format_Arg_z& operator=(const Format_Arg_z&) = delete;
 		~Format_Arg_z()                              = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		Message_Info& infoRef;
@@ -316,7 +316,7 @@ namespace serenity::msg_details {
 		~Format_Arg_A()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -333,7 +333,7 @@ namespace serenity::msg_details {
 		~Format_Arg_B()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -350,7 +350,7 @@ namespace serenity::msg_details {
 		~Format_Arg_C()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -367,7 +367,7 @@ namespace serenity::msg_details {
 		~Format_Arg_D()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		Message_Time& timeRef;
@@ -385,7 +385,7 @@ namespace serenity::msg_details {
 		~Format_Arg_F()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		Message_Time& timeRef;
@@ -403,7 +403,7 @@ namespace serenity::msg_details {
 		~Format_Arg_H()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -420,7 +420,7 @@ namespace serenity::msg_details {
 		~Format_Arg_I()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -436,7 +436,7 @@ namespace serenity::msg_details {
 		~Format_Arg_L()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		LoggerLevel& levelRef;
@@ -453,7 +453,7 @@ namespace serenity::msg_details {
 		~Format_Arg_M()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -469,7 +469,7 @@ namespace serenity::msg_details {
 		Format_Arg_N& operator=(const Format_Arg_N&) = delete;
 		~Format_Arg_N()                              = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		std::string& name;
@@ -484,7 +484,7 @@ namespace serenity::msg_details {
 		Format_Arg_R& operator=(const Format_Arg_R&) = delete;
 		~Format_Arg_R()                              = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -500,7 +500,7 @@ namespace serenity::msg_details {
 		~Format_Arg_S()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -516,7 +516,7 @@ namespace serenity::msg_details {
 		Format_Arg_T& operator=(const Format_Arg_T&) = delete;
 		~Format_Arg_T()                              = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		const std::tm& cacheRef;
@@ -532,7 +532,7 @@ namespace serenity::msg_details {
 		~Format_Arg_Y()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		Message_Time& timeRef;
@@ -550,7 +550,7 @@ namespace serenity::msg_details {
 		~Format_Arg_Z()                              = default;
 
 		std::string& UpdateInternalView() override;
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		Message_Time& timeRef;
@@ -567,7 +567,7 @@ namespace serenity::msg_details {
 		Format_Arg_Message& operator=(const Format_Arg_Message&) = delete;
 		~Format_Arg_Message()                                    = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 
 	      private:
 		std::string& message;
@@ -582,7 +582,7 @@ namespace serenity::msg_details {
 		Format_Arg_Char& operator=(const Format_Arg_Char&) = delete;
 		~Format_Arg_Char()                                 = default;
 
-		std::string_view FormatUserPattern() override;
+		void FormatUserPattern(std::string&) override;
 	};
 
 }    // namespace serenity::msg_details

@@ -19,8 +19,8 @@ namespace serenity::msg_details {
 		return result.append(sWkday.data(), sWkday.size());
 	}
 
-	std::string_view Format_Arg_a::FormatUserPattern() {
-		return (lastWkday != cacheRef.tm_wday) ? UpdateInternalView() : result;
+	void Format_Arg_a::FormatUserPattern(std::string& container) {
+		(lastWkday != cacheRef.tm_wday) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -35,8 +35,8 @@ namespace serenity::msg_details {
 		return result.append(mon.data(), mon.size());
 	}
 
-	std::string_view Format_Arg_b::FormatUserPattern() {
-		return (lastMonth != cacheRef.tm_wday) ? UpdateInternalView() : result;
+	void Format_Arg_b::FormatUserPattern(std::string& container) {
+		(lastMonth != cacheRef.tm_wday) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -44,8 +44,7 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	Format_Arg_c::Format_Arg_c(Message_Info& info): timeRef(info.TimeDetails()) { }
 
-	std::string_view Format_Arg_c::FormatUserPattern() {
-		result.clear();
+	void Format_Arg_c::FormatUserPattern(std::string& container) {
 		auto& cache { timeRef.Cache() };
 		auto wkday { serenity::SERENITY_LUTS::short_weekdays[ cache.tm_wday ] };
 		auto mon { serenity::SERENITY_LUTS::short_months[ cache.tm_mon ] };
@@ -56,7 +55,7 @@ namespace serenity::msg_details {
 		timeRef.CalculateCurrentYear(cache.tm_year);
 		auto year { timeRef.GetCurrentYearSV(false) };
 		result.reserve(wkday.size() + mon.size() + day.size() + hour.size() + min.size() + sec.size() + year.size() + 2);
-		return result.append(wkday.data(), wkday.size())
+		container.append(wkday.data(), wkday.size())
 		.append(" ")
 		.append(mon.data(), mon.size())
 		.append(" ")
@@ -86,8 +85,8 @@ namespace serenity::msg_details {
 		return result.append(paddedDay.data(), paddedDay.size());
 	}
 
-	std::string_view Format_Arg_d::FormatUserPattern() {
-		return (cacheRef.tm_mday != lastDay) ? UpdateInternalView() : result;
+	void Format_Arg_d::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_mday != lastDay) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -95,7 +94,7 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	Format_Arg_e::Format_Arg_e(size_t precision): buffer(std::array<char, defaultBufferSize> {}), m_precision(precision) { }
 
-	std::string_view Format_Arg_e::FormatUserPattern() {
+	void Format_Arg_e::FormatUserPattern(std::string& container) {
 		std::fill(buffer.data(), buffer.data() + buffer.size(), '\0');
 		// Note: It seems the trailing zeros are an OS limitation in how fine the clocks' granularity is.
 		//       I haven't tested this on other platforms other than Windows at the moment though.
@@ -115,7 +114,7 @@ namespace serenity::msg_details {
 			}
 		auto startPoint { buffer.begin() };
 		std::string_view sv { startPoint + bufferStartOffset, startPoint + i - (maxPrecision - m_precision) };
-		return std::move(sv);
+		container.append(sv.data(), sv.size());
 	}
 	/*********************************************************************************************************************/
 
@@ -132,8 +131,8 @@ namespace serenity::msg_details {
 		return result.append(lvl.data(), lvl.size());
 	}
 
-	std::string_view Format_Arg_l::FormatUserPattern() {
-		return (levelRef != lastLevel) ? UpdateInternalView() : result;
+	void Format_Arg_l::FormatUserPattern(std::string& container) {
+		(levelRef != lastLevel) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -150,8 +149,8 @@ namespace serenity::msg_details {
 		return result.append(paddedMonth.data(), paddedMonth.size());
 	}
 
-	std::string_view Format_Arg_m::FormatUserPattern() {
-		return (cacheRef.tm_mon != lastMonth) ? UpdateInternalView() : result;
+	void Format_Arg_m::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_mon != lastMonth) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -170,8 +169,8 @@ namespace serenity::msg_details {
 		return result.append(day.data(), day.size()).append(month.data(), month.size()).append(year.data(), year.size());
 	}
 
-	std::string_view Format_Arg_n::FormatUserPattern() {
-		return (cacheRef.tm_mday != lastDay) ? UpdateInternalView() : result;
+	void Format_Arg_n::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_mday != lastDay) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -188,8 +187,8 @@ namespace serenity::msg_details {
 		return result.append(dHalf.data(), dHalf.size());
 	}
 
-	std::string_view Format_Arg_p::FormatUserPattern() {
-		return (cacheRef.tm_hour != lastHour) ? UpdateInternalView() : result;
+	void Format_Arg_p::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_hour != lastHour) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -218,9 +217,8 @@ namespace serenity::msg_details {
 		.append(ampm);
 	}
 
-	std::string_view Format_Arg_r::FormatUserPattern() {
-		UpdateInternalView();
-		return result;
+	void Format_Arg_r::FormatUserPattern(std::string& container) {
+		container.append(UpdateInternalView());
 	}
 	/*********************************************************************************************************************/
 
@@ -237,61 +235,87 @@ namespace serenity::msg_details {
 			}
 	}
 
-	void Format_Arg_s::FormatAll() {
+	void Format_Arg_s::FormatAll(std::string& container) {
 		file = srcLocation.file_name();
-		result.append("[ ").append(file.filename().string()).append("(");
+		container.append("[ ").append(file.filename().string()).append("(");
 
 		std::fill(buff.data(), buff.data() + buff.size(), '\0');
 		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-		result.append(buff.data(), buff.data() + FindEndPos()).append(":");
+		container.append(buff.data(), buff.data() + FindEndPos()).append(":");
 
 		std::fill(buff.data(), buff.data() + buff.size(), '\0');
 		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
 
-		result.append(buff.data(), buff.data() + FindEndPos()).append(") ");
-		result.append(srcLocation.function_name()).append(" ]");
+		container.append(buff.data(), buff.data() + FindEndPos()).append(") ");
+		container.append(srcLocation.function_name()).append(" ]");
 	}
 
-	std::string Format_Arg_s::FormatFile() {
+	void Format_Arg_s::FormatFile(std::string& container) {
 		file = srcLocation.file_name();
-		return file.make_preferred().filename().string();
+		container.append(file.make_preferred().filename().string());
 	}
-	std::string Format_Arg_s::FormatLine() {
+	void Format_Arg_s::FormatLine(std::string& container) {
 		std::fill(buff.data(), buff.data() + buff.size(), '\0');
 		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-		return std::string(buff.data(), buff.data() + FindEndPos());
+		container.append(buff.data(), buff.data() + FindEndPos());
 	}
-	std::string Format_Arg_s::FormatColumn() {
+	void Format_Arg_s::FormatColumn(std::string& container) {
 		std::fill(buff.data(), buff.data() + buff.size(), '\0');
 		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
-		return std::string(buff.data(), buff.data() + FindEndPos());
+		container.append(buff.data(), buff.data() + FindEndPos());
 	}
-	std::string Format_Arg_s::FormatFunction() {
-		return std::string(srcLocation.function_name());
+	void Format_Arg_s::FormatFunction(std::string& container) {
+		container.append(srcLocation.function_name());
 	}
 
 	// NOTE: cases 6 (File and Column) and 10 (Function and Column) seemed useless so they were left out of here
-	std::string_view Format_Arg_s::FormatUserPattern() {
+	void Format_Arg_s::FormatUserPattern(std::string& container) {
 		using enum source_flag;
 		result.clear();
-		// clang-format off
-		switch (static_cast<int>(spec))
-		{
-			case 0:   return ""; break;
-			case 1:   result.append(FormatLine()); break;
-			case 2:   result.append(FormatColumn()); break;
-			case 3:   result.append(FormatLine()).append(":").append(FormatColumn()); break;
-			case 4:   result.append(FormatFile()); break;
-			case 5:   result.append(FormatFile()).append(" ").append(FormatLine()); break;
-			case 7:   result.append(FormatFile()).append("(").append(FormatLine()).append(":").append(FormatColumn()).append(")"); break;
-			case 8:   result.append(FormatFunction()); break;
-			case 9:   result.append(FormatFunction()).append(" ").append(FormatLine()); break;
-			case 11: result.append(FormatFunction()).append("(").append(FormatLine()).append(":").append(FormatColumn()).append(")"); break;
-			case 12: result.append(FormatFile()).append(" ").append(FormatFunction()); break;
-			default: FormatAll(); break;
-		}
-		return result;
-		// clang-format on
+
+		switch( static_cast<int>(spec) ) {
+				case 0: break;
+				case 1: FormatLine(container); break;
+				case 2: FormatColumn(container); break;
+				case 3:
+					FormatLine(container);
+					container.append(":");
+					FormatColumn(container);
+					break;
+				case 4: FormatFile(container); break;
+				case 5:
+					FormatFile(container);
+					container.append(" ");
+					FormatLine(container);
+					break;
+				case 7:
+					FormatFile(container);
+					container.append("(");
+					FormatLine(container);
+					container.append(":");
+					FormatColumn(container);
+					container.append(")");
+					break;
+				case 8: FormatFunction(container); break;
+				case 9:
+					FormatFunction(container);
+					container.append(" ");
+					FormatLine(container);
+					break;
+				case 11:
+					FormatFunction(container);
+					FormatLine(container);
+					container.append(":");
+					FormatColumn(container);
+					container.append(")");
+					break;
+				case 12:
+					FormatFile(container);
+					container.append(" ");
+					FormatFunction(container);
+					break;
+				default: FormatAll(container); break;
+			}
 	}
 	/*********************************************************************************************************************/
 
@@ -304,8 +328,8 @@ namespace serenity::msg_details {
 		result.append(sv.data(), sv.size());
 	}
 
-	std::string_view Format_Arg_t::FormatUserPattern() {
-		return result;
+	void Format_Arg_t::FormatUserPattern(std::string& container) {
+		container.append(result);
 	}
 
 	// Format %w Functions
@@ -327,8 +351,8 @@ namespace serenity::msg_details {
 		return result.append(buff.data(), buff.size());
 	}
 
-	std::string_view Format_Arg_w::FormatUserPattern() {
-		return (cacheRef.tm_wday != lastDay) ? UpdateInternalView() : result;
+	void Format_Arg_w::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_wday != lastDay) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -345,8 +369,8 @@ namespace serenity::msg_details {
 		return result.append(yr.data(), yr.size());
 	}
 
-	std::string_view Format_Arg_y::FormatUserPattern() {
-		return (cacheRef.tm_year != lastYear) ? UpdateInternalView() : result;
+	void Format_Arg_y::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_year != lastYear) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -356,18 +380,17 @@ namespace serenity::msg_details {
 		info.TimeDetails().EnableZoneThread();
 	}
 
-	std::string_view Format_Arg_z::FormatUserPattern() {
+	void Format_Arg_z::FormatUserPattern(std::string& container) {
 		auto& timeRef { infoRef.TimeDetails() };
 		auto currentMinute { infoRef.TimeInfo().tm_min };
-		if( lastMin == currentMinute ) return result;
-		result.clear();
+		if( lastMin == currentMinute ) return;
 		lastMin = currentMinute;
 		auto offset { timeRef.UtcOffset() };
 		auto hours { std::abs(std::chrono::duration_cast<std::chrono::hours>(offset).count()) };
 		std::string_view sign { (offset.count() >= 0) ? "+" : "-" };
 		auto hour { serenity::SERENITY_LUTS::numberStr[ hours ] };
 		auto min { serenity::SERENITY_LUTS::numberStr[ hours / 60 ] };
-		return result.append(sign.data(), sign.size()).append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
+		container.append(sign.data(), sign.size()).append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
 	}
 	/*********************************************************************************************************************/
 
@@ -384,8 +407,8 @@ namespace serenity::msg_details {
 		return result.append(lWkday.data(), lWkday.size());
 	}
 
-	std::string_view Format_Arg_A::FormatUserPattern() {
-		return (cacheRef.tm_wday != lastWkday) ? UpdateInternalView() : result;
+	void Format_Arg_A::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_wday != lastWkday) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -402,8 +425,8 @@ namespace serenity::msg_details {
 		return result.append(lMonth.data(), lMonth.size());
 	}
 
-	std::string_view Format_Arg_B::FormatUserPattern() {
-		return (cacheRef.tm_mon != lastMonth) ? UpdateInternalView() : result;
+	void Format_Arg_B::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_mon != lastMonth) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -420,8 +443,8 @@ namespace serenity::msg_details {
 		return result.append(year.data(), year.size());
 	}
 
-	std::string_view Format_Arg_C::FormatUserPattern() {
-		return (cacheRef.tm_year != lastYear) ? UpdateInternalView() : result;
+	void Format_Arg_C::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_year != lastYear) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -442,8 +465,8 @@ namespace serenity::msg_details {
 		return result.append(m.data(), m.size()).append("/").append(d.data(), d.size()).append("/").append(y.data(), y.size());
 	}
 
-	std::string_view Format_Arg_D::FormatUserPattern() {
-		return (cacheRef.tm_mday != lastDay) ? UpdateInternalView() : result;
+	void Format_Arg_D::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_mday != lastDay) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -464,8 +487,8 @@ namespace serenity::msg_details {
 		return result.append(y.data(), y.size()).append("-").append(m.data(), m.size()).append("-").append(d.data(), d.size());
 	}
 
-	std::string_view Format_Arg_F::FormatUserPattern() {
-		return (cacheRef.tm_mday != lastDay) ? UpdateInternalView() : result;
+	void Format_Arg_F::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_mday != lastDay) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -482,8 +505,8 @@ namespace serenity::msg_details {
 		return result.append(hr.data(), hr.size());
 	}
 
-	std::string_view Format_Arg_H::FormatUserPattern() {
-		return (cacheRef.tm_hour != lastHour) ? UpdateInternalView() : result;
+	void Format_Arg_H::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_hour != lastHour) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -501,8 +524,8 @@ namespace serenity::msg_details {
 		return result.append(paddedHour.data(), paddedHour.size());
 	}
 
-	std::string_view Format_Arg_I::FormatUserPattern() {
-		return (cacheRef.tm_hour != lastHour) ? UpdateInternalView() : result;
+	void Format_Arg_I::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_hour != lastHour) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -519,8 +542,8 @@ namespace serenity::msg_details {
 		return result.append(lvl.data(), lvl.size());
 	}
 
-	std::string_view Format_Arg_L::FormatUserPattern() {
-		return (levelRef != lastLevel) ? UpdateInternalView() : result;
+	void Format_Arg_L::FormatUserPattern(std::string& container) {
+		(levelRef != lastLevel) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -537,8 +560,8 @@ namespace serenity::msg_details {
 		return result.append(minute.data(), minute.size());
 	}
 
-	std::string_view Format_Arg_M::FormatUserPattern() {
-		return (cacheRef.tm_min != lastMin) ? UpdateInternalView() : result;
+	void Format_Arg_M::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_min != lastMin) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -546,8 +569,8 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	Format_Arg_N::Format_Arg_N(Message_Info& info): name(info.Name()) { }
 
-	std::string_view Format_Arg_N::FormatUserPattern() {
-		return name;
+	void Format_Arg_N::FormatUserPattern(std::string& container) {
+		container.append(name);
 	}
 	/*********************************************************************************************************************/
 
@@ -555,11 +578,10 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	Format_Arg_R::Format_Arg_R(Message_Info& info): cacheRef(info.TimeInfo()) { }
 
-	std::string_view Format_Arg_R::FormatUserPattern() {
-		result.clear();
+	void Format_Arg_R::FormatUserPattern(std::string& container) {
 		auto hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
 		auto min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
-		return result.append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
+		container.append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
 	}
 	/*********************************************************************************************************************/
 
@@ -576,8 +598,8 @@ namespace serenity::msg_details {
 		return result.append(second.data(), second.size());
 	}
 
-	std::string_view Format_Arg_S::FormatUserPattern() {
-		return (cacheRef.tm_sec != lastSec) ? UpdateInternalView() : result;
+	void Format_Arg_S::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_sec != lastSec) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -585,12 +607,11 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	Format_Arg_T::Format_Arg_T(Message_Info& info): cacheRef(info.TimeInfo()) { }
 
-	std::string_view Format_Arg_T::FormatUserPattern() {
-		result.clear();
+	void Format_Arg_T::FormatUserPattern(std::string& container) {
 		auto hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
 		auto min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
 		auto sec  = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
-		return result.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size());
+		container.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size());
 	}
 	/*********************************************************************************************************************/
 
@@ -607,8 +628,8 @@ namespace serenity::msg_details {
 		return result.append(yr.data(), yr.size());
 	}
 
-	std::string_view Format_Arg_Y::FormatUserPattern() {
-		return (cacheRef.tm_year != lastYear) ? UpdateInternalView() : result;
+	void Format_Arg_Y::FormatUserPattern(std::string& container) {
+		(cacheRef.tm_year != lastYear) ? container.append(UpdateInternalView()) : container.append(result);
 	}
 	/*********************************************************************************************************************/
 
@@ -624,8 +645,8 @@ namespace serenity::msg_details {
 		return timeModeRef == message_time_mode::local ? result = timeRef.TimeZoneAbbrev() : result = "UTC";
 	}
 
-	std::string_view serenity::msg_details::Format_Arg_Z::FormatUserPattern() {
-		return cachedMode == timeModeRef ? result : UpdateInternalView();
+	void serenity::msg_details::Format_Arg_Z::FormatUserPattern(std::string& container) {
+		cachedMode == timeModeRef ? container.append(result) : container.append(UpdateInternalView());
 	}
 	/*********************************************************************************************************************/
 
@@ -633,8 +654,8 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	Format_Arg_Message::Format_Arg_Message(Message_Info& info): message(info.Message()) { }
 
-	std::string_view Format_Arg_Message::FormatUserPattern() {
-		return message;
+	void Format_Arg_Message::FormatUserPattern(std::string& container) {
+		container.append(message);
 	}
 	/*********************************************************************************************************************/
 
@@ -644,8 +665,8 @@ namespace serenity::msg_details {
 		result.append(ch.data(), ch.size());
 	}
 
-	std::string_view Format_Arg_Char::FormatUserPattern() {
-		return result;
+	void Format_Arg_Char::FormatUserPattern(std::string& container) {
+		container.append(result);
 	}
 	/*********************************************************************************************************************/
 

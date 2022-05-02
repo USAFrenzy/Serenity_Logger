@@ -1,3 +1,15 @@
+#define ENABLE_MEMORY_LEAK_DETECTION 0
+#define INSTRUMENT                   1
+
+#if ENABLE_MEMORY_LEAK_DETECTION
+	#define _CRTDBG_MAP_ALLOC
+	#include <crtdbg.h>
+	#include <stdlib.h>
+#endif
+#if INSTRUMENT
+	#define INSTRUMENTATION_ENABLED
+#endif
+
 #include <iostream>
 
 #include <serenity/Targets/ColorConsoleTarget.h>
@@ -9,12 +21,6 @@
 // TODO: Remove Internal Dependancy On Utilities File - I'll work on that as a separate project from this (as it honestly should have been)
 // TODO: ####################################################################################################################################
 // clang-format on
-
-#define INSTRUMENT 1
-
-#if INSTRUMENT
-	#define INSTRUMENTATION_ENABLED
-#endif
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
@@ -291,7 +297,8 @@ int main() {
 	 *****************************************************************************/
 	// clang-format on
 
-	constexpr const char* msg { "{1}:Test with other characters present: [{0:*^12.2A}]" };
+	constexpr const char* msg { "{1}: Test with other characters present, positional arguments, and nested precision: [{0:*^20.{2}e}]" };
+#define INCLUDE_SPDLOG 1
 
 #ifdef INSTRUMENTATION_ENABLED
 
@@ -309,7 +316,7 @@ int main() {
 	// test = temp.c_str();
 	auto test         = 9875.76;
 	std::string test2 = "[Placement Test]";
-
+	auto test3        = 3;
 	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
 
 	unsigned long int i { 0 };
@@ -320,7 +327,7 @@ int main() {
 	std::cout << "Benching Color Console Target...\n";
 
 	for( i; i < iterations; i++ ) {
-			C.Info(msg, test, test2);
+			C.Info(msg, test, test2, test3);
 		}
 	timer.StopWatch_Stop();
 	auto consoleSeconds { timer.Elapsed_In(time_mode::sec) };
@@ -330,23 +337,24 @@ int main() {
 	std::cout << "\nColor Console Target Bench Finished. Benching Spdlog Color "
 		     "Console Sink...\n";
 
+	#if INCLUDE_SPDLOG
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogConsoleLogger->info(msg, test, test2);
+			spdlogConsoleLogger->info(msg, test, test2, test3);
 		}
 	timer.StopWatch_Stop();
+	#endif
 	auto spdlogConsoleSeconds { timer.Elapsed_In(time_mode::sec) };
 	auto spdlogConsoleMillSec { timer.Elapsed_In(time_mode::ms) };
 	auto spdlogConsoleMicroSec { timer.Elapsed_In(time_mode::us) };
 	auto SpdlogConsoleThroughput { (testStrInMB * iterations) / spdlogConsoleSeconds };
 	std::cout << "\nSpdlog Color Console Sink Bench Finished.  Benching File "
 		     "Target...\n";
-
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			testFile.Info(msg, test, test2);
+			testFile.Info(msg, test, test2, test3);
 		}
 	timer.StopWatch_Stop();
 	testFile.Flush();
@@ -357,24 +365,25 @@ int main() {
 
 	std::cout << "\nFile Target Bench Finished. Benching Spdlog Basic File Sink...\n";
 
+	#if INCLUDE_SPDLOG
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogFileLogger->info(msg, test, test2);
+			spdlogFileLogger->info(msg, test, test2, test3);
 		}
 	timer.StopWatch_Stop();
 	spdlogFileLogger->flush();
+	#endif
 	auto spdlogFileSeconds { timer.Elapsed_In(time_mode::sec) };
 	auto spdlogFileMillSec { timer.Elapsed_In(time_mode::ms) };
 	auto spdlogFileMicroSec { timer.Elapsed_In(time_mode::us) };
 	auto SpdlogFileThroughput { (testStrInMB * iterations) / spdlogFileSeconds };
 	std::cout << "\nSpdlog Basic File Sink Bench Finished. Benching Rotating "
 		     "Target...\n";
-
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			rotatingFile.Info(msg, test, test2);
+			rotatingFile.Info(msg, test, test2, test3);
 		}
 	timer.StopWatch_Stop();
 	rotatingFile.Flush();
@@ -384,13 +393,15 @@ int main() {
 	auto rotatingThroughput { (testStrInMB * iterations) / rotateSeconds };
 	std::cout << "\nRotating Target Bench Finished. Benching Spdlog Rotating Sink...\n";
 
+	#if INCLUDE_SPDLOG
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogRotatingLogger->info(msg, test, test2);
+			spdlogRotatingLogger->info(msg, test, test2, test3);
 		}
 	timer.StopWatch_Stop();
 	spdlogRotatingLogger->flush();
+	#endif
 	auto spdlogRotateSeconds { timer.Elapsed_In(time_mode::sec) };
 	auto spdlogRotateMillSec { timer.Elapsed_In(time_mode::ms) };
 	auto spdlogRotateMicroSec { timer.Elapsed_In(time_mode::us) };
@@ -483,4 +494,8 @@ int main() {
 	std::cout << Tag::Yellow("***************************************************************************************\n\n");
 
 #endif    // INSTRUMENTATION_ENABLED
+
+#if ENABLE_MEMORY_LEAK_DETECTION
+	_CrtDumpMemoryLeaks();
+#endif    //
 }

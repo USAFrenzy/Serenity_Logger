@@ -30,11 +30,9 @@ namespace serenity::msg_details {
 		LazyParseHelper& operator=(const LazyParseHelper&) = delete;
 		~LazyParseHelper()                                 = default;
 
-		void SetBracketPosition(bracket_type bracket, const size_t& pos);
-		void SetConversionResult(const std::to_chars_result& convResult);
+		void SetBracketPosition(bracket_type bracket, size_t pos);
 		void SetPartition(partition_type pType, std::string_view sv);
 		std::array<char, SERENITY_ARG_BUFFER_SIZE>& ConversionResultBuffer();
-		const std::to_chars_result ConversionResultInfo() const;
 		size_t BracketPosition(bracket_type bracket) const;
 		std::string& PartitionString(partition_type pType);
 		std::string& StringBuffer();
@@ -48,44 +46,12 @@ namespace serenity::msg_details {
 		std::string temp;
 		size_t openBracketPos { 0 };
 		size_t closeBracketPos { 0 };
-		std::to_chars_result result                             = {};
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> resultBuffer = {};
 	};
 
 	template<class T, class U> struct is_supported;
 	template<class T, class... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
 	{
-	};
-	enum class SpecValue
-	{
-		none = 0,
-		s    = 1,
-		a    = 2,
-		A    = 3,
-		b    = 4,
-		B    = 5,
-		c    = 6,
-		d    = 7,
-		e    = 8,
-		E    = 9,
-		f    = 10,
-		F    = 11,
-		g    = 12,
-		G    = 13,
-		o    = 14,
-		x    = 15,
-		X    = 16,
-		p    = 17,
-	};
-
-	enum class SpecValueModifiers
-	{
-		fill_align   = 0,
-		width        = 1,
-		sign         = 2,
-		hash         = 3,
-		zero_pad     = 4,
-		std_fallback = 5,
 	};
 
 	enum class SpecType
@@ -128,6 +94,7 @@ namespace serenity::msg_details {
 		struct FillAlignValues
 		{
 			std::string temp;
+			std::array<char, 250> buff {};
 			size_t digitSpec { 0 };
 			char fillSpec { '\0' };
 			char fillAlignSpec { '<' };
@@ -142,6 +109,7 @@ namespace serenity::msg_details {
 	      private:
 		struct PrecSpec
 		{
+			std::string temp;
 			std::string precision;
 			char spec { '\0' };
 		};
@@ -150,39 +118,37 @@ namespace serenity::msg_details {
 		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long,
 		                                          unsigned long long, bool, char, float, double, long double, const void*, void*>;
 
-		std::vector<SpecType> argSpecTypes;
-		std::vector<SpecValue> argSpecValue;
-
-		bool IsValidStringSpec(char spec);
-		bool IsValidIntSpec(char spec);
-		bool IsValidBoolSpec(char spec);
-		bool IsValidFloatingPointSpec(char spec);
-		bool IsValidCharSpec(char spec);
-		bool VerifySpec(SpecType type, char spec);
-		bool VerifySpecWithPrecision(size_t index, SpecType type, std::string_view spec);
-		void HandleWidthSpec(char spec);
-		void HandleSignSpec(char spec);
-		void HandleHashSpec(char spec);
+		bool IsValidStringSpec(char& spec);
+		bool IsValidIntSpec(char& spec);
+		bool IsValidBoolSpec(char& spec);
+		bool IsValidFloatingPointSpec(char& spec);
+		bool IsValidCharSpec(char& spec);
+		bool VerifySpec(SpecType type, char& spec);
+		bool VerifySpecWithPrecision(SpecType type, std::string_view& spec);
+		void HandleWidthSpec(char& spec);
+		void HandleSignSpec(char& spec);
+		void HandleHashSpec(char& spec);
 		void HandlePrecisionSpec(size_t index, SpecType type);
-		bool VerifyIfFillAndAlignSpec(size_t index, SpecType type, std::string_view specView);
-		void SplitPrecisionAndSpec(size_t index, SpecType type, std::string_view spec);
+		bool VerifyIfFillAndAlignSpec(size_t index, SpecType type, std::string_view& specView);
+		void SplitPrecisionAndSpec(SpecType type, std::string_view spec);
 
-		template<typename T> void FormatFloatTypeArg(char spec, T value) {
+		template<typename T>
+		void FormatFloatTypeArg(std::string& container, char&& spec, T&& value, std::array<char, SERENITY_ARG_BUFFER_SIZE>& resultBuffer) {
 			std::chars_format format { std::chars_format::general };
-			int precisionValue { 0 };
-			auto& buffer { parseHelper.ConversionResultBuffer() };
-			auto& strRef { parseHelper.StringBuffer() };
+			int precisionValue { 6 };
+			auto& pStr { precisionSpecHelper.precision };
 
-			if( precisionSpecHelper.precision.size() != 0 ) {
-					std::from_chars(precisionSpecHelper.precision.data(),
-					                precisionSpecHelper.precision.data() + precisionSpecHelper.precision.size(),
-					                precisionValue);
-			}
+			if( (pStr.size() == 1) && (pStr[ 0 ] != '6') ) {
+					std::from_chars(pStr.data(), pStr.data() + pStr.size(), precisionValue);
+			} else {
+					std::from_chars(pStr.data(), pStr.data() + pStr.size(), precisionValue);
+				}
+
 			if( spec != '\0' ) {
 					switch( spec ) {
 							case 'a': [[fallthrough]];
 							case 'A':
-								strRef.append("0x");
+								container.append("0x");
 								format = std::chars_format::hex;
 								break;
 							case 'e': format = std::chars_format::scientific; break;
@@ -195,22 +161,23 @@ namespace serenity::msg_details {
 						}
 			}
 			if( precisionValue != 0 ) {
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), value, format, precisionValue));
+					std::to_chars(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), std::forward<T>(value),
+					              format, precisionValue);
 			} else {
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), value, format));
+					std::to_chars(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), std::forward<T>(value),
+					              format);
 				}
 			switch( spec ) {
 					case 'A': [[fallthrough]];
 					case 'E': [[fallthrough]];
 					case 'G':
-						for( auto& ch: strRef ) {
+						for( auto& ch: container ) {
+								if( ch == '\0' ) break;
 								if( IsAlpha(ch) ) {
 										ch -= 32;
 								}
 							}
-						for( auto& ch: buffer ) {
+						for( auto& ch: resultBuffer ) {
 								if( ch == '\0' ) break;
 								if( IsAlpha(ch) ) {
 										ch -= 32;
@@ -219,26 +186,26 @@ namespace serenity::msg_details {
 						break;
 					default: break;
 				}    // capitilization
+			container.append(resultBuffer.data(), resultBuffer.data() + parseHelper.FindEndPos());
 		}
 
 		void EnableFallbackToStd(bool enable);
-		std::string&& AlignLeft(size_t index);
-		std::string&& AlignRight(size_t index);
-		std::string&& AlignCenter(size_t index);
+		void AlignLeft(size_t index, std::string& container);
+		void AlignRight(size_t index, std::string& container);
+		void AlignCenter(size_t index, std::string& container);
 
 		// Moved Formatting Templates Here While I Work On Some Things
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 			(
 			[ = ](auto&& arg) {
 				auto typeFound = is_supported<std::remove_reference_t<decltype(arg)>, LazilySupportedTypes> {};
-				auto size { 0 };
 				if constexpr( !typeFound.value ) {
 						containsUnknownType = true;
 				} else {
 						if( containsUnknownType ) return;
-						argContainer.emplace_back(std::remove_reference_t<decltype(arg)>(arg));
-						argSpecTypes.emplace_back(mapIndexToType[ argContainer[ size ].index() ]);
-						++size;
+						argContainer.emplace_back(
+						/*std::in_place_type<std::remove_reference_t<decltype(arg)>>,*/ arg);
+						argSpecTypes.emplace_back(mapIndexToType[ argContainer.back().index() ]);
 					}
 			}(args),
 			...);
@@ -246,6 +213,7 @@ namespace serenity::msg_details {
 
 		template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args) {
 			Reset();
+			CountNumberOfBrackets(formatString);
 			EmplaceBackArgs(std::forward<Args>(args)...);
 			size_t size { argContainer.size() };
 			if( size != 0 ) {
@@ -261,30 +229,31 @@ namespace serenity::msg_details {
 		const std::vector<LazilySupportedTypes>& ArgStorage() const;
 		LazyParseHelper& ParseHelper();
 		void Reset();
-		size_t AdvanceToNextArg();
+		void AdvanceToNextArg();
 		bool EndReached() const;
 		bool ContainsUnsupportedType() const;
-		std::string&& GetArgValue(size_t positionIndex, char additionalSpec = '\0');
+		void GetArgValue(std::string& container, size_t positionIndex, char&& additionalSpec = '\0');
 		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
 		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
-
-		// May not remain here
-		std::string&& ParseForSpecifiers(std::string_view&);
+		void ParseForSpecifiers(std::string_view&);
+		void CountNumberOfBrackets(std::string_view fmt);
+		std::string_view FinalArgResult() {
+			return finalArgValue;
+		}
 
 	      private:
 		std::vector<LazilySupportedTypes> argContainer;
 		size_t maxIndex { 0 };
 		size_t argIndex { 0 };
+		size_t remainingArgs { 0 };
 		bool endReached { false };
-		LazyParseHelper parseHelper;
+		LazyParseHelper parseHelper {};
 		bool containsUnknownType { false };
 		bool isStdFallbackEnabled { false };
-		FillAlignValues fillAlignValues;
+		FillAlignValues fillAlignValues {};
+		PrecSpec precisionSpecHelper {};
 		std::string finalArgValue;
-		std::string tempStorage;
-
-	      protected:
-		PrecSpec precisionSpecHelper;
+		std::vector<SpecType> argSpecTypes;
 	};
 
 	class Message_Formatter
@@ -319,7 +288,8 @@ namespace serenity::msg_details {
 		Formatters& GetFormatters();
 		void StoreFormat();
 		const Message_Info* MessageDetails();
-		void LazySubstitute(std::string& msg, std::string&& arg);
+		void LazySubstitute(std::string& msg, std::string_view arg);
+
 		// template<typename... Args> void FormatMessage(MsgWithLoc& message, Args&&... args);
 		template<typename... Args> void FormatMessageArgs(MsgWithLoc& message, Args&&... args) {
 			lazy_message.clear();
@@ -329,7 +299,8 @@ namespace serenity::msg_details {
 			} else {
 					lazy_message.append(message.msg);
 					for( ;; ) {
-							LazySubstitute(lazy_message, std::move(argStorage.ParseForSpecifiers(message.msg)));
+							argStorage.ParseForSpecifiers(message.msg);
+							LazySubstitute(lazy_message, argStorage.FinalArgResult());
 							argStorage.AdvanceToNextArg();
 							if( argStorage.EndReached() ) {
 									break;

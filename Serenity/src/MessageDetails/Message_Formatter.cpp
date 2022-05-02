@@ -14,7 +14,7 @@ namespace serenity::msg_details {
 		remainder.clear();
 	}
 
-	void LazyParseHelper::SetBracketPosition(bracket_type bracket, const size_t& pos) {
+	void LazyParseHelper::SetBracketPosition(bracket_type bracket, size_t pos) {
 		switch( bracket ) {
 				case bracket_type::open: openBracketPos = pos; break;
 				case bracket_type::close: closeBracketPos = pos; break;
@@ -34,16 +34,8 @@ namespace serenity::msg_details {
 		return resultBuffer;
 	}
 
-	const std::to_chars_result LazyParseHelper::ConversionResultInfo() const {
-		return result;
-	}
-
 	std::string& LazyParseHelper::StringBuffer() {
 		return temp;
-	}
-
-	void LazyParseHelper::SetConversionResult(const std::to_chars_result& convResult) {
-		result = convResult;
 	}
 
 	void LazyParseHelper::SetPartition(partition_type pType, std::string_view sv) {
@@ -81,22 +73,20 @@ namespace serenity::msg_details {
 	void ArgContainer::Reset() {
 		argContainer.clear();
 		argSpecTypes.clear();
-		argIndex = maxIndex = 0;
-		endReached          = false;
+		argIndex = maxIndex = remainingArgs = 0;
+		endReached                          = false;
 	}
 
-	size_t ArgContainer::AdvanceToNextArg() {
+	void ArgContainer::AdvanceToNextArg() {
 		if( argIndex < maxIndex ) {
 				++argIndex;
 		} else {
 				endReached = true;
 			}
-		return argIndex;
 	}
 
-	bool ArgContainer::IsValidStringSpec(char spec) {
+	bool ArgContainer::IsValidStringSpec(char& spec) {
 		if( spec == 's' ) {
-				argSpecValue.emplace_back(SpecValue::s);
 				return true;
 		} else {
 				std::string throwMessage { "Arg Specifier '" };
@@ -106,15 +96,15 @@ namespace serenity::msg_details {
 			}
 	}
 
-	bool ArgContainer::IsValidIntSpec(char spec) {
+	bool ArgContainer::IsValidIntSpec(char& spec) {
 		switch( spec ) {
-				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
-				case 'B': argSpecValue.emplace_back(SpecValue::B); break;
-				case 'c': argSpecValue.emplace_back(SpecValue::c); break;
-				case 'd': argSpecValue.emplace_back(SpecValue::d); break;
-				case 'o': argSpecValue.emplace_back(SpecValue::o); break;
-				case 'x': argSpecValue.emplace_back(SpecValue::x); break;
-				case 'X': argSpecValue.emplace_back(SpecValue::X); break;
+				case 'b': break;
+				case 'B': break;
+				case 'c': break;
+				case 'd': break;
+				case 'o': break;
+				case 'x': break;
+				case 'X': break;
 				default:
 					std::string throwMessage { "Arg Specifier '" };
 					throwMessage += spec;
@@ -125,15 +115,15 @@ namespace serenity::msg_details {
 		return true;
 	}
 
-	bool ArgContainer::IsValidBoolSpec(char spec) {
+	bool ArgContainer::IsValidBoolSpec(char& spec) {
 		switch( spec ) {
-				case 's': argSpecValue.emplace_back(SpecValue::s); break;
-				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
-				case 'B': argSpecValue.emplace_back(SpecValue::B); break;
-				case 'c': argSpecValue.emplace_back(SpecValue::c); break;
-				case 'o': argSpecValue.emplace_back(SpecValue::o); break;
-				case 'x': argSpecValue.emplace_back(SpecValue::x); break;
-				case 'X': argSpecValue.emplace_back(SpecValue::X); break;
+				case 's': break;
+				case 'b': break;
+				case 'B': break;
+				case 'c': break;
+				case 'o': break;
+				case 'x': break;
+				case 'X': break;
 				default:
 					std::string throwMessage { "Arg Specifier '" };
 					throwMessage += spec;
@@ -144,16 +134,16 @@ namespace serenity::msg_details {
 		return true;
 	}
 
-	bool ArgContainer::IsValidFloatingPointSpec(char spec) {
+	bool ArgContainer::IsValidFloatingPointSpec(char& spec) {
 		switch( spec ) {
-				case 'a': argSpecValue.emplace_back(SpecValue::a); break;
-				case 'A': argSpecValue.emplace_back(SpecValue::A); break;
-				case 'e': argSpecValue.emplace_back(SpecValue::e); break;
-				case 'E': argSpecValue.emplace_back(SpecValue::E); break;
-				case 'f': argSpecValue.emplace_back(SpecValue::f); break;
-				case 'F': argSpecValue.emplace_back(SpecValue::F); break;
-				case 'g': argSpecValue.emplace_back(SpecValue::g); break;
-				case 'G': argSpecValue.emplace_back(SpecValue::G); break;
+				case 'a': break;
+				case 'A': break;
+				case 'e': break;
+				case 'E': break;
+				case 'f': break;
+				case 'F': break;
+				case 'g': break;
+				case 'G': break;
 				default:
 					std::string throwMessage { "Arg Specifier '" };
 					throwMessage += spec;
@@ -164,15 +154,15 @@ namespace serenity::msg_details {
 		return true;
 	}
 
-	bool ArgContainer::IsValidCharSpec(char spec) {
+	bool ArgContainer::IsValidCharSpec(char& spec) {
 		switch( spec ) {
-				case 'b': argSpecValue.emplace_back(SpecValue::b); break;
-				case 'B': argSpecValue.emplace_back(SpecValue::B); break;
-				case 'c': argSpecValue.emplace_back(SpecValue::c); break;
-				case 'd': argSpecValue.emplace_back(SpecValue::d); break;
-				case 'o': argSpecValue.emplace_back(SpecValue::o); break;
-				case 'x': argSpecValue.emplace_back(SpecValue::x); break;
-				case 'X': argSpecValue.emplace_back(SpecValue::X); break;
+				case 'b': break;
+				case 'B': break;
+				case 'c': break;
+				case 'd': break;
+				case 'o': break;
+				case 'x': break;
+				case 'X': break;
 				default:
 					std::string throwMessage { "Arg Specifier '" };
 					throwMessage += spec;
@@ -202,13 +192,13 @@ namespace serenity::msg_details {
 				case SpecType::FloatType: [[fallthrough]];
 				case SpecType::DoubleType: [[fallthrough]];
 				case SpecType::LongDoubleType:
-					finalArgValue.append(std::move(GetArgValue(index, precisionSpecHelper.spec)));
+					GetArgValue(finalArgValue, index, std::move(precisionSpecHelper.spec));
 					break;    // Still Need To Implement
 				default: break;
 			}
 	}
 
-	void ArgContainer::SplitPrecisionAndSpec(size_t index, SpecType type, std::string_view spec) {
+	void ArgContainer::SplitPrecisionAndSpec(SpecType type, std::string_view spec) {
 		precisionSpecHelper.precision.clear();
 		precisionSpecHelper.spec = '\0';
 		for( ;; ) {
@@ -221,16 +211,60 @@ namespace serenity::msg_details {
 				}
 
 				if( IsAlpha(ch) ) {
-						using enum SpecType;
-						if( type == StringType || type == CharPointerType || type == StringViewType ) break;
 						precisionSpecHelper.spec = spec.front();
 						break;
 				}
 				// possibly nested field
 				if( ch == '{' ) {
-						// implement nested field logic here
-				}
+						auto endPos { spec.find_first_of('}') };
+						if( endPos != std::string_view::npos ) {
+								size_t index { argIndex + 1 };
+								size_t pos {};
+								auto newField { std::move(spec.substr(0, endPos)) };
+								precisionSpecHelper.temp.clear();
+								for( ;; ) {
+										if( endPos <= pos ) break;
+										auto ch { newField[ pos ] };
+										if( IsDigit(ch) ) {
+												precisionSpecHelper.temp += ch;
+										}
+										++pos;
+									}
+								if( precisionSpecHelper.temp.size() != 0 ) {
+										std::from_chars(precisionSpecHelper.temp.data(),
+										                precisionSpecHelper.temp.data() +
+										                precisionSpecHelper.temp.size(),
+										                index);
+										if( index > argContainer.size() ) {
+												std::string throwMsg { "Error In Precision "
+													               "Field For Argument \"" };
+												std::array<char, 2> buff { '\0', '\0' };
+												std::to_chars(buff.data(),
+												              buff.data() + buff.size(),
+												              argIndex + 1);
+												auto endPos { buff[ 1 ] == '\0' ? 1 : 2 };
+												throwMsg.append(buff.data(),
+												                buff.data() + endPos);
+												throwMsg.append("\": Argument Position Exceeds "
+												                "Supplied Arguments.\n");
+												throw std::runtime_error(throwMsg);
+										}
+								}
 
+								GetArgValue(precisionSpecHelper.precision, index);
+								spec.remove_prefix(endPos + 1);
+								--remainingArgs;
+								continue;
+						} else {
+								std::string throwMsg { "Error In Precision Field For Argument \"" };
+								std::array<char, 2> buff { '\0', '\0' };
+								std::to_chars(buff.data(), buff.data() + buff.size(), argIndex + 1);
+								auto endPos { buff[ 1 ] == '\0' ? 1 : 2 };
+								throwMsg.append(buff.data(), buff.data() + endPos);
+								throwMsg.append("\": '{' Found With No Closing Brace\n");
+								throw std::runtime_error(throwMsg);
+							}
+				}
 				spec.remove_prefix(1);
 			}
 
@@ -239,7 +273,7 @@ namespace serenity::msg_details {
 		}
 	}
 
-	bool ArgContainer::VerifySpecWithPrecision(size_t index, SpecType type, std::string_view spec) {
+	bool ArgContainer::VerifySpecWithPrecision(SpecType type, std::string_view& spec) {
 		switch( type ) {
 				case SpecType::CharPointerType: [[fallthrough]];
 				case SpecType::StringViewType: [[fallthrough]];
@@ -255,14 +289,20 @@ namespace serenity::msg_details {
 				default: break;
 			}
 		spec.remove_prefix(1);    // remove '.'
-		SplitPrecisionAndSpec(index, type, spec);
-		bool isValidSpec { VerifySpec(type, precisionSpecHelper.spec) && (precisionSpecHelper.precision.size() != 0) };
-		return isValidSpec;
+		SplitPrecisionAndSpec(type, spec);
+		return VerifySpec(type, precisionSpecHelper.spec) && (precisionSpecHelper.precision.size() != 0);
 	}
 
-	bool ArgContainer::VerifySpec(SpecType type, char spec) {
+	bool ArgContainer::VerifySpec(SpecType type, char& spec) {
 		using enum SpecType;
 		if( spec == '\0' ) return true;
+		if( !IsAlpha(spec) ) {
+				std::string throwMsg { "Error In Verifying Argument Specifier \"" };
+				throwMsg += spec;
+				throwMsg.append("\": Invalid Argument Specifier Was Provided Or Specifier Format Is Incorrect.\n");
+				std::cout << throwMsg;
+				throw std::runtime_error(std::move(throwMsg));
+		}
 		switch( type ) {
 				case MonoType: return true; break;
 				case StringType: [[fallthrough]];
@@ -288,23 +328,20 @@ namespace serenity::msg_details {
 					if( IsValidFloatingPointSpec(spec) ) return true;
 					break;
 				case ConstVoidPtrType: [[fallthrough]];
-				case VoidPtrType:
-					argSpecValue.emplace_back(SpecValue::p);
-					return true;
-					break;
+				case VoidPtrType: return true; break;
 				default: return false; break;
 			}
 		return false;
 	}
 
-	void ArgContainer::HandleWidthSpec(char spec) {
+	void ArgContainer::HandleWidthSpec(char& spec) {
 		// TODO: implement this fully
 	}
 
 	static constexpr std::array<char, 3> faSpecs   = { '<', '>', '^' };
 	static constexpr std::array<char, 3> signSpecs = { '+', '-', ' ' };
 
-	bool ArgContainer::VerifyIfFillAndAlignSpec(size_t index, SpecType type, std::string_view specView) {
+	bool ArgContainer::VerifyIfFillAndAlignSpec(size_t index, SpecType type, std::string_view& specView) {
 		size_t pos { 0 };
 		fillAlignValues.Reset();
 		auto argBracketSize { specView.size() };
@@ -312,42 +349,41 @@ namespace serenity::msg_details {
 		for( ;; ) {
 				if( pos >= argBracketSize - 1 ) break;
 				auto ch { specView[ pos ] };
+				if( ch == '}' ) break;
 
 				// deal with padding spec
 				if( IsDigit(ch) ) {
-						fillAlignValues.temp.clear();
-						fillAlignValues.temp += ch;
+						auto& temp { fillAlignValues.temp };
+						temp.clear();
+						temp += ch;
 						auto tempPos { pos + 1 };
 						for( ;; ) {
 								if( tempPos >= argBracketSize ) break;
 								auto nextCh { specView[ tempPos ] };
 								if( IsDigit(nextCh) ) {
-										fillAlignValues.temp += nextCh;
+										temp += nextCh;
 										++tempPos;
 								} else {
 										break;
 									}
 							}
-						if( fillAlignValues.temp.size() > 2 ) {
+						if( temp.size() > 2 ) {
 								// clang-format off
-								throw std::runtime_error("Digit Spec For Fill/Align Cannot Be Greater Than Two "
-								                         "Digits\n");
+								throw std::runtime_error("Digit Spec For Fill/Align Cannot Be Greater Than Two Digits\n");
 								// clang-format on
 						}
-						std::from_chars(fillAlignValues.temp.data(),
-						                fillAlignValues.temp.data() + fillAlignValues.temp.size(),
-						                fillAlignValues.digitSpec);
+						std::from_chars(temp.data(), temp.data() + temp.size(), fillAlignValues.digitSpec);
 						pos = tempPos;
 						continue;
 				}
 
 				// Specifically for additional specifiers in the type-field
 				if( IsAlpha(ch) || (ch == '}') ) {
+						if( precisionSpecHelper.spec == ch ) break;
 						auto tempPos { pos + 1 };
 						char nextCh;
 						if( tempPos <= argBracketSize ) nextCh = specView[ tempPos ];
 						if( !std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
-								if( ch == '}' ) break;
 								if( VerifySpec(type, ch) ) fillAlignValues.additionalSpec = ch;
 						}
 						if( nextCh == '}' ) break;
@@ -357,7 +393,8 @@ namespace serenity::msg_details {
 
 				if( ch == '.' ) {
 						// this is where presision should be handled (WIP)
-						if( VerifySpecWithPrecision(index, type, specView.substr(pos, specView.size())) ) {
+						auto specToParse { std::move(specView.substr(pos, specView.size())) };
+						if( VerifySpecWithPrecision(type, specToParse) ) {
 								fillAlignValues.additionalSpec = precisionSpecHelper.spec;
 						}
 						pos += (precisionSpecHelper.precision.size());
@@ -373,7 +410,8 @@ namespace serenity::msg_details {
 						char nextCh { '<' };
 						if( (pos + 1) <= argBracketSize ) nextCh = specView[ pos + 1 ];
 						if( nextCh == '}' ) nextCh = '<';
-						if( std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](char chSp) { return nextCh == chSp; }) ) {
+						if( std::any_of(faSpecs.begin(), faSpecs.end(),
+						                [ & ](const char& chSp) { return nextCh == chSp; }) ) {
 								fillAlignValues.fillSpec      = ch;
 								fillAlignValues.fillAlignSpec = nextCh;
 								pos += 2;
@@ -389,96 +427,121 @@ namespace serenity::msg_details {
 		return (fillAlignValues.digitSpec != 0);
 	}
 
-	void ArgContainer::HandleSignSpec(char spec) {
+	void ArgContainer::HandleSignSpec(char& spec) {
 		// TODO: implement this fully
 	}
 
-	void ArgContainer::HandleHashSpec(char spec) {
+	void ArgContainer::HandleHashSpec(char& spec) {
 		// TODO: implement this fully
 	}
 
 	// spec standard
-	//  [fill - and -align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional) type(optional)]
+	//  [fill - and -align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional)
+	//  type(optional)]
 
-	std::string&& ArgContainer::AlignLeft(size_t index) {
-		fillAlignValues.temp.clear();
-		fillAlignValues.temp.append(std::move(GetArgValue(index, fillAlignValues.additionalSpec)));
-		auto fillAmount { (fillAlignValues.digitSpec - fillAlignValues.temp.size()) };
-		if( fillAlignValues.fillSpec != '\0' ) {
-				for( int i { 0 }; i < fillAmount; ++i ) {
-						fillAlignValues.temp += fillAlignValues.fillSpec;
-					}
-		} else {
-				for( int i { 0 }; i < fillAmount; ++i ) {
-						fillAlignValues.temp += ' ';
-					}
+	void ArgContainer::AlignLeft(size_t index, std::string& container) {
+		auto& fillSpec { fillAlignValues.fillSpec };
+		auto& buff { fillAlignValues.buff };
+		container.clear();
+		GetArgValue(container, index, std::move(fillAlignValues.additionalSpec));
+		auto fillAmount { (fillAlignValues.digitSpec - container.size()) };
+		auto data { buff.data() };
+		std::fill(data, data + fillAlignValues.digitSpec + 1, '\0');
+
+		if( fillSpec == '\0' ) fillSpec = ' ';
+		size_t i { 0 };
+		for( auto& ch: container ) {
+				buff[ i ] = std::move(ch);
+				++i;
 			}
-		return std::move(fillAlignValues.temp);
+		std::fill(data + i, data + fillAlignValues.digitSpec, fillSpec);
+		container.clear();
+		container.append(data, fillAlignValues.digitSpec);
 	}
 
-	std::string&& ArgContainer::AlignRight(size_t index) {
-		auto argValue { std::move(GetArgValue(index, fillAlignValues.additionalSpec)) };
-		fillAlignValues.temp.clear();
-		if( fillAlignValues.fillSpec != '\0' ) {
-				for( int i { 0 }; i < (fillAlignValues.digitSpec - argValue.size()); ++i ) {
-						fillAlignValues.temp += fillAlignValues.fillSpec;
-					}
-		} else {
-				for( int i { 0 }; i < (fillAlignValues.digitSpec - argValue.size()); ++i ) {
-						fillAlignValues.temp += ' ';
-					}
+	void ArgContainer::AlignRight(size_t index, std::string& container) {
+		auto& fillSpec { fillAlignValues.fillSpec };
+		auto& buff { fillAlignValues.buff };
+		container.clear();
+		GetArgValue(container, index, std::move(fillAlignValues.additionalSpec));
+		auto fillAmount { (fillAlignValues.digitSpec - container.size()) };
+		auto data { buff.data() };
+		std::fill(data, data + fillAlignValues.digitSpec + 1, '\0');
+
+		if( fillSpec == '\0' ) fillSpec = ' ';
+		std::fill(data, data + fillAmount, fillSpec);
+		size_t i { fillAmount };
+		for( auto& ch: container ) {
+				buff[ i ] = std::move(ch);
+				++i;
 			}
-		fillAlignValues.temp.append(std::move(argValue));
-		return std::move(fillAlignValues.temp);
+
+		container.clear();
+		container.append(data, data + i);
 	}
 
-	std::string&& ArgContainer::AlignCenter(size_t index) {
-		auto argValue { std::move(GetArgValue(index, fillAlignValues.additionalSpec)) };
-		fillAlignValues.temp.clear();
-		if( fillAlignValues.fillSpec != '\0' ) {
-				for( int i { 0 }; i < (fillAlignValues.digitSpec - argValue.size()) / 2; ++i ) {
-						fillAlignValues.temp += fillAlignValues.fillSpec;
-					}
-		} else {
-				for( int i { 0 }; i < (fillAlignValues.digitSpec - argValue.size()) / 2; ++i ) {
-						fillAlignValues.temp += ' ';
-					}
+	void ArgContainer::AlignCenter(size_t index, std::string& container) {
+		auto& fillSpec { fillAlignValues.fillSpec };
+		auto& buff { fillAlignValues.buff };
+		container.clear();
+		GetArgValue(container, index, std::move(fillAlignValues.additionalSpec));
+		auto fillLeftover { (fillAlignValues.digitSpec - container.size()) % 2 };
+		auto fillAmount { (fillAlignValues.digitSpec - container.size()) / 2 };
+		auto data { buff.data() };
+
+		std::fill(data, data + fillAlignValues.digitSpec + 1, '\0');
+		if( fillSpec == '\0' ) fillSpec = ' ';
+		std::fill(data, data + fillAmount, fillSpec);
+		size_t i { fillAmount };
+		for( auto& ch: container ) {
+				buff[ i ] = std::move(ch);
+				++i;
 			}
-		auto fillPartition { fillAlignValues.temp };
-		fillAlignValues.temp.append(std::move(argValue)).append(std::move(fillPartition));
-		return std::move(fillAlignValues.temp);
+		auto endPos { i + fillAmount + fillLeftover };
+		std::fill(data + i, data + endPos, fillSpec);
+
+		container.clear();
+		container.append(data, data + endPos);
 	}
 
-	std::string&& ArgContainer::ParseForSpecifiers(std::string_view& fmt) {
-		// clang-format off
-		// ******************************************** WIP ********************************************
-		// clang-format on
-		auto argCounter { argIndex };
-		finalArgValue.clear();
-		if( fmt.size() == 0 ) {
-				return std::move(finalArgValue);
-		}
+	void ArgContainer::CountNumberOfBrackets(std::string_view fmt) {
+		for( ;; ) {
+				if( fmt.size() == 0 ) break;
+				auto startPos { fmt.find_first_of('{') };
+				auto endPos { fmt.find_first_of('}') };
+				if( startPos != std::string_view::npos ) {
+						if( endPos != std::string_view::npos ) {
+								auto copy { fmt };
+								copy.remove_prefix(startPos + 1);
+								copy.remove_suffix(fmt.size() - endPos - 1);
+								if( copy.find_first_of('{') != std::string_view::npos ) {
+										if( copy.find_first_of('}') != std::string_view::npos ) {
+												++remainingArgs;
+										}
+								}
+								++remainingArgs;
+								fmt.remove_prefix(endPos + 1);
+						}
+				} else {
+						break;
+					}
+			}
+	}
 
+	void ArgContainer::ParseForSpecifiers(std::string_view& fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
 		using P_Type = LazyParseHelper::partition_type;
-		parseHelper.ClearPartitions();
-		parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of(static_cast<char>('{')));
-		parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of(static_cast<char>(' }')));
-		// clang-format off
-		// no substitution needed so return
-		if( (parseHelper.BracketPosition(B_Type::open) == std::string_view::npos) || (parseHelper.BracketPosition(B_Type::close) == std::string_view::npos) )
-		{
-			return std::move(finalArgValue);
-		}
-		// clang-format off
-		auto argBracket { std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1) )};
-		// clang-format on
+		finalArgValue.clear();
 
-		// Handle the case of nested brackets
-		if( fmt[ parseHelper.BracketPosition(B_Type::open) + 1 ] == '{' && fmt[ parseHelper.BracketPosition(B_Type::close) + 1 ] == '}' )
-		{
-				return std::move(finalArgValue);    // return for now
-		}
+		if( remainingArgs <= 0 ) return;
+		if( fmt.size() == 0 ) return;
+
+		auto argCounter { argIndex };
+		parseHelper.ClearPartitions();
+		parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of(('{')));
+		parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of(('}')));
+		auto argBracket { std::move(
+		fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1)) };
 
 		// handle empty arg brackets no matter the amount of whitespace,
 		// but skip the processing step if it only contains whitespace
@@ -496,9 +559,10 @@ namespace serenity::msg_details {
 			}
 		if( emptyArg ) {
 				// fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
-				finalArgValue.append(std::move(GetArgValue(argCounter)));
+				GetArgValue(finalArgValue, argCounter);
 				fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
-				return std::move(finalArgValue);
+				--remainingArgs;
+				return;
 		}
 
 		// handle positional arg type here and then continue
@@ -507,7 +571,8 @@ namespace serenity::msg_details {
 				auto initialPos { pos };
 				++pos;
 				for( ;; ) {
-						if( !IsDigit(argBracket[ pos ]) ) break;
+						auto ch { argBracket[ pos ] };
+						if( !IsDigit(ch) ) break;
 						++pos;
 					}
 				std::from_chars(argBracket.data() + initialPos, argBracket.data() + pos, argCounter);
@@ -531,9 +596,10 @@ namespace serenity::msg_details {
 		} else {
 				argT = argSpecTypes.at(0);
 				if( argT == SpecType::MonoType ) {
-						finalArgValue.append(std::move(GetArgValue(argCounter)));
+						GetArgValue(finalArgValue, argCounter);
 						fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
-						return std::move(finalArgValue);
+						--remainingArgs;
+						return;
 				}
 			}
 
@@ -547,9 +613,10 @@ namespace serenity::msg_details {
 				throw std::runtime_error(std::move(throwMsg));
 		} else if( argBracket[ 0 ] == '}' ) {
 				// Otherwise, if we reached the end, get the supposed value and return
-				finalArgValue.append(std::move(GetArgValue(argCounter)));
+				GetArgValue(finalArgValue, argCounter);
 				fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
-				return std::move(finalArgValue);
+				--remainingArgs;
+				return;
 		} else {
 				// else remove the next char and continue onward
 				argBracket.remove_prefix(1);
@@ -565,9 +632,10 @@ namespace serenity::msg_details {
 						case '#': HandleHashSpec(firstToken); break;
 						case '0': /*HandleZeroPadding();*/ break;
 						case '.':
-							if( VerifySpecWithPrecision(argCounter, argT, argBracket) ) {
+							if( VerifySpecWithPrecision(argT, argBracket) ) {
 									HandlePrecisionSpec(argCounter, argT);
-									return std::move(finalArgValue);
+									--remainingArgs;
+									return;
 							}
 							break;
 						case 'L': /*LocaleFallBack() */ break;
@@ -581,15 +649,17 @@ namespace serenity::msg_details {
 									if( nextToken == '}' ) nextToken = '<';
 									if( VerifyIfFillAndAlignSpec(argCounter, argT, argBracket) ) {
 											// clang-format off
-										tempStorage.clear();
+										finalArgValue.clear();
 													switch( fillAlignValues.fillAlignSpec ) {
-															case '<':  tempStorage.append(std::move(AlignLeft(argCounter))); break;
-															case '>': tempStorage.append(std::move(AlignRight(argCounter))); break;
-															case '^': tempStorage.append(std::move(AlignCenter(argCounter))); break;
+															case '<':  AlignLeft(argCounter, finalArgValue); break;
+															case '>': AlignRight(argCounter, finalArgValue); break;
+															case '^': AlignCenter(argCounter, finalArgValue); break;
 															default: break;
 														}
-													finalArgValue.append(std::move(tempStorage));
-													return std::move(finalArgValue);
+													precisionSpecHelper.spec != '\0' ? fmt.remove_prefix(fmt.find(precisionSpecHelper.spec) + 1) 
+														                                                             : fmt.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
+													--remainingArgs;
+													return;
 													// add to formatted string here when set
 											// clang-format on
 									}
@@ -601,18 +671,12 @@ namespace serenity::msg_details {
 							break;
 					}    // switch statement
 
-				// Remove partition up to the first arg processed
-				fmt.remove_prefix(fmt.find_first_of('}') + 1);
-				break;
+				std::string throwMsg { "Error In Parsing Argument Specifiers: \"" };
+				throwMsg += firstToken;
+				throwMsg.append("\" Is Not A Valid Specifier\n ");
+				throw throwMsg;
 			}    // argument bracket processing for-loop
-		finalArgValue.append(std::move(GetArgValue(argCounter)));
-		return std::move(finalArgValue);
-
-	}    // parsing fmt loop
-
-	// clang-format off
-		 // ******************************************** WIP ********************************************
-	// clang-format on
+	}                    // parsing fmt loop
 
 	size_t LazyParseHelper::FindEndPos() {
 		size_t pos {};
@@ -622,106 +686,71 @@ namespace serenity::msg_details {
 			}
 	}
 
-	/*************************************** Variant Order *******************************************
+	/*************************************** Variant Order ********************************************
 	 * [0] std::monostate, [1] std::string, [2] const char*, [3] std::string_view, [4] int,
 	 * [5] unsigned int, [6] long long, [7] unsigned long long, [8] bool, [9] char, [10] float,
 	 * [11] double, [12] long double, [13] const void* [14] void*
-	 ************************************************************************************************/
-	std::string&& ArgContainer::GetArgValue(size_t positionIndex, char additionalSpec) {
-		auto& strRef { parseHelper.StringBuffer() };
-		strRef.clear();
+	 *************************************************************************************************/
+	/********************************************** Note **********************************************
+	 * Might be able to improve use cases of std::to_chars(). Without knowing too much about the
+	 * individual algorithms yet and judging by the header name referred to in the call stack, MSVC uses
+	 * the Ryu algorithm for this - I've read and seen a few benchmarks that seem to state that both
+	 * the Dragonbox and Schubfach algorithms are more efficient so it might be worth it to research up
+	 * on these algorithms and try my hand at implementing one or a combination of these algorithms?
+	 * Really depends on how complex the logic flow is on whether it's worth it or not, but, given that
+	 * this is where most of the time is spent in this function, the performance gains would trickle
+	 * down eveywhere else as well so the motivation is DEFINITELY there to at least try it out.
+	 * The catch is adding the same capabilities as 'std::chars_format' usage to be fully compatible.
+	 **************************************************************************************************/
+	void ArgContainer::GetArgValue(std::string& container, size_t positionIndex, char&& additionalSpec) {
+		container.clear();
 		parseHelper.ClearBuffer();
-		// need a proper way to find the type or the spec index that maps to the location in argContainer
 		auto& arg { argContainer[ positionIndex ] };
 		auto& buffer { parseHelper.ConversionResultBuffer() };
-		auto& result { parseHelper.ConversionResultInfo() };
 
 		switch( arg.index() ) {
-				case 0: return std::move(strRef); break;
-				case 1: return std::move(strRef.append(std::move(std::get<1>(arg)))); break;
-				case 2: return std::move(strRef.append(std::move(std::get<2>(arg)))); break;
-				case 3: return std::move(strRef.append(std::move(std::get<3>(arg)))); break;
+				case 0: break;
+				case 1: container.append(std::move(std::get<1>(std::move(arg)))); break;
+				case 2: container.append(std::move(std::get<2>(std::move(arg)))); break;
+				case 3: container.append(std::move(std::get<3>(std::move(arg)))); break;
 				case 4:
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<4>(arg))));
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<4>(std::move(arg))));
+					container.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 5:
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<5>(arg))));
-
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<5>(std::move(arg))));
+					container.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 6:
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<6>(arg))));
-
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<6>(std::move(arg))));
+					container.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 7:
-					parseHelper.SetConversionResult(
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<7>(arg))));
-
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<7>(std::move(arg))));
+					container.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
-				case 8:
-					strRef.append(std::move(std::get<8>(arg)) == true ? "true" : "false");
-					return std::move(strRef);
-					break;
-				case 9:
-					strRef += std::move(std::move(std::get<9>(arg)));
-					return std::move(strRef);
-					break;
+				case 8: container.append(std::move(std::get<8>(std::move(arg))) == true ? "true" : "false"); break;
+				case 9: container += std::move(std::get<9>(std::move(arg))); break;
 				case 10:
-					FormatFloatTypeArg(additionalSpec, std::move(std::get<10>(arg)));
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<10>(std::move(arg))), buffer);
 					break;
 				case 11:
-					FormatFloatTypeArg(additionalSpec, std::move(std::get<11>(arg)));
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<11>(std::move(arg))), buffer);
 					break;
 				case 12:
-					FormatFloatTypeArg(additionalSpec, std::move(std::get<12>(arg)));
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<12>(std::move(arg))), buffer);
 					break;
 				case 13:
-					parseHelper.SetConversionResult(std::to_chars(buffer.data(), buffer.data() + buffer.size(),
-					                                              reinterpret_cast<size_t>(std::move(std::get<13>(arg))), 16));
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					              reinterpret_cast<size_t>(std::move(std::get<13>(std::move(arg)))), 16);
+					container.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 14:
-					parseHelper.SetConversionResult(std::to_chars(buffer.data(), buffer.data() + buffer.size(),
-					                                              reinterpret_cast<size_t>(std::move(std::get<14>(arg))), 16));
-					if( result.ec != std::errc::value_too_large ) {
-							strRef.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
-					}
-					return std::move(strRef);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					              reinterpret_cast<size_t>(std::move(std::get<14>(std::move(arg)))), 16);
+					container.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
-				default: return std::move(strRef); break;
+				default: break;
 			}
 	}
 
@@ -828,7 +857,7 @@ namespace serenity::msg_details {
 								temp.clear();
 								continue;
 						}
-						std::string subStr { std::move(temp.substr(0, pos)) };
+						std::string subStr { temp.substr(0, pos) };
 						formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(subStr));
 						temp.erase(0, subStr.size());
 					}
@@ -919,27 +948,37 @@ namespace serenity::msg_details {
 		return tmpValue;
 	}
 
-	void Message_Formatter::LazySubstitute(std::string& msg, std::string&& arg) {
+	void Message_Formatter::LazySubstitute(std::string& msg, std::string_view arg) {
+		if( (arg.size() == 0) || (msg.size() < 2) ) return;
 		std::string_view temp { msg };
 		auto& parseHelper { argStorage.ParseHelper() };
 		parseHelper.ClearPartitions();
+
 		using B_Type = LazyParseHelper::bracket_type;
 		using P_Type = LazyParseHelper::partition_type;
 
-		parseHelper.SetBracketPosition(B_Type::open, temp.find_first_of(static_cast<char>('{')));
-		parseHelper.SetBracketPosition(B_Type::close, temp.find_first_of(static_cast<char>(' }')));
-
-		if( parseHelper.BracketPosition(B_Type::open) != 0 ) {
+		parseHelper.SetBracketPosition(B_Type::open, temp.find_first_of(('{')));
+		parseHelper.SetBracketPosition(B_Type::close, temp.find_first_of(('}')));
+		if( (parseHelper.BracketPosition(B_Type::open) != std::string::npos) &&
+		    (parseHelper.BracketPosition(B_Type::close) != std::string::npos) ) {
 				parseHelper.SetPartition(P_Type::primary, temp.substr(0, parseHelper.BracketPosition(B_Type::open)));
+				temp.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
+				// handle cases of a leftover closing brace that hasn't been escaped
+				if( temp.size() != 0 ) {
+						parseHelper.SetBracketPosition(B_Type::open, temp.find_first_of(('{')));
+						parseHelper.SetBracketPosition(B_Type::close, temp.find_first_of(('}')));
+						if( (parseHelper.BracketPosition(B_Type::open) == std::string::npos) &&
+						    (parseHelper.BracketPosition(B_Type::close) != std::string::npos) ) {
+								if( temp.at(parseHelper.BracketPosition(B_Type::close) + 1) != '}' ) {
+										temp.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
+								}
+						}
+				}
 		}
-		temp.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
 		parseHelper.SetPartition(P_Type::remainder, temp);
-
 		msg.clear();
-		auto size { arg.size() };
-		msg.append(std::move(parseHelper.PartitionString(P_Type::primary))
-		           .append(std::move(arg.data()), size)
-		           .append(std::move(parseHelper.PartitionString(P_Type::remainder))));
+		msg.append(
+		parseHelper.PartitionString(P_Type::primary).append(arg.data(), arg.size()).append(parseHelper.PartitionString(P_Type::remainder)));
 	}
 
 	const Message_Info* Message_Formatter::MessageDetails() {
@@ -960,8 +999,7 @@ namespace serenity::msg_details {
 	std::string_view Message_Formatter::Formatters::FormatUserPattern() {
 		localBuffer.clear();
 		for( auto& formatter: m_Formatter ) {
-				auto formatted { formatter->FormatUserPattern() };
-				localBuffer.append(formatted.data(), formatted.size());
+				formatter->FormatUserPattern(localBuffer);
 			}
 		return localBuffer;
 	}

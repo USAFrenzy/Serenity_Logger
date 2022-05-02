@@ -241,11 +241,11 @@ namespace serenity {
 
 	// clang-format on
 
-	static bool IsDigit(char ch) {
+	static bool IsDigit(char& ch) {
 		return ((ch >= '0') && (ch <= '9'));
 	}
 
-	static bool IsAlpha(char ch) {
+	static bool IsAlpha(char& ch) {
 		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 	}
 
@@ -261,12 +261,9 @@ namespace serenity {
 	{
 		std::string_view msg;
 		std::source_location source;
-		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current())
-			: msg(std::move(sv)), source(src) { }
-		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current())
-			: msg(std::move(sv)), source(src) { }
-		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current())
-			: msg(std::move(sv)), source(src) { }
+		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
 		MsgWithLoc(const std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
 	};
 
