@@ -454,6 +454,27 @@ namespace serenity::msg_details {
 	//*******************************************************************************************************************************
 	// clang-format on
 
+	/************************ Taken From https://en.cppreference.com/w/cpp/utility/format/formatter ***********************
+	fill-and-align is an optional fill character (which can be any character other than { or }), followed by one of the
+	align options <, >, ^. The meaning of align options is as follows:
+
+	<: Forces the field to be aligned to the start of the available space. This is the default when a non-integer
+	   non-floating-point presentation type is used.
+	>: Forces the field to be aligned to the end of the available space. This is the default when an integer or
+	   floating-point presentation type is used.
+	^: Forces the field to be centered within the available space by inserting [n/2] characters before and [n/2]
+	   characters after the value, where n is the total number of fill characters to insert.
+
+	char c = 120;
+	auto s0 = std::format("{:6}", 42);    // value of s0 is "    42"
+	auto s1 = std::format("{:6}", 'x');   // value of s1 is "x     "
+	auto s2 = std::format("{:*<6}", 'x'); // value of s2 is "x*****"
+	auto s3 = std::format("{:*>6}", 'x'); // value of s3 is "*****x"
+	auto s4 = std::format("{:*^6}", 'x'); // value of s4 is "**x***"
+	auto s5 = std::format("{:6d}", c);    // value of s5 is "   120"
+	auto s6 = std::format("{:6}", true);  // value of s6 is "true  "
+	**********************************************************************************************************************/
+	// Align Left And Align Right Still Need To Add Default Behaviors
 	void ArgContainer::AlignLeft(size_t index, std::string& container) {
 		auto& fillSpec { fillAlignValues.fillSpec };
 		auto& buff { fillAlignValues.buff };
