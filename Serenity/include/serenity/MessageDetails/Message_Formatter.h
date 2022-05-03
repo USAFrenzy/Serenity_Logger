@@ -91,6 +91,7 @@ namespace serenity::msg_details {
 
 	class ArgContainer
 	{
+	      private:
 		struct FillAlignValues
 		{
 			std::string temp;
@@ -106,7 +107,6 @@ namespace serenity::msg_details {
 			}
 		};
 
-	      private:
 		struct PrecSpec
 		{
 			std::string temp;
@@ -126,24 +126,75 @@ namespace serenity::msg_details {
 		bool VerifySpec(SpecType type, char& spec);
 		bool VerifySpecWithPrecision(SpecType type, std::string_view& spec);
 		void HandleWidthSpec(char& spec);
-		void HandleSignSpec(char& spec);
+		void HandleSignSpec(char& spec, std::string_view sv);
 		void HandleHashSpec(char& spec);
 		void HandlePrecisionSpec(size_t index, SpecType type);
 		bool VerifyIfFillAndAlignSpec(size_t index, SpecType type, std::string_view& specView);
 		void SplitPrecisionAndSpec(SpecType type, std::string_view spec);
+
+		static constexpr std::array<char, 10> charDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+		size_t TwoDigitFromChars(std::string_view sv) {
+			if( sv[ 0 ] == '-' || sv[ 0 ] == '+' ) {
+					// ignore any signed designation
+					sv.remove_prefix(1);
+			}
+
+			size_t pos { 0 }, finalValue { 0 };
+			switch( sv.size() ) {
+					case 0: break;
+					case 1:
+						for( ;; ) {
+								auto ch { charDigits[ pos ] };
+								if( ch == sv[ 0 ] ) break;
+								if( ch > sv[ 0 ] ) {
+										--pos;
+										break;
+								}
+								pos = ((pos + 2) % charDigits.size());
+							}
+						finalValue = pos;
+						break;
+					case 2:
+						for( ;; ) {
+								auto ch { charDigits[ pos ] };
+								if( ch == sv[ 0 ] ) break;
+								if( ch > sv[ 0 ] ) {
+										--pos;
+										break;
+								}
+								pos = ((pos + 2) % charDigits.size());
+							}
+						finalValue = pos * 10;
+						pos        = 0;
+						for( ;; ) {
+								auto ch { charDigits[ pos ] };
+								if( ch == sv[ 1 ] ) break;
+								if( ch > sv[ 1 ] ) {
+										--pos;
+										break;
+								}
+								pos = ((pos + 2) % charDigits.size());
+							}
+						finalValue += pos;
+						break;
+					default:
+						std::string throwMsg { "TwoDigitFromChars() Only Handles String Types Of Size 2 Or Less: \"" };
+						throwMsg.append(sv.data(), sv.size()).append("\" Doesn't Adhere To This Limitation\n");
+						throw std::runtime_error(std::move(throwMsg));
+						break;
+				}
+			return finalValue;
+		}
 
 		template<typename T>
 		void FormatFloatTypeArg(std::string& container, char&& spec, T&& value, std::array<char, SERENITY_ARG_BUFFER_SIZE>& resultBuffer) {
 			std::chars_format format { std::chars_format::general };
 			int precisionValue { 6 };
 			auto& pStr { precisionSpecHelper.precision };
-
-			if( (pStr.size() == 1) && (pStr[ 0 ] != '6') ) {
-					std::from_chars(pStr.data(), pStr.data() + pStr.size(), precisionValue);
-			} else {
-					std::from_chars(pStr.data(), pStr.data() + pStr.size(), precisionValue);
-				}
-
+			// precisionSpecHelper.precision is guaranteed to at most be size 2
+			if( pStr.size() != 0 ) {
+					precisionValue = static_cast<int>(TwoDigitFromChars(pStr));
+			}
 			if( spec != '\0' ) {
 					switch( spec ) {
 							case 'a': [[fallthrough]];
@@ -203,8 +254,7 @@ namespace serenity::msg_details {
 						containsUnknownType = true;
 				} else {
 						if( containsUnknownType ) return;
-						argContainer.emplace_back(
-						/*std::in_place_type<std::remove_reference_t<decltype(arg)>>,*/ arg);
+						argContainer.emplace_back(arg);
 						argSpecTypes.emplace_back(mapIndexToType[ argContainer.back().index() ]);
 					}
 			}(args),

@@ -220,7 +220,7 @@ namespace serenity::msg_details {
 						if( endPos != std::string_view::npos ) {
 								size_t index { argIndex + 1 };
 								size_t pos {};
-								auto newField { std::move(spec.substr(0, endPos)) };
+								auto newField { std::move(spec.substr(1, endPos)) };
 								precisionSpecHelper.temp.clear();
 								for( ;; ) {
 										if( endPos <= pos ) break;
@@ -230,27 +230,20 @@ namespace serenity::msg_details {
 										}
 										++pos;
 									}
+								// clang-format off
 								if( precisionSpecHelper.temp.size() != 0 ) {
-										std::from_chars(precisionSpecHelper.temp.data(),
-										                precisionSpecHelper.temp.data() +
-										                precisionSpecHelper.temp.size(),
-										                index);
+									index = TwoDigitFromChars(precisionSpecHelper.temp);
 										if( index > argContainer.size() ) {
-												std::string throwMsg { "Error In Precision "
-													               "Field For Argument \"" };
+												std::string throwMsg { "Error In Precision Field For Argument \"" };
 												std::array<char, 2> buff { '\0', '\0' };
-												std::to_chars(buff.data(),
-												              buff.data() + buff.size(),
-												              argIndex + 1);
+												std::to_chars(buff.data(), buff.data() + buff.size(), argIndex + 1);
 												auto endPos { buff[ 1 ] == '\0' ? 1 : 2 };
-												throwMsg.append(buff.data(),
-												                buff.data() + endPos);
-												throwMsg.append("\": Argument Position Exceeds "
-												                "Supplied Arguments.\n");
+												throwMsg.append(buff.data(), buff.data() + endPos);
+												throwMsg.append("\": Argument Position Exceeds Supplied Arguments.\n");
 												throw std::runtime_error(throwMsg);
+												// clang-format on
 										}
 								}
-
 								GetArgValue(precisionSpecHelper.precision, index);
 								spec.remove_prefix(endPos + 1);
 								--remainingArgs;
@@ -372,8 +365,8 @@ namespace serenity::msg_details {
 								throw std::runtime_error("Digit Spec For Fill/Align Cannot Be Greater Than Two Digits\n");
 								// clang-format on
 						}
-						std::from_chars(temp.data(), temp.data() + temp.size(), fillAlignValues.digitSpec);
-						pos = tempPos;
+						fillAlignValues.digitSpec = TwoDigitFromChars(temp);
+						pos                       = tempPos;
 						continue;
 				}
 
@@ -427,7 +420,27 @@ namespace serenity::msg_details {
 		return (fillAlignValues.digitSpec != 0);
 	}
 
-	void ArgContainer::HandleSignSpec(char& spec) {
+	/************************ Taken From https://en.cppreference.com/w/cpp/utility/format/formatter ***********************
+	The sign option can be one of following:
+
+	+: Indicates that a sign should be used for both non-negative and negative numbers. The + sign is inserted before the
+	output value for non-negative numbers.
+
+	-: Indicates that a sign should be used for negative numbers only (this is the default behavior).
+
+	space: Indicates that a leading space should be used for non-negative numbers, and a minus sign for negative numbers.
+	Negative zero is treated as a negative number.
+
+	The sign option applies to floating-point infinity and NaN.
+
+	double inf = std::numeric_limits<double>::infinity();
+	double nan = std::numeric_limits<double>::quiet_NaN();
+	auto s0 = std::format("{0:},{0:+},{0:-},{0: }", 1);   // value of s0 is "1,+1,1, 1"
+	auto s1 = std::format("{0:},{0:+},{0:-},{0: }", -1);  // value of s1 is "-1,-1,-1,-1"
+	auto s2 = std::format("{0:},{0:+},{0:-},{0: }", inf); // value of s2 is "inf,+inf,inf, inf"
+	auto s3 = std::format("{0:},{0:+},{0:-},{0: }", nan); // value of s3 is "nan,+nan,nan, nan"
+	**********************************************************************************************************************/
+	void ArgContainer::HandleSignSpec(char& spec, std::string_view sv) {
 		// TODO: implement this fully
 	}
 
@@ -435,9 +448,11 @@ namespace serenity::msg_details {
 		// TODO: implement this fully
 	}
 
-	// spec standard
-	//  [fill - and -align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional)
-	//  type(optional)]
+	// clang-format off
+	//******************************************************** spec standard ********************************************************
+	// [fill-and-align(optional) sign(optional) #(optional)0(optional)width(optional) precision(optional) L(optional) type(optional)]
+	//*******************************************************************************************************************************
+	// clang-format on
 
 	void ArgContainer::AlignLeft(size_t index, std::string& container) {
 		auto& fillSpec { fillAlignValues.fillSpec };
@@ -628,7 +643,10 @@ namespace serenity::msg_details {
 				switch( firstToken ) {
 						case '+': [[fallthrough]];
 						case '-': [[fallthrough]];
-						case ' ': HandleSignSpec(firstToken); break;
+						case ' ':
+							HandleSignSpec(firstToken, argBracket.substr(1, argBracket.size()));
+							--remainingArgs;
+							return;
 						case '#': HandleHashSpec(firstToken); break;
 						case '0': /*HandleZeroPadding();*/ break;
 						case '.':
@@ -691,17 +709,6 @@ namespace serenity::msg_details {
 	 * [5] unsigned int, [6] long long, [7] unsigned long long, [8] bool, [9] char, [10] float,
 	 * [11] double, [12] long double, [13] const void* [14] void*
 	 *************************************************************************************************/
-	/********************************************** Note **********************************************
-	 * Might be able to improve use cases of std::to_chars(). Without knowing too much about the
-	 * individual algorithms yet and judging by the header name referred to in the call stack, MSVC uses
-	 * the Ryu algorithm for this - I've read and seen a few benchmarks that seem to state that both
-	 * the Dragonbox and Schubfach algorithms are more efficient so it might be worth it to research up
-	 * on these algorithms and try my hand at implementing one or a combination of these algorithms?
-	 * Really depends on how complex the logic flow is on whether it's worth it or not, but, given that
-	 * this is where most of the time is spent in this function, the performance gains would trickle
-	 * down eveywhere else as well so the motivation is DEFINITELY there to at least try it out.
-	 * The catch is adding the same capabilities as 'std::chars_format' usage to be fully compatible.
-	 **************************************************************************************************/
 	void ArgContainer::GetArgValue(std::string& container, size_t positionIndex, char&& additionalSpec) {
 		container.clear();
 		parseHelper.ClearBuffer();

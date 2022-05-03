@@ -297,7 +297,7 @@ int main() {
 	 *****************************************************************************/
 	// clang-format on
 
-	constexpr const char* msg { "{1}: Test with other characters present, positional arguments, and nested precision: [{0:*^20.{2}e}]" };
+	constexpr const char* msg { "{2:+^6}: Test with other characters present, positional arguments, and nested precision: [{0:*^20.{2}e}]" };
 #define INCLUDE_SPDLOG 1
 
 #ifdef INSTRUMENTATION_ENABLED
@@ -322,7 +322,7 @@ int main() {
 	unsigned long int i { 0 };
 	const unsigned long int iterations { 2'000'000 };
 	C.SetLogLevel(LoggerLevel::off);
-	spdlogConsoleLogger->set_level(spdlog::level::off);
+	// spdlogConsoleLogger->set_level(spdlog::level::off);
 
 	std::cout << "Benching Color Console Target...\n";
 
