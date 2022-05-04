@@ -6,6 +6,7 @@ set(MESSAGE_DETAILS_SOURCE_FILES
     "src/MessageDetails/Message_Formatter.cpp"
     "src/MessageDetails/FormatterArgs.cpp"
     "src/MessageDetails/FlushPolicy.cpp"
+    "src/MessageDetails/LazyParser.cpp"
 )
 
 set(TARGETS_SOURCE_FILES
@@ -30,6 +31,7 @@ set(MESSAGE_DETAILS_HEADER_FILES
     "include/serenity/MessageDetails/Message_Formatter_Impl.h"
     "include/serenity/MessageDetails/FormatterArgs.h"
     "include/serenity/MessageDetails/FlushPolicy.h"
+    "include/serenity//MessageDetails/LazyParser.h"
 )
 
 set(TARGETS_HEADER_FILES

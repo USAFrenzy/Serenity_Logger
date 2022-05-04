@@ -126,7 +126,7 @@ namespace serenity::msg_details {
 		bool VerifySpec(SpecType type, char& spec);
 		bool VerifySpecWithPrecision(SpecType type, std::string_view& spec);
 		void HandleWidthSpec(char& spec);
-		void HandleSignSpec(char& spec, std::string_view sv);
+		void HandleSignSpec(size_t index, char& spec, std::string_view sv);
 		void HandleHashSpec(char& spec);
 		void HandlePrecisionSpec(size_t index, SpecType type);
 		bool VerifyIfFillAndAlignSpec(size_t index, SpecType type, std::string_view& specView);

@@ -440,8 +440,23 @@ namespace serenity::msg_details {
 	auto s2 = std::format("{0:},{0:+},{0:-},{0: }", inf); // value of s2 is "inf,+inf,inf, inf"
 	auto s3 = std::format("{0:},{0:+},{0:-},{0: }", nan); // value of s3 is "nan,+nan,nan, nan"
 	**********************************************************************************************************************/
-	void ArgContainer::HandleSignSpec(char& spec, std::string_view sv) {
+	void ArgContainer::HandleSignSpec(size_t index, char& spec, std::string_view sv) {
 		// TODO: implement this fully
+		bool zero_padded { false };
+		if( sv[ 0 ] == '0' ) {
+				zero_padded = true;
+				sv.remove_prefix(1);
+		}
+		size_t pos { 0 };
+		for( ;; ) {
+				auto ch { sv[ pos ] };
+				if( IsDigit(ch) ) {
+						//	fillAlignValues.
+				}
+				++pos;
+			}
+
+		GetArgValue(finalArgValue, index);
 	}
 
 	void ArgContainer::HandleHashSpec(char& spec) {
@@ -466,13 +481,13 @@ namespace serenity::msg_details {
 	   characters after the value, where n is the total number of fill characters to insert.
 
 	char c = 120;
-	auto s0 = std::format("{:6}", 42);    // value of s0 is "    42"
-	auto s1 = std::format("{:6}", 'x');   // value of s1 is "x     "
-	auto s2 = std::format("{:*<6}", 'x'); // value of s2 is "x*****"
-	auto s3 = std::format("{:*>6}", 'x'); // value of s3 is "*****x"
-	auto s4 = std::format("{:*^6}", 'x'); // value of s4 is "**x***"
-	auto s5 = std::format("{:6d}", c);    // value of s5 is "   120"
-	auto s6 = std::format("{:6}", true);  // value of s6 is "true  "
+	auto s0 = std::format("{:6}", 42);      // value of s0 is "    42"
+	auto s1 = std::format("{:6}", 'x');       // value of s1 is "x     "
+	auto s2 = std::format("{:*<6}", 'x');  // value of s2 is "x*****"
+	auto s3 = std::format("{:*>6}", 'x');  // value of s3 is "*****x"
+	auto s4 = std::format("{:*^6}", 'x');   // value of s4 is "**x***"
+	auto s5 = std::format("{:6d}", c);       // value of s5 is "   120"
+	auto s6 = std::format("{:6}", true);   // value of s6 is "true  "
 	**********************************************************************************************************************/
 	// Align Left And Align Right Still Need To Add Default Behaviors
 	void ArgContainer::AlignLeft(size_t index, std::string& container) {
@@ -665,7 +680,7 @@ namespace serenity::msg_details {
 						case '+': [[fallthrough]];
 						case '-': [[fallthrough]];
 						case ' ':
-							HandleSignSpec(firstToken, argBracket.substr(1, argBracket.size()));
+							HandleSignSpec(argCounter, firstToken, argBracket.substr(1, argBracket.size()));
 							--remainingArgs;
 							return;
 						case '#': HandleHashSpec(firstToken); break;
@@ -952,7 +967,7 @@ namespace serenity::msg_details {
 						std::from_chars(precision.data(), precision.data() + precision.size(), tmpValue);
 						ValidateUserPrecisionSpec(index, tmpValue);
 				}
-				if( std::isalpha(ch) ) {
+				if( IsAlpha(ch) ) {
 						parseStr.erase(0, 1);
 						for( ;; ) {
 								auto ch { parseStr.front() };
