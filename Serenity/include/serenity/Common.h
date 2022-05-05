@@ -70,6 +70,9 @@
 
 	#define ISATTY _isatty
 	#define FILENO _fileno
+[[noreturn]] __forceinline void unreachable() {
+	__assume(false);
+}
 	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 	#endif
@@ -79,15 +82,18 @@
 	#include <unistd.h>
 	#define ISATTY                      isatty
 	#define FILENO                      fileno
+[[noreturn]] inline __attribute__((always_inline)) void unreachable() {
+	__builtin_unreachable();
+}
 	#define LOCAL_TIME(tmStruct, timeT) localtime_r(&tmStruct, &timeT)
 	#define GM_TIME(tmStruct, timeT)    gmtime_r(&tmStruct, &timeT)
 #endif
 
-#define KB                       (1024)
-#define MB                       (1024 * KB)
-#define GB                       (1024 * MB)
-#define DEFAULT_BUFFER_SIZE      (64 * KB)                  // used for file buffers
-#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)    // used for lazy parsing
+#define KB                  (1024)
+#define MB                  (1024 * KB)
+#define GB                  (1024 * MB)
+#define DEFAULT_BUFFER_SIZE (64 * KB)    // used for file buffers
+//#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)    // used for lazy parsing
 
 // declaring for use later and for doc purposes
 namespace serenity::experimental { }
@@ -241,11 +247,11 @@ namespace serenity {
 
 	// clang-format on
 
-	static bool IsDigit(char& ch) {
+	static bool IsDigit(char ch) {
 		return ((ch >= '0') && (ch <= '9'));
 	}
 
-	static bool IsAlpha(char& ch) {
+	static bool IsAlpha(char ch) {
 		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 	}
 

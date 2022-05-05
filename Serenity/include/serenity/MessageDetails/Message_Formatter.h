@@ -10,6 +10,10 @@
 #include <variant>
 
 namespace serenity::msg_details {
+	// due to reworking this in LazyParser.h
+#ifndef SERENITY_ARG_BUFFER_SIZE
+	#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)
+#endif    // !SERENITY_ARG_BUFFER_SIZE
 
 	class LazyParseHelper
 	{
