@@ -10,15 +10,12 @@
 	#include <stdlib.h>
 #endif
 
-#if ROTATING_TESTING
-	#define ENABLE_ROTATION_SECTION
-	#include <iostream>
-#endif
-
 #if PARSE_TESTING
 	#define ENABLE_PARSE_SECTION
 	#include <serenity/MessageDetails/LazyParser.h>
 #endif
+
+#include <iostream>
 
 #include <serenity/Targets/ColorConsoleTarget.h>
 #include <serenity/Targets/FileTarget.h>
@@ -202,15 +199,18 @@ int main() {
 #ifdef ENABLE_PARSE_SECTION
 	using namespace lazy_parser;
 
-	std::string parseString { "This is a parse string with brackets 1: {1:*^4} and 2: {2:+}" };
-
-	auto sizeToken          = sizeof(enum TokenType);
-	auto sizeHelper         = sizeof(helper::LazyParseHelper);
-	auto sizeParser         = sizeof(LazyParser);
-	auto sizeParserIsolated = sizeParser - sizeHelper;
+	std::string parseString { "This is a parse string with brackets 1: {:1}, 2: {2:+}, and 3: {3:{4}.{5}}" };
 
 	LazyParser parser;
-	parser.Parse(parseString);
+	Instrumentator timer;
+
+	timer.StopWatch_Reset();
+	for( size_t i { 0 }; i < 2'000'000; ++i ) {
+			parser.Parse(parseString);
+		}
+	timer.StopWatch_Stop();
+
+	std::cout << "LazyParser Parsing Elapsed Time Over 2,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 2'000'000.0f << " us\n";
 
 #endif    // ENABLE_PARSE_SECTION
 
@@ -218,3 +218,13 @@ int main() {
 	_CrtDumpMemoryLeaks();
 #endif    //
 }
+/************************************************* Paser Notes *************************************************/
+// [06May] Note 1: Parsing Time On Average Takes ~0.47-0.48 us, which is just too damn slow for my use case.
+//                 Most of the time is spent in clearing the token storage vector and creating/storing the
+//                 unique pointers of the tokens. There's a chance that I can bypass this by making these
+//                 token classes apart of a std::variant and access them this way. At the very least, I may
+//                 be able to shift parsing over to compile time which would eliminate most of the runtime
+//                 checks as well as bypass runtime parsing; this also has the added benefit of being closer
+//                 to what libfmt/<format> provides and would allow the only cost of this be in the formatting
+//                 of the token itself (which isn't even factored in here - hence why the current timings are
+//                 horrid; Adding ~0.5 us to a logger whose latency is ~0.8 us at its slowest is unacceptable).

@@ -231,6 +231,41 @@ namespace serenity::lazy_parser {
 		return moreSpecsToParse;
 	}
 
+	void serenity::lazy_parser::LazyParser::FindNestedBrackets(std::string_view sv, size_t& currentPos) {
+		size_t pos { currentPos };
+
+		for( ;; ) {
+				// search for any nested fields
+				if( pos >= sv.size() ) break;
+				// reset on each iteration
+				bool nestedOpenFound { false };
+				bool nestedCloseFound { false };
+
+				if( sv[ pos ] != '{' ) {
+						// potential nested arg
+						++pos;
+						continue;
+				} else {
+						nestedOpenFound = true;
+						for( ;; ) {
+								// found a potential nested bracket, now find a closing bracket
+								if( pos >= sv.size() ) break;
+								if( sv[ pos ] != '}' ) {
+										++pos;
+										continue;
+								} else {
+										nestedCloseFound = true;
+										++pos;
+										break;
+									}
+							}    // nested closing brace loop
+					}                    // if nested opening brace found
+				if( nestedOpenFound && nestedCloseFound ) {
+						currentPos = pos;
+				}
+			}    // nested opening brace loop
+	}
+
 	bool LazyParser::FindBrackets(std::string_view sv) {
 		using B_Type = helper::LazyParseHelper::bracket_type;
 		using P_Type = helper::LazyParseHelper::partition_type;
@@ -249,9 +284,13 @@ namespace serenity::lazy_parser {
 						continue;
 				}
 				parseHelper.SetBracketPosition(B_Type::open, pos);
-				subPos = pos;
+				subPos = pos + 1;
 				for( ;; ) {
 						if( subPos >= sv.size() ) return false;
+						auto ch { sv[ subPos ] };
+						if( (ch == ':' || ch == '.') && sv[ subPos + static_cast<size_t>(1) ] == '{' ) {
+								FindNestedBrackets(sv, subPos);
+						}
 						if( sv[ subPos ] != '}' ) {
 								++subPos;
 								continue;
@@ -262,7 +301,7 @@ namespace serenity::lazy_parser {
 				break;
 			}
 		parseHelper.SetPartition(P_Type::primary, sv.substr(0, pos));
-		parseHelper.SetPartition(P_Type::remainder, sv.substr(subPos + 1, sv.size()));
+		parseHelper.SetPartition(P_Type::remainder, sv.substr(subPos + static_cast<size_t>(1), sv.size()));
 		return true;
 	}
 
@@ -271,8 +310,10 @@ namespace serenity::lazy_parser {
 	bool LazyParser::HasFillAlignField(std::string_view& sv) {
 		auto svSize { sv.size() };
 		if( svSize < 2 ) return false;    // accounting for fill-align spec and '}'
-		auto ch { sv[ 0 ] };
-		auto nextCh { sv[ 1 ] };
+		size_t pos { 0 };
+
+		auto ch { sv[ pos ] };
+		auto nextCh { sv[ ++pos ] };
 		if( ch == '}' ) return false;
 		if( ch != '{' ) {
 				switch( ch ) {
@@ -287,9 +328,9 @@ namespace serenity::lazy_parser {
 					}
 
 				switch( nextCh ) {
-						case '<': specValues.align = Alignment::AlignLeft;
-						case '>': specValues.align = Alignment::AlignRight;
-						case '^': specValues.align = Alignment::AlignCenter;
+						case '<': specValues.align = Alignment::AlignLeft; break;
+						case '>': specValues.align = Alignment::AlignRight; break;
+						case '^': specValues.align = Alignment::AlignCenter; break;
 						default: specValues.align = Alignment::Empty; break;
 					}
 
@@ -297,17 +338,17 @@ namespace serenity::lazy_parser {
 						specValues.fillCharacter = ch;
 				}
 
-				size_t pos { 0 };
-				if( svSize > 3 ) {
-						if( IsDigit(sv[ 2 ]) ) {
-								pos = 3;
+				++pos;
+				if( pos < svSize ) {
+						if( IsDigit(sv[ pos ]) ) {
+								++pos;
 								for( ;; ) {
-										if( pos >= sv.size() ) break;
+										if( pos >= svSize ) break;
 										if( !IsDigit(sv[ pos ]) ) break;
 										++pos;
 									}
 						}
-						std::from_chars(sv.data() + 3, sv.data() + pos, specValues.alignmentPadding);
+						std::from_chars(sv.data() + 2, sv.data() + pos, specValues.alignmentPadding);
 						m_tokenType |= TokenType::AlignmentPadding;
 				}
 		}
@@ -328,6 +369,10 @@ namespace serenity::lazy_parser {
 		return true;
 	}
 
+	static std::string_view NestedFieldTypeStr(NestedFieldType type) {
+		return type == NestedFieldType::Precision ? "Precision" : "Width";
+	}
+
 	bool LazyParser::HasValidNestedField(std::string_view& sv, NestedFieldType type, size_t index) {
 		size_t primaryPos { 0 }, subPos { 0 }, argIndex { index };
 		for( ;; ) {
@@ -336,8 +381,17 @@ namespace serenity::lazy_parser {
 						primaryPos = std::string_view::npos;
 						break;
 				}
+				if( ch == '}' ) break;
+
+				if( !IsDigit(ch) && ch != ' ' ) {
+						std::string throwMsg { "Error In Nested Argument Bracket For " };
+						throwMsg.append(NestedFieldTypeStr(type));
+						throwMsg.append(": Only A Position Field May Be Declared In A Nested Bracket Argument\n");
+						throw std::runtime_error(std::move(throwMsg));
+				}
 
 				if( IsDigit(ch) ) {
+						// TODO: Add index mode check here as well
 						subPos = primaryPos + 1;
 						for( ;; ) {
 								if( subPos >= sv.size() ) break;
@@ -345,19 +399,6 @@ namespace serenity::lazy_parser {
 								++subPos;
 							}
 						std::from_chars(sv.data() + primaryPos, sv.data() + subPos, argIndex);
-				}
-
-				if( ch == '}' ) {
-						// verify theres at least one more closing bracket for valid width bracket
-						subPos = primaryPos;
-						for( ;; ) {
-								if( subPos >= sv.size() ) {
-										subPos = std::string_view::npos;
-										break;
-								}
-								if( sv[ subPos ] == '}' ) break;
-								++subPos;
-							}
 				}
 				++primaryPos;
 			}
@@ -379,7 +420,7 @@ namespace serenity::lazy_parser {
 		using enum TokenType;
 		using B_Type = helper::LazyParseHelper::bracket_type;
 		using P_Type = helper::LazyParseHelper::partition_type;
-
+		m_tokenStorage.clear();
 		int autoargCounter { 0 };
 
 		for( ;; ) {
@@ -465,11 +506,11 @@ namespace serenity::lazy_parser {
 				}
 
 				auto nextChar { argBracket[ 0 ] };
-				bool isPotentialNestedWidth { argBracket.size() > 4 && nextChar == '{' };
+				bool isPotentialNestedWidth { argBracket.size() > 2 && nextChar == '{' };
 				bool isDigitWidth { argBracket.size() > 2 && IsDigit(nextChar) };
 				if( isPotentialNestedWidth ) {
 						argBracket.remove_prefix(1);    // remove the '{'
-						if( !HasValidNestedField(argBracket) ) {
+						if( !HasValidNestedField(argBracket, NestedFieldType::Width, autoargCounter) ) {
 								// clang-format off
 								throw std::runtime_error("Error In Width Field: '{' Found With No Appropriately Matching '}'\n");
 								// clang-format on
@@ -480,10 +521,11 @@ namespace serenity::lazy_parser {
 						argBracket.remove_prefix(1);
 				}
 
-				if( argBracket.size() > 2 && sv[ 0 ] == '.' ) {
+				if( argBracket.size() > 2 && argBracket[ 0 ] == '.' ) {
 						argBracket.remove_prefix(1);
-						bool isPotentialNestedPrecision { argBracket.size() > 4 && argBracket[ 0 ] == '{' };
+						bool isPotentialNestedPrecision { argBracket.size() > 2 && argBracket[ 0 ] == '{' };
 						if( isPotentialNestedPrecision ) {
+								argBracket.remove_prefix(1);    // remove the '{'
 								if( !HasValidNestedField(argBracket, NestedFieldType::Precision, autoargCounter) )
 								{
 										// clang-format off

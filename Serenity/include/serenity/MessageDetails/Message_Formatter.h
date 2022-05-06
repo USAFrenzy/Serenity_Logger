@@ -289,7 +289,7 @@ namespace serenity::msg_details {
 		void GetArgValue(std::string& container, size_t positionIndex, char&& additionalSpec = '\0');
 		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
 		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
-		void ParseForSpecifiers(std::string_view&);
+		void ParseForSpecifiers(std::string_view);
 		void CountNumberOfBrackets(std::string_view fmt);
 		std::string_view FinalArgResult() {
 			return finalArgValue;

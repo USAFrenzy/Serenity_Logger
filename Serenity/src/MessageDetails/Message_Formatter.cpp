@@ -579,7 +579,7 @@ namespace serenity::msg_details {
 			}
 	}
 
-	void ArgContainer::ParseForSpecifiers(std::string_view& fmt) {
+	void ArgContainer::ParseForSpecifiers(std::string_view fmt) {
 		using B_Type = LazyParseHelper::bracket_type;
 		using P_Type = LazyParseHelper::partition_type;
 		finalArgValue.clear();

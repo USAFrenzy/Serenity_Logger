@@ -271,6 +271,7 @@ namespace serenity::lazy_parser {
 
 		void Parse(std::string_view sv);
 		bool FindBrackets(std::string_view sv);
+		void FindNestedBrackets(std::string_view sv, size_t& currentPos);
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex);
 		size_t FindDigitEnd(std::string_view);
