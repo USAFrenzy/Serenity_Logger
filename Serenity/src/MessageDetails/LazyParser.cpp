@@ -267,50 +267,89 @@ namespace serenity::lazy_parser {
 	}
 
 	static constexpr std::array<char, 3> fillAlignSpecs = { '<', '>', '^' };
+
 	bool LazyParser::HasFillAlignField(std::string_view& sv) {
-		if( sv.size() < 2 ) return false;    // accounting for fill-align spec and '}'
+		auto svSize { sv.size() };
+		if( svSize < 2 ) return false;    // accounting for fill-align spec and '}'
 		auto ch { sv[ 0 ] };
 		auto nextCh { sv[ 1 ] };
 		if( ch == '}' ) return false;
 		if( ch != '{' ) {
-				if( std::any_of(fillAlignSpecs.begin(), fillAlignSpecs.end(), [ & ](char spec) { return ch == spec; }) ) {
-						// clang-format off
-								throw std::runtime_error("Error In Fill Align Field: Alignment Option Specified Without A Fill Character\n");
-						// clang-format on
+				switch( ch ) {
+						case '<': [[fallthrough]];
+						case '>': [[fallthrough]];
+						case '^':
+							// clang-format off
+							throw std::runtime_error("Error In Fill Align Field: Alignment Option Specified Without A Fill Character\n");
+							// clang-format on
+							break;
+						default: break;
+					}
+
+				switch( nextCh ) {
+						case '<': specValues.align = Alignment::AlignLeft;
+						case '>': specValues.align = Alignment::AlignRight;
+						case '^': specValues.align = Alignment::AlignCenter;
+						default: specValues.align = Alignment::Empty; break;
+					}
+
+				if( specValues.align != Alignment::Empty ) {
+						specValues.fillCharacter = ch;
 				}
-				if( std::any_of(fillAlignSpecs.begin(), fillAlignSpecs.end(), [ & ](char spec) { return nextCh == spec; }) ) {
+
+				size_t pos { 0 };
+				if( svSize > 3 ) {
 						if( IsDigit(sv[ 2 ]) ) {
-								m_tokenType |= TokenType::AlignmentPadding;
+								pos = 3;
+								for( ;; ) {
+										if( pos >= sv.size() ) break;
+										if( !IsDigit(sv[ pos ]) ) break;
+										++pos;
+									}
 						}
-						return true;
+						std::from_chars(sv.data() + 3, sv.data() + pos, specValues.alignmentPadding);
+						m_tokenType |= TokenType::AlignmentPadding;
 				}
 		}
-		return false;
+		return (specValues.align != Alignment::Empty);
 	}
 
 	static constexpr std::array<char, 3> signSpecs = { '+', '-', ' ' };
 	bool LazyParser::HasSignField(std::string_view& sv) {
 		if( sv.size() < 2 ) return false;    // this accounts for at least sign + '}'
 		auto ch { sv[ 0 ] };
-		if( std::any_of(signSpecs.begin(), signSpecs.end(), [ & ](char spec) { return ch == spec; }) ) {
-				sv.remove_prefix(1);
-				return true;
-		} else {
-				return false;
+		switch( ch ) {
+				case '+': specValues.signType = Sign::Plus; break;
+				case '-': specValues.signType = Sign::Minus; break;
+				case ' ': specValues.signType = Sign::Space; break;
+				default: return false; break;
 			}
+		sv.remove_prefix(1);
+		return true;
 	}
 
-	bool LazyParser::HasValidNestedField(std::string_view& sv) {
-		size_t widthPos { 0 }, subPos { 0 };
+	bool LazyParser::HasValidNestedField(std::string_view& sv, NestedFieldType type, size_t index) {
+		size_t primaryPos { 0 }, subPos { 0 }, argIndex { index };
 		for( ;; ) {
-				auto ch { sv[ widthPos ] };
-				if( widthPos >= sv.size() ) {
-						widthPos = std::string_view::npos;
+				auto ch { sv[ primaryPos ] };
+				if( primaryPos >= sv.size() ) {
+						primaryPos = std::string_view::npos;
 						break;
 				}
+
+				if( IsDigit(ch) ) {
+						subPos = primaryPos + 1;
+						for( ;; ) {
+								if( subPos >= sv.size() ) break;
+								if( !IsDigit(sv[ subPos ]) ) break;
+								++subPos;
+							}
+						std::from_chars(sv.data() + primaryPos, sv.data() + subPos, argIndex);
+				}
+
 				if( ch == '}' ) {
 						// verify theres at least one more closing bracket for valid width bracket
-						subPos = widthPos;
+						subPos = primaryPos;
 						for( ;; ) {
 								if( subPos >= sv.size() ) {
 										subPos = std::string_view::npos;
@@ -320,9 +359,14 @@ namespace serenity::lazy_parser {
 								++subPos;
 							}
 				}
-				++widthPos;
+				++primaryPos;
 			}
-		if( (widthPos != std::string_view::npos && subPos != std::string_view::npos) ) {
+		if( (primaryPos != std::string_view::npos && subPos != std::string_view::npos) ) {
+				if( type == NestedFieldType::Width ) {
+						specValues.nestedWidthArgPos = argIndex;
+				} else {
+						specValues.nestedPrecArgPos = argIndex;
+					}
 				sv.remove_prefix(subPos + 1);
 				return true;
 		} else {
@@ -440,7 +484,8 @@ namespace serenity::lazy_parser {
 						argBracket.remove_prefix(1);
 						bool isPotentialNestedPrecision { argBracket.size() > 4 && argBracket[ 0 ] == '{' };
 						if( isPotentialNestedPrecision ) {
-								if( !HasValidNestedField(argBracket) ) {
+								if( !HasValidNestedField(argBracket, NestedFieldType::Precision, autoargCounter) )
+								{
 										// clang-format off
 							throw std::runtime_error("Error In Precision Field: '{' Found With No Appropriately Matching '}'\n");
 										// clang-format on

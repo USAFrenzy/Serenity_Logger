@@ -112,6 +112,14 @@ namespace serenity::lazy_parser {
 		void FormatToken() override;
 	};
 
+	enum class Alignment : char
+	{
+		Empty = 0,
+		AlignLeft,
+		AlignRight,
+		AlignCenter
+	};
+
 	class FillAlignToken final: public BaseToken
 	{
 	      public:
@@ -123,6 +131,13 @@ namespace serenity::lazy_parser {
 		void FormatToken() override;
 	};
 
+	enum class Sign
+	{
+		Empty = 0,
+		Plus,
+		Minus,
+		Space
+	};
 	class SignToken final: public BaseToken
 	{
 	      public:
@@ -230,6 +245,22 @@ namespace serenity::lazy_parser {
 		manual
 	};
 
+	struct SpecFormatting
+	{
+		Alignment align { Alignment::Empty };
+		size_t alignmentPadding { 0 };
+		char fillCharacter { '\0' };
+		Sign signType { Sign::Empty };
+		size_t nestedWidthArgPos { 0 };
+		size_t nestedPrecArgPos { 0 };
+	};
+
+	enum class NestedFieldType
+	{
+		Width,
+		Precision
+	};
+
 	class LazyParser
 	{
 	      public:
@@ -247,7 +278,7 @@ namespace serenity::lazy_parser {
 
 		bool HasFillAlignField(std::string_view& sv);
 		bool HasSignField(std::string_view& sv);
-		bool HasValidNestedField(std::string_view& sv);
+		bool HasValidNestedField(std::string_view& sv, NestedFieldType type, size_t index);
 
 		bool IsFlagSet(TokenType& tokenFlags, TokenType checkValue);
 
@@ -258,6 +289,7 @@ namespace serenity::lazy_parser {
 		std::vector<std::unique_ptr<BaseToken>> m_tokenStorage;
 		IndexMode m_indexMode { IndexMode::automatic };
 		TokenType m_tokenType { TokenType::Empty };
+		SpecFormatting specValues {};
 	};
 
 }    // namespace serenity::lazy_parser
