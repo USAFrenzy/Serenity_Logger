@@ -204,9 +204,20 @@ int main() {
 	LazyParser parser;
 	Instrumentator timer;
 
+	ParseResult result {};
+	result.remainder = parseString;
 	timer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 2'000'000; ++i ) {
-			parser.Parse(parseString);
+			// simulating a workload of taking the result and continuing to parse
+			for( ;; ) {
+					if( result.remainder.size() == 0 ) {
+							break;
+					} else {
+							result = parser.Parse(result.remainder);
+							continue;
+						}
+				}
+			result.remainder = parseString;
 		}
 	timer.StopWatch_Stop();
 
@@ -228,3 +239,14 @@ int main() {
 //                 to what libfmt/<format> provides and would allow the only cost of this be in the formatting
 //                 of the token itself (which isn't even factored in here - hence why the current timings are
 //                 horrid; Adding ~0.5 us to a logger whose latency is ~0.8 us at its slowest is unacceptable).
+//
+// [06May] Note 2: Changing how the Parse() function is used dropped the times dramatically to ~0.18-0.20 us, so this
+//                 is clearly the right direction to go in. Now the Parser() function will return a ParseResults
+//                 struct containing the formatted token value (when the Format'x'Token() functions are in place),
+//                 the portion of the string up to the substitution brackets, and the portion of the string after the
+//                 substitution brackets. Given that no formatting was done in the original version AND in this version
+//                 of the Parse() function, this is a more apples-to-apples comparison. Eliminated the usage of
+//                 LazyParserHelper class due to bloat of unused variables and functions other than the bracket related
+//                 variables and functions.
+// [06May] Note 3: Some more micro-optimizations on bracket searching and using string_views vs strings sped this up
+//                 to only take ~0.13 us consistently. This is definitely on the right track now.
