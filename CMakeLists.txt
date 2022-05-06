@@ -41,11 +41,11 @@ option(
 add_subdirectory(Serenity)
 
 if (BUILD_DEMOS)
-    add_subdirectory({CMAKE_CURRENT_SOURCE_DIR}/Demos ${CMAKE_CURRENT_BINARY_DIR}/Demos)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Demos ${CMAKE_CURRENT_BINARY_DIR}/Demos)
 endif ()
 
 if (BUILD_BENCHMARKS)
-    add_subdirectory({CMAKE_CURRENT_SOURCE_DIR}/bench ${CMAKE_CURRENT_BINARY_DIR}/bench)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/bench ${CMAKE_CURRENT_BINARY_DIR}/bench)
 endif ()
 
 if (BUILD_SANDBOX)
