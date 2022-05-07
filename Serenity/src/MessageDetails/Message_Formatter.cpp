@@ -232,7 +232,7 @@ namespace serenity::msg_details {
 									}
 								// clang-format off
 								if( precisionSpecHelper.temp.size() != 0 ) {
-									index = TwoDigitFromChars(precisionSpecHelper.temp);
+									index = UnCheckedDigitFromChars(precisionSpecHelper.temp);
 										if( index > argContainer.size() ) {
 												std::string throwMsg { "Error In Precision Field For Argument \"" };
 												std::array<char, 2> buff { '\0', '\0' };
@@ -365,7 +365,7 @@ namespace serenity::msg_details {
 								throw std::runtime_error("Digit Spec For Fill/Align Cannot Be Greater Than Two Digits\n");
 								// clang-format on
 						}
-						fillAlignValues.digitSpec = TwoDigitFromChars(temp);
+						fillAlignValues.digitSpec = UnCheckedDigitFromChars(temp);
 						pos                       = tempPos;
 						continue;
 				}

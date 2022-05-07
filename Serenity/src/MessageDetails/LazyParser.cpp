@@ -7,116 +7,109 @@ namespace serenity::lazy_parser {
 		return (tokenFlags & checkValue) == checkValue;
 	}
 
-	size_t LazyParser::FindDigitEnd(std::string_view sv) {
-		size_t pos { 0 };
-		char ch { 0 };
+	void LazyParser::FindDigitEnd(std::string_view sv, size_t& start) {
 		for( ;; ) {
-				ch = sv[ pos ];
-				if( IsDigit(ch) ) {
-						++pos;
-						continue;
-				}
+				switch( sv[ start ] ) {
+						case '0': [[fallthrough]];
+						case '1': [[fallthrough]];
+						case '2': [[fallthrough]];
+						case '3': [[fallthrough]];
+						case '4': [[fallthrough]];
+						case '5': [[fallthrough]];
+						case '6': [[fallthrough]];
+						case '7': [[fallthrough]];
+						case '8': [[fallthrough]];
+						case '9': ++start; continue;
+						default: break;
+					}
 				break;
 			}
-		return pos;
 	}
 
-	int LazyParser::TwoDigitFromChars(std::string_view sv, const size_t& begin, const size_t& end) {
-		// Given what the changes here are, can probably just write some logic to
-		// get the length of the view and modulo it to get positions and generalize
-		// this function a bit
-		auto pos { static_cast<int>(begin) };
-		switch( (end - begin) ) {
+	int LazyParser::UnCheckedDigitFromChars(std::string_view sv, const size_t& begin, const size_t& end) {
+		// This is a really nasty way of doing this but hand-rolled to take in account INT_MAX of 2,147,483,647.
+		auto Digit = [](const char& ch) {
+			switch( ch ) {
+					case '0': return 0; break;
+					case '1': return 1; break;
+					case '2': return 2; break;
+					case '3': return 3; break;
+					case '4': return 4; break;
+					case '5': return 5; break;
+					case '6': return 6; break;
+					case '7': return 7; break;
+					case '8': return 8; break;
+					case '9': return 9; break;
+					default: break;
+				}
+			unreachable();
+		};
+
+		switch( end - begin ) {
 				case 0: break;
-				case 1:
-					switch( sv[ begin ] ) {
-							case '0': break;
-							case '1': ++pos; break;
-							case '2': pos += 2; break;
-							case '3': pos += 3; break;
-							case '4': pos += 4; break;
-							case '5': pos += 5; break;
-							case '6': pos += 6; break;
-							case '7': pos += 7; break;
-							case '8': pos += 8; break;
-							case '9': pos += 9; break;
-							default: break;
-						}
+				case 1: return Digit(sv[ 0 ]); break;
+				case 2: return Digit(sv[ 0 ]) * 10 + Digit(sv[ 1 ]); break;
+				case 3: return Digit(sv[ 0 ]) * 100 + Digit(sv[ 1 ]) * 10 + Digit(sv[ 2 ]); break;
+				case 4: return Digit(sv[ 0 ]) * 1'000 + Digit(sv[ 1 ]) * 100 + Digit(sv[ 2 ]) * 10 + Digit(sv[ 3 ]); break;
+				case 5:
+					return Digit(sv[ 0 ]) * 10'000 + Digit(sv[ 1 ]) * 1'000 + Digit(sv[ 2 ]) * 100 + Digit(sv[ 3 ]) * 10 +
+					       Digit(sv[ 4 ]);
 					break;
-				case 2:
-					switch( sv[ begin ] ) {
-							case '0': break;
-							case '1': ++pos; break;
-							case '2': pos += 2; break;
-							case '3': pos += 3; break;
-							case '4': pos += 4; break;
-							case '5': pos += 5; break;
-							case '6': pos += 6; break;
-							case '7': pos += 7; break;
-							case '8': pos += 8; break;
-							case '9': pos += 9; break;
-							default: break;
-						}
-					pos *= 10;
-					switch( sv[ begin + static_cast<size_t>(1) ] ) {
-							case '0': break;
-							case '1': ++pos; break;
-							case '2': pos += 2; break;
-							case '3': pos += 3; break;
-							case '4': pos += 4; break;
-							case '5': pos += 5; break;
-							case '6': pos += 6; break;
-							case '7': pos += 7; break;
-							case '8': pos += 8; break;
-							case '9': pos += 9; break;
-							default: break;
-						}
+				case 6:
+					return Digit(sv[ 0 ]) * 100'000 + Digit(sv[ 1 ]) * 10'000 + Digit(sv[ 2 ]) * 1'000 +
+					       Digit(sv[ 3 ]) * 100 + Digit(sv[ 4 ]) * 10 + Digit(sv[ 5 ]);
 					break;
-				default:
-					std::string throwMsg { "TwoDigitFromChars() Only Handles String Types Of Size 2 Or Less: \"" };
-					throwMsg.append(sv.data(), sv.size()).append("\" Doesn't Adhere To This Limitation\n");
-					throw std::runtime_error(std::move(throwMsg));
+				case 7:
+					return Digit(sv[ 0 ]) * 1'000'000 + Digit(sv[ 1 ]) * 100'000 + Digit(sv[ 2 ]) * 10'000 +
+					       Digit(sv[ 3 ]) * 1'000 + Digit(sv[ 4 ]) * 100 + Digit(sv[ 5 ]) * 10 + Digit(sv[ 6 ]);
 					break;
+				case 8:
+					return Digit(sv[ 0 ]) * 10'000'000 + Digit(sv[ 1 ]) * 1'000'000 + Digit(sv[ 2 ]) * 100'000 +
+					       Digit(sv[ 3 ]) * 10'000 + Digit(sv[ 4 ]) * 1'000 + Digit(sv[ 5 ]) * 100 + Digit(sv[ 6 ]) * 10 +
+					       Digit(sv[ 7 ]);
+					break;
+				case 9:
+					return Digit(sv[ 0 ]) * 100'000'000 + Digit(sv[ 1 ]) * 10'000'000 + Digit(sv[ 2 ]) * 1'000'000 +
+					       Digit(sv[ 3 ]) * 100'000 + Digit(sv[ 4 ]) * 10'000 + Digit(sv[ 5 ]) * 1'000 +
+					       Digit(sv[ 6 ]) * 100 + Digit(sv[ 7 ]) * 10 + Digit(sv[ 8 ]);
+					break;
+				case 10:
+					if( sv[ 0 ] > '2' ) break;
+					if( sv[ 0 ] == '2' ) {
+							if( sv[ 1 ] > '1' ) break;
+							if( sv[ 2 ] > '4' ) break;
+							if( sv[ 3 ] > '7' ) break;
+							if( sv[ 4 ] > '4' ) break;
+							if( sv[ 5 ] > '8' ) break;
+							if( sv[ 6 ] > '3' ) break;
+							if( sv[ 7 ] > '6' ) break;
+							if( sv[ 8 ] > '4' ) break;
+							if( sv[ 9 ] > '7' ) break;
+					}
+					return Digit(sv[ 0 ]) * 1'000'000'000 + Digit(sv[ 1 ]) * 100'000'000 + Digit(sv[ 2 ]) * 10'000'000 +
+					       Digit(sv[ 3 ]) * 1'000'000 + Digit(sv[ 4 ]) * 100'000 + Digit(sv[ 5 ]) * 10'000 +
+					       Digit(sv[ 6 ]) * 1'000 + Digit(sv[ 7 ]) * 100 + Digit(sv[ 8 ]) * 10 + Digit(sv[ 9 ]);
+					break;
+				default: break;
 			}
-		return pos;
+		throw std::runtime_error("Error In UnCheckedDigitFromChars(): Char Representation Is Too Large To Fit In An "
+		                         "Integer Type\n");
+		unreachable();
 	}
 
-	bool LazyParser::ParsePositionalField(std::string_view& sv, int& argIndex) {
-		size_t endPos { FindDigitEnd(sv) };
+	bool LazyParser::ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start) {
+		FindDigitEnd(sv, start);
 		auto size { sv.size() };
 
-		if( endPos <= 2 ) {
-				argIndex = TwoDigitFromChars(sv, 0, endPos);
-				sv.remove_prefix(endPos);
+		if( start <= 2 ) {
+				argIndex = UnCheckedDigitFromChars(sv, 0, start);
+				sv.remove_prefix(start);
 		} else {
 				throw std::runtime_error("Error In Positional Argument Field: Max Position (99) Exceeded\n");
 			}
-		endPos = 0;
-		for( ;; ) {
-				if( endPos >= size ) {
-						endPos = std::string_view::npos;
-						break;
-				}
-				if( sv[ endPos ] == ':' || sv[ endPos ] == '}' ) break;
-				++endPos;
-			}
 		m_tokenType |= TokenType::Positional;
-		// probably add a handle to argContainer so that a comparison can
-		// be made on the argIndex vs the # of args supplied
-		bool moreSpecsToParse { (endPos != std::string_view::npos) && sv[ endPos ] != '}' };
-		if( moreSpecsToParse ) {
-				sv.remove_prefix(endPos + 1);
-		} else {
-				if( sv[ endPos ] != '}' ) {
-						std::string throwMsg { "Error In Argument Field: Valid Argument Index Of '" };
-						std::array<char, 2> buff { '\0', '\0' };
-						std::to_chars(buff.data(), buff.data() + buff.size(), argIndex);
-						throwMsg.append(buff.data(), buff.data() + (buff[ 1 ] == '\0' ? 1 : 2));
-						throwMsg.append("' Provided But No Valid Specs Found After ':' \n ");
-						throw std::runtime_error(throwMsg);
-				}
-			}
-		return moreSpecsToParse;
+		specValues.argPosition = argIndex;
+		return true;
 	}
 
 	void serenity::lazy_parser::LazyParser::FindNestedBrackets(std::string_view sv, int& currentPos) {
@@ -176,7 +169,8 @@ namespace serenity::lazy_parser {
 				for( ;; ) {
 						ch = sv[ subPos ];
 						if( subPos > size ) bracketResults.isValid = false;
-						if( (ch == ':' || ch == '.') && sv[ subPos + 1 ] == '{' ) {
+						if( (ch == ':' || ch == '.') && sv[ static_cast<size_t>(subPos) + static_cast<size_t>(1) ] == '{' )
+						{
 								FindNestedBrackets(sv, subPos);
 						}
 						if( sv[ subPos ] != '}' ) {
@@ -189,12 +183,14 @@ namespace serenity::lazy_parser {
 				break;
 			}
 		result.preTokenStr     = std::move(sv.substr(0, pos));
-		result.remainder       = std::move(sv.substr(subPos + 1, size));
+		result.remainder       = std::move(sv.substr(static_cast<size_t>(subPos) + static_cast<size_t>(1), size));
 		bracketResults.isValid = true;
 	}
 
 	bool LazyParser::VerifyFillAlignField(std::string_view& sv, size_t& currentPos, const size_t& bracketSize) {
 		auto ch { sv[ currentPos ] };
+		size_t offset { 0 };
+
 		switch( ch ) {
 				case '<': specValues.align = Alignment::AlignLeft; break;
 				case '>': specValues.align = Alignment::AlignRight; break;
@@ -203,10 +199,12 @@ namespace serenity::lazy_parser {
 			}
 
 		if( specValues.align != Alignment::Empty ) {
+				++offset;
 				auto potentialFillChar { sv[ currentPos - 1 ] };
 
 				if( potentialFillChar != '{' && potentialFillChar != '}' ) {
 						specValues.fillCharacter = potentialFillChar;
+						++offset;
 				} else {
 						// clang-format off
 							throw std::runtime_error("Error In Fill Align Field: Alignment Option Specified Without A Fill Character\n");
@@ -224,26 +222,145 @@ namespace serenity::lazy_parser {
 									}
 						}
 						std::from_chars(sv.data() + 2, sv.data() + currentPos, specValues.alignmentPadding);
+						if( specValues.alignmentPadding != 0 ) offset += specValues.alignmentPadding > 9 ? 2 : 1;
+						// sv.remove_prefix(offset);
 						m_tokenType |= TokenType::AlignmentPadding;
 				}
 		}
 		return (specValues.align != Alignment::Empty);
 	}
 
-	bool LazyParser::HasSignField(std::string_view& sv, const size_t& bracketSize) {
-		if( bracketSize < 2 ) return false;    // this accounts for at least sign + '}'
-		switch( sv[ 0 ] ) {
+	bool LazyParser::VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+		switch( sv[ currentPosition ] ) {
 				case '+': specValues.signType = Sign::Plus; break;
 				case '-': specValues.signType = Sign::Minus; break;
 				case ' ': specValues.signType = Sign::Space; break;
-				default: return false; break;
+				default: specValues.signType = Sign::Empty; break;
 			}
-		sv.remove_prefix(1);
+		if( specValues.signType == Sign::Empty ) return false;
+		sv.remove_prefix(currentPosition + static_cast<size_t>(1));
+		m_tokenType |= TokenType::Sign;
 		return true;
 	}
 
-	static std::string_view NestedFieldTypeStr(NestedFieldType type) {
-		return type == NestedFieldType::Precision ? "Precision" : "Width";
+	bool LazyParser::VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+		// This requires a check for integer/floating point types, which is implemented in
+		// ArgContainer at the moment but not over here
+		// Integers use 0b/0B for binary, 0 for ocatal and 0x/0X for hex
+		// For floating point, the result contains a decimal point irregardless if the value contains
+		// decimal points or not where the default is to present decimal points only when present and
+		// g/G doesn't remove trailing zeros (This is by the spec being followed)
+		return false;
+	}
+
+	bool LazyParser::VerifyZeroPadField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, int currentArgIndex) {
+		specValues.fillCharacter = '0';
+		sv.remove_prefix(1);
+		auto nextCh { sv[ currentPosition ] };
+		if( nextCh == '{' ) {
+				// Handle zeroPadded field followed by some nested arg value
+				sv.remove_prefix(1);    // remove '{'
+				specValues.nestedWidthArgPos = UnCheckedDigitFromChars(sv, currentPosition, ((bracketSize % 2) + 1));
+				sv.remove_prefix(currentPosition + static_cast<size_t>(1));
+		} else if( IsDigit(nextCh) ) {
+				// Handle zeroPadded field followed by some integer literal
+				specValues.zeroPadAmount = UnCheckedDigitFromChars(sv, currentPosition, ((bracketSize % 2) + 1));
+				sv.remove_prefix(currentPosition + specValues.nestedWidthArgPos > 9 ? 2 : 1);
+		} else {
+				if( nextCh != ' ' && nextCh != '}' ) {
+						// If the next char present after '0' isn't '{', an integer literal, a space delimiter
+						// or a closing brace, then we have an invalid specifier in this field
+						throw std::runtime_error("Error Detected In Argument Formatting Field: A '0' Was Found With No "
+						                         "Accompanying Brace, Integer Literal, Space Delimiter, Or Closing "
+						                         "Brace\n");
+				}
+			}
+		return true;
+	}
+
+	bool LazyParser::VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+		// TODO: MIRROR SIMILAR PARSE VERIFICATION AS PRECISION
+
+		sv.remove_prefix(1);    // place_holder
+		return false;
+	}
+
+	bool LazyParser::VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+		auto size { sv.size() };
+		++currentPosition;
+		auto ch { sv[ currentPosition ] };
+		if( m_indexMode == IndexMode::manual && size > 3 && ch == '{' ) {
+				++currentPosition;
+				for( ;; ) {
+						if( currentPosition >= (size - 1) ) {
+								// clang-format off
+							throw std::runtime_error("Cannot Mix Manual And Automatic Indexing For Arguments\n");
+								// clang-format on
+						}
+						ch = sv[ currentPosition ];
+						if( IsDigit(ch) ) {
+								specValues.nestedPrecArgPos = UnCheckedDigitFromChars(sv, currentPosition, size);
+								++currentPosition;
+								// searching to make sure no other specs are found
+								for( ;; ) {
+										if( currentPosition >= size - 1 ) break;
+										ch = sv[ currentPosition ];
+										if( ch == '}' ) break;
+										if( ch != ' ' ) {
+												continue;
+										} else {
+												// clang-format off
+												throw std::runtime_error("Error In Precision Field: Only Positional Argument Is A Valid Specifier\n");
+												// clang-format on
+											}
+										++currentPosition;
+									}
+								break;
+						}
+						++currentPosition;
+					}
+		} else {
+				++currentPosition;
+				for( ;; ) {
+						if( currentPosition >= (size - 1) ) break;
+						ch = sv[ currentPosition ];
+						if( IsDigit(ch) ) {
+								// clang-format off
+									throw std::runtime_error("Cannot Mix Manual And Automatic Indexing For Arguments\n");
+								// clang-format on
+						}
+						if( ch != ' ' && ch != '}' ) {
+								// clang-format off
+							throw std::runtime_error("Error In Precision Field: Only Positional Argument Is A Valid Specifier\n");
+								// clang-format on
+						}
+						++currentPosition;
+					}
+			}
+		// sv.remove_prefix(currentPosition + 1);
+		return true;
+	}
+
+	bool LazyParser::VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+		if( bracketSize > 2 ) {
+				if( sv[ currentPosition + static_cast<size_t>(1) ] == '}' ) {
+						std::string tmp { 1, '}' };
+						tmp.append(result.remainder.data(), result.remainder.size());
+						result.remainder = std::move(tmp);
+						return true;
+				}
+		}
+		return false;
+	}
+
+	bool LazyParser::VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+		sv.remove_prefix(1);    // place_holder
+		return false;
+	}
+
+	bool LazyParser::VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+		sv.remove_prefix(1);    // place_holder
+		return false;
 	}
 
 	void LazyParser::FormatFillAlignToken() { }
@@ -287,56 +404,6 @@ namespace serenity::lazy_parser {
 			}
 	}
 
-	bool LazyParser::HasValidNestedField(std::string_view& sv, NestedFieldType type, size_t index) {
-		size_t primaryPos { 0 }, subPos { 0 }, argIndex { index }, svSize(sv.size() - 1);
-		char ch { sv[ 0 ] };
-		for( ;; ) {
-				ch = sv[ primaryPos ];
-				if( primaryPos > svSize ) {
-						primaryPos = std::string_view::npos;
-						break;
-				}
-				if( ch == '}' ) break;
-
-				if( !IsDigit(ch) && ch != ' ' ) {
-						std::string throwMsg { "Error In Nested Argument Bracket For " };
-						throwMsg.append(NestedFieldTypeStr(type));
-						throwMsg.append(": Only A Position Field May Be Declared In A Nested Bracket Argument\n");
-						throw std::runtime_error(std::move(throwMsg));
-				}
-
-				if( IsDigit(ch) ) {
-						subPos = primaryPos + 1;
-						for( ;; ) {
-								if( subPos > svSize ) {
-										subPos = std::string_view::npos;
-										break;
-								}
-								if( !IsDigit(sv[ subPos ]) ) break;
-								++subPos;
-							}
-						if( subPos > (primaryPos + 3) ) {
-								// clang-format off
-								throw std::runtime_error("Error In Positional Argument Field: Max Position (99) Exceeded\n");
-								// clang-format on
-						}
-						argIndex = TwoDigitFromChars(sv, primaryPos, subPos);
-				}
-				++primaryPos;
-			}
-		if( (primaryPos != std::string_view::npos && subPos != std::string_view::npos) ) {
-				if( type == NestedFieldType::Width ) {
-						specValues.nestedWidthArgPos = argIndex;
-				} else {
-						specValues.nestedPrecArgPos = argIndex;
-					}
-				sv.remove_prefix(subPos + 1);
-				return true;
-		} else {
-				return false;
-			}
-	}
-
 	// Enum Types: FillAlign, Sign, Alternate, ZeroPad, Locale, Width, Precision, Type
 	ParseResult& LazyParser::Parse(std::string_view sv) {
 		using enum TokenType;
@@ -352,122 +419,136 @@ namespace serenity::lazy_parser {
 				auto endPos { bracketResults.endPos };
 				if( endPos - startPos == 0 ) break;
 				auto argBracket { sv.substr(startPos + 1, (endPos - startPos)) };
-				auto firstChar { argBracket[ 0 ] };
 
-				if( firstChar == '}' ) {
+				// remove empty whitespace
+				if( argBracket[ 0 ] == ' ' ) {
+						argBracket.remove_prefix(1);
+						auto pos { 0 };
+						for( ;; ) {
+								auto ch = argBracket[ pos ];
+								if( ch != ' ' ) break;
+								++pos;
+							}
+				}
+
+				// Nothing to Parse - just a simple substitution
+				if( argBracket[ 0 ] == '}' ) {
 						if( m_indexMode == IndexMode::manual ) {
 								// clang-format off
-								throw std::runtime_error("Cannot Mix Manual And Automatic Indexing For Arguments\n");
+						throw std::runtime_error("Cannot Mix Manual And Automatic Indexing For Arguments\n");
 								// clang-format on
 						}
 						++argCounter;
 						break;
 				}
 
-				if( firstChar == '{' ) {
-						/*Handle Escaped Bracket*/
-				} else if( (firstChar == ':' && IsDigit(argBracket[ 1 ])) || (IsDigit(firstChar)) ) {
-						/*Handle Positional Args*/
+				/*Handle Escaped Bracket*/
+				if( argBracket[ 0 ] == '{' ) {
+						std::string tmp { result.preTokenStr };
+						tmp.append(1, '{');
+						result.preTokenStr = std::move(tmp);
+				}
+
+				/*Handle Positional Args*/
+				if( IsDigit(argBracket[ 0 ]) ) {
 						if( (m_indexMode == IndexMode::automatic) && (argCounter != 0) ) {
 								// clang-format off
 								throw std::runtime_error("Cannot Mix Manual And Automatic Indexing For Arguments\n");
 								// clang-format on
 						}
 						m_indexMode = IndexMode::manual;
-						if( !ParsePositionalField(argBracket, argCounter) ) {
-								++argCounter;
+						size_t pos { 0 };
+						if( !ParsePositionalField(argBracket, argCounter, pos) ) {
+								// clang-format off
+								// ensuring size includes at least one flag, accounting for closing '}'if there are more fields to parse (denoted by the ':')
+								if( argBracket.size() < 3 || argBracket[ 0 ] != ':' ) {
+										break; // nothing more to do
+								} else if( (argBracket.size() < 3 && argBracket[ 0 ] == ':') || ((argBracket.size() > 3 || (argBracket[ 0 ] != ':' && argBracket[ 0 ] != ' '))) )  {
+									// Eliminate any whitespace just in case there is more to parse and user was just being dumb with specs	
+									if( argBracket.size() > 3 && argBracket[ 0 ] == ' ' ) {
+												auto pos { 0 };
+												auto ch { argBracket[ pos ] };
+												for( ;; ) {
+														if( ch != ' ' ) break;
+														++pos;
+													}
+												if( argBracket.size() > 2 && argBracket[ 0 ] != ':' && argBracket[ 0 ] != '}' ) {
+													// No saving the user here -> throw hands up
+													throw std::runtime_error("Error In Argument Field: Incorrect Formatting Detected\n");
+														// clang-format on
+												}
+										}
+								}
 						}
-				} else if( firstChar == ':' && argBracket.size() > 2 ) {
-						// ensuring size includes at least one flag, accounting for closing '}'
+						++argCounter;
+				}
+
+				if( argBracket[ 0 ] == ':' && argBracket.size() > 2 ) {
 						argBracket.remove_prefix(1);
 				} else {
-						throw std::runtime_error("Error In Argument Field: Incorrect Formatting Detected\n");
 					}
 
-				const auto& argBracketSize { argBracket.size() };
+				// Work In Progress On Shifting The Crap Ton Of  If/Else calls To A
+				// Simple For Loop Switch Case Iterative Approach
 				size_t pos { 0 };
-				/* Work In Progress On Shifting The Crap Ton Of  If/Else calls To A Simple For Loop Switch Case Iterative
-				 * Approach */
-				// const auto& argBracketSize { argBracket.size() };
-				// size_t pos { 0 };
-				// for( ;; ) {
-				//		if( argBracketSize > 2 ) {
-				//				auto ch { argBracket[ 0 ] };
-				//				switch( ch ) {
-				//						case '^': [[fallthrough]];
-				//						case '<': [[fallthrough]];
-				//						case '>':
-				//							VerifyFillAlignField(argBracket, pos, argBracketSize);
-				//							break;
-				//						case '+': [[fallthrough]];
-				//						case '-': [[fallthrough]];
-				//						case ' ': break;
-				//					}
+				for( ;; ) {
+						auto argBracketSize { argBracket.size() };
+						if( (argBracketSize <= 1) || (pos >= argBracketSize - 1) ) break;
+						auto ch { argBracket[ pos ] };
+						switch( ch ) {
+								case '^': [[fallthrough]];
+								case '<': [[fallthrough]];
+								case '>': VerifyFillAlignField(argBracket, pos, argBracketSize); break;
+								case '+': [[fallthrough]];
+								case '-': [[fallthrough]];
+								case ' ': VerifySignField(argBracket, pos, argBracketSize); break;
+								case '#': VerifyAltField(argBracket, pos, argBracketSize); break;
+								case '0': VerifyZeroPadField(argBracket, pos, argBracketSize, argCounter); break;
+								case '{': VerifyWidthField(argBracket, pos, argBracketSize); break;
+								case '.': VerifyPrecisionField(argBracket, pos, argBracketSize); break;
+								case 'L': VerifyLocaleField(argBracket, pos, argBracketSize); break;
+								case '}': VerifyEscapedBracket(argBracket, pos, argBracketSize); break;
+								default:
+									if( IsAlpha(ch) ) {
+											VerifyTypeSpec(argBracket, pos, argBracketSize);
+									}
+									break;    // still no custom support
+							}
+						++pos;
+					}
+
+				// if( argBracketSize > 2 && argBracket[ 0 ] == '#' ) {
+				//		m_tokenType |= Alternate;
+				//		argBracket.remove_prefix(1);
+				//}
+
+				// if( argBracketSize > 2 && argBracket[ 0 ] == '{' ) {
+				//		argBracket.remove_prefix(1);    // remove the '{'
+				//		if( !HasValidNestedField(argBracket, NestedFieldType::Width, argCounter) ) {
+				//				// clang-format off
+				//				throw std::runtime_error("Error In Width Field: '{' Found With No
+				// Appropriately
+				// Matching '}'\n");
+				//				// clang-format on
 				//		}
-				//		++pos;
-				//	}
+				//		m_tokenType |= Width;
+				//} else if( argBracketSize > 2 && IsDigit(argBracket[ 0 ]) ) {
+				//		m_tokenType |= Width;
+				//		argBracket.remove_prefix(1);
+				//}
 
-				if( VerifyFillAlignField(argBracket, pos, argBracketSize) ) {
-						m_tokenType |= FillAlign;
-				}
+				// if( argBracketSize > 2 && sv[ 0 ] == 'L' ) {
+				//		m_tokenType |= Locale;
+				//		argBracket.remove_prefix(1);
+				//}
 
-				if( HasSignField(argBracket, argBracketSize) ) {
-						m_tokenType |= Sign;
-				}
-
-				if( argBracketSize > 2 && argBracket[ 0 ] == '#' ) {
-						m_tokenType |= Alternate;
-						argBracket.remove_prefix(1);
-				}
-
-				if( argBracketSize > 2 && argBracket[ 0 ] == '0' ) {
-						m_tokenType |= ZeroPad;
-						argBracket.remove_prefix(1);
-				}
-
-				if( argBracketSize > 2 && argBracket[ 0 ] == '{' ) {
-						argBracket.remove_prefix(1);    // remove the '{'
-						if( !HasValidNestedField(argBracket, NestedFieldType::Width, argCounter) ) {
-								// clang-format off
-								throw std::runtime_error("Error In Width Field: '{' Found With No Appropriately Matching '}'\n");
-								// clang-format on
-						}
-						m_tokenType |= Width;
-				} else if( argBracketSize > 2 && IsDigit(argBracket[ 0 ]) ) {
-						m_tokenType |= Width;
-						argBracket.remove_prefix(1);
-				}
-
-				if( argBracketSize > 2 && argBracket[ 0 ] == '.' ) {
-						argBracket.remove_prefix(1);
-						bool isPotentialNestedPrecision { argBracketSize > 2 && argBracket[ 0 ] == '{' };
-						if( isPotentialNestedPrecision ) {
-								argBracket.remove_prefix(1);    // remove the '{'
-								if( !HasValidNestedField(argBracket, NestedFieldType::Precision, argCounter) ) {
-										// clang-format off
-										throw std::runtime_error("Error In Precision Field: '{' Found With No Appropriately Matching '}'\n");
-										// clang-format on
-								}
-								m_tokenType |= Precision;
-						} else if( argBracketSize > 2 && IsDigit(argBracket[ 0 ]) ) {
-								m_tokenType |= Precision;
-								argBracket.remove_prefix(1);
-						}
-				}
-
-				if( argBracketSize > 2 && sv[ 0 ] == 'L' ) {
-						m_tokenType |= Locale;
-						argBracket.remove_prefix(1);
-				}
-
-				if( argBracketSize > 2 && IsAlpha(argBracket[ 0 ]) ) {
-						// Would need to verify the type spec is valid for the arg type supplied
-						m_tokenType |= Type;
-				}
+				// if( argBracketSize > 2 && IsAlpha(argBracket[ 0 ]) ) {
+				//		// Would need to verify the type spec is valid for the arg type supplied
+				//		m_tokenType |= Type;
+				//}
 
 				break;
 			}    // outtermost for(;;) loop
-		FormatTokens();
 		return result;
 	}
 

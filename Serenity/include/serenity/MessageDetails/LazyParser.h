@@ -57,29 +57,26 @@ namespace serenity::lazy_parser {
 		automatic,
 		manual
 	};
-	enum class NestedFieldType
-	{
-		Width,
-		Precision
-	};
 
+	// Will shrink the size once I have everything accounted for
 	struct SpecFormatting
 	{
+		char argPosition { 0 };
 		Alignment align { Alignment::Empty };
 		size_t alignmentPadding { 0 };
 		char fillCharacter { '\0' };
 		Sign signType { Sign::Empty };
 		size_t nestedWidthArgPos { 0 };
 		size_t nestedPrecArgPos { 0 };
+		size_t zeroPadAmount { 0 };
 	};
 
 	struct ParseResult
 	{
 		void Reset() {
-			preTokenStr = tokenResult = remainder = "";
+			preTokenStr = remainder = "";
 		}
 		std::string_view preTokenStr;
-		std::string_view tokenResult;
 		std::string_view remainder;
 	};
 
@@ -106,13 +103,19 @@ namespace serenity::lazy_parser {
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
 
-		bool ParsePositionalField(std::string_view& sv, int& argIndex);
-		size_t FindDigitEnd(std::string_view);
-		int TwoDigitFromChars(std::string_view sv, const size_t& begin, const size_t& end);
+		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
+		void FindDigitEnd(std::string_view, size_t& start);
+		int UnCheckedDigitFromChars(std::string_view sv, const size_t& begin, const size_t& end);
 
-		bool VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSIze);
-		bool HasSignField(std::string_view& sv, const size_t& bracketSIze);
-		bool HasValidNestedField(std::string_view& sv, NestedFieldType type, size_t index);
+		bool VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyZeroPadField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, int currentArgIndex);
+		bool VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 
 		bool IsFlagSet(TokenType& tokenFlags, TokenType checkValue);
 

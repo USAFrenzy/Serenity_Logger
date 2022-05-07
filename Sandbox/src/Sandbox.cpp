@@ -1,6 +1,7 @@
 
 
 #define ENABLE_MEMORY_LEAK_DETECTION 0
+#define GENERAL_SANDBOX              0
 #define ROTATING_TESTING             0
 #define PARSE_TESTING                1
 
@@ -33,15 +34,19 @@ int main() {
 	using namespace se_colors;
 	using namespace experimental;
 
+#if GENERAL_SANDBOX
+
 	serenity::targets::ColorConsole C;
 	serenity::targets::FileTarget testFile;
 
-#ifdef ENABLE_ROTATION_SECTION
+	#ifdef ENABLE_ROTATION_SECTION
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Daily/DailyLog.txt";
-#else
+	#else
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Rotating_Log.txt";
-#endif    // ENABLE_ROTATION_SECTION
+	#endif    // ENABLE_ROTATION_SECTION
 	serenity::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", dailyFilePath.string(), true);
+
+#endif    //  GENERAL_SANDBOX
 
 #ifdef ENABLE_ROTATION_SECTION
 	std::cout << "###############################################################"
@@ -199,7 +204,7 @@ int main() {
 #ifdef ENABLE_PARSE_SECTION
 	using namespace lazy_parser;
 
-	std::string parseString { "This is a parse string with brackets 1: {:1}, 2: {2:+}, and 3: {3:{4}.{5}}" };
+	std::string parseString { "This is a parse string with brackets 1: {1}, 2: {2:+}, and 3: {3:0{4}.{5}}" };
 
 	LazyParser parser;
 	Instrumentator timer;
