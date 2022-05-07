@@ -207,7 +207,7 @@ int main() {
 	ParseResult result {};
 	result.remainder = parseString;
 	timer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 2'000'000; ++i ) {
+	for( size_t i { 0 }; i < 10'000'000; ++i ) {
 			// simulating a workload of taking the result and continuing to parse
 			for( ;; ) {
 					if( result.remainder.size() == 0 ) {
@@ -221,7 +221,7 @@ int main() {
 		}
 	timer.StopWatch_Stop();
 
-	std::cout << "LazyParser Parsing Elapsed Time Over 2,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 2'000'000.0f << " us\n";
+	std::cout << "LazyParser Parsing Elapsed Time Over 10,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 10'000'000.0f << " us\n";
 
 #endif    // ENABLE_PARSE_SECTION
 

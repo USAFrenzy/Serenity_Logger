@@ -21,7 +21,7 @@ namespace serenity::lazy_parser {
 		return pos;
 	}
 
-	int LazyParser::TwoDigitFromChars(std::string_view sv, size_t begin, size_t end) {
+	int LazyParser::TwoDigitFromChars(std::string_view sv, const size_t& begin, const size_t& end) {
 		// Given what the changes here are, can probably just write some logic to
 		// get the length of the view and modulo it to get positions and generalize
 		// this function a bit
@@ -100,6 +100,7 @@ namespace serenity::lazy_parser {
 				if( sv[ endPos ] == ':' || sv[ endPos ] == '}' ) break;
 				++endPos;
 			}
+		m_tokenType |= TokenType::Positional;
 		// probably add a handle to argContainer so that a comparison can
 		// be made on the argIndex vs the # of args supplied
 		bool moreSpecsToParse { (endPos != std::string_view::npos) && sv[ endPos ] != '}' };
@@ -118,16 +119,15 @@ namespace serenity::lazy_parser {
 		return moreSpecsToParse;
 	}
 
-	void serenity::lazy_parser::LazyParser::FindNestedBrackets(std::string_view sv, size_t& currentPos) {
-		size_t pos { currentPos };
-		auto size { sv.size() };
+	void serenity::lazy_parser::LazyParser::FindNestedBrackets(std::string_view sv, int& currentPos) {
+		int pos { currentPos };
+		auto size { sv.size() - 1 };
 		for( ;; ) {
 				// search for any nested fields
-				if( pos >= size ) break;
+				if( pos > size ) break;
 				// reset on each iteration
 				bool nestedOpenFound { false };
 				bool nestedCloseFound { false };
-
 				if( sv[ pos ] != '{' ) {
 						// potential nested arg
 						++pos;
@@ -136,7 +136,7 @@ namespace serenity::lazy_parser {
 						nestedOpenFound = true;
 						for( ;; ) {
 								// found a potential nested bracket, now find a closing bracket
-								if( pos >= size ) break;
+								if( pos > size ) break;
 								if( sv[ pos ] != '}' ) {
 										++pos;
 										continue;
@@ -153,17 +153,16 @@ namespace serenity::lazy_parser {
 			}    // nested opening brace loop
 	}
 
-	void LazyParser::FindBrackets(std::string_view sv) {
+	void LazyParser::FindBrackets(std::string_view& sv) {
 		bracketResults.Reset();
-		size_t pos { 0 };
-		size_t subPos { 0 };
-		auto size { sv.size() };
+		int pos { 0 }, subPos { 0 };
+		auto size { sv.size() - 1 };
 		// This is mainly when setting the sv to the remainder value in the Parse function
 		if( size != 0 && sv[ 0 ] == '\0' ) {
 				sv.remove_prefix(1);
 		}
 		for( ;; ) {
-				if( pos >= size ) {
+				if( pos > size ) {
 						bracketResults.isValid = false;
 						break;
 				}
@@ -173,10 +172,11 @@ namespace serenity::lazy_parser {
 				}
 				bracketResults.beginPos = pos;
 				subPos                  = pos + 1;
+				auto ch { sv[ subPos ] };
 				for( ;; ) {
-						if( subPos >= size ) bracketResults.isValid = false;
-						auto ch { sv[ subPos ] };
-						if( (ch == ':' || ch == '.') && sv[ subPos + static_cast<size_t>(1) ] == '{' ) {
+						ch = sv[ subPos ];
+						if( subPos > size ) bracketResults.isValid = false;
+						if( (ch == ':' || ch == '.') && sv[ subPos + 1 ] == '{' ) {
 								FindNestedBrackets(sv, subPos);
 						}
 						if( sv[ subPos ] != '}' ) {
@@ -189,65 +189,50 @@ namespace serenity::lazy_parser {
 				break;
 			}
 		result.preTokenStr     = std::move(sv.substr(0, pos));
-		result.remainder       = std::move(sv.substr(subPos + static_cast<size_t>(1), size));
+		result.remainder       = std::move(sv.substr(subPos + 1, size));
 		bracketResults.isValid = true;
 	}
 
-	static constexpr std::array<char, 3> fillAlignSpecs = { '<', '>', '^' };
+	bool LazyParser::VerifyFillAlignField(std::string_view& sv, size_t& currentPos, const size_t& bracketSize) {
+		auto ch { sv[ currentPos ] };
+		switch( ch ) {
+				case '<': specValues.align = Alignment::AlignLeft; break;
+				case '>': specValues.align = Alignment::AlignRight; break;
+				case '^': specValues.align = Alignment::AlignCenter; break;
+				default: specValues.align = Alignment::Empty; break;
+			}
 
-	bool LazyParser::HasFillAlignField(std::string_view& sv) {
-		auto svSize { sv.size() };
-		if( svSize < 2 ) return false;    // accounting for fill-align spec and '}'
-		size_t pos { 0 };
+		if( specValues.align != Alignment::Empty ) {
+				auto potentialFillChar { sv[ currentPos - 1 ] };
 
-		auto ch { sv[ pos ] };
-		auto nextCh { sv[ ++pos ] };
-		if( ch == '}' ) return false;
-		if( ch != '{' ) {
-				switch( ch ) {
-						case '<': [[fallthrough]];
-						case '>': [[fallthrough]];
-						case '^':
-							// clang-format off
+				if( potentialFillChar != '{' && potentialFillChar != '}' ) {
+						specValues.fillCharacter = potentialFillChar;
+				} else {
+						// clang-format off
 							throw std::runtime_error("Error In Fill Align Field: Alignment Option Specified Without A Fill Character\n");
-							// clang-format on
-							break;
-						default: break;
+						// clang-format on
 					}
 
-				switch( nextCh ) {
-						case '<': specValues.align = Alignment::AlignLeft; break;
-						case '>': specValues.align = Alignment::AlignRight; break;
-						case '^': specValues.align = Alignment::AlignCenter; break;
-						default: specValues.align = Alignment::Empty; break;
-					}
-
-				if( specValues.align != Alignment::Empty ) {
-						specValues.fillCharacter = ch;
-				}
-
-				++pos;
-				if( pos < svSize ) {
-						if( IsDigit(sv[ pos ]) ) {
-								++pos;
+				++currentPos;
+				if( currentPos < bracketSize ) {
+						if( IsDigit(sv[ currentPos ]) ) {
+								++currentPos;
 								for( ;; ) {
-										if( pos >= svSize ) break;
-										if( !IsDigit(sv[ pos ]) ) break;
-										++pos;
+										if( currentPos >= bracketSize ) break;
+										if( !IsDigit(sv[ currentPos ]) ) break;
+										++currentPos;
 									}
 						}
-						std::from_chars(sv.data() + 2, sv.data() + pos, specValues.alignmentPadding);
+						std::from_chars(sv.data() + 2, sv.data() + currentPos, specValues.alignmentPadding);
 						m_tokenType |= TokenType::AlignmentPadding;
 				}
 		}
 		return (specValues.align != Alignment::Empty);
 	}
 
-	static constexpr std::array<char, 3> signSpecs = { '+', '-', ' ' };
-	bool LazyParser::HasSignField(std::string_view& sv) {
-		if( sv.size() < 2 ) return false;    // this accounts for at least sign + '}'
-		auto ch { sv[ 0 ] };
-		switch( ch ) {
+	bool LazyParser::HasSignField(std::string_view& sv, const size_t& bracketSize) {
+		if( bracketSize < 2 ) return false;    // this accounts for at least sign + '}'
+		switch( sv[ 0 ] ) {
 				case '+': specValues.signType = Sign::Plus; break;
 				case '-': specValues.signType = Sign::Minus; break;
 				case ' ': specValues.signType = Sign::Space; break;
@@ -263,7 +248,7 @@ namespace serenity::lazy_parser {
 
 	void LazyParser::FormatFillAlignToken() { }
 
-	void LazyParser::FormatEmptyToken() { }
+	void LazyParser::FormatPositionalToken() { }
 
 	void LazyParser::FormatSignToken() { }
 
@@ -285,55 +270,29 @@ namespace serenity::lazy_parser {
 
 	void LazyParser::FormatTokens() {
 		using enum TokenType;
-		if( IsFlagSet(m_tokenType, FillAlign) ) {
-				FormatFillAlignToken();
-
-				/*			m_tokenStorage.emplace_back(
-				                        std::make_unique<FillAlignToken>(originalBracket, m_tokenType, argCounter));*/
-		} else if( IsFlagSet(m_tokenType, Sign) ) {
-				FormatSignToken();
-				/*	m_tokenStorage.emplace_back(
-				        std::make_unique<SignToken>(originalBracket, m_tokenType, argCounter));*/
-		} else if( IsFlagSet(m_tokenType, Alternate) ) {
-				FormatAlternateToken();
-				/*	m_tokenStorage.emplace_back(
-				        std::make_unique<AlternateToken>(originalBracket, m_tokenType, argCounter));*/
-		} else if( IsFlagSet(m_tokenType, ZeroPad) ) {
-				FormatZeroPadToken();
-				/*	m_tokenStorage.emplace_back(
-				        std::make_unique<ZeroPadToken>(originalBracket, m_tokenType, argCounter));*/
-		} else if( IsFlagSet(m_tokenType, Width) ) {
-				FormatWidthToken();
-				/*m_tokenStorage.emplace_back(
-				std::make_unique<WidthToken>(originalBracket, m_tokenType, argCounter));*/
-		} else if( IsFlagSet(m_tokenType, Precision) ) {
-				FormatPrecisionToken();
-				/*	m_tokenStorage.emplace_back(
-				        std::make_unique<PrecisionToken>(originalBracket, m_tokenType, argCounter));*/
-		} else if( IsFlagSet(m_tokenType, Locale) ) {
-				FormatLocaleToken();
-				/*	m_tokenStorage.emplace_back(
-				        std::make_unique<LocaleToken>(originalBracket, m_tokenType, argCounter));*/
-		} else if( IsFlagSet(m_tokenType, Type) ) {
-				FormatTypeToken();
-				/*	m_tokenStorage.emplace_back(
-				        std::make_unique<TypeToken>(originalBracket, m_tokenType, argCounter));*/
-		} else if( IsFlagSet(m_tokenType, Custom) ) {
-				// TODO: Actually implement a way to forward user spec and formatting
-				// NOTE: I literally have no idea how fmtlib/<format> handles this, so
-				//       this will be saved for last
-				FormatCustomToken();
-				/*m_tokenStorage.emplace_back(
-				std::make_unique<CustomToken>(originalBracket, m_tokenType, argCounter));*/
-		}
+		switch( m_tokenType ) {
+				case AlignmentPadding: [[fallthrough]];
+				case FillAlign: FormatFillAlignToken(); break;
+				case Sign: FormatSignToken(); break;
+				case Alternate: FormatAlternateToken(); break;
+				case ZeroPad: FormatZeroPadToken(); break;
+				case Locale: FormatLocaleToken(); break;
+				case Width: FormatWidthToken(); break;
+				case Precision: FormatPrecisionToken(); break;
+				case Type: FormatTypeToken(); break;
+				case CharAggregate: FormatCharAggregateToken(); break;
+				case Custom: FormatCustomToken(); break;
+				case Positional: FormatPositionalToken(); break;
+				default: break;
+			}
 	}
 
 	bool LazyParser::HasValidNestedField(std::string_view& sv, NestedFieldType type, size_t index) {
-		size_t primaryPos { 0 }, subPos { 0 }, argIndex { index };
-		char ch { 0 };
+		size_t primaryPos { 0 }, subPos { 0 }, argIndex { index }, svSize(sv.size() - 1);
+		char ch { sv[ 0 ] };
 		for( ;; ) {
 				ch = sv[ primaryPos ];
-				if( primaryPos >= sv.size() ) {
+				if( primaryPos > svSize ) {
 						primaryPos = std::string_view::npos;
 						break;
 				}
@@ -347,16 +306,19 @@ namespace serenity::lazy_parser {
 				}
 
 				if( IsDigit(ch) ) {
-						// TODO: Add index mode check here as well
 						subPos = primaryPos + 1;
 						for( ;; ) {
-								if( subPos >= sv.size() ) break;
+								if( subPos > svSize ) {
+										subPos = std::string_view::npos;
+										break;
+								}
 								if( !IsDigit(sv[ subPos ]) ) break;
 								++subPos;
 							}
 						if( subPos > (primaryPos + 3) ) {
-								throw std::runtime_error("Error In Positional Argument Field: Max Position (99) "
-								                         "Exceeded\n");
+								// clang-format off
+								throw std::runtime_error("Error In Positional Argument Field: Max Position (99) Exceeded\n");
+								// clang-format on
 						}
 						argIndex = TwoDigitFromChars(sv, primaryPos, subPos);
 				}
@@ -422,25 +384,48 @@ namespace serenity::lazy_parser {
 						throw std::runtime_error("Error In Argument Field: Incorrect Formatting Detected\n");
 					}
 
-				if( HasFillAlignField(argBracket) ) {
+				const auto& argBracketSize { argBracket.size() };
+				size_t pos { 0 };
+				/* Work In Progress On Shifting The Crap Ton Of  If/Else calls To A Simple For Loop Switch Case Iterative
+				 * Approach */
+				// const auto& argBracketSize { argBracket.size() };
+				// size_t pos { 0 };
+				// for( ;; ) {
+				//		if( argBracketSize > 2 ) {
+				//				auto ch { argBracket[ 0 ] };
+				//				switch( ch ) {
+				//						case '^': [[fallthrough]];
+				//						case '<': [[fallthrough]];
+				//						case '>':
+				//							VerifyFillAlignField(argBracket, pos, argBracketSize);
+				//							break;
+				//						case '+': [[fallthrough]];
+				//						case '-': [[fallthrough]];
+				//						case ' ': break;
+				//					}
+				//		}
+				//		++pos;
+				//	}
+
+				if( VerifyFillAlignField(argBracket, pos, argBracketSize) ) {
 						m_tokenType |= FillAlign;
 				}
 
-				if( HasSignField(argBracket) ) {
+				if( HasSignField(argBracket, argBracketSize) ) {
 						m_tokenType |= Sign;
 				}
 
-				if( argBracket.size() > 2 && argBracket[ 0 ] == '#' ) {
+				if( argBracketSize > 2 && argBracket[ 0 ] == '#' ) {
 						m_tokenType |= Alternate;
 						argBracket.remove_prefix(1);
 				}
 
-				if( argBracket.size() > 2 && argBracket[ 0 ] == '0' ) {
+				if( argBracketSize > 2 && argBracket[ 0 ] == '0' ) {
 						m_tokenType |= ZeroPad;
 						argBracket.remove_prefix(1);
 				}
 
-				if( argBracket.size() > 2 && argBracket[ 0 ] == '{' ) {
+				if( argBracketSize > 2 && argBracket[ 0 ] == '{' ) {
 						argBracket.remove_prefix(1);    // remove the '{'
 						if( !HasValidNestedField(argBracket, NestedFieldType::Width, argCounter) ) {
 								// clang-format off
@@ -448,14 +433,14 @@ namespace serenity::lazy_parser {
 								// clang-format on
 						}
 						m_tokenType |= Width;
-				} else if( argBracket.size() > 2 && IsDigit(argBracket[ 0 ]) ) {
+				} else if( argBracketSize > 2 && IsDigit(argBracket[ 0 ]) ) {
 						m_tokenType |= Width;
 						argBracket.remove_prefix(1);
 				}
 
-				if( argBracket.size() > 2 && argBracket[ 0 ] == '.' ) {
+				if( argBracketSize > 2 && argBracket[ 0 ] == '.' ) {
 						argBracket.remove_prefix(1);
-						bool isPotentialNestedPrecision { argBracket.size() > 2 && argBracket[ 0 ] == '{' };
+						bool isPotentialNestedPrecision { argBracketSize > 2 && argBracket[ 0 ] == '{' };
 						if( isPotentialNestedPrecision ) {
 								argBracket.remove_prefix(1);    // remove the '{'
 								if( !HasValidNestedField(argBracket, NestedFieldType::Precision, argCounter) ) {
@@ -464,18 +449,18 @@ namespace serenity::lazy_parser {
 										// clang-format on
 								}
 								m_tokenType |= Precision;
-						} else if( sv.size() > 2 && IsDigit(argBracket[ 0 ]) ) {
+						} else if( argBracketSize > 2 && IsDigit(argBracket[ 0 ]) ) {
 								m_tokenType |= Precision;
 								argBracket.remove_prefix(1);
 						}
 				}
 
-				if( argBracket.size() > 2 && sv[ 0 ] == 'L' ) {
+				if( argBracketSize > 2 && sv[ 0 ] == 'L' ) {
 						m_tokenType |= Locale;
 						argBracket.remove_prefix(1);
 				}
 
-				if( argBracket.size() > 2 && IsAlpha(argBracket[ 0 ]) ) {
+				if( argBracketSize > 2 && IsAlpha(argBracket[ 0 ]) ) {
 						// Would need to verify the type spec is valid for the arg type supplied
 						m_tokenType |= Type;
 				}

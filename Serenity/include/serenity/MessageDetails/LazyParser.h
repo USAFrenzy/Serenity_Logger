@@ -21,6 +21,7 @@ namespace serenity::lazy_parser {
 		Type             = 1 << 8,
 		CharAggregate    = 1 << 9,
 		Custom           = 1 << 10,
+		Positional       = 1 << 11,
 	};
 	constexpr TokenType operator|(TokenType lhs, TokenType rhs) {
 		using uType = std::underlying_type_t<TokenType>;
@@ -102,30 +103,30 @@ namespace serenity::lazy_parser {
 		~LazyParser()                            = default;
 
 		ParseResult& Parse(std::string_view sv);
-		void FindBrackets(std::string_view sv);
-		void FindNestedBrackets(std::string_view sv, size_t& currentPos);
+		void FindBrackets(std::string_view& sv);
+		void FindNestedBrackets(std::string_view sv, int& currentPos);
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex);
 		size_t FindDigitEnd(std::string_view);
-		int TwoDigitFromChars(std::string_view sv, size_t begin, size_t end);
+		int TwoDigitFromChars(std::string_view sv, const size_t& begin, const size_t& end);
 
-		bool HasFillAlignField(std::string_view& sv);
-		bool HasSignField(std::string_view& sv);
+		bool VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSIze);
+		bool HasSignField(std::string_view& sv, const size_t& bracketSIze);
 		bool HasValidNestedField(std::string_view& sv, NestedFieldType type, size_t index);
 
 		bool IsFlagSet(TokenType& tokenFlags, TokenType checkValue);
 
-		void FormatEmptyToken();
-		void FormatFillAlignToken();
-		void FormatSignToken();
-		void FormatAlternateToken();
-		void FormatZeroPadToken();
-		void FormatLocaleToken();
-		void FormatWidthToken();
-		void FormatPrecisionToken();
-		void FormatTypeToken();
-		void FormatCharAggregateToken();
-		void FormatCustomToken();
+		void FormatFillAlignToken();        // To Be Implemented
+		void FormatSignToken();             // To Be Implemented
+		void FormatAlternateToken();        // To Be Implemented
+		void FormatZeroPadToken();          // To Be Implemented
+		void FormatLocaleToken();           // To Be Implemented
+		void FormatWidthToken();            // To Be Implemented
+		void FormatPrecisionToken();        // To Be Implemented
+		void FormatTypeToken();             // To Be Implemented
+		void FormatCharAggregateToken();    // To Be Implemented
+		void FormatCustomToken();           // To Be Implemented
+		void FormatPositionalToken();       // To Be Implemented
 
 		void FormatTokens();    // To Be Implemented
 
