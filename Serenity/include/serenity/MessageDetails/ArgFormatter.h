@@ -1,9 +1,17 @@
 #pragma once
 
+#include <serenity/MessageDetails/ArgContainer.h>
+
 #include <array>
 #include <memory>
 #include <string>
 #include <vector>
+
+// Given that this class is in charge of parsing and formatting the tokens found,
+// it'd be more apt to call this whole thing "ArgFormatter" instead; especially
+// since I plan to add elements of ArgContainer in here for type checking when
+// parsing the message (ArgContainer will have some significant changes to reflect
+// that idea).
 
 namespace serenity::lazy_parser {
 
@@ -58,6 +66,12 @@ namespace serenity::lazy_parser {
 		manual
 	};
 
+	enum class NestedFieldType
+	{
+		Prec,
+		Width
+	};
+
 	// Will shrink the size once I have everything accounted for
 	struct SpecFormatting
 	{
@@ -69,15 +83,19 @@ namespace serenity::lazy_parser {
 		size_t nestedWidthArgPos { 0 };
 		size_t nestedPrecArgPos { 0 };
 		size_t zeroPadAmount { 0 };
+		char typeSpec { '\0' };
+		bool hasAltForm { false };
+		const char* preAltForm { "\0" };
 	};
 
 	struct ParseResult
 	{
+		char defaultValue { '\0' };
+		std::string_view preTokenStr { &defaultValue };
+		std::string_view remainder { &defaultValue };
 		void Reset() {
-			preTokenStr = remainder = "";
+			preTokenStr = remainder = &defaultValue;
 		}
-		std::string_view preTokenStr;
-		std::string_view remainder;
 	};
 
 	struct BracketSearchResults
@@ -91,31 +109,35 @@ namespace serenity::lazy_parser {
 		size_t endPos { 0 };
 	};
 
-	class LazyParser
+	class ArgFormatter
 	{
+		using ArgContainer = serenity::experimental::msg_details::ArgContainer;
+
 	      public:
-		LazyParser()                             = default;
-		LazyParser(const LazyParser&)            = delete;
-		LazyParser& operator=(const LazyParser&) = delete;
-		~LazyParser()                            = default;
+		ArgFormatter()                               = default;
+		ArgFormatter(const ArgFormatter&)            = delete;
+		ArgFormatter& operator=(const ArgFormatter&) = delete;
+		~ArgFormatter()                              = default;
 
 		ParseResult& Parse(std::string_view sv);
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
-		void FindDigitEnd(std::string_view, size_t& start);
-		int UnCheckedDigitFromChars(std::string_view sv, const size_t& begin, const size_t& end);
+		size_t FindDigitEnd(std::string_view, size_t start);
+		int NoCheckIntFromChars(std::string_view sv, const size_t& begin, const size_t& end);
 
+		void VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize);
 		bool VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		bool VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		bool VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, int argIndex);
 		bool VerifyZeroPadField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, int currentArgIndex);
 		bool VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		bool VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		bool VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		bool VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);    // TO be Implemented
+		bool VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec, int argIndex);
 		bool VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type);
 
 		bool IsFlagSet(TokenType& tokenFlags, TokenType checkValue);
 
@@ -130,8 +152,11 @@ namespace serenity::lazy_parser {
 		void FormatCharAggregateToken();    // To Be Implemented
 		void FormatCustomToken();           // To Be Implemented
 		void FormatPositionalToken();       // To Be Implemented
+		void FormatTokens();                // To Be Implemented
 
-		void FormatTokens();    // To Be Implemented
+		template<typename... Args> void CaptureArgs(std::string_view fmtString, Args&&... args) {
+			argStorage.CaptureArgs(fmtString, std::forward<Args>(args)...);
+		}
 
 	      private:
 		IndexMode m_indexMode { IndexMode::automatic };
@@ -140,6 +165,7 @@ namespace serenity::lazy_parser {
 		ParseResult result {};
 		BracketSearchResults bracketResults {};
 		int argCounter { 0 };
+		serenity::experimental::msg_details::ArgContainer argStorage {};
 	};
 
 }    // namespace serenity::lazy_parser

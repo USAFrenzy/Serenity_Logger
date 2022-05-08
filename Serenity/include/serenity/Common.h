@@ -95,9 +95,6 @@
 #define DEFAULT_BUFFER_SIZE (64 * KB)    // used for file buffers
 //#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)    // used for lazy parsing
 
-// declaring for use later and for doc purposes
-namespace serenity::experimental { }
-
 namespace serenity {
 
 	namespace globals {

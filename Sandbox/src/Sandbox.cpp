@@ -13,7 +13,7 @@
 
 #if PARSE_TESTING
 	#define ENABLE_PARSE_SECTION
-	#include <serenity/MessageDetails/LazyParser.h>
+	#include <serenity/MessageDetails/ArgFormatter.h>
 #endif
 
 #include <iostream>
@@ -204,14 +204,22 @@ int main() {
 #ifdef ENABLE_PARSE_SECTION
 	using namespace lazy_parser;
 
-	std::string parseString { "This is a parse string with brackets 1: {1}, 2: {2:+}, and 3: {3:0{4}.{5}}" };
+	std::string parseString { "This is a parse string with brackets 1: {0:#{1}}, 2: {2:+}, and 3: {3:0{4}.{5}}" };
+	int a { 42 };
+	int b { 5 };
+	float c { 32.5f };
+	double d { 54.42 };
+	int e { 6 };
+	int f { 7 };
 
-	LazyParser parser;
+	ArgFormatter parser;
 	Instrumentator timer;
 
 	ParseResult result {};
 	result.remainder = parseString;
+
 	timer.StopWatch_Reset();
+	parser.CaptureArgs(parseString, a, b, c, d, e, f);
 	for( size_t i { 0 }; i < 10'000'000; ++i ) {
 			// simulating a workload of taking the result and continuing to parse
 			for( ;; ) {
@@ -226,7 +234,8 @@ int main() {
 		}
 	timer.StopWatch_Stop();
 
-	std::cout << "LazyParser Parsing Elapsed Time Over 10,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 10'000'000.0f << " us\n";
+	std::cout << "ArgFormatter Parsing Elapsed Time Over 10,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 10'000'000.0f
+		  << " us\n";
 
 #endif    // ENABLE_PARSE_SECTION
 
@@ -255,3 +264,24 @@ int main() {
 //                 variables and functions.
 // [06May] Note 3: Some more micro-optimizations on bracket searching and using string_views vs strings sped this up
 //                 to only take ~0.13 us consistently. This is definitely on the right track now.
+//
+// [07May] Note 4: Using a new string w/ "This is a parse string with brackets 1: {0:#{1}}, 2: {2:+}, and 3: {3:0{4}.{5}}",
+//                 AND with the CaptureArgs() called every time the string is empty in the iteration, the timings were
+//                 roughly ~0.23-0.24 us. W/o CaptureArgs() the timing was ~0.18us, so just need to care for the parsing
+//                 and token formatting timings it seems. The parse time with a string consisting of only one bracket
+//                 with specifiers at the max complexity I could think of:
+//                 "{0:*^20{1}.{2}Lf}" <- I actually have no idea YET if this is valid in the spec, but it correctly parses
+//                 with timings ~0.040-0.042 us. The hang up seems to be the FindBrackets()/FindNestedBrackets() functions and
+//                 setting the first and remainder partitions. I could probably just set offset points as pairs:
+//                 - Ex: firstPartition {0, 5) & remainder {8, 13} where I can just grab the offsets, split the string, and
+//                       have a temporary string object or some other container type that equates to the first offset found when
+//                       parsing, then append the token, re-parse with the remainder offset positions of the original message,
+//                       append the first partition offset to that temp string object, then append the token. Rinse-Repeat
+//                       until message is processed.
+//                       - The above idea is to basically only allocate a container once at startup, clear it on each Parse() call,
+//                         and use it as storage for each ParseResult step of the Parse() process using only integral
+//                         offsets and the formatted token.
+//                         - With that in mind, could use a char array of something like 512 bytes, clear it by the std::fill() method,
+//                           in a for loop - copy each char within the partition offsets to the appropriate array index, do the same to
+//                           for the token and Rinse-Repeat. Would need to do bounds checking for this. 512 may be a little large, but
+//                           I'll cross that bridge when I get there if I decide to implement this idea

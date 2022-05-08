@@ -1,10 +1,13 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/3yywxhc5bc4gq6hr/branch/dev?svg=true)](https://ci.appveyor.com/project/USAFrenzy/serenity-logger/branch/dev)
-[![](https://tokei.rs/b1/github/USAFrenzy/Serenity_Logger?category=code)](https://github.com/USAFrenzy/Serenity_Logger/tree/dev)
 
+<br><br>
+[NOTE: THE DOCUMENTATION AND THIS README ARE NOT UP-TO-DATE WITH THE CURRENT PROGRESS OF SERENITY AT THE MOMENT]
+<br><br>
 ### For all current details about the library, check out the documentation [HERE](https://usafrenzy.github.io/Serenity_Logger/) ###
 
 --------------------------------------
 <h1 align="center"> Requirements And Features Explicitly Used</h1>
+
 
 ## For Out Of The Box Usage ##
 - C++20 

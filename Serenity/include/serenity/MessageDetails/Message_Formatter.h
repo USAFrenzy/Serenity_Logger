@@ -10,7 +10,7 @@
 #include <variant>
 
 namespace serenity::msg_details {
-	// due to reworking this in LazyParser.h
+	// due to reworking this in ArgFormatter.h
 #ifndef SERENITY_ARG_BUFFER_SIZE
 	#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)
 #endif    // !SERENITY_ARG_BUFFER_SIZE
@@ -137,7 +137,7 @@ namespace serenity::msg_details {
 		void SplitPrecisionAndSpec(SpecType type, std::string_view spec);
 
 		static constexpr std::array<char, 10> charDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-		size_t UnCheckedDigitFromChars(std::string_view sv) {
+		size_t TwoDigitFromChars(std::string_view sv) {
 			if( sv[ 0 ] == '-' || sv[ 0 ] == '+' ) {
 					// ignore any signed designation
 					sv.remove_prefix(1);
@@ -182,7 +182,7 @@ namespace serenity::msg_details {
 						finalValue += pos;
 						break;
 					default:
-						std::string throwMsg { "UnCheckedDigitFromChars() Only Handles String Types Of Size 2 Or Less: "
+						std::string throwMsg { "TwoDigitFromChars() Only Handles String Types Of Size 2 Or Less: "
 							               "\"" };
 						throwMsg.append(sv.data(), sv.size()).append("\" Doesn't Adhere To This Limitation\n");
 						throw std::runtime_error(std::move(throwMsg));
@@ -198,7 +198,7 @@ namespace serenity::msg_details {
 			auto& pStr { precisionSpecHelper.precision };
 			// precisionSpecHelper.precision is guaranteed to at most be size 2
 			if( pStr.size() != 0 ) {
-					precisionValue = static_cast<int>(UnCheckedDigitFromChars(pStr));
+					precisionValue = static_cast<int>(TwoDigitFromChars(pStr));
 			}
 			if( spec != '\0' ) {
 					switch( spec ) {
