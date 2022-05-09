@@ -7,13 +7,6 @@ namespace serenity::experimental::msg_details {
 		return argContainer;
 	}
 
-	void ArgContainer::Reset() {
-		argContainer.clear();
-		argSpecTypes.clear();
-		argIndex = maxIndex = remainingArgs = 0;
-		endReached                          = false;
-	}
-
 	void ArgContainer::AdvanceToNextArg() {
 		if( argIndex < maxIndex ) {
 				++argIndex;

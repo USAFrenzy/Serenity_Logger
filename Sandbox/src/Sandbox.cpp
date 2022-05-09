@@ -202,9 +202,16 @@ int main() {
 #endif    // !ENABLE_ROTATION_SECTION
 
 #ifdef ENABLE_PARSE_SECTION
-	using namespace lazy_parser;
+	using namespace serenity::arg_formatter;
 
-	std::string parseString { "This is a parse string with brackets 1: {0:#{1}}, 2: {2:+}, and 3: {3:0{4}.{5}}" };
+	/*********************************** Parsing Timings So Far ***********************************************
+	 * - [0.21021 us] "This is a parse string with brackets 1: {0:*^#{1}x}, 2: {2:+0B}, and 3: {3:^0{4}.{5}X}"
+	 * - [0.167281 us] "Value Should Be {2:*^{5}.{6}} But Is {3:*^{5}.{6}} Instead\n"
+	 * - [0.0667496 us] ""{3:*^{5}.{6}}"
+	 * - [0.021954 us] "{}"
+	 *********************************************************************************************************/
+
+	std::string parseString { "Value Should Be {2:*^{5}.{6}} But Is {3:*^{5}.{6}} Instead\n" };
 	int a { 42 };
 	int b { 5 };
 	float c { 32.5f };
@@ -216,12 +223,12 @@ int main() {
 	Instrumentator timer;
 
 	ParseResult result {};
-	result.remainder = parseString;
-
-	timer.StopWatch_Reset();
+	// NOTE: benching specifically the parsing, CaptureArgs() is ~0.05us-0.06us
 	parser.CaptureArgs(parseString, a, b, c, d, e, f);
+	timer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 10'000'000; ++i ) {
 			// simulating a workload of taking the result and continuing to parse
+			result.remainder = parseString;
 			for( ;; ) {
 					if( result.remainder.size() == 0 ) {
 							break;
@@ -230,7 +237,6 @@ int main() {
 							continue;
 						}
 				}
-			result.remainder = parseString;
 		}
 	timer.StopWatch_Stop();
 

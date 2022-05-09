@@ -185,6 +185,7 @@ TEST_CASE("Rotate On Hourly Mark - 1", "[RotateTarget Functions] [Rotation On] [
 	RotatingDaylightCache dsCache {};
 	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
 	auto cache { info.TimeInfo() };
+	cache.tm_hour = 0; // forces the same starting point every time
 
 	int counter { 0 }, dsCounter { 0 };
 	for( int i { 0 }; i <= 23; ++i ) {
@@ -202,7 +203,7 @@ TEST_CASE("Rotate On Hourly Mark - 1", "[RotateTarget Functions] [Rotation On] [
 					++counter;
 			}
 		}
-	REQUIRE(counter == 24);
+	REQUIRE(counter == 23);
 	REQUIRE(dsCounter == 0);
 }
 
@@ -211,6 +212,7 @@ TEST_CASE("Rotate On Hourly Mark - 2", "[RotateTarget Functions] [Rotation On] [
 	RotatingDaylightCache dsCache {};
 	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
 	auto cache { info.TimeInfo() };
+	cache.tm_hour = 0; // forces the same starting point every time
 
 	int counter { 0 }, dsCounter { 0 };
 	for( int i { 0 }; i <= 23; ++i ) {
@@ -228,7 +230,7 @@ TEST_CASE("Rotate On Hourly Mark - 2", "[RotateTarget Functions] [Rotation On] [
 					cache.tm_hour = i;
 			}
 		}
-	REQUIRE(counter == 24);
+	REQUIRE(counter == 24); // 24 due to the will = dsHour 
 	REQUIRE(dsCounter == 12);
 }
 
@@ -237,6 +239,7 @@ TEST_CASE("Rotate On Hourly Mark - 3", "[RotateTarget Functions] [Rotation On] [
 	RotatingDaylightCache dsCache {};
 	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
 	auto cache { info.TimeInfo() };
+	cache.tm_hour = 0; // forces the same starting point every time
 
 	int counter { 0 }, dsCounter { 0 };
 	for( int i { 0 }; i <= 23; ++i ) {
@@ -254,7 +257,7 @@ TEST_CASE("Rotate On Hourly Mark - 3", "[RotateTarget Functions] [Rotation On] [
 					++counter;
 			}
 		}
-	REQUIRE(counter == 24);
+	REQUIRE(counter == 23);
 	REQUIRE(dsCounter == 0);
 }
 
@@ -263,6 +266,7 @@ TEST_CASE("Rotate On Hourly Mark - 4", "[RotateTarget Functions] [Rotation On] [
 	RotatingDaylightCache dsCache {};
 	dsCache.initialDSValue = info.TimeDetails().IsDaylightSavings();
 	auto cache { info.TimeInfo() };
+	cache.tm_hour = 0; // forces the same starting point every time
 
 	int counter { 0 }, dsCounter { 0 };
 	for( int i { 0 }; i <= 23; ++i ) {
@@ -281,6 +285,6 @@ TEST_CASE("Rotate On Hourly Mark - 4", "[RotateTarget Functions] [Rotation On] [
 					cache.tm_hour = i;
 			}
 		}
-	REQUIRE(counter == 24);
+	REQUIRE(counter == 23);
 	REQUIRE(dsCounter == 0);
 }

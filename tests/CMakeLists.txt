@@ -5,6 +5,7 @@ set(PROJECT_NAME Serenity_Tests)
 set(TEST_SOURCE_FILES
 main.cpp
 RotatingTests.cpp
+FormattingArgsTest.cpp
 )
 
 enable_testing()

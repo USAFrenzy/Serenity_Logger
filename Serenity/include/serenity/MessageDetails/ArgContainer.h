@@ -32,6 +32,29 @@ namespace serenity::experimental::msg_details {
 		VoidPtrType      = 14,
 	};
 
+	static constexpr std::string_view SpecTypeString(SpecType type) {
+		using enum SpecType;
+		switch( type ) {
+				case MonoType: return "MonoType"; break;
+				case StringType: return "String  Type"; break;
+				case CharPointerType: return "Const Char *"; break;
+				case StringViewType: "String View"; break;
+				case IntType: return "Int"; break;
+				case U_IntType: return "Unsigned Int"; break;
+				case LongLongType: return "Long Long"; break;
+				case U_LongLongType: return "Unsigned Long Long"; break;
+				case BoolType: return "Bool"; break;
+				case CharType: return "Char"; break;
+				case FloatType: return "Float"; break;
+				case DoubleType: return "Double"; break;
+				case LongDoubleType: return "Long Double"; break;
+				case ConstVoidPtrType: return "Const Void *"; break;
+				case VoidPtrType: return "Void *"; break;
+				default: break;
+			}
+		return "";
+	}
+
 	static std::unordered_map<size_t, SpecType> mapIndexToType = {
 		{ 0, SpecType::MonoType },        { 1, SpecType::StringType },        { 2, SpecType::CharPointerType },
 		{ 3, SpecType::StringViewType },  { 4, SpecType::IntType },           { 5, SpecType::U_IntType },
@@ -145,11 +168,11 @@ namespace serenity::experimental::msg_details {
 			...);
 		}
 
-		template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args) {
+		template<typename... Args> constexpr void CaptureArgs(std::string_view formatString, Args&&... args) {
 			Reset();
 			// CountNumberOfBrackets(formatString);
 			EmplaceBackArgs(std::forward<Args>(args)...);
-			size_t size { argContainer.size() };
+			const size_t& size { argContainer.size() };
 			if( size != 0 ) {
 					maxIndex = size - 1;
 			}
@@ -161,7 +184,14 @@ namespace serenity::experimental::msg_details {
 		~ArgContainer()                              = default;
 
 		const std::vector<LazilySupportedTypes>& ArgStorage() const;
-		void Reset();
+
+		constexpr void Reset() {
+			argContainer.clear();
+			argSpecTypes.clear();
+			argIndex = maxIndex = remainingArgs = 0;
+			endReached                          = false;
+		}
+
 		void AdvanceToNextArg();
 		bool EndReached() const;
 		bool ContainsUnsupportedType() const;
