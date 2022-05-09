@@ -91,8 +91,7 @@ namespace serenity::experimental::msg_details {
 		// ~Keeping
 
 		// Keeping to reference and improve upon when I work on the Format'x'Token functions
-		template<typename T>
-		void FormatFloatTypeArg(std::string& container, char&& spec, T&& value, std::array<char, SERENITY_ARG_BUFFER_SIZE>& resultBuffer) {
+		template<typename T> void FormatFloatTypeArg(std::string& container, char&& spec, T&& value) {
 			// std::chars_format format { std::chars_format::general };
 			// int precisionValue { 6 };
 			// auto& pStr { precisionSpecHelper.precision };
@@ -205,7 +204,7 @@ namespace serenity::experimental::msg_details {
 			return finalArgValue;
 		}
 		// Used here and in ArgFormatter, so may move this to Common.h to remove copy-pasta between the two
-		size_t FindDigitEnd(std::string_view sv, size_t start);
+		size_t FindDigitEnd(std::string_view sv);
 
 		// used for ArgFormatter calls
 		std::vector<SpecType>& SpecTypesCaptured() {
@@ -222,5 +221,6 @@ namespace serenity::experimental::msg_details {
 		bool isStdFallbackEnabled { false };
 		std::string finalArgValue;
 		std::vector<SpecType> argSpecTypes;
+		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
 	};
 }    // namespace serenity::experimental::msg_details

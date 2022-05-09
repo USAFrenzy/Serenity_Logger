@@ -238,28 +238,17 @@ namespace serenity::experimental::msg_details {
 			}
 	}
 
-	size_t ArgContainer::FindDigitEnd(std::string_view sv, size_t start) {
-		auto originalValue { start };
+	size_t ArgContainer::FindDigitEnd(std::string_view sv) {
+		size_t size { sv.size() }, pos { 0 };
 		for( ;; ) {
-				switch( sv[ start ] ) {
-						case '0': [[fallthrough]];
-						case '1': [[fallthrough]];
-						case '2': [[fallthrough]];
-						case '3': [[fallthrough]];
-						case '4': [[fallthrough]];
-						case '5': [[fallthrough]];
-						case '6': [[fallthrough]];
-						case '7': [[fallthrough]];
-						case '8': [[fallthrough]];
-						case '9': ++start; continue;
-						default: break;
-					}
-				if( start == originalValue ) {
-						start = std::string_view::npos;
+				if( pos >= size ) break;
+				if( sv[ pos ] != '\0' ) {
+						++pos;
+						continue;
 				}
 				break;
 			}
-		return start;
+		return pos;
 	}
 
 	/*************************************** Variant Order ********************************************
@@ -268,51 +257,50 @@ namespace serenity::experimental::msg_details {
 	 * [11] double, [12] long double, [13] const void* [14] void*
 	 *************************************************************************************************/
 	void ArgContainer::GetArgValue(std::string& container, size_t positionIndex, char&& additionalSpec) {
-		container.clear();
 		auto& arg { argContainer[ positionIndex ] };
-		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
-
+		auto data { buffer.data() };
+		std::fill(data, data + buffer.size(), '\0');
 		switch( arg.index() ) {
 				case 0: break;
 				case 1: container.append(std::move(std::get<1>(std::move(arg)))); break;
 				case 2: container.append(std::move(std::get<2>(std::move(arg)))); break;
 				case 3: container.append(std::move(std::get<3>(std::move(arg)))); break;
 				case 4:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<4>(std::move(arg))));
-					container.append(buffer.data(), buffer.data() + FindDigitEnd(buffer.data(), buffer.size()));
+					std::to_chars(data, data + buffer.size(), std::move(std::get<4>(std::move(arg))));
+					container.append(data, data + FindDigitEnd(data));
 					break;
 				case 5:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<5>(std::move(arg))));
-					container.append(buffer.data(), buffer.data() + FindDigitEnd(buffer.data(), buffer.size()));
+					std::to_chars(data, data + buffer.size(), std::move(std::get<5>(std::move(arg))));
+					container.append(data, data + FindDigitEnd(data));
 					break;
 				case 6:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<6>(std::move(arg))));
-					container.append(buffer.data(), buffer.data() + FindDigitEnd(buffer.data(), buffer.size()));
+					std::to_chars(data, data + buffer.size(), std::move(std::get<6>(std::move(arg))));
+					container.append(data, data + FindDigitEnd(data));
 					break;
 				case 7:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<7>(std::move(arg))));
-					container.append(buffer.data(), buffer.data() + FindDigitEnd(buffer.data(), buffer.size()));
+					std::to_chars(data, data + buffer.size(), std::move(std::get<7>(std::move(arg))));
+					container.append(data, data + FindDigitEnd(data));
 					break;
 				case 8: container.append(std::move(std::get<8>(std::move(arg))) == true ? "true" : "false"); break;
 				case 9: container += std::move(std::get<9>(std::move(arg))); break;
 				case 10:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<10>(std::move(arg))), buffer);
+					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<10>(std::move(arg))));
 					break;
 				case 11:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<11>(std::move(arg))), buffer);
+					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<11>(std::move(arg))));
 					break;
 				case 12:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<12>(std::move(arg))), buffer);
+					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<12>(std::move(arg))));
 					break;
 				case 13:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					std::to_chars(data, data + buffer.size(),
 					              reinterpret_cast<size_t>(std::move(std::get<13>(std::move(arg)))), 16);
-					container.append("0x").append(buffer.data(), buffer.data() + FindDigitEnd(buffer.data(), buffer.size()));
+					container.append("0x").append(data, data + FindDigitEnd(data));
 					break;
 				case 14:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					std::to_chars(data, data + buffer.size(),
 					              reinterpret_cast<size_t>(std::move(std::get<14>(std::move(arg)))), 16);
-					container.append("0x").append(buffer.data(), buffer.data() + FindDigitEnd(buffer.data(), buffer.size()));
+					container.append("0x").append(data, data + FindDigitEnd(data));
 					break;
 				default: break;
 			}

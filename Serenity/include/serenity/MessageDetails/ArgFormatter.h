@@ -17,19 +17,17 @@ namespace serenity::arg_formatter {
 
 	enum class TokenType
 	{
-		Empty            = 0,
-		FillAlign        = 1 << 0,
-		AlignmentPadding = 1 << 1,
-		Sign             = 1 << 2,
-		Alternate        = 1 << 3,
-		ZeroPad          = 1 << 4,
-		Locale           = 1 << 5,
-		Width            = 1 << 6,
-		Precision        = 1 << 7,
-		Type             = 1 << 8,
-		CharAggregate    = 1 << 9,
-		Custom           = 1 << 10,
-		Positional       = 1 << 11,
+		Empty      = 0,
+		FillAlign  = 1 << 0,
+		Sign       = 1 << 1,
+		Alternate  = 1 << 2,
+		ZeroPad    = 1 << 3,
+		Locale     = 1 << 4,
+		Width      = 1 << 5,
+		Precision  = 1 << 6,
+		Type       = 1 << 7,
+		Custom     = 1 << 8,
+		Positional = 1 << 9,
 	};
 	constexpr TokenType operator|(TokenType lhs, TokenType rhs) {
 		using uType = std::underlying_type_t<TokenType>;
@@ -93,8 +91,10 @@ namespace serenity::arg_formatter {
 		char defaultValue { '\0' };
 		std::string_view preTokenStr { &defaultValue };
 		std::string_view remainder { &defaultValue };
+		std::string tokenResult;
 		void Reset() {
 			preTokenStr = remainder = &defaultValue;
+			tokenResult.clear();
 		}
 	};
 
@@ -130,16 +130,17 @@ namespace serenity::arg_formatter {
 		void VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize);
 		void VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, int argIndex);
+		void VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, bool isDigit);
 		void VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize,
-		                       int currentArgIndex);    // TO be Implemented
-		void VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec, int argIndex);
+		void VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		void VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec);
 		void VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type);
+		void HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		bool HandleIfEndOrWhiteSpace(std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 
-		bool IsFlagSet(TokenType& tokenFlags, TokenType checkValue);
+		bool IsFlagSet(TokenType checkValue);
 
 		void FormatFillAlignToken();        // To Be Implemented
 		void FormatSignToken();             // To Be Implemented
@@ -153,6 +154,7 @@ namespace serenity::arg_formatter {
 		void FormatCustomToken();           // To Be Implemented
 		void FormatPositionalToken();       // To Be Implemented
 		void FormatTokens();                // To Be Implemented
+		void SimpleFormat();
 
 		template<typename... Args> constexpr void CaptureArgs(std::string_view fmtString, Args&&... args) {
 			argStorage.CaptureArgs(fmtString, std::forward<Args>(args)...);
@@ -166,6 +168,8 @@ namespace serenity::arg_formatter {
 		BracketSearchResults bracketResults {};
 		int argCounter { 0 };
 		serenity::experimental::msg_details::ArgContainer argStorage {};
+		std::string temp;
+		std::array<char, 250> buffer {};
 	};
 
 }    // namespace serenity::arg_formatter

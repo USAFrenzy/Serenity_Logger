@@ -205,13 +205,13 @@ int main() {
 	using namespace serenity::arg_formatter;
 
 	/*********************************** Parsing Timings So Far ***********************************************
-	 * - [0.21021 us] "This is a parse string with brackets 1: {0:*^#{1}x}, 2: {2:+0B}, and 3: {3:^0{4}.{5}X}"
-	 * - [0.167281 us] "Value Should Be {2:*^{5}.{6}} But Is {3:*^{5}.{6}} Instead\n"
-	 * - [0.0667496 us] ""{3:*^{5}.{6}}"
-	 * - [0.021954 us] "{}"
+	 * - [0.2171770 us] "This is a parse string with brackets 1: {0:*^#{1}x}, 2: {2:+0g}, and 3: {3:^0{4}.{5}A}"
+	 * - [0.1486490 us] "Value Should Be {2:*^{5}.{6}} But Is {3:*^{5}.{6}} Instead\n"
+	 * - [0.0606147 us] "{3:*^{5}.{6}}"
+	 * - [0.0213549 us] "{}"
 	 *********************************************************************************************************/
 
-	std::string parseString { "Value Should Be {2:*^{5}.{6}} But Is {3:*^{5}.{6}} Instead\n" };
+	std::string parseString { "{0:*^{5}}" };
 	int a { 42 };
 	int b { 5 };
 	float c { 32.5f };
@@ -225,15 +225,19 @@ int main() {
 	ParseResult result {};
 	// NOTE: benching specifically the parsing, CaptureArgs() is ~0.05us-0.06us
 	parser.CaptureArgs(parseString, a, b, c, d, e, f);
+	std::string final;
 	timer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 10'000'000; ++i ) {
 			// simulating a workload of taking the result and continuing to parse
 			result.remainder = parseString;
+			final.clear();
 			for( ;; ) {
 					if( result.remainder.size() == 0 ) {
 							break;
 					} else {
 							result = parser.Parse(result.remainder);
+							final.append(result.preTokenStr.data(), result.preTokenStr.size());
+							final.append(std::move(result.tokenResult));
 							continue;
 						}
 				}
@@ -242,6 +246,21 @@ int main() {
 
 	std::cout << "ArgFormatter Parsing Elapsed Time Over 10,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 10'000'000.0f
 		  << " us\n";
+
+	result = parser.Parse(result.remainder);
+	final.append(result.preTokenStr.data(), result.preTokenStr.size());
+	final.append(std::move(result.tokenResult));
+	std::cout << "With Result: \"" << final << "\"\n";
+
+	final.clear();
+	timer.StopWatch_Reset();
+	for( size_t i { 0 }; i < 10'000'000; ++i ) {
+			VFORMAT_TO(final, parseString, a, b, c, d, e, f);
+			final.clear();
+		}
+	timer.StopWatch_Stop();
+	std::cout << "std::format_to() Elapsed Time Over 10,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 10'000'000.0f << " us\n";
+	std::cout << "With Result: \"" << final << "\"\n";
 
 #endif    // ENABLE_PARSE_SECTION
 
