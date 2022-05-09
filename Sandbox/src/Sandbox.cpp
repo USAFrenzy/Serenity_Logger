@@ -230,6 +230,7 @@ int main() {
 	for( size_t i { 0 }; i < 10'000'000; ++i ) {
 			// simulating a workload of taking the result and continuing to parse
 			result.remainder = parseString;
+			parser.CaptureArgs(parseString, a, b, c, d, e, f);
 			final.clear();
 			for( ;; ) {
 					if( result.remainder.size() == 0 ) {
@@ -259,6 +260,7 @@ int main() {
 			final.clear();
 		}
 	timer.StopWatch_Stop();
+	VFORMAT_TO(final, parseString, a, b, c, d, e, f);
 	std::cout << "std::format_to() Elapsed Time Over 10,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 10'000'000.0f << " us\n";
 	std::cout << "With Result: \"" << final << "\"\n";
 
