@@ -77,11 +77,10 @@ namespace serenity::msg_details {
 		VoidPtrType      = 14,
 	};
 
-	static std::unordered_map<size_t, SpecType> mapIndexToType = {
-		{ 0, SpecType::MonoType },        { 1, SpecType::StringType },        { 2, SpecType::CharPointerType }, { 3, SpecType::StringViewType },
-		{ 4, SpecType::IntType },         { 5, SpecType::U_IntType },         { 6, SpecType::LongLongType },    { 7, SpecType::U_LongLongType },
-		{ 8, SpecType::BoolType },        { 9, SpecType::CharType },          { 10, SpecType::FloatType },      { 11, SpecType::DoubleType },
-		{ 12, SpecType::LongDoubleType }, { 13, SpecType::ConstVoidPtrType }, { 14, SpecType::VoidPtrType },
+	static constexpr std::array<SpecType, 15> mapIndexToType = {
+		SpecType::MonoType,   SpecType::StringType,    SpecType::CharPointerType, SpecType::StringViewType,   SpecType::IntType,
+		SpecType::U_IntType, SpecType::LongLongType, SpecType::U_LongLongType,  SpecType::BoolType,         SpecType::CharType,
+		SpecType::FloatType, SpecType::DoubleType,   SpecType::LongDoubleType,  SpecType::ConstVoidPtrType, SpecType::VoidPtrType,
 	};
 
 	static std::unordered_map<SpecType, size_t> mapTypeToIndex = {
@@ -244,30 +243,41 @@ namespace serenity::msg_details {
 		void AlignLeft(size_t index, std::string& container);
 		void AlignRight(size_t index, std::string& container);
 		void AlignCenter(size_t index, std::string& container);
+		constexpr void StoreArgTypes() {
+			for (auto& arg : argContainer) {
+				argSpecTypes.emplace_back(mapIndexToType[arg.index()]);
+			}
+		}
 
 		// Moved Formatting Templates Here While I Work On Some Things
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 			(
-			[ = ](auto&& arg) {
-				auto typeFound = is_supported<std::remove_reference_t<decltype(arg)>, LazilySupportedTypes> {};
-				if constexpr( !typeFound.value ) {
-						containsUnknownType = true;
-				} else {
-						if( containsUnknownType ) return;
-						argContainer.emplace_back(arg);
-						argSpecTypes.emplace_back(mapIndexToType[ argContainer.back().index() ]);
+				[=](auto&& arg) {
+					if (!std::is_constant_evaluated()) {
+						argContainer.emplace_back(std::forward<std::decay_t<decltype(arg)>>((arg)));
 					}
-			}(args),
-			...);
+					else {
+						auto typeFound = is_supported<std::decay_t<decltype(arg)>, LazilySupportedTypes>{};
+						if constexpr (!typeFound.value) {
+							containsUnknownType = true;
+						}
+						else {
+							if (containsUnknownType) return;
+						}
+					}
+				}(args),
+					...);
 		}
 
 		template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args) {
 			Reset();
 			CountNumberOfBrackets(formatString);
+			argContainer.reserve(sizeof...(args));
 			EmplaceBackArgs(std::forward<Args>(args)...);
-			size_t size { argContainer.size() };
-			if( size != 0 ) {
-					maxIndex = size - 1;
+			StoreArgTypes();
+			size_t size{ argContainer.size() };
+			if (size != 0) {
+				maxIndex = size - 1;
 			}
 		}
 

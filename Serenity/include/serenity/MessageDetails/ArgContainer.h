@@ -101,11 +101,11 @@ namespace serenity::experimental::msg_details {
 		return s;
 	}
 
-	static constexpr std::array<SpecType, 15> mapIndexToType   = { SpecType::MonoType,        SpecType::StringType,        SpecType::CharPointerType,
-		                                                           SpecType ::StringViewType, SpecType ::IntType,          SpecType ::U_IntType,
-		                                                           SpecType ::LongLongType,   SpecType::U_LongLongType,    SpecType ::BoolType,
-		                                                           SpecType::CharType,        SpecType ::FloatType,        SpecType ::DoubleType,
-		                                                           SpecType::LongDoubleType,  SpecType ::ConstVoidPtrType, SpecType ::VoidPtrType };
+	static constexpr std::array<SpecType, 15> mapIndexToType = {
+		SpecType::MonoType,   SpecType::StringType,    SpecType::CharPointerType, SpecType ::StringViewType,   SpecType ::IntType,
+		SpecType ::U_IntType, SpecType ::LongLongType, SpecType::U_LongLongType,  SpecType ::BoolType,         SpecType::CharType,
+		SpecType ::FloatType, SpecType ::DoubleType,   SpecType::LongDoubleType,  SpecType ::ConstVoidPtrType, SpecType ::VoidPtrType,
+	};
 
 	static std::unordered_map<SpecType, size_t> mapTypeToIndex = {
 		{ SpecType::MonoType, 0 },        { SpecType::StringType, 1 },        { SpecType::CharPointerType, 2 }, { SpecType::StringViewType, 3 },
@@ -230,8 +230,8 @@ namespace serenity::experimental::msg_details {
 			StoreArgTypes();
 		}
 
-		ArgContainer()                               = default;
-		ArgContainer(const ArgContainer&)            = delete;
+		ArgContainer()                    = default;
+		ArgContainer(const ArgContainer&) = delete;
 		ArgContainer& operator=(const ArgContainer&) = delete;
 		~ArgContainer()                              = default;
 

@@ -275,7 +275,7 @@ int main() {
 					auto percentage { SetPrecision(std::abs(percentValue), 2) };
 					console.Debug(Tag::Bright_White("Serenity's Formatting Function Is ")
 					              .append(Tag::Green("[%" + percentage.append("]")))
-					              .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function\n")));
+					              .append(Tag::Bright_White(" Faster Than The Standard's Formatting Function\n")));
 				}
 		}
 #endif    // ENABLE_PARSE_SECTION
