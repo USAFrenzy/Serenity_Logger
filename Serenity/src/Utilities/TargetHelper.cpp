@@ -2,8 +2,8 @@
 
 namespace serenity::targets::helpers {
 	BaseTargetHelper::BaseTargetHelper()
-		: toBuffer(false), internalBuffer(std::string {}), multiThreadSupport(false),
-		  policy(std::make_unique<serenity::experimental::Flush_Policy>(serenity::experimental::FlushSetting::never)) { }
+			: toBuffer(false), internalBuffer(std::string {}), multiThreadSupport(false),
+			  policy(std::make_unique<serenity::experimental::Flush_Policy>(serenity::experimental::FlushSetting::never)) { }
 
 	BaseTargetHelper& serenity::targets::helpers::BaseTargetHelper::operator=(BaseTargetHelper& other) {
 		internalBuffer     = other.internalBuffer;

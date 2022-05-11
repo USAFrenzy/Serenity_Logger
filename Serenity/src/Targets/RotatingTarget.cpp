@@ -4,8 +4,7 @@
 
 namespace serenity::experimental {
 
-	RotateSettings::RotateSettings(const std::string& path)
-		: FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(RotateLimits {}) {
+	RotateSettings::RotateSettings(const std::string& path): FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(RotateLimits {}) {
 		if( !path.empty() ) {
 				std::filesystem::path pathToCache = path;
 				std::filesystem::directory_entry dirCheck { pathToCache };
@@ -27,7 +26,7 @@ namespace serenity::experimental {
 	}
 
 	RotateSettings::RotateSettings(const RotateLimits& limits)
-		: FileHelper(std::filesystem::current_path().string()), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
+			: FileHelper(std::filesystem::current_path().string()), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
 		FileCacheHelper()->CacheFile(std::filesystem::current_path().string(), true);
 		std::string fileName { "Rotating_Log.txt" };
 		std::string logDir { "Logs" };
@@ -41,7 +40,7 @@ namespace serenity::experimental {
 	}
 
 	RotateSettings::RotateSettings(const std::string& path, const RotateLimits& limits)
-		: FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
+			: FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
 		if( !path.empty() ) {
 				std::filesystem::path pathToCache = path;
 				FileCacheHelper()->CacheFile(pathToCache.string(), true);
@@ -99,9 +98,8 @@ namespace serenity::experimental {
 namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
-		: TargetBase("Rotating_Logger"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size),
-		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false),
-		  truncateMessage(true) {
+			: TargetBase("Rotating_Logger"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
+			  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
@@ -120,9 +118,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
-		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false),
-		  truncateMessage(true) {
+			: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+			  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 
 		SyncTargetHelpers(TargetHelper());
@@ -142,9 +139,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
-		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false),
-		  truncateMessage(true) {
+			: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+			  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
@@ -247,14 +243,13 @@ namespace serenity::experimental::targets {
 		if( !fileToReplace.empty() ) {
 				FileCacheHelper()->SetFilePath(fileToReplace);
 		} else {
-				std::cerr << "Warning: Unable To Locate Oldest File With Base Name \"" << OriginalName()
-					  << "\". Opening And Truncating Previous File, \"" << previousFile << "\"\n";
+				std::cerr << "Warning: Unable To Locate Oldest File With Base Name \"" << OriginalName() << "\". Opening And Truncating Previous File, \""
+						  << previousFile << "\"\n";
 				success = false;
 			}
 		if( !OpenFile(true) ) {
 				if( FileCacheHelper()->FilePath() != previousFile ) {
-						std::cerr << "Error: Unable To Finish Rotating From File \"" << previousFile << "\" To File \""
-							  << FileCacheHelper()->FileName() << "\"\n";
+						std::cerr << "Error: Unable To Finish Rotating From File \"" << previousFile << "\" To File \"" << FileCacheHelper()->FileName() << "\"\n";
 				} else {
 						std::cerr << "Error: Unable To Open And Truncate File \"" << previousFile << "\"\n";
 					}
@@ -366,19 +361,16 @@ namespace serenity::experimental::targets {
 					break;
 				case IntervalMode::daily:
 					{
-						if( (MsgInfo()->TimeMode() == message_time_mode::local) &&
-						    (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
 								dsCache.initialDSValue = !dsCache.initialDSValue;
-								auto offset { std::abs(
-								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								auto offset { std::abs(MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
 								int tempHr {}, tempMin {};
 								if( dsCache.initialDSValue ) {
 										tempHr                 = cache.tm_hour - (offset / 60);
 										tempMin                = cache.tm_min - (offset % 60);
 										dsCache.dsHour         = tempHr >= 0 ? tempHr : 0;
 										dsCache.dsMinute       = tempMin >= 0 ? tempMin : 0;
-										dsCache.dsShouldRotate = !(dsCache.dsHour ==
-										                           limits.dayModeSettingHour);
+										dsCache.dsShouldRotate = !(dsCache.dsHour == limits.dayModeSettingHour);
 								} else {
 										tempHr           = cache.tm_hour + (offset / 60);
 										tempMin          = cache.tm_min + (offset % 60);
@@ -396,8 +388,8 @@ namespace serenity::experimental::targets {
 									meetsThreshold = (limits.dayModeSettingMinute != dsCache.dsMinute) && (cache.tm_min >= limits.dayModeSettingMinute);
 										// clang-format on
 								} else {
-										isSameHour     = dsCache.dsHour == limits.dayModeSettingHour;
-										meetsThreshold = dsCache.dsMinute >= limits.dayModeSettingMinute;
+										isSameHour             = dsCache.dsHour == limits.dayModeSettingHour;
+										meetsThreshold         = dsCache.dsMinute >= limits.dayModeSettingMinute;
 										dsCache.dsShouldRotate = !(isSameHour && meetsThreshold);
 									}
 								return (isSameHour && meetsThreshold);
@@ -406,11 +398,9 @@ namespace serenity::experimental::targets {
 					break;
 				case IntervalMode::weekly:
 					{
-						if( (MsgInfo()->TimeMode() == message_time_mode::local) &&
-						    (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
 								dsCache.initialDSValue = !dsCache.initialDSValue;
-								auto offset { std::abs(
-								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								auto offset { std::abs(MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
 								int wkDay {}, tempHr {}, tempMin {};
 								if( dsCache.initialDSValue ) {
 										tempHr           = cache.tm_hour - (offset / 60);
@@ -460,16 +450,13 @@ namespace serenity::experimental::targets {
 						// This tidbit is here to make sure a month isn't accidentally skipped
 						if( numberOfDays < rotationDay ) {
 								rotationDay = numberOfDays;
-								if( (cache.tm_mon == serenity::SERENITY_LUTS::FEBRUARY) &&
-								    (MsgInfo()->TimeDetails().isLeapYear()) ) {
+								if( (cache.tm_mon == serenity::SERENITY_LUTS::FEBRUARY) && (MsgInfo()->TimeDetails().isLeapYear()) ) {
 										rotationDay = 29;
 								}
 						}
-						if( (MsgInfo()->TimeMode() == message_time_mode::local) &&
-						    (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
 								dsCache.initialDSValue = !dsCache.initialDSValue;
-								auto offset { std::abs(
-								MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								auto offset { std::abs(MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
 								dsCache.dsDayOfMonth = cache.tm_mday;
 								int tempHr {}, tempMin {};
 								if( dsCache.initialDSValue ) {
@@ -494,8 +481,7 @@ namespace serenity::experimental::targets {
 										if( dsCache.dsHour == 0 ) {
 												++dsCache.dsDayOfMonth;
 										}
-										if( dsCache.dsDayOfMonth > numberOfDays )
-											dsCache.dsDayOfMonth = 1;
+										if( dsCache.dsDayOfMonth > numberOfDays ) dsCache.dsDayOfMonth = 1;
 										// clang-format off
 									dsCache.dsShouldRotate = (dsCache.dsHour == limits.dayModeSettingHour) && (dsCache.dsDayOfMonth == rotationDay);
 										// clang-format on
@@ -643,7 +629,7 @@ namespace serenity::experimental::targets {
 					}
 					break;
 			}    // Sub Option Check
-	}                    // PolicyFlushOn( ) Function
+	}            // PolicyFlushOn( ) Function
 
 	void RotatingTarget::SetMessageSize(size_t size) {
 		messageSize = size;

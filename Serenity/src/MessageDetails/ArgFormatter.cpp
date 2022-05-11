@@ -7,153 +7,62 @@ namespace serenity::arg_formatter {
 		return (m_tokenType & checkValue) == checkValue;
 	}
 
-	size_t ArgFormatter::FindDigitEnd(std::string_view sv, size_t start) {
-		// This was somehow faster than doing a call to IsDigit and then incrementing
-		// the position (as far as I'm aware, this basically should be very similar
-		// instructions?)
-		for( ;; ) {
-				switch( sv[ start ] ) {
-						case '0': [[fallthrough]];
-						case '1': [[fallthrough]];
-						case '2': [[fallthrough]];
-						case '3': [[fallthrough]];
-						case '4': [[fallthrough]];
-						case '5': [[fallthrough]];
-						case '6': [[fallthrough]];
-						case '7': [[fallthrough]];
-						case '8': [[fallthrough]];
-						case '9': ++start; continue;
-						default: break;
-					}
-				break;
-			}
-		return start;
-	}
-
-	static constexpr std::string_view maxValue { "2147483647" };
-
-	static int Digit(const char& ch) {
-		switch( ch ) {
-				case '0': return 0; break;
-				case '1': return 1; break;
-				case '2': return 2; break;
-				case '3': return 3; break;
-				case '4': return 4; break;
-				case '5': return 5; break;
-				case '6': return 6; break;
-				case '7': return 7; break;
-				case '8': return 8; break;
-				case '9': return 9; break;
-				default: return -1; break;
-			}
-	};
-
-	// Up to user to define valid range
-	int ArgFormatter::NoCheckIntFromChars(std::string_view sv, const size_t& begin, const size_t& end) {
-		// This is a really nasty way of doing this but hand-rolled to take in account INT_MAX of 2,147,483,647.
-		// NOTE: Tested up to 7 digits at the moment.This function is roughly 50 ns slower than std::from_chars();
-		//       this is faster with only one digit but after two digits, std::from_chars() wins out marginally
-		//       every time except for the case of VerifyPositionalField() -> std::from_chars was much faster than
-		//       this call and reduced overall timing by ~20-25 ns.
-		//       Therefore, keeping this function for calls in other functions where it happens to be faster than
-		//       the call to std::from_chars()
-		auto i { begin };
-		switch( end - begin ) {
-				case 0: break;
-				case 1: return Digit(sv[ i ]); break;
-				case 2: return Digit(sv[ i ]) * 10 + Digit(sv[ i + 1 ]); break;
-				case 3: return Digit(sv[ i ]) * 100 + Digit(sv[ i + 1 ]) * 10 + Digit(sv[ i + 2 ]); break;
-				case 4:
-					return Digit(sv[ i ]) * 1'000 + Digit(sv[ i + 1 ]) * 100 + Digit(sv[ i + 2 ]) * 10 + Digit(sv[ i + 3 ]);
-					break;
-				case 5:
-					return Digit(sv[ i ]) * 10'000 + Digit(sv[ i + 1 ]) * 1'000 + Digit(sv[ i + 2 ]) * 100 +
-					       Digit(sv[ i + 3 ]) * 10 + Digit(sv[ i + 4 ]);
-					break;
-				case 6:
-					return Digit(sv[ i ]) * 100'000 + Digit(sv[ i + 1 ]) * 10'000 + Digit(sv[ i + 2 ]) * 1'000 +
-					       Digit(sv[ i + 3 ]) * 100 + Digit(sv[ i + 4 ]) * 10 + Digit(sv[ i + 5 ]);
-					break;
-				case 7:
-					return Digit(sv[ i ]) * 1'000'000 + Digit(sv[ i + 1 ]) * 100'000 + Digit(sv[ i + 2 ]) * 10'000 +
-					       Digit(sv[ i + 3 ]) * 1'000 + Digit(sv[ i + 4 ]) * 100 + Digit(sv[ i + 5 ]) * 10 +
-					       Digit(sv[ i + 6 ]);
-					break;
-				case 8:
-					return Digit(sv[ i ]) * 10'000'000 + Digit(sv[ i + 1 ]) * 1'000'000 + Digit(sv[ i + 2 ]) * 100'000 +
-					       Digit(sv[ i + 3 ]) * 10'000 + Digit(sv[ i + 4 ]) * 1'000 + Digit(sv[ i + 5 ]) * 100 +
-					       Digit(sv[ i + 6 ]) * 10 + Digit(sv[ i + 7 ]);
-					break;
-				case 9:
-					return Digit(sv[ i ]) * 100'000'000 + Digit(sv[ i + 1 ]) * 10'000'000 + Digit(sv[ i + 2 ]) * 1'000'000 +
-					       Digit(sv[ i + 3 ]) * 100'000 + Digit(sv[ i + 4 ]) * 10'000 + Digit(sv[ i + 5 ]) * 1'000 +
-					       Digit(sv[ i + 6 ]) * 100 + Digit(sv[ i + 7 ]) * 10 + Digit(sv[ i + 8 ]);
-					break;
-				case 10:
-					if( sv[ 0 ] == '2' ) {
-							for( auto& ch: sv ) {
-									for( auto& mCh: maxValue ) {
-											if( ch > mCh ) {
-													// clang-format off
-													throw std::runtime_error("Error In NoCheckIntFromChars(): Char "
-														                                              "Representation Is Too Large To Fit In An Integer\n");
-													// clang-format on
-											}
-										}
-								}
-					}
-					return Digit(sv[ i ]) * 1'000'000'000 + Digit(sv[ i + 1 ]) * 100'000'000 +
-					       Digit(sv[ i + 2 ]) * 10'000'000 + Digit(sv[ i + 3 ]) * 1'000'000 + Digit(sv[ i + 4 ]) * 100'000 +
-					       Digit(sv[ i + 5 ]) * 10'000 + Digit(sv[ i + 6 ]) * 1'000 + Digit(sv[ i + 7 ]) * 100 +
-					       Digit(sv[ i + 8 ]) * 10 + Digit(sv[ i + 9 ]);
-					break;
-			}
-		unreachable();
-	}
-
 	bool ArgFormatter::ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start) {
 		auto ch { sv[ start ] };
 
+		// we're in automatic mode
 		if( m_indexMode == IndexMode::automatic ) {
 				if( ch == '}' ) {
-						if( m_indexMode == IndexMode::automatic ) {
-								specValues.argPosition = ++argIndex;
-								return false;
-						} else {
-								throw std::runtime_error("Cannot Mix Manual And Automatic Indexing For "
-								                         "Arguments\n");
-							}
+						specValues.argPosition = ++argIndex;
+						return false;
 				} else if( ch == ' ' ) {
 						for( ;; ) {
 								if( start >= sv.size() ) break;
 								if( ch = sv[ ++start ] != ' ' ) break;
 							}
-						if( ch != '}' ) {
-								throw std::runtime_error("Error In Positional Field: Invalid Format Detected. A "
-								                         "Position Field Should Be "
-								                         "Followed By A ':' Or A '}'");
-						} else {
-								specValues.argPosition = ++argIndex;
-								return sv[ ++start ] == ':';
-							}
-				}
+						if( ch != '}' && ch != ':' ) {
+								throw std::runtime_error("Error In Position Field: Invalid Format Detected. A Position Field In Automatic Indexing Mode Should "
+								                         "Be Followed By A ':' Or A '}'\n");
+						}
+				} else {
+						if( IsDigit(ch) ) {
+								m_indexMode = IndexMode::manual;
+								return ParsePositionalField(sv, argIndex, start);
+						}
+						specValues.argPosition = ++argIndex;
+						return sv[ ++start ] == ':';
+					}
 		}
+		// we're in manual mode
+		if( ch == '}' ) {
+				throw std::runtime_error("Error In Postion Field: Cannot Mix Manual And Automatic Indexing For "
+				                         "Arguments\n");
+		} else if( ch == ' ' ) {
+				for( ;; ) {
+						if( start >= sv.size() ) break;
+						if( ch = sv[ ++start ] != ' ' ) break;
+					}
+		}
+		if( ch == ':' ) {
+				throw std::runtime_error("Error In Position Field: Missing Positional Argument Before ':' In Manual Indexing Mode\n");
+		}
+
 		if( IsDigit(ch) ) {
 				auto& position { specValues.argPosition };
 				// from_chars() is much faster than the NoCheckIntFromChars() in this particular case
-				std::from_chars(sv.data(), sv.data() + FindDigitEnd(sv, start), position);
+				std::from_chars(sv.data(), sv.data() + sv.size(), position);
 				start += position > 9 ? position <= 99 ? 2 : -1 : 1;
 				if( start == -1 ) {
-						throw std::runtime_error("Error In Positional Argument Field: Max Position (99) Exceeded\n");
+						throw std::runtime_error("Error In Position Argument Field: Max Position (99) Exceeded\n");
 				}
 				if( sv[ start ] != ':' && sv[ start ] != '}' ) {
-						throw std::runtime_error("Error In Positional Field: Invalid Format Detected. A Position Field "
-						                         "Should Be "
-						                         "Followed By A ':' Or A '}'");
+						throw std::runtime_error("Error In Position Field: Invalid Format Detected. A Position Field Should Be Followed By A ':' Or A "
+						                         "'}'\n");
 				}
 				++argIndex;
 				m_tokenType |= TokenType::Positional;
 		}
+
 		return true;
 	}
 
@@ -177,6 +86,7 @@ namespace serenity::arg_formatter {
 		auto FindCloseBracket = [ & ]() {
 			for( ;; ) {
 					if( currentPos > size ) {
+							throw std::runtime_error("Missing Closing '}' In Argument Spec Field\n");
 							break;
 					} else if( sv[ currentPos ] != '}' ) {
 							++currentPos;
@@ -211,10 +121,16 @@ namespace serenity::arg_formatter {
 				}
 				bracketResults.beginPos = pos;
 				subPos                  = pos + 1;
+				if( subPos >= size ) {
+						throw std::runtime_error("Missing Closing '}' In Argument Spec Field\n");
+				}
 				auto ch { sv[ subPos ] };
 				for( ;; ) {
+						if( subPos > size ) {
+								bracketResults.isValid = false;
+								break;
+						}
 						ch = sv[ subPos ];
-						if( subPos > size ) bracketResults.isValid = false;
 						if( ch == '{' ) {
 								FindNestedBrackets(sv, subPos);
 						}
@@ -343,10 +259,12 @@ namespace serenity::arg_formatter {
 		if( ch == '}' ) {
 				if( m_indexMode == IndexMode::automatic ) {
 						if( type == NestedFieldType::Prec ) {
-								specValues.nestedPrecArgPos = ++argCounter;
+								specValues.nestedPrecArgPos = argCounter;
+								++argCounter;
 								m_tokenType |= TokenType::Precision;
 						} else {
-								specValues.nestedWidthArgPos = ++argCounter;
+								specValues.nestedWidthArgPos = argCounter;
+								++argCounter;
 								m_tokenType |= TokenType::Width;
 							}
 						return;
@@ -356,13 +274,11 @@ namespace serenity::arg_formatter {
 		}
 		if( IsDigit(ch) ) {
 				if( type == NestedFieldType::Width ) {
-						specValues.nestedWidthArgPos = NoCheckIntFromChars(sv, currentPosition,
-						                                                   FindDigitEnd(sv, currentPosition));
+						std::from_chars(sv.data() + currentPosition, sv.data() + sv.size(), specValues.nestedWidthArgPos);
 						currentPosition += specValues.nestedWidthArgPos > 9 ? 2 : 1;
 						m_tokenType |= TokenType::Width;
 				} else {
-						specValues.nestedPrecArgPos = NoCheckIntFromChars(sv, currentPosition,
-						                                                  FindDigitEnd(sv, currentPosition));
+						std::from_chars(sv.data() + currentPosition, sv.data() + sv.size(), specValues.nestedPrecArgPos);
 						currentPosition += specValues.nestedPrecArgPos > 9 ? 2 : 1;
 						m_tokenType |= TokenType::Precision;
 					}
@@ -388,7 +304,8 @@ namespace serenity::arg_formatter {
 				return;
 		} else if( ch == '}' ) {
 				if( m_indexMode == IndexMode::automatic ) {
-						specValues.nestedWidthArgPos = ++argCounter;
+						specValues.nestedWidthArgPos = argCounter;
+						++argCounter;
 				} else {
 						throw std::runtime_error("Cannot Mix Manual And Automatic Indexing For Arguments\n");
 					}
@@ -399,13 +316,11 @@ namespace serenity::arg_formatter {
 					}
 		}
 		if( IsDigit(ch) ) {
-				auto& position { specValues.alignmentPadding };
-				// from_chars() is much faster than the NoCheckIntFromChars() in this particular case
-				std::from_chars(sv.data(), sv.data() + FindDigitEnd(sv, currentPosition), position);
-				currentPosition += position > 9 ? position <= 99 ? 2 : -1 : 1;
+				auto& padding { specValues.alignmentPadding };
+				std::from_chars(sv.data(), sv.data() + sv.size(), padding);
+				currentPosition += padding > 9 ? padding <= 99 ? 2 : -1 : 1;
 				if( currentPosition == -1 ) {
-						throw std::runtime_error("Error In Positional Argument Field: Max Position (99) "
-						                         "Exceeded\n");
+						throw std::runtime_error("Error In Positional Argument Field: Max Position (99) Exceeded\n");
 				}
 				++argCounter;
 				m_tokenType |= TokenType::Width;
@@ -421,7 +336,8 @@ namespace serenity::arg_formatter {
 				return;
 		} else if( ch == '}' ) {
 				if( m_indexMode == IndexMode::automatic ) {
-						specValues.nestedPrecArgPos = ++argCounter;
+						specValues.nestedPrecArgPos = argCounter;
+						++argCounter;
 				} else {
 						throw std::runtime_error("Cannot Mix Manual And Automatic Indexing For Arguments\n");
 					}
@@ -432,14 +348,9 @@ namespace serenity::arg_formatter {
 					}
 		}
 		if( IsDigit(ch) ) {
-				auto& position { specValues.nestedPrecArgPos };
-				// from_chars() is much faster than the NoCheckIntFromChars() in this particular case
-				std::from_chars(sv.data(), sv.data() + FindDigitEnd(sv, currentPosition), position);
-				currentPosition += position > 9 ? position <= 99 ? 2 : -1 : 1;
-				if( currentPosition == -1 ) {
-						throw std::runtime_error("Error In Positional Argument Field: Max Position (99) "
-						                         "Exceeded\n");
-				}
+				auto& precision { specValues.precision };
+				std::from_chars(sv.data(), sv.data() + sv.size(), precision);
+				currentPosition += precision > 9 ? precision <= 99 ? 2 : -1 : 1;
 				++argCounter;
 				m_tokenType |= TokenType::Precision;
 		} else if( ch != '}' ) {
@@ -526,26 +437,22 @@ namespace serenity::arg_formatter {
 
 	void ArgFormatter::HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
 		auto ch { sv[ currentPosition ] };
-		if( IsAlpha(ch) ) {
-				switch( sv[ currentPosition + 1 ] ) {
-						case '}': VerifyTypeSpec(sv, currentPosition, bracketSize, ch); break;
-						case ' ':
-							++currentPosition;
-							for( ;; ) {
-									if( currentPosition >= bracketSize ) break;
-									if( sv[ ++currentPosition ] == '}' ) break;
-									VerifyTypeSpec(sv, currentPosition, bracketSize, ch);
-									break;
-								}
-							break;
-						default:
-							std::string tmp { "Invalid Type Specifier Found: \"" };
-							tmp.append(1, sv[ currentPosition ]).append("\"\n");
-							throw std::runtime_error(std::move(tmp));
-							break;
-					}
-		} else {
+		if( !IsAlpha(ch) ) {
 				++currentPosition;
+				return;
+		}
+		switch( sv[ ++currentPosition ] ) {
+				case '}': VerifyTypeSpec(sv, currentPosition, bracketSize, ch); break;
+				case ' ':
+					for( ;; ) {
+							if( currentPosition >= bracketSize ) break;
+							if( sv[ ++currentPosition ] == '}' ) {
+									VerifyTypeSpec(sv, currentPosition, bracketSize, ch);
+							}
+							break;
+						}
+					break;
+				default: throw std::runtime_error("Error In Argument Format Field: No Closing '}' Found \n"); break;
 			}
 	}
 
@@ -601,64 +508,82 @@ namespace serenity::arg_formatter {
 	        auto s5 = std::format("{:6d}", c);       // value of s5 is "   120"
 	        auto s6 = std::format("{:6}", true);   // value of s6 is "true  "
 	**********************************************************************************************************************/
-	void ArgFormatter::FormatFillAlignToken() {
+	void ArgFormatter::FormatFillAlignToken(std::string& container) {
 		temp.clear();
+		buff.clear();
 		size_t fillAmount {}, totalWidth {}, i { 0 };
-		auto data { buffer.data() };
 		if( specValues.hasAltForm ) {
 				temp.append(std::move(specValues.preAltForm));
 		}
-		argStorage.GetArgValue(temp, specValues.argPosition, std::move(specValues.typeSpec));
+		// clang-format off
+		int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
+			                                                                                            :  specValues.precision != 0 ? specValues.precision : 0 
+		};
+		// clang-format on
+		argStorage.GetArgValueAsStr(temp, specValues.argPosition, std::move(specValues.typeSpec), precision);
 		if( specValues.nestedWidthArgPos != 0 ) {
-				argStorage.GetArgValue(result.tokenResult, specValues.nestedWidthArgPos);
-				std::from_chars(result.tokenResult.data(), result.tokenResult.data() + result.tokenResult.size(), totalWidth);
-				result.tokenResult.clear();
+				totalWidth = argStorage.int_state(specValues.nestedWidthArgPos);
 		} else {
 				totalWidth = specValues.alignmentPadding != 0 ? specValues.alignmentPadding : 0;
 			}
-		fillAmount = (totalWidth > temp.size()) ? totalWidth - temp.size() : 0;
-		std::fill(data, data + totalWidth + 1, '\0');
+		auto size(temp.size());
+		container.reserve(totalWidth + static_cast<size_t>(1));
+
+		fillAmount = (totalWidth > size) ? totalWidth - size : 0;
+		if( fillAmount == 0 ) {
+				container.append(std::move(temp));
+				return;
+		}
+
+		buff.reserve(fillAmount);
 
 		switch( specValues.align ) {
 				case Alignment::AlignLeft:
 					{
-						for( auto& ch: temp ) {
-								buffer[ i ] = std::move(ch);
+						container.append(std::move(temp));
+						for( ;; ) {
+								if( i >= fillAmount ) break;
+								buff.emplace_back(specValues.fillCharacter);
 								++i;
 							}
-						std::fill(data + i, data + totalWidth, specValues.fillCharacter);
-						result.tokenResult.append(data, totalWidth);
+						container.append(buff.data(), buff.data() + buff.size());
 					}
 					break;
 				case Alignment::AlignRight:
 					{
-						std::fill(data, data + fillAmount, specValues.fillCharacter);
-						i = fillAmount;
-						for( auto& ch: temp ) {
-								buffer[ i ] = std::move(ch);
+						for( ;; ) {
+								if( i >= fillAmount ) break;
+								buff.emplace_back(specValues.fillCharacter);
 								++i;
 							}
-						result.tokenResult.append(data, data + i);
+						container.append(buff.data(), buff.data() + buff.size()).append(std::move(temp));
 					}
 					break;
 				case Alignment::AlignCenter:
-					{
-						i = (fillAmount /= 2);
-						std::fill(data, data + fillAmount, specValues.fillCharacter);
-						for( auto& ch: temp ) {
-								buffer[ i ] = ch;
-								++i;
-							}
-						auto endPos { i + fillAmount + (fillAmount % 2) + 1 };
-						std::fill(data + i, data + endPos, specValues.fillCharacter);
-						result.tokenResult.append(data, data + endPos);
-					}
+					fillAmount /= 2;
+					for( ;; ) {
+							if( i >= fillAmount ) break;
+							buff.emplace_back(specValues.fillCharacter);
+							++i;
+						}
+					container.append(buff.data(), fillAmount);
+					container.append(std::move(temp));
+					i          = 0;
+					fillAmount = (totalWidth - size - fillAmount);
+					buff.clear();
+					buff.reserve(fillAmount);
+					for( ;; ) {
+							if( i >= fillAmount ) break;
+							buff.emplace_back(specValues.fillCharacter);
+							++i;
+						}
+					container.append(buff.data(), buff.data() + fillAmount);
 					break;
 				default: break;
 			}
 	}
 
-	void ArgFormatter::FormatPositionalToken() { }
+	void ArgFormatter::FormatPositionalToken(std::string& container) { }
 	/************************ Taken From https://en.cppreference.com/w/cpp/utility/format/formatter ***********************
 	        The sign option can be one of following:
 
@@ -679,63 +604,76 @@ namespace serenity::arg_formatter {
 	        auto s2 = std::format("{0:},{0:+},{0:-},{0: }", inf); // value of s2 is "inf,+inf,inf, inf"
 	        auto s3 = std::format("{0:},{0:+},{0:-},{0: }", nan); // value of s3 is "nan,+nan,nan, nan"
 	**********************************************************************************************************************/
-	void ArgFormatter::FormatSignToken() { }
+	void ArgFormatter::FormatSignToken(std::string& container) { }
 
 	// Integers use 0b/0B for binary, 0 for octal and 0x/0X for hex
 	// For floating point, the result contains a decimal point irregardless if the value contains
 	// decimal points or not where the default is to only use decimal points only when present and
 	// g/G doesn't remove trailing zeros (This is by the spec being followed)
-	void ArgFormatter::FormatAlternateToken() { }
+	void ArgFormatter::FormatAlternateToken(std::string& container) { }
 
-	void ArgFormatter::FormatZeroPadToken() { }
+	void ArgFormatter::FormatZeroPadToken(std::string& container) { }
 
-	void ArgFormatter::FormatLocaleToken() { }
+	void ArgFormatter::FormatLocaleToken(std::string& container) {
+		// pass in the reference to the locale from msginfo so if it changes,
+		// it'll be reflected here when creating the groupings
+		std::locale loc { "" };
 
-	void ArgFormatter::FormatWidthToken() { }
+		auto argType { argStorage.SpecTypesCaptured()[ argCounter ] };
 
-	void ArgFormatter::FormatPrecisionToken() { }
+		argStorage.GetArgValueAsStr(temp, argCounter);
+		size_t value;
+		std::from_chars(temp.data(), temp.data() + temp.size(), value);
 
-	void ArgFormatter::FormatTypeToken() { }
+		std::string groupings { std::use_facet<std::numpunct<char>>(loc).grouping() };
+		auto numOfSep { std::_Count_separators(temp.size(), groupings) };
+	}
 
-	void ArgFormatter::FormatCharAggregateToken() { }
+	void ArgFormatter::FormatWidthToken(std::string& container) { }
 
-	void ArgFormatter::FormatCustomToken() { }
+	void ArgFormatter::FormatPrecisionToken(std::string& container) { }
 
-	void ArgFormatter::SimpleFormat() {
+	void ArgFormatter::FormatTypeToken(std::string& container) { }
+
+	void ArgFormatter::FormatCharAggregateToken(std::string& container) { }
+
+	void ArgFormatter::FormatCustomToken(std::string& container) { }
+
+	void ArgFormatter::SimpleFormat(std::string& container) {
 		// once formatting is setup, this will be used to just format
 	}
 
-	void ArgFormatter::FormatTokens() {
+	void ArgFormatter::FormatTokens(std::string& container) {
 		using enum TokenType;
 		if( IsFlagSet(TokenType::FillAlign) ) {
-				FormatFillAlignToken();
+				FormatFillAlignToken(container);
 		} else if( IsFlagSet(TokenType::Sign) ) {
-				FormatSignToken();
+				FormatSignToken(container);
 		} else if( IsFlagSet(TokenType::Alternate) ) {
-				FormatAlternateToken();
+				FormatAlternateToken(container);
 		} else if( IsFlagSet(TokenType::ZeroPad) ) {
-				FormatZeroPadToken();
+				FormatZeroPadToken(container);
 		} else if( IsFlagSet(TokenType::Locale) ) {
-				FormatLocaleToken();
+				FormatLocaleToken(container);
 		} else if( IsFlagSet(TokenType::Width) ) {
-				FormatWidthToken();
+				FormatWidthToken(container);
 		} else if( IsFlagSet(TokenType::Precision) ) {
-				FormatPrecisionToken();
+				FormatPrecisionToken(container);
 		} else if( IsFlagSet(TokenType::Type) ) {
-				FormatTypeToken();
+				FormatTypeToken(container);
 		} else if( IsFlagSet(TokenType::Positional) ) {
-				FormatPositionalToken();
+				FormatPositionalToken(container);
 		} else if( IsFlagSet(TokenType::Custom) ) {
-				FormatCustomToken();
+				FormatCustomToken(container);
 		} else if( IsFlagSet(TokenType::Empty) ) {
-				SimpleFormat();
+				SimpleFormat(container);
 		}
 	}
 
-	bool ArgFormatter::HandleIfEndOrWhiteSpace(std::string_view sv, size_t& currentPosition, const size_t& bracketSize) {
-		auto ch { sv[ ++currentPosition ] };
+	bool ArgFormatter::HandleIfEndOrWhiteSpace(std::string& container, std::string_view sv, size_t& currentPosition, const size_t& bracketSize) {
+		auto ch { sv[ currentPosition + static_cast<size_t>(1) ] };
 		if( ch == '}' ) {
-				FormatTokens();
+				FormatTokens(container);
 				++argCounter;
 				return true;
 		} else if( ch == ' ' ) {
@@ -744,7 +682,7 @@ namespace serenity::arg_formatter {
 						if( ch = sv[ ++currentPosition ] != ' ' ) break;
 					}
 				if( ch == '}' ) {
-						FormatTokens();
+						FormatTokens(container);
 						++argCounter;
 						return true;
 				} else {
@@ -755,49 +693,53 @@ namespace serenity::arg_formatter {
 	}
 
 	// Enum Types: FillAlign, Sign, Alternate, ZeroPad, Locale, Width, Precision, Type
-	ParseResult& ArgFormatter::Parse(std::string_view sv) {
-		result.Reset();
-		if( sv.size() < 2 ) return result;
-
-		size_t pos { 0 };
-		argCounter  = 0;
-		m_tokenType = TokenType::Empty;
-
-		FindBrackets(sv);
-		if( !bracketResults.isValid ) {
-				result.preTokenStr = std::move(sv);
-				return result;
-		}
-		result.preTokenStr = std::move(sv.substr(0, bracketResults.beginPos));
-		result.remainder   = std::move(sv.substr(bracketResults.endPos + 1, sv.size()));
-		auto argBracket { sv.substr(bracketResults.beginPos + 1, (bracketResults.endPos - bracketResults.beginPos)) };
-		const size_t& bracketSize { argBracket.size() };
-
-		/* Handle If Bracket Contained No Specs */
-		if( HandleIfEndOrWhiteSpace(sv, pos, bracketSize) ) {
-				return result;
-		}
-		/*Handle Escaped Bracket*/
-		if( argBracket[ pos ] == '{' ) {
-				std::string tmp { result.preTokenStr };
-				tmp.append(1, '{');
-				result.preTokenStr = std::move(tmp);
-		}
-		/*Handle Positional Args*/
-		if( !ParsePositionalField(argBracket, argCounter, pos) ) {
-				// Nothing to Parse - just a simple substitution
-				FormatTokens();
-				++argCounter;
-				return result;
-		}
-		/* Handle What's Left Of The Bracket */
-		auto endPos { bracketSize - 1 };
+	void ArgFormatter::Parse(std::string& container, std::string_view sv) {
+		result.remainder = sv;
+		specValues.ResetSpecs();
 		for( ;; ) {
-				if( pos >= endPos ) break;
-				VerifyArgumentBracket(argBracket, pos, bracketSize);
+				if( sv.size() < 2 ) break;
+
+				size_t pos { 0 };
+				argCounter  = 0;
+				m_tokenType = TokenType::Empty;
+
+				FindBrackets(result.remainder);
+				if( !bracketResults.isValid ) {
+						container.append(sv.data(), sv.size());
+						break;
+				}
+				container.append(sv.substr(0, bracketResults.beginPos));
+				auto argBracket { sv.substr(bracketResults.beginPos + 1, (bracketResults.endPos - bracketResults.beginPos)) };
+				const size_t& bracketSize { argBracket.size() };
+
+				/* Handle If Bracket Contained No Specs */
+				if( HandleIfEndOrWhiteSpace(container, argBracket, pos, bracketSize) ) {
+						break;
+				}
+				/*Handle Escaped Bracket*/
+				if( argBracket[ pos ] == '{' ) {
+						std::string tmp { result.preTokenStr };
+						tmp.append(1, '{');
+						result.preTokenStr = std::move(tmp);
+				}
+				/*Handle Positional Args*/
+				if( !ParsePositionalField(argBracket, argCounter, pos) ) {
+						// Nothing to Parse - just a simple substitution
+						FormatTokens(container);
+						++argCounter;
+						break;
+						;
+				}
+				/* Handle What's Left Of The Bracket */
+				auto endPos { bracketSize - 1 };
+				for( ;; ) {
+						if( pos >= endPos ) break;
+						VerifyArgumentBracket(argBracket, pos, bracketSize);
+					}
+				FormatTokens(container);
+				break;
 			}
-		FormatTokens();
-		return result;
+		container.append(sv.substr(bracketResults.endPos + 1, sv.size()));
 	}
 
 }    // namespace serenity::arg_formatter

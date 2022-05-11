@@ -17,7 +17,7 @@ namespace serenity::msg_details {
 
 	class LazyParseHelper
 	{
-	      public:
+	  public:
 		enum class bracket_type
 		{
 			open = 0,
@@ -44,7 +44,7 @@ namespace serenity::msg_details {
 		void ClearPartitions();
 		size_t FindEndPos();
 
-	      private:
+	  private:
 		std::string partitionUpToArg;
 		std::string remainder;
 		std::string temp;
@@ -78,24 +78,22 @@ namespace serenity::msg_details {
 	};
 
 	static std::unordered_map<size_t, SpecType> mapIndexToType = {
-		{ 0, SpecType::MonoType },        { 1, SpecType::StringType },        { 2, SpecType::CharPointerType },
-		{ 3, SpecType::StringViewType },  { 4, SpecType::IntType },           { 5, SpecType::U_IntType },
-		{ 6, SpecType::LongLongType },    { 7, SpecType::U_LongLongType },    { 8, SpecType::BoolType },
-		{ 9, SpecType::CharType },        { 10, SpecType::FloatType },        { 11, SpecType::DoubleType },
+		{ 0, SpecType::MonoType },        { 1, SpecType::StringType },        { 2, SpecType::CharPointerType }, { 3, SpecType::StringViewType },
+		{ 4, SpecType::IntType },         { 5, SpecType::U_IntType },         { 6, SpecType::LongLongType },    { 7, SpecType::U_LongLongType },
+		{ 8, SpecType::BoolType },        { 9, SpecType::CharType },          { 10, SpecType::FloatType },      { 11, SpecType::DoubleType },
 		{ 12, SpecType::LongDoubleType }, { 13, SpecType::ConstVoidPtrType }, { 14, SpecType::VoidPtrType },
 	};
 
 	static std::unordered_map<SpecType, size_t> mapTypeToIndex = {
-		{ SpecType::MonoType, 0 },        { SpecType::StringType, 1 },        { SpecType::CharPointerType, 2 },
-		{ SpecType::StringViewType, 3 },  { SpecType::IntType, 4 },           { SpecType::U_IntType, 5 },
-		{ SpecType::LongLongType, 6 },    { SpecType::U_LongLongType, 7 },    { SpecType::BoolType, 8 },
-		{ SpecType::CharType, 9 },        { SpecType::FloatType, 10 },        { SpecType::DoubleType, 11 },
+		{ SpecType::MonoType, 0 },        { SpecType::StringType, 1 },        { SpecType::CharPointerType, 2 }, { SpecType::StringViewType, 3 },
+		{ SpecType::IntType, 4 },         { SpecType::U_IntType, 5 },         { SpecType::LongLongType, 6 },    { SpecType::U_LongLongType, 7 },
+		{ SpecType::BoolType, 8 },        { SpecType::CharType, 9 },          { SpecType::FloatType, 10 },      { SpecType::DoubleType, 11 },
 		{ SpecType::LongDoubleType, 12 }, { SpecType::ConstVoidPtrType, 13 }, { SpecType::VoidPtrType, 14 },
 	};
 
 	class ArgContainer
 	{
-	      private:
+	  private:
 		struct FillAlignValues
 		{
 			std::string temp;
@@ -118,9 +116,9 @@ namespace serenity::msg_details {
 			char spec { '\0' };
 		};
 
-	      public:
-		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long,
-		                                          unsigned long long, bool, char, float, double, long double, const void*, void*>;
+	  public:
+		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long, unsigned long long,
+		                                          bool, char, float, double, long double, const void*, void*>;
 
 		bool IsValidStringSpec(char& spec);
 		bool IsValidIntSpec(char& spec);
@@ -183,7 +181,7 @@ namespace serenity::msg_details {
 						break;
 					default:
 						std::string throwMsg { "TwoDigitFromChars() Only Handles String Types Of Size 2 Or Less: "
-							               "\"" };
+							                   "\"" };
 						throwMsg.append(sv.data(), sv.size()).append("\" Doesn't Adhere To This Limitation\n");
 						throw std::runtime_error(std::move(throwMsg));
 						break;
@@ -191,8 +189,7 @@ namespace serenity::msg_details {
 			return finalValue;
 		}
 
-		template<typename T>
-		void FormatFloatTypeArg(std::string& container, char&& spec, T&& value, std::array<char, SERENITY_ARG_BUFFER_SIZE>& resultBuffer) {
+		template<typename T> void FormatFloatTypeArg(std::string& container, char&& spec, T&& value, std::array<char, SERENITY_ARG_BUFFER_SIZE>& resultBuffer) {
 			std::chars_format format { std::chars_format::general };
 			int precisionValue { 6 };
 			auto& pStr { precisionSpecHelper.precision };
@@ -217,11 +214,9 @@ namespace serenity::msg_details {
 						}
 			}
 			if( precisionValue != 0 ) {
-					std::to_chars(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), std::forward<T>(value),
-					              format, precisionValue);
+					std::to_chars(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), std::forward<T>(value), format, precisionValue);
 			} else {
-					std::to_chars(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), std::forward<T>(value),
-					              format);
+					std::to_chars(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), std::forward<T>(value), format);
 				}
 			switch( spec ) {
 					case 'A': [[fallthrough]];
@@ -296,7 +291,7 @@ namespace serenity::msg_details {
 			return finalArgValue;
 		}
 
-	      private:
+	  private:
 		std::vector<LazilySupportedTypes> argContainer;
 		size_t maxIndex { 0 };
 		size_t argIndex { 0 };
@@ -313,17 +308,17 @@ namespace serenity::msg_details {
 
 	class Message_Formatter
 	{
-	      public:
+	  public:
 		class Formatters
 		{
-		      public:
+		  public:
 			Formatters(std::vector<std::unique_ptr<Formatter>>&& container);
 			Formatters() = default;
 			void Emplace_Back(std::unique_ptr<Formatter>&& formatter);
 			std::string_view FormatUserPattern();
 			void Clear();
 
-		      private:
+		  private:
 			std::string localBuffer;
 			std::string temp;
 			std::vector<std::unique_ptr<Formatter>> m_Formatter;
@@ -370,7 +365,7 @@ namespace serenity::msg_details {
 		std::string_view LineEnding() const;
 		void EnableFallbackToStd(bool enable);
 
-	      private:
+	  private:
 		Message_Info* msgInfo;
 		std::locale* localeRef;
 		Formatters formatter;

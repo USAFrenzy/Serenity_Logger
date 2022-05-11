@@ -7,7 +7,7 @@ namespace serenity::targets::helpers {
 
 	class BaseTargetHelper
 	{
-	      public:
+	  public:
 		explicit BaseTargetHelper();
 		BaseTargetHelper(BaseTargetHelper&) = delete;
 		BaseTargetHelper& operator=(BaseTargetHelper&);
@@ -21,12 +21,12 @@ namespace serenity::targets::helpers {
 		std::string* Buffer();
 		const std::unique_ptr<serenity::experimental::Flush_Policy>& Policy() const;
 
-	      private:
+	  private:
 		bool toBuffer;
 		std::string internalBuffer;
 		bool multiThreadSupport;
 
-	      protected:
+	  protected:
 		std::unique_ptr<serenity::experimental::Flush_Policy> policy;
 	};
 }    // namespace serenity::targets::helpers

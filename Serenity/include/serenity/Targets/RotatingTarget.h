@@ -26,7 +26,7 @@ namespace serenity::experimental {
 
 	class RotateSettings: public serenity::targets::helpers::FileHelper
 	{
-	      public:
+	  public:
 		explicit RotateSettings(const std::string& path);
 		explicit RotateSettings(const RotateLimits& limits);
 		explicit RotateSettings(const std::string& path, const RotateLimits& limits);
@@ -44,10 +44,10 @@ namespace serenity::experimental {
 		void SetRotationLimits(const RotateLimits& limits);
 		RotateLimits RotationLimits() const;
 
-	      protected:
+	  protected:
 		void SetCurrentFileSize(size_t currentSize);
 
-	      private:
+	  private:
 		RotateLimits settingLimits;
 		size_t currentFileSize;
 		bool initalRotationEnabled;
@@ -71,11 +71,10 @@ namespace serenity::experimental::targets {
 
 	class RotatingTarget: public serenity::targets::TargetBase, public serenity::experimental::RotateSettings
 	{
-	      public:
+	  public:
 		explicit RotatingTarget();
 		explicit RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
-		explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
-		                        bool replaceIfExists = false);
+		explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists = false);
 		RotatingTarget(const RotatingTarget&)            = delete;
 		RotatingTarget& operator=(const RotatingTarget&) = delete;
 		~RotatingTarget();

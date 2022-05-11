@@ -31,7 +31,7 @@ namespace serenity {
 
 		class Instrumentator
 		{
-		      public:
+		  public:
 			Instrumentator();
 
 			void StopWatch_Reset();
@@ -43,10 +43,10 @@ namespace serenity {
 
 			~Instrumentator();
 
-		      public:
+		  public:
 			static Allocation_Statistics mem_tracker;
 
-		      private:
+		  private:
 			std::chrono::time_point<std::chrono::steady_clock> m_Start, m_End;
 		};
 

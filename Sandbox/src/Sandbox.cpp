@@ -16,8 +16,6 @@
 	#include <serenity/MessageDetails/ArgFormatter.h>
 #endif
 
-#include <iostream>
-
 #include <serenity/Targets/ColorConsoleTarget.h>
 #include <serenity/Targets/FileTarget.h>
 #include <serenity/Targets/RotatingTarget.h>
@@ -26,6 +24,16 @@
 
 std::filesystem::path LogDirPath() {
 	return (std::filesystem::current_path() /= "Logs");
+}
+
+// This is from
+// (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128)
+// Just using this to set throughput precision
+template<typename T> std::string SetPrecision(const T value, const int precision = 3) {
+	std::ostringstream temp;
+	temp.precision(precision);
+	temp << std::fixed << value;
+	return temp.str();
 }
 
 int main() {
@@ -50,11 +58,11 @@ int main() {
 
 #ifdef ENABLE_ROTATION_SECTION
 	std::cout << "###############################################################"
-		     "#####\n";
+				 "#####\n";
 	std::cout << "# This Will Be The Default Pattern Format And Message Level "
-		     "Colors #\n";
+				 "Colors #\n";
 	std::cout << "###############################################################"
-		     "#####\n";
+				 "#####\n";
 	// Trace Is Default Color
 	C.Trace("Trace");
 	// Info Is Light Green
@@ -68,13 +76,13 @@ int main() {
 	// Fatal Is Light Yellow On Dark Red
 	C.Fatal("Fatal");
 	std::cout << "###############################################################"
-		     "#####\n\n";
+				 "#####\n\n";
 	std::cout << "###############################################################"
-		     "#########\n";
+				 "#########\n";
 	std::cout << "# Testing Some Basic Functions To Make Sure All Is Working As "
-		     "I Expect #\n";
+				 "I Expect #\n";
 	std::cout << "###############################################################"
-		     "#########\n";
+				 "#########\n";
 	C.SetPattern("%T [%N]: %+");
 	C.Info("Pattern String Has Been Changed To \"%T [%N]: %+\"");
 	C.ColorizeOutput(false);
@@ -152,7 +160,7 @@ int main() {
 	};
 
 	std::cout << "\n\nLogging messages to test rotation on hour mark, daily "
-		     "mark, and file size\n\n";
+				 "mark, and file size\n\n";
 	auto LogHourly = [ & ]() {
 		std::mutex hourlyMutex;
 		for( int i = 1; i <= rotationIterations; ++i ) {
@@ -217,53 +225,59 @@ int main() {
 	float c { 32.5f };
 	double d { 54.42 };
 	int e { 6 };
-	int f { 7 };
+	int f { 6 };
+	std::string tmp { "Suspendisse sed porttitor orci." };
 
 	ArgFormatter parser;
 	Instrumentator timer;
-
 	ParseResult result {};
-	// NOTE: benching specifically the parsing, CaptureArgs() is ~0.05us-0.06us
-	parser.CaptureArgs(parseString, a, b, c, d, e, f);
-	std::string final;
-	timer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 10'000'000; ++i ) {
-			// simulating a workload of taking the result and continuing to parse
-			result.remainder = parseString;
-			parser.CaptureArgs(parseString, a, b, c, d, e, f);
-			final.clear();
-			for( ;; ) {
-					if( result.remainder.size() == 0 ) {
-							break;
-					} else {
-							result = parser.Parse(result.remainder);
-							final.append(result.preTokenStr.data(), result.preTokenStr.size());
-							final.append(std::move(result.tokenResult));
-							continue;
-						}
+	std::string finalStr;
+
+	serenity::targets::ColorConsole console("", "%+");
+
+	for( int i { 0 }; i < 5; ++i ) {
+			// serenity's format loop
+			timer.StopWatch_Reset();
+			for( size_t i { 0 }; i < 10'000'000; ++i ) {
+					parser.se_format_to(finalStr, parseString, a, b, c, d, e, f, tmp);
+					finalStr.clear();
+				}
+			timer.StopWatch_Stop();
+
+			auto serenityTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
+			console.Debug(Tag::Bright_Cyan("ArgFormatter Parsing Elapsed Time Over 10,000,000 iterations: " +
+			                               std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us")));
+			parser.se_format_to(finalStr, parseString, a, b, c, d, e, f, tmp);
+			console.Debug(Tag::Green("With Result: \"" + finalStr + "\""));
+			finalStr.clear();
+
+			// Standdard's std::vformat_to() loop
+			timer.StopWatch_Reset();
+			for( size_t i { 0 }; i < 10'000'000; ++i ) {
+					VFORMAT_TO(finalStr, parseString, a, b, c, d, e, f, tmp);
+					finalStr.clear();
+				}
+			timer.StopWatch_Stop();
+
+			auto standardTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
+			VFORMAT_TO(finalStr, parseString, a, b, c, d, e, f, tmp);
+			console.Debug(Tag::Bright_Cyan("std::format_to() Elapsed Time Over 10,000,000 iterations: " +
+			                               std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us")));
+			console.Debug(Tag::Green("With Result: \"" + finalStr + "\""));
+
+			auto percentValue { ((serenityTime - standardTime) / serenityTime) * 100 };
+			if( percentValue > 0 ) {
+					auto percentage { SetPrecision(percentValue, 2) };
+					console.Debug(Tag::Bright_White("Serenity's Formatting Function Is ")
+					              .append(Tag::Red("[%" + percentage.append("]")))
+					              .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function\n")));
+			} else {
+					auto percentage { SetPrecision(std::abs(percentValue), 2) };
+					console.Debug(Tag::Bright_White("Serenity's Formatting Function Is ")
+					              .append(Tag::Green("[%" + percentage.append("]")))
+					              .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function\n")));
 				}
 		}
-	timer.StopWatch_Stop();
-
-	std::cout << "ArgFormatter Parsing Elapsed Time Over 10,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 10'000'000.0f
-		  << " us\n";
-
-	result = parser.Parse(result.remainder);
-	final.append(result.preTokenStr.data(), result.preTokenStr.size());
-	final.append(std::move(result.tokenResult));
-	std::cout << "With Result: \"" << final << "\"\n";
-
-	final.clear();
-	timer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 10'000'000; ++i ) {
-			VFORMAT_TO(final, parseString, a, b, c, d, e, f);
-			final.clear();
-		}
-	timer.StopWatch_Stop();
-	VFORMAT_TO(final, parseString, a, b, c, d, e, f);
-	std::cout << "std::format_to() Elapsed Time Over 10,000,000 iterations: " << timer.Elapsed_In(time_mode::us) / 10'000'000.0f << " us\n";
-	std::cout << "With Result: \"" << final << "\"\n";
-
 #endif    // ENABLE_PARSE_SECTION
 
 #if ENABLE_MEMORY_LEAK_DETECTION

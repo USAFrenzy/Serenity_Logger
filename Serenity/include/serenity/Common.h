@@ -12,43 +12,38 @@
 
 #ifdef DOXYGEN_DOCUMENTATION
 	/// @brief If _WIN32 is defined, then this is also defined.
-        /// @details If this macro is defined, includes the Windows.h and io.h headers
-        /// as well as defines ISATTY to _isatty and FILENO to _fileno. If
-        /// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
+    /// @details If this macro is defined, includes the Windows.h and io.h headers
+    /// as well as defines ISATTY to _isatty and FILENO to _fileno. If
+    /// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
 	#define WINDOWS_PLATFORM
 	/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also
-        /// defined.
-        /// @details If this macro is defined, includes the unistd.h header and defines
-        /// ISATTY to isatty and FILENO to fileno
+    /// defined.
+    /// @details If this macro is defined, includes the unistd.h header and defines
+    /// ISATTY to isatty and FILENO to fileno
 	#define MAC_PLATFORM
 #endif
 
 #ifdef _WIN32
 	#define WINDOWS_PLATFORM
 	// I believe the below macro defines *should* cover some basic corner cases.
-        // Mostly noticed this issue when I built this for VS 2022 to try out.
+    // Mostly noticed this issue when I built this for VS 2022 to try out.
 	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)
 		#define CONTEXT std::back_insert_iterator<std::basic_string<char>>
-		#define L_VFORMAT_TO(container, locale, message, ...)                                                                           \
+		#define L_VFORMAT_TO(container, locale, message, ...)                                                                                                  \
 			std::vformat_to<CONTEXT>(std::back_inserter(container), locale, message, std::make_format_args(__VA_ARGS__))
-		#define VFORMAT_TO(container, message, ...)                                                                                     \
-			std::vformat_to<CONTEXT>(std::back_inserter(container), message, std::make_format_args(__VA_ARGS__))
+		#define VFORMAT_TO(container, message, ...) std::vformat_to<CONTEXT>(std::back_inserter(container), message, std::make_format_args(__VA_ARGS__))
 	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
 		#define CONTEXT std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
-		#define L_VFORMAT_TO(container, locale, message, ...)                                                                           \
+		#define L_VFORMAT_TO(container, locale, message, ...)                                                                                                  \
 			std::vformat_to(std::back_inserter(container), locale, message, std::make_format_args<CONTEXT>(__VA_ARGS__))
-		#define VFORMAT_TO(container, message, ...)                                                                                     \
-			std::vformat_to(std::back_inserter(container), message, std::make_format_args<CONTEXT>(__VA_ARGS__))
+		#define VFORMAT_TO(container, message, ...) std::vformat_to(std::back_inserter(container), message, std::make_format_args<CONTEXT>(__VA_ARGS__))
 	#else
 		#if( _MSC_VER < 1929 )
-			#error                                                                                                                  \
-			"MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"
+			#error "MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"
 		#elif(_MSVC_LANG < 202002L)
-			#error                                                                                                                  \
-			"MSVC's Implementation Of <format> Not Fully Implemented Prior To C++20. Please Use The  C++ Latest Compiler Flag'"
+			#error "MSVC's Implementation Of <format> Not Fully Implemented Prior To C++20. Please Use The  C++ Latest Compiler Flag'"
 		#else    // This one is probably uneccessary, but it's here for completeness I guess
-			#error                                                                                                                  \
-			"Unkown Error: Compiler And Language Standard Being Used Should Include <format> Header, But No <format> Header Was Detected"
+			#error "Unkown Error: Compiler And Language Standard Being Used Should Include <format> Header, But No <format> Header Was Detected"
 		#endif
 
 	#endif
@@ -226,8 +221,7 @@ namespace serenity {
 		all      = 16,
 	};
 	constexpr source_flag operator|(source_flag lhs, source_flag rhs) {
-		return static_cast<source_flag>(static_cast<std::underlying_type<source_flag>::type>(lhs) |
-		                                static_cast<std::underlying_type<source_flag>::type>(rhs));
+		return static_cast<source_flag>(static_cast<std::underlying_type<source_flag>::type>(lhs) | static_cast<std::underlying_type<source_flag>::type>(rhs));
 	}
 	constexpr source_flag operator|=(source_flag& lhs, source_flag rhs) {
 		return static_cast<source_flag>(lhs = lhs | rhs);

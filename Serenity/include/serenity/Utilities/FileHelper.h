@@ -20,7 +20,7 @@ namespace serenity {
 
 	class FileCache
 	{
-	      public:
+	  public:
 		FileCache(std::string_view path);
 		FileCache(FileCache&)            = delete;
 		FileCache& operator=(FileCache&) = delete;
@@ -41,14 +41,14 @@ namespace serenity {
 		void SetFileName(const std::string& newName);
 		void SetExtension(const std::string& newExt);
 
-	      protected:
+	  protected:
 		std::filesystem::path filePath;
 		std::string fileDir;
 		std::string fileName;
 		std::string extension;
 		std::filesystem::path dirPath;
 
-	      private:
+	  private:
 		size_t bufferSize;
 		std::vector<char> fileBuffer;
 	};
@@ -59,7 +59,7 @@ namespace serenity::targets::helpers {
 
 	class FileHelper
 	{
-	      public:
+	  public:
 		explicit FileHelper(const std::string_view fpath);
 		FileHelper(FileHelper&)            = delete;
 		FileHelper& operator=(FileHelper&) = delete;
@@ -81,7 +81,7 @@ namespace serenity::targets::helpers {
 		const std::unique_ptr<FileCache>& FileCacheHelper() const;
 		const std::unique_ptr<BackgroundThread>& BackgoundThreadInfo() const;
 
-	      private:
+	  private:
 		int retryAttempt;
 		std::ofstream fileHandle;
 		std::mutex fileHelperMutex;

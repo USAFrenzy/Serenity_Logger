@@ -24,7 +24,7 @@ namespace serenity::targets {
 	}
 
 	ColorConsole::ColorConsole(std::string_view name, std::string_view msgPattern)
-		: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false) {
+			: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false) {
 		TargetHelper()->WriteToBaseBuffer(false);
 		TargetHelper()->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::always);
 		SetConsoleInterface(consoleMode);
@@ -51,8 +51,8 @@ namespace serenity::targets {
 		if( !IsTerminalType() ) {
 				fflush(outputHandle);
 		}
-#endif       // WINDOWS_PLATFORM
-	}    // ~ColorConsole
+#endif    // WINDOWS_PLATFORM
+	}     // ~ColorConsole
 
 	bool ColorConsole::IsValidHandle() {
 #ifdef WINDOWS_PLATFORM
@@ -156,9 +156,9 @@ namespace serenity::targets {
 #else
 				fwrite(message.data(), 1, message.size(), outputHandle);
 				return;
-#endif               // WINDOWS_PLATFORM
+#endif       // WINDOWS_PLATFORM
 		}    // IsValidHandle() Check
-	}            // PrintMessage()
+	}        // PrintMessage()
 
 	// TODO: Add a function that checks if locale needs to be swapped as well
 	// TODO: as reset the old mode to its default if mode is changed in SetConsoleMode()

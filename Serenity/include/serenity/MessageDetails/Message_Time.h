@@ -9,7 +9,7 @@ namespace serenity::msg_details {
 
 	class ZoneThread
 	{
-	      public:
+	  public:
 		ZoneThread() = delete;
 		explicit ZoneThread(const std::chrono::tzdb& db);
 		ZoneThread(const ZoneThread&)            = delete;
@@ -27,7 +27,7 @@ namespace serenity::msg_details {
 		void EnableZoneThread(bool enabled = true);
 		bool IsZoneThreadActive() const;
 
-	      private:
+	  private:
 		const std::chrono::tzdb& timezoneDB;
 		mutable std::mutex timeMutex;
 		std::chrono::sys_info sysCache;
@@ -39,7 +39,7 @@ namespace serenity::msg_details {
 
 	class Message_Time
 	{
-	      public:
+	  public:
 		Message_Time() = delete;
 		explicit Message_Time(message_time_mode mode);
 		Message_Time(const Message_Time&)            = delete;
@@ -63,7 +63,7 @@ namespace serenity::msg_details {
 		void EnableZoneThread(bool enabled = true);
 		bool IsZoneThreadActive() const;
 
-	      private:
+	  private:
 		message_time_mode m_mode;
 		std::tm m_cache;
 		std::chrono::seconds secsSinceLastLog;

@@ -5,7 +5,7 @@
 namespace serenity::msg_details {
 
 	ZoneThread::ZoneThread(const std::chrono::tzdb& db)
-		: timezoneDB(db), timeMutex(std::mutex {}), sysCache(std::chrono::sys_info {}), isThreadActive(false), isDaylightSavings(false) {
+			: timezoneDB(db), timeMutex(std::mutex {}), sysCache(std::chrono::sys_info {}), isThreadActive(false), isDaylightSavings(false) {
 		sysCache          = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
 		isDaylightSavings = (sysCache.save != std::chrono::minutes(0));
 	}

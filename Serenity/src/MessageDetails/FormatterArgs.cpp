@@ -98,9 +98,7 @@ namespace serenity::msg_details {
 		std::fill(buffer.data(), buffer.data() + buffer.size(), '\0');
 		// Note: It seems the trailing zeros are an OS limitation in how fine the clocks' granularity is.
 		//       I haven't tested this on other platforms other than Windows at the moment though.
-		auto subSeconds {
-			std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count()
-		};
+		auto subSeconds { std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count() };
 		std::to_chars(buffer.data(), buffer.data() + buffer.size(), subSeconds);
 		// Note: Ignoring the first 10 digits as those don't equate to the points of interest. The 10th digit
 		//       is the second offset so start at the second offset and find the end of the precision digits.
@@ -208,13 +206,7 @@ namespace serenity::msg_details {
 		}
 		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		result.clear();
-		return result.append(hour.data(), hour.size())
-		.append(":")
-		.append(min.data(), min.size())
-		.append(":")
-		.append(sec.data(), sec.size())
-		.append(" ")
-		.append(ampm);
+		return result.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size()).append(" ").append(ampm);
 	}
 
 	void Format_Arg_r::FormatUserPattern(std::string& container) {
@@ -224,8 +216,7 @@ namespace serenity::msg_details {
 
 	// Format %s Functions
 	/*********************************************************************************************************************/
-	Format_Arg_s::Format_Arg_s(Message_Info& info, source_flag flag)
-		: srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag) { }
+	Format_Arg_s::Format_Arg_s(Message_Info& info, source_flag flag): srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag) { }
 
 	size_t Format_Arg_s::FindEndPos() {
 		size_t pos {};
@@ -635,8 +626,7 @@ namespace serenity::msg_details {
 
 	// Format %Z Functions
 	/*********************************************************************************************************************/
-	serenity::msg_details::Format_Arg_Z::Format_Arg_Z(Message_Info& info)
-		: timeRef(info.TimeDetails()), timeModeRef(timeRef.Mode()), cachedMode(timeModeRef) {
+	serenity::msg_details::Format_Arg_Z::Format_Arg_Z(Message_Info& info): timeRef(info.TimeDetails()), timeModeRef(timeRef.Mode()), cachedMode(timeModeRef) {
 		timeModeRef == message_time_mode::local ? result = timeRef.TimeZoneAbbrev() : result = "UTC";
 		timeRef.EnableZoneThread();
 	}

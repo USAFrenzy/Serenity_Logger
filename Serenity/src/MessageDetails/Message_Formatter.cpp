@@ -186,14 +186,10 @@ namespace serenity::msg_details {
 		switch( type ) {
 				case SpecType::CharPointerType: [[fallthrough]];
 				case SpecType::StringViewType: [[fallthrough]];
-				case SpecType::StringType:
-					throw std::runtime_error("Fallback Not Yet Implemented\n");
-					break;    // Still Need To Implement
+				case SpecType::StringType: throw std::runtime_error("Fallback Not Yet Implemented\n"); break;    // Still Need To Implement
 				case SpecType::FloatType: [[fallthrough]];
 				case SpecType::DoubleType: [[fallthrough]];
-				case SpecType::LongDoubleType:
-					GetArgValue(finalArgValue, index, std::move(precisionSpecHelper.spec));
-					break;    // Still Need To Implement
+				case SpecType::LongDoubleType: GetArgValue(finalArgValue, index, std::move(precisionSpecHelper.spec)); break;    // Still Need To Implement
 				default: break;
 			}
 	}
@@ -403,8 +399,7 @@ namespace serenity::msg_details {
 						char nextCh { '<' };
 						if( (pos + 1) <= argBracketSize ) nextCh = specView[ pos + 1 ];
 						if( nextCh == '}' ) nextCh = '<';
-						if( std::any_of(faSpecs.begin(), faSpecs.end(),
-						                [ & ](const char& chSp) { return nextCh == chSp; }) ) {
+						if( std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](const char& chSp) { return nextCh == chSp; }) ) {
 								fillAlignValues.fillSpec      = ch;
 								fillAlignValues.fillAlignSpec = nextCh;
 								pos += 2;
@@ -591,8 +586,7 @@ namespace serenity::msg_details {
 		parseHelper.ClearPartitions();
 		parseHelper.SetBracketPosition(B_Type::open, fmt.find_first_of(('{')));
 		parseHelper.SetBracketPosition(B_Type::close, fmt.find_first_of(('}')));
-		auto argBracket { std::move(
-		fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1)) };
+		auto argBracket { std::move(fmt.substr(parseHelper.BracketPosition(B_Type::open) + 1, parseHelper.BracketPosition(B_Type::close) + 1)) };
 
 		// handle empty arg brackets no matter the amount of whitespace,
 		// but skip the processing step if it only contains whitespace
@@ -696,8 +690,7 @@ namespace serenity::msg_details {
 						default:
 							bool isFirstTokenDigit { IsDigit(firstToken) };
 							auto nextToken = argBracket[ 1 ];
-							bool isFASpec { std::any_of(faSpecs.begin(), faSpecs.end(),
-								                    [ & ](auto ch) { return nextToken == ch; }) };
+							bool isFASpec { std::any_of(faSpecs.begin(), faSpecs.end(), [ & ](auto ch) { return nextToken == ch; }) };
 							bool isFAFillSpec { (firstToken != '{') && (firstToken != '}') };
 							if( isFAFillSpec && isFASpec ) {
 									if( nextToken == '}' ) nextToken = '<';
@@ -730,7 +723,7 @@ namespace serenity::msg_details {
 				throwMsg.append("\" Is Not A Valid Specifier\n ");
 				throw throwMsg;
 			}    // argument bracket processing for-loop
-	}                    // parsing fmt loop
+	}            // parsing fmt loop
 
 	size_t LazyParseHelper::FindEndPos() {
 		size_t pos {};
@@ -774,23 +767,15 @@ namespace serenity::msg_details {
 					break;
 				case 8: container.append(std::move(std::get<8>(std::move(arg))) == true ? "true" : "false"); break;
 				case 9: container += std::move(std::get<9>(std::move(arg))); break;
-				case 10:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<10>(std::move(arg))), buffer);
-					break;
-				case 11:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<11>(std::move(arg))), buffer);
-					break;
-				case 12:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<12>(std::move(arg))), buffer);
-					break;
+				case 10: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<10>(std::move(arg))), buffer); break;
+				case 11: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<11>(std::move(arg))), buffer); break;
+				case 12: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<12>(std::move(arg))), buffer); break;
 				case 13:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(),
-					              reinterpret_cast<size_t>(std::move(std::get<13>(std::move(arg)))), 16);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), reinterpret_cast<size_t>(std::move(std::get<13>(std::move(arg)))), 16);
 					container.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 14:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(),
-					              reinterpret_cast<size_t>(std::move(std::get<14>(std::move(arg)))), 16);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), reinterpret_cast<size_t>(std::move(std::get<14>(std::move(arg)))), 16);
 					container.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				default: break;
@@ -810,7 +795,7 @@ namespace serenity::msg_details {
 	}
 
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
-		: msgInfo(*&details), localeRef(nullptr), sourceFlag(source_flag::empty) {
+			: msgInfo(*&details), localeRef(nullptr), sourceFlag(source_flag::empty) {
 		SetPattern(pattern);
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;
@@ -1002,16 +987,15 @@ namespace serenity::msg_details {
 
 		parseHelper.SetBracketPosition(B_Type::open, temp.find_first_of(('{')));
 		parseHelper.SetBracketPosition(B_Type::close, temp.find_first_of(('}')));
-		if( (parseHelper.BracketPosition(B_Type::open) != std::string::npos) &&
-		    (parseHelper.BracketPosition(B_Type::close) != std::string::npos) ) {
+		if( (parseHelper.BracketPosition(B_Type::open) != std::string::npos) && (parseHelper.BracketPosition(B_Type::close) != std::string::npos) ) {
 				parseHelper.SetPartition(P_Type::primary, temp.substr(0, parseHelper.BracketPosition(B_Type::open)));
 				temp.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
 				// handle cases of a leftover closing brace that hasn't been escaped
 				if( temp.size() != 0 ) {
 						parseHelper.SetBracketPosition(B_Type::open, temp.find_first_of(('{')));
 						parseHelper.SetBracketPosition(B_Type::close, temp.find_first_of(('}')));
-						if( (parseHelper.BracketPosition(B_Type::open) == std::string::npos) &&
-						    (parseHelper.BracketPosition(B_Type::close) != std::string::npos) ) {
+						if( (parseHelper.BracketPosition(B_Type::open) == std::string::npos) && (parseHelper.BracketPosition(B_Type::close) != std::string::npos) )
+						{
 								if( temp.at(parseHelper.BracketPosition(B_Type::close) + 1) != '}' ) {
 										temp.remove_prefix(parseHelper.BracketPosition(B_Type::close) + 1);
 								}
@@ -1020,8 +1004,7 @@ namespace serenity::msg_details {
 		}
 		parseHelper.SetPartition(P_Type::remainder, temp);
 		msg.clear();
-		msg.append(
-		parseHelper.PartitionString(P_Type::primary).append(arg.data(), arg.size()).append(parseHelper.PartitionString(P_Type::remainder)));
+		msg.append(parseHelper.PartitionString(P_Type::primary).append(arg.data(), arg.size()).append(parseHelper.PartitionString(P_Type::remainder)));
 	}
 
 	const Message_Info* Message_Formatter::MessageDetails() {

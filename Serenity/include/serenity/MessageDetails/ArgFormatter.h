@@ -73,27 +73,36 @@ namespace serenity::arg_formatter {
 	// Will shrink the size once I have everything accounted for
 	struct SpecFormatting
 	{
+		void ResetSpecs() {
+			argPosition = alignmentPadding = precision = 0;
+			nestedPrecArgPos = nestedWidthArgPos = zeroPadAmount = static_cast<size_t>(0);
+			align                                                = Alignment::Empty;
+			typeSpec = alignmentPadding = '\0';
+			preAltForm                  = "\0";
+			signType                    = Sign::Empty;
+			hasAltForm                  = false;
+		}
+
 		char argPosition { 0 };
-		Alignment align { Alignment::Empty };
-		size_t alignmentPadding { 0 };
-		char fillCharacter { '\0' };
-		Sign signType { Sign::Empty };
+		int alignmentPadding { 0 };
+		int precision { 0 };
 		size_t nestedWidthArgPos { 0 };
 		size_t nestedPrecArgPos { 0 };
 		size_t zeroPadAmount { 0 };
+		Alignment align { Alignment::Empty };
+		char fillCharacter { '\0' };
 		char typeSpec { '\0' };
-		bool hasAltForm { false };
 		const char* preAltForm { "\0" };
+		Sign signType { Sign::Empty };
+		bool hasAltForm { false };
 	};
 
 	struct ParseResult
 	{
-		char defaultValue { '\0' };
-		std::string_view preTokenStr { &defaultValue };
-		std::string_view remainder { &defaultValue };
+		std::string_view preTokenStr { "" };
+		std::string_view remainder { "" };
 		std::string tokenResult;
 		void Reset() {
-			preTokenStr = remainder = &defaultValue;
 			tokenResult.clear();
 		}
 	};
@@ -113,19 +122,23 @@ namespace serenity::arg_formatter {
 	{
 		using ArgContainer = serenity::experimental::msg_details::ArgContainer;
 
-	      public:
+	  public:
 		ArgFormatter()                               = default;
 		ArgFormatter(const ArgFormatter&)            = delete;
 		ArgFormatter& operator=(const ArgFormatter&) = delete;
 		~ArgFormatter()                              = default;
 
-		ParseResult& Parse(std::string_view sv);
+		template<typename... Args> void se_format_to(std::string& container, std::string_view sv, Args&&... args) {
+			CaptureArgs(std::forward<Args>(args)...);
+			Parse(container, sv);
+		}
+
+	  private:
+		void Parse(std::string& container, std::string_view sv);
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
-		size_t FindDigitEnd(std::string_view, size_t start);
-		int NoCheckIntFromChars(std::string_view sv, const size_t& begin, const size_t& end);
 
 		void VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize);
 		void VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
@@ -138,29 +151,29 @@ namespace serenity::arg_formatter {
 		void VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type);
 		void HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		bool HandleIfEndOrWhiteSpace(std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
+		bool HandleIfEndOrWhiteSpace(std::string& container, std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 
 		bool IsFlagSet(TokenType checkValue);
 
-		void FormatFillAlignToken();        // To Be Implemented
-		void FormatSignToken();             // To Be Implemented
-		void FormatAlternateToken();        // To Be Implemented
-		void FormatZeroPadToken();          // To Be Implemented
-		void FormatLocaleToken();           // To Be Implemented
-		void FormatWidthToken();            // To Be Implemented
-		void FormatPrecisionToken();        // To Be Implemented
-		void FormatTypeToken();             // To Be Implemented
-		void FormatCharAggregateToken();    // To Be Implemented
-		void FormatCustomToken();           // To Be Implemented
-		void FormatPositionalToken();       // To Be Implemented
-		void FormatTokens();                // To Be Implemented
-		void SimpleFormat();
+		void FormatFillAlignToken(std::string& container);        // To Be Implemented
+		void FormatSignToken(std::string& container);             // To Be Implemented
+		void FormatAlternateToken(std::string& container);        // To Be Implemented
+		void FormatZeroPadToken(std::string& container);          // To Be Implemented
+		void FormatLocaleToken(std::string& container);           // To Be Implemented
+		void FormatWidthToken(std::string& container);            // To Be Implemented
+		void FormatPrecisionToken(std::string& container);        // To Be Implemented
+		void FormatTypeToken(std::string& container);             // To Be Implemented
+		void FormatCharAggregateToken(std::string& container);    // To Be Implemented
+		void FormatCustomToken(std::string& container);           // To Be Implemented
+		void FormatPositionalToken(std::string& container);       // To Be Implemented
+		void FormatTokens(std::string& container);                // To Be Implemented
+		void SimpleFormat(std::string& container);
 
-		template<typename... Args> constexpr void CaptureArgs(std::string_view fmtString, Args&&... args) {
-			argStorage.CaptureArgs(fmtString, std::forward<Args>(args)...);
+		template<typename... Args> constexpr void CaptureArgs(Args&&... args) {
+			argStorage.CaptureArgs(std::forward<Args>(args)...);
 		}
 
-	      private:
+	  private:
 		IndexMode m_indexMode { IndexMode::automatic };
 		TokenType m_tokenType { TokenType::Empty };
 		SpecFormatting specValues {};
@@ -169,7 +182,7 @@ namespace serenity::arg_formatter {
 		int argCounter { 0 };
 		serenity::experimental::msg_details::ArgContainer argStorage {};
 		std::string temp;
-		std::array<char, 250> buffer {};
+		std::vector<char> buff {};
 	};
 
 }    // namespace serenity::arg_formatter

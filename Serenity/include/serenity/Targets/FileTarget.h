@@ -8,22 +8,21 @@
 namespace serenity::targets {
 	class FileTarget: public TargetBase, public helpers::FileHelper
 	{
-	      public:
+	  public:
 		FileTarget();
 		explicit FileTarget(std::string_view fileName, bool replaceIfExists = false);
 		explicit FileTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
-		explicit FileTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
-		                    bool replaceIfExists = false);
+		explicit FileTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists = false);
 		FileTarget(const FileTarget&)            = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();
 		void SetLocale(const std::locale& loc) override;
 
-	      protected:
+	  protected:
 		void PolicyFlushOn() override;
 		void PrintMessage(std::string_view formatted) override;
 
-	      private:
+	  private:
 		mutable std::mutex fileMutex;
 	};
 }    // namespace serenity::targets

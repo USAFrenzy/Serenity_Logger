@@ -134,24 +134,22 @@ namespace serenity {
 					file_utils::ValidateFileName(newFile.filename().string());
 				}
 			catch( std::exception& fileName_err ) {
-					printf("Could Not Rename %s To %s\nReason: %s\n", oldFile.filename().string().c_str(),
-					       newFile.filename().string().c_str(), fileName_err.what());
+					printf("Could Not Rename %s To %s\nReason: %s\n", oldFile.filename().string().c_str(), newFile.filename().string().c_str(),
+					       fileName_err.what());
 					return false;
 				}
 
 			if( !file_utils::ValidateExtension(newFile.extension().string()) ) {
-					printf("Could Not Rename %s To %s\tReason: Not A Valid Extension String\n",
-					       oldFile.filename().string().c_str(), newFile.filename().string().c_str());
+					printf("Could Not Rename %s To %s\tReason: Not A Valid Extension String\n", oldFile.filename().string().c_str(),
+					       newFile.filename().string().c_str());
 					return false;
 			} else {
 					try {
-							if( !(file_utils::CompareExtensions(oldFile.extension().string(),
-							                                    newFile.extension().string())) ) {
+							if( !(file_utils::CompareExtensions(oldFile.extension().string(), newFile.extension().string())) ) {
 									printf("WARNING:\t"
 									       "New File Name: [ %s ] Does Not Have The Same Extension As Old "
 									       "File: [ %s ]\n",
-									       newFile.filename().string().c_str(),
-									       oldFile.filename().string().c_str());
+									       newFile.filename().string().c_str(), oldFile.filename().string().c_str());
 									std::filesystem::rename(oldFile, newFile);
 							} else {
 									std::filesystem::rename(oldFile, newFile);
@@ -163,8 +161,7 @@ namespace serenity {
 						}
 				}
 
-			if( (oldFile.filename() == newFile.filename()) &&
-			    (std::filesystem::file_size(oldFile) == std::filesystem::file_size(newFile)) ) {
+			if( (oldFile.filename() == newFile.filename()) && (std::filesystem::file_size(oldFile) == std::filesystem::file_size(newFile)) ) {
 					return true;
 			} else {
 					return false;
@@ -194,8 +191,7 @@ namespace serenity {
 			timer.StopWatch_Reset();
 #endif
 			if( recursive ) {
-					for( const std::filesystem::directory_entry& entry: std::filesystem::recursive_directory_iterator(path) )
-					{
+					for( const std::filesystem::directory_entry& entry: std::filesystem::recursive_directory_iterator(path) ) {
 							dirEntries.emplace_back(entry.path().string());
 							fileCount++;
 						}
@@ -219,8 +215,7 @@ namespace serenity {
 		}
 
 		// std::tuple<bool, std::vector<std::filesystem::directory_entry>>
-		file_utils_results::search_dir_entries const SearchDirEntries(std::vector<std::filesystem::directory_entry>& dirEntries,
-		                                                              std::string searchString) {
+		file_utils_results::search_dir_entries const SearchDirEntries(std::vector<std::filesystem::directory_entry>& dirEntries, std::string searchString) {
 			std::vector<std::filesystem::directory_entry> matchedResults;
 			bool containsMatch { false };
 			file_utils_results::search_dir_entries results;

@@ -153,7 +153,7 @@ namespace serenity::experimental::msg_details {
 		// auto& fillSpec{ fillAlignValues.fillSpec };
 		// auto& buff{ fillAlignValues.buff };
 		// container.clear();
-		// GetArgValue(container, index, std::move(fillAlignValues.additionalSpec));
+		// GetArgValue(container, index, fillAlignValues.additionalSpec));
 		// auto fillAmount{ (fillAlignValues.digitSpec - container.size()) };
 		// auto data{ buff.data() };
 		// std::fill(data, data + fillAlignValues.digitSpec + 1, '\0');
@@ -161,7 +161,7 @@ namespace serenity::experimental::msg_details {
 		// if (fillSpec == '\0') fillSpec = ' ';
 		// size_t i{ 0 };
 		// for (auto& ch : container) {
-		//	buff[i] = std::move(ch);
+		//	buff[i] = ch);
 		//	++i;
 		// }
 		// std::fill(data + i, data + fillAlignValues.digitSpec, fillSpec);
@@ -173,7 +173,7 @@ namespace serenity::experimental::msg_details {
 		// auto& fillSpec{ fillAlignValues.fillSpec };
 		// auto& buff{ fillAlignValues.buff };
 		// container.clear();
-		// GetArgValue(container, index, std::move(fillAlignValues.additionalSpec));
+		// GetArgValue(container, index, fillAlignValues.additionalSpec));
 		// auto fillAmount{ (fillAlignValues.digitSpec - container.size()) };
 		// auto data{ buff.data() };
 		// std::fill(data, data + fillAlignValues.digitSpec + 1, '\0');
@@ -182,7 +182,7 @@ namespace serenity::experimental::msg_details {
 		// std::fill(data, data + fillAmount, fillSpec);
 		// size_t i{ fillAmount };
 		// for (auto& ch : container) {
-		//	buff[i] = std::move(ch);
+		//	buff[i] = ch);
 		//	++i;
 		// }
 
@@ -194,7 +194,7 @@ namespace serenity::experimental::msg_details {
 		// auto& fillSpec{ fillAlignValues.fillSpec };
 		// auto& buff{ fillAlignValues.buff };
 		// container.clear();
-		// GetArgValue(container, index, std::move(fillAlignValues.additionalSpec));
+		// GetArgValue(container, index, fillAlignValues.additionalSpec));
 		// auto fillLeftover{ (fillAlignValues.digitSpec - container.size()) % 2 };
 		// auto fillAmount{ (fillAlignValues.digitSpec - container.size()) / 2 };
 		// auto data{ buff.data() };
@@ -204,7 +204,7 @@ namespace serenity::experimental::msg_details {
 		// std::fill(data, data + fillAmount, fillSpec);
 		// size_t i{ fillAmount };
 		// for (auto& ch : container) {
-		//	buff[i] = std::move(ch);
+		//	buff[i] = ch);
 		//	++i;
 		// }
 		// auto endPos{ i + fillAmount + fillLeftover };
@@ -256,51 +256,56 @@ namespace serenity::experimental::msg_details {
 	 * [5] unsigned int, [6] long long, [7] unsigned long long, [8] bool, [9] char, [10] float,
 	 * [11] double, [12] long double, [13] const void* [14] void*
 	 *************************************************************************************************/
-	void ArgContainer::GetArgValue(std::string& container, size_t positionIndex, char&& additionalSpec) {
+	void ArgContainer::GetArgValueAsStr(std::string& container, size_t positionIndex, char&& additionalSpec, int precision) {
 		auto& arg { argContainer[ positionIndex ] };
 		auto data { buffer.data() };
 		std::fill(data, data + buffer.size(), '\0');
+		std::string_view tmp;
 		switch( arg.index() ) {
 				case 0: break;
-				case 1: container.append(std::move(std::get<1>(std::move(arg)))); break;
-				case 2: container.append(std::move(std::get<2>(std::move(arg)))); break;
-				case 3: container.append(std::move(std::get<3>(std::move(arg)))); break;
+				case 1:
+					tmp       = std::get<1>(arg);
+					precision = precision > 0 ? precision : static_cast<int>(tmp.size());
+					container.append(tmp.data(), tmp.data() + precision);
+					break;
+				case 2:
+					tmp       = std::get<2>(arg);
+					precision = precision > 0 ? precision : static_cast<int>(tmp.size());
+					container.append(tmp.data(), tmp.data() + precision);
+					break;
+				case 3:
+					tmp       = std::get<3>(arg);
+					precision = precision > 0 ? precision : static_cast<int>(tmp.size());
+					container.append(tmp.data(), tmp.data() + precision);
+					break;
 				case 4:
-					std::to_chars(data, data + buffer.size(), std::move(std::get<4>(std::move(arg))));
-					container.append(data, data + FindDigitEnd(data));
+					result = std::to_chars(data, data + buffer.size(), std::get<4>(arg));
+					container.append(data, result.ptr);
 					break;
 				case 5:
-					std::to_chars(data, data + buffer.size(), std::move(std::get<5>(std::move(arg))));
-					container.append(data, data + FindDigitEnd(data));
+					result = std::to_chars(data, data + buffer.size(), std::get<5>(arg));
+					container.append(data, result.ptr);
 					break;
 				case 6:
-					std::to_chars(data, data + buffer.size(), std::move(std::get<6>(std::move(arg))));
-					container.append(data, data + FindDigitEnd(data));
+					result = std::to_chars(data, data + buffer.size(), std::get<6>(arg));
+					container.append(data, result.ptr);
 					break;
 				case 7:
-					std::to_chars(data, data + buffer.size(), std::move(std::get<7>(std::move(arg))));
-					container.append(data, data + FindDigitEnd(data));
+					result = std::to_chars(data, data + buffer.size(), std::get<7>(arg));
+					container.append(data, result.ptr);
 					break;
-				case 8: container.append(std::move(std::get<8>(std::move(arg))) == true ? "true" : "false"); break;
-				case 9: container += std::move(std::get<9>(std::move(arg))); break;
-				case 10:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<10>(std::move(arg))));
-					break;
-				case 11:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<11>(std::move(arg))));
-					break;
-				case 12:
-					FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<12>(std::move(arg))));
-					break;
+				case 8: container.append(std::get<8>(arg) == true ? "true" : "false"); break;
+				case 9: container.append(1, std::get<9>(arg)); break;
+				case 10: FormatFloatTypeArg(container, std::move(additionalSpec), std::get<10>(arg), precision); break;
+				case 11: FormatFloatTypeArg(container, std::move(additionalSpec), std::get<11>(arg), precision); break;
+				case 12: FormatFloatTypeArg(container, std::move(additionalSpec), std::get<12>(arg), precision); break;
 				case 13:
-					std::to_chars(data, data + buffer.size(),
-					              reinterpret_cast<size_t>(std::move(std::get<13>(std::move(arg)))), 16);
-					container.append("0x").append(data, data + FindDigitEnd(data));
+					result = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(std::get<13>(arg)), 16);
+					container.append("0x").append(data, result.ptr);
 					break;
 				case 14:
-					std::to_chars(data, data + buffer.size(),
-					              reinterpret_cast<size_t>(std::move(std::get<14>(std::move(arg)))), 16);
-					container.append("0x").append(data, data + FindDigitEnd(data));
+					result = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(std::get<14>(arg)), 16);
+					container.append("0x").append(data, result.ptr);
 					break;
 				default: break;
 			}

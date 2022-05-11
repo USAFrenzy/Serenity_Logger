@@ -55,19 +55,62 @@ namespace serenity::experimental::msg_details {
 		return "";
 	}
 
-	static std::unordered_map<size_t, SpecType> mapIndexToType = {
-		{ 0, SpecType::MonoType },        { 1, SpecType::StringType },        { 2, SpecType::CharPointerType },
-		{ 3, SpecType::StringViewType },  { 4, SpecType::IntType },           { 5, SpecType::U_IntType },
-		{ 6, SpecType::LongLongType },    { 7, SpecType::U_LongLongType },    { 8, SpecType::BoolType },
-		{ 9, SpecType::CharType },        { 10, SpecType::FloatType },        { 11, SpecType::DoubleType },
-		{ 12, SpecType::LongDoubleType }, { 13, SpecType::ConstVoidPtrType }, { 14, SpecType::VoidPtrType },
-	};
+	static std::monostate Type(std::monostate s) {
+		return s;
+	}
+	static std::string Type(std::string s) {
+		return s;
+	}
+	static const char* Type(const char* s) {
+		return s;
+	}
+	static std::string_view Type(std::string_view s) {
+		return s;
+	}
+	static int Type(int s) {
+		return s;
+	}
+	static unsigned int Type(unsigned int s) {
+		return s;
+	}
+	static long long Type(long long s) {
+		return s;
+	}
+	static unsigned long long Type(unsigned long long s) {
+		return s;
+	}
+	static bool Type(bool s) {
+		return s;
+	}
+	static char Type(char s) {
+		return s;
+	}
+	static float Type(float s) {
+		return s;
+	}
+	static double Type(double s) {
+		return s;
+	}
+	static long double Type(long double s) {
+		return s;
+	}
+	static const void* Type(const void* s) {
+		return s;
+	}
+	static void* Type(void* s) {
+		return s;
+	}
+
+	static constexpr std::array<SpecType, 15> mapIndexToType   = { SpecType::MonoType,        SpecType::StringType,        SpecType::CharPointerType,
+		                                                           SpecType ::StringViewType, SpecType ::IntType,          SpecType ::U_IntType,
+		                                                           SpecType ::LongLongType,   SpecType::U_LongLongType,    SpecType ::BoolType,
+		                                                           SpecType::CharType,        SpecType ::FloatType,        SpecType ::DoubleType,
+		                                                           SpecType::LongDoubleType,  SpecType ::ConstVoidPtrType, SpecType ::VoidPtrType };
 
 	static std::unordered_map<SpecType, size_t> mapTypeToIndex = {
-		{ SpecType::MonoType, 0 },        { SpecType::StringType, 1 },        { SpecType::CharPointerType, 2 },
-		{ SpecType::StringViewType, 3 },  { SpecType::IntType, 4 },           { SpecType::U_IntType, 5 },
-		{ SpecType::LongLongType, 6 },    { SpecType::U_LongLongType, 7 },    { SpecType::BoolType, 8 },
-		{ SpecType::CharType, 9 },        { SpecType::FloatType, 10 },        { SpecType::DoubleType, 11 },
+		{ SpecType::MonoType, 0 },        { SpecType::StringType, 1 },        { SpecType::CharPointerType, 2 }, { SpecType::StringViewType, 3 },
+		{ SpecType::IntType, 4 },         { SpecType::U_IntType, 5 },         { SpecType::LongLongType, 6 },    { SpecType::U_LongLongType, 7 },
+		{ SpecType::BoolType, 8 },        { SpecType::CharType, 9 },          { SpecType::FloatType, 10 },      { SpecType::DoubleType, 11 },
 		{ SpecType::LongDoubleType, 12 }, { SpecType::ConstVoidPtrType, 13 }, { SpecType::VoidPtrType, 14 },
 	};
 
@@ -77,9 +120,9 @@ namespace serenity::experimental::msg_details {
 
 	class ArgContainer
 	{
-	      public:
-		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long,
-		                                          unsigned long long, bool, char, float, double, long double, const void*, void*>;
+	  public:
+		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long, unsigned long long,
+		                                          bool, char, float, double, long double, const void*, void*>;
 
 		// Keeping
 		bool IsValidStringSpec(const char& spec);
@@ -91,57 +134,60 @@ namespace serenity::experimental::msg_details {
 		// ~Keeping
 
 		// Keeping to reference and improve upon when I work on the Format'x'Token functions
-		template<typename T> void FormatFloatTypeArg(std::string& container, char&& spec, T&& value) {
-			// std::chars_format format { std::chars_format::general };
-			// int precisionValue { 6 };
-			// auto& pStr { precisionSpecHelper.precision };
-			//// precisionSpecHelper.precision is guaranteed to at most be size 2
-			// if( pStr.size() != 0 ) {
-			//		precisionValue = static_cast<int>(TwoDigitFromChars(pStr));
-			// }
-			// if( spec != '\0' ) {
-			//		switch( spec ) {
-			//				case 'a': [[fallthrough]];
-			//				case 'A':
-			//					container.append("0x");
-			//					format = std::chars_format::hex;
-			//					break;
-			//				case 'e': format = std::chars_format::scientific; break;
-			//				case 'E': format = std::chars_format::scientific; break;
-			//				case 'f': [[fallthrough]];
-			//				case 'F': format = std::chars_format::fixed; break;
-			//				case 'g': format = std::chars_format::general; break;
-			//				case 'G': format = std::chars_format::general; break;
-			//				default: break;
-			//			}
-			// }
-			// if( precisionValue != 0 ) {
-			//		std::to_chars(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), std::forward<T>(value),
-			//		              format, precisionValue);
-			// } else {
-			//		std::to_chars(resultBuffer.data(), resultBuffer.data() + resultBuffer.size(), std::forward<T>(value),
-			//		              format);
-			//	}
-			// switch( spec ) {
-			//		case 'A': [[fallthrough]];
-			//		case 'E': [[fallthrough]];
-			//		case 'G':
-			//			for( auto& ch: container ) {
-			//					if( ch == '\0' ) break;
-			//					if( IsAlpha(ch) ) {
-			//							ch -= 32;
-			//					}
-			//				}
-			//			for( auto& ch: resultBuffer ) {
-			//					if( ch == '\0' ) break;
-			//					if( IsAlpha(ch) ) {
-			//							ch -= 32;
-			//					}
-			//				}
-			//			break;
-			//		default: break;
-			//	}    // capitilization
-			// container.append(resultBuffer.data(), resultBuffer.data() + parseHelper.FindEndPos());
+		template<typename T> void FormatFloatTypeArg(std::string& container, char&& spec, T&& value, int precision) {
+			std::chars_format format { std::chars_format::general };
+			if( spec != '\0' ) {
+					switch( spec ) {
+							case 'a': [[fallthrough]];
+							case 'A':
+								container.append("0x");
+								precision = precision > 0 ? precision : 0;
+								format    = std::chars_format::hex;
+								break;
+							case 'e': [[fallthrough]];
+							case 'E':
+								format    = std::chars_format::scientific;
+								precision = precision > 0 ? precision : 6;
+								break;
+							case 'f': [[fallthrough]];
+							case 'F':
+								format    = std::chars_format::fixed;
+								precision = precision > 0 ? precision : 6;
+								break;
+							case 'g': [[fallthrough]];
+							case 'G':
+								format    = std::chars_format::general;
+								precision = precision > 0 ? precision : 6;
+								break;
+							default: break;
+						}
+			}
+			auto data { buffer.data() };
+			if( precision != 0 ) {
+					result = std::to_chars(data, data + buffer.size(), std::forward<T>(value), format, precision);
+			} else {
+					result = std::to_chars(data, data + buffer.size(), std::forward<T>(value), format);
+				}
+			switch( spec ) {
+					case 'A': [[fallthrough]];
+					case 'E': [[fallthrough]];
+					case 'G':
+						for( auto& ch: container ) {
+								if( ch == '\0' ) break;
+								if( IsAlpha(ch) ) {
+										ch -= 32;
+								}
+							}
+						for( auto& ch: buffer ) {
+								if( ch == '\0' ) break;
+								if( IsAlpha(ch) ) {
+										ch -= 32;
+								}
+							}
+						break;
+					default: break;
+				}    // capitilization
+			container.append(data, result.ptr);
 		}
 
 		void EnableFallbackToStd(bool enable);
@@ -151,30 +197,37 @@ namespace serenity::experimental::msg_details {
 		void AlignCenter(size_t index, std::string& container);
 		//***********************************************************************************
 
+		constexpr void StoreArgTypes() {
+			for( auto& arg: argContainer ) {
+					argSpecTypes.emplace_back(mapIndexToType[ arg.index() ]);
+				}
+		}
+
 		// Moved Formatting Templates Here While I Work On Some Things
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 			(
 			[ = ](auto&& arg) {
-				auto typeFound = is_supported<std::remove_reference_t<decltype(arg)>, LazilySupportedTypes> {};
-				if constexpr( !typeFound.value ) {
-						containsUnknownType = true;
+				if( !std::is_constant_evaluated() ) {
+						argContainer.emplace_back(std::forward<std::decay_t<decltype(arg)>>((arg)));
 				} else {
-						if( containsUnknownType ) return;
-						argContainer.emplace_back(arg);
-						argSpecTypes.emplace_back(mapIndexToType[ argContainer.back().index() ]);
+						auto typeFound = is_supported<std::decay_t<decltype(arg)>, LazilySupportedTypes> {};
+						if constexpr( !typeFound.value ) {
+								containsUnknownType = true;
+								// this is leftover from original impl, but leaving here
+								// for the time-being for potential compile time warning
+						} else {
+								if( containsUnknownType ) return;
+							}
 					}
 			}(args),
 			...);
 		}
 
-		template<typename... Args> constexpr void CaptureArgs(std::string_view formatString, Args&&... args) {
+		template<typename... Args> constexpr void CaptureArgs(Args&&... args) {
 			Reset();
-			// CountNumberOfBrackets(formatString);
+			argContainer.reserve(sizeof...(args));
 			EmplaceBackArgs(std::forward<Args>(args)...);
-			const size_t& size { argContainer.size() };
-			if( size != 0 ) {
-					maxIndex = size - 1;
-			}
+			StoreArgTypes();
 		}
 
 		ArgContainer()                               = default;
@@ -194,9 +247,81 @@ namespace serenity::experimental::msg_details {
 		void AdvanceToNextArg();
 		bool EndReached() const;
 		bool ContainsUnsupportedType() const;
-		void GetArgValue(std::string& container, size_t positionIndex, char&& additionalSpec = '\0');
+		void GetArgValueAsStr(std::string& container, size_t positionIndex, char&& additionalSpec = '\0', int precision = 0);
 		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
 		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
+
+		int RawValue(int);
+		unsigned int RawValue(unsigned int);
+		long long RawValue(long long);
+		unsigned long long RawValue(unsigned long long);
+		bool RawValue(bool);
+		float RawValue(float);
+		double RawValue(double);
+		long double RawValue(long double);
+
+		int int_state(size_t index) {
+			if( index >= argContainer.size() ) {
+					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
+					                         "Container\n");
+			}
+			return std::get<4>(argContainer[ index ]);
+		}
+		unsigned int uint_state(size_t index) {
+			if( index >= argContainer.size() ) {
+					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
+					                         "Container\n");
+			}
+			return std::get<5>(argContainer[ index ]);
+		}
+
+		long long long_long_state(size_t index) {
+			if( index >= argContainer.size() ) {
+					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
+					                         "Container\n");
+			}
+			return std::get<6>(argContainer[ index ]);
+		}
+
+		unsigned long long u_long_long_state(size_t index) {
+			if( index >= argContainer.size() ) {
+					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
+					                         "Container\n");
+			}
+			return std::get<7>(argContainer[ index ]);
+		}
+
+		bool bool_state(size_t index) {
+			if( index >= argContainer.size() ) {
+					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
+					                         "Container\n");
+			}
+			return std::get<8>(argContainer[ index ]);
+		}
+
+		float float_state(size_t index) {
+			if( index >= argContainer.size() ) {
+					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
+					                         "Container\n");
+			}
+			return std::get<10>(argContainer[ index ]);
+		}
+
+		double double_state(size_t index) {
+			if( index >= argContainer.size() ) {
+					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
+					                         "Container\n");
+			}
+			return std::get<11>(argContainer[ index ]);
+		}
+
+		long double long_double_state(size_t index) {
+			if( index >= argContainer.size() ) {
+					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
+					                         "Container\n");
+			}
+			return std::get<12>(argContainer[ index ]);
+		}
 
 		// May not need any more, but keeping until I flesh things out more
 		void CountNumberOfBrackets(std::string_view fmt);
@@ -211,7 +336,7 @@ namespace serenity::experimental::msg_details {
 			return argSpecTypes;
 		}
 
-	      private:
+	  private:
 		std::vector<LazilySupportedTypes> argContainer;
 		size_t maxIndex { 0 };
 		size_t argIndex { 0 };
@@ -222,5 +347,6 @@ namespace serenity::experimental::msg_details {
 		std::string finalArgValue;
 		std::vector<SpecType> argSpecTypes;
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
+		std::to_chars_result result {};
 	};
 }    // namespace serenity::experimental::msg_details

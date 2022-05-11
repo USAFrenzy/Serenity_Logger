@@ -25,8 +25,7 @@ namespace serenity::targets {
 		}
 	}
 
-	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists)
-		: TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
+	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists): TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path logDirPath { std::filesystem::current_path() /= "Logs" };
 		InitializeFilePath(fileName);
@@ -47,8 +46,7 @@ namespace serenity::targets {
 		}
 	}
 
-	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists)
-		: TargetBase(name), FileHelper(fPath), fileMutex(std::mutex {}) {
+	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists): TargetBase(name), FileHelper(fPath), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
 		try {
 				if( !std::filesystem::exists(FileCacheHelper()->FilePath()) ) {
@@ -70,7 +68,7 @@ namespace serenity::targets {
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
-		: TargetBase(name, formatPattern), FileHelper(fPath), fileMutex(std::mutex {}) {
+			: TargetBase(name, formatPattern), FileHelper(fPath), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
 		try {
 				if( !std::filesystem::exists(FileCacheHelper()->FilePath()) ) {
@@ -158,6 +156,6 @@ namespace serenity::targets {
 					}
 					break;
 			}    // Sub Option Check
-	}                    // PolicyFlushOn( ) Function
+	}            // PolicyFlushOn( ) Function
 
 }    // namespace serenity::targets

@@ -7,7 +7,7 @@ namespace serenity::msg_details {
 
 	class Message_Info
 	{
-	      public:
+	  public:
 		Message_Info(std::string_view name, LoggerLevel level, message_time_mode mode);
 		Message_Info& operator=(const Message_Info& t) = delete;
 		Message_Info(const Message_Info&)              = delete;
@@ -32,7 +32,7 @@ namespace serenity::msg_details {
 		std::locale GetLocale() const;
 		std::locale& GetLocale();
 
-	      private:
+	  private:
 		std::string m_name;
 		LoggerLevel m_msgLevel;
 		Message_Time m_msgTime;
