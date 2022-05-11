@@ -78,7 +78,7 @@ namespace serenity::msg_details {
 	};
 
 	static constexpr std::array<SpecType, 15> mapIndexToType = {
-		SpecType::MonoType,   SpecType::StringType,    SpecType::CharPointerType, SpecType::StringViewType,   SpecType::IntType,
+		SpecType::MonoType,  SpecType::StringType,   SpecType::CharPointerType, SpecType::StringViewType,   SpecType::IntType,
 		SpecType::U_IntType, SpecType::LongLongType, SpecType::U_LongLongType,  SpecType::BoolType,         SpecType::CharType,
 		SpecType::FloatType, SpecType::DoubleType,   SpecType::LongDoubleType,  SpecType::ConstVoidPtrType, SpecType::VoidPtrType,
 	};
@@ -243,41 +243,40 @@ namespace serenity::msg_details {
 		void AlignLeft(size_t index, std::string& container);
 		void AlignRight(size_t index, std::string& container);
 		void AlignCenter(size_t index, std::string& container);
-		constexpr void StoreArgTypes() {
-			for (auto& arg : argContainer) {
-				argSpecTypes.emplace_back(mapIndexToType[arg.index()]);
-			}
-		}
 
 		// Moved Formatting Templates Here While I Work On Some Things
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 			(
-				[=](auto&& arg) {
-					if (!std::is_constant_evaluated()) {
-						argContainer.emplace_back(std::forward<std::decay_t<decltype(arg)>>((arg)));
+			[ = ](auto&& arg) {
+				if( !std::is_constant_evaluated() ) {
+						using base_type = std::decay_t<decltype(arg)>;
+						using ref       = std::add_rvalue_reference_t<base_type>;
+						argContainer.emplace_back(std::forward<ref>(base_type(arg)));
+				} else {
+						auto typeFound = is_supported<std::decay_t<decltype(arg)>, LazilySupportedTypes> {};
+						if constexpr( !typeFound.value ) {
+								containsUnknownType = true;
+						} else {
+								if( containsUnknownType ) return;
+							}
 					}
-					else {
-						auto typeFound = is_supported<std::decay_t<decltype(arg)>, LazilySupportedTypes>{};
-						if constexpr (!typeFound.value) {
-							containsUnknownType = true;
-						}
-						else {
-							if (containsUnknownType) return;
-						}
-					}
-				}(args),
-					...);
+			}(args),
+			...);
+		}
+		constexpr void StoreArgTypes() {
+			for( auto& arg: argContainer ) {
+					argSpecTypes.emplace_back(mapIndexToType[ arg.index() ]);
+				}
 		}
 
-		template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args) {
+		template<typename... Args> void CaptureArgs(Args&&... args) {
 			Reset();
-			CountNumberOfBrackets(formatString);
 			argContainer.reserve(sizeof...(args));
 			EmplaceBackArgs(std::forward<Args>(args)...);
 			StoreArgTypes();
-			size_t size{ argContainer.size() };
-			if (size != 0) {
-				maxIndex = size - 1;
+			size_t size { argContainer.size() };
+			if( size != 0 ) {
+					maxIndex = size - 1;
 			}
 		}
 
@@ -353,7 +352,8 @@ namespace serenity::msg_details {
 		// template<typename... Args> void FormatMessage(MsgWithLoc& message, Args&&... args);
 		template<typename... Args> void FormatMessageArgs(MsgWithLoc& message, Args&&... args) {
 			lazy_message.clear();
-			argStorage.CaptureArgs(message.msg, std::forward<Args>(args)...);
+			argStorage.CountNumberOfBrackets(message.msg);
+			argStorage.CaptureArgs(std::forward<Args>(args)...);
 			if( argStorage.ContainsUnsupportedType() ) {
 					VFORMAT_TO(lazy_message, message.msg, std::forward<Args>(args)...);
 			} else {

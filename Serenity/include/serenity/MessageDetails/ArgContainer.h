@@ -208,7 +208,9 @@ namespace serenity::experimental::msg_details {
 			(
 			[ = ](auto&& arg) {
 				if( !std::is_constant_evaluated() ) {
-						argContainer.emplace_back(std::forward<std::decay_t<decltype(arg)>>((arg)));
+						using base_type = std::decay_t<decltype(arg)>;
+						using ref       = std::add_rvalue_reference_t<base_type>;
+						argContainer.emplace_back(std::forward<base_type>(ref(arg)));
 				} else {
 						auto typeFound = is_supported<std::decay_t<decltype(arg)>, LazilySupportedTypes> {};
 						if constexpr( !typeFound.value ) {
@@ -230,8 +232,8 @@ namespace serenity::experimental::msg_details {
 			StoreArgTypes();
 		}
 
-		ArgContainer()                    = default;
-		ArgContainer(const ArgContainer&) = delete;
+		ArgContainer()                               = default;
+		ArgContainer(const ArgContainer&)            = delete;
 		ArgContainer& operator=(const ArgContainer&) = delete;
 		~ArgContainer()                              = default;
 
