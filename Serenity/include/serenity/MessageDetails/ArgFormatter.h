@@ -77,14 +77,14 @@ namespace serenity::arg_formatter {
 			argPosition = alignmentPadding = precision = 0;
 			nestedPrecArgPos = nestedWidthArgPos = zeroPadAmount = static_cast<size_t>(0);
 			align                                                = Alignment::Empty;
-			typeSpec = alignmentPadding = '\0';
-			preAltForm                  = "\0";
-			signType                    = Sign::Empty;
-			hasAltForm                  = false;
+			typeSpec                                             = '\0';
+			preAltForm                                           = "\0";
+			signType                                             = Sign::Empty;
+			hasAltForm                                           = false;
 		}
 
-		char argPosition { 0 };
-		int alignmentPadding { 0 };
+		size_t argPosition { 0 };
+		size_t alignmentPadding { 0 };
 		int precision { 0 };
 		size_t nestedWidthArgPos { 0 };
 		size_t nestedPrecArgPos { 0 };
@@ -118,6 +118,8 @@ namespace serenity::arg_formatter {
 		size_t endPos { 0 };
 	};
 
+	// Compatible class that provides some of the same functionality that mirrors <format> for pre C++23
+	// (In the hopes of eliminating the usage of /std:latest compiler flag to use <forrmat> functionality)
 	class ArgFormatter
 	{
 		using ArgContainer = serenity::experimental::msg_details::ArgContainer;
@@ -127,14 +129,20 @@ namespace serenity::arg_formatter {
 		ArgFormatter(const ArgFormatter&)            = delete;
 		ArgFormatter& operator=(const ArgFormatter&) = delete;
 		~ArgFormatter()                              = default;
-
-		template<typename... Args> void se_format_to(std::string& container, std::string_view sv, Args&&... args) {
-			CaptureArgs(std::forward<Args>(args)...);
-			Parse(container, sv);
-		}
+		// Given bench results, the back inserter works much better for smaller values (size <= ~10) but the string ref works better for much larger values.
+		// Therefore, as annoying as it will be, I'll keep both versions here for open options. For much larger values, the string& is ~2x faster
+		// than both the standard's format function and serenity's version using the back_insert_iterator. In all other cases, serenity's formatting
+		// function is within 10-15% of the standard's version when compiled under utf-8 flag (depending on size, at a container of size >= ~35, it flips
+		// in favor of serenity's version); when not compiled with this flag, serenity's version is ~1100% faster, which is absolutely fantastically
+		// mind-blowing.Serenity's results are consistent and is statistically the same no matter if the utf-8 compile flag is present or not.
+		// I really wish to know why there is such a drop in the standard's version w/o that compiler flag...
+		template<typename... Args> void se_format_to(std::string& container, std::string_view sv, Args&&... args);
+		template<typename T, typename... Args> void se_format_to(std::back_insert_iterator<T> && (container), std::string_view sv, Args&&... args);
 
 	  private:
 		void Parse(std::string& container, std::string_view sv);
+		template<typename T> void Parse(std::back_insert_iterator<T> && (container), std::string_view sv);
+
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
 
@@ -153,6 +161,9 @@ namespace serenity::arg_formatter {
 		void HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		bool HandleIfEndOrWhiteSpace(std::string& container, std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 
+		template<typename T>
+		bool HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (container), std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
+
 		bool IsFlagSet(TokenType checkValue);
 
 		void FormatFillAlignToken(std::string& container);        // To Be Implemented
@@ -169,9 +180,21 @@ namespace serenity::arg_formatter {
 		void FormatTokens(std::string& container);                // To Be Implemented
 		void SimpleFormat(std::string& container);
 
-		template<typename... Args> constexpr void CaptureArgs(Args&&... args) {
-			argStorage.CaptureArgs(std::forward<Args>(args)...);
-		}
+		template<typename T> void FormatTokens(std::back_insert_iterator<T>(container));
+		template<typename T> void FormatFillAlignToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatSignToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatAlternateToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatZeroPadToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatLocaleToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatWidthToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatPrecisionToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatTypeToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatCharAggregateToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatCustomToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void FormatPositionalToken(std::back_insert_iterator<T> && (container));
+		template<typename T> void SimpleFormat(std::back_insert_iterator<T>(container));
+
+		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 
 	  private:
 		IndexMode m_indexMode { IndexMode::automatic };
@@ -184,5 +207,6 @@ namespace serenity::arg_formatter {
 		std::string temp;
 		std::vector<char> buff {};
 	};
+#include <serenity/MessageDetails/ArgFormatterImpl.h>
 
 }    // namespace serenity::arg_formatter

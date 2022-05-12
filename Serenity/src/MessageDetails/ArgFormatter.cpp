@@ -23,7 +23,14 @@ namespace serenity::arg_formatter {
 						if( ch != '}' && ch != ':' ) {
 								throw std::runtime_error("Error In Position Field: Invalid Format Detected. A Position Field In Automatic Indexing Mode Should "
 								                         "Be Followed By A ':' Or A '}'\n");
-						}
+						} else {
+								return true;
+							}
+				} else if( ch == ':' ) {
+						++start;
+						specValues.argPosition = argIndex;
+						++argIndex;
+						return true;
 				} else {
 						if( IsDigit(ch) ) {
 								m_indexMode = IndexMode::manual;
@@ -51,9 +58,9 @@ namespace serenity::arg_formatter {
 				auto& position { specValues.argPosition };
 				// from_chars() is much faster than the NoCheckIntFromChars() in this particular case
 				std::from_chars(sv.data(), sv.data() + sv.size(), position);
-				start += position > 9 ? position <= 99 ? 2 : -1 : 1;
+				start += position > 9 ? position <= 24 ? 2 : -1 : 1;
 				if( start == -1 ) {
-						throw std::runtime_error("Error In Position Argument Field: Max Position (99) Exceeded\n");
+						throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n");
 				}
 				if( sv[ start ] != ':' && sv[ start ] != '}' ) {
 						throw std::runtime_error("Error In Position Field: Invalid Format Detected. A Position Field Should Be Followed By A ':' Or A "
@@ -227,6 +234,11 @@ namespace serenity::arg_formatter {
 	}
 
 	void ArgFormatter::VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+		// handle if '#' is a fill char and not a alt specifier
+		if( currentPosition > 0 && sv[ currentPosition - 1 ] == ':' ) {
+				++currentPosition;
+				return;
+		}
 		auto& specStorage { argStorage.SpecTypesCaptured() };
 		const auto& cSize { specStorage.size() };
 		using SpecType = experimental::msg_details::SpecType;
@@ -275,11 +287,17 @@ namespace serenity::arg_formatter {
 		if( IsDigit(ch) ) {
 				if( type == NestedFieldType::Width ) {
 						std::from_chars(sv.data() + currentPosition, sv.data() + sv.size(), specValues.nestedWidthArgPos);
-						currentPosition += specValues.nestedWidthArgPos > 9 ? 2 : 1;
+						currentPosition += specValues.nestedWidthArgPos > 9 ? specValues.nestedWidthArgPos <= 24 ? 2 : -1 : 1;
+						if( currentPosition == -1 ) {
+								throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n");
+						}
 						m_tokenType |= TokenType::Width;
 				} else {
 						std::from_chars(sv.data() + currentPosition, sv.data() + sv.size(), specValues.nestedPrecArgPos);
-						currentPosition += specValues.nestedPrecArgPos > 9 ? 2 : 1;
+						currentPosition += specValues.nestedPrecArgPos > 9 ? specValues.nestedPrecArgPos <= 24 ? 2 : -1 : 1;
+						if( currentPosition == -1 ) {
+								throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n");
+						}
 						m_tokenType |= TokenType::Precision;
 					}
 		} else if( ch == ' ' ) {
@@ -292,7 +310,9 @@ namespace serenity::arg_formatter {
 						throwMsg.append(NestedFieldTypeStr(type));
 						throwMsg.append("\": Only A Positional Argument Is Allowed\n ");
 						throw std::runtime_error(std::move(throwMsg));
-				}
+				} else {
+						VerifyNestedBracket(sv, --currentPosition, bracketSize, type);
+					}
 		}
 		++currentPosition;
 	}
@@ -317,11 +337,8 @@ namespace serenity::arg_formatter {
 		}
 		if( IsDigit(ch) ) {
 				auto& padding { specValues.alignmentPadding };
-				std::from_chars(sv.data(), sv.data() + sv.size(), padding);
-				currentPosition += padding > 9 ? padding <= 99 ? 2 : -1 : 1;
-				if( currentPosition == -1 ) {
-						throw std::runtime_error("Error In Positional Argument Field: Max Position (99) Exceeded\n");
-				}
+				std::from_chars(sv.data() + currentPosition, sv.data() + sv.size(), padding);
+				currentPosition += padding > 9 ? padding >= 100 ? 3 : 2 : 1;
 				++argCounter;
 				m_tokenType |= TokenType::Width;
 		} else if( ch != '}' ) {
@@ -350,7 +367,7 @@ namespace serenity::arg_formatter {
 		if( IsDigit(ch) ) {
 				auto& precision { specValues.precision };
 				std::from_chars(sv.data(), sv.data() + sv.size(), precision);
-				currentPosition += precision > 9 ? precision <= 99 ? 2 : -1 : 1;
+				currentPosition += precision > 9 ? precision >= 100 ? 3 : 2 : 1;
 				++argCounter;
 				m_tokenType |= TokenType::Precision;
 		} else if( ch != '}' ) {
@@ -510,7 +527,6 @@ namespace serenity::arg_formatter {
 	**********************************************************************************************************************/
 	void ArgFormatter::FormatFillAlignToken(std::string& container) {
 		temp.clear();
-		buff.clear();
 		size_t fillAmount {}, totalWidth {}, i { 0 };
 		if( specValues.hasAltForm ) {
 				temp.append(std::move(specValues.preAltForm));
@@ -526,58 +542,32 @@ namespace serenity::arg_formatter {
 		} else {
 				totalWidth = specValues.alignmentPadding != 0 ? specValues.alignmentPadding : 0;
 			}
+
 		auto size(temp.size());
 		container.reserve(totalWidth + static_cast<size_t>(1));
-
 		fillAmount = (totalWidth > size) ? totalWidth - size : 0;
+
 		if( fillAmount == 0 ) {
 				container.append(std::move(temp));
 				return;
 		}
 
-		buff.reserve(fillAmount);
-
 		switch( specValues.align ) {
 				case Alignment::AlignLeft:
 					{
-						container.append(std::move(temp));
-						for( ;; ) {
-								if( i >= fillAmount ) break;
-								buff.emplace_back(specValues.fillCharacter);
-								++i;
-							}
-						container.append(buff.data(), buff.data() + buff.size());
+						container.append(std::move(temp)).append(fillAmount, specValues.fillCharacter);
 					}
 					break;
 				case Alignment::AlignRight:
 					{
-						for( ;; ) {
-								if( i >= fillAmount ) break;
-								buff.emplace_back(specValues.fillCharacter);
-								++i;
-							}
-						container.append(buff.data(), buff.data() + buff.size()).append(std::move(temp));
+						container.append(fillAmount, specValues.fillCharacter).append(std::move(temp));
 					}
 					break;
 				case Alignment::AlignCenter:
 					fillAmount /= 2;
-					for( ;; ) {
-							if( i >= fillAmount ) break;
-							buff.emplace_back(specValues.fillCharacter);
-							++i;
-						}
-					container.append(buff.data(), fillAmount);
-					container.append(std::move(temp));
-					i          = 0;
+					container.append(fillAmount, specValues.fillCharacter).append(std::move(temp));
 					fillAmount = (totalWidth - size - fillAmount);
-					buff.clear();
-					buff.reserve(fillAmount);
-					for( ;; ) {
-							if( i >= fillAmount ) break;
-							buff.emplace_back(specValues.fillCharacter);
-							++i;
-						}
-					container.append(buff.data(), buff.data() + fillAmount);
+					container.append(fillAmount, specValues.fillCharacter);
 					break;
 				default: break;
 			}

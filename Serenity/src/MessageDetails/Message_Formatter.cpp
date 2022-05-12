@@ -62,7 +62,7 @@ namespace serenity::msg_details {
 			}
 	}
 
-	const std::vector<ArgContainer::LazilySupportedTypes>& ArgContainer::ArgStorage() const {
+	const std::array<ArgContainer::LazilySupportedTypes, 24>& ArgContainer::ArgStorage() const {
 		return argContainer;
 	}
 
@@ -71,8 +71,8 @@ namespace serenity::msg_details {
 	}
 
 	void ArgContainer::Reset() {
-		argContainer.clear();
-		argSpecTypes.clear();
+		std::fill(argSpecTypes.data(), argSpecTypes.data() + counter, SpecType::MonoType);
+		counter  = 0;
 		argIndex = maxIndex = remainingArgs = 0;
 		endReached                          = false;
 	}
@@ -739,43 +739,42 @@ namespace serenity::msg_details {
 	 * [11] double, [12] long double, [13] const void* [14] void*
 	 *************************************************************************************************/
 	void ArgContainer::GetArgValue(std::string& container, size_t positionIndex, char&& additionalSpec) {
-		container.clear();
 		parseHelper.ClearBuffer();
 		auto& arg { argContainer[ positionIndex ] };
 		auto& buffer { parseHelper.ConversionResultBuffer() };
 
 		switch( arg.index() ) {
 				case 0: break;
-				case 1: container.append(std::move(std::get<1>(std::move(arg)))); break;
-				case 2: container.append(std::move(std::get<2>(std::move(arg)))); break;
-				case 3: container.append(std::move(std::get<3>(std::move(arg)))); break;
+				case 1: container.append(std::move(*std::get_if<1>(std::move(&arg)))); break;
+				case 2: container.append(std::move(*std::get_if<2>(std::move(&arg)))); break;
+				case 3: container.append(std::move(*std::get_if<3>(std::move(&arg)))); break;
 				case 4:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<4>(std::move(arg))));
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(*std::get_if<4>(std::move(&arg))));
 					container.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 5:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<5>(std::move(arg))));
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(*std::get_if<5>(std::move(&arg))));
 					container.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 6:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<6>(std::move(arg))));
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(*std::get_if<6>(std::move(&arg))));
 					container.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 7:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(std::get<7>(std::move(arg))));
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), std::move(*std::get_if<7>(std::move(&arg))));
 					container.append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
-				case 8: container.append(std::move(std::get<8>(std::move(arg))) == true ? "true" : "false"); break;
-				case 9: container += std::move(std::get<9>(std::move(arg))); break;
-				case 10: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<10>(std::move(arg))), buffer); break;
-				case 11: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<11>(std::move(arg))), buffer); break;
-				case 12: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(std::get<12>(std::move(arg))), buffer); break;
+				case 8: container.append(std::move(*std::get_if<8>(std::move(&arg))) == true ? "true" : "false"); break;
+				case 9: container += std::move(*std::get_if<9>(std::move(&arg))); break;
+				case 10: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(*std::get_if<10>(std::move(&arg))), buffer); break;
+				case 11: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(*std::get_if<11>(std::move(&arg))), buffer); break;
+				case 12: FormatFloatTypeArg(container, std::move(additionalSpec), std::move(*std::get_if<12>(std::move(&arg))), buffer); break;
 				case 13:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), reinterpret_cast<size_t>(std::move(std::get<13>(std::move(arg)))), 16);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), reinterpret_cast<size_t>(std::move(*std::get_if<13>(std::move(&arg)))), 16);
 					container.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				case 14:
-					std::to_chars(buffer.data(), buffer.data() + buffer.size(), reinterpret_cast<size_t>(std::move(std::get<14>(std::move(arg)))), 16);
+					std::to_chars(buffer.data(), buffer.data() + buffer.size(), reinterpret_cast<size_t>(std::move(*std::get_if<14>(std::move(&arg)))), 16);
 					container.append("0x").append(buffer.data(), buffer.data() + parseHelper.FindEndPos());
 					break;
 				default: break;

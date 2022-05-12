@@ -3,8 +3,8 @@
 
 namespace serenity::experimental::msg_details {
 
-	const std::vector<ArgContainer::LazilySupportedTypes>& ArgContainer::ArgStorage() const {
-		return argContainer;
+	const std::array<ArgContainer::LazilySupportedTypes, 24>& ArgContainer::ArgStorage() const {
+		return testContainer;
 	}
 
 	void ArgContainer::AdvanceToNextArg() {
@@ -257,54 +257,55 @@ namespace serenity::experimental::msg_details {
 	 * [11] double, [12] long double, [13] const void* [14] void*
 	 *************************************************************************************************/
 	void ArgContainer::GetArgValueAsStr(std::string& container, size_t positionIndex, char&& additionalSpec, int precision) {
-		auto& arg { argContainer[ positionIndex ] };
+		auto& arg { testContainer[ positionIndex ] };
 		auto data { buffer.data() };
 		std::fill(data, data + buffer.size(), '\0');
 		std::string_view tmp;
+
 		switch( arg.index() ) {
 				case 0: break;
 				case 1:
-					tmp       = std::get<1>(arg);
+					tmp       = *std::get_if<1>(&arg);
 					precision = precision > 0 ? precision : static_cast<int>(tmp.size());
 					container.append(tmp.data(), tmp.data() + precision);
 					break;
 				case 2:
-					tmp       = std::get<2>(arg);
+					tmp       = *std::get_if<2>(&arg);
 					precision = precision > 0 ? precision : static_cast<int>(tmp.size());
 					container.append(tmp.data(), tmp.data() + precision);
 					break;
 				case 3:
-					tmp       = std::get<3>(arg);
+					tmp       = *std::get_if<3>(&arg);
 					precision = precision > 0 ? precision : static_cast<int>(tmp.size());
 					container.append(tmp.data(), tmp.data() + precision);
 					break;
 				case 4:
-					result = std::to_chars(data, data + buffer.size(), std::get<4>(arg));
+					result = std::to_chars(data, data + buffer.size(), *std::get_if<4>(&arg));
 					container.append(data, result.ptr);
 					break;
 				case 5:
-					result = std::to_chars(data, data + buffer.size(), std::get<5>(arg));
+					result = std::to_chars(data, data + buffer.size(), *std::get_if<5>(&arg));
 					container.append(data, result.ptr);
 					break;
 				case 6:
-					result = std::to_chars(data, data + buffer.size(), std::get<6>(arg));
+					result = std::to_chars(data, data + buffer.size(), *std::get_if<6>(&arg));
 					container.append(data, result.ptr);
 					break;
 				case 7:
-					result = std::to_chars(data, data + buffer.size(), std::get<7>(arg));
+					result = std::to_chars(data, data + buffer.size(), *std::get_if<7>(&arg));
 					container.append(data, result.ptr);
 					break;
-				case 8: container.append(std::get<8>(arg) == true ? "true" : "false"); break;
-				case 9: container.append(1, std::get<9>(arg)); break;
-				case 10: FormatFloatTypeArg(container, std::move(additionalSpec), std::get<10>(arg), precision); break;
-				case 11: FormatFloatTypeArg(container, std::move(additionalSpec), std::get<11>(arg), precision); break;
-				case 12: FormatFloatTypeArg(container, std::move(additionalSpec), std::get<12>(arg), precision); break;
+				case 8: container.append(*std::get_if<8>(&arg) == true ? "true" : "false"); break;
+				case 9: container.append(1, *std::get_if<9>(&arg)); break;
+				case 10: FormatFloatTypeArg(container, std::move(additionalSpec), *std::get_if<10>(&arg), precision); break;
+				case 11: FormatFloatTypeArg(container, std::move(additionalSpec), *std::get_if<11>(&arg), precision); break;
+				case 12: FormatFloatTypeArg(container, std::move(additionalSpec), *std::get_if<12>(&arg), precision); break;
 				case 13:
-					result = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(std::get<13>(arg)), 16);
+					result = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(*std::get_if<13>(&arg)), 16);
 					container.append("0x").append(data, result.ptr);
 					break;
 				case 14:
-					result = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(std::get<14>(arg)), 16);
+					result = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(*std::get_if<14>(&arg)), 16);
 					container.append("0x").append(data, result.ptr);
 					break;
 				default: break;

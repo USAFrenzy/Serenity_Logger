@@ -251,11 +251,19 @@ namespace serenity::msg_details {
 				if( !std::is_constant_evaluated() ) {
 						using base_type = std::decay_t<decltype(arg)>;
 						using ref       = std::add_rvalue_reference_t<base_type>;
-						argContainer.emplace_back(std::forward<ref>(base_type(arg)));
+						if( counter >= argContainer.size() - 1 ) {
+								std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
+								return;
+						}
+						argContainer[ counter ] = std::forward<base_type>(ref(arg));
+						++counter;
+
 				} else {
 						auto typeFound = is_supported<std::decay_t<decltype(arg)>, LazilySupportedTypes> {};
 						if constexpr( !typeFound.value ) {
 								containsUnknownType = true;
+								// this is leftover from original impl, but leaving here
+								// for the time-being for potential compile time warning
 						} else {
 								if( containsUnknownType ) return;
 							}
@@ -264,19 +272,20 @@ namespace serenity::msg_details {
 			...);
 		}
 		constexpr void StoreArgTypes() {
-			for( auto& arg: argContainer ) {
-					argSpecTypes.emplace_back(mapIndexToType[ arg.index() ]);
+			size_t pos { 0 };
+			for( ;; ) {
+					if( pos >= counter ) break;
+					argSpecTypes[ pos ] = mapIndexToType[ argContainer[ pos ].index() ];
+					++pos;
 				}
 		}
 
 		template<typename... Args> void CaptureArgs(Args&&... args) {
 			Reset();
-			argContainer.reserve(sizeof...(args));
 			EmplaceBackArgs(std::forward<Args>(args)...);
 			StoreArgTypes();
-			size_t size { argContainer.size() };
-			if( size != 0 ) {
-					maxIndex = size - 1;
+			if( counter != 0 ) {
+					maxIndex = counter - 1;
 			}
 		}
 
@@ -285,7 +294,7 @@ namespace serenity::msg_details {
 		ArgContainer& operator=(const ArgContainer&) = delete;
 		~ArgContainer()                              = default;
 
-		const std::vector<LazilySupportedTypes>& ArgStorage() const;
+		const std::array<LazilySupportedTypes, 24>& ArgStorage() const;
 		LazyParseHelper& ParseHelper();
 		void Reset();
 		void AdvanceToNextArg();
@@ -301,7 +310,7 @@ namespace serenity::msg_details {
 		}
 
 	  private:
-		std::vector<LazilySupportedTypes> argContainer;
+		std::array<LazilySupportedTypes, 24> argContainer;
 		size_t maxIndex { 0 };
 		size_t argIndex { 0 };
 		size_t remainingArgs { 0 };
@@ -312,7 +321,8 @@ namespace serenity::msg_details {
 		FillAlignValues fillAlignValues {};
 		PrecSpec precisionSpecHelper {};
 		std::string finalArgValue;
-		std::vector<SpecType> argSpecTypes;
+		std::array<SpecType, 24> argSpecTypes;
+		size_t counter { 0 };
 	};
 
 	class Message_Formatter

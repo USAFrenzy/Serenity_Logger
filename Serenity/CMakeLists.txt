@@ -33,6 +33,7 @@ set(MESSAGE_DETAILS_HEADER_FILES
     "include/serenity/MessageDetails/FormatterArgs.h"
     "include/serenity/MessageDetails/FlushPolicy.h"
     "include/serenity//MessageDetails/ArgFormatter.h"
+    "include/serenity//MessageDetails/ArgFormatterImpl.h"
     "include/serenity//MessageDetails/ArgContainer.h"
 )
 

@@ -8,8 +8,8 @@
 
 namespace serenity::experimental::msg_details {
 
-	template<class T, class U> struct is_supported;
-	template<class T, class... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
+	template<typename T, typename U> struct is_supported;
+	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
 	{
 	};
 
@@ -53,52 +53,6 @@ namespace serenity::experimental::msg_details {
 				default: break;
 			}
 		return "";
-	}
-
-	static std::monostate Type(std::monostate s) {
-		return s;
-	}
-	static std::string Type(std::string s) {
-		return s;
-	}
-	static const char* Type(const char* s) {
-		return s;
-	}
-	static std::string_view Type(std::string_view s) {
-		return s;
-	}
-	static int Type(int s) {
-		return s;
-	}
-	static unsigned int Type(unsigned int s) {
-		return s;
-	}
-	static long long Type(long long s) {
-		return s;
-	}
-	static unsigned long long Type(unsigned long long s) {
-		return s;
-	}
-	static bool Type(bool s) {
-		return s;
-	}
-	static char Type(char s) {
-		return s;
-	}
-	static float Type(float s) {
-		return s;
-	}
-	static double Type(double s) {
-		return s;
-	}
-	static long double Type(long double s) {
-		return s;
-	}
-	static const void* Type(const void* s) {
-		return s;
-	}
-	static void* Type(void* s) {
-		return s;
 	}
 
 	static constexpr std::array<SpecType, 15> mapIndexToType = {
@@ -198,8 +152,11 @@ namespace serenity::experimental::msg_details {
 		//***********************************************************************************
 
 		constexpr void StoreArgTypes() {
-			for( auto& arg: argContainer ) {
-					argSpecTypes.emplace_back(mapIndexToType[ arg.index() ]);
+			size_t pos { 0 };
+			for( ;; ) {
+					if( pos >= counter ) break;
+					testSpecContainer[ pos ] = mapIndexToType[ testContainer[ pos ].index() ];
+					++pos;
 				}
 		}
 
@@ -210,7 +167,13 @@ namespace serenity::experimental::msg_details {
 				if( !std::is_constant_evaluated() ) {
 						using base_type = std::decay_t<decltype(arg)>;
 						using ref       = std::add_rvalue_reference_t<base_type>;
-						argContainer.emplace_back(std::forward<base_type>(ref(arg)));
+						if( counter >= testContainer.size() - 1 ) {
+								std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
+								return;
+						}
+						testContainer[ counter ] = std::forward<base_type>(ref(arg));
+						++counter;
+
 				} else {
 						auto typeFound = is_supported<std::decay_t<decltype(arg)>, LazilySupportedTypes> {};
 						if constexpr( !typeFound.value ) {
@@ -227,7 +190,6 @@ namespace serenity::experimental::msg_details {
 
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args) {
 			Reset();
-			argContainer.reserve(sizeof...(args));
 			EmplaceBackArgs(std::forward<Args>(args)...);
 			StoreArgTypes();
 		}
@@ -237,13 +199,11 @@ namespace serenity::experimental::msg_details {
 		ArgContainer& operator=(const ArgContainer&) = delete;
 		~ArgContainer()                              = default;
 
-		const std::vector<LazilySupportedTypes>& ArgStorage() const;
+		const std::array<LazilySupportedTypes, 24>& ArgStorage() const;
 
 		constexpr void Reset() {
-			argContainer.clear();
-			argSpecTypes.clear();
-			argIndex = maxIndex = remainingArgs = 0;
-			endReached                          = false;
+			std::fill(testSpecContainer.data(), testSpecContainer.data() + counter, SpecType::MonoType);
+			counter = 0;
 		}
 
 		void AdvanceToNextArg();
@@ -263,70 +223,40 @@ namespace serenity::experimental::msg_details {
 		long double RawValue(long double);
 
 		int int_state(size_t index) {
-			if( index >= argContainer.size() ) {
-					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
-					                         "Container\n");
-			}
-			return std::get<4>(argContainer[ index ]);
+			return *std::get_if<4>(&testContainer[ index ]);
 		}
+
 		unsigned int uint_state(size_t index) {
-			if( index >= argContainer.size() ) {
-					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
-					                         "Container\n");
-			}
-			return std::get<5>(argContainer[ index ]);
+			return *std::get_if<5>(&testContainer[ index ]);
 		}
 
 		long long long_long_state(size_t index) {
-			if( index >= argContainer.size() ) {
-					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
-					                         "Container\n");
-			}
-			return std::get<6>(argContainer[ index ]);
+			return *std::get_if<6>(&testContainer[ index ]);
 		}
 
 		unsigned long long u_long_long_state(size_t index) {
-			if( index >= argContainer.size() ) {
-					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
-					                         "Container\n");
-			}
-			return std::get<7>(argContainer[ index ]);
+			return *std::get_if<7>(&testContainer[ index ]);
 		}
 
 		bool bool_state(size_t index) {
-			if( index >= argContainer.size() ) {
-					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
-					                         "Container\n");
-			}
-			return std::get<8>(argContainer[ index ]);
+			return *std::get_if<8>(&testContainer[ index ]);
 		}
 
 		float float_state(size_t index) {
-			if( index >= argContainer.size() ) {
-					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
-					                         "Container\n");
-			}
-			return std::get<10>(argContainer[ index ]);
+			return *std::get_if<10>(&testContainer[ index ]);
 		}
 
 		double double_state(size_t index) {
-			if( index >= argContainer.size() ) {
-					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
-					                         "Container\n");
-			}
-			return std::get<11>(argContainer[ index ]);
+			return *std::get_if<11>(&testContainer[ index ]);
 		}
 
 		long double long_double_state(size_t index) {
-			if( index >= argContainer.size() ) {
-					throw std::runtime_error("Error In GetRawArgValue(): Index Provided Exceeds Elements In Argument "
-					                         "Container\n");
-			}
-			return std::get<12>(argContainer[ index ]);
+			return *std::get_if<12>(&testContainer[ index ]);
 		}
 
 		// May not need any more, but keeping until I flesh things out more
 		void CountNumberOfBrackets(std::string_view fmt);
+
 		std::string_view FinalArgResult() {
 			return finalArgValue;
 		}
@@ -334,12 +264,11 @@ namespace serenity::experimental::msg_details {
 		size_t FindDigitEnd(std::string_view sv);
 
 		// used for ArgFormatter calls
-		std::vector<SpecType>& SpecTypesCaptured() {
-			return argSpecTypes;
+		std::array<SpecType, 24>& SpecTypesCaptured() {
+			return testSpecContainer;
 		}
 
 	  private:
-		std::vector<LazilySupportedTypes> argContainer;
 		size_t maxIndex { 0 };
 		size_t argIndex { 0 };
 		size_t remainingArgs { 0 };
@@ -347,8 +276,31 @@ namespace serenity::experimental::msg_details {
 		bool containsUnknownType { false };
 		bool isStdFallbackEnabled { false };
 		std::string finalArgValue;
-		std::vector<SpecType> argSpecTypes;
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
 		std::to_chars_result result {};
+		std::array<LazilySupportedTypes, 24> testContainer {};
+		std::array<SpecType, 24> testSpecContainer {};
+		size_t counter {};
 	};
 }    // namespace serenity::experimental::msg_details
+
+/**************************************** A RANDOM THOUGHT BEFORE HEADING TO BED ****************************************/
+// Might be able to reduce the time spent storing arguments by using a std::array of a certain pre-defined max length
+// By doing this, I could keep a counter as to the occupied size of the array and reduce the clearing section down to:
+/*
+ *  size_t pos {0};
+ *	 for(;;){
+ *	   if(pos >= counter) break;
+ *       arr[pos].emplace(std::in_place_index_t<0>, std::monostate);
+ *       ++pos;
+ *   }
+ */
+// I could then store the argument types by indexing into the array at the incrementing counter position and just emplace
+// that argument instead of having to construct the object in a vector
+/*
+ *  if(counter >= arr.size() -1) throw some error/warn/or return;
+ *  arr[counter].emplace(std::forward<base_type(arg)>(ref(arg)));
+ *  ++counter;
+ */
+// -> I think the clear times would be quicker but the storage times might be relatively the same. Then again, changing the
+//    SpecType vector to index via an array saw ~ >2x improvements so this might be worth pursuing as a test?
