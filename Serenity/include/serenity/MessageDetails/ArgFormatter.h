@@ -137,11 +137,11 @@ namespace serenity::arg_formatter {
 		// mind-blowing.Serenity's results are consistent and is statistically the same no matter if the utf-8 compile flag is present or not.
 		// I really wish to know why there is such a drop in the standard's version w/o that compiler flag...
 		template<typename... Args> void se_format_to(std::string& container, std::string_view sv, Args&&... args);
-		template<typename T, typename... Args> void se_format_to(std::back_insert_iterator<T> && (container), std::string_view sv, Args&&... args);
+		template<typename T, typename... Args> void se_format_to(T&& container, std::string_view sv, Args&&... args);
 
 	  private:
 		void Parse(std::string& container, std::string_view sv);
-		template<typename T> void Parse(std::back_insert_iterator<T> && (container), std::string_view sv);
+		template<typename T> void Parse(T&& container, std::string_view sv);
 
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
@@ -161,8 +161,7 @@ namespace serenity::arg_formatter {
 		void HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		bool HandleIfEndOrWhiteSpace(std::string& container, std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 
-		template<typename T>
-		bool HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (container), std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
+		template<typename T> bool HandleIfEndOrWhiteSpace(T&& container, std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 
 		bool IsFlagSet(TokenType checkValue);
 
@@ -180,19 +179,19 @@ namespace serenity::arg_formatter {
 		void FormatTokens(std::string& container);                // To Be Implemented
 		void SimpleFormat(std::string& container);
 
-		template<typename T> void FormatTokens(std::back_insert_iterator<T>(container));
-		template<typename T> void FormatFillAlignToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatSignToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatAlternateToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatZeroPadToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatLocaleToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatWidthToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatPrecisionToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatTypeToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatCharAggregateToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatCustomToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void FormatPositionalToken(std::back_insert_iterator<T> && (container));
-		template<typename T> void SimpleFormat(std::back_insert_iterator<T>(container));
+		template<typename T> void FormatTokens(T&& container);
+		template<typename T> void FormatFillAlignToken(T&& container);
+		template<typename T> void FormatSignToken(T&& container);
+		template<typename T> void FormatAlternateToken(T&& container);
+		template<typename T> void FormatZeroPadToken(T&& container);
+		template<typename T> void FormatLocaleToken(T&& container);
+		template<typename T> void FormatWidthToken(T&& container);
+		template<typename T> void FormatPrecisionToken(T&& container);
+		template<typename T> void FormatTypeToken(T&& container);
+		template<typename T> void FormatCharAggregateToken(T&& container);
+		template<typename T> void FormatCustomToken(T&& container);
+		template<typename T> void FormatPositionalToken(T&& container);
+		template<typename T> void SimpleFormat(T&& container);
 
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 

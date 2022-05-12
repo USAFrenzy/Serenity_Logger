@@ -2,21 +2,21 @@
 
 #include <string_view>
 
-template<typename T, typename... Args> void ArgFormatter::se_format_to(std::back_insert_iterator<T> && (container), std::string_view sv, Args&&... args) {
+template<typename T, typename... Args> void serenity::arg_formatter::ArgFormatter::se_format_to(T&& container, std::string_view sv, Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
-	Parse(std::forward<std::back_insert_iterator<T>>(container), sv);
+	Parse(std::forward<T>(container), sv);
 }
 
-template<typename... Args> void ArgFormatter::se_format_to(std::string& container, std::string_view sv, Args&&... args) {
+template<typename... Args> void serenity::arg_formatter::ArgFormatter::se_format_to(std::string& container, std::string_view sv, Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
 	Parse(container, sv);
 }
 
 template<typename T>
-bool ArgFormatter::HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (container), std::string_view sv, size_t& currentPosition, const size_t& bracketSize) {
+inline bool serenity::arg_formatter::ArgFormatter::HandleIfEndOrWhiteSpace(T&& container, std::string_view sv, size_t& currentPosition, const size_t& bracketSize) {
 	auto ch { sv[ currentPosition + static_cast<size_t>(1) ] };
 	if( ch == '}' ) {
-			FormatTokens(std::forward<std::back_insert_iterator<T>>(container));
+			FormatTokens(std::forward<T>(container));
 			++argCounter;
 			return true;
 	} else if( ch == ' ' ) {
@@ -25,7 +25,7 @@ bool ArgFormatter::HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (cont
 					if( ch = sv[ ++currentPosition ] != ' ' ) break;
 				}
 			if( ch == '}' ) {
-					FormatTokens(std::forward<std::back_insert_iterator<T>>(container));
+					FormatTokens(std::forward<T>(container));
 					++argCounter;
 					return true;
 			} else {
@@ -35,7 +35,7 @@ bool ArgFormatter::HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (cont
 	return false;
 }
 
-template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (container), std::string_view sv) {
+template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(T&& container, std::string_view sv) {
 	result.remainder = sv;
 	specValues.ResetSpecs();
 	for( ;; ) {
@@ -56,7 +56,7 @@ template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (c
 			const size_t& bracketSize { argBracket.size() };
 
 			/* Handle If Bracket Contained No Specs */
-			if( HandleIfEndOrWhiteSpace(std::forward<std::back_insert_iterator<T>>(container), argBracket, pos, bracketSize) ) {
+			if( HandleIfEndOrWhiteSpace(std::forward<T>(container), argBracket, pos, bracketSize) ) {
 					break;
 			}
 			/*Handle Escaped Bracket*/
@@ -68,7 +68,7 @@ template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (c
 			/*Handle Positional Args*/
 			if( !ParsePositionalField(argBracket, argCounter, pos) ) {
 					// Nothing to Parse - just a simple substitution
-					FormatTokens(std::forward<std::back_insert_iterator<T>>(container));
+					FormatTokens(std::forward<T>(container));
 					++argCounter;
 					break;
 			}
@@ -78,14 +78,14 @@ template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (c
 					if( pos >= endPos ) break;
 					VerifyArgumentBracket(argBracket, pos, bracketSize);
 				}
-			FormatTokens(std::forward<std::back_insert_iterator<T>>(container));
+			FormatTokens(std::forward<T>(container));
 			break;
 		}
 	auto remainder { sv.substr(bracketResults.endPos + 1, sv.size()) };
-	std::move(remainder.begin(), remainder.end(), std::back_insert_iterator(container));
+	std::move(remainder.begin(), remainder.end(), container);
 }
 
-template<typename T> void ArgFormatter::FormatFillAlignToken(std::back_insert_iterator<T> && (container)) {
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFillAlignToken(T&& container) {
 	temp.clear();
 	size_t fillAmount {}, totalWidth {}, i { 0 };
 	if( specValues.hasAltForm ) {
@@ -151,46 +151,46 @@ template<typename T> void ArgFormatter::FormatFillAlignToken(std::back_insert_it
 			default: break;
 		}
 }
-template<typename T> void ArgFormatter::FormatSignToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatAlternateToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatZeroPadToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatLocaleToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatWidthToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatPrecisionToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatTypeToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatCharAggregateToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatCustomToken(std::back_insert_iterator<T> && (container)) { }
-template<typename T> void ArgFormatter::FormatPositionalToken(std::back_insert_iterator<T> && (container)) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatSignToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatAlternateToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatZeroPadToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatLocaleToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatWidthToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatPrecisionToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTypeToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatCharAggregateToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatCustomToken(T&& container) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatPositionalToken(T&& container) { }
 
-template<typename T> void ArgFormatter::FormatTokens(std::back_insert_iterator<T>(container)) {
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(T&& container) {
 	using enum TokenType;
 	if( IsFlagSet(TokenType::FillAlign) ) {
-			FormatFillAlignToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatFillAlignToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Sign) ) {
-			FormatSignToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatSignToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Alternate) ) {
-			FormatAlternateToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatAlternateToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::ZeroPad) ) {
-			FormatZeroPadToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatZeroPadToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Locale) ) {
-			FormatLocaleToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatLocaleToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Width) ) {
-			FormatWidthToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatWidthToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Precision) ) {
-			FormatPrecisionToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatPrecisionToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Type) ) {
-			FormatTypeToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatTypeToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Positional) ) {
-			FormatPositionalToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatPositionalToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Custom) ) {
-			FormatCustomToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatCustomToken(std::forward<T>(container));
 	} else if( IsFlagSet(TokenType::Empty) ) {
-			SimpleFormat(std::forward<std::back_insert_iterator<T>>(container));
+			SimpleFormat(std::forward<T>(container));
 	}
 }
 
-template<typename T> void ArgFormatter::SimpleFormat(std::back_insert_iterator<T>(container)) { }
+template<typename T> void serenity::arg_formatter::ArgFormatter::SimpleFormat(T&& container) { }
 
-template<typename... Args> constexpr void ArgFormatter::CaptureArgs(Args&&... args) {
+template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter::CaptureArgs(Args&&... args) {
 	argStorage.CaptureArgs(std::forward<Args>(args)...);
 }
