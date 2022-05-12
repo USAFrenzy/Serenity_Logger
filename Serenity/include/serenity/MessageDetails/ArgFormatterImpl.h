@@ -47,7 +47,7 @@ template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (c
 
 			FindBrackets(result.remainder);
 			if( !bracketResults.isValid ) {
-					std::move(sv.begin(), sv.end(), std::back_insert_iterator(container));
+					std::copy(sv.begin(), sv.end(), std::back_insert_iterator(container));
 					break;
 			}
 			auto preToken { sv.substr(0, bracketResults.beginPos) };
