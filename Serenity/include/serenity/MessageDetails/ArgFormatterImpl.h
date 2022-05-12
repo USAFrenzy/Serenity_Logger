@@ -2,9 +2,9 @@
 
 #include <string_view>
 
-template<typename T, typename... Args> void ArgFormatter::se_format_to(std::back_insert_iterator<T> && (container), std::string_view sv, Args&&... args) {
+template<typename T, typename... Args> void ArgFormatter::se_format_to(std::back_insert_iterator<T>(container), std::string_view sv, Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
-	Parse(std::forward<std::back_insert_iterator<T>>(container), sv);
+	Parse(std::move(container), sv);
 }
 
 template<typename... Args> void ArgFormatter::se_format_to(std::string& container, std::string_view sv, Args&&... args) {
@@ -13,10 +13,10 @@ template<typename... Args> void ArgFormatter::se_format_to(std::string& containe
 }
 
 template<typename T>
-bool ArgFormatter::HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (container), std::string_view sv, size_t& currentPosition, const size_t& bracketSize) {
+bool ArgFormatter::HandleIfEndOrWhiteSpace(std::back_insert_iterator<T>(container), std::string_view sv, size_t& currentPosition, const size_t& bracketSize) {
 	auto ch { sv[ currentPosition + static_cast<size_t>(1) ] };
 	if( ch == '}' ) {
-			FormatTokens(std::forward<std::back_insert_iterator<T>>(container));
+			FormatTokens(std::move(container));
 			++argCounter;
 			return true;
 	} else if( ch == ' ' ) {
@@ -25,7 +25,7 @@ bool ArgFormatter::HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (cont
 					if( ch = sv[ ++currentPosition ] != ' ' ) break;
 				}
 			if( ch == '}' ) {
-					FormatTokens(std::forward<std::back_insert_iterator<T>>(container));
+					FormatTokens(std::move(container));
 					++argCounter;
 					return true;
 			} else {
@@ -35,7 +35,7 @@ bool ArgFormatter::HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (cont
 	return false;
 }
 
-template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (container), std::string_view sv) {
+template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T>(container), std::string_view sv) {
 	result.remainder = sv;
 	specValues.ResetSpecs();
 	for( ;; ) {
@@ -56,7 +56,7 @@ template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (c
 			const size_t& bracketSize { argBracket.size() };
 
 			/* Handle If Bracket Contained No Specs */
-			if( HandleIfEndOrWhiteSpace(std::forward<std::back_insert_iterator<T>>(container), argBracket, pos, bracketSize) ) {
+			if( HandleIfEndOrWhiteSpace(container, argBracket, pos, bracketSize) ) {
 					break;
 			}
 			/*Handle Escaped Bracket*/
@@ -68,7 +68,7 @@ template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (c
 			/*Handle Positional Args*/
 			if( !ParsePositionalField(argBracket, argCounter, pos) ) {
 					// Nothing to Parse - just a simple substitution
-					FormatTokens(std::forward<std::back_insert_iterator<T>>(container));
+					FormatTokens(container);
 					++argCounter;
 					break;
 			}
@@ -78,7 +78,7 @@ template<typename T> void ArgFormatter::Parse(std::back_insert_iterator<T> && (c
 					if( pos >= endPos ) break;
 					VerifyArgumentBracket(argBracket, pos, bracketSize);
 				}
-			FormatTokens(std::forward<std::back_insert_iterator<T>>(container));
+			FormatTokens(container);
 			break;
 		}
 	auto remainder { sv.substr(bracketResults.endPos + 1, sv.size()) };
@@ -165,27 +165,27 @@ template<typename T> void ArgFormatter::FormatPositionalToken(std::back_insert_i
 template<typename T> void ArgFormatter::FormatTokens(std::back_insert_iterator<T>(container)) {
 	using enum TokenType;
 	if( IsFlagSet(TokenType::FillAlign) ) {
-			FormatFillAlignToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatFillAlignToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Sign) ) {
-			FormatSignToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatSignToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Alternate) ) {
-			FormatAlternateToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatAlternateToken(std::move(container));
 	} else if( IsFlagSet(TokenType::ZeroPad) ) {
-			FormatZeroPadToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatZeroPadToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Locale) ) {
-			FormatLocaleToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatLocaleToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Width) ) {
-			FormatWidthToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatWidthToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Precision) ) {
-			FormatPrecisionToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatPrecisionToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Type) ) {
-			FormatTypeToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatTypeToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Positional) ) {
-			FormatPositionalToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatPositionalToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Custom) ) {
-			FormatCustomToken(std::forward<std::back_insert_iterator<T>>(container));
+			FormatCustomToken(std::move(container));
 	} else if( IsFlagSet(TokenType::Empty) ) {
-			SimpleFormat(std::forward<std::back_insert_iterator<T>>(container));
+			SimpleFormat(std::move(container));
 	}
 }
 

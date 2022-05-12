@@ -137,11 +137,11 @@ namespace serenity::arg_formatter {
 		// mind-blowing.Serenity's results are consistent and is statistically the same no matter if the utf-8 compile flag is present or not.
 		// I really wish to know why there is such a drop in the standard's version w/o that compiler flag...
 		template<typename... Args> void se_format_to(std::string& container, std::string_view sv, Args&&... args);
-		template<typename T, typename... Args> void se_format_to(std::back_insert_iterator<T> && (container), std::string_view sv, Args&&... args);
+		template<typename T, typename... Args> void se_format_to(std::back_insert_iterator<T>(container), std::string_view sv, Args&&... args);
 
 	  private:
 		void Parse(std::string& container, std::string_view sv);
-		template<typename T> void Parse(std::back_insert_iterator<T> && (container), std::string_view sv);
+		template<typename T> void Parse(std::back_insert_iterator<T>(container), std::string_view sv);
 
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
@@ -162,7 +162,7 @@ namespace serenity::arg_formatter {
 		bool HandleIfEndOrWhiteSpace(std::string& container, std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 
 		template<typename T>
-		bool HandleIfEndOrWhiteSpace(std::back_insert_iterator<T> && (container), std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
+		bool HandleIfEndOrWhiteSpace(std::back_insert_iterator<T>(container), std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 
 		bool IsFlagSet(TokenType checkValue);
 
