@@ -98,3 +98,5 @@ build_script:
     mkdir build
 
     cmake -B build -G %GENERATOR% -D BUILD_SANDBOX=%BUILD_SANDBOX% -D BUILD_DEMOS=%BUILD_DEMOS% -D BUILD_TESTS=%BUILD_TESTS% -D BUILD_BENCHMARKS=%BUILD_BENCHMARKS% -D BUILD_ALL=%BUILD_ALL% -D CMAKE_BUILD_TYPE=Release -S .
+
+    cmake --build build --config Release
