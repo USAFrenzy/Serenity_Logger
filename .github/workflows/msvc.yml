@@ -52,7 +52,7 @@ jobs:
         # Provide a unique ID to access the sarif output path
         id: run-analysis
         with:
-          cmakeBuildDirectory: ${{ env.build }}
+          cmakeBuildDirectory: ${{ env.build }}/Release
           # Ruleset file that will determine what checks will be run
           ruleset: NativeRecommendedRules.ruleset
 
