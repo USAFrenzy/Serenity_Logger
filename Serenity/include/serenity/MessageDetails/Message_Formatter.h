@@ -310,7 +310,7 @@ namespace serenity::msg_details {
 		}
 
 	  private:
-		std::array<LazilySupportedTypes, 24> argContainer;
+		  std::array<LazilySupportedTypes, 24> argContainer{LazilySupportedTypes {}};
 		size_t maxIndex { 0 };
 		size_t argIndex { 0 };
 		size_t remainingArgs { 0 };
@@ -321,7 +321,7 @@ namespace serenity::msg_details {
 		FillAlignValues fillAlignValues {};
 		PrecSpec precisionSpecHelper {};
 		std::string finalArgValue;
-		std::array<SpecType, 24> argSpecTypes;
+		std::array<SpecType, 24> argSpecTypes {SpecType::MonoType};
 		size_t counter { 0 };
 	};
 
