@@ -44,13 +44,19 @@ if (BUILD_DEMOS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Demos ${CMAKE_CURRENT_BINARY_DIR}/Demos)
 endif ()
 
+if (BUILD_BENCHMARKS
+    OR BUILD_SANDBOX
+    OR BUILD_ALL
+)
+    include(cmake/CPM.cmake)
+    cpmaddpackage("gh:gabime/spdlog@1.10.0")
+endif ()
+
 if (BUILD_BENCHMARKS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/bench ${CMAKE_CURRENT_BINARY_DIR}/bench)
 endif ()
 
 if (BUILD_SANDBOX)
-    include(cmake/CPM.cmake)
-    cpmaddpackage("gh:gabime/spdlog@1.10.0")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Sandbox ${CMAKE_CURRENT_BINARY_DIR}/Sandbox)
     set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Sandbox)
 endif ()
@@ -61,17 +67,10 @@ if (BUILD_TESTS)
 endif ()
 
 if (BUILD_ALL)
-
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Demos ${CMAKE_CURRENT_BINARY_DIR}/Demos)
-
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/bench ${CMAKE_CURRENT_BINARY_DIR}/bench)
-
     enable_testing()
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests ${CMAKE_CURRENT_BINARY_DIR}/tests)
-
-    include(cmake/CPM.cmake)
-    cpmaddpackage("gh:gabime/spdlog@1.10.0")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Sandbox ${CMAKE_CURRENT_BINARY_DIR}/Sandbox)
     set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Sandbox)
-
 endif ()
