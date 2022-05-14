@@ -73,18 +73,19 @@ namespace serenity::experimental::msg_details {
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 			(
 			[ = ](auto&& arg) {
+				using base_type = std::decay_t<decltype(arg)>;
+				// ran into issues with std::string type args with adding an rvalue reference
+				// (understandably), so swapped over to lvalue reference instead
+				using ref       = std::add_lvalue_reference_t<base_type>;
 				if( !std::is_constant_evaluated() ) {
-						using base_type = std::decay_t<decltype(arg)>;
-						using ref       = std::add_rvalue_reference_t<base_type>;
 						if( counter >= testContainer.size() - 1 ) {
 								std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
 								return;
 						}
-						testContainer[ counter ] = std::forward<base_type>(ref(arg));
+						testContainer[ counter ] = std::forward<ref>(ref(arg));
 						++counter;
-
 				} else {
-						auto typeFound = is_supported<std::decay_t<decltype(arg)>, LazilySupportedTypes> {};
+						auto typeFound = is_supported<base_type, LazilySupportedTypes> {};
 						if constexpr( !typeFound.value ) {
 								// this is leftover from original impl, but leaving here
 								// for the time-being for potential compile time warning

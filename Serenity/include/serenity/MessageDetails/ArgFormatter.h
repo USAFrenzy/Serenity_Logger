@@ -47,6 +47,7 @@ namespace serenity::arg_formatter {
 			typeSpec                             = '\0';
 			preAltForm                           = "\0";
 			signType                             = Sign::Empty;
+			localize                             = false;
 		}
 
 		size_t argPosition { 0 };
@@ -59,6 +60,7 @@ namespace serenity::arg_formatter {
 		char typeSpec { '\0' };
 		std::string_view preAltForm { "\0" };
 		Sign signType { Sign::Empty };
+		bool localize { false };
 	};
 
 	struct ParseResult
@@ -106,6 +108,7 @@ namespace serenity::arg_formatter {
 
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
+		void SetLocaleForUse(const std::locale& locale);
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
 
@@ -113,13 +116,13 @@ namespace serenity::arg_formatter {
 		void VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, bool isDigit);
+		void VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec);
-		void VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type);
 		void HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		void VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 
 		bool IsValidStringSpec(const char& spec);
 		bool IsValidIntSpec(const char& spec);
@@ -134,10 +137,11 @@ namespace serenity::arg_formatter {
 		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 
-		std::string_view FormatRawValueToStr(int& precision);
-		std::string_view AppendByPrecision(std::string_view val, int precision);
-		template<typename T> std::string_view FormatFloatTypeArg(T&& value, int precision);
-		std::string_view FormatIntTypeArg(int&& value);
+		void FormatRawValueToStr(int& precision);
+		void AppendByPrecision(std::string_view val, int precision);
+		template<typename T> void FormatFloatTypeArg(T&& value, int precision);
+		void FormatIntTypeArg(int&& value);
+		void LocalizeArgument(int precision);
 
 	  private:
 		int argCounter { 0 };
@@ -148,9 +152,18 @@ namespace serenity::arg_formatter {
 		SpecFormatting specValues {};
 		serenity::experimental::msg_details::ArgContainer argStorage {};
 
+		std::string rawValueTemp;
 		std::vector<char> buff {};
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
 		std::to_chars_result charsResult;
+		// The idea here is to have a constructor that takes in a locale and sets these by default unless SetLocale() is called, in which case, these get
+		// updated.When I introduce this class into the loggers, their respective SetLocale() arguments will call this one as well. This way, any class (the
+		// logging ones are at the forefront of this thought) can instantiate an ArgFormatter class with a locale and circumvent the <format> performance hit;
+		// if none are supplied, the default constructor won't poll for a locale everytime like <format> does when no locale is supplied, it will use the
+		// default constructed locale for the system if none is provided and this default locale will be the one that is referenced when 'L' is present).
+		std::unique_ptr<std::locale> loc { std::make_unique<std::locale>(std::locale("")) };
+		char separator { std::use_facet<std::numpunct<char>>(*loc.get()).thousands_sep() };
+		std::string groupings { std::use_facet<std::numpunct<char>>(*loc.get()).grouping() };
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
 

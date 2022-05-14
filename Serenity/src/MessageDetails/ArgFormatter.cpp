@@ -151,20 +151,23 @@ namespace serenity::arg_formatter {
 
 	void ArgFormatter::VerifyFillAlignField(std::string_view& sv, size_t& currentPos, const size_t& bracketSize) {
 		auto ch { sv[ currentPos ] };
-
-		switch( ch ) {
+		char nextCh {};
+		if( currentPos + 1 < bracketSize ) {
+				nextCh = sv[ currentPos + 1 ];
+		}
+		switch( nextCh ) {
 				case '<': specValues.align = Alignment::AlignLeft; break;
 				case '>': specValues.align = Alignment::AlignRight; break;
 				case '^': specValues.align = Alignment::AlignCenter; break;
 				default: specValues.align = Alignment::Empty; break;
 			}
-		if( currentPos - 1 >= 0 ) {
-				auto ch { sv[ currentPos - 1 ] };
+		if( specValues.align != Alignment::Empty ) {
 				if( ch != '{' && ch != '}' ) {
 						if( ch == ':' ) {
 								specValues.fillCharacter = ' ';
 						} else {
-								specValues.fillCharacter = sv[ currentPos - 1 ];
+								specValues.fillCharacter = ch;
+								++currentPos;
 							}
 				} else {
 						std::string tmp { "Error In Fill/Align Field: \"" };
@@ -176,11 +179,6 @@ namespace serenity::arg_formatter {
 	}
 
 	void ArgFormatter::VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
-		auto nextChar { sv[ currentPosition + 1 ] };
-		if( nextChar == '^' || nextChar == '<' || nextChar == '>' ) {
-				++currentPosition;
-				return;
-		}
 		switch( sv[ currentPosition ] ) {
 				case '+': specValues.signType = Sign::Plus; break;
 				case '-': specValues.signType = Sign::Minus; break;
@@ -249,11 +247,6 @@ namespace serenity::arg_formatter {
 	}
 
 	void ArgFormatter::VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
-		// handle if '#' is a fill char and not a alt specifier
-		if( currentPosition > 0 && sv[ currentPosition - 1 ] == ':' ) {
-				++currentPosition;
-				return;
-		}
 		auto& specStorage { argStorage.SpecTypesCaptured() };
 		const auto& cSize { specStorage.size() };
 		using SpecType = experimental::msg_details::SpecType;
@@ -270,6 +263,7 @@ namespace serenity::arg_formatter {
 				auto ch { sv[ parseForAltSpecPos ] };
 				if( IsValidAltTypeSpec(argType, ch) ) {
 						specValues.preAltForm = AlternatePreFormatChars(argType, ch);
+						specValues.typeSpec   = ch;
 						break;
 				}
 			}
@@ -335,7 +329,7 @@ namespace serenity::arg_formatter {
 		++currentPosition;
 	}
 
-	void ArgFormatter::VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, bool isDigit) {
+	void ArgFormatter::VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
 		auto ch { sv[ currentPosition ] };
 		if( ch == '{' ) {
 				VerifyNestedBracket(sv, currentPosition, bracketSize, NestedFieldType::Width);
@@ -433,7 +427,10 @@ namespace serenity::arg_formatter {
 						tmp.append("\" Cannot Be Localized\n");
 						throw std::runtime_error(std::move(tmp));
 					}
-				default: return; break;
+				default:
+					specValues.localize = true;
+					return;
+					break;
 			}
 	}
 
@@ -480,12 +477,14 @@ namespace serenity::arg_formatter {
 	}
 
 	void ArgFormatter::HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
-		auto ch { sv[ currentPosition ] };
-		if( !IsAlpha(ch) ) {
+		// If this case returns true, then we've already handled the type spec in the alternate form field
+		if( specValues.typeSpec != '\0' ) {
 				++currentPosition;
 				return;
 		}
-		switch( sv[ ++currentPosition ] ) {
+		if( currentPosition >= bracketSize ) return;
+		auto ch { sv[ currentPosition ] };
+		switch( sv[ currentPosition + 1 ] ) {
 				case '}': VerifyTypeSpec(sv, currentPosition, bracketSize, ch); break;
 				case ' ':
 					for( ;; ) {
@@ -496,78 +495,68 @@ namespace serenity::arg_formatter {
 							break;
 						}
 					break;
-				default: throw std::runtime_error("Error In Argument Format Field: No Closing '}' Found \n"); break;
+				default: throw std::runtime_error("Error In Argument Format Field: Unable To Verify Potential Type Specifier - No Closing '}' Found \n"); break;
 			}
+		++currentPosition;
+		return;
 	}
 
 	void ArgFormatter::VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize) {
 		if( (bracketSize <= 1) || (start >= (bracketSize - 1)) ) return;
-		auto ch { sv[ start ] };
-		switch( ch ) {
-				case '^': [[fallthrough]];
-				case '<': [[fallthrough]];
-				case '>': VerifyFillAlignField(sv, start, bracketSize); break;
-				case '+': [[fallthrough]];
-				case '-': [[fallthrough]];
-				case ' ': VerifySignField(sv, start, bracketSize); break;
-				case '#': VerifyAltField(sv, start, bracketSize); break;
-				case '0':
-					if( specValues.fillCharacter == '\0' ) {
-							specValues.fillCharacter = '0';
-					}
-					++start;
-					break;
-				case '1': [[fallthrough]];
-				case '2': [[fallthrough]];
-				case '3': [[fallthrough]];
-				case '4': [[fallthrough]];
-				case '5': [[fallthrough]];
-				case '6': [[fallthrough]];
-				case '7': [[fallthrough]];
-				case '8': [[fallthrough]];
-				case '9': VerifyWidthField(sv, start, bracketSize, true); break;
-				case '{': VerifyWidthField(sv, start, bracketSize, false); break;
-				case '.': VerifyPrecisionField(sv, start, bracketSize); break;
-				case 'L': VerifyLocaleField(sv, start, bracketSize); break;
-				case '}': VerifyEscapedBracket(sv, start, bracketSize); break;
-				default: HandlePotentialTypeField(sv, start, bracketSize); break;
-			}
+		VerifyFillAlignField(sv, start, bracketSize);
+		VerifySignField(sv, start, bracketSize);
+		if( sv[ start ] == '#' ) {
+				VerifyAltField(sv, start, bracketSize);
+		}
+		if( sv[ start ] == '0' ) {
+				if( specValues.fillCharacter == '\0' ) {
+						specValues.fillCharacter = '0';
+				}
+				++start;
+		}
+		if( (sv[ start ] >= '1' && sv[ start ] <= '9') || (sv[ start ] == '{') ) {
+				VerifyWidthField(sv, start, bracketSize);
+		}
+		if( sv[ start ] == '.' ) {
+				VerifyPrecisionField(sv, start, bracketSize);
+		}
+		if( sv[ start ] == 'L' ) {
+				VerifyLocaleField(sv, start, bracketSize);
+		}
+		if( sv[ start ] == '}' ) {
+				VerifyEscapedBracket(sv, start, bracketSize);
+		}
+		HandlePotentialTypeField(sv, start, bracketSize);
 	}
 
-	std::string_view ArgFormatter::FormatRawValueToStr(int& precision) {
+	void ArgFormatter::FormatRawValueToStr(int& precision) {
 		using SpecType = experimental::msg_details::SpecType;
 		switch( argStorage.SpecTypesCaptured()[ specValues.argPosition ] ) {
-				case SpecType::StringType: return AppendByPrecision(argStorage.string_state(specValues.argPosition), precision); break;
-				case SpecType::CharPointerType: return AppendByPrecision(argStorage.c_string_state(specValues.argPosition), precision); break;
-				case SpecType::StringViewType: return AppendByPrecision(argStorage.string_view_state(specValues.argPosition), precision); break;
-				case SpecType::IntType: return FormatIntTypeArg(argStorage.int_state(specValues.argPosition)); break;
-				case SpecType::U_IntType: return FormatIntTypeArg(argStorage.uint_state(specValues.argPosition)); break;
+				case SpecType::StringType: AppendByPrecision(argStorage.string_state(specValues.argPosition), precision); break;
+				case SpecType::CharPointerType: AppendByPrecision(argStorage.c_string_state(specValues.argPosition), precision); break;
+				case SpecType::StringViewType: AppendByPrecision(argStorage.string_view_state(specValues.argPosition), precision); break;
+				case SpecType::IntType: FormatIntTypeArg(argStorage.int_state(specValues.argPosition)); break;
+				case SpecType::U_IntType: FormatIntTypeArg(argStorage.uint_state(specValues.argPosition)); break;
 				case SpecType::LongLongType:
 					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(), argStorage.long_long_state(specValues.argPosition));
-					return std::string_view(buffer.data(), charsResult.ptr);
+					rawValueTemp.append(buffer.data(), charsResult.ptr);
 					break;
 				case SpecType::U_LongLongType:
 					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(), argStorage.u_long_long_state(specValues.argPosition));
-					return std::string_view(buffer.data(), charsResult.ptr);
+					rawValueTemp.append(buffer.data(), charsResult.ptr);
 					break;
-				case SpecType::BoolType: return std::string_view(argStorage.bool_state(specValues.argPosition) ? "true" : "false"); break;
-				case SpecType::CharType:
-					{
-						std::string tmp { argStorage.char_state(specValues.argPosition) };
-						return std::string_view { std::move(tmp) };
-					}
-					break;
-				case SpecType::FloatType: return FormatFloatTypeArg(argStorage.float_state(specValues.argPosition), precision); break;
-				case SpecType::DoubleType: return FormatFloatTypeArg(argStorage.double_state(specValues.argPosition), precision); break;
-				case SpecType::LongDoubleType: return FormatFloatTypeArg(argStorage.long_double_state(specValues.argPosition), precision); break;
+				case SpecType::BoolType: rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false"); break;
+				case SpecType::CharType: rawValueTemp.append(argStorage.char_state(specValues.argPosition), 1); break;
+				case SpecType::FloatType: FormatFloatTypeArg(argStorage.float_state(specValues.argPosition), precision); break;
+				case SpecType::DoubleType: FormatFloatTypeArg(argStorage.double_state(specValues.argPosition), precision); break;
+				case SpecType::LongDoubleType: FormatFloatTypeArg(argStorage.long_double_state(specValues.argPosition), precision); break;
 				case SpecType::ConstVoidPtrType: break;
 				case SpecType::VoidPtrType: break;
 				default: break;
 			}
-		unreachable();
 	}
 
-	std::string_view ArgFormatter::FormatIntTypeArg(int&& value) {
+	void ArgFormatter::FormatIntTypeArg(int&& value) {
 		int base { 10 };
 		auto data { buffer.data() };
 		int pos { 0 };
@@ -613,20 +602,20 @@ namespace serenity::arg_formatter {
 				case 'X':
 					for( auto& ch: buffer ) {
 							if( ch == *charsResult.ptr ) break;
-							if( IsAlpha(ch) ) {
+							if( ch >= 'a' && ch <= 'z' ) {
 									ch -= 32;
 							}
 						}
 					break;
 				default: break;
 			}    // capitilization
-		return std::string_view(data, charsResult.ptr);
+		rawValueTemp.append(data, charsResult.ptr);
 	}
 
-	std::string_view ArgFormatter::AppendByPrecision(std::string_view val, int precision) {
+	void ArgFormatter::AppendByPrecision(std::string_view val, int precision) {
 		int size { static_cast<int>(val.size()) };
 		precision = precision > 0 ? precision > size ? size : precision : size;
-		return std::move(std::string_view { val.substr(0, precision) });
+		rawValueTemp.append(val.data(), precision);
 	}
 
 	bool ArgFormatter::IsValidStringSpec(const char& spec) {
@@ -757,19 +746,60 @@ namespace serenity::arg_formatter {
 		return false;
 	}
 
-	// void ArgFormatter::FormatLocaleToken(std::string& container) {
-	//	// pass in the reference to the locale from msginfo so if it changes,
-	//	// it'll be reflected here when creating the groupings
-	//	std::locale loc { "" };
+	void ArgFormatter::SetLocaleForUse(const std::locale& locale) {
+		loc       = std::make_unique<std::locale>(locale);
+		groupings = std::use_facet<std::numpunct<char>>(*loc.get()).grouping();
+		separator = std::use_facet<std::numpunct<char>>(*loc.get()).thousands_sep();
+	}
 
-	//	auto argType { argStorage.SpecTypesCaptured()[ argCounter ] };
+	void serenity::arg_formatter::ArgFormatter::LocalizeArgument(int precision) {
+		// TODO: Implement Logic To Decide HOW an argument is supposed to be localized:
+		//       whether it's a numerical localization, a boolean localization, etc
+		using enum serenity::experimental::msg_details::SpecType;
+		auto argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+		// NOTE: The following types should have been caught in the verification process:
+		//       monostate, string, c-string, string view, const void*, void *
+		switch( argType ) {
+				case IntType: break;
+				case U_IntType: break;
+				case LongLongType: break;
+				case U_LongLongType: break;
+				case BoolType: break;
+				case CharType: break;
+				case FloatType: break;
+				case DoubleType: break;
+				case LongDoubleType: break;
+				default: break;
+			}
 
-	//	argStorage.GetArgValueAsStr(temp, argCounter);
-	//	size_t value;
-	//	std::from_chars(temp.data(), temp.data() + temp.size(), value);
+		FormatRawValueToStr(precision);
 
-	//	std::string groupings { std::use_facet<std::numpunct<char>>(loc).grouping() };
-	//	auto numOfSep { std::_Count_separators(temp.size(), groupings) };
-	//}
-
+		// integer localization
+		size_t groupGap { 0 };
+		size_t groups { 0 };
+		auto end { rawValueTemp.size() };
+		if( groupings.size() > 1 ) {
+				/********************* grouping is unique *********************/
+				// TODO: FINISH IMPLEMENTING LOGIC HERE BASED ON UNIQUE GROUPINGS
+				groupGap = *groupings.begin();
+		} else {
+				/********************* grouping is uniform *********************/
+				// NOTE: this could have been simplified if taking a string_view of the rawValueTemp after FormatRawValueToStr() was called hadn't resulted in
+				// the random replacement of the first char with a null character when moving the string to the sv before clearing the string. The thought was
+				// to just directly append the values in the grouping range to the string and call sv.remove_prefix(groupGap); This would have eliminated the
+				// additional sv constructions in the loop and the additional string allocation for 'tmp'. Would still like to find a better way to achieve this.
+				groupGap = *groupings.begin();
+				groups   = (end / groupGap);
+				std::string tmp;
+				for( int i { 0 }; i < groups; ++i ) {
+						std::string_view sv { rawValueTemp };
+						tmp.append(sv.data(), sv.data() + groupGap);
+						if( sv.size() > groupGap ) {
+								tmp += separator;
+						}
+						rawValueTemp.erase(groupGap);
+					}
+				rawValueTemp = std::move(tmp);
+			}
+	}
 }    // namespace serenity::arg_formatter
