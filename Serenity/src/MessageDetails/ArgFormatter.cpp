@@ -537,79 +537,18 @@ namespace serenity::arg_formatter {
 				case SpecType::StringViewType: AppendByPrecision(argStorage.string_view_state(specValues.argPosition), precision); break;
 				case SpecType::IntType: FormatIntTypeArg(argStorage.int_state(specValues.argPosition)); break;
 				case SpecType::U_IntType: FormatIntTypeArg(argStorage.uint_state(specValues.argPosition)); break;
-				case SpecType::LongLongType:
-					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(), argStorage.long_long_state(specValues.argPosition));
-					rawValueTemp.append(buffer.data(), charsResult.ptr);
-					break;
-				case SpecType::U_LongLongType:
-					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(), argStorage.u_long_long_state(specValues.argPosition));
-					rawValueTemp.append(buffer.data(), charsResult.ptr);
-					break;
+				case SpecType::LongLongType: FormatIntTypeArg(argStorage.long_long_state(specValues.argPosition)); break;
+				case SpecType::U_LongLongType: FormatIntTypeArg(argStorage.u_long_long_state(specValues.argPosition)); break;
 				case SpecType::BoolType: rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false"); break;
-				case SpecType::CharType: rawValueTemp.append(argStorage.char_state(specValues.argPosition), 1); break;
+				case SpecType::CharType: rawValueTemp += argStorage.char_state(specValues.argPosition); break;
 				case SpecType::FloatType: FormatFloatTypeArg(argStorage.float_state(specValues.argPosition), precision); break;
 				case SpecType::DoubleType: FormatFloatTypeArg(argStorage.double_state(specValues.argPosition), precision); break;
 				case SpecType::LongDoubleType: FormatFloatTypeArg(argStorage.long_double_state(specValues.argPosition), precision); break;
+
 				case SpecType::ConstVoidPtrType: break;
 				case SpecType::VoidPtrType: break;
 				default: break;
 			}
-	}
-
-	void ArgFormatter::FormatIntTypeArg(int&& value) {
-		int base { 10 };
-		auto data { buffer.data() };
-		int pos { 0 };
-
-		if( specValues.signType == Sign::Space ) {
-				specValues.signType = value < 0 ? Sign::Minus : Sign::Plus;
-		}
-		switch( specValues.signType ) {
-				case Sign::Space:
-					data[ pos ] = ' ';
-					++pos;
-					break;
-				case Sign::Plus:
-					data[ pos ] = '+';
-					++pos;
-					break;
-				case Sign::Empty: [[fallthrough]];
-				case Sign::Minus: break;
-			}
-
-		if( specValues.preAltForm != "\0" ) {
-				size_t i { 0 };
-				auto size { specValues.preAltForm.size() };
-				for( auto& ch: specValues.preAltForm ) {
-						data[ pos ] = ch;
-						++pos;
-					}
-		}
-
-		switch( specValues.typeSpec ) {
-				case 'b': [[fallthrough]];
-				case 'B': base = 2; break;
-				case 'o': base = 8; break;
-				case 'x': [[fallthrough]];
-				case 'X': base = 16; break;
-				default: break;
-			}
-
-		charsResult = std::to_chars(data + pos, data + buffer.size(), value, base);
-
-		switch( specValues.typeSpec ) {
-				case 'B': [[fallthrough]];
-				case 'X':
-					for( auto& ch: buffer ) {
-							if( ch == *charsResult.ptr ) break;
-							if( ch >= 'a' && ch <= 'z' ) {
-									ch -= 32;
-							}
-						}
-					break;
-				default: break;
-			}    // capitilization
-		rawValueTemp.append(data, charsResult.ptr);
 	}
 
 	void ArgFormatter::AppendByPrecision(std::string_view val, int precision) {
@@ -750,56 +689,117 @@ namespace serenity::arg_formatter {
 		loc       = std::make_unique<std::locale>(locale);
 		groupings = std::use_facet<std::numpunct<char>>(*loc.get()).grouping();
 		separator = std::use_facet<std::numpunct<char>>(*loc.get()).thousands_sep();
+		decimal   = std::use_facet<std::numpunct<char>>(*loc.get()).decimal_point();
+		falseStr  = std::use_facet<std::numpunct<char>>(*loc.get()).falsename();
+		trueStr   = std::use_facet<std::numpunct<char>>(*loc.get()).truename();
 	}
 
-	void serenity::arg_formatter::ArgFormatter::LocalizeArgument(int precision) {
-		// TODO: Implement Logic To Decide HOW an argument is supposed to be localized:
-		//       whether it's a numerical localization, a boolean localization, etc
+	void ArgFormatter::FormatIntegralGrouping(std::string& section, char separator) {
+		size_t groups { 0 };
+		auto groupBegin { groupings.begin() };
+		int groupGap { *groupBegin };
+		auto end { section.size() };
+		if( section.size() < groupGap ) return;
+		std::string tmp;
+		std::string_view sv { section };
+
+		if( groupings.size() > 1 ) {
+				/********************* grouping is unique *********************/
+				if( groupings.size() == 3 ) {
+						tmp.append(sv.data(), sv.data() + groupGap);
+						sv.remove_prefix(groupGap);
+						tmp += separator;
+
+						groupGap = *(++groupBegin);
+						tmp.append(sv.data(), sv.data() + groupGap);
+						sv.remove_prefix(groupGap);
+
+						groupGap = *(++groupBegin);
+						groups   = end / groupGap - end % groupGap;
+						for( ; groups; --groups ) {
+								tmp.append(sv.data(), sv.data() + groupGap);
+								if( groups > 1 ) {
+										tmp += separator;
+								}
+								sv.remove_prefix(groupGap);
+							}
+				} else {
+						// grouping is one group and then uniform
+						tmp.append(sv.data(), sv.data() + groupGap);
+						sv.remove_prefix(groupGap);
+						tmp += separator;
+
+						groupGap = *(++groupBegin);
+						groups   = end / groupGap - end % groupGap;
+						for( ; groups; --groups ) {
+								tmp.append(sv.data(), sv.data() + groupGap);
+								if( groups > 1 ) {
+										tmp += separator;
+								}
+								sv.remove_prefix(groupGap);
+							}
+					}
+		} else {
+				/********************* grouping is uniform *********************/
+				groups = end / groupGap - end % groupGap;
+				for( ; groups; --groups ) {
+						tmp.append(sv.data(), sv.data() + groupGap);
+						if( groups > 1 ) {
+								tmp += separator;
+						}
+						sv.remove_prefix(groupGap);
+					}
+				section.clear();
+				section.append(std::move(tmp));
+			}
+	}
+
+	void ArgFormatter::LocalizeIntegral(int precision) {
+		FormatRawValueToStr(precision);
+		FormatIntegralGrouping(rawValueTemp, separator);
+	}
+
+	void ArgFormatter::LocalizeFloatingPoint(int precision) {
+		FormatRawValueToStr(precision);
+		size_t pos { 0 };
+		auto size { rawValueTemp.size() };
+		auto data { rawValueTemp.begin() };
+		std::string_view sv { rawValueTemp };
+		std::string tmp;
+		for( ;; ) {
+				if( pos >= size ) break;
+				if( sv[ pos ] == '.' ) {
+						tmp.append(sv.substr(0, pos));
+						FormatIntegralGrouping(tmp, separator);
+						tmp += decimal;
+						tmp.append(sv.substr(pos + 1, sv.size()));
+						break;
+				}
+				++pos;
+			}
+		rawValueTemp.clear();
+		rawValueTemp.append(std::move(tmp));
+	}
+
+	void ArgFormatter::LocalizeBool() {
+		rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? trueStr : falseStr);
+	}
+
+	void ArgFormatter::LocalizeArgument(int precision) {
 		using enum serenity::experimental::msg_details::SpecType;
 		auto argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 		// NOTE: The following types should have been caught in the verification process:
 		//       monostate, string, c-string, string view, const void*, void *
 		switch( argType ) {
-				case IntType: break;
-				case U_IntType: break;
-				case LongLongType: break;
-				case U_LongLongType: break;
-				case BoolType: break;
-				case CharType: break;
-				case FloatType: break;
-				case DoubleType: break;
-				case LongDoubleType: break;
+				case IntType: [[fallthrough]];
+				case U_IntType: [[fallthrough]];
+				case LongLongType: LocalizeIntegral(precision); break;
+				case FloatType: [[fallthrough]];
+				case DoubleType: [[fallthrough]];
+				case LongDoubleType: [[fallthrough]];
+				case U_LongLongType: LocalizeFloatingPoint(precision); break;
+				case BoolType: LocalizeBool(); break;
 				default: break;
-			}
-
-		FormatRawValueToStr(precision);
-
-		// integer localization
-		size_t groupGap { 0 };
-		size_t groups { 0 };
-		auto end { rawValueTemp.size() };
-		if( groupings.size() > 1 ) {
-				/********************* grouping is unique *********************/
-				// TODO: FINISH IMPLEMENTING LOGIC HERE BASED ON UNIQUE GROUPINGS
-				groupGap = *groupings.begin();
-		} else {
-				/********************* grouping is uniform *********************/
-				// NOTE: this could have been simplified if taking a string_view of the rawValueTemp after FormatRawValueToStr() was called hadn't resulted in
-				// the random replacement of the first char with a null character when moving the string to the sv before clearing the string. The thought was
-				// to just directly append the values in the grouping range to the string and call sv.remove_prefix(groupGap); This would have eliminated the
-				// additional sv constructions in the loop and the additional string allocation for 'tmp'. Would still like to find a better way to achieve this.
-				groupGap = *groupings.begin();
-				groups   = (end / groupGap);
-				std::string tmp;
-				for( int i { 0 }; i < groups; ++i ) {
-						std::string_view sv { rawValueTemp };
-						tmp.append(sv.data(), sv.data() + groupGap);
-						if( sv.size() > groupGap ) {
-								tmp += separator;
-						}
-						rawValueTemp.erase(groupGap);
-					}
-				rawValueTemp = std::move(tmp);
 			}
 	}
 }    // namespace serenity::arg_formatter

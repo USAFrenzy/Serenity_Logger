@@ -1,4 +1,39 @@
 #pragma once
+/************************************** What The ArgFormatter And ArgContainer Classes Offer **************************************/
+// This work is a very simple reimplementation with limititations on my end of Victor Zverovich's fmt library.
+// Currently the standard's implementation of his work is still underway although for the most part, it's feature
+// complete with Victor's library - there are some huge performance drops when it's not compiled under the /utf-8
+// flag on MSVC though.
+//
+// The ArgFormatter and ArgContainer classes work in tandem to deliver a very bare-bones version of what the fmt,
+// and MSVC's implementation of fmt, libraries provides and is only intended for usage until MSVC's code is as performant
+// as it is when compiled with /utf-8 for compilation without the need for this flag.
+//
+// With that being said, these classes provide the functionality of formatting to a container with a back insert iterator
+// object which mirrors the std::format_to()/std::vformat_to() via the se_format_to() function, as well as a way to recieve
+// a string with the formatted result via the se_format() function, mirroring std::format()/std::vformat().
+// Unlike MSVC's implementations, however, the default locale used when the locale specifier is present will refer to the
+// default locale created on construction of this class. The downside is that this will not reflect any changes when the
+// locale is changed globally; but the benefit of this approach is reducing the construction of an empty locale on every
+// format, as well as the ability to change the locale with "SetLocale(const std::locale &)" function without affecting
+// the locale of the rest of the program. All formatting specifiers and manual/automatic indexing from the fmt library
+// are available and supported.
+/**********************************************************************************************************************************/
+
+/********************************************************* Current State **********************************************************/
+// Currently, all specifiers are accounted for when formatting the input string and a brief test period shows that most
+// results occur accurately compared to MSVC's results as well. This is still very much a work in progress class and
+// should be treated as such - there has yet to be extensive testing to ensure that this class will handle all permutations
+// correctly and issue a warning/throw for any incorrect variations. Other than the case of manual indexed substitution of
+// strings, ints, and const char*, this class handles the parsing/formatting at a level that matches MSVC's speed and accuracy
+// (and in some cases, such as doubles, alternate formats, and some padding options, manages to actually far exceed speed) of
+// formatting when their implementation is compiled under the /utf-8 flag. When compiled with /O2 and without the /utf-8
+// compiler flag, these classes manage to outperform MSVC's implementation by over a staggering ~1100%. To put that in reference,
+// this also means that compiling MSVS's implementation with the /utf-8 flag also nets ~1100% over the case when it's NOT compiled
+// with this flag. In the case of the first three mentioned - the performance is within 10-15% of MSVC's if no additional formatting
+// specifiers are supplied; when additional formatting specifiers are supplied with these three though, timings are almost identical
+// between the two implementations.
+/**********************************************************************************************************************************/
 
 #include <serenity/MessageDetails/ArgContainer.h>
 
@@ -140,8 +175,13 @@ namespace serenity::arg_formatter {
 		void FormatRawValueToStr(int& precision);
 		void AppendByPrecision(std::string_view val, int precision);
 		template<typename T> void FormatFloatTypeArg(T&& value, int precision);
-		void FormatIntTypeArg(int&& value);
+		template<typename T> void FormatIntTypeArg(T&& value);
 		void LocalizeArgument(int precision);
+		void LocalizeIntegral(int precision);
+		void LocalizeFloatingPoint(int precision);
+		void LocalizeBool();
+
+		void FormatIntegralGrouping(std::string& section, char separator);
 
 	  private:
 		int argCounter { 0 };
@@ -163,6 +203,9 @@ namespace serenity::arg_formatter {
 		// default constructed locale for the system if none is provided and this default locale will be the one that is referenced when 'L' is present).
 		std::unique_ptr<std::locale> loc { std::make_unique<std::locale>(std::locale("")) };
 		char separator { std::use_facet<std::numpunct<char>>(*loc.get()).thousands_sep() };
+		char decimal { std::use_facet<std::numpunct<char>>(*loc.get()).decimal_point() };
+		std::string falseStr { std::use_facet<std::numpunct<char>>(*loc.get()).falsename() };
+		std::string trueStr { std::use_facet<std::numpunct<char>>(*loc.get()).truename() };
 		std::string groupings { std::use_facet<std::numpunct<char>>(*loc.get()).grouping() };
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>

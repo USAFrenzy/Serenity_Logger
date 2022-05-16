@@ -1,5 +1,26 @@
 #pragma once
+/************************************** What The ArgFormatter And ArgContainer Classes Offer **************************************/
+// This work is a very simple reimplementation with limititations on my end of Victor Zverovich's fmt library.
+// Currently the standard's implementation of his work is still underway although for the most part, it's feature
+// complete with Victor's library - there are some huge performance drops when it's not compiled under the /utf-8
+// flag on MSVC though.
+//
+// The ArgFormatter and ArgContainer classes work in tandem to deliver a very bare-bones version of what the fmt,
+// and MSVC's implementation of fmt, libraries provides and is only intended for usage until MSVC's code is as performant
+// as it is when compiled with /utf-8 for compilation without the need for this flag.
+//
+// With that being said, these classes provide the functionality of formatting to a container with a back insert iterator
+// object which mirrors the std::format_to()/std::vformat_to() via the se_format_to() function, as well as a way to recieve
+// a string with the formatted result via the se_format() function, mirroring std::format()/std::vformat().
+// Unlike MSVC's implementations, however, the default locale used when the locale specifier is present will refer to the
+// default locale created on construction of this class. The downside is that this will not reflect any changes when the
+// locale is changed globally; but the benefit of this approach is reducing the construction of an empty locale on every
+// format, as well as the ability to change the locale with "SetLocale(const std::locale &)" function without affecting
+// the locale of the rest of the program. All formatting specifiers and manual/automatic indexing from the fmt library
+// are available and supported.
+/**********************************************************************************************************************************/
 
+#include "ArgFormatter.h"
 #include <string_view>
 
 template<typename T, typename... Args>
@@ -26,7 +47,6 @@ inline bool serenity::arg_formatter::ArgFormatter::HandleIfEndOrWhiteSpace(std::
 	if( ch == '}' ) {
 			ParsePositionalField(sv, argCounter, currentPosition);
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
-			++argCounter;
 			return true;
 	} else if( ch == ' ' ) {
 			for( ;; ) {
@@ -198,33 +218,29 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 			case Sign::Minus: break;
 		}
 
-	std::chars_format format { std::chars_format::general };
-	if( specValues.preAltForm != "\0" ) {
-			format = std::chars_format::fixed;
-	} else {
-			switch( specValues.typeSpec ) {
-					case 'a': [[fallthrough]];
-					case 'A':
-						precision = precision > 0 ? precision : 0;
-						format    = std::chars_format::hex;
-						break;
-					case 'e': [[fallthrough]];
-					case 'E':
-						format    = std::chars_format::scientific;
-						precision = precision > 0 ? precision : 6;
-						break;
-					case 'f': [[fallthrough]];
-					case 'F':
-						format    = std::chars_format::fixed;
-						precision = precision > 0 ? precision : 6;
-						break;
-					case 'g': [[fallthrough]];
-					case 'G':
-						format    = std::chars_format::general;
-						precision = precision > 0 ? precision : 6;
-						break;
-					default: break;
-				}
+	std::chars_format format { std::chars_format::fixed };
+	switch( specValues.typeSpec ) {
+			case 'a': [[fallthrough]];
+			case 'A':
+				precision = precision > 0 ? precision : 0;
+				format    = std::chars_format::hex;
+				break;
+			case 'e': [[fallthrough]];
+			case 'E':
+				format    = std::chars_format::scientific;
+				precision = precision > 0 ? precision : 6;
+				break;
+			case 'f': [[fallthrough]];
+			case 'F':
+				format    = std::chars_format::fixed;
+				precision = precision > 0 ? precision : 6;
+				break;
+			case 'g': [[fallthrough]];
+			case 'G':
+				format    = std::chars_format::general;
+				precision = precision > 0 ? precision : 6;
+				break;
+			default: break;
 		}
 
 	if( precision != 0 ) {
@@ -236,6 +252,62 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 			case 'A': [[fallthrough]];
 			case 'E': [[fallthrough]];
 			case 'G':
+				for( auto& ch: buffer ) {
+						if( ch == *charsResult.ptr ) break;
+						if( ch >= 'a' && ch <= 'z' ) {
+								ch -= 32;
+						}
+					}
+				break;
+			default: break;
+		}    // capitilization
+	rawValueTemp.append(data, charsResult.ptr);
+}
+
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeArg(T&& value) {
+	int base { 10 };
+	auto data { buffer.data() };
+	int pos { 0 };
+
+	if( specValues.signType == Sign::Space ) {
+			specValues.signType = value < 0 ? Sign::Minus : Sign::Plus;
+	}
+	switch( specValues.signType ) {
+			case Sign::Space:
+				data[ pos ] = ' ';
+				++pos;
+				break;
+			case Sign::Plus:
+				data[ pos ] = '+';
+				++pos;
+				break;
+			case Sign::Empty: [[fallthrough]];
+			case Sign::Minus: break;
+		}
+
+	if( specValues.preAltForm != "\0" ) {
+			size_t i { 0 };
+			auto size { specValues.preAltForm.size() };
+			for( auto& ch: specValues.preAltForm ) {
+					data[ pos ] = ch;
+					++pos;
+				}
+	}
+
+	switch( specValues.typeSpec ) {
+			case 'b': [[fallthrough]];
+			case 'B': base = 2; break;
+			case 'o': base = 8; break;
+			case 'x': [[fallthrough]];
+			case 'X': base = 16; break;
+			default: break;
+		}
+
+	charsResult = std::to_chars(data + pos, data + buffer.size(), value, base);
+
+	switch( specValues.typeSpec ) {
+			case 'B': [[fallthrough]];
+			case 'X':
 				for( auto& ch: buffer ) {
 						if( ch == *charsResult.ptr ) break;
 						if( ch >= 'a' && ch <= 'z' ) {

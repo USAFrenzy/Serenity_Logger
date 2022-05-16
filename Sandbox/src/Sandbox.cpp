@@ -218,13 +218,13 @@ int main() {
 	// because it asssumes that this should be a type spec instead. I'm not sure whether to keep this behavior
 	// or not as it's a bit more forgiving on the spec fields' placement (given that ':' is present) and
 	// performance on my end doesn't suffer from where the spec placement is
-	std::string parseString { "{0:#^{5}L}" };
-	int a { 424242 };
+	std::string parseString { "{3:*^#{5}LA}" };
+	int a { 424242442 };
 	int b { 5 };
 	float c { 32.5f };
-	double d { 54765.65 };
+	double d { 54453765675.65675 };
 	int e { 6 };
-	int f { 12 };
+	int f { 30 };
 	std::string tmp { "Suspendisse sed porttitor orci." };
 
 	ArgFormatter parser;
@@ -266,7 +266,7 @@ int main() {
 
 			// Standdard's std::vformat_to() loop
 			timer.StopWatch_Reset();
-			auto locale { std::locale("en_US.UTF-8") };
+			auto locale { std::locale("") };
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
 					L_VFORMAT_TO(finalStr, locale, parseString, a, b, c, d, e, f, tmp);
 					finalStr.clear();
