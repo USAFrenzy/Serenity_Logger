@@ -82,7 +82,7 @@ namespace serenity::arg_formatter {
 			typeSpec                             = '\0';
 			preAltForm                           = "\0";
 			signType                             = Sign::Empty;
-			localize                             = false;
+			localize = hasAlt = false;
 		}
 
 		size_t argPosition { 0 };
@@ -96,6 +96,7 @@ namespace serenity::arg_formatter {
 		std::string_view preAltForm { "\0" };
 		Sign signType { Sign::Empty };
 		bool localize { false };
+		bool hasAlt { false };
 	};
 
 	struct ParseResult
@@ -120,7 +121,7 @@ namespace serenity::arg_formatter {
 	};
 
 #ifndef SERENITY_ARG_BUFFER_SIZE
-	#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)
+	#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(64)
 #endif    // !SERENITY_ARG_BUFFER_SIZE
 
 	// Compatible class that provides some of the same functionality that mirrors <format> for pre C++23

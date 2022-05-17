@@ -193,6 +193,7 @@ template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter:
 }
 
 template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatTypeArg(T&& value, int precision) {
+	std::chars_format format;
 	auto data { buffer.data() };
 	int pos { 0 };
 
@@ -212,29 +213,40 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 			case Sign::Minus: break;
 		}
 
-	std::chars_format format { std::chars_format::fixed };
-	switch( specValues.typeSpec ) {
-			case 'a': [[fallthrough]];
-			case 'A':
-				precision = precision > 0 ? precision : 0;
-				format    = std::chars_format::hex;
-				break;
-			case 'e': [[fallthrough]];
-			case 'E':
-				format    = std::chars_format::scientific;
-				precision = precision > 0 ? precision : 6;
-				break;
-			case 'f': [[fallthrough]];
-			case 'F':
-				format    = std::chars_format::fixed;
-				precision = precision > 0 ? precision : 6;
-				break;
-			case 'g': [[fallthrough]];
-			case 'G':
-				format    = std::chars_format::general;
-				precision = precision > 0 ? precision : 6;
-				break;
-			default: break;
+	// default behaviors
+	if( specValues.typeSpec == '\0' ) {
+			if( specValues.hasAlt && precision == 0 ) {
+					format = std::chars_format::scientific;
+			} else if( precision == 0 ) {
+					format = std::chars_format::fixed;
+			} else {
+					format = std::chars_format::general;
+				}
+	} else {
+			// default behavior skipped, so process the type spec that was found
+			switch( specValues.typeSpec ) {
+					case 'a': [[fallthrough]];
+					case 'A':
+						precision = precision > 0 ? precision : 0;
+						format    = std::chars_format::hex;
+						break;
+					case 'e': [[fallthrough]];
+					case 'E':
+						format    = std::chars_format::scientific;
+						precision = precision > 0 ? precision : 6;
+						break;
+					case 'f': [[fallthrough]];
+					case 'F':
+						format    = std::chars_format::fixed;
+						precision = precision > 0 ? precision : 6;
+						break;
+					case 'g': [[fallthrough]];
+					case 'G':
+						format    = std::chars_format::general;
+						precision = precision > 0 ? precision : 6;
+						break;
+					default: break;
+				}
 		}
 
 	if( precision != 0 ) {

@@ -7,25 +7,25 @@
 #include <serenity/MessageDetails/ArgFormatter.h>
 using namespace serenity::arg_formatter;
 
+// common testing variables
+static int a                = 424'242'424;
+static unsigned int b       = 4'242'424'242;
+static long long c          = 424'242'424'242'424;
+static unsigned long long d = 424'242'424'242'424'424;
+static float e              = 424'242'424.424f;
+static double f             = 424'242'424.42424242;
+static long double g        = 424'424'242'424.42424242;
+static std::string h { "This is a string arg" };
+static const char* i { "This is a const char* arg" };
+static std::string_view j { "This is a string_view arg" };
+static bool k = true;
+static char l = 'm';
+
 // NOTE: Currently I have yet to add const void*, void*, or custom formatting
 
 TEST_CASE("Base Auto Index Formatting") {
 	ArgFormatter formatter;
-	// not sure why msvc code analysis was failing with possibly implicating this formatString
 	static constexpr std::string_view formatString { "{}" };
-
-	int a                = 424'242'424;
-	unsigned int b       = 4'242'424'242;
-	long long c          = 424'242'424'242'424;
-	unsigned long long d = 424'242'424'242'424'424;
-	float e              = 424'242'424.424f;
-	double f             = 424'242'424.42424242;
-	long double g        = 424'424'242'424.42424242;
-	std::string h { "This is a string arg" };
-	const char* i { "This is a const char* arg" };
-	std::string_view j { "This is a string_view arg" };
-	bool k = true;
-	char l = 'm';
 
 	REQUIRE(std::format(formatString, a) == formatter.se_format(formatString, a));
 	REQUIRE(std::format(formatString, b) == formatter.se_format(formatString, b));
@@ -47,19 +47,6 @@ TEST_CASE("Base Auto Index Formatting") {
 TEST_CASE("Base Manual Index Formatting") {
 	ArgFormatter formatter;
 
-	int a                = 424'242'424;
-	unsigned int b       = 4'242'424'242;
-	long long c          = 424'242'424'242'424;
-	unsigned long long d = 424'242'424'242'424'424;
-	float e              = 424'242'424.424f;
-	double f             = 424'242'424.42424242;
-	long double g        = 424'424'242'424.42424242;
-	std::string h { "This is a string arg" };
-	const char* i { "This is a const char* arg" };
-	std::string_view j { "This is a string_view arg" };
-	bool k = true;
-	char l = 'm';
-
 	REQUIRE(std::format("{0}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{0}", a, b, c, d, e, f, g, h, i, j, k, l));
 	REQUIRE(std::format("{1}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{1}", a, b, c, d, e, f, g, h, i, j, k, l));
 	REQUIRE(std::format("{2}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{2}", a, b, c, d, e, f, g, h, i, j, k, l));
@@ -72,6 +59,66 @@ TEST_CASE("Base Manual Index Formatting") {
 	REQUIRE(std::format("{9}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{9}", a, b, c, d, e, f, g, h, i, j, k, l));
 	REQUIRE(std::format("{10}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{10}", a, b, c, d, e, f, g, h, i, j, k, l));
 	REQUIRE(std::format("{11}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{11}", a, b, c, d, e, f, g, h, i, j, k, l));
+
 	REQUIRE(std::format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11}", a, b, c, d, e, f, g, h, i, j, k, l) ==
 	        formatter.se_format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11}", a, b, c, d, e, f, g, h, i, j, k, l));
+
+	REQUIRE(std::format("{9} {3} {2} {10} {4} {6} {5} {11} {8} {7} {0} {1}", a, b, c, d, e, f, g, h, i, j, k, l) ==
+	        formatter.se_format("{9} {3} {2} {10} {4} {6} {5} {11} {8} {7} {0} {1}", a, b, c, d, e, f, g, h, i, j, k, l));
+}
+
+TEST_CASE("Alternate Int Formatting") {
+	ArgFormatter formatter;
+
+	REQUIRE(std::format("{:#}", a) == formatter.se_format("{:#}", a));
+	REQUIRE(std::format("{:#b}", a) == formatter.se_format("{:#b}", a));
+	REQUIRE(std::format("{:#B}", a) == formatter.se_format("{:#B}", a));
+	REQUIRE(std::format("{:#d}", a) == formatter.se_format("{:#d}", a));
+	REQUIRE(std::format("{:#o}", a) == formatter.se_format("{:#o}", a));
+	REQUIRE(std::format("{:#x}", a) == formatter.se_format("{:#x}", a));
+	REQUIRE(std::format("{:#X}", a) == formatter.se_format("{:#X}", a));
+}
+
+TEST_CASE("Alternate U_Int Formatting") {
+	ArgFormatter formatter;
+
+	REQUIRE(std::format("{:#}", b) == formatter.se_format("{:#}", b));
+	REQUIRE(std::format("{:#b}", b) == formatter.se_format("{:#b}", b));
+	REQUIRE(std::format("{:#B}", b) == formatter.se_format("{:#B}", b));
+	REQUIRE(std::format("{:#d}", b) == formatter.se_format("{:#d}", b));
+	REQUIRE(std::format("{:#o}", b) == formatter.se_format("{:#o}", b));
+	REQUIRE(std::format("{:#x}", b) == formatter.se_format("{:#x}", b));
+	REQUIRE(std::format("{:#X}", b) == formatter.se_format("{:#X}", b));
+}
+
+TEST_CASE("Alternate Long Long Formatting") {
+	ArgFormatter formatter;
+
+	REQUIRE(std::format("{:#}", c) == formatter.se_format("{:#}", c));
+	REQUIRE(std::format("{:#b}", c) == formatter.se_format("{:#b}", c));
+	REQUIRE(std::format("{:#B}", c) == formatter.se_format("{:#B}", c));
+	REQUIRE(std::format("{:#d}", c) == formatter.se_format("{:#d}", c));
+	REQUIRE(std::format("{:#o}", c) == formatter.se_format("{:#o}", c));
+	REQUIRE(std::format("{:#x}", c) == formatter.se_format("{:#x}", c));
+	REQUIRE(std::format("{:#X}", c) == formatter.se_format("{:#X}", c));
+}
+
+TEST_CASE("Alternate Unsigned Long Long Formatting") {
+	ArgFormatter formatter;
+
+	REQUIRE(std::format("{:#}", d) == formatter.se_format("{:#}", d));
+	REQUIRE(std::format("{:#b}", d) == formatter.se_format("{:#b}", d));
+	REQUIRE(std::format("{:#B}", d) == formatter.se_format("{:#B}", d));
+	REQUIRE(std::format("{:#d}", d) == formatter.se_format("{:#d}", d));
+	REQUIRE(std::format("{:#o}", d) == formatter.se_format("{:#o}", d));
+	REQUIRE(std::format("{:#x}", d) == formatter.se_format("{:#x}", d));
+	REQUIRE(std::format("{:#X}", d) == formatter.se_format("{:#X}", d));
+}
+
+TEST_CASE("Alternate Float Formatting") {
+	ArgFormatter formatter;
+
+	REQUIRE(std::format("{:#}", e) == formatter.se_format("{:#}", e));
+	REQUIRE(std::format("{:#a}", e) == formatter.se_format("{:#a}", e));
+	REQUIRE(std::format("{:#A}", e) == formatter.se_format("{:#A}", e));
 }

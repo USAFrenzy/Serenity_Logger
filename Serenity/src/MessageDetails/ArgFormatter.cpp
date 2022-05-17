@@ -159,22 +159,23 @@ namespace serenity::arg_formatter {
 				case '<': specValues.align = Alignment::AlignLeft; break;
 				case '>': specValues.align = Alignment::AlignRight; break;
 				case '^': specValues.align = Alignment::AlignCenter; break;
-				default: specValues.align = Alignment::Empty; break;
+				default:
+					specValues.align = Alignment::Empty;
+					return;
+					break;
 			}
-		if( specValues.align != Alignment::Empty ) {
-				if( ch != '{' && ch != '}' ) {
-						if( ch == ':' ) {
-								specValues.fillCharacter = ' ';
-						} else {
-								specValues.fillCharacter = ch;
-								++currentPos;
-							}
+		if( ch != '{' && ch != '}' ) {
+				if( ch == ':' ) {
+						specValues.fillCharacter = ' ';
 				} else {
-						std::string tmp { "Error In Fill/Align Field: \"" };
-						tmp.append(1, sv[ currentPos - 1 ]).append("\" Is Not A Valid Fill Specifier\n");
-						throw std::runtime_error(std::move(tmp));
+						specValues.fillCharacter = ch;
+						++currentPos;
 					}
-		}
+		} else {
+				std::string tmp { "Error In Fill/Align Field: \"" };
+				tmp.append(1, sv[ currentPos - 1 ]).append("\" Is Not A Valid Fill Specifier\n");
+				throw std::runtime_error(std::move(tmp));
+			}
 		++currentPos;
 	}
 
@@ -207,41 +208,64 @@ namespace serenity::arg_formatter {
 
 	static bool IsValidAltTypeSpec(experimental::msg_details::SpecType type, const char& spec) {
 		using SpecType = experimental::msg_details::SpecType;
-		if( type == SpecType::IntType || type == SpecType::U_IntType ) {
-				switch( spec ) {
-						case 'b': [[fallthrough]];
-						case 'B': [[fallthrough]];
-						case 'o': [[fallthrough]];
-						case 'x': [[fallthrough]];
-						case 'X': return true; break;
-						default: return false; break;
-					}
-		} else {
-				switch( spec ) {
-						case 'a': [[fallthrough]];
-						case 'A': return true; break;
-						default: return false; break;
-					}
+
+		switch( type ) {
+				case SpecType::IntType: [[fallthrough]];
+				case SpecType::U_IntType: [[fallthrough]];
+				case SpecType::LongLongType: [[fallthrough]];
+				case SpecType::U_LongLongType:
+					switch( spec ) {
+							case 'b': [[fallthrough]];
+							case 'B': [[fallthrough]];
+							case 'o': [[fallthrough]];
+							case 'x': [[fallthrough]];
+							case 'X': return true; break;
+							default: return false; break;
+						}
+					break;
+				case SpecType::FloatType:
+				case SpecType::DoubleType:
+				case SpecType::LongDoubleType:
+					switch( spec ) {
+							case 'a': [[fallthrough]];
+							case 'A': return true; break;
+							default: return false; break;
+						}
+					break;
+
+				default: break;
 			}
+		return false;
 	}
 
 	static const char* AlternatePreFormatChars(experimental::msg_details::SpecType type, const char& spec) {
 		using SpecType = experimental::msg_details::SpecType;
-		if( type == SpecType::IntType || type == SpecType::U_IntType ) {
-				switch( spec ) {
-						case 'b': return "0b"; break;
-						case 'B': return "0B"; break;
-						case 'o': return "0"; break;
-						case 'x': return "0x"; break;
-						case 'X': return "0X"; break;
-						default: break;
-					}
-		} else {
-				switch( spec ) {
-						case 'a': return "0x"; break;
-						case 'A': return "0X"; break;
-						default: break;
-					}
+
+		switch( type ) {
+				case SpecType::IntType: [[fallthrough]];
+				case SpecType::U_IntType: [[fallthrough]];
+				case SpecType::LongLongType: [[fallthrough]];
+				case SpecType::U_LongLongType:
+					switch( spec ) {
+							case 'b': return "0b"; break;
+							case 'B': return "0B"; break;
+							case 'o': return "0"; break;
+							case 'x': return "0x"; break;
+							case 'X': return "0X"; break;
+							default: break;
+						}
+					break;
+				case SpecType::FloatType:
+				case SpecType::DoubleType:
+				case SpecType::LongDoubleType:
+					switch( spec ) {
+							case 'a': return "0x"; break;
+							case 'A': return "0X"; break;
+							default: break;
+						}
+					break;
+
+				default: break;
 			}
 		return "\0";
 	}
@@ -251,6 +275,9 @@ namespace serenity::arg_formatter {
 		const auto& cSize { specStorage.size() };
 		using SpecType = experimental::msg_details::SpecType;
 		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
+
+		specValues.hasAlt = true;
+
 		if( !IsValidAltType(argType) ) {
 				std::string tmp { "Error In Alternate Form Field: Argument Type \"" };
 				tmp.append(experimental::msg_details::SpecTypeString(argType));
@@ -267,6 +294,7 @@ namespace serenity::arg_formatter {
 						break;
 				}
 			}
+
 		++currentPosition;
 	}
 
@@ -398,12 +426,12 @@ namespace serenity::arg_formatter {
 	}
 
 	void ArgFormatter::VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
-		++currentPosition;    // advance past the first '}'
-		if( currentPosition <= (bracketSize - 2) ) {
+		if( (currentPosition + 1) <= (bracketSize - 2) ) {
 				if( sv[ currentPosition + static_cast<size_t>(1) ] == '}' ) {
 						std::string tmp { 1, '}' };
 						tmp.append(result.remainder.data(), result.remainder.size());
 						result.remainder = std::move(tmp);
+						++currentPosition;
 				}
 		}
 	}
@@ -482,7 +510,7 @@ namespace serenity::arg_formatter {
 				++currentPosition;
 				return;
 		}
-		if( currentPosition >= bracketSize ) return;
+		if( currentPosition + 1 >= bracketSize ) return;
 		auto ch { sv[ currentPosition ] };
 		switch( sv[ currentPosition + 1 ] ) {
 				case '}': VerifyTypeSpec(sv, currentPosition, bracketSize, ch); break;
@@ -572,7 +600,6 @@ namespace serenity::arg_formatter {
 		switch( spec ) {
 				case 'b': break;
 				case 'B': break;
-				case 'c': break;
 				case 'd': break;
 				case 'o': break;
 				case 'x': break;
