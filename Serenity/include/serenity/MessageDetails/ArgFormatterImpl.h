@@ -65,14 +65,12 @@ inline bool serenity::arg_formatter::ArgFormatter::HandleIfEndOrWhiteSpace(std::
 }
 
 template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
-	result.remainder = sv;
-	specValues.ResetSpecs();
-	if( sv.size() < 2 ) return;
-
 	argCounter = 0;
 	for( ;; ) {
+			if( sv.size() < 2 ) return;
 			size_t pos { 0 };
-
+			result.remainder = sv;
+			specValues.ResetSpecs();
 			FindBrackets(result.remainder);
 			if( !bracketResults.isValid ) {
 					for( auto& ch: result.remainder ) {
@@ -80,15 +78,16 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 						}
 					break;
 			}
-
 			auto preToken { sv.substr(0, bracketResults.beginPos) };
-			std::move(preToken.begin(), preToken.end(), Iter);
+			for( auto& ch: preToken ) {
+					Iter = ch;
+				}
 			auto argBracket { sv.substr(bracketResults.beginPos + 1, (bracketResults.endPos - bracketResults.beginPos)) };
 			const size_t& bracketSize { argBracket.size() };
-
 			/* Handle If Bracket Contained No Specs */
 			if( HandleIfEndOrWhiteSpace(std::forward<std::back_insert_iterator<T>>(Iter), argBracket, pos, bracketSize) ) {
-					break;
+					sv.remove_prefix(argBracket.size() + preToken.size() + 1);
+					continue;
 			}
 			/*Handle Escaped Bracket*/
 			if( argBracket[ pos ] == '{' ) {
@@ -96,7 +95,6 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 					tmp.append(1, '{');
 					result.preTokenStr = std::move(tmp);
 			}
-
 			/*Handle Positional Args*/
 			if( !ParsePositionalField(argBracket, argCounter, pos) ) {
 					// Nothing to Parse - just a simple substitution
@@ -104,14 +102,10 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 					++argCounter;
 					break;
 			}
-
 			/* Handle What's Left Of The Bracket */
 			VerifyArgumentBracket(argBracket, pos, bracketSize);
-
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
-
-			if( bracketResults.endPos + 1 >= sv.size() ) return;
-			result.remainder = sv.substr(bracketResults.endPos + 1, sv.size());
+			sv.remove_prefix(argBracket.size() + preToken.size() + 1);
 		}
 }
 
@@ -267,6 +261,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeArg(T&& value) {
 	int base { 10 };
 	auto data { buffer.data() };
+	std::fill(data, data + buffer.size(), 0);
 	int pos { 0 };
 
 	if( specValues.signType == Sign::Space ) {
