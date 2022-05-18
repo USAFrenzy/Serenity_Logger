@@ -16,10 +16,14 @@ if (CMAKE_CXX_COMPILER_ID
     STREQUAL
     "MSVC"
 )
-    set(STANDARD 23)
-else ()
-    set(STANDARD 20)
-endif ()
+if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 192930145)
+set(STANDARD 20)
+else()
+set(STANDARD 23)
+endif()
+else()
+set(STANDARD 20)
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD ${STANDARD})
 

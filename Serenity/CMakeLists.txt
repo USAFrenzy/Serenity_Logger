@@ -87,9 +87,25 @@ add_library(${PROJECT_NAME} ${SERENITY_ALL_FILES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+if (CMAKE_CXX_COMPILER_ID
+    STREQUAL
+    "MSVC"
+)
+    if (CMAKE_CXX_COMPILER_VERSION
+        VERSION_GREATER_EQUAL
+        192930145
+    )
+        set(STANDARD 20)
+    else ()
+        set(STANDARD 23)
+    endif ()
+else ()
+    set(STANDARD 20)
+endif ()
+
 set_target_properties(
     ${PROJECT_NAME}
-    PROPERTIES CXX_STANDARD 20
+    PROPERTIES CXX_STANDARD ${STANDARD}
                CMAKE_ARCHIVE_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/lib
                CMAKE_LIBRARY_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/lib
                CMAKE_RUNTIME_OUTPUT_DIRECTORY_<CONFIG> ${CMAKE_SOURCE_DIR}/bin
