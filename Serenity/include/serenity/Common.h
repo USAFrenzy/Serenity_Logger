@@ -33,10 +33,16 @@
 			std::vformat_to<CONTEXT>(std::back_inserter(container), locale, message, std::make_format_args(__VA_ARGS__))
 		#define VFORMAT_TO(container, message, ...) std::vformat_to<CONTEXT>(std::back_inserter(container), message, std::make_format_args(__VA_ARGS__))
 	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
-		#define CONTEXT std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
-		#define L_VFORMAT_TO(container, locale, message, ...)                                                                                                  \
-			std::vformat_to(std::back_inserter(container), locale, message, std::make_format_args<CONTEXT>(__VA_ARGS__))
-		#define VFORMAT_TO(container, message, ...) std::vformat_to(std::back_inserter(container), message, std::make_format_args<CONTEXT>(__VA_ARGS__))
+		#if _MSC_FULL_VER >= 192930145    // MSVC backported fixes
+			#define L_VFORMAT_TO(container, locale, message, ...)                                                                                              \
+				std::vformat_to(std::back_inserter(container), locale, message, std::make_format_args(__VA_ARGS__))
+			#define VFORMAT_TO(container, message, ...) std::vformat_to(std::back_inserter(container), message, std::make_format_args(__VA_ARGS__))
+		#else
+			#define CONTEXT std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
+			#define L_VFORMAT_TO(container, locale, message, ...)                                                                                              \
+				std::vformat_to(std::back_inserter(container), locale, message, std::make_format_args<CONTEXT>(__VA_ARGS__))
+			#define VFORMAT_TO(container, message, ...) std::vformat_to(std::back_inserter(container), message, std::make_format_args<CONTEXT>(__VA_ARGS__))
+		#endif
 	#else
 		#if( _MSC_VER < 1929 )
 			#error "MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"

@@ -22,18 +22,16 @@ namespace serenity::arg_formatter {
 						} else {
 								return true;
 							}
-				} else if( ch == ':' ) {
-						++start;
-						specValues.argPosition = argIndex;
-						++argIndex;
-						return true;
 				} else {
 						if( IsDigit(ch) ) {
 								m_indexMode = IndexMode::manual;
 								return ParsePositionalField(sv, argIndex, start);
 						}
-						specValues.argPosition = ++argIndex;
-						return sv[ ++start ] == ':';
+						if( ch == ':' ) {
+								specValues.argPosition = argIndex++;
+								++start;
+								return true;
+						}
 					}
 		}
 		// we're in manual mode
@@ -210,6 +208,18 @@ namespace serenity::arg_formatter {
 		using SpecType = experimental::msg_details::SpecType;
 
 		switch( type ) {
+				case SpecType::CharType:
+					switch( spec ) {
+							case 'b': [[fallthrough]];
+							case 'B': [[fallthrough]];
+							case 'c': [[fallthrough]];
+							case 'o': [[fallthrough]];
+							case 'x': [[fallthrough]];
+							case 'X': return true; break;
+							default: return false; break;
+						}
+					break;
+
 				case SpecType::IntType: [[fallthrough]];
 				case SpecType::U_IntType: [[fallthrough]];
 				case SpecType::LongLongType: [[fallthrough]];
@@ -242,6 +252,8 @@ namespace serenity::arg_formatter {
 		using SpecType = experimental::msg_details::SpecType;
 
 		switch( type ) {
+				case SpecType::CharType: [[fallthrough]];
+				case SpecType::BoolType: [[fallthrough]];
 				case SpecType::IntType: [[fallthrough]];
 				case SpecType::U_IntType: [[fallthrough]];
 				case SpecType::LongLongType: [[fallthrough]];
@@ -264,7 +276,6 @@ namespace serenity::arg_formatter {
 							default: break;
 						}
 					break;
-
 				default: break;
 			}
 		return "\0";
@@ -567,14 +578,33 @@ namespace serenity::arg_formatter {
 				case SpecType::U_IntType: FormatIntTypeArg(argStorage.uint_state(specValues.argPosition)); break;
 				case SpecType::LongLongType: FormatIntTypeArg(argStorage.long_long_state(specValues.argPosition)); break;
 				case SpecType::U_LongLongType: FormatIntTypeArg(argStorage.u_long_long_state(specValues.argPosition)); break;
-				case SpecType::BoolType: rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false"); break;
-				case SpecType::CharType: rawValueTemp += argStorage.char_state(specValues.argPosition); break;
+				case SpecType::BoolType:
+					if( specValues.typeSpec != '\0' && specValues.typeSpec != 's' ) {
+							FormatIntTypeArg(static_cast<unsigned char>(argStorage.bool_state(specValues.argPosition)));
+					} else {
+							rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
+						}
+					break;
+				case SpecType::CharType:
+					if( specValues.typeSpec != '\0' && specValues.typeSpec != 'c' ) {
+							FormatIntTypeArg(static_cast<int>(argStorage.char_state(specValues.argPosition)));
+					} else {
+							rawValueTemp += argStorage.char_state(specValues.argPosition);
+						}
+					break;
 				case SpecType::FloatType: FormatFloatTypeArg(argStorage.float_state(specValues.argPosition), precision); break;
 				case SpecType::DoubleType: FormatFloatTypeArg(argStorage.double_state(specValues.argPosition), precision); break;
 				case SpecType::LongDoubleType: FormatFloatTypeArg(argStorage.long_double_state(specValues.argPosition), precision); break;
-
-				case SpecType::ConstVoidPtrType: break;
-				case SpecType::VoidPtrType: break;
+				case SpecType::ConstVoidPtrType:
+					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					                            reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16);
+					rawValueTemp.append(buffer.data(), charsResult.ptr);
+					break;
+				case SpecType::VoidPtrType:
+					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+					                            reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16);
+					rawValueTemp.append(buffer.data(), charsResult.ptr);
+					break;
 				default: break;
 			}
 	}

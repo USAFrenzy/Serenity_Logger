@@ -213,11 +213,6 @@ int main() {
 
 #ifdef ENABLE_PARSE_SECTION
 	using namespace serenity::arg_formatter;
-	// Because I iterate over each char, I'm able to pick up the '+' after width in "{0:#^{5}+}" and parse it
-	// correctly as a sign spec, but the standard doesn't and throws a "wrong integral type" error, presumbably
-	// because it asssumes that this should be a type spec instead. I'm not sure whether to keep this behavior
-	// or not as it's a bit more forgiving on the spec fields' placement (given that ':' is present) and
-	// performance on my end doesn't suffer from where the spec placement is
 	std::string parseString { "{3:*^#{5}LA}" };
 	int a { 424242442 };
 	int b { 5 };

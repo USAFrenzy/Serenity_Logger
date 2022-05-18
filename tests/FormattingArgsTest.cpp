@@ -26,7 +26,6 @@ static char l = 'm';
 TEST_CASE("Base Auto Index Formatting") {
 	ArgFormatter formatter;
 	static constexpr std::string_view formatString { "{}" };
-
 	REQUIRE(std::format(formatString, a) == formatter.se_format(formatString, a));
 	REQUIRE(std::format(formatString, b) == formatter.se_format(formatString, b));
 	REQUIRE(std::format(formatString, c) == formatter.se_format(formatString, c));
@@ -46,7 +45,6 @@ TEST_CASE("Base Auto Index Formatting") {
 
 TEST_CASE("Base Manual Index Formatting") {
 	ArgFormatter formatter;
-
 	REQUIRE(std::format("{0}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{0}", a, b, c, d, e, f, g, h, i, j, k, l));
 	REQUIRE(std::format("{1}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{1}", a, b, c, d, e, f, g, h, i, j, k, l));
 	REQUIRE(std::format("{2}", a, b, c, d, e, f, g, h, i, j, k, l) == formatter.se_format("{2}", a, b, c, d, e, f, g, h, i, j, k, l));
@@ -69,7 +67,6 @@ TEST_CASE("Base Manual Index Formatting") {
 
 TEST_CASE("Alternate Int Formatting") {
 	ArgFormatter formatter;
-
 	REQUIRE(std::format("{:#}", a) == formatter.se_format("{:#}", a));
 	REQUIRE(std::format("{:#b}", a) == formatter.se_format("{:#b}", a));
 	REQUIRE(std::format("{:#B}", a) == formatter.se_format("{:#B}", a));
@@ -81,7 +78,6 @@ TEST_CASE("Alternate Int Formatting") {
 
 TEST_CASE("Alternate U_Int Formatting") {
 	ArgFormatter formatter;
-
 	REQUIRE(std::format("{:#}", b) == formatter.se_format("{:#}", b));
 	REQUIRE(std::format("{:#b}", b) == formatter.se_format("{:#b}", b));
 	REQUIRE(std::format("{:#B}", b) == formatter.se_format("{:#B}", b));
@@ -93,7 +89,6 @@ TEST_CASE("Alternate U_Int Formatting") {
 
 TEST_CASE("Alternate Long Long Formatting") {
 	ArgFormatter formatter;
-
 	REQUIRE(std::format("{:#}", c) == formatter.se_format("{:#}", c));
 	REQUIRE(std::format("{:#b}", c) == formatter.se_format("{:#b}", c));
 	REQUIRE(std::format("{:#B}", c) == formatter.se_format("{:#B}", c));
@@ -105,7 +100,6 @@ TEST_CASE("Alternate Long Long Formatting") {
 
 TEST_CASE("Alternate Unsigned Long Long Formatting") {
 	ArgFormatter formatter;
-
 	REQUIRE(std::format("{:#}", d) == formatter.se_format("{:#}", d));
 	REQUIRE(std::format("{:#b}", d) == formatter.se_format("{:#b}", d));
 	REQUIRE(std::format("{:#B}", d) == formatter.se_format("{:#B}", d));
@@ -117,8 +111,48 @@ TEST_CASE("Alternate Unsigned Long Long Formatting") {
 
 TEST_CASE("Alternate Float Formatting") {
 	ArgFormatter formatter;
-
 	REQUIRE(std::format("{:#}", e) == formatter.se_format("{:#}", e));
 	REQUIRE(std::format("{:#a}", e) == formatter.se_format("{:#a}", e));
 	REQUIRE(std::format("{:#A}", e) == formatter.se_format("{:#A}", e));
+}
+
+TEST_CASE("Alternate Double Formatting") {
+	ArgFormatter formatter;
+	REQUIRE(std::format("{:#}", f) == formatter.se_format("{:#}", f));
+	REQUIRE(std::format("{:#a}", f) == formatter.se_format("{:#a}", f));
+	REQUIRE(std::format("{:#A}", f) == formatter.se_format("{:#A}", f));
+}
+
+TEST_CASE("Alternate Long Double Formatting") {
+	ArgFormatter formatter;
+	REQUIRE(std::format("{:#}", g) == formatter.se_format("{:#}", g));
+	REQUIRE(std::format("{:#a}", g) == formatter.se_format("{:#a}", g));
+	REQUIRE(std::format("{:#A}", g) == formatter.se_format("{:#A}", g));
+}
+
+TEST_CASE("String Type Formatting") {
+	ArgFormatter formatter;
+	REQUIRE(std::format("{:s}", h) == formatter.se_format("{:s}", h));
+	REQUIRE(std::format("{:s}", i) == formatter.se_format("{:s}", i));
+	REQUIRE(std::format("{:s}", j) == formatter.se_format("{:s}", j));
+}
+
+TEST_CASE("Bool Formatting") {
+	ArgFormatter formatter;
+	REQUIRE(std::format("{:b}", k) == formatter.se_format("{:b}", k));
+	REQUIRE(std::format("{:B}", k) == formatter.se_format("{:B}", k));
+	REQUIRE(std::format("{:o}", k) == formatter.se_format("{:o}", k));
+	REQUIRE(std::format("{:x}", k) == formatter.se_format("{:x}", k));
+	REQUIRE(std::format("{:X}", k) == formatter.se_format("{:X}", k));
+}
+
+TEST_CASE("Char Formatting") {
+	ArgFormatter formatter;
+	REQUIRE(std::format("{:b}", l) == formatter.se_format("{:b}", l));
+	REQUIRE(std::format("{:B}", l) == formatter.se_format("{:B}", l));
+	REQUIRE(std::format("{:c}", l) == formatter.se_format("{:c}", l));
+	REQUIRE(std::format("{:d}", l) == formatter.se_format("{:d}", l));
+	REQUIRE(std::format("{:o}", l) == formatter.se_format("{:o}", l));
+	REQUIRE(std::format("{:x}", l) == formatter.se_format("{:x}", l));
+	REQUIRE(std::format("{:X}", l) == formatter.se_format("{:X}", l));
 }

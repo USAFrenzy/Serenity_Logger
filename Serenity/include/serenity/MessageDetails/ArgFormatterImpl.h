@@ -18,6 +18,11 @@
 // format, as well as the ability to change the locale with "SetLocale(const std::locale &)" function without affecting
 // the locale of the rest of the program. All formatting specifiers and manual/automatic indexing from the fmt library
 // are available and supported.
+//
+// EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib;
+// kinda sad that the update came out JUST as I was almost done with the formatting section, however, the performance
+// times of serenity is STILL faster than the MSVC's implementation - the consistency of their performance is now a
+// non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
 #include "ArgFormatter.h"
@@ -193,7 +198,7 @@ template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter:
 }
 
 template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatTypeArg(T&& value, int precision) {
-	std::chars_format format;
+	std::chars_format format {};
 	auto data { buffer.data() };
 	int pos { 0 };
 
@@ -304,6 +309,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeAr
 	switch( specValues.typeSpec ) {
 			case 'b': [[fallthrough]];
 			case 'B': base = 2; break;
+			case 'c': rawValueTemp += static_cast<char>(value); return;
 			case 'o': base = 8; break;
 			case 'x': [[fallthrough]];
 			case 'X': base = 16; break;

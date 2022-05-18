@@ -18,6 +18,11 @@
 // format, as well as the ability to change the locale with "SetLocale(const std::locale &)" function without affecting
 // the locale of the rest of the program. All formatting specifiers and manual/automatic indexing from the fmt library
 // are available and supported.
+//
+// EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib;
+// kinda sad that the update came out JUST as I was almost done with the formatting section, however, the performance
+// times of serenity is STILL faster than the MSVC's implementation - the consistency of their performance is now a
+// non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
 /********************************************************* Current State **********************************************************/
