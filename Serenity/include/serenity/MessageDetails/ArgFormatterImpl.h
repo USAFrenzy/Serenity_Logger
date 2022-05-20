@@ -20,9 +20,8 @@
 // are available and supported.
 //
 // EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib;
-// kinda sad that the update came out JUST as I was almost done with the formatting section, however, the performance
-// times of serenity is STILL faster than the MSVC's implementation - the consistency of their performance is now a
-// non-issue though (same performance with or without the UTF-8 flag)
+// however, the performance times of serenity is STILL faster than the MSVC's implementation - the consistency of their
+// performance is now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
 #include "ArgFormatter.h"
@@ -54,6 +53,15 @@ inline bool serenity::arg_formatter::ArgFormatter::HandleIfEndOrWhiteSpace(std::
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
 			return true;
 	} else if( ch == ' ' ) {
+			// handle appropriately if it's only one space as a Sign spec,
+			// otherwise, remove any extra spaces past the first one
+			if( currentPosition >= 0 ) {
+					if( sv[ currentPosition ] == ':' ) {
+							specValues.signType = Sign::Space;
+							currentPosition += 2;    // move past ':' & ' '
+							return false;
+					}
+			}
 			for( ;; ) {
 					if( currentPosition > bracketSize ) break;
 					if( ch = sv[ ++currentPosition ] != ' ' ) break;
@@ -114,26 +122,54 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 		}
 }
 
+template<typename T> void serenity::arg_formatter::ArgFormatter::AppendDirectly(std::back_insert_iterator<T>&& Iter, experimental::msg_details::SpecType type) {
+	using SpecType = experimental::msg_details::SpecType;
+	std::string_view sv;
+	switch( type ) {
+			case SpecType::StringType: sv = std::move(argStorage.string_state(specValues.argPosition)); break;
+			case SpecType::CharPointerType: sv = std::move(argStorage.c_string_state(specValues.argPosition)); break;
+			case SpecType::StringViewType: sv = std::move(argStorage.string_view_state(specValues.argPosition)); break;
+			default: break;
+		}
+	for( auto& ch: sv ) {
+			Iter = ch;
+		}
+}
+
 template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(std::back_insert_iterator<T>&& Iter) {
 	size_t fillAmount {}, totalWidth {}, i { 0 };
-	rawValueTemp.clear();
-
 	// clang-format off
 	auto precision{ specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
 																									: specValues.precision != 0 ? specValues.precision : 0
 	};
 	// clang-format on
-
-	if( specValues.localize ) {
-			LocalizeArgument(precision);
-	} else {
-			FormatRawValueToStr(precision);
-		}
-
 	if( specValues.nestedWidthArgPos != 0 ) {
 			totalWidth = argStorage.int_state(specValues.nestedWidthArgPos);
 	} else {
 			totalWidth = specValues.alignmentPadding != 0 ? specValues.alignmentPadding : 0;
+		}
+
+	using SpecType = experimental::msg_details::SpecType;
+	auto argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+
+	if( totalWidth == 0 && precision == 0 ) {
+			switch( argType ) {
+					case SpecType::StringType: [[fallthrough]];
+					case SpecType::CharPointerType: [[fallthrough]];
+					case SpecType::StringViewType:
+						AppendDirectly(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+						return;
+						break;
+					default: break;
+				}
+	}
+
+	rawValueTemp.clear();
+
+	if( specValues.localize ) {
+			LocalizeArgument(precision, argType);
+	} else {
+			FormatRawValueToStr(precision, argType);
 		}
 
 	auto size(rawValueTemp.size());
@@ -200,10 +236,11 @@ template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter:
 template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatTypeArg(T&& value, int precision) {
 	std::chars_format format {};
 	auto data { buffer.data() };
+	std::fill(data, data + buffer.size(), 0);
 	int pos { 0 };
 
 	if( specValues.signType == Sign::Space ) {
-			specValues.signType = value < 0 ? Sign::Minus : Sign::Plus;
+			specValues.signType = value < 0 ? Sign::Minus : Sign::Space;
 	}
 	switch( specValues.signType ) {
 			case Sign::Space:
@@ -219,39 +256,37 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 		}
 
 	// default behaviors
-	if( specValues.typeSpec == '\0' ) {
-			if( specValues.hasAlt && precision == 0 ) {
-					format = std::chars_format::scientific;
-			} else if( precision == 0 ) {
-					format = std::chars_format::fixed;
-			} else {
-					format = std::chars_format::general;
-				}
+	if( specValues.hasAlt && precision == 0 ) {
+			format = std::chars_format::scientific;
+	} else if( !specValues.localize && specValues.alignmentPadding == 0 && precision == 0 && specValues.signType == Sign::Empty ) {
+			format = std::chars_format::fixed;
 	} else {
-			// default behavior skipped, so process the type spec that was found
-			switch( specValues.typeSpec ) {
-					case 'a': [[fallthrough]];
-					case 'A':
-						precision = precision > 0 ? precision : 0;
-						format    = std::chars_format::hex;
-						break;
-					case 'e': [[fallthrough]];
-					case 'E':
-						format    = std::chars_format::scientific;
-						precision = precision > 0 ? precision : 6;
-						break;
-					case 'f': [[fallthrough]];
-					case 'F':
-						format    = std::chars_format::fixed;
-						precision = precision > 0 ? precision : 6;
-						break;
-					case 'g': [[fallthrough]];
-					case 'G':
-						format    = std::chars_format::general;
-						precision = precision > 0 ? precision : 6;
-						break;
-					default: break;
-				}
+			format = std::chars_format::general;
+		}
+	// default behavior skipped, so process the type spec that was found
+	switch( specValues.typeSpec ) {
+			case '\0': break;
+			case 'a': [[fallthrough]];
+			case 'A':
+				precision = precision > 0 ? precision : 0;
+				format    = std::chars_format::hex;
+				break;
+			case 'e': [[fallthrough]];
+			case 'E':
+				format    = std::chars_format::scientific;
+				precision = precision > 0 ? precision : 6;
+				break;
+			case 'f': [[fallthrough]];
+			case 'F':
+				format    = std::chars_format::fixed;
+				precision = precision > 0 ? precision : 6;
+				break;
+			case 'g': [[fallthrough]];
+			case 'G':
+				format    = std::chars_format::general;
+				precision = precision > 0 ? precision : 6;
+				break;
+			default: break;
 		}
 
 	if( precision != 0 ) {
@@ -260,6 +295,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 			charsResult = std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format);
 		}
 	switch( specValues.typeSpec ) {
+			case '\0': break;
 			case 'A': [[fallthrough]];
 			case 'E': [[fallthrough]];
 			case 'G':
@@ -282,7 +318,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeAr
 	int pos { 0 };
 
 	if( specValues.signType == Sign::Space ) {
-			specValues.signType = value < 0 ? Sign::Minus : Sign::Plus;
+			specValues.signType = value < 0 ? Sign::Minus : Sign::Space;
 	}
 	switch( specValues.signType ) {
 			case Sign::Space:
@@ -307,6 +343,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeAr
 	}
 
 	switch( specValues.typeSpec ) {
+			case '\0': break;
 			case 'b': [[fallthrough]];
 			case 'B': base = 2; break;
 			case 'c': rawValueTemp += static_cast<char>(value); return;
@@ -319,6 +356,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeAr
 	charsResult = std::to_chars(data + pos, data + buffer.size(), value, base);
 
 	switch( specValues.typeSpec ) {
+			case '\0': break;
 			case 'B': [[fallthrough]];
 			case 'X':
 				for( auto& ch: buffer ) {

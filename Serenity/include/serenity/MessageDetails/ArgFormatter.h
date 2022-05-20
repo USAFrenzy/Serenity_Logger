@@ -20,24 +20,8 @@
 // are available and supported.
 //
 // EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib;
-// kinda sad that the update came out JUST as I was almost done with the formatting section, however, the performance
-// times of serenity is STILL faster than the MSVC's implementation - the consistency of their performance is now a
-// non-issue though (same performance with or without the UTF-8 flag)
-/**********************************************************************************************************************************/
-
-/********************************************************* Current State **********************************************************/
-// Currently, all specifiers are accounted for when formatting the input string and a brief test period shows that most
-// results occur accurately compared to MSVC's results as well. This is still very much a work in progress class and
-// should be treated as such - there has yet to be extensive testing to ensure that this class will handle all permutations
-// correctly and issue a warning/throw for any incorrect variations. Other than the case of manual indexed substitution of
-// strings, ints, and const char*, this class handles the parsing/formatting at a level that matches MSVC's speed and accuracy
-// (and in some cases, such as doubles, alternate formats, and some padding options, manages to actually far exceed speed) of
-// formatting when their implementation is compiled under the /utf-8 flag. When compiled with /O2 and without the /utf-8
-// compiler flag, these classes manage to outperform MSVC's implementation by over a staggering ~1100%. To put that in reference,
-// this also means that compiling MSVS's implementation with the /utf-8 flag also nets ~1100% over the case when it's NOT compiled
-// with this flag. In the case of the first three mentioned - the performance is within 10-15% of MSVC's if no additional formatting
-// specifiers are supplied; when additional formatting specifiers are supplied with these three though, timings are almost identical
-// between the two implementations.
+// however, the performance times of serenity is STILL faster than the MSVC's implementation - the consistency of their
+// performance is now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
 #include <serenity/MessageDetails/ArgContainer.h>
@@ -84,9 +68,9 @@ namespace serenity::arg_formatter {
 			argPosition = alignmentPadding = precision = 0;
 			nestedPrecArgPos = nestedWidthArgPos = static_cast<size_t>(0);
 			align                                = Alignment::Empty;
-			typeSpec                             = '\0';
-			preAltForm                           = "\0";
-			signType                             = Sign::Empty;
+			typeSpec = fillCharacter = '\0';
+			preAltForm               = "\0";
+			signType                 = Sign::Empty;
 			localize = hasAlt = false;
 		}
 
@@ -143,13 +127,13 @@ namespace serenity::arg_formatter {
 
 		template<typename... Args> std::string se_format(std::string_view sv, Args&&... args);
 		template<typename T, typename... Args> void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
+		void SetLocaleForUse(const std::locale& locale);
 
 	  private:
 		template<typename T> void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
 
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
-		void SetLocaleForUse(const std::locale& locale);
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
 
@@ -178,15 +162,15 @@ namespace serenity::arg_formatter {
 		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 
-		void FormatRawValueToStr(int& precision);
+		void FormatRawValueToStr(int& precision, experimental::msg_details::SpecType type);
 		void AppendByPrecision(std::string_view val, int precision);
+		template<typename T> void AppendDirectly(std::back_insert_iterator<T>&& Iter, experimental::msg_details::SpecType type);
 		template<typename T> void FormatFloatTypeArg(T&& value, int precision);
 		template<typename T> void FormatIntTypeArg(T&& value);
-		void LocalizeArgument(int precision);
-		void LocalizeIntegral(int precision);
-		void LocalizeFloatingPoint(int precision);
+		void LocalizeArgument(int precision, experimental::msg_details::SpecType type);
+		void LocalizeIntegral(int precision, experimental::msg_details::SpecType type);
+		void LocalizeFloatingPoint(int precision, experimental::msg_details::SpecType type);
 		void LocalizeBool();
-
 		void FormatIntegralGrouping(std::string& section, char separator);
 
 	  private:

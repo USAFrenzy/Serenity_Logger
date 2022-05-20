@@ -11,11 +11,11 @@ namespace serenity::experimental::msg_details {
 		isStdFallbackEnabled = enable;
 	}
 
-	std::string ArgContainer::string_state(size_t index) {
+	std::string_view ArgContainer::string_state(size_t index) {
 		return *std::get_if<1>(&testContainer[ index ]);
 	}
 
-	const char* ArgContainer::c_string_state(size_t index) {
+	std::string_view ArgContainer::c_string_state(size_t index) {
 		return *std::get_if<2>(&testContainer[ index ]);
 	}
 

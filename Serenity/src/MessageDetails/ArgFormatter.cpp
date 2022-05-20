@@ -158,9 +158,22 @@ namespace serenity::arg_formatter {
 				case '>': specValues.align = Alignment::AlignRight; break;
 				case '^': specValues.align = Alignment::AlignCenter; break;
 				default:
-					specValues.align = Alignment::Empty;
+					auto& specStorage { argStorage.SpecTypesCaptured() };
+					const auto& cSize { specStorage.size() };
+					using SpecType = experimental::msg_details::SpecType;
+					SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
+					switch( argType ) {
+							case SpecType::IntType: [[fallthrough]];
+							case SpecType::U_IntType: [[fallthrough]];
+							case SpecType::DoubleType: [[fallthrough]];
+							case SpecType::FloatType: [[fallthrough]];
+							case SpecType::LongDoubleType: [[fallthrough]];
+							case SpecType::LongLongType: [[fallthrough]];
+							case SpecType::U_LongLongType: specValues.align = Alignment::AlignRight; break;
+							default: specValues.align = Alignment::AlignLeft; break;
+						}
+					specValues.fillCharacter = ' ';
 					return;
-					break;
 			}
 		if( ch != '{' && ch != '}' ) {
 				if( ch == ':' ) {
@@ -390,7 +403,6 @@ namespace serenity::arg_formatter {
 				auto& padding { specValues.alignmentPadding };
 				std::from_chars(sv.data() + currentPosition, sv.data() + sv.size(), padding);
 				currentPosition += padding > 9 ? padding >= 100 ? 3 : 2 : 1;
-				++argCounter;
 		} else if( ch != '}' ) {
 				throw std::runtime_error("Error In Width Field: Invalid Format Detected.\n");
 		}
@@ -422,13 +434,22 @@ namespace serenity::arg_formatter {
 						if( ch = sv[ ++currentPosition ] != ' ' ) break;
 					}
 		}
+
 		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
-		if( argType == SpecType::IntType ) {
-				throw std::runtime_error("Error In Precision Field: An Integral Type Is Not Allowed To Have A Precsision Field\n");
-		}
+		switch( argType ) {
+				case SpecType::CharType: [[fallthrough]];
+				case SpecType::BoolType: [[fallthrough]];
+				case SpecType::IntType: [[fallthrough]];
+				case SpecType::U_IntType: [[fallthrough]];
+				case SpecType::LongLongType: [[fallthrough]];
+				case SpecType::U_LongLongType:
+					throw std::runtime_error("Error In Precision Field: An Integral Type Is Not Allowed To Have A Precsision Field\n");
+				default: break;
+			}
+
 		if( IsDigit(ch) ) {
 				auto& precision { specValues.precision };
-				std::from_chars(sv.data(), sv.data() + sv.size(), precision);
+				std::from_chars(sv.data() + currentPosition, sv.data() + sv.size(), precision);
 				currentPosition += precision > 9 ? precision >= 100 ? 3 : 2 : 1;
 				++argCounter;
 		} else if( ch != '}' ) {
@@ -568,12 +589,12 @@ namespace serenity::arg_formatter {
 		HandlePotentialTypeField(sv, start, bracketSize);
 	}
 
-	void ArgFormatter::FormatRawValueToStr(int& precision) {
+	void ArgFormatter::FormatRawValueToStr(int& precision, experimental::msg_details::SpecType type) {
 		using SpecType = experimental::msg_details::SpecType;
-		switch( argStorage.SpecTypesCaptured()[ specValues.argPosition ] ) {
-				case SpecType::StringType: AppendByPrecision(argStorage.string_state(specValues.argPosition), precision); break;
-				case SpecType::CharPointerType: AppendByPrecision(argStorage.c_string_state(specValues.argPosition), precision); break;
-				case SpecType::StringViewType: AppendByPrecision(argStorage.string_view_state(specValues.argPosition), precision); break;
+		switch( type ) {
+				case SpecType::StringType: AppendByPrecision(std::move(argStorage.string_state(specValues.argPosition)), precision); break;
+				case SpecType::CharPointerType: AppendByPrecision(std::move(argStorage.c_string_state(specValues.argPosition)), precision); break;
+				case SpecType::StringViewType: AppendByPrecision(std::move(argStorage.string_view_state(specValues.argPosition)), precision); break;
 				case SpecType::IntType: FormatIntTypeArg(argStorage.int_state(specValues.argPosition)); break;
 				case SpecType::U_IntType: FormatIntTypeArg(argStorage.uint_state(specValues.argPosition)); break;
 				case SpecType::LongLongType: FormatIntTypeArg(argStorage.long_long_state(specValues.argPosition)); break;
@@ -598,12 +619,12 @@ namespace serenity::arg_formatter {
 				case SpecType::ConstVoidPtrType:
 					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
 					                            reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16);
-					rawValueTemp.append(buffer.data(), charsResult.ptr);
+					rawValueTemp.append("0x").append(buffer.data(), charsResult.ptr);
 					break;
 				case SpecType::VoidPtrType:
 					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
 					                            reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16);
-					rawValueTemp.append(buffer.data(), charsResult.ptr);
+					rawValueTemp.append("0x").append(buffer.data(), charsResult.ptr);
 					break;
 				default: break;
 			}
@@ -759,65 +780,86 @@ namespace serenity::arg_formatter {
 		if( section.size() < groupGap ) return;
 		std::string tmp;
 		std::string_view sv { section };
-
 		if( groupings.size() > 1 ) {
 				/********************* grouping is unique *********************/
 				if( groupings.size() == 3 ) {
-						tmp.append(sv.data(), sv.data() + groupGap);
-						sv.remove_prefix(groupGap);
-						tmp += separator;
+						tmp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+						sv.remove_suffix(groupGap);
+						tmp.insert(0, 1, separator);
 
 						groupGap = *(++groupBegin);
-						tmp.append(sv.data(), sv.data() + groupGap);
-						sv.remove_prefix(groupGap);
+						tmp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+						sv.remove_suffix(groupGap);
+						tmp.insert(0, 1, separator);
 
 						groupGap = *(++groupBegin);
 						groups   = end / groupGap - end % groupGap;
 						for( ; groups; --groups ) {
-								tmp.append(sv.data(), sv.data() + groupGap);
-								if( groups > 1 ) {
-										tmp += separator;
+								if( groups > 0 ) {
+										tmp.insert(0, 1, separator);
 								}
-								sv.remove_prefix(groupGap);
+								if( sv.size() > groupGap ) {
+										tmp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+								} else {
+										tmp.insert(0, sv);
+										break;
+									}
+								if( sv.size() >= groupGap ) {
+										sv.remove_suffix(groupGap);
+								}
 							}
 				} else {
 						// grouping is one group and then uniform
-						tmp.append(sv.data(), sv.data() + groupGap);
-						sv.remove_prefix(groupGap);
-						tmp += separator;
+						tmp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+						sv.remove_suffix(groupGap);
 
 						groupGap = *(++groupBegin);
 						groups   = end / groupGap - end % groupGap;
+
 						for( ; groups; --groups ) {
-								tmp.append(sv.data(), sv.data() + groupGap);
-								if( groups > 1 ) {
-										tmp += separator;
+								if( groups > 0 ) {
+										tmp.insert(0, 1, separator);
 								}
-								sv.remove_prefix(groupGap);
+								if( sv.size() > groupGap ) {
+										tmp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+								} else {
+										tmp.insert(0, sv);
+										break;
+									}
+								if( sv.size() >= groupGap ) {
+										sv.remove_suffix(groupGap);
+								}
 							}
 					}
 		} else {
 				/********************* grouping is uniform *********************/
-				groups = end / groupGap - end % groupGap;
+				groups = end / groupGap + end % groupGap;
 				for( ; groups; --groups ) {
-						tmp.append(sv.data(), sv.data() + groupGap);
-						if( groups > 1 ) {
-								tmp += separator;
+						if( sv.size() > groupGap ) {
+								tmp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+						} else {
+								tmp.insert(0, sv);
+								break;
+							}
+						if( groups > 0 ) {
+								tmp.insert(0, 1, separator);
 						}
-						sv.remove_prefix(groupGap);
+						if( sv.size() >= groupGap ) {
+								sv.remove_suffix(groupGap);
+						}
 					}
-				section.clear();
-				section.append(std::move(tmp));
 			}
+		section.clear();
+		section.append(std::move(tmp));
 	}
 
-	void ArgFormatter::LocalizeIntegral(int precision) {
-		FormatRawValueToStr(precision);
+	void ArgFormatter::LocalizeIntegral(int precision, experimental::msg_details::SpecType type) {
+		FormatRawValueToStr(precision, type);
 		FormatIntegralGrouping(rawValueTemp, separator);
 	}
 
-	void ArgFormatter::LocalizeFloatingPoint(int precision) {
-		FormatRawValueToStr(precision);
+	void ArgFormatter::LocalizeFloatingPoint(int precision, experimental::msg_details::SpecType type) {
+		FormatRawValueToStr(precision, type);
 		size_t pos { 0 };
 		auto size { rawValueTemp.size() };
 		auto data { rawValueTemp.begin() };
@@ -834,27 +876,30 @@ namespace serenity::arg_formatter {
 				}
 				++pos;
 			}
-		rawValueTemp.clear();
-		rawValueTemp.append(std::move(tmp));
+		if( tmp.size() != 0 ) {
+				rawValueTemp.clear();
+				rawValueTemp.append(std::move(tmp));
+				return;
+		}
+		FormatIntegralGrouping(rawValueTemp, separator);
 	}
 
 	void ArgFormatter::LocalizeBool() {
 		rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? trueStr : falseStr);
 	}
 
-	void ArgFormatter::LocalizeArgument(int precision) {
+	void ArgFormatter::LocalizeArgument(int precision, experimental::msg_details::SpecType type) {
 		using enum serenity::experimental::msg_details::SpecType;
-		auto argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 		// NOTE: The following types should have been caught in the verification process:
 		//       monostate, string, c-string, string view, const void*, void *
-		switch( argType ) {
+		switch( type ) {
 				case IntType: [[fallthrough]];
 				case U_IntType: [[fallthrough]];
-				case LongLongType: LocalizeIntegral(precision); break;
+				case LongLongType: LocalizeIntegral(precision, type); break;
 				case FloatType: [[fallthrough]];
 				case DoubleType: [[fallthrough]];
 				case LongDoubleType: [[fallthrough]];
-				case U_LongLongType: LocalizeFloatingPoint(precision); break;
+				case U_LongLongType: LocalizeFloatingPoint(precision, type); break;
 				case BoolType: LocalizeBool(); break;
 				default: break;
 			}

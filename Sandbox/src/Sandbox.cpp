@@ -213,7 +213,7 @@ int main() {
 
 #ifdef ENABLE_PARSE_SECTION
 	using namespace serenity::arg_formatter;
-	std::string parseString { "{3:*^#{5}LA}" };
+	std::string parseString { "{3:*^50L}" };
 	int a { 424242442 };
 	int b { 5 };
 	float c { 32.5f };

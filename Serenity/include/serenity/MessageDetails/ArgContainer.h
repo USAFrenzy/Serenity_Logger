@@ -20,9 +20,8 @@
 // are available and supported.
 //
 // EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib;
-// kinda sad that the update came out JUST as I was almost done with the formatting section, however, the performance
-// times of serenity is STILL faster than the MSVC's implementation - the consistency of their performance is now a
-// non-issue though (same performance with or without the UTF-8 flag)
+// however, the performance times of serenity is STILL faster than the MSVC's implementation - the consistency of their
+// performance is now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
 #include <serenity/Common.h>
@@ -151,8 +150,8 @@ namespace serenity::experimental::msg_details {
 		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
 		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
 
-		std::string string_state(size_t index);
-		const char* c_string_state(size_t index);
+		std::string_view string_state(size_t index);
+		std::string_view c_string_state(size_t index);
 		std::string_view string_view_state(size_t index);
 		int int_state(size_t index);
 		unsigned int uint_state(size_t index);
