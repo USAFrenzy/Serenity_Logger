@@ -401,6 +401,8 @@ TEST_CASE("Fill-Align Formatting") {
 	REQUIRE(std::format("{:*>20}", n) == formatter.se_format("{:*>20}", n));
 }
 
+#include <serenity/Common.h>
+
 TEST_CASE("Format Function Test") {
 	ArgFormatter formatter(std::locale("en_US.UTF-8"));
 	int width { 20 };
@@ -408,7 +410,10 @@ TEST_CASE("Format Function Test") {
 	constexpr std::string_view fmt { "{0:*^#{1}x}" };
 
 	formatter.se_format_to(std::back_inserter(argFmtStr), fmt, a, width);
-	std::vformat_to(std::back_inserter(stdStr), fmt, std::make_format_args(a, width));
+	// once appveyor supports the new update in VS 16.14/16.15 then this macro can dissapear.
+	// Build is failing when using the normal std::vformat_to() due to how it used to work before 
+	// the back-ported fixes to <format>
+	VFORMAT_TO(stdStr, fmt, a, width);
 
 	REQUIRE(std::format(fmt, a, width) == formatter.se_format(fmt, a, width));
 	REQUIRE(stdStr == argFmtStr);

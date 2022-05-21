@@ -35,7 +35,6 @@ set(MESSAGE_DETAILS_HEADER_FILES
     "include/serenity//MessageDetails/ArgFormatter.h"
     "include/serenity//MessageDetails/ArgFormatterImpl.h"
     "include/serenity//MessageDetails/ArgContainer.h"
-    "include/serenity//MessageDetails/ArgContainerImpl.h"
 )
 
 set(TARGETS_HEADER_FILES
