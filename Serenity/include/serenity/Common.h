@@ -97,7 +97,7 @@
 namespace serenity {
 
 	namespace globals {
-		static const std::locale default_locale { std::locale(".UTF-8") };
+		static std::locale default_locale { std::locale("en_US.UTF-8") };
 	}
 
 	enum class LineEnd

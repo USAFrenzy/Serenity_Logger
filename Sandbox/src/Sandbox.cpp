@@ -213,18 +213,18 @@ int main() {
 
 #ifdef ENABLE_PARSE_SECTION
 	using namespace serenity::arg_formatter;
-	std::string parseString { "{3:*^50L}" };
+	std::string parseString { "{0:*^#{5}X}" };
 	int a { 424242442 };
 	int b { 5 };
 	float c { 32.5f };
 	double d { 54453765675.65675 };
 	int e { 6 };
-	int f { 30 };
+	int f { 50 };
 	std::string tmp { "Suspendisse sed porttitor orci." };
 
-	ArgFormatter parser;
+	ArgFormatter parser(std::locale(""));
 	Instrumentator timer;
-	ParseResult result {};
+	std::string result;
 	std::string finalStr;
 
 	serenity::targets::ColorConsole console("", "%+");
@@ -237,12 +237,14 @@ int main() {
 					finalStr.clear();
 				}
 			timer.StopWatch_Stop();
+			finalStr.clear();
 
 			auto serenityTime1 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-			console.Debug(Tag::Bright_Cyan("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [" +
-			                               std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
+			console.Debug("{}", Tag::Bright_Cyan("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [" +
+			                                     std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
 			parser.se_format_to(std::back_inserter(finalStr), parseString, a, b, c, d, e, f, tmp);
-			console.Debug(Tag::Green("With Result: \"" + finalStr + "\""));
+			result = Tag::Green("With Result: \"" + finalStr + "\"");
+			console.Debug("{}", result);
 			finalStr.clear();
 
 			// serenity's format loop by taking string&
@@ -251,12 +253,14 @@ int main() {
 					finalStr = parser.se_format(parseString, a, b, c, d, e, f, tmp);
 				}
 			timer.StopWatch_Stop();
+			finalStr.clear();
 
 			auto serenityTime2 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-			console.Debug(Tag::Bright_Cyan("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [" +
-			                               std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
+			console.Debug("{}", Tag::Bright_Cyan("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [" +
+			                                     std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
 			finalStr = parser.se_format(parseString, a, b, c, d, e, f, tmp);
-			console.Debug(Tag::Green("With Result: \"" + finalStr + "\""));
+			result   = Tag::Green("With Result: \"" + finalStr + "\"");
+			console.Debug("{}", result);
 			finalStr.clear();
 
 			// Standdard's std::vformat_to() loop
@@ -267,12 +271,14 @@ int main() {
 					finalStr.clear();
 				}
 			timer.StopWatch_Stop();
+			finalStr.clear();
 
 			auto standardTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			L_VFORMAT_TO(finalStr, locale, parseString, a, b, c, d, e, f, tmp);
-			console.Debug(Tag::Bright_Cyan("std::format_to() Elapsed Time Over 10,000,000 iterations: [" +
-			                               std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
-			console.Debug(Tag::Green("With Result: \"" + finalStr + "\""));
+			console.Debug("{}", Tag::Bright_Cyan("std::format_to() Elapsed Time Over 10,000,000 iterations: [" +
+			                                     std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
+			result = Tag::Green("With Result: \"" + finalStr + "\"");
+			console.Debug("{}", result);
 
 			auto percentValue { ((serenityTime1 - standardTime) / serenityTime1) * 100 };
 			auto percentValue2 { ((serenityTime2 - standardTime) / serenityTime2) * 100 };
@@ -280,38 +286,38 @@ int main() {
 
 			if( percentValue > 0 ) {
 					auto percentage { SetPrecision(percentValue, 2) };
-					console.Debug(Tag::Bright_White("Serenity's se_format_to() is ")
-					              .append(Tag::Red("[%" + percentage.append("]")))
-					              .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function std::vformat_to()")));
+					console.Debug("{}", Tag::Bright_White("Serenity's se_format_to() is ")
+					                    .append(Tag::Red("[%" + percentage.append("]")))
+					                    .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function std::vformat_to()")));
 			} else {
 					auto percentage { SetPrecision(std::abs(percentValue), 2) };
-					console.Debug(Tag::Bright_White("Serenity's se_format_to() is ")
-					              .append(Tag::Green("[%" + percentage.append("]")))
-					              .append(Tag::Bright_White(" Faster Than The Standard's Formatting Function std::vformat_to()")));
+					console.Debug("{}", Tag::Bright_White("Serenity's se_format_to() is ")
+					                    .append(Tag::Green("[%" + percentage.append("]")))
+					                    .append(Tag::Bright_White(" Faster Than The Standard's Formatting Function std::vformat_to()")));
 				}
 
 			if( percentValue2 > 0 ) {
 					auto percentage { SetPrecision(percentValue2, 2) };
-					console.Debug(Tag::Bright_White("Serenity's se_format() is ")
-					              .append(Tag::Red("[%" + percentage.append("]")))
-					              .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function std::vformat_to()")));
+					console.Debug("{}", Tag::Bright_White("Serenity's se_format() is ")
+					                    .append(Tag::Red("[%" + percentage.append("]")))
+					                    .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function std::vformat_to()")));
 			} else {
 					auto percentage { SetPrecision(std::abs(percentValue2), 2) };
-					console.Debug(Tag::Bright_White("Serenity's se_format() is ")
-					              .append(Tag::Green("[%" + percentage.append("]")))
-					              .append(Tag::Bright_White(" Faster Than The Standard's Formatting Function std::vformat_to()")));
+					console.Debug("{}", Tag::Bright_White("Serenity's se_format() is ")
+					                    .append(Tag::Green("[%" + percentage.append("]")))
+					                    .append(Tag::Bright_White(" Faster Than The Standard's Formatting Function std::vformat_to()")));
 				}
 
 			if( percentValue3 > 0 ) {
 					auto percentage { SetPrecision(percentValue3, 2) };
-					console.Debug(Tag::Bright_White("Serenity's se_format_to() Is ")
-					              .append(Tag::Red("[%" + percentage.append("]")))
-					              .append(Tag::Bright_White(" Slower Than Serenity's  se_format()\n")));
+					console.Debug("{}", Tag::Bright_White("Serenity's se_format_to() Is ")
+					                    .append(Tag::Red("[%" + percentage.append("]")))
+					                    .append(Tag::Bright_White(" Slower Than Serenity's  se_format()\n")));
 			} else {
 					auto percentage { SetPrecision(std::abs(percentValue3), 2) };
-					console.Debug(Tag::Bright_White("Serenity's se_format_to() Is ")
-					              .append(Tag::Green("[%" + percentage.append("]")))
-					              .append(Tag::Bright_White(" Faster Than Serenity's se_format()")));
+					console.Debug("{}", Tag::Bright_White("Serenity's se_format_to() Is ")
+					                    .append(Tag::Green("[%" + percentage.append("]")))
+					                    .append(Tag::Bright_White(" Faster Than Serenity's se_format()")));
 				}
 
 			printf("\n");

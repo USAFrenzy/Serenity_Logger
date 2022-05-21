@@ -1,14 +1,10 @@
 #include <serenity/MessageDetails/ArgContainer.h>
 #include <iostream>
 
-namespace serenity::experimental::msg_details {
+namespace serenity::msg_details {
 
-	const std::array<ArgContainer::LazilySupportedTypes, 24>& ArgContainer::ArgStorage() const {
+	const std::array<ArgContainer::LazilySupportedTypes, MAX_ARG_COUNT>& ArgContainer::ArgStorage() const {
 		return testContainer;
-	}
-
-	void ArgContainer::EnableFallbackToStd(bool enable) {
-		isStdFallbackEnabled = enable;
 	}
 
 	std::string_view ArgContainer::string_state(size_t index) {
@@ -66,8 +62,8 @@ namespace serenity::experimental::msg_details {
 		return *std::get_if<14>(&testContainer[ index ]);
 	}
 
-	std::array<SpecType, 24>& ArgContainer::SpecTypesCaptured() {
+	std::array<SpecType, MAX_ARG_COUNT>& ArgContainer::SpecTypesCaptured() {
 		return testSpecContainer;
 	}
 
-}    // namespace serenity::experimental::msg_details
+}    // namespace serenity::msg_details

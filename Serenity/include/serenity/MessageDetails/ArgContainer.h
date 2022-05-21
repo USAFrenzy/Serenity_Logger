@@ -27,9 +27,7 @@
 #include <serenity/Common.h>
 #include <variant>
 
-// Moving ArgContainer to it's own file as I work on integrating it with the new ArgFormatter
-
-namespace serenity::experimental::msg_details {
+namespace serenity::msg_details {
 
 	template<typename T, typename U> struct is_supported;
 	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
@@ -84,46 +82,40 @@ namespace serenity::experimental::msg_details {
 		SpecType ::FloatType, SpecType ::DoubleType,   SpecType::LongDoubleType,  SpecType ::ConstVoidPtrType, SpecType ::VoidPtrType,
 	};
 
+	constexpr size_t MAX_ARG_COUNT = 25;
 	class ArgContainer
 	{
 	  public:
 		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long, unsigned long long,
 		                                          bool, char, float, double, long double, const void*, void*>;
 
-		void EnableFallbackToStd(bool enable);
+		ArgContainer()             = default;
+		ArgContainer(const ArgContainer&)            = delete;
+		ArgContainer& operator=(const ArgContainer&) = delete;
+		~ArgContainer()                              = default;
 
-		// Moved Formatting Templates Here While I Work On Some Things
+		const std::array<LazilySupportedTypes, MAX_ARG_COUNT>& ArgStorage() const;
+		std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
 		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
 			(
 			[ = ](auto&& arg) {
 				using base_type = std::decay_t<decltype(arg)>;
-				// ran into issues with std::string type args with adding an rvalue reference
-				// (understandably), so swapped over to lvalue reference instead
 				using ref       = std::add_lvalue_reference_t<base_type>;
-				if( !std::is_constant_evaluated() ) {
-						if( counter >= testContainer.size() - 1 ) {
-								std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
-								return;
-						}
-						testContainer[ counter ] = std::forward<ref>(ref(arg));
-						++counter;
-				} else {
-						auto typeFound = is_supported<base_type, LazilySupportedTypes> {};
-						if constexpr( !typeFound.value ) {
-								// this is leftover from original impl, but leaving here
-								// for the time-being for potential compile time warning
-						} else {
-							}
-					}
+				// -1 offset accounting for indexing of 0-24
+				if( counter > MAX_ARG_COUNT - 1 ) {
+						std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
+						return;
+				}
+				testContainer[ counter ] = std::forward<ref>(ref(arg));
+				++counter;
 			}(args),
 			...);
 		}
-
-		constexpr void Reset() {
-			std::fill(testSpecContainer.data(), testSpecContainer.data() + counter, SpecType::MonoType);
-			counter = 0;
+		template<typename... Args> void CaptureArgs(Args&&... args) {
+			Reset();
+			EmplaceBackArgs(std::forward<Args>(args)...);
+			StoreArgTypes();
 		}
-
 		constexpr void StoreArgTypes() {
 			size_t pos { 0 };
 			for( ;; ) {
@@ -132,23 +124,10 @@ namespace serenity::experimental::msg_details {
 					++pos;
 				}
 		}
-
-		template<typename... Args> constexpr void CaptureArgs(Args&&... args) {
-			Reset();
-			EmplaceBackArgs(std::forward<Args>(args)...);
-			StoreArgTypes();
+		constexpr void Reset() {
+			std::fill(testSpecContainer.data(), testSpecContainer.data() + counter, SpecType::MonoType);
+			counter = 0;
 		}
-
-		ArgContainer()                               = default;
-		ArgContainer(const ArgContainer&)            = delete;
-		ArgContainer& operator=(const ArgContainer&) = delete;
-		~ArgContainer()                              = default;
-
-		const std::array<LazilySupportedTypes, 24>& ArgStorage() const;
-		std::array<SpecType, 24>& SpecTypesCaptured();
-
-		//	template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
-		// template<typename... Args> void CaptureArgs(std::string_view formatString, Args&&... args);
 
 		std::string_view string_state(size_t index);
 		std::string_view c_string_state(size_t index);
@@ -166,10 +145,8 @@ namespace serenity::experimental::msg_details {
 		void* void_ptr_state(size_t index);
 
 	  private:
-		bool endReached { false };
-		bool isStdFallbackEnabled { false };
-		std::array<LazilySupportedTypes, 24> testContainer {};
-		std::array<SpecType, 24> testSpecContainer {};
+		std::array<LazilySupportedTypes, MAX_ARG_COUNT> testContainer {};
+		std::array<SpecType, MAX_ARG_COUNT> testSpecContainer {};
 		size_t counter {};
 	};
-}    // namespace serenity::experimental::msg_details
+}    // namespace serenity::msg_details

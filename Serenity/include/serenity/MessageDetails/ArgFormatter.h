@@ -31,6 +31,10 @@
 #include <string>
 #include <vector>
 
+namespace serenity {
+	using ArgContainer = msg_details::ArgContainer;
+}
+
 namespace serenity::arg_formatter {
 
 	enum class Alignment : char
@@ -64,16 +68,7 @@ namespace serenity::arg_formatter {
 	// Will shrink the size once I have everything accounted for
 	struct SpecFormatting
 	{
-		void ResetSpecs() {
-			argPosition = alignmentPadding = precision = 0;
-			nestedPrecArgPos = nestedWidthArgPos = static_cast<size_t>(0);
-			align                                = Alignment::Empty;
-			typeSpec = fillCharacter = '\0';
-			preAltForm               = "\0";
-			signType                 = Sign::Empty;
-			localize = hasAlt = false;
-		}
-
+		void ResetSpecs();
 		size_t argPosition { 0 };
 		size_t alignmentPadding { 0 };
 		int precision { 0 };
@@ -86,24 +81,19 @@ namespace serenity::arg_formatter {
 		Sign signType { Sign::Empty };
 		bool localize { false };
 		bool hasAlt { false };
+		bool hasClosingBrace { false };
 	};
 
 	struct ParseResult
 	{
-		std::string_view preTokenStr { "" };
+		void Reset();
 		std::string_view remainder { "" };
 		std::string tokenResult;
-		void Reset() {
-			tokenResult.clear();
-		}
 	};
 
 	struct BracketSearchResults
 	{
-		void Reset() {
-			isValid  = false;
-			beginPos = endPos = 0;
-		}
+		void Reset();
 		bool isValid { false };
 		size_t beginPos { 0 };
 		size_t endPos { 0 };
@@ -117,10 +107,9 @@ namespace serenity::arg_formatter {
 	// (In the hopes of eliminating the usage of /std:latest compiler flag to use <forrmat> functionality)
 	class ArgFormatter
 	{
-		using ArgContainer = serenity::experimental::msg_details::ArgContainer;
-
 	  public:
-		ArgFormatter()                               = default;
+		ArgFormatter() = delete;
+		ArgFormatter(const std::locale& loc);
 		ArgFormatter(const ArgFormatter&)            = delete;
 		ArgFormatter& operator=(const ArgFormatter&) = delete;
 		~ArgFormatter()                              = default;
@@ -154,7 +143,7 @@ namespace serenity::arg_formatter {
 		bool IsValidBoolSpec(const char& spec);
 		bool IsValidFloatingPointSpec(const char& spec);
 		bool IsValidCharSpec(const char& spec);
-		bool VerifySpec(experimental::msg_details::SpecType type, const char& spec);
+		bool VerifySpec(msg_details::SpecType type, const char& spec);
 
 		template<typename T>
 		bool HandleIfEndOrWhiteSpace(std::back_insert_iterator<T>&& Iter, std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
@@ -162,14 +151,14 @@ namespace serenity::arg_formatter {
 		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 
-		void FormatRawValueToStr(int& precision, experimental::msg_details::SpecType type);
+		void FormatRawValueToStr(int& precision, msg_details::SpecType type);
 		void AppendByPrecision(std::string_view val, int precision);
-		template<typename T> void AppendDirectly(std::back_insert_iterator<T>&& Iter, experimental::msg_details::SpecType type);
+		template<typename T> void AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType type);
 		template<typename T> void FormatFloatTypeArg(T&& value, int precision);
 		template<typename T> void FormatIntTypeArg(T&& value);
-		void LocalizeArgument(int precision, experimental::msg_details::SpecType type);
-		void LocalizeIntegral(int precision, experimental::msg_details::SpecType type);
-		void LocalizeFloatingPoint(int precision, experimental::msg_details::SpecType type);
+		void LocalizeArgument(int precision, msg_details::SpecType type);
+		void LocalizeIntegral(int precision, msg_details::SpecType type);
+		void LocalizeFloatingPoint(int precision, msg_details::SpecType type);
 		void LocalizeBool();
 		void FormatIntegralGrouping(std::string& section, char separator);
 
@@ -180,23 +169,20 @@ namespace serenity::arg_formatter {
 		ParseResult result {};
 		BracketSearchResults bracketResults {};
 		SpecFormatting specValues {};
-		serenity::experimental::msg_details::ArgContainer argStorage {};
+		ArgContainer argStorage {};
 
 		std::string rawValueTemp;
 		std::vector<char> buff {};
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
 		std::to_chars_result charsResult;
-		// The idea here is to have a constructor that takes in a locale and sets these by default unless SetLocale() is called, in which case, these get
-		// updated.When I introduce this class into the loggers, their respective SetLocale() arguments will call this one as well. This way, any class (the
-		// logging ones are at the forefront of this thought) can instantiate an ArgFormatter class with a locale and circumvent the <format> performance hit;
-		// if none are supplied, the default constructor won't poll for a locale everytime like <format> does when no locale is supplied, it will use the
-		// default constructed locale for the system if none is provided and this default locale will be the one that is referenced when 'L' is present).
-		std::unique_ptr<std::locale> loc { std::make_unique<std::locale>(std::locale("")) };
-		char separator { std::use_facet<std::numpunct<char>>(*loc.get()).thousands_sep() };
-		char decimal { std::use_facet<std::numpunct<char>>(*loc.get()).decimal_point() };
-		std::string falseStr { std::use_facet<std::numpunct<char>>(*loc.get()).falsename() };
-		std::string trueStr { std::use_facet<std::numpunct<char>>(*loc.get()).truename() };
-		std::string groupings { std::use_facet<std::numpunct<char>>(*loc.get()).grouping() };
+
+		std::unique_ptr<std::locale> loc;
+		char separator;
+		char decimal;
+		std::string falseStr;
+		std::string trueStr;
+		std::string groupings;
+		std::string localeTemp;
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
 

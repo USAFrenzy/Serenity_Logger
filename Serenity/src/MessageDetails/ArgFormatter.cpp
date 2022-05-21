@@ -3,6 +3,37 @@
 
 namespace serenity::arg_formatter {
 
+	void SpecFormatting::ResetSpecs() {
+		argPosition = alignmentPadding = precision = 0;
+		nestedPrecArgPos = nestedWidthArgPos = static_cast<size_t>(0);
+		align                                = Alignment::Empty;
+		typeSpec = fillCharacter = '\0';
+		preAltForm               = "\0";
+		signType                 = Sign::Empty;
+		localize = hasAlt = false;
+	}
+
+	void ParseResult::Reset() {
+		tokenResult.clear();
+	}
+
+	void BracketSearchResults::Reset() {
+		isValid  = false;
+		beginPos = endPos = 0;
+	}
+
+	ArgFormatter::ArgFormatter(const std::locale& locale)
+			: argCounter(0), m_indexMode(IndexMode::automatic), result(ParseResult {}), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}),
+			  argStorage(serenity::msg_details::ArgContainer {}), rawValueTemp(), buff(std::vector<char> {}),
+			  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), charsResult(std::to_chars_result {}), loc(nullptr) {
+		loc       = std::make_unique<std::locale>(locale);
+		separator = std::use_facet<std::numpunct<char>>(*loc.get()).thousands_sep();
+		decimal   = std::use_facet<std::numpunct<char>>(*loc.get()).decimal_point();
+		falseStr  = std::use_facet<std::numpunct<char>>(*loc.get()).falsename();
+		trueStr   = std::use_facet<std::numpunct<char>>(*loc.get()).truename();
+		groupings = std::use_facet<std::numpunct<char>>(*loc.get()).grouping();
+	}
+
 	bool ArgFormatter::ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start) {
 		auto ch { sv[ start ] };
 
@@ -160,7 +191,7 @@ namespace serenity::arg_formatter {
 				default:
 					auto& specStorage { argStorage.SpecTypesCaptured() };
 					const auto& cSize { specStorage.size() };
-					using SpecType = experimental::msg_details::SpecType;
+					using SpecType = msg_details::SpecType;
 					SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 					switch( argType ) {
 							case SpecType::IntType: [[fallthrough]];
@@ -203,8 +234,8 @@ namespace serenity::arg_formatter {
 		++currentPosition;
 	}
 
-	static bool IsValidAltType(experimental::msg_details::SpecType argType) {
-		using SpecType = experimental::msg_details::SpecType;
+	static bool IsValidAltType(msg_details::SpecType argType) {
+		using SpecType = msg_details::SpecType;
 		switch( argType ) {
 				case SpecType::IntType: [[fallthrough]];
 				case SpecType::U_IntType: [[fallthrough]];
@@ -217,8 +248,8 @@ namespace serenity::arg_formatter {
 			}
 	}
 
-	static bool IsValidAltTypeSpec(experimental::msg_details::SpecType type, const char& spec) {
-		using SpecType = experimental::msg_details::SpecType;
+	static bool IsValidAltTypeSpec(msg_details::SpecType type, const char& spec) {
+		using SpecType = msg_details::SpecType;
 
 		switch( type ) {
 				case SpecType::CharType:
@@ -261,8 +292,8 @@ namespace serenity::arg_formatter {
 		return false;
 	}
 
-	static const char* AlternatePreFormatChars(experimental::msg_details::SpecType type, const char& spec) {
-		using SpecType = experimental::msg_details::SpecType;
+	static const char* AlternatePreFormatChars(msg_details::SpecType type, const char& spec) {
+		using SpecType = msg_details::SpecType;
 
 		switch( type ) {
 				case SpecType::CharType: [[fallthrough]];
@@ -297,14 +328,14 @@ namespace serenity::arg_formatter {
 	void ArgFormatter::VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
 		auto& specStorage { argStorage.SpecTypesCaptured() };
 		const auto& cSize { specStorage.size() };
-		using SpecType = experimental::msg_details::SpecType;
+		using SpecType = msg_details::SpecType;
 		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 
 		specValues.hasAlt = true;
 
 		if( !IsValidAltType(argType) ) {
 				std::string tmp { "Error In Alternate Form Field: Argument Type \"" };
-				tmp.append(experimental::msg_details::SpecTypeString(argType));
+				tmp.append(msg_details::SpecTypeString(argType));
 				tmp.append("\" Does Not Have A Supported Alternative Form\n");
 				throw std::runtime_error(std::move(tmp));
 		}
@@ -329,7 +360,7 @@ namespace serenity::arg_formatter {
 	void ArgFormatter::VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type) {
 		auto& specStorage { argStorage.SpecTypesCaptured() };
 		const auto& cSize { specStorage.size() };
-		using SpecType = experimental::msg_details::SpecType;
+		using SpecType = msg_details::SpecType;
 
 		auto ch { sv[ ++currentPosition ] };
 		if( ch == '}' ) {
@@ -411,7 +442,7 @@ namespace serenity::arg_formatter {
 	void ArgFormatter::VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
 		auto& specStorage { argStorage.SpecTypesCaptured() };
 		const auto& cSize { specStorage.size() };
-		using SpecType = experimental::msg_details::SpecType;
+		using SpecType = msg_details::SpecType;
 
 		auto ch { sv[ ++currentPosition ] };
 		if( ch == '{' ) {
@@ -460,9 +491,7 @@ namespace serenity::arg_formatter {
 	void ArgFormatter::VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
 		if( (currentPosition + 1) <= (bracketSize - 2) ) {
 				if( sv[ currentPosition + static_cast<size_t>(1) ] == '}' ) {
-						std::string tmp { 1, '}' };
-						tmp.append(result.remainder.data(), result.remainder.size());
-						result.remainder = std::move(tmp);
+						specValues.hasClosingBrace = true;
 						++currentPosition;
 				}
 		}
@@ -471,7 +500,7 @@ namespace serenity::arg_formatter {
 	void ArgFormatter::VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
 		auto& specStorage { argStorage.SpecTypesCaptured() };
 		const auto& cSize { specStorage.size() };
-		using SpecType = experimental::msg_details::SpecType;
+		using SpecType = msg_details::SpecType;
 		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 		++currentPosition;
 		switch( argType ) {
@@ -483,7 +512,7 @@ namespace serenity::arg_formatter {
 				case SpecType::VoidPtrType:
 					{
 						std::string tmp { "Error In Locale Field: Argument Of Type \"" };
-						tmp.append(experimental::msg_details::SpecTypeString(argType));
+						tmp.append(msg_details::SpecTypeString(argType));
 						tmp.append("\" Cannot Be Localized\n");
 						throw std::runtime_error(std::move(tmp));
 					}
@@ -521,7 +550,7 @@ namespace serenity::arg_formatter {
 	void ArgFormatter::VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec) {
 		const auto& specStorage { argStorage.SpecTypesCaptured() };
 		const auto& cSize { specStorage.size() };
-		using SpecType = experimental::msg_details::SpecType;
+		using SpecType = msg_details::SpecType;
 		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 		if( VerifySpec(argType, spec) ) {
 				++currentPosition;
@@ -531,7 +560,7 @@ namespace serenity::arg_formatter {
 				std::string tmp { "Error In Type Field: Type Specifier\"" };
 				tmp.append(1, spec);
 				tmp.append("\" Is Not A Valid Specifier For Argument Of Type \"");
-				tmp.append(experimental::msg_details::SpecTypeString(argType)).append("\"\n");
+				tmp.append(msg_details::SpecTypeString(argType)).append("\"\n");
 				throw std::runtime_error(std::move(tmp));
 			}
 	}
@@ -589,8 +618,8 @@ namespace serenity::arg_formatter {
 		HandlePotentialTypeField(sv, start, bracketSize);
 	}
 
-	void ArgFormatter::FormatRawValueToStr(int& precision, experimental::msg_details::SpecType type) {
-		using SpecType = experimental::msg_details::SpecType;
+	void ArgFormatter::FormatRawValueToStr(int& precision, msg_details::SpecType type) {
+		using SpecType = msg_details::SpecType;
 		switch( type ) {
 				case SpecType::StringType: AppendByPrecision(std::move(argStorage.string_state(specValues.argPosition)), precision); break;
 				case SpecType::CharPointerType: AppendByPrecision(std::move(argStorage.c_string_state(specValues.argPosition)), precision); break;
@@ -619,11 +648,13 @@ namespace serenity::arg_formatter {
 				case SpecType::ConstVoidPtrType:
 					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
 					                            reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16);
+					rawValueTemp.reserve(charsResult.ptr - buffer.data() + 2);
 					rawValueTemp.append("0x").append(buffer.data(), charsResult.ptr);
 					break;
 				case SpecType::VoidPtrType:
 					charsResult = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
 					                            reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16);
+					rawValueTemp.reserve(charsResult.ptr - buffer.data() + 2);
 					rawValueTemp.append("0x").append(buffer.data(), charsResult.ptr);
 					break;
 				default: break;
@@ -633,6 +664,7 @@ namespace serenity::arg_formatter {
 	void ArgFormatter::AppendByPrecision(std::string_view val, int precision) {
 		int size { static_cast<int>(val.size()) };
 		precision = precision > 0 ? precision > size ? size : precision : size;
+		rawValueTemp.reserve(size);
 		rawValueTemp.append(val.data(), precision);
 	}
 
@@ -723,8 +755,8 @@ namespace serenity::arg_formatter {
 		return true;
 	}
 
-	bool ArgFormatter::VerifySpec(experimental::msg_details::SpecType type, const char& spec) {
-		using enum experimental::msg_details::SpecType;
+	bool ArgFormatter::VerifySpec(msg_details::SpecType type, const char& spec) {
+		using enum msg_details::SpecType;
 		if( spec == '\0' ) return true;
 		if( !IsAlpha(spec) ) {
 				std::string throwMsg { "Error In Verifying Argument Specifier \"" };
@@ -765,11 +797,11 @@ namespace serenity::arg_formatter {
 
 	void ArgFormatter::SetLocaleForUse(const std::locale& locale) {
 		loc       = std::make_unique<std::locale>(locale);
-		groupings = std::use_facet<std::numpunct<char>>(*loc.get()).grouping();
 		separator = std::use_facet<std::numpunct<char>>(*loc.get()).thousands_sep();
 		decimal   = std::use_facet<std::numpunct<char>>(*loc.get()).decimal_point();
 		falseStr  = std::use_facet<std::numpunct<char>>(*loc.get()).falsename();
 		trueStr   = std::use_facet<std::numpunct<char>>(*loc.get()).truename();
+		groupings = std::use_facet<std::numpunct<char>>(*loc.get()).grouping();
 	}
 
 	void ArgFormatter::FormatIntegralGrouping(std::string& section, char separator) {
@@ -778,30 +810,36 @@ namespace serenity::arg_formatter {
 		int groupGap { *groupBegin };
 		auto end { section.size() };
 		if( section.size() < groupGap ) return;
-		std::string tmp;
+		localeTemp.clear();
+		localeTemp.reserve(section.size() + groupGap);
 		std::string_view sv { section };
+		if( specValues.hasAlt ) {
+				sv.remove_prefix(2);
+		}
+
+		// TODO: Rework this to avoid using insert (Used insert to just get this working, but it's very slow)
 		if( groupings.size() > 1 ) {
 				/********************* grouping is unique *********************/
 				if( groupings.size() == 3 ) {
-						tmp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+						localeTemp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
 						sv.remove_suffix(groupGap);
-						tmp.insert(0, 1, separator);
+						localeTemp.insert(0, 1, separator);
 
 						groupGap = *(++groupBegin);
-						tmp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+						localeTemp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
 						sv.remove_suffix(groupGap);
-						tmp.insert(0, 1, separator);
+						localeTemp.insert(0, 1, separator);
 
 						groupGap = *(++groupBegin);
 						groups   = end / groupGap - end % groupGap;
 						for( ; groups; --groups ) {
 								if( groups > 0 ) {
-										tmp.insert(0, 1, separator);
+										localeTemp.insert(0, 1, separator);
 								}
 								if( sv.size() > groupGap ) {
-										tmp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+										localeTemp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
 								} else {
-										tmp.insert(0, sv);
+										localeTemp.insert(0, sv);
 										break;
 									}
 								if( sv.size() >= groupGap ) {
@@ -810,7 +848,7 @@ namespace serenity::arg_formatter {
 							}
 				} else {
 						// grouping is one group and then uniform
-						tmp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+						localeTemp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
 						sv.remove_suffix(groupGap);
 
 						groupGap = *(++groupBegin);
@@ -818,12 +856,12 @@ namespace serenity::arg_formatter {
 
 						for( ; groups; --groups ) {
 								if( groups > 0 ) {
-										tmp.insert(0, 1, separator);
+										localeTemp.insert(0, 1, separator);
 								}
 								if( sv.size() > groupGap ) {
-										tmp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+										localeTemp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
 								} else {
-										tmp.insert(0, sv);
+										localeTemp.insert(0, sv);
 										break;
 									}
 								if( sv.size() >= groupGap ) {
@@ -836,49 +874,53 @@ namespace serenity::arg_formatter {
 				groups = end / groupGap + end % groupGap;
 				for( ; groups; --groups ) {
 						if( sv.size() > groupGap ) {
-								tmp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+								localeTemp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
 						} else {
-								tmp.insert(0, sv);
+								localeTemp.insert(0, sv);
 								break;
 							}
 						if( groups > 0 ) {
-								tmp.insert(0, 1, separator);
+								localeTemp.insert(0, 1, separator);
 						}
 						if( sv.size() >= groupGap ) {
 								sv.remove_suffix(groupGap);
 						}
 					}
 			}
+		if( specValues.hasAlt ) {
+				localeTemp.insert(0, section.substr(0, 2));
+		}
 		section.clear();
-		section.append(std::move(tmp));
+		section.reserve(localeTemp.size());
+		section.append(std::move(localeTemp));
 	}
 
-	void ArgFormatter::LocalizeIntegral(int precision, experimental::msg_details::SpecType type) {
+	void ArgFormatter::LocalizeIntegral(int precision, msg_details::SpecType type) {
 		FormatRawValueToStr(precision, type);
 		FormatIntegralGrouping(rawValueTemp, separator);
 	}
 
-	void ArgFormatter::LocalizeFloatingPoint(int precision, experimental::msg_details::SpecType type) {
+	void ArgFormatter::LocalizeFloatingPoint(int precision, msg_details::SpecType type) {
 		FormatRawValueToStr(precision, type);
 		size_t pos { 0 };
 		auto size { rawValueTemp.size() };
 		auto data { rawValueTemp.begin() };
 		std::string_view sv { rawValueTemp };
-		std::string tmp;
+		localeTemp.clear();
 		for( ;; ) {
 				if( pos >= size ) break;
 				if( sv[ pos ] == '.' ) {
-						tmp.append(sv.substr(0, pos));
-						FormatIntegralGrouping(tmp, separator);
-						tmp += decimal;
-						tmp.append(sv.substr(pos + 1, sv.size()));
+						localeTemp.append(sv.substr(0, pos));
+						FormatIntegralGrouping(localeTemp, separator);
+						localeTemp += decimal;
+						localeTemp.append(sv.substr(pos + 1, sv.size()));
 						break;
 				}
 				++pos;
 			}
-		if( tmp.size() != 0 ) {
+		if( localeTemp.size() != 0 ) {
 				rawValueTemp.clear();
-				rawValueTemp.append(std::move(tmp));
+				rawValueTemp.append(std::move(localeTemp));
 				return;
 		}
 		FormatIntegralGrouping(rawValueTemp, separator);
@@ -888,8 +930,8 @@ namespace serenity::arg_formatter {
 		rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? trueStr : falseStr);
 	}
 
-	void ArgFormatter::LocalizeArgument(int precision, experimental::msg_details::SpecType type) {
-		using enum serenity::experimental::msg_details::SpecType;
+	void ArgFormatter::LocalizeArgument(int precision, msg_details::SpecType type) {
+		using enum serenity::msg_details::SpecType;
 		// NOTE: The following types should have been caught in the verification process:
 		//       monostate, string, c-string, string view, const void*, void *
 		switch( type ) {

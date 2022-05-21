@@ -50,7 +50,7 @@ static constexpr std::string_view testView {
 };
 // clang-format on
 
-constexpr const char* msg { "{1}: Test with other characters present, positional arguments, and nested precision: [{0:*^20.{2}e}]" };
+constexpr const char* msg { "{}" };
 
 int main() {
 	std::vector<spdlog::sink_ptr> sinks;
@@ -92,35 +92,13 @@ int main() {
 	serenity::targets::FileTarget testFile;
 	serenity::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", (LogDirPath() /= "Rotating_Log.txt").string(), true);
 
-	// ****************************** TEMPORARY TESTING ********************************************
-	/* PeriodicSettings testFileFlushSettings = {};
-	 testFileFlushSettings.flushEvery       = std::chrono::seconds(1);
-	 Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
-	 testFile.SetFlushPolicy(testFIleFlushPolicy);
-	 rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
-	 C.SetFlushPolicy(testFIleFlushPolicy);*/
-	// testFile.EnableMultiThreadingSupport();
-	// rotatingFile.EnableMultiThreadingSupport();
-	// C.EnableMultiThreadingSupport();
-	//    *********************************************************************************************
-	/*	spdlog::flush_every(std::chrono::seconds(1));*/
-	// ****************************** TEMPORARY TESTING ********************************************
-
-	// Currently the fallback isn't implemented
-	C.EnableFallbackToStd(true);
-	testFile.EnableFallbackToStd(true);
-	rotatingFile.EnableFallbackToStd(true);
-
 	Instrumentator timer;
 
-	// const char* test = nullptr;
-	//  test string
+	 const char* test = nullptr;
+	// test string
 	static_assert(testView.size() == 400);
 	std::string temp { testView.data(), testView.size() };
-	// test = temp.c_str();
-	auto test         = 9875.76;
-	std::string test2 = "[Placement Test]";
-	auto test3        = 3;
+	test = temp.c_str();
 	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
 
 	unsigned long int i { 0 };
@@ -131,7 +109,7 @@ int main() {
 	std::cout << "Benching Color Console Target...\n";
 
 	for( i; i < iterations; i++ ) {
-			C.Info(msg, test, test2, test3);
+			C.Info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	auto consoleSeconds { timer.Elapsed_In(time_mode::sec) };
@@ -145,7 +123,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogConsoleLogger->info(msg, test, test2, test3);
+			spdlogConsoleLogger->info(msg, test);
 		}
 	timer.StopWatch_Stop();
 #endif
@@ -158,7 +136,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			testFile.Info(msg, test, test2, test3);
+			testFile.Info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	testFile.Flush();
@@ -173,7 +151,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogFileLogger->info(msg, test, test2, test3);
+			spdlogFileLogger->info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	spdlogFileLogger->flush();
@@ -187,7 +165,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			rotatingFile.Info(msg, test, test2, test3);
+			rotatingFile.Info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	rotatingFile.Flush();
@@ -201,7 +179,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogRotatingLogger->info(msg, test, test2, test3);
+			spdlogRotatingLogger->info(msg, test);
 		}
 	timer.StopWatch_Stop();
 	spdlogRotatingLogger->flush();

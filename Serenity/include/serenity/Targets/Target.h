@@ -34,7 +34,6 @@ namespace serenity::targets {
 		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 		virtual void SetLocale(const std::locale& loc);
 		std::locale GetLocale() const;
-		void EnableFallbackToStd(bool enable = true);
 
 	  protected:
 		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();

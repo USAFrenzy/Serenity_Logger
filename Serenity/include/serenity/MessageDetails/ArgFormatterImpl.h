@@ -51,6 +51,9 @@ inline bool serenity::arg_formatter::ArgFormatter::HandleIfEndOrWhiteSpace(std::
 	if( ch == '}' ) {
 			ParsePositionalField(sv, argCounter, currentPosition);
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
+			if( specValues.hasClosingBrace ) {
+					*Iter = '}';
+			}
 			return true;
 	} else if( ch == ' ' ) {
 			// handle appropriately if it's only one space as a Sign spec,
@@ -80,50 +83,60 @@ inline bool serenity::arg_formatter::ArgFormatter::HandleIfEndOrWhiteSpace(std::
 template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
 	argCounter = 0;
 	for( ;; ) {
-			if( sv.size() < 2 ) return;
+			if( sv.size() < 2 ) break;
 			size_t pos { 0 };
 			result.remainder = sv;
 			specValues.ResetSpecs();
 			FindBrackets(result.remainder);
 			if( !bracketResults.isValid ) {
-					for( auto& ch: result.remainder ) {
-							Iter = ch;
-						}
+					*Iter = std::copy(result.remainder.begin(), result.remainder.end(), std::move(Iter));
 					break;
 			}
-			auto preToken { sv.substr(0, bracketResults.beginPos) };
-			for( auto& ch: preToken ) {
-					Iter = ch;
-				}
+			std::string_view preToken { sv.substr(0, bracketResults.beginPos) };
+			if( preToken.size() != 0 ) {
+					*Iter = std::copy(preToken.begin(), preToken.end(), std::move(Iter));
+			}
+
 			auto argBracket { sv.substr(bracketResults.beginPos + 1, (bracketResults.endPos - bracketResults.beginPos)) };
 			const size_t& bracketSize { argBracket.size() };
+			/*Handle Escaped Bracket*/
+			if( (pos + 1 < bracketSize) && (argBracket[ pos + 1 ] == '{') ) {
+					*Iter = '{';
+					++pos;
+			}
+
 			/* Handle If Bracket Contained No Specs */
 			if( HandleIfEndOrWhiteSpace(std::forward<std::back_insert_iterator<T>>(Iter), argBracket, pos, bracketSize) ) {
 					sv.remove_prefix(argBracket.size() + preToken.size() + 1);
 					continue;
 			}
-			/*Handle Escaped Bracket*/
-			if( argBracket[ pos ] == '{' ) {
-					std::string tmp { result.preTokenStr };
-					tmp.append(1, '{');
-					result.preTokenStr = std::move(tmp);
-			}
+
 			/*Handle Positional Args*/
 			if( !ParsePositionalField(argBracket, argCounter, pos) ) {
 					// Nothing to Parse - just a simple substitution
 					FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
+					if( specValues.hasClosingBrace ) {
+							*Iter = '}';
+					}
+					sv.remove_prefix(argBracket.size() + preToken.size() + 1);
 					++argCounter;
-					break;
+					continue;
 			}
 			/* Handle What's Left Of The Bracket */
 			VerifyArgumentBracket(argBracket, pos, bracketSize);
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
+			if( specValues.hasClosingBrace ) {
+					*Iter = '}';
+			}
 			sv.remove_prefix(argBracket.size() + preToken.size() + 1);
 		}
+	if( sv.size() != 0 ) {
+			*Iter = std::copy(sv.begin(), sv.end(), std::move(Iter));
+	}
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::AppendDirectly(std::back_insert_iterator<T>&& Iter, experimental::msg_details::SpecType type) {
-	using SpecType = experimental::msg_details::SpecType;
+template<typename T> void serenity::arg_formatter::ArgFormatter::AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType type) {
+	using SpecType = msg_details::SpecType;
 	std::string_view sv;
 	switch( type ) {
 			case SpecType::StringType: sv = std::move(argStorage.string_state(specValues.argPosition)); break;
@@ -131,9 +144,8 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::AppendDirectly(
 			case SpecType::StringViewType: sv = std::move(argStorage.string_view_state(specValues.argPosition)); break;
 			default: break;
 		}
-	for( auto& ch: sv ) {
-			Iter = ch;
-		}
+
+	*Iter = std::copy(sv.begin(), sv.end(), std::move(Iter));
 }
 
 template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(std::back_insert_iterator<T>&& Iter) {
@@ -149,8 +161,8 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 			totalWidth = specValues.alignmentPadding != 0 ? specValues.alignmentPadding : 0;
 		}
 
-	using SpecType = experimental::msg_details::SpecType;
-	auto argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+	using SpecType = msg_details::SpecType;
+	auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 
 	if( totalWidth == 0 && precision == 0 ) {
 			switch( argType ) {
@@ -176,20 +188,17 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 	fillAmount = (totalWidth > size) ? totalWidth - size : 0;
 
 	if( fillAmount == 0 ) {
-			for( auto& ch: rawValueTemp ) {
-					Iter = std::move(ch);
-				}
+			*Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), std::move(Iter));
 			return;
 	}
+	std::string_view fillChar { &specValues.fillCharacter, 1 };
 	switch( specValues.align ) {
 			case Alignment::AlignLeft:
 				{
-					for( auto& ch: rawValueTemp ) {
-							Iter = std::move(ch);
-						}
+					*Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), std::move(Iter));
 					for( ;; ) {
 							if( i >= fillAmount ) break;
-							Iter = specValues.fillCharacter;
+							*Iter = std::copy(fillChar.begin(), fillChar.end(), std::move(Iter));
 							++i;
 						}
 				}
@@ -198,30 +207,25 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 				{
 					for( ;; ) {
 							if( i >= fillAmount ) break;
-							Iter = specValues.fillCharacter;
+							*Iter = std::copy(fillChar.begin(), fillChar.end(), std::move(Iter));
 							++i;
 						}
-					for( auto& ch: rawValueTemp ) {
-							Iter = std::move(ch);
-						}
+					*Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), std::move(Iter));
 				}
 				break;
 			case Alignment::AlignCenter:
 				fillAmount /= 2;
 				for( ;; ) {
 						if( i >= fillAmount ) break;
-						Iter = specValues.fillCharacter;
+						*Iter = std::copy(fillChar.begin(), fillChar.end(), std::move(Iter));
 						++i;
 					}
-				i = 0;
-				for( auto& ch: rawValueTemp ) {
-						Iter = std::move(ch);
-					}
-				i          = 0;
+				*Iter      = std::move(rawValueTemp.begin(), rawValueTemp.end(), std::move(Iter));
 				fillAmount = (totalWidth - size - fillAmount);
+				i          = 0;
 				for( ;; ) {
 						if( i >= fillAmount ) break;
-						Iter = specValues.fillCharacter;
+						*Iter = std::copy(fillChar.begin(), fillChar.end(), std::move(Iter));
 						++i;
 					}
 				break;
@@ -308,6 +312,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 				break;
 			default: break;
 		}    // capitilization
+	rawValueTemp.reserve(charsResult.ptr - data);
 	rawValueTemp.append(data, charsResult.ptr);
 }
 
@@ -368,5 +373,6 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeAr
 				break;
 			default: break;
 		}    // capitilization
+	rawValueTemp.reserve(charsResult.ptr - data);
 	rawValueTemp.append(data, charsResult.ptr);
 }
