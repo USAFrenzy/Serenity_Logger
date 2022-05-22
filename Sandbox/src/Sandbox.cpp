@@ -213,14 +213,26 @@ int main() {
 
 #ifdef ENABLE_PARSE_SECTION
 	using namespace serenity::arg_formatter;
-	std::string parseString { "{0:*^#{5}X}" };
+	std::string parseString { "{6}" };
+	// The ArgFormatter implementation is now faster all around except for the simple substitution of int, float, & double values.
+	// I imagine this really extends to all arithmetic types but I'll have to test for that; the string cases (changing tmp to string_view,
+	// const char*, and leaving it as a string) saw ~40% speed up over std::vformat_to(). In all cases of additional specs being present, this
+	// implementation is much faster than std::vformat_to() (This is in regards to post back-ported fixes to <format>, pre fixes <format>
+	// will always be slower than this implementation unless compiled with the '/UTF-8' compiler flag).
+	// NOTE: One hiccup found so far is that if there is only one character in the bracket and is not a positional field, my implementation
+	//               formats the first argument supplied instead of throwing an error
+	// TODO: Fix the above note
 	int a { 424242442 };
 	int b { 5 };
 	float c { 32.5f };
 	double d { 54453765675.65675 };
 	int e { 6 };
 	int f { 50 };
-	std::string tmp { "Suspendisse sed porttitor orci." };
+	std::string tmp { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
+		              "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
+		              "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
+		              " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
+		              " mi non odio." };
 
 	ArgFormatter parser(std::locale(""));
 	Instrumentator timer;

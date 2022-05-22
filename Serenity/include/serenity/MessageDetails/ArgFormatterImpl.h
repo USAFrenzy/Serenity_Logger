@@ -1,4 +1,34 @@
 #pragma once
+// Copyright from <format> header extending to libfmt
+
+// Copyright (c) 2012 - present, Victor Zverovich
+//
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// --- Optional exception to the license ---
+//
+// As an exception, if, as a result of your compiling your source code, portions
+// of this Software are embedded into a machine-executable object form of such
+// source code, you may redistribute such embedded portions in such object form
+// without including the above copyright and permission notices.
+
 /************************************** What The ArgFormatter And ArgContainer Classes Offer **************************************/
 // This work is a very simple reimplementation with limititations on my end of Victor Zverovich's fmt library.
 // Currently the standard's implementation of his work is still underway although for the most part, it's feature
@@ -52,7 +82,7 @@ inline bool serenity::arg_formatter::ArgFormatter::HandleIfEndOrWhiteSpace(std::
 			ParsePositionalField(sv, argCounter, currentPosition);
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
 			if( specValues.hasClosingBrace ) {
-					*Iter = '}';
+					'}';
 			}
 			return true;
 	} else if( ch == ' ' ) {
@@ -89,19 +119,19 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 			specValues.ResetSpecs();
 			FindBrackets(result.remainder);
 			if( !bracketResults.isValid ) {
-					*Iter = std::copy(result.remainder.begin(), result.remainder.end(), std::move(Iter));
+					std::copy(result.remainder.begin(), result.remainder.end(), Iter);
 					break;
 			}
 			std::string_view preToken { sv.substr(0, bracketResults.beginPos) };
 			if( preToken.size() != 0 ) {
-					*Iter = std::copy(preToken.begin(), preToken.end(), std::move(Iter));
+					std::copy(preToken.begin(), preToken.end(), Iter);
 			}
 
 			auto argBracket { sv.substr(bracketResults.beginPos + 1, (bracketResults.endPos - bracketResults.beginPos)) };
 			const size_t& bracketSize { argBracket.size() };
 			/*Handle Escaped Bracket*/
-			if( (pos + 1 < bracketSize) && (argBracket[ pos + 1 ] == '{') ) {
-					*Iter = '{';
+			if( argBracket[ pos ] == '{' ) {
+					'{';
 					++pos;
 			}
 
@@ -116,7 +146,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 					// Nothing to Parse - just a simple substitution
 					FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
 					if( specValues.hasClosingBrace ) {
-							*Iter = '}';
+							'}';
 					}
 					sv.remove_prefix(argBracket.size() + preToken.size() + 1);
 					++argCounter;
@@ -126,16 +156,17 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 			VerifyArgumentBracket(argBracket, pos, bracketSize);
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
 			if( specValues.hasClosingBrace ) {
-					*Iter = '}';
+					'}';
 			}
 			sv.remove_prefix(argBracket.size() + preToken.size() + 1);
 		}
 	if( sv.size() != 0 ) {
-			*Iter = std::copy(sv.begin(), sv.end(), std::move(Iter));
+			std::copy(sv.begin(), sv.end(), Iter);
 	}
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType type) {
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType type, bool isSimpleSub) {
 	using SpecType = msg_details::SpecType;
 	std::string_view sv;
 	switch( type ) {
@@ -145,10 +176,11 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::AppendDirectly(
 			default: break;
 		}
 
-	*Iter = std::copy(sv.begin(), sv.end(), std::move(Iter));
+	std::copy(sv.begin(), sv.end(), Iter);
 }
 
 template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(std::back_insert_iterator<T>&& Iter) {
+	rawValueTemp.clear();
 	size_t fillAmount {}, totalWidth {}, i { 0 };
 	// clang-format off
 	auto precision{ specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
@@ -163,42 +195,42 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 
 	using SpecType = msg_details::SpecType;
 	auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+	bool simpleSub { totalWidth == 0 };
 
 	if( totalWidth == 0 && precision == 0 ) {
 			switch( argType ) {
 					case SpecType::StringType: [[fallthrough]];
 					case SpecType::CharPointerType: [[fallthrough]];
 					case SpecType::StringViewType:
-						AppendDirectly(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+						AppendDirectly(std::forward<std::back_insert_iterator<T>>(Iter), argType, simpleSub);
 						return;
 						break;
 					default: break;
 				}
 	}
-
-	rawValueTemp.clear();
-
 	if( specValues.localize ) {
-			LocalizeArgument(precision, argType);
+			LocalizeArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, argType, simpleSub);
 	} else {
-			FormatRawValueToStr(precision, argType);
+			FormatRawValueToStr(std::forward<std::back_insert_iterator<T>>(Iter), precision, argType, simpleSub);
 		}
+	if( simpleSub ) return;
 
 	auto size(rawValueTemp.size());
 	fillAmount = (totalWidth > size) ? totalWidth - size : 0;
-
 	if( fillAmount == 0 ) {
-			*Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), std::move(Iter));
+			std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 			return;
 	}
+
 	std::string_view fillChar { &specValues.fillCharacter, 1 };
+
 	switch( specValues.align ) {
 			case Alignment::AlignLeft:
 				{
-					*Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), std::move(Iter));
+					std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 					for( ;; ) {
 							if( i >= fillAmount ) break;
-							*Iter = std::copy(fillChar.begin(), fillChar.end(), std::move(Iter));
+							std::copy(fillChar.begin(), fillChar.end(), Iter);
 							++i;
 						}
 				}
@@ -207,25 +239,25 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 				{
 					for( ;; ) {
 							if( i >= fillAmount ) break;
-							*Iter = std::copy(fillChar.begin(), fillChar.end(), std::move(Iter));
+							std::copy(fillChar.begin(), fillChar.end(), Iter);
 							++i;
 						}
-					*Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), std::move(Iter));
+					std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 				}
 				break;
 			case Alignment::AlignCenter:
 				fillAmount /= 2;
 				for( ;; ) {
 						if( i >= fillAmount ) break;
-						*Iter = std::copy(fillChar.begin(), fillChar.end(), std::move(Iter));
+						std::copy(fillChar.begin(), fillChar.end(), Iter);
 						++i;
 					}
-				*Iter      = std::move(rawValueTemp.begin(), rawValueTemp.end(), std::move(Iter));
+				*Iter      = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 				fillAmount = (totalWidth - size - fillAmount);
 				i          = 0;
 				for( ;; ) {
 						if( i >= fillAmount ) break;
-						*Iter = std::copy(fillChar.begin(), fillChar.end(), std::move(Iter));
+						std::copy(fillChar.begin(), fillChar.end(), Iter);
 						++i;
 					}
 				break;
@@ -237,7 +269,8 @@ template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter:
 	argStorage.CaptureArgs(std::forward<Args>(args)...);
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatTypeArg(T&& value, int precision) {
+template<typename T, typename U>
+void serenity::arg_formatter::ArgFormatter::FormatFloatTypeArg(std::back_insert_iterator<T>&& Iter, U&& value, int precision, bool isSimpleSub) {
 	std::chars_format format {};
 	auto data { buffer.data() };
 	std::fill(data, data + buffer.size(), 0);
@@ -294,9 +327,9 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 		}
 
 	if( precision != 0 ) {
-			charsResult = std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format, precision);
+			charsResult = std::to_chars(data + pos, data + buffer.size(), std::forward<U>(value), format, precision);
 	} else {
-			charsResult = std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format);
+			charsResult = std::to_chars(data + pos, data + buffer.size(), std::forward<U>(value), format);
 		}
 	switch( specValues.typeSpec ) {
 			case '\0': break;
@@ -312,11 +345,18 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 				break;
 			default: break;
 		}    // capitilization
-	rawValueTemp.reserve(charsResult.ptr - data);
+
+	if( isSimpleSub && !specValues.localize ) {
+			for( data; data != charsResult.ptr; ++data ) {
+					*Iter = *data;
+				}
+			return;
+	}
 	rawValueTemp.append(data, charsResult.ptr);
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeArg(T&& value) {
+template<typename T, typename U>
+void serenity::arg_formatter::ArgFormatter::FormatIntTypeArg(std::back_insert_iterator<T>&& Iter, U&& value, bool isSimpleSub) {
 	int base { 10 };
 	auto data { buffer.data() };
 	std::fill(data, data + buffer.size(), 0);
@@ -351,14 +391,20 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeAr
 			case '\0': break;
 			case 'b': [[fallthrough]];
 			case 'B': base = 2; break;
-			case 'c': rawValueTemp += static_cast<char>(value); return;
+			case 'c':
+				if( isSimpleSub ) {
+						Iter = static_cast<char>(value);
+				} else {
+						rawValueTemp += static_cast<char>(value);
+					}
+				return;
 			case 'o': base = 8; break;
 			case 'x': [[fallthrough]];
 			case 'X': base = 16; break;
 			default: break;
 		}
 
-	charsResult = std::to_chars(data + pos, data + buffer.size(), value, base);
+	charsResult = std::to_chars(data + pos, data + buffer.size(), std::forward<U>(value), base);
 
 	switch( specValues.typeSpec ) {
 			case '\0': break;
@@ -373,6 +419,291 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeAr
 				break;
 			default: break;
 		}    // capitilization
-	rawValueTemp.reserve(charsResult.ptr - data);
+
+	if( isSimpleSub && !specValues.localize ) {
+			for( data; data != charsResult.ptr; ++data ) {
+					*Iter = *data;
+				}
+			return;
+	}
 	rawValueTemp.append(data, charsResult.ptr);
+}
+
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::AppendByPrecision(std::back_insert_iterator<T>&& Iter, std::string_view val, int precision, bool isSimpleSub) {
+	int size { static_cast<int>(val.size()) };
+	precision = precision > 0 ? precision > size ? size : precision : size;
+	if( isSimpleSub ) {
+			size_t pos { 0 };
+			for( ;; ) {
+					if( pos == precision ) break;
+					*Iter = val[ pos ];
+					++pos;
+				}
+			return;
+	}
+	rawValueTemp.reserve(size);
+	rawValueTemp.append(val.data(), precision);
+}
+
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::FormatRawValueToStr(std::back_insert_iterator<T>&& Iter, int& precision, msg_details::SpecType type, bool isSimpleSub) {
+	using SpecType = msg_details::SpecType;
+	switch( type ) {
+			case SpecType::StringType:
+				AppendByPrecision(std::forward<std::back_insert_iterator<T>>(Iter), std::move(argStorage.string_state(specValues.argPosition)), precision,
+				                  isSimpleSub);
+				break;
+			case SpecType::CharPointerType:
+				AppendByPrecision(std::forward<std::back_insert_iterator<T>>(Iter), std::move(argStorage.c_string_state(specValues.argPosition)), precision,
+				                  isSimpleSub);
+				break;
+			case SpecType::StringViewType:
+				AppendByPrecision(std::forward<std::back_insert_iterator<T>>(Iter), std::move(argStorage.string_view_state(specValues.argPosition)), precision,
+				                  isSimpleSub);
+				break;
+			case SpecType::IntType:
+				FormatIntTypeArg(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.int_state(specValues.argPosition), isSimpleSub);
+				break;
+			case SpecType::U_IntType:
+				FormatIntTypeArg(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.uint_state(specValues.argPosition), isSimpleSub);
+				break;
+			case SpecType::LongLongType:
+				FormatIntTypeArg(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.long_long_state(specValues.argPosition), isSimpleSub);
+				break;
+			case SpecType::U_LongLongType:
+				FormatIntTypeArg(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.u_long_long_state(specValues.argPosition), isSimpleSub);
+				break;
+			case SpecType::BoolType:
+				if( isSimpleSub && specValues.typeSpec == '\0' ) {
+						std::string_view sv { (argStorage.bool_state(specValues.argPosition) ? "true" : "false") };
+						for( auto& ch: sv ) {
+								*Iter = ch;
+							}
+						return;
+				}
+				if( specValues.typeSpec != '\0' && specValues.typeSpec != 's' ) {
+						FormatIntTypeArg(std::forward<std::back_insert_iterator<T>>(Iter),
+						                 static_cast<unsigned char>(argStorage.bool_state(specValues.argPosition)), isSimpleSub);
+				} else {
+						rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
+					}
+				break;
+			case SpecType::CharType:
+				if( isSimpleSub && (specValues.typeSpec == '\0' || specValues.typeSpec == 'c') ) {
+						*Iter = argStorage.char_state(specValues.argPosition);
+						return;
+				}
+				if( specValues.typeSpec != '\0' && specValues.typeSpec != 'c' ) {
+						FormatIntTypeArg(std::forward<std::back_insert_iterator<T>>(Iter), static_cast<int>(argStorage.char_state(specValues.argPosition)),
+						                 isSimpleSub);
+				} else {
+						rawValueTemp += argStorage.char_state(specValues.argPosition);
+					}
+				break;
+			case SpecType::FloatType:
+				FormatFloatTypeArg(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.float_state(specValues.argPosition), precision, isSimpleSub);
+				break;
+			case SpecType::DoubleType:
+				FormatFloatTypeArg(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.double_state(specValues.argPosition), precision, isSimpleSub);
+				break;
+			case SpecType::LongDoubleType:
+				FormatFloatTypeArg(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.long_double_state(specValues.argPosition), precision, isSimpleSub);
+				break;
+			case SpecType::ConstVoidPtrType:
+				{
+					auto data { buffer.data() };
+					charsResult = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16);
+					if( isSimpleSub ) {
+							Iter = '0';
+							Iter = 'x';
+							std::copy(data, charsResult.ptr, Iter);
+							return;
+					}
+					rawValueTemp.reserve(charsResult.ptr - buffer.data() + 2);
+					rawValueTemp.append("0x").append(buffer.data(), charsResult.ptr);
+				}
+				break;
+			case SpecType::VoidPtrType:
+				{
+					auto data { buffer.data() };
+					charsResult = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16);
+					if( isSimpleSub ) {
+							Iter = '0';
+							Iter = 'x';
+							std::copy(data, charsResult.ptr, Iter);
+							return;
+					}
+					rawValueTemp.reserve(charsResult.ptr - buffer.data() + 2);
+					rawValueTemp.append("0x").append(buffer.data(), charsResult.ptr);
+				}
+				break;
+			default: break;
+		}
+}
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::FormatIntegralGrouping(std::back_insert_iterator<T>&& Iter, std::string& section, char separator, bool isSimpleSub) {
+	size_t groups { 0 };
+	auto groupBegin { groupings.begin() };
+	int groupGap { *groupBegin };
+	auto end { section.size() };
+	if( section.size() < groupGap ) {
+			if( isSimpleSub ) {
+					std::move(section.begin(), section.end(), Iter);
+			}
+			return;
+	}
+	localeTemp.clear();
+	localeTemp.reserve(section.size() + groupGap);
+	std::string_view sv { section };
+	if( specValues.hasAlt ) {
+			sv.remove_prefix(2);
+	}
+
+	// TODO: Rework this to avoid using insert (Used insert to just get this working, but it's very slow)
+	if( groupings.size() > 1 ) {
+			/********************* grouping is unique *********************/
+			if( groupings.size() == 3 ) {
+					localeTemp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+					sv.remove_suffix(groupGap);
+					localeTemp.insert(0, 1, separator);
+
+					groupGap = *(++groupBegin);
+					localeTemp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+					sv.remove_suffix(groupGap);
+					localeTemp.insert(0, 1, separator);
+
+					groupGap = *(++groupBegin);
+					groups   = end / groupGap - end % groupGap;
+					for( ; groups; --groups ) {
+							if( groups > 0 ) {
+									localeTemp.insert(0, 1, separator);
+							}
+							if( sv.size() > groupGap ) {
+									localeTemp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+							} else {
+									localeTemp.insert(0, sv);
+									break;
+								}
+							if( sv.size() >= groupGap ) {
+									sv.remove_suffix(groupGap);
+							}
+						}
+			} else {
+					// grouping is one group and then uniform
+					localeTemp.append(sv.data() + sv.size() - groupGap, sv.data() + sv.size());
+					sv.remove_suffix(groupGap);
+
+					groupGap = *(++groupBegin);
+					groups   = end / groupGap - end % groupGap;
+
+					for( ; groups; --groups ) {
+							if( groups > 0 ) {
+									localeTemp.insert(0, 1, separator);
+							}
+							if( sv.size() > groupGap ) {
+									localeTemp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+							} else {
+									localeTemp.insert(0, sv);
+									break;
+								}
+							if( sv.size() >= groupGap ) {
+									sv.remove_suffix(groupGap);
+							}
+						}
+				}
+	} else {
+			/********************* grouping is uniform *********************/
+			groups = end / groupGap + end % groupGap;
+			for( ; groups; --groups ) {
+					if( sv.size() > groupGap ) {
+							localeTemp.insert(0, sv.substr(sv.size() - groupGap, sv.size()));
+					} else {
+							localeTemp.insert(0, sv);
+							break;
+						}
+					if( groups > 0 ) {
+							localeTemp.insert(0, 1, separator);
+					}
+					if( sv.size() >= groupGap ) {
+							sv.remove_suffix(groupGap);
+					}
+				}
+		}
+	if( specValues.hasAlt ) {
+			localeTemp.insert(0, section.substr(0, 2));
+	}
+	if( isSimpleSub ) {
+			std::move(localeTemp.begin(), localeTemp.end(), Iter);
+			return;
+	}
+	section.clear();
+	section.reserve(localeTemp.size());
+	section.append(std::move(localeTemp));
+}
+
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::LocalizeIntegral(std::back_insert_iterator<T>&& Iter, int precision, msg_details::SpecType type, bool isSimpleSub) {
+	FormatRawValueToStr(std::forward<std::back_insert_iterator<T>>(Iter), precision, type, isSimpleSub);
+	FormatIntegralGrouping(std::forward<std::back_insert_iterator<T>>(Iter), rawValueTemp, separator, isSimpleSub);
+}
+
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::LocalizeFloatingPoint(std::back_insert_iterator<T>&& Iter, int precision, msg_details::SpecType type, bool isSimpleSub) {
+	FormatRawValueToStr(std::forward<std::back_insert_iterator<T>>(Iter), precision, type, isSimpleSub);
+	size_t pos { 0 };
+	auto size { rawValueTemp.size() };
+	auto data { rawValueTemp.begin() };
+	std::string_view sv { rawValueTemp };
+	localeTemp.clear();
+	for( ;; ) {
+			if( pos >= size ) break;
+			if( sv[ pos ] == '.' ) {
+					localeTemp.append(sv.substr(0, pos));
+					FormatIntegralGrouping(std::forward<std::back_insert_iterator<T>>(Iter), localeTemp, separator, isSimpleSub);
+					if( isSimpleSub ) {
+							*Iter = decimal;
+							auto subSV { sv.substr(pos + 1, sv.size()) };
+							std::copy(subSV.begin(), subSV.end(), Iter);
+							return;
+					}
+					localeTemp += decimal;
+					localeTemp.append(sv.substr(pos + 1, sv.size()));
+					break;
+			}
+			++pos;
+		}
+	if( localeTemp.size() != 0 ) {
+			rawValueTemp.clear();
+			rawValueTemp.append(std::move(localeTemp));
+			return;
+	}
+	FormatIntegralGrouping(std::forward<std::back_insert_iterator<T>>(Iter), rawValueTemp, separator, isSimpleSub);
+}
+
+template<typename T> void serenity::arg_formatter::ArgFormatter::LocalizeBool(std::back_insert_iterator<T>&& Iter, bool isSimpleSub) {
+	if( isSimpleSub ) {
+			std::string_view sv { argStorage.bool_state(specValues.argPosition) ? trueStr : falseStr };
+			std::copy(sv.begin(), sv.end(), Iter);
+			return;
+	}
+	rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? trueStr : falseStr);
+}
+
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::LocalizeArgument(std::back_insert_iterator<T>&& Iter, int precision, msg_details::SpecType type, bool isSimpleSub) {
+	using enum serenity::msg_details::SpecType;
+	// NOTE: The following types should have been caught in the verification process:
+	//       monostate, string, c-string, string view, const void*, void *
+	switch( type ) {
+			case IntType: [[fallthrough]];
+			case U_IntType: [[fallthrough]];
+			case LongLongType: LocalizeIntegral(std::forward<std::back_insert_iterator<T>>(Iter), precision, type, isSimpleSub); break;
+			case FloatType: [[fallthrough]];
+			case DoubleType: [[fallthrough]];
+			case LongDoubleType: [[fallthrough]];
+			case U_LongLongType: LocalizeFloatingPoint(std::forward<std::back_insert_iterator<T>>(Iter), precision, type, isSimpleSub); break;
+			case BoolType: LocalizeBool(std::forward<std::back_insert_iterator<T>>(Iter), isSimpleSub); break;
+			default: break;
+		}
 }
