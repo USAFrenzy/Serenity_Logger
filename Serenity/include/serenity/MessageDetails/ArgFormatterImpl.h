@@ -131,7 +131,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 			const size_t& bracketSize { argBracket.size() };
 			/*Handle Escaped Bracket*/
 			if( argBracket[ pos ] == '{' ) {
-					'{';
+					Iter = '{';
 					++pos;
 			}
 
@@ -146,7 +146,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 					// Nothing to Parse - just a simple substitution
 					FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
 					if( specValues.hasClosingBrace ) {
-							'}';
+							Iter = '}';
 					}
 					sv.remove_prefix(argBracket.size() + preToken.size() + 1);
 					++argCounter;
@@ -156,7 +156,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Parse(std::back
 			VerifyArgumentBracket(argBracket, pos, bracketSize);
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
 			if( specValues.hasClosingBrace ) {
-					'}';
+					Iter = '}';
 			}
 			sv.remove_prefix(argBracket.size() + preToken.size() + 1);
 		}
