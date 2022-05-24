@@ -100,7 +100,7 @@ namespace serenity::arg_formatter {
 	{
 		void ResetSpecs();
 		size_t argPosition { 0 };
-		size_t alignmentPadding { 0 };
+		int alignmentPadding { 0 };
 		int precision { 0 };
 		size_t nestedWidthArgPos { 0 };
 		size_t nestedPrecArgPos { 0 };
@@ -174,23 +174,23 @@ namespace serenity::arg_formatter {
 		bool IsValidFloatingPointSpec(const char& spec);
 		bool IsValidCharSpec(const char& spec);
 		bool VerifySpec(msg_details::SpecType type, const char& spec);
+		bool IsSimpleSubstitution(msg_details::SpecType& argType, int& precision, int& width);
 
 		template<typename T>
 		bool HandleIfEndOrWhiteSpace(std::back_insert_iterator<T>&& Iter, std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		template<typename T>
-		void FormatRawValueToStr(std::back_insert_iterator<T>&& Iter, int& precision, msg_details::SpecType type, bool isSimpleSub = false);
-		template<typename T> void AppendByPrecision(std::back_insert_iterator<T>&& Iter, std::string_view val, int precision, bool isSimpleSub = false);
-		template<typename T> void AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType type, bool isSimpleSub = false);
-		template<typename T, typename U> void FormatFloatTypeArg(std::back_insert_iterator<T>&& Iter, U&& value, int precision, bool isSimpleSub = false);
-		template<typename T, typename U> void FormatIntTypeArg(std::back_insert_iterator<T>&& Iter, U&& value, bool isSimpleSub = false);
-		template<typename T> void LocalizeArgument(std::back_insert_iterator<T>&& Iter, int precision, msg_details::SpecType type, bool isSimpleSub = false);
-		template<typename T> void LocalizeIntegral(std::back_insert_iterator<T>&& Iter, int precision, msg_details::SpecType type, bool isSimpleSub = false);
-		template<typename T>
-		void LocalizeFloatingPoint(std::back_insert_iterator<T>&& Iter, int precision, msg_details::SpecType type, bool isSimpleSub = false);
-		template<typename T> void LocalizeBool(std::back_insert_iterator<T>&& Iter, bool isSimpleSub = false);
-		template<typename T> void FormatIntegralGrouping(std::back_insert_iterator<T>&& Iter, std::string& section, char separator, bool isSimpleSub = false);
+		void AppendByPrecision(std::string_view val, int precision);
+		template<typename T> void AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType type);
+		template<typename T> void FormatFloatTypeArg(T&& value, int precision);
+		template<typename T> void FormatIntTypeArg(T&& value);
+		void FormatRawValueToStr(int& precision, msg_details::SpecType type);
+		void LocalizeArgument(int precision, msg_details::SpecType type);
+		void LocalizeIntegral(int precision, msg_details::SpecType type);
+		void LocalizeFloatingPoint(int precision, msg_details::SpecType type);
+		void LocalizeBool();
+		void FormatIntegralGrouping(std::string& section, char separator);
+		template<typename T> void DirectlyWriteValue(std::back_insert_iterator<T>&& Iter, msg_details::SpecType);
 
 	  private:
 		int argCounter { 0 };

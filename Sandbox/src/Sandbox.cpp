@@ -214,14 +214,20 @@ int main() {
 #ifdef ENABLE_PARSE_SECTION
 	using namespace serenity::arg_formatter;
 	std::string parseString { "{6}" };
-	// The ArgFormatter implementation is now faster all around except for the simple substitution of int, float, & double values.
-	// I imagine this really extends to all arithmetic types but I'll have to test for that; the string cases (changing tmp to string_view,
-	// const char*, and leaving it as a string) saw ~40% speed up over std::vformat_to(). In all cases of additional specs being present, this
-	// implementation is much faster than std::vformat_to() (This is in regards to post back-ported fixes to <format>, pre fixes <format>
-	// will always be slower than this implementation unless compiled with the '/UTF-8' compiler flag).
-	// NOTE: One hiccup found so far is that if there is only one character in the bracket and is not a positional field, my implementation
-	//               formats the first argument supplied instead of throwing an error
-	// TODO: Fix the above note
+	// The ArgFormatter implementation is now faster all around except for the simple substitution of arithmetic types. The string cases
+	// (changing tmp to string_view, const char*, and leaving it as a string) saw ~40% speed up over std::vformat_to(). In all cases of
+	// additional specs being present, this implementation is much faster than std::vformat_to() (This is in regards to post back-ported
+	// fixes to <format>, pre fixes <format> will always be slower than this implementation unless compiled with the '/UTF-8'
+	// compiler flag).
+	//
+	// EDIT: Sped up flat substitution for arithmetic types by ~10-11% with the short-circuit to direct writing; still ~14-15% slower
+	//             than MSVC's flat substitution for arithmetic types with no additional specifiers though (~20% slower for large doubles).
+	//**************************************** Just for reference, the timings are still decent though ***********************************
+	// - at its arithmetic slowest with the double for example, it's  0.105402 us vs. 0.086393 us (~19% slower than MSVC)
+	// - at its arithmetic fastest with an int for example, its 0.072173 us vs.  0.061324 us. (~15% slower than MSVC)
+	// - for the string types, its 0.456160 us vs. 0.652549 us for the 400 byte string (~43% faster than MSVC)
+	//    and 0.053755 us vs. 0.062758 us (~17% faster than MSVC) for a 6 byte string (keeping SSO in mind on that one).
+	//********************************************************************************************************************************
 	int a { 424242442 };
 	int b { 5 };
 	float c { 32.5f };
