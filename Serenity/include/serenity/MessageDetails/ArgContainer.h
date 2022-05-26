@@ -53,100 +53,49 @@ namespace serenity::msg_details {
 		VoidPtrType      = 14,
 	};
 
-	static constexpr std::string_view SpecTypeString(SpecType type) {
-		using enum SpecType;
-		switch( type ) {
-				case MonoType: return "MonoType"; break;
-				case StringType: return "String  Type"; break;
-				case CharPointerType: return "Const Char *"; break;
-				case StringViewType: "String View"; break;
-				case IntType: return "Int"; break;
-				case U_IntType: return "Unsigned Int"; break;
-				case LongLongType: return "Long Long"; break;
-				case U_LongLongType: return "Unsigned Long Long"; break;
-				case BoolType: return "Bool"; break;
-				case CharType: return "Char"; break;
-				case FloatType: return "Float"; break;
-				case DoubleType: return "Double"; break;
-				case LongDoubleType: return "Long Double"; break;
-				case ConstVoidPtrType: return "Const Void *"; break;
-				case VoidPtrType: return "Void *"; break;
-				default: break;
-			}
-		return "";
-	}
-
-	static constexpr std::array<SpecType, 15> mapIndexToType = {
-		SpecType::MonoType,   SpecType::StringType,    SpecType::CharPointerType, SpecType ::StringViewType,   SpecType ::IntType,
-		SpecType ::U_IntType, SpecType ::LongLongType, SpecType::U_LongLongType,  SpecType ::BoolType,         SpecType::CharType,
-		SpecType ::FloatType, SpecType ::DoubleType,   SpecType::LongDoubleType,  SpecType ::ConstVoidPtrType, SpecType ::VoidPtrType,
-	};
-
 	constexpr size_t MAX_ARG_COUNT = 25;
+	constexpr size_t MAX_ARG_INDEX = 24;
+
+	// This is marginally faster than using the above array with the variant.index() call I was using before-hand
+	template<typename T> static constexpr SpecType GetArgType(T&& val);
+	static constexpr std::string_view SpecTypeString(SpecType type);
+
 	class ArgContainer
 	{
 	  public:
-		using LazilySupportedTypes = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long, unsigned long long,
-		                                          bool, char, float, double, long double, const void*, void*>;
+		// clang-format off
+		using VType = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, 
+			                                                     long long, unsigned long long,bool, char, float, double, long double, const void*, void*>;
+		// clang-format on
+		constexpr ArgContainer()                               = default;
+		constexpr ArgContainer(const ArgContainer&)            = delete;
+		constexpr ArgContainer& operator=(const ArgContainer&) = delete;
+		constexpr ~ArgContainer()                              = default;
 
-		ArgContainer()             = default;
-		ArgContainer(const ArgContainer&)            = delete;
-		ArgContainer& operator=(const ArgContainer&) = delete;
-		~ArgContainer()                              = default;
+		constexpr std::array<VType, MAX_ARG_COUNT>& ArgStorage();
+		constexpr std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
+		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
+		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
+		constexpr std::string_view string_state(size_t index);
+		constexpr std::string_view c_string_state(size_t index);
+		constexpr std::string_view string_view_state(size_t index);
+		constexpr int int_state(size_t index);
+		constexpr unsigned int uint_state(size_t index);
+		constexpr long long long_long_state(size_t index);
+		constexpr unsigned long long u_long_long_state(size_t index);
+		constexpr bool bool_state(size_t index);
+		constexpr char char_state(size_t index);
+		constexpr float float_state(size_t index);
+		constexpr double double_state(size_t index);
+		constexpr long double long_double_state(size_t index);
+		constexpr const void* const_void_ptr_state(size_t index);
 
-		const std::array<LazilySupportedTypes, MAX_ARG_COUNT>& ArgStorage() const;
-		std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
-		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args) {
-			(
-			[ = ](auto&& arg) {
-				using base_type = std::decay_t<decltype(arg)>;
-				using ref       = std::add_lvalue_reference_t<base_type>;
-				// -1 offset accounting for indexing of 0-24
-				if( counter > MAX_ARG_COUNT - 1 ) {
-						std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
-						return;
-				}
-				testContainer[ counter ] = std::forward<ref>(ref(arg));
-				++counter;
-			}(args),
-			...);
-		}
-		template<typename... Args> void CaptureArgs(Args&&... args) {
-			Reset();
-			EmplaceBackArgs(std::forward<Args>(args)...);
-			StoreArgTypes();
-		}
-		constexpr void StoreArgTypes() {
-			size_t pos { 0 };
-			for( ;; ) {
-					if( pos >= counter ) break;
-					testSpecContainer[ pos ] = mapIndexToType[ testContainer[ pos ].index() ];
-					++pos;
-				}
-		}
-		constexpr void Reset() {
-			std::fill(testSpecContainer.data(), testSpecContainer.data() + counter, SpecType::MonoType);
-			counter = 0;
-		}
-
-		std::string_view string_state(size_t index);
-		std::string_view c_string_state(size_t index);
-		std::string_view string_view_state(size_t index);
-		int int_state(size_t index);
-		unsigned int uint_state(size_t index);
-		long long long_long_state(size_t index);
-		unsigned long long u_long_long_state(size_t index);
-		bool bool_state(size_t index);
-		char char_state(size_t index);
-		float float_state(size_t index);
-		double double_state(size_t index);
-		long double long_double_state(size_t index);
-		const void* const_void_ptr_state(size_t index);
-		void* void_ptr_state(size_t index);
+		constexpr void* void_ptr_state(size_t index);
 
 	  private:
-		std::array<LazilySupportedTypes, MAX_ARG_COUNT> testContainer {};
-		std::array<SpecType, MAX_ARG_COUNT> testSpecContainer {};
+		std::array<VType, MAX_ARG_COUNT> argContainer {};
+		std::array<SpecType, MAX_ARG_COUNT> specContainer {};
 		size_t counter {};
 	};
+#include <serenity/MessageDetails/ArgContainerImpl.h>
 }    // namespace serenity::msg_details

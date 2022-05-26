@@ -7,7 +7,6 @@ set(MESSAGE_DETAILS_SOURCE_FILES
     "src/MessageDetails/FormatterArgs.cpp"
     "src/MessageDetails/FlushPolicy.cpp"
     "src/MessageDetails/ArgFormatter.cpp"
-    "src/MessageDetails/ArgContainer.cpp"
 )
 
 set(TARGETS_SOURCE_FILES
@@ -35,6 +34,7 @@ set(MESSAGE_DETAILS_HEADER_FILES
     "include/serenity//MessageDetails/ArgFormatter.h"
     "include/serenity//MessageDetails/ArgFormatterImpl.h"
     "include/serenity//MessageDetails/ArgContainer.h"
+    "include/serenity//MessageDetails/ArgContainerImpl.h"
 )
 
 set(TARGETS_HEADER_FILES

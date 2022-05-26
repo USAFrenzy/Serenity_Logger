@@ -129,8 +129,17 @@ namespace serenity::arg_formatter {
 		size_t endPos { 0 };
 	};
 
+	template<typename T> struct IteratorContainer: std::back_insert_iterator<T>
+	{
+		using std::back_insert_iterator<T>::container_type;
+		IteratorContainer(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
+		const auto& Container() {
+			return this->container;
+		}
+	};
+
 #ifndef SERENITY_ARG_BUFFER_SIZE
-	#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(64)
+	#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(65)
 #endif    // !SERENITY_ARG_BUFFER_SIZE
 
 	// Compatible class that provides some of the same functionality that mirrors <format> for pre C++23
@@ -145,11 +154,11 @@ namespace serenity::arg_formatter {
 		~ArgFormatter()                              = default;
 
 		template<typename... Args> std::string se_format(std::string_view sv, Args&&... args);
-		template<typename T, typename... Args> void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
+		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
 		void SetLocaleForUse(const std::locale& locale);
 
 	  private:
-		template<typename T> void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		template<typename T> constexpr void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
 
 		void FindBrackets(std::string_view& sv);
 		void FindNestedBrackets(std::string_view sv, int& currentPos);
@@ -181,7 +190,7 @@ namespace serenity::arg_formatter {
 		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 		void AppendByPrecision(std::string_view val, int precision);
-		template<typename T> void AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType type);
+		template<typename T> void AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType& type);
 		template<typename T> void FormatFloatTypeArg(T&& value, int precision);
 		template<typename T> void FormatIntTypeArg(T&& value);
 		void FormatRawValueToStr(int& precision, msg_details::SpecType type);
@@ -190,7 +199,7 @@ namespace serenity::arg_formatter {
 		void LocalizeFloatingPoint(int precision, msg_details::SpecType type);
 		void LocalizeBool();
 		void FormatIntegralGrouping(std::string& section, char separator);
-		template<typename T> void DirectlyWriteValue(std::back_insert_iterator<T>&& Iter, msg_details::SpecType);
+		template<typename T> void DirectlyWriteValue(std::back_insert_iterator<T>&& Iter, msg_details::SpecType&);
 
 	  private:
 		int argCounter { 0 };

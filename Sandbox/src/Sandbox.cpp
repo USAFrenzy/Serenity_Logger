@@ -213,7 +213,7 @@ int main() {
 
 #ifdef ENABLE_PARSE_SECTION
 	using namespace serenity::arg_formatter;
-	std::string parseString { "{6}" };
+	constexpr const char* parseString { "{0}" };
 	// The ArgFormatter implementation is now faster all around except for the simple substitution of arithmetic types. The string cases
 	// (changing tmp to string_view, const char*, and leaving it as a string) saw ~40% speed up over std::vformat_to(). In all cases of
 	// additional specs being present, this implementation is much faster than std::vformat_to() (This is in regards to post back-ported
@@ -222,23 +222,44 @@ int main() {
 	//
 	// EDIT: Sped up flat substitution for arithmetic types by ~10-11% with the short-circuit to direct writing; still ~14-15% slower
 	//             than MSVC's flat substitution for arithmetic types with no additional specifiers though (~20% slower for large doubles).
-	//**************************************** Just for reference, the timings are still decent though ***********************************
+	//**************************************** Just for reference, the timings are still decent though **************************************************
 	// - at its arithmetic slowest with the double for example, it's  0.105402 us vs. 0.086393 us (~19% slower than MSVC)
 	// - at its arithmetic fastest with an int for example, its 0.072173 us vs.  0.061324 us. (~15% slower than MSVC)
-	// - for the string types, its 0.456160 us vs. 0.652549 us for the 400 byte string (~43% faster than MSVC)
-	//    and 0.053755 us vs. 0.062758 us (~17% faster than MSVC) for a 6 byte string (keeping SSO in mind on that one).
-	//********************************************************************************************************************************
-	int a { 424242442 };
-	int b { 5 };
-	float c { 32.5f };
-	double d { 54453765675.65675 };
-	int e { 6 };
-	int f { 50 };
-	std::string tmp { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
-		              "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
-		              "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
-		              " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
-		              " mi non odio." };
+	// - for the string types, its 0.456160 us vs. 0.652549 us for the 400 byte string (~43% faster than MSVC)  and 0.053755 us vs. 0.062758 us
+	//   (~17% faster than MSVC) for a 6 byte string (keeping SSO in mind on that one).
+	//***********************************************************************************************************************************************
+	// EDIT 2: I guess the way I'm benching this has some influence on timings; changing the print-out functions and MSVC's time for the arithmetic
+	//                 simple substitution went down to 0.053633 us whereas mine is now 0.068997 us (~20% slower >.>), however, for string types, the
+	//                 timings somehow don't change at all - I'm still ~40% faster so the aritmetic deal is really odd to me
+	//***********************************************************************************************************************************************
+	// EDIT 3: Being able to grab the underlying container and append directly to the container saw MASSIVE gains in performance for string
+	//                 containers; still need to test this for vector containers and the like though. But results so far for just flat substitution without any
+	//                 other specifiers (i.e. {0}, {3}, etc) are:
+	// - In constexpr context (serenity VS. msvc with percentage reflecting speed against msvc):
+	//     - int: [0.048387 us] vs [0.048196 us] (%0.40 slower)
+	//     - float: [0.072432 us] vs  [0.064671 us] (%10.71 slower)
+	//    - double: [0.069087 us] vs  [0.073304 us] (%6.10 faster)
+	//    - 400 byte string_view: [0.041554 us] vs [0.616257 us] (%1383.02 faster)
+	//    - 400 byte c-string: [0.149616 us] vs [0.482798 us] (%222.69)
+	// - In Runtime context with no constexpr argument variables supplied
+	//     - int: [0.057770 us] vs [0.053154 us] (%7.99 slower)
+	//     - float: [0.082643 us] vs  [0.070608 us] (%14.56 slower)
+	//     - double: [0.078247 us] vs  0.080394 us] (%2.74 faster)
+	//     - 400 byte string_view: [0.040973 us] vs [0.615737 us] (%1402.80 faster)
+	//    - 400 byte string:  [0.049914 us] vs  [0.644688 us] (%1191.59 faster)
+	//    - 400 byte c-string: [0.149273 us] vs [0.477707 us] (%220.02)
+
+	constexpr int a { 424242442 };
+	constexpr int b { 5 };
+	constexpr float c { 32.5f };
+	constexpr double d { 54453765675.65675 };
+	constexpr int e { 6 };
+	constexpr int f { 50 };
+	constexpr const char* tmp { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
+		                        "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
+		                        "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
+		                        " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
+		                        " mi non odio." };
 
 	ArgFormatter parser(std::locale(""));
 	Instrumentator timer;
@@ -246,6 +267,7 @@ int main() {
 	std::string finalStr;
 
 	serenity::targets::ColorConsole console("", "%+");
+	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
 
 	for( int i { 0 }; i < 5; ++i ) {
 			// serenity's format loop using back_insert_iterator
@@ -258,14 +280,12 @@ int main() {
 			finalStr.clear();
 
 			auto serenityTime1 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-			console.Debug("{}", Tag::Bright_Cyan("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [" +
-			                                     std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
+			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime1));
 			parser.se_format_to(std::back_inserter(finalStr), parseString, a, b, c, d, e, f, tmp);
-			result = Tag::Green("With Result: \"" + finalStr + "\"");
-			console.Debug("{}", result);
+			console.Info("With Result: {}", finalStr);
 			finalStr.clear();
 
-			// serenity's format loop by taking string&
+			// serenity's format loop by returning a string
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
 					finalStr = parser.se_format(parseString, a, b, c, d, e, f, tmp);
@@ -274,14 +294,12 @@ int main() {
 			finalStr.clear();
 
 			auto serenityTime2 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-			console.Debug("{}", Tag::Bright_Cyan("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [" +
-			                                     std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
+			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime2));
 			finalStr = parser.se_format(parseString, a, b, c, d, e, f, tmp);
-			result   = Tag::Green("With Result: \"" + finalStr + "\"");
-			console.Debug("{}", result);
+			console.Info("With Result: {}", finalStr);
 			finalStr.clear();
 
-			// Standdard's std::vformat_to() loop
+			// Standard's std::vformat_to() loop
 			timer.StopWatch_Reset();
 			auto locale { std::locale("") };
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
@@ -293,51 +311,42 @@ int main() {
 
 			auto standardTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			L_VFORMAT_TO(finalStr, locale, parseString, a, b, c, d, e, f, tmp);
-			console.Debug("{}", Tag::Bright_Cyan("std::format_to() Elapsed Time Over 10,000,000 iterations: [" +
-			                                     std::to_string(timer.Elapsed_In(time_mode::us) / 10'000'000.0f).append(" us]")));
-			result = Tag::Green("With Result: \"" + finalStr + "\"");
-			console.Debug("{}", result);
+			console.Debug("std::format_to() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(standardTime));
+			console.Info("With Result: {}", finalStr);
 
 			auto percentValue { ((serenityTime1 - standardTime) / serenityTime1) * 100 };
 			auto percentValue2 { ((serenityTime2 - standardTime) / serenityTime2) * 100 };
 			auto percentValue3 { ((serenityTime1 - serenityTime2) / serenityTime1) * 100 };
 
 			if( percentValue > 0 ) {
-					auto percentage { SetPrecision(percentValue, 2) };
-					console.Debug("{}", Tag::Bright_White("Serenity's se_format_to() is ")
-					                    .append(Tag::Red("[%" + percentage.append("]")))
-					                    .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function std::vformat_to()")));
+					std::string percentStr { "[%" };
+					percentStr.append(SetPrecision(percentValue, 2)).append("]");
+					console.Trace("Serenity's se_format_to() is {} Slower Than The Standard's Formatting Function std::vformat_to()", Tag::Red(percentStr));
 			} else {
-					auto percentage { SetPrecision(std::abs(percentValue), 2) };
-					console.Debug("{}", Tag::Bright_White("Serenity's se_format_to() is ")
-					                    .append(Tag::Green("[%" + percentage.append("]")))
-					                    .append(Tag::Bright_White(" Faster Than The Standard's Formatting Function std::vformat_to()")));
+					std::string percentStr { "[%" };
+					percentStr.append(SetPrecision(std::abs(percentValue), 2)).append("]");
+					console.Trace("Serenity's se_format_to() is {} Faster Than The Standard's Formatting Function std::vformat_to()", Tag::Green(percentStr));
 				}
 
 			if( percentValue2 > 0 ) {
-					auto percentage { SetPrecision(percentValue2, 2) };
-					console.Debug("{}", Tag::Bright_White("Serenity's se_format() is ")
-					                    .append(Tag::Red("[%" + percentage.append("]")))
-					                    .append(Tag::Bright_White(" Slower Than The Standard's Formatting Function std::vformat_to()")));
+					std::string percentStr { "[%" };
+					percentStr.append(SetPrecision(percentValue2, 2)).append("]");
+					console.Trace("Serenity's se_format() is {} Slower Than The Standard's Formatting Function std::vformat_to()", Tag::Red(percentStr));
 			} else {
-					auto percentage { SetPrecision(std::abs(percentValue2), 2) };
-					console.Debug("{}", Tag::Bright_White("Serenity's se_format() is ")
-					                    .append(Tag::Green("[%" + percentage.append("]")))
-					                    .append(Tag::Bright_White(" Faster Than The Standard's Formatting Function std::vformat_to()")));
+					std::string percentStr { "[%" };
+					percentStr.append(SetPrecision(std::abs(percentValue2), 2)).append("]");
+					console.Trace("Serenity's se_format() is {} Faster Than The Standard's Formatting Function std::vformat_to()", Tag::Green(percentStr));
 				}
 
 			if( percentValue3 > 0 ) {
-					auto percentage { SetPrecision(percentValue3, 2) };
-					console.Debug("{}", Tag::Bright_White("Serenity's se_format_to() Is ")
-					                    .append(Tag::Red("[%" + percentage.append("]")))
-					                    .append(Tag::Bright_White(" Slower Than Serenity's  se_format()\n")));
+					std::string percentStr { "[%" };
+					percentStr.append(SetPrecision(percentValue3, 2)).append("]");
+					console.Trace("Serenity's se_format_to() Is {} Slower Than Serenity's  se_format()\n", Tag::Red(percentStr));
 			} else {
-					auto percentage { SetPrecision(std::abs(percentValue3), 2) };
-					console.Debug("{}", Tag::Bright_White("Serenity's se_format_to() Is ")
-					                    .append(Tag::Green("[%" + percentage.append("]")))
-					                    .append(Tag::Bright_White(" Faster Than Serenity's se_format()")));
+					std::string percentStr { "[%" };
+					percentStr.append(SetPrecision(std::abs(percentValue3), 2)).append("]");
+					console.Trace("Serenity's se_format_to() Is {} Faster Than Serenity's  se_format()\n", Tag::Green(percentStr));
 				}
-
 			printf("\n");
 		}
 

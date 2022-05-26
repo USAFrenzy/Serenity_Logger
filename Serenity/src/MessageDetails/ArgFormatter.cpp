@@ -4,13 +4,7 @@
 namespace serenity::arg_formatter {
 
 	void SpecFormatting::ResetSpecs() {
-		argPosition = alignmentPadding = precision = 0;
-		nestedPrecArgPos = nestedWidthArgPos = static_cast<size_t>(0);
-		align                                = Alignment::Empty;
-		typeSpec = fillCharacter = '\0';
-		preAltForm               = "\0";
-		signType                 = Sign::Empty;
-		localize = hasAlt = false;
+		std::memset(this, 0, sizeof(SpecFormatting));
 	}
 
 	void ParseResult::Reset() {
@@ -36,7 +30,6 @@ namespace serenity::arg_formatter {
 
 	bool ArgFormatter::ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start) {
 		auto ch { sv[ start ] };
-
 		// we're in automatic mode
 		if( m_indexMode == IndexMode::automatic ) {
 				if( ch == '}' ) {
@@ -64,38 +57,41 @@ namespace serenity::arg_formatter {
 								return true;
 						}
 					}
-		}
-		// we're in manual mode
-		if( ch == '}' ) {
-				throw std::runtime_error("Error In Postion Field: Cannot Mix Manual And Automatic Indexing For "
-				                         "Arguments\n");
-		} else if( ch == ' ' ) {
-				for( ;; ) {
-						if( start >= sv.size() ) break;
-						if( ch = sv[ ++start ] != ' ' ) break;
-					}
-		}
-		if( ch == ':' ) {
-				throw std::runtime_error("Error In Position Field: Missing Positional Argument Before ':' In Manual Indexing Mode\n");
-		}
-
-		if( IsDigit(ch) ) {
-				auto& position { specValues.argPosition };
-				// from_chars() is much faster than the NoCheckIntFromChars() in this particular case
-				std::from_chars(sv.data(), sv.data() + sv.size(), position);
-				start += position > 9 ? position <= 24 ? 2 : -1 : 1;
-				if( start == -1 ) {
-						throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n");
-				}
-				if( sv[ start ] != ':' && sv[ start ] != '}' ) {
-						throw std::runtime_error("Error In Position Field: Invalid Format Detected. A Position Field Should Be Followed By A ':' Or A '}'\n");
-				}
-				++argIndex;
-				++start;
 		} else {
-				throw std::runtime_error("Formatting Error Detected: Missing ':' Before Next Specifier\n");
+				// we're in manual mode
+				if( IsDigit(ch) ) {
+						auto& position { specValues.argPosition };
+						auto data { sv.data() };
+						std::from_chars(data + start, data + sv.size(), position);
+						start += position > 9 ? position <= 24 ? 2 : 0 : 1;
+						if( start == 0 ) {
+								throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n");
+						}
+						if( sv[ start ] != ':' && sv[ start ] != '}' ) {
+								throw std::runtime_error("Error In Position Field: Invalid Format Detected. A Position Field Should Be Followed By A ':' Or A "
+								                         "'}'\n");
+						}
+						++argIndex;
+						++start;
+						return true;
+				} else {
+						switch( ch ) {
+								case '}': throw std::runtime_error("Error In Postion Field: Cannot Mix Manual And Automatic Indexing For Arguments\n"); break;
+								case ' ':
+									{
+										for( ;; ) {
+												if( start >= sv.size() ) break;
+												if( ch = sv[ ++start ] != ' ' ) break;
+											}
+									}
+									[[fallthrough]];
+								case ':':
+									throw std::runtime_error("Error In Position Field: Missing Positional Argument Before ':' In Manual Indexing Mode\n");
+									break;
+								default: throw std::runtime_error("Formatting Error Detected: Missing ':' Before Next Specifier\n"); break;
+							}
+					}
 			}
-
 		return true;
 	}
 
@@ -157,14 +153,12 @@ namespace serenity::arg_formatter {
 				if( subPos >= size ) {
 						throw std::runtime_error("Missing Closing '}' In Argument Spec Field\n");
 				}
-				auto ch { sv[ subPos ] };
 				for( ;; ) {
 						if( subPos > size ) {
 								bracketResults.isValid = false;
 								break;
 						}
-						ch = sv[ subPos ];
-						if( ch == '{' ) {
+						if( sv[ subPos ] == '{' ) {
 								FindNestedBrackets(sv, subPos);
 						}
 						if( sv[ subPos ] != '}' ) {
@@ -249,7 +243,7 @@ namespace serenity::arg_formatter {
 			}
 	}
 
-	static bool IsValidAltTypeSpec(msg_details::SpecType type, const char& spec) {
+	static constexpr bool IsValidAltTypeSpec(msg_details::SpecType type, const char& spec) {
 		using SpecType = msg_details::SpecType;
 
 		switch( type ) {
@@ -293,7 +287,7 @@ namespace serenity::arg_formatter {
 		return false;
 	}
 
-	static const char* AlternatePreFormatChars(msg_details::SpecType type, const char& spec) {
+	static constexpr const char* AlternatePreFormatChars(msg_details::SpecType type, const char& spec) {
 		using SpecType = msg_details::SpecType;
 
 		switch( type ) {
