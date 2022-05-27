@@ -257,7 +257,7 @@ int main() {
 	//                time was spent in FindBrackets() hence the initial focus there.
 	//***************************************************************************************************************************************************
 	using namespace serenity::arg_formatter;
-	std::string_view parseString { "{2}" };
+	std::string_view parseString { "{0}" };
 	int a { 424242442 };
 	int b { 5 };
 	float c { 32.5f };

@@ -76,13 +76,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			size_t pos { 0 };
 			remainder = sv;
 			specValues.ResetSpecs();
-			FindBrackets(remainder);
+			FindBrackets(remainder, remainder.size());
 			if( !bracketResults.isValid ) {
 					std::copy(sv.begin(), sv.end(), Iter);
 					return;
 			}
 			if( bracketResults.beginPos != 0 ) {
-					std::string_view preToken { sv.substr(0, bracketResults.beginPos) };
+					std::string_view preToken { sv.data(), sv.data() + bracketResults.beginPos };
 					auto size { preToken.size() };
 					std::copy(preToken.begin(), preToken.end(), Iter);
 					sv.remove_prefix(size);
@@ -90,7 +90,6 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					bracketResults.endPos -= size;
 			}
 			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
-			const size_t bracketSize { argBracket.size() };
 			/*Handle Escaped Bracket*/
 			if( argBracket[ pos ] == '{' ) {
 					Iter = '{';
@@ -104,7 +103,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					continue;
 			}
 			/* Handle What's Left Of The Bracket */
-			VerifyArgumentBracket(argBracket, pos, bracketSize);
+			VerifyArgumentBracket(argBracket, pos, bracketResults.endPos - bracketResults.beginPos);
 			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';

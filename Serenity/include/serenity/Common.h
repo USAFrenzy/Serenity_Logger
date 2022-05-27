@@ -242,7 +242,7 @@ namespace serenity {
 
 	// clang-format on
 
-	static bool IsDigit(char ch) {
+	static bool IsDigit(const char& ch) {
 		return ((ch >= '0') && (ch <= '9'));
 	}
 

@@ -141,7 +141,7 @@ namespace serenity::arg_formatter {
 	  public:
 		ArgFormatter() = delete;
 		ArgFormatter(const std::locale& loc);
-		ArgFormatter(const ArgFormatter&)            = delete;
+		ArgFormatter(const ArgFormatter&) = delete;
 		ArgFormatter& operator=(const ArgFormatter&) = delete;
 		~ArgFormatter()                              = default;
 
@@ -152,7 +152,7 @@ namespace serenity::arg_formatter {
 	  private:
 		template<typename T> constexpr void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
 
-		void FindBrackets(std::string_view sv);
+		void FindBrackets(std::string_view sv, size_t svSize);
 		void FindNestedBrackets(std::string_view sv, size_t& currentPos);
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);

@@ -24,10 +24,9 @@ namespace serenity::arg_formatter {
 	}
 
 	bool ArgFormatter::ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start) {
-		auto ch { sv[ start ] };
 		// we're in automatic mode
 		if( m_indexMode == IndexMode::automatic ) {
-				if( ch == '}' ) {
+			if( auto ch {sv[start]}; ch == '}' ) {
 						specValues.argPosition = argIndex++;
 						return false;
 				} else if( ch == ' ' ) {
@@ -53,28 +52,24 @@ namespace serenity::arg_formatter {
 					}
 		} else {
 				// we're in manual mode
-				if( IsDigit(ch) ) {
-						auto& position { specValues.argPosition };
+			if( IsDigit(sv[start]) ) {
 						auto data { sv.data() };
-						std::from_chars(data + start, data + sv.size(), position);
-						start += position > 9 ? position <= 24 ? 2 : 0 : 1;
-						if( start == 0 ) {
-								throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n");
-						}
-						if( sv[ start ] != ':' && sv[ start ] != '}' ) {
+						auto length { static_cast<size_t>(std::from_chars(data + start, data + sv.size(), specValues.argPosition).ptr - (data + start)) };
+						length >= 3 ?  throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n"): start += length;
+						if( const auto& ch = sv[ start ]; ch != ':' && ch != '}' ) {
 								throw std::runtime_error("Error In Position Field: Invalid Format - A Position Field Should Be Followed By A ':' Or A '}'\n");
 						}
 						++argIndex;
 						++start;
 						return true;
 				} else {
-						switch( ch ) {
+						switch(sv[start]) {
 								case '}': throw std::runtime_error("Error In Postion Field: Cannot Mix Manual And Automatic Indexing For Arguments\n"); break;
 								case ' ':
 									{
 										for( ;; ) {
 												if( start >= sv.size() ) break;
-												if( ch = sv[ ++start ] != ' ' ) break;
+												if( sv[ ++start ] != ' ' ) break;
 											}
 									}
 									[[fallthrough]];
@@ -124,11 +119,10 @@ namespace serenity::arg_formatter {
 		}
 	}
 
-	void ArgFormatter::FindBrackets(std::string_view sv) {
+	void ArgFormatter::FindBrackets(std::string_view sv, size_t svSize) {
 		bracketResults.Reset();
-		auto size { sv.size() };
 		for( ;; ) {
-				if( bracketResults.beginPos >= size ) {
+				if( bracketResults.beginPos >= svSize ) {
 						bracketResults.isValid = false;
 						return;
 				}
@@ -137,11 +131,11 @@ namespace serenity::arg_formatter {
 						continue;
 				}
 				bracketResults.endPos = bracketResults.beginPos + 1;
-				if( bracketResults.endPos >= size ) {
+				if( bracketResults.endPos >= svSize ) {
 						throw std::runtime_error("Missing Closing '}' In Argument Spec Field\n");
 				}
 				for( ;; ) {
-						if( bracketResults.endPos > size ) {
+						if( bracketResults.endPos > svSize ) {
 								bracketResults.isValid = false;
 								return;
 						}
