@@ -19,9 +19,9 @@
 // the locale of the rest of the program. All formatting specifiers and manual/automatic indexing from the fmt library
 // are available and supported.
 //
-// EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib;
-// however, the performance times of serenity is STILL faster than the MSVC's implementation - the consistency of their
-// performance is now a non-issue though (same performance with or without the UTF-8 flag)
+// EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib; however,
+//             the performance times of serenity is STILL faster than the MSVC's implementation (for most cases) - the consistency of their
+//             performance is now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
 #include <serenity/Common.h>
@@ -75,7 +75,7 @@ namespace serenity::msg_details {
 		constexpr std::array<VType, MAX_ARG_COUNT>& ArgStorage();
 		constexpr std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		template<typename... Args> constexpr void EmplaceBackArgs(Args&&... args);
+		template<typename... Args> constexpr void StoreArgs(Args&&... args);
 		constexpr std::string_view string_state(size_t index);
 		constexpr std::string_view c_string_state(size_t index);
 		constexpr std::string_view string_view_state(size_t index);

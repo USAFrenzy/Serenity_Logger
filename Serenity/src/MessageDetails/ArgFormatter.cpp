@@ -7,19 +7,14 @@ namespace serenity::arg_formatter {
 		std::memset(this, 0, sizeof(SpecFormatting));
 	}
 
-	void ParseResult::Reset() {
-		tokenResult.clear();
-	}
-
 	void BracketSearchResults::Reset() {
-		isValid  = false;
-		beginPos = endPos = 0;
+		std::memset(this, 0, sizeof(BracketSearchResults));
 	}
 
 	ArgFormatter::ArgFormatter(const std::locale& locale)
-			: argCounter(0), m_indexMode(IndexMode::automatic), result(ParseResult {}), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}),
-			  argStorage(serenity::msg_details::ArgContainer {}), rawValueTemp(), buff(std::vector<char> {}),
-			  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), charsResult(std::to_chars_result {}), loc(nullptr) {
+			: argCounter(0), m_indexMode(IndexMode::automatic), remainder(""), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}),
+			  argStorage(serenity::msg_details::ArgContainer {}), rawValueTemp(), buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}),
+			  charsResult(std::to_chars_result {}), loc(nullptr) {
 		loc       = std::make_unique<std::locale>(locale);
 		separator = std::use_facet<std::numpunct<char>>(*loc.get()).thousands_sep();
 		decimal   = std::use_facet<std::numpunct<char>>(*loc.get()).decimal_point();
@@ -46,15 +41,14 @@ namespace serenity::arg_formatter {
 						} else {
 								return true;
 							}
+				} else if( ch == ':' ) {
+						specValues.argPosition = argIndex++;
+						++start;
+						return true;
 				} else {
 						if( IsDigit(ch) ) {
 								m_indexMode = IndexMode::manual;
 								return ParsePositionalField(sv, argIndex, start);
-						}
-						if( ch == ':' ) {
-								specValues.argPosition = argIndex++;
-								++start;
-								return true;
 						}
 					}
 		} else {
@@ -68,8 +62,7 @@ namespace serenity::arg_formatter {
 								throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n");
 						}
 						if( sv[ start ] != ':' && sv[ start ] != '}' ) {
-								throw std::runtime_error("Error In Position Field: Invalid Format Detected. A Position Field Should Be Followed By A ':' Or A "
-								                         "'}'\n");
+								throw std::runtime_error("Error In Position Field: Invalid Format - A Position Field Should Be Followed By A ':' Or A '}'\n");
 						}
 						++argIndex;
 						++start;
@@ -95,7 +88,7 @@ namespace serenity::arg_formatter {
 		return true;
 	}
 
-	void serenity::arg_formatter::ArgFormatter::FindNestedBrackets(std::string_view sv, int& currentPos) {
+	void serenity::arg_formatter::ArgFormatter::FindNestedBrackets(std::string_view sv, size_t& currentPos) {
 		auto size { sv.size() - 1 };
 
 		auto FindOpenBracket = [ & ]() {
@@ -131,45 +124,42 @@ namespace serenity::arg_formatter {
 		}
 	}
 
-	void ArgFormatter::FindBrackets(std::string_view& sv) {
+	void ArgFormatter::FindBrackets(std::string_view sv) {
 		bracketResults.Reset();
-		int pos { 0 }, subPos { 0 };
 		auto size { sv.size() };
-		// This is mainly when setting the sv to the remainder value in the Parse function
-		if( size != 0 && sv[ 0 ] == '\0' ) {
-				sv.remove_prefix(1);
-		}
 		for( ;; ) {
-				if( pos >= size ) {
+				if( bracketResults.beginPos >= size ) {
 						bracketResults.isValid = false;
-						break;
+						return;
 				}
-				if( sv[ pos ] != '{' ) {
-						++pos;
+				if( sv[ bracketResults.beginPos ] != '{' ) {
+						++bracketResults.beginPos;
 						continue;
 				}
-				bracketResults.beginPos = pos;
-				subPos                  = pos + 1;
-				if( subPos >= size ) {
+				bracketResults.endPos = bracketResults.beginPos + 1;
+				if( bracketResults.endPos >= size ) {
 						throw std::runtime_error("Missing Closing '}' In Argument Spec Field\n");
 				}
 				for( ;; ) {
-						if( subPos > size ) {
+						if( bracketResults.endPos > size ) {
 								bracketResults.isValid = false;
-								break;
+								return;
 						}
-						if( sv[ subPos ] == '{' ) {
-								FindNestedBrackets(sv, subPos);
-						}
-						if( sv[ subPos ] != '}' ) {
-								++subPos;
-								continue;
-						}
-						bracketResults.endPos  = subPos;
-						bracketResults.isValid = true;
-						break;
+						switch( sv[ bracketResults.endPos ] ) {
+								case '{':
+									FindNestedBrackets(sv, bracketResults.endPos);
+									continue;
+									break;
+								case '}':
+									bracketResults.isValid = true;
+									return;
+									break;
+								default:
+									++bracketResults.endPos;
+									continue;
+									break;
+							}
 					}
-				break;
 			}
 	}
 
@@ -579,7 +569,7 @@ namespace serenity::arg_formatter {
 						return !specValues.hasAlt && specValues.signType == Sign::Empty && !specValues.localize && specValues.typeSpec == '\0';
 					}
 					break;
-				case BoolType: !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 's'); break;
+				case BoolType: return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 's'); break;
 				case CharType: return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 'c'); break;
 				case FloatType: [[fallthrough]];
 				case DoubleType: [[fallthrough]];

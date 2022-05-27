@@ -49,9 +49,9 @@
 // the locale of the rest of the program. All formatting specifiers and manual/automatic indexing from the fmt library
 // are available and supported.
 //
-// EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib;
-// however, the performance times of serenity is STILL faster than the MSVC's implementation - the consistency of their
-// performance is now a non-issue though (same performance with or without the UTF-8 flag)
+// EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib; however,
+//             the performance times of serenity is STILL faster than the MSVC's implementation (for most cases) - the consistency of their
+//             performance is now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
 #include <serenity/MessageDetails/ArgContainer.h>
@@ -95,7 +95,6 @@ namespace serenity::arg_formatter {
 		Width
 	};
 
-	// Will shrink the size once I have everything accounted for
 	struct SpecFormatting
 	{
 		void ResetSpecs();
@@ -112,13 +111,6 @@ namespace serenity::arg_formatter {
 		bool localize { false };
 		bool hasAlt { false };
 		bool hasClosingBrace { false };
-	};
-
-	struct ParseResult
-	{
-		void Reset();
-		std::string_view remainder { "" };
-		std::string tokenResult;
 	};
 
 	struct BracketSearchResults
@@ -160,8 +152,8 @@ namespace serenity::arg_formatter {
 	  private:
 		template<typename T> constexpr void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
 
-		void FindBrackets(std::string_view& sv);
-		void FindNestedBrackets(std::string_view sv, int& currentPos);
+		void FindBrackets(std::string_view sv);
+		void FindNestedBrackets(std::string_view sv, size_t& currentPos);
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
 
@@ -185,12 +177,9 @@ namespace serenity::arg_formatter {
 		bool VerifySpec(msg_details::SpecType type, const char& spec);
 		bool IsSimpleSubstitution(msg_details::SpecType& argType, int& precision, int& width);
 
-		template<typename T>
-		bool HandleIfEndOrWhiteSpace(std::back_insert_iterator<T>&& Iter, std::string_view sv, size_t& currentPosition, const size_t& bracketSize);
 		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 		void AppendByPrecision(std::string_view val, int precision);
-		template<typename T> void AppendDirectly(std::back_insert_iterator<T>&& Iter, msg_details::SpecType& type);
 		template<typename T> void FormatFloatTypeArg(T&& value, int precision);
 		template<typename T> void FormatIntTypeArg(T&& value);
 		void FormatRawValueToStr(int& precision, msg_details::SpecType type);
@@ -199,19 +188,18 @@ namespace serenity::arg_formatter {
 		void LocalizeFloatingPoint(int precision, msg_details::SpecType type);
 		void LocalizeBool();
 		void FormatIntegralGrouping(std::string& section, char separator);
-		template<typename T> void DirectlyWriteValue(std::back_insert_iterator<T>&& Iter, msg_details::SpecType&);
+		template<typename T> void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, msg_details::SpecType);
 
 	  private:
 		int argCounter { 0 };
 		IndexMode m_indexMode { IndexMode::automatic };
 
-		ParseResult result {};
+		std::string_view remainder { "" };
 		BracketSearchResults bracketResults {};
 		SpecFormatting specValues {};
 		ArgContainer argStorage {};
 
 		std::string rawValueTemp;
-		std::vector<char> buff {};
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
 		std::to_chars_result charsResult;
 

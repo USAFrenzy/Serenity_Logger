@@ -71,13 +71,13 @@ constexpr std::array<details::SpecType, details::MAX_ARG_COUNT>& details::ArgCon
 	return specContainer;
 }
 
-template<typename... Args> constexpr void details::ArgContainer::EmplaceBackArgs(Args&&... args) {
+template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&&... args) {
 	(
 	[ = ](auto&& arg) {
 		using base_type          = std::decay_t<decltype(arg)>;
 		using ref                = std::add_lvalue_reference_t<base_type>;
 		argContainer[ counter ]  = std::forward<ref>(ref(arg));
-		specContainer[ counter ] = GetArgType(std::forward<ref>(ref(arg)));
+		specContainer[ counter ] = GetArgType(arg);
 		if( ++counter > MAX_ARG_INDEX ) {
 				std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
 				return;
@@ -87,7 +87,7 @@ template<typename... Args> constexpr void details::ArgContainer::EmplaceBackArgs
 }
 template<typename... Args> constexpr void details::ArgContainer::CaptureArgs(Args&&... args) {
 	counter = 0;
-	EmplaceBackArgs(std::forward<Args>(args)...);
+	StoreArgs(std::forward<Args>(args)...);
 }
 
 constexpr std::string_view details::ArgContainer::string_state(size_t index) {
