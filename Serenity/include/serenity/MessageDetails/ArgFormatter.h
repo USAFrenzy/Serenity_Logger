@@ -141,7 +141,7 @@ namespace serenity::arg_formatter {
 	  public:
 		ArgFormatter() = delete;
 		ArgFormatter(const std::locale& loc);
-		ArgFormatter(const ArgFormatter&) = delete;
+		ArgFormatter(const ArgFormatter&)            = delete;
 		ArgFormatter& operator=(const ArgFormatter&) = delete;
 		~ArgFormatter()                              = default;
 
@@ -157,7 +157,7 @@ namespace serenity::arg_formatter {
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
 
-		void VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize, msg_details::SpecType &argType);
+		void VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize, msg_details::SpecType& argType);
 		void VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
 		void VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 		void VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);

@@ -257,18 +257,18 @@ int main() {
 	//                time was spent in FindBrackets() hence the initial focus there.
 	//***************************************************************************************************************************************************
 	using namespace serenity::arg_formatter;
-	std::string_view parseString { "{0}" };
-	int a { 424242442 };
-	int b { 5 };
-	float c { 32.5f };
-	double d { 54453765675.65675 };
-	int e { 6 };
-	int f { 50 };
-	std::string_view tmp { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
-		                   "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
-		                   "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
-		                   " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
-		                   " mi non odio." };
+	constexpr std::string_view parseString { "{0:*^#20X}" };
+	constexpr int a { 424242442 };
+	constexpr int b { 5 };
+	constexpr float c { 32.5f };
+	constexpr double d { 54453765675.65675 };
+	constexpr int e { 6 };
+	constexpr int f { 50 };
+	constexpr std::string_view tmp { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
+		                             "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
+		                             "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
+		                             " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
+		                             " mi non odio." };
 
 	ArgFormatter parser(std::locale(""));
 	Instrumentator timer;
@@ -278,7 +278,7 @@ int main() {
 	serenity::targets::ColorConsole console("", "%+");
 	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
 
-	for( int i { 0 }; i < 1; ++i ) {
+	for( int i { 0 }; i < 5; ++i ) {
 			// serenity's format loop using back_insert_iterator
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {

@@ -304,7 +304,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::WriteSimpleValu
 		}
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(std::back_insert_iterator<T>&& Iter, msg_details::SpecType&argType) {
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(std::back_insert_iterator<T>&& Iter, msg_details::SpecType& argType) {
 	using enum msg_details::SpecType;
 	int precision { precision = specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
 		                      : specValues.precision != 0        ? specValues.precision
@@ -327,7 +327,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 			if( std::is_same_v<T, std::string> ) {
 					container.append(std::move(rawValueTemp));
 			} else {
-				Iter=std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
+					Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 				}
 			return;
 	}

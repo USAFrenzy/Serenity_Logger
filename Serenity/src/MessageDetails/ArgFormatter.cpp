@@ -34,11 +34,10 @@ namespace serenity::arg_formatter {
 								if( start >= sv.size() ) break;
 								if( ch = sv[ start++ ] != ' ' ) break;
 							}
-						if( ch != '}' && ch != ':' ) {
-								throw std::runtime_error("Error In Position Field: Invalid Format Detected. A Position Field In Automatic Indexing Mode Should "
-								                         "Be Followed By A ':' Or A '}'\n");
-						} else {
-								return true;
+						switch( sv[ start ] ) {
+								case ':': [[fallthrough]];
+								case '}': return true; break;
+								default: throw std::runtime_error("Error In Position Field: No ':' Or '}' Found While In Automatic Indexing Mode\n"); break;
 							}
 				} else if( ch == ':' ) {
 						specValues.argPosition = argIndex++;
@@ -52,16 +51,47 @@ namespace serenity::arg_formatter {
 					}
 		} else {
 				// we're in manual mode
-				if( IsDigit(sv[ start ]) ) {
-						auto data { sv.data() };
-						auto length { static_cast<size_t>(std::from_chars(data + start, data + sv.size(), specValues.argPosition).ptr - (data + start)) };
-						length >= 3 ? throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n") : start += length;
-						if( const auto& ch = sv[ start ]; ch != ':' && ch != '}' ) {
-								throw std::runtime_error("Error In Position Field: Invalid Format - A Position Field Should Be Followed By A ':' Or A '}'\n");
+				if( char ch { sv[ start ] }; IsDigit(ch) ) {
+						// At the cost of some readability, this is much faster than std::from_chars() for this use case (~%10 faster).
+						// Presumably because unlike std::from_chars(), I'm not doing any bounds/sign checking here, just seeing
+						// if the next char is an ASCII digit and converting it to an integer while limiting the digits to 2 instead.
+						// clang-format off
+						auto ToInt = [ & ]() {
+							switch( ch ) {
+									case '0': return 0; break;
+									case '1': return 1; break;
+									case '2': return 2; break;
+									case '3': return 3; break;
+									case '4': return 4; break;
+									case '5': return 5; break;
+									case '6': return 6; break;
+									case '7': return 7; break;
+									case '8': return 8; break;
+									case '9': return 9; break;
+									default: unreachable(); break;
+								}
+						};
+						// clang-format on
+						auto& position { specValues.argPosition };
+						position = ToInt();
+						ch       = sv[ ++start ];
+						if( IsDigit(ch) ) {
+								position *= 10;
+								position += ToInt();
+								ch = sv[ ++start ];
+								if( position > 24 || IsDigit(ch) ) {
+										throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n");
+								}
 						}
-						++argIndex;
-						++start;
-						return true;
+						switch( sv[ start ] ) {
+								case ':': [[fallthrough]];
+								case '}':
+									++argIndex;
+									++start;
+									return true;
+									break;
+								default: throw std::runtime_error("Error In Position Field: No ':' Or '}' Found While In Manual Indexing Mode\n"); break;
+							}
 				} else {
 						switch( sv[ start ] ) {
 								case '}': throw std::runtime_error("Error In Postion Field: Cannot Mix Manual And Automatic Indexing For Arguments\n"); break;
@@ -635,7 +665,7 @@ namespace serenity::arg_formatter {
 		return;
 	}
 
-	void ArgFormatter::VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize, msg_details::SpecType &argType) {
+	void ArgFormatter::VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize, msg_details::SpecType& argType) {
 		if( (bracketSize <= 1) || (start >= (bracketSize - 1)) ) return;
 		using SpecType = msg_details::SpecType;
 		VerifyFillAlignField(sv, start, bracketSize, argType);

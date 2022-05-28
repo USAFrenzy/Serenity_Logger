@@ -93,13 +93,8 @@ int main() {
 	serenity::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", (LogDirPath() /= "Rotating_Log.txt").string(), true);
 
 	Instrumentator timer;
-
-	 const char* test = nullptr;
-	// test string
 	static_assert(testView.size() == 400);
-	std::string temp { testView.data(), testView.size() };
-	test = temp.c_str();
-	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
+	auto testStrInMB { (testView.length()) / static_cast<float>(MB) };
 
 	unsigned long int i { 0 };
 	const unsigned long int iterations { 2'000'000 };
@@ -109,7 +104,7 @@ int main() {
 	std::cout << "Benching Color Console Target...\n";
 
 	for( i; i < iterations; i++ ) {
-			C.Info(msg, test);
+			C.Info(msg, testView);
 		}
 	timer.StopWatch_Stop();
 	auto consoleSeconds { timer.Elapsed_In(time_mode::sec) };
@@ -123,7 +118,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogConsoleLogger->info(msg, test);
+			spdlogConsoleLogger->info(msg, testView);
 		}
 	timer.StopWatch_Stop();
 #endif
@@ -136,7 +131,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			testFile.Info(msg, test);
+			testFile.Info(msg, testView);
 		}
 	timer.StopWatch_Stop();
 	testFile.Flush();
@@ -151,7 +146,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogFileLogger->info(msg, test);
+			spdlogFileLogger->info(msg, testView);
 		}
 	timer.StopWatch_Stop();
 	spdlogFileLogger->flush();
@@ -165,7 +160,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			rotatingFile.Info(msg, test);
+			rotatingFile.Info(msg, testView);
 		}
 	timer.StopWatch_Stop();
 	rotatingFile.Flush();
@@ -179,7 +174,7 @@ int main() {
 	i = 0;    // reset
 	timer.StopWatch_Reset();
 	for( i; i < iterations; i++ ) {
-			spdlogRotatingLogger->info(msg, test);
+			spdlogRotatingLogger->info(msg, testView);
 		}
 	timer.StopWatch_Stop();
 	spdlogRotatingLogger->flush();
