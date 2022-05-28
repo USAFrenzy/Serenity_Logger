@@ -98,13 +98,15 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			/*Handle Positional Args*/
 			if( !ParsePositionalField(argBracket, argCounter, pos) ) {
 					// Nothing Else to Parse - just a simple substitution after position field
-					FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
+					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+					FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 					sv.remove_prefix(argBracket.size() + 1);
 					continue;
 			}
 			/* Handle What's Left Of The Bracket */
-			VerifyArgumentBracket(argBracket, pos, bracketResults.endPos - bracketResults.beginPos);
-			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter));
+			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+			VerifyArgumentBracket(argBracket, pos, bracketResults.endPos - bracketResults.beginPos, argType);
+			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
 			}
@@ -302,7 +304,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::WriteSimpleValu
 		}
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(std::back_insert_iterator<T>&& Iter) {
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(std::back_insert_iterator<T>&& Iter, msg_details::SpecType&argType) {
 	using enum msg_details::SpecType;
 	int precision { precision = specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
 		                      : specValues.precision != 0        ? specValues.precision
@@ -310,8 +312,6 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
-	auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-
 	if( IsSimpleSubstitution(argType, precision, totalWidth) ) {
 			return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 	}
@@ -327,7 +327,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 			if( std::is_same_v<T, std::string> ) {
 					container.append(std::move(rawValueTemp));
 			} else {
-					std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
+				Iter=std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 				}
 			return;
 	}
@@ -340,7 +340,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 					if( std::is_same_v<T, std::string> ) {
 							container.append(std::move(rawValueTemp));
 					} else {
-							std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
+							Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 						}
 					for( ;; ) {
 							if( i >= fillAmount ) break;
@@ -359,7 +359,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 					if( std::is_same_v<T, std::string> ) {
 							container.append(std::move(rawValueTemp));
 					} else {
-							std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
+							Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 						}
 				}
 				break;
@@ -373,7 +373,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(st
 				if( std::is_same_v<T, std::string> ) {
 						container.append(std::move(rawValueTemp));
 				} else {
-						std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
+						Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 					}
 				fillAmount = (totalWidth - size - fillAmount);
 				i          = 0;

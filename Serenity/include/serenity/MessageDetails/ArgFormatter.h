@@ -157,16 +157,16 @@ namespace serenity::arg_formatter {
 
 		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
 
-		void VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize);
-		void VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		void VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize, msg_details::SpecType &argType);
+		void VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
 		void VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec);
-		void VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type);
-		void HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		void VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
+		void VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
+		void VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
+		void VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
+		void VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec, msg_details::SpecType& argType);
+		void VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type, msg_details::SpecType& argType);
+		void HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
 		void VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
 
 		bool IsValidStringSpec(const char& spec);
@@ -177,7 +177,7 @@ namespace serenity::arg_formatter {
 		bool VerifySpec(msg_details::SpecType type, const char& spec);
 		bool IsSimpleSubstitution(msg_details::SpecType& argType, int& precision, int& width);
 
-		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter);
+		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter, msg_details::SpecType& argType);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 		void AppendByPrecision(std::string_view val, int precision);
 		template<typename T> void FormatFloatTypeArg(T&& value, int precision);

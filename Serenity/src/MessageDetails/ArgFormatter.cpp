@@ -26,7 +26,7 @@ namespace serenity::arg_formatter {
 	bool ArgFormatter::ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start) {
 		// we're in automatic mode
 		if( m_indexMode == IndexMode::automatic ) {
-			if( auto ch {sv[start]}; ch == '}' ) {
+				if( auto ch { sv[ start ] }; ch == '}' ) {
 						specValues.argPosition = argIndex++;
 						return false;
 				} else if( ch == ' ' ) {
@@ -52,10 +52,10 @@ namespace serenity::arg_formatter {
 					}
 		} else {
 				// we're in manual mode
-			if( IsDigit(sv[start]) ) {
+				if( IsDigit(sv[ start ]) ) {
 						auto data { sv.data() };
 						auto length { static_cast<size_t>(std::from_chars(data + start, data + sv.size(), specValues.argPosition).ptr - (data + start)) };
-						length >= 3 ?  throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n"): start += length;
+						length >= 3 ? throw std::runtime_error("Error In Position Argument Field: Max Position (24) Exceeded\n") : start += length;
 						if( const auto& ch = sv[ start ]; ch != ':' && ch != '}' ) {
 								throw std::runtime_error("Error In Position Field: Invalid Format - A Position Field Should Be Followed By A ':' Or A '}'\n");
 						}
@@ -63,7 +63,7 @@ namespace serenity::arg_formatter {
 						++start;
 						return true;
 				} else {
-						switch(sv[start]) {
+						switch( sv[ start ] ) {
 								case '}': throw std::runtime_error("Error In Postion Field: Cannot Mix Manual And Automatic Indexing For Arguments\n"); break;
 								case ' ':
 									{
@@ -157,7 +157,7 @@ namespace serenity::arg_formatter {
 			}
 	}
 
-	void ArgFormatter::VerifyFillAlignField(std::string_view& sv, size_t& currentPos, const size_t& bracketSize) {
+	void ArgFormatter::VerifyFillAlignField(std::string_view& sv, size_t& currentPos, const size_t& bracketSize, msg_details::SpecType& argType) {
 		auto ch { sv[ currentPos ] };
 		char nextCh {};
 		if( currentPos + 1 < bracketSize ) {
@@ -168,10 +168,7 @@ namespace serenity::arg_formatter {
 				case '>': specValues.align = Alignment::AlignRight; break;
 				case '^': specValues.align = Alignment::AlignCenter; break;
 				default:
-					auto& specStorage { argStorage.SpecTypesCaptured() };
-					const auto& cSize { specStorage.size() };
 					using SpecType = msg_details::SpecType;
-					SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 					switch( argType ) {
 							case SpecType::IntType: [[fallthrough]];
 							case SpecType::U_IntType: [[fallthrough]];
@@ -213,7 +210,7 @@ namespace serenity::arg_formatter {
 		++currentPosition;
 	}
 
-	static bool IsValidAltType(msg_details::SpecType argType) {
+	static bool IsValidAltType(msg_details::SpecType& argType) {
 		using SpecType = msg_details::SpecType;
 		switch( argType ) {
 				case SpecType::IntType: [[fallthrough]];
@@ -227,7 +224,7 @@ namespace serenity::arg_formatter {
 			}
 	}
 
-	static constexpr bool IsValidAltTypeSpec(msg_details::SpecType type, const char& spec) {
+	static constexpr bool IsValidAltTypeSpec(msg_details::SpecType& type, const char& spec) {
 		using SpecType = msg_details::SpecType;
 
 		switch( type ) {
@@ -304,20 +301,14 @@ namespace serenity::arg_formatter {
 		return "\0";
 	}
 
-	void ArgFormatter::VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
-		auto& specStorage { argStorage.SpecTypesCaptured() };
-		const auto& cSize { specStorage.size() };
-		using SpecType = msg_details::SpecType;
-		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
-
-		specValues.hasAlt = true;
-
+	void ArgFormatter::VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType) {
 		if( !IsValidAltType(argType) ) {
 				std::string tmp { "Error In Alternate Form Field: Argument Type \"" };
 				tmp.append(msg_details::SpecTypeString(argType));
 				tmp.append("\" Does Not Have A Supported Alternative Form\n");
 				throw std::runtime_error(std::move(tmp));
 		}
+		specValues.hasAlt = true;
 		size_t parseForAltSpecPos { currentPosition };
 		for( ;; ) {
 				if( ++parseForAltSpecPos >= bracketSize ) break;
@@ -336,16 +327,14 @@ namespace serenity::arg_formatter {
 		return type == NestedFieldType::Prec ? "Precision\0" : "Width\0";
 	}
 
-	void ArgFormatter::VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type) {
-		auto& specStorage { argStorage.SpecTypesCaptured() };
-		const auto& cSize { specStorage.size() };
+	void ArgFormatter::VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type,
+	                                       msg_details::SpecType& argType) {
 		using SpecType = msg_details::SpecType;
 
 		auto ch { sv[ ++currentPosition ] };
 		if( ch == '}' ) {
 				if( m_indexMode == IndexMode::automatic ) {
 						if( type == NestedFieldType::Prec ) {
-								SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 								if( argType == SpecType::IntType ) {
 										throw std::runtime_error("Error In Precision Field: An Integral Type Is Not Allowed To Have A Precsision Field\n");
 								}
@@ -385,16 +374,16 @@ namespace serenity::arg_formatter {
 						throwMsg.append("\": Only A Positional Argument Is Allowed\n ");
 						throw std::runtime_error(std::move(throwMsg));
 				} else {
-						VerifyNestedBracket(sv, --currentPosition, bracketSize, type);
+						VerifyNestedBracket(sv, --currentPosition, bracketSize, type, argType);
 					}
 		}
 		++currentPosition;
 	}
 
-	void ArgFormatter::VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+	void ArgFormatter::VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType) {
 		auto ch { sv[ currentPosition ] };
 		if( ch == '{' ) {
-				VerifyNestedBracket(sv, currentPosition, bracketSize, NestedFieldType::Width);
+				VerifyNestedBracket(sv, currentPosition, bracketSize, NestedFieldType::Width, argType);
 				return;
 		} else if( ch == '}' ) {
 				if( m_indexMode == IndexMode::automatic ) {
@@ -418,18 +407,15 @@ namespace serenity::arg_formatter {
 		}
 	}
 
-	void ArgFormatter::VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
-		auto& specStorage { argStorage.SpecTypesCaptured() };
-		const auto& cSize { specStorage.size() };
+	void ArgFormatter::VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType) {
 		using SpecType = msg_details::SpecType;
 
 		auto ch { sv[ ++currentPosition ] };
 		if( ch == '{' ) {
-				VerifyNestedBracket(sv, currentPosition, bracketSize, NestedFieldType::Prec);
+				VerifyNestedBracket(sv, currentPosition, bracketSize, NestedFieldType::Prec, argType);
 				return;
 		} else if( ch == '}' ) {
 				if( m_indexMode == IndexMode::automatic ) {
-						SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 						if( argType == SpecType::IntType ) {
 								throw std::runtime_error("Error In Precision Field: An Integral Type Is Not Allowed To Have A Precsision Field\n");
 						}
@@ -444,8 +430,6 @@ namespace serenity::arg_formatter {
 						if( ch = sv[ ++currentPosition ] != ' ' ) break;
 					}
 		}
-
-		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 		switch( argType ) {
 				case SpecType::CharType: [[fallthrough]];
 				case SpecType::BoolType: [[fallthrough]];
@@ -476,11 +460,8 @@ namespace serenity::arg_formatter {
 		}
 	}
 
-	void ArgFormatter::VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
-		auto& specStorage { argStorage.SpecTypesCaptured() };
-		const auto& cSize { specStorage.size() };
+	void ArgFormatter::VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType) {
 		using SpecType = msg_details::SpecType;
-		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 		++currentPosition;
 		switch( argType ) {
 				case SpecType::CharType: [[fallthrough]];
@@ -526,11 +507,8 @@ namespace serenity::arg_formatter {
 		return false;
 	}
 
-	void ArgFormatter::VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec) {
-		const auto& specStorage { argStorage.SpecTypesCaptured() };
-		const auto& cSize { specStorage.size() };
+	void ArgFormatter::VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec, msg_details::SpecType& argType) {
 		using SpecType = msg_details::SpecType;
-		SpecType argType { specValues.argPosition <= cSize ? specStorage[ specValues.argPosition ] : SpecType::MonoType };
 		if( VerifySpec(argType, spec) ) {
 				++currentPosition;
 				specValues.typeSpec = spec;
@@ -632,7 +610,7 @@ namespace serenity::arg_formatter {
 			}
 	}
 
-	void ArgFormatter::HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize) {
+	void ArgFormatter::HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType) {
 		// If this case returns true, then we've already handled the type spec in the alternate form field
 		if( specValues.typeSpec != '\0' ) {
 				++currentPosition;
@@ -641,12 +619,12 @@ namespace serenity::arg_formatter {
 		if( currentPosition + 1 >= bracketSize ) return;
 		auto ch { sv[ currentPosition ] };
 		switch( sv[ currentPosition + 1 ] ) {
-				case '}': VerifyTypeSpec(sv, currentPosition, bracketSize, ch); break;
+				case '}': VerifyTypeSpec(sv, currentPosition, bracketSize, ch, argType); break;
 				case ' ':
 					for( ;; ) {
 							if( currentPosition >= bracketSize ) break;
 							if( sv[ ++currentPosition ] == '}' ) {
-									VerifyTypeSpec(sv, currentPosition, bracketSize, ch);
+									VerifyTypeSpec(sv, currentPosition, bracketSize, ch, argType);
 							}
 							break;
 						}
@@ -657,12 +635,13 @@ namespace serenity::arg_formatter {
 		return;
 	}
 
-	void ArgFormatter::VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize) {
+	void ArgFormatter::VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize, msg_details::SpecType &argType) {
 		if( (bracketSize <= 1) || (start >= (bracketSize - 1)) ) return;
-		VerifyFillAlignField(sv, start, bracketSize);
+		using SpecType = msg_details::SpecType;
+		VerifyFillAlignField(sv, start, bracketSize, argType);
 		VerifySignField(sv, start, bracketSize);
 		if( sv[ start ] == '#' ) {
-				VerifyAltField(sv, start, bracketSize);
+				VerifyAltField(sv, start, bracketSize, argType);
 		}
 		if( sv[ start ] == '0' ) {
 				if( specValues.fillCharacter == '\0' ) {
@@ -671,18 +650,18 @@ namespace serenity::arg_formatter {
 				++start;
 		}
 		if( (sv[ start ] >= '1' && sv[ start ] <= '9') || (sv[ start ] == '{') ) {
-				VerifyWidthField(sv, start, bracketSize);
+				VerifyWidthField(sv, start, bracketSize, argType);
 		}
 		if( sv[ start ] == '.' ) {
-				VerifyPrecisionField(sv, start, bracketSize);
+				VerifyPrecisionField(sv, start, bracketSize, argType);
 		}
 		if( sv[ start ] == 'L' ) {
-				VerifyLocaleField(sv, start, bracketSize);
+				VerifyLocaleField(sv, start, bracketSize, argType);
 		}
 		if( sv[ start ] == '}' ) {
 				VerifyEscapedBracket(sv, start, bracketSize);
 		}
-		HandlePotentialTypeField(sv, start, bracketSize);
+		HandlePotentialTypeField(sv, start, bracketSize, argType);
 	}
 
 	bool ArgFormatter::IsValidStringSpec(const char& spec) {

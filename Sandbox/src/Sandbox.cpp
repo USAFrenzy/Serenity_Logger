@@ -278,7 +278,7 @@ int main() {
 	serenity::targets::ColorConsole console("", "%+");
 	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
 
-	for( int i { 0 }; i < 5; ++i ) {
+	for( int i { 0 }; i < 1; ++i ) {
 			// serenity's format loop using back_insert_iterator
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
