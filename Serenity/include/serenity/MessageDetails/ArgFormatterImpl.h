@@ -54,7 +54,7 @@
 //             performance is now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
-#include "ArgFormatter.h"
+#include <serenity/MessageDetails/ArgFormatter.h>
 #include <string_view>
 
 template<typename T, typename... Args>
@@ -65,6 +65,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_ins
 
 template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(std::string_view sv, Args&&... args) {
 	std::string tmp;
+	tmp.reserve(ReserveCapacity(std::forward<Args>(args)...));
 	se_format_to(std::back_inserter(tmp), sv, std::forward<Args>(args)...);
 	return tmp;
 }
@@ -74,20 +75,16 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 	for( ;; ) {
 			if( sv.size() < 2 ) break;
 			size_t pos { 0 };
-			remainder = sv;
 			specValues.ResetSpecs();
-			FindBrackets(remainder, remainder.size());
-			if( !bracketResults.isValid ) {
-					std::copy(sv.begin(), sv.end(), Iter);
+			if( !FindBrackets(sv) ) {
+					std::copy(sv.data(), sv.data() + sv.size(), Iter);
 					return;
 			}
 			if( bracketResults.beginPos != 0 ) {
-					std::string_view preToken { sv.data(), sv.data() + bracketResults.beginPos };
-					auto size { preToken.size() };
-					std::copy(preToken.begin(), preToken.end(), Iter);
-					sv.remove_prefix(size);
-					bracketResults.beginPos -= size;
-					bracketResults.endPos -= size;
+					std::copy(sv.data(), sv.data() + bracketResults.beginPos, Iter);
+					sv.remove_prefix(bracketResults.beginPos);
+					bracketResults.endPos -= bracketResults.beginPos;
+					bracketResults.beginPos = 0;
 			}
 			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
 			/*Handle Escaped Bracket*/
@@ -96,176 +93,167 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					++pos;
 			}
 			/*Handle Positional Args*/
-			if( !ParsePositionalField(argBracket, argCounter, pos) ) {
+			if( !ParsePositionalField(argBracket, pos, specValues.argPosition) ) {
 					// Nothing Else to Parse - just a simple substitution after position field
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-					FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+					Format(std::forward<std::back_insert_iterator<T>>(Iter), std::move(argType));
 					sv.remove_prefix(argBracket.size() + 1);
 					continue;
 			}
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			VerifyArgumentBracket(argBracket, pos, bracketResults.endPos - bracketResults.beginPos, argType);
-			FormatTokens(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			if( pos < argBracket.size() ) {
+					VerifyArgumentBracket(argBracket, pos, argType);
+			}
+			Format(std::forward<std::back_insert_iterator<T>>(Iter), std::move(argType));
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
 			}
 			sv.remove_prefix(argBracket.size() + 1);
 		}
 	if( sv.size() != 0 ) {
-			std::copy(sv.begin(), sv.end(), Iter);
+			std::copy(sv.data(), sv.data() + sv.size(), Iter);
 	}
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(std::back_insert_iterator<T>&& Iter, msg_details::SpecType argType) {
+template<typename T> void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
 	using enum msg_details::SpecType;
+	auto& container { *IteratorContainer(Iter).Container() };
 	switch( argType ) {
 			case StringType:
 				{
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
-							container.append(argStorage.string_state(specValues.argPosition));
+					std::string_view sv { std::move(argStorage.string_state(specValues.argPosition)) };
+					if constexpr( std::is_same_v<T, std::string> ) {
+							container.append(sv.data(), sv.size());
 					} else {
-							auto sv { argStorage.string_state(specValues.argPosition) };
 							std::copy(sv.begin(), sv.end(), Iter);
 						}
-					break;
+					return;
 				}
 			case CharPointerType:
 				{
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
-							container.append(argStorage.c_string_state(specValues.argPosition));
+					std::string_view sv { std::move(argStorage.c_string_state(specValues.argPosition)) };
+					if constexpr( std::is_same_v<T, std::string> ) {
+							container.append(sv.data(), sv.size());
 					} else {
-							auto sv { argStorage.c_string_state(specValues.argPosition) };
 							std::copy(sv.begin(), sv.end(), Iter);
 						}
-					break;
+					return;
 				}
 			case StringViewType:
 				{
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
-							container.append(argStorage.string_view_state(specValues.argPosition));
+					std::string_view sv { std::move(argStorage.string_view_state(specValues.argPosition)) };
+					if constexpr( std::is_same_v<T, std::string> ) {
+							container.append(sv.data(), sv.size());
 					} else {
-							auto sv { argStorage.string_view_state(specValues.argPosition) };
 							std::copy(sv.begin(), sv.end(), Iter);
 						}
-					break;
+					return;
 				}
 			case IntType:
 				{
 					auto data { buffer.data() };
 					auto size { buffer.size() };
 					std::memset(data, 0, size);
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr - data);
 					} else {
 							std::move(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr, Iter);
 						}
-					break;
+					return;
 				}
 			case U_IntType:
 				{
 					auto data { buffer.data() };
 					auto size { buffer.size() };
 					std::memset(data, 0, size);
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr - data);
 					} else {
 							std::move(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr, Iter);
 						}
-					break;
+					return;
 				}
 			case LongLongType:
 				{
 					auto data { buffer.data() };
 					auto size { buffer.size() };
 					std::memset(data, 0, size);
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr - data);
 					} else {
 							std::move(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr, Iter);
 						}
-					break;
+					return;
 				}
 			case U_LongLongType:
 				{
 					auto data { buffer.data() };
 					auto size { buffer.size() };
 					std::memset(data, 0, size);
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr - data);
 					} else {
 							std::move(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr, Iter);
 						}
-					break;
+					return;
 				}
 			case BoolType:
 				{
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
 					} else {
 							std::string_view sv { argStorage.bool_state(specValues.argPosition) ? "true" : "false" };
 							std::copy(sv.begin(), sv.end(), Iter);
 						}
-					break;
+					return;
 				}
 			case CharType:
 				{
 					Iter = argStorage.char_state(specValues.argPosition);
-					break;
+					return;
 				}
 			case FloatType:
 				{
 					auto data { buffer.data() };
 					std::memset(data, 0, buffer.size());
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr - data);
 					} else {
 							std::move(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr, Iter);
 						}
-					break;
+					return;
 				}
 			case DoubleType:
 				{
 					auto data { buffer.data() };
 					auto size { buffer.size() };
 					std::memset(data, 0, size);
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr - data);
 					} else {
 							std::move(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr, Iter);
 						}
-					break;
+					return;
 				}
 			case LongDoubleType:
 				{
 					auto data { buffer.data() };
 					auto size { buffer.size() };
 					std::memset(data, 0, size);
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr - data);
 					} else {
 							std::move(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr, Iter);
 						}
-					break;
+					return;
 				}
 			case ConstVoidPtrType:
 				{
 					auto data { buffer.data() };
 					auto size { buffer.size() };
 					std::memset(data, 0, size);
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append("0x").append(
 							data,
 							std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr -
@@ -278,15 +266,14 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::WriteSimpleValu
 							std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr,
 							Iter);
 						}
-					break;
+					return;
 				}
 			case VoidPtrType:
 				{
 					auto data { buffer.data() };
 					auto size { buffer.size() };
 					std::memset(data, 0, size);
-					auto& container { *IteratorContainer(Iter).Container() };
-					if( std::is_same_v<T, std::string> ) {
+					if constexpr( std::is_same_v<T, std::string> ) {
 							container.append("0x").append(
 							data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr -
 								  data);
@@ -297,93 +284,81 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::WriteSimpleValu
 							data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr,
 							Iter);
 						}
-					break;
+					return;
 				}
-
-			default: break;
+			default: return; break;
 		}
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::FormatTokens(std::back_insert_iterator<T>&& Iter, msg_details::SpecType& argType) {
+template<typename T> void serenity::arg_formatter::ArgFormatter::Format(std::back_insert_iterator<T>&& Iter, msg_details::SpecType&& argType) {
 	using enum msg_details::SpecType;
-	int precision { precision = specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
-		                      : specValues.precision != 0        ? specValues.precision
-		                                                         : 0 };
+	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
+		            : specValues.precision != 0      ? specValues.precision
+		                                             : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
-	if( IsSimpleSubstitution(argType, precision, totalWidth) ) {
-			return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+	if( totalWidth == 0 ) {    // use this check to guard from any unnecessary additional checks
+			if( IsSimpleSubstitution(argType, precision) ) {
+					return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			}
 	}
-
 	rawValueTemp.clear();
-	specValues.localize ? LocalizeArgument(precision, argType) : FormatRawValueToStr(precision, argType);
-
-	auto size(rawValueTemp.size());
+	if( !specValues.localize ) {
+			FormatRawValueToStr(precision, argType);
+	} else {
+			LocalizeArgument(precision, argType);
+		}
+	const auto& size(rawValueTemp.size());
 	size_t fillAmount { (totalWidth > size) ? totalWidth - size : 0 };
 	auto& container { *IteratorContainer(Iter).Container() };
-
 	if( fillAmount == 0 ) {
-			if( std::is_same_v<T, std::string> ) {
-					container.append(std::move(rawValueTemp));
+			if constexpr( std::is_same_v<T, std::string> ) {
+					container.append(std::move(rawValueTemp).data(), size);
 			} else {
 					Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 				}
 			return;
 	}
-
-	size_t i { 0 };
-	auto& fillChar { specValues.fillCharacter };
+	// Reuse the buffer being used for formatting arithmetic to chars (leads to a massive performance gain vs a copying push_back/append call for a char).
+	// CPU cycles went from spending ~%18 per align loop with the fill char down to ~%2 with this change (std::fill() takes ~%2.3 so in the case of
+	// Align Center; this takes the cycles spent here down from ~%36 down to ~%6-%7).
+	auto data { buffer.data() };
+	std::memset(data, specValues.fillCharacter, buffer.size());
 	switch( specValues.align ) {
 			case Alignment::AlignLeft:
 				{
-					if( std::is_same_v<T, std::string> ) {
-							container.append(std::move(rawValueTemp));
+					if constexpr( std::is_same_v<T, std::string> ) {
+							container.append(std::move(rawValueTemp).data(), size).append(data, fillAmount);
 					} else {
 							Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
+							Iter = std::move(data, data + fillAmount, Iter);
 						}
-					for( ;; ) {
-							if( i >= fillAmount ) break;
-							Iter = fillChar;
-							++i;
-						}
+					return;
 				}
-				break;
 			case Alignment::AlignRight:
 				{
-					for( ;; ) {
-							if( i >= fillAmount ) break;
-							Iter = fillChar;
-							++i;
-						}
-					if( std::is_same_v<T, std::string> ) {
-							container.append(std::move(rawValueTemp));
+					if constexpr( std::is_same_v<T, std::string> ) {
+							container.append(data, fillAmount).append(std::move(rawValueTemp).data(), size);
 					} else {
+							Iter = std::move(data, data + fillAmount, Iter);
 							Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 						}
+					return;
 				}
-				break;
 			case Alignment::AlignCenter:
-				fillAmount /= 2;
-				for( ;; ) {
-						if( i >= fillAmount ) break;
-						Iter = fillChar;
-						++i;
-					}
-				if( std::is_same_v<T, std::string> ) {
-						container.append(std::move(rawValueTemp));
-				} else {
-						Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
-					}
-				fillAmount = (totalWidth - size - fillAmount);
-				i          = 0;
-				for( ;; ) {
-						if( i >= fillAmount ) break;
-						Iter = fillChar;
-						++i;
-					}
-				break;
-			default: break;
+				{
+					fillAmount /= 2;
+					if constexpr( std::is_same_v<T, std::string> ) {
+							container.append(data, fillAmount).append(std::move(rawValueTemp).data(), size).append(data, (totalWidth - size - fillAmount));
+					} else {
+							Iter = std::move(data, data + fillAmount, Iter);
+							Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
+							Iter = std::move(data, data + (totalWidth - size - fillAmount), Iter);
+						}
+					return;
+				}
+			default: return; break;
 		}
 }
 
@@ -391,142 +366,121 @@ template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter:
 	argStorage.CaptureArgs(std::forward<Args>(args)...);
 }
 
-template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatTypeArg(T&& value, int precision) {
-	std::chars_format format {};
-	auto data { buffer.data() };
-	std::fill(data, data + buffer.size(), 0);
+template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatTypeArg(T&& value, int& precision) {
 	int pos { 0 };
-
-	if( specValues.signType == Sign::Space ) {
-			specValues.signType = value < 0 ? Sign::Minus : Sign::Space;
-	}
-	switch( specValues.signType ) {
-			case Sign::Space:
-				data[ pos ] = ' ';
-				++pos;
-				break;
-			case Sign::Plus:
-				data[ pos ] = '+';
-				++pos;
-				break;
+	auto data { buffer.data() };
+	std::memset(data, 0, buffer.size());
+	switch( specValues.signType == Sign::Space ? value < 0 ? Sign::Minus : Sign::Space : specValues.signType ) {
+			case Sign::Space: data[ pos++ ] = ' '; break;
+			case Sign::Plus: data[ pos++ ] = '+'; break;
 			case Sign::Empty: [[fallthrough]];
 			case Sign::Minus: break;
 		}
-
-	// default behaviors
-	if( specValues.hasAlt && precision == 0 ) {
-			format = std::chars_format::scientific;
-	} else if( !specValues.localize && specValues.alignmentPadding == 0 && precision == 0 && specValues.signType == Sign::Empty ) {
-			format = std::chars_format::fixed;
-	} else {
-			format = std::chars_format::general;
-		}
-	// default behavior skipped, so process the type spec that was found
+	bool isUpper { false };
+	std::chars_format format {};
 	switch( specValues.typeSpec ) {
-			case '\0': break;
-			case 'a': [[fallthrough]];
-			case 'A':
+			case '\0':
+				// default behaviors
+				if( specValues.hasAlt && precision == 0 ) {
+						format = std::chars_format::scientific;
+				} else if( !specValues.localize && specValues.alignmentPadding == 0 && precision == 0 && specValues.signType == Sign::Empty ) {
+						format = std::chars_format::fixed;
+				} else {
+						format = std::chars_format::general;
+					}
+				break;
+			case 'a':
 				precision = precision > 0 ? precision : 0;
 				format    = std::chars_format::hex;
 				break;
-			case 'e': [[fallthrough]];
-			case 'E':
+			case 'A':
+				isUpper   = true;
+				precision = precision > 0 ? precision : 0;
+				format    = std::chars_format::hex;
+				break;
+			case 'e':
 				format    = std::chars_format::scientific;
 				precision = precision > 0 ? precision : 6;
 				break;
-			case 'f': [[fallthrough]];
-			case 'F':
+			case 'E':
+				isUpper   = true;
+				format    = std::chars_format::scientific;
+				precision = precision > 0 ? precision : 6;
+				break;
+			case 'f':
 				format    = std::chars_format::fixed;
 				precision = precision > 0 ? precision : 6;
 				break;
-			case 'g': [[fallthrough]];
+			case 'F':
+				isUpper   = true;
+				format    = std::chars_format::fixed;
+				precision = precision > 0 ? precision : 6;
+				break;
+			case 'g':
+				format    = std::chars_format::general;
+				precision = precision > 0 ? precision : 6;
+				break;
 			case 'G':
+				isUpper   = true;
 				format    = std::chars_format::general;
 				precision = precision > 0 ? precision : 6;
 				break;
 			default: break;
 		}
-
-	if( precision != 0 ) {
-			charsResult = std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format, precision);
-	} else {
-			charsResult = std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format);
+	// clang-format off
+	rawValueTemp.append(data, (precision != 0 ? std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format, precision)
+	                                          : std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format)).ptr -data);
+	// clang-format on
+	if( !isUpper ) return;
+	for( auto& ch: rawValueTemp ) {
+			if( ch >= 'a' && ch <= 'z' ) {
+					ch -= 32;
+			}
 		}
-	switch( specValues.typeSpec ) {
-			case '\0': break;
-			case 'A': [[fallthrough]];
-			case 'E': [[fallthrough]];
-			case 'G':
-				for( auto& ch: buffer ) {
-						if( ch == *charsResult.ptr ) break;
-						if( ch >= 'a' && ch <= 'z' ) {
-								ch -= 32;
-						}
-					}
-				break;
-			default: break;
-		}    // capitilization
-	rawValueTemp.reserve(charsResult.ptr - data);
-	rawValueTemp.append(data, charsResult.ptr);
 }
 
 template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeArg(T&& value) {
-	int base { 10 };
+	int pos {};
+	int base {};
 	auto data { buffer.data() };
-	std::fill(data, data + buffer.size(), 0);
-	int pos { 0 };
-
-	if( specValues.signType == Sign::Space ) {
-			specValues.signType = value < 0 ? Sign::Minus : Sign::Space;
-	}
-	switch( specValues.signType ) {
-			case Sign::Space:
-				data[ pos ] = ' ';
-				++pos;
-				break;
-			case Sign::Plus:
-				data[ pos ] = '+';
-				++pos;
-				break;
+	std::memset(data, 0, buffer.size());
+	switch( specValues.signType == Sign::Space ? value < 0 ? Sign::Minus : Sign::Space : specValues.signType ) {
+			case Sign::Space: data[ pos++ ] = ' '; break;
+			case Sign::Plus: data[ pos++ ] = '+'; break;
 			case Sign::Empty: [[fallthrough]];
 			case Sign::Minus: break;
 		}
-
-	if( specValues.preAltForm != "\0" ) {
-			size_t i { 0 };
-			auto size { specValues.preAltForm.size() };
-			for( auto& ch: specValues.preAltForm ) {
-					data[ pos ] = ch;
-					++pos;
-				}
-	}
-
-	switch( specValues.typeSpec ) {
-			case '\0': break;
-			case 'b': [[fallthrough]];
-			case 'B': base = 2; break;
-			case 'c': rawValueTemp += static_cast<char>(value); return;
-			case 'o': base = 8; break;
-			case 'x': [[fallthrough]];
-			case 'X': base = 16; break;
-			default: break;
-		}
-
-	charsResult = std::to_chars(data + pos, data + buffer.size(), value, base);
-
-	switch( specValues.typeSpec ) {
-			case '\0': break;
-			case 'B': [[fallthrough]];
-			case 'X':
-				for( auto& ch: buffer ) {
-						if( ch == *charsResult.ptr ) break;
-						if( ch >= 'a' && ch <= 'z' ) {
-								ch -= 32;
-						}
-					}
+	// size is only ever 0, 1, or 2
+	switch( specValues.preAltForm.size() ) {
+			case 1: data[ pos++ ] = specValues.preAltForm[ 0 ]; break;
+			case 2:
+				data[ pos++ ] = specValues.preAltForm[ 0 ];
+				data[ pos++ ] = specValues.preAltForm[ 1 ];
 				break;
 			default: break;
-		}    // capitilization
-	rawValueTemp.reserve(charsResult.ptr - data);
-	rawValueTemp.append(data, charsResult.ptr);
+		}
+	bool isUpper { false };
+	switch( specValues.typeSpec ) {
+			case '\0': base = 10; break;
+			case 'b': base = 2; break;
+			case 'B':
+				base    = 2;
+				isUpper = true;
+				break;
+			case 'c': rawValueTemp += static_cast<char>(value); return;
+			case 'o': base = 8; break;
+			case 'x': base = 16; break;
+			case 'X':
+				base    = 16;
+				isUpper = true;
+				break;
+			default: base = 10; break;
+		}
+	rawValueTemp.append(data, std::to_chars(data + pos, data + buffer.size(), value, base).ptr - data);
+	if( !isUpper ) return;
+	for( auto& ch: rawValueTemp ) {
+			if( ch >= 'a' && ch <= 'z' ) {
+					ch -= 32;
+			}
+		}
 }

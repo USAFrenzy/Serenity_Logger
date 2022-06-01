@@ -1,0 +1,55 @@
+*************************************************************************************************************[31May22]*************************************************************************************************************
+******************************************* Instrumentation According To The Format String Of:  "\n{0:*^#{5}X}\n{1:*^#{5}x}\n{2:*^#{5}a}\n{3:*^#{5}E}\n{4:*^#{5}b}\n{5:*^#{5}B}\n{6:s}" *******************************************
+***********************************************************************************************************************************************************************************************************************************
+     [Function]            [Number Of Calls]    [Inclusive Time Spent]    [Exclusive Time Spent]                                  [Various Notes]
+- string::append()            1,821,485                20.62%                   20.62%               > Due to optimization of underlying container call vs a std::copy() call
+- std::from_chars_result      947,173                  19.60%                   19.60%               > Total % due to calls in ParsePositionalField()/VerifyPrecisionField()/VerifyWidthField()
+- ArgFomatter::Format()       510,016                  54.69%                   12.96%               > The whole process is parse then format, parse is fast enough for this to be worth optimizing
+- Interger_To_Chars()         291,438                  11.61%                   11.18%               > Resultant of FormatIntValue() called from FormatRawValueToStr()
+- ArgFormatter::Parse()       72,860                   91.77%                   8.33%                > Inclusive Time spent includes time spent formatting and checking bounds on format string being parsed
+- VerifyWidthField()          437,157                  11.58%                   7.64%                > The only other calls to other functions are std::from_chars/IsDigit totalling ~4%; another potential optimization
+- FormatRawValueToStr()       437,157                  33.19%                   4.02%                > Most of the time spent is calling the FormatIntValue()/FormatFloatValue() which heavily relies on std::to_chars
+- LocalizeArgument()          510,016                  3.84%                    3.80%                > RedFlag: Never called so not sure why it shows up in the report
+- VerifyArgumentBracket()     437,157                  12.07%                   0.25%                > Does nothing by itself except issue Verify'x'Field() type functions -> optimizing those calls will help here
+- ParsePositionalField()      510,017                  15.95%                   0.29%                > Time varies on whether its automatic or manual indexing; automatic is faster due to just incrementing the count whereas 
+                                                                                                       manual indexing varies iff the value is > 24 due to hard limit on max positions being locked to a total of 25 (0-24) - 
+                                                                                                       using a fixed array vs a dynamic array to reduce allocations by fronting the allocation on intialization instead
+
+***************************************************************** [Thoughts And Changes Made] *****************************************************************
+-> From the above, it seems I should see what I can do about the calls made to Verify'x'Field() functions and see what I can possibly due to optimize Format() 
+   and its children functions -> specifically the usage of std::to_chars()in FormatIntValue()/FormatFloatValue() as that's where the most time was spent. The 
+   string argument called WriteSimpleValue() which only took ~3% Inclusively and ~0.23% Exclusively. Also need to understand why the hell LocalizeArgument() 
+   is showing up here - unless specValues.localize isn't false for some of these cases, there's no reason for it to show up as no locale was being called with 
+   the '%L' flag...
+-> Slightly changing ParsePositionalField() to assume the first char it sees is a digit in the manual section and jump straight to conversion, along with having 
+   ParseWidthField() (made same change to ParsePrecisionField()) just call ParsePostionalField() if the index mode was set to IndexMode::Manual saw a drop in 
+   time spent in this function down to 5.03% Exclusive and Inclusive; ParseWidthField() saw its timings drop to 6.20% Inclusive and 1.34% Exclusive due to this 
+   change as well
+   -> Overall execution average dropped from ~0.58us to ~0.56us for the complex formatting string.
+-> With the previous note, it might REALLY payoff to just optimize what I can with the most called functions.
+   -> FormatRawValueToStr() is still the most expensive function call for the Format() children
+   -> VerifyWidthField() is no longer the most expensive Verify'x' call, it's dropped to second place behind the VerifySpec() calls that are made 
+      (7.75% Inclusive 0.30% Exclusive)
+-> Changing HandlePotentialTypeField() to directly deal with the validation rather than issuing calls to other functions sped things up a bit more from ~0.56us 
+   down to a consistent ~0.54us. Time spent in HandlePotentialTypeField() decreased down to 4.05% Inclusively and 4.00% Exclusively.
+-> Fixing a small bug that didn't blow anything up but led to an extra check with HandlePotentialTypeField() as well as going crazy with return statements for 
+   early exits (possibly overdone?) led to another gain in performance for this complex pattern bringing the total time down to ~0.50us
+-> After running the formatting tests, had to fix some issues caused by the overuse of early exit return statements causing some logic later down the line to be 
+   skipped if a flag wasn't set. Unfortunately time dropped back to ~0.54us again... have to do things right before doing them fast though =/ I'm still happy 
+   with a performance gain of ~40ns-~45ns so far for this format pattern though.
+-> Incorporating the IsAllowedSpec() function that I totally forgot about and has literally been there for a few revision builds now and changing how 
+   HandlePotentialTypeField() works based around that led to consistent ~0.50us-~0.51us WITH all tests passing too. I am now a VERY happy camper right now.
+-> I don't know if it's due to some major optimizations in memset or not (I assume so due to this change), but in Format(), changing the memset call from 
+   'std::memset(data, specValues.fillCharacter, fillAmount + 1);' to 'std::memset(data, specValues.fillCharacter, buffer.size());' saw a noticable gain in
+   performance causing this pattern to take an overall ~0.47us down from ~0.50us (I'll have to look into that since that's actually pretty interesting, maybe
+   it allows for just grabbing the whole address and setting it to the value vs having to do some sort of check on partitioning the structure? No idea atm).
+   On a smaller note, in the same function, changing the 'container.append(std::move(rawValueTemp))' to 'container.append(std::move(rawValueTemp).data(), size)'
+   saw a ~3ns gain in performance bringing this down to a solid upper ~0.46us (~0.466us - ~0.467us) possibly because the line of code is now no longer copying
+   the pointer but now using move semantics on a string. Tried this on the buffer but I assume that, from previous reading, the move was just too expensive;
+   therefore left that as a pointer with buffer.data() in the FormatIntValue()/FormatFloatValue() functions.
+-> At the cost of ~4ns-~6ns for se_format_to() (not sure why the stand-alone version is affected by this change but it's small enough to just to ignore it),
+   writing a ReserveCapacity() function for se_format() to call saw a huge improvement going from ~0.86us down to ~0.57us. This brings the two of them down 
+   to ~0.473us for se_format_to() and ~0.576us for se_format(). 
+-> Changing HandlePotentialTypeField() to take a const char& again since the removal of the IsValid'x'Spec() functions granted another, albeit very small, 
+   performance gain of ~2ns-~3ns, making the prior change above this entry to an almost net neutral addition bringing the two functions to ~0.471us for 
+   se_format_to() and ~0.573us for se_format(). 

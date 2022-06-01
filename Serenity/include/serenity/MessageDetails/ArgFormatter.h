@@ -61,11 +61,8 @@
 #include <string>
 #include <vector>
 
-namespace serenity {
-	using ArgContainer = msg_details::ArgContainer;
-}
-
 namespace serenity::arg_formatter {
+	using namespace msg_details;
 
 	enum class Alignment : char
 	{
@@ -89,12 +86,6 @@ namespace serenity::arg_formatter {
 		manual
 	};
 
-	enum class NestedFieldType
-	{
-		Prec,
-		Width
-	};
-
 	struct SpecFormatting
 	{
 		void ResetSpecs();
@@ -106,7 +97,7 @@ namespace serenity::arg_formatter {
 		Alignment align { Alignment::Empty };
 		char fillCharacter { '\0' };
 		char typeSpec { '\0' };
-		std::string_view preAltForm { "\0" };
+		std::string_view preAltForm { "" };
 		Sign signType { Sign::Empty };
 		bool localize { false };
 		bool hasAlt { false };
@@ -116,7 +107,6 @@ namespace serenity::arg_formatter {
 	struct BracketSearchResults
 	{
 		void Reset();
-		bool isValid { false };
 		size_t beginPos { 0 };
 		size_t endPos { 0 };
 	};
@@ -129,6 +119,32 @@ namespace serenity::arg_formatter {
 			return this->container;
 		}
 	};
+
+	template<typename... Args> static constexpr void ReserveCapacityImpl(size_t& totalSize, Args&&... args) {
+		// Most of the currently supported types are 8 bytes except for a select few, such as int being 4 bytes and its modified types being 8 bytes,
+		// float also being 4 bytes but a double is 8 and a long double is 12. Since even the 4 byte values can be interpreted differently when formatted
+		// and end up larger in the end, a happy medium is probably 8 bytes, but using 16 bytes as the default and will tweak from there. Since strings
+		// tend to be rather large and slow, on MSVC, it seems the size of a string is 40 bytes, so I'll start off allocating somewhere around 50% extra
+		// and tweak things from there.
+		(
+		[ = ](size_t& totalSize, auto&& arg) {
+			using base_type = std::decay_t<decltype(arg)>;
+			if constexpr( std::is_same_v<base_type, std::string> || std::is_same_v<base_type, std::string_view> ) {
+					totalSize += arg.size();
+			} else if constexpr( std::is_same_v<base_type, const char*> ) {
+					totalSize += 56;
+			} else {
+					totalSize += 8;
+				}
+		}(totalSize, args),
+		...);
+	}
+
+	template<typename... Args> static constexpr size_t ReserveCapacity(Args&&... args) {
+		size_t totalSize {};
+		ReserveCapacityImpl(totalSize, std::forward<Args>(args)...);
+		return std::forward<size_t>(totalSize);
+	}
 
 #ifndef SERENITY_ARG_BUFFER_SIZE
 	#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(65)
@@ -152,43 +168,33 @@ namespace serenity::arg_formatter {
 	  private:
 		template<typename T> constexpr void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
 
-		void FindBrackets(std::string_view sv, size_t svSize);
-		void FindNestedBrackets(std::string_view sv, size_t& currentPos);
+		bool FindBrackets(std::string_view sv);
 
-		bool ParsePositionalField(std::string_view& sv, int& argIndex, size_t& start);
+		bool ParsePositionalField(std::string_view sv, size_t& start, size_t& positionValue);
 
-		void VerifyArgumentBracket(std::string_view& sv, size_t& start, const size_t& bracketSize, msg_details::SpecType& argType);
-		void VerifyFillAlignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
-		void VerifySignField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
-		void VerifyAltField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
-		void VerifyWidthField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
-		void VerifyPrecisionField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
-		void VerifyLocaleField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
-		void VerifyTypeSpec(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, const char& spec, msg_details::SpecType& argType);
-		void VerifyNestedBracket(std::string_view sv, size_t& currentPosition, const size_t& bracketSize, NestedFieldType type, msg_details::SpecType& argType);
-		void HandlePotentialTypeField(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize, msg_details::SpecType& argType);
-		void VerifyEscapedBracket(std::string_view& sv, size_t& currentPosition, const size_t& bracketSize);
+		void VerifyArgumentBracket(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		void VerifyFillAlignField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		void VerifySignField(const char& ch, size_t& currentPosition);
+		void VerifyAltField(std::string_view sv, const SpecType& argType);
+		void VerifyWidthField(std::string_view sv, size_t& currentPosition);
+		void VerifyPrecisionField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		void VerifyLocaleField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		void HandlePotentialTypeField(const char& ch, const SpecType& argType);
+		void VerifyEscapedBracket(std::string_view sv, size_t& currentPosition);
+		bool IsSimpleSubstitution(const SpecType& argType, const int& precision);
 
-		bool IsValidStringSpec(const char& spec);
-		bool IsValidIntSpec(const char& spec);
-		bool IsValidBoolSpec(const char& spec);
-		bool IsValidFloatingPointSpec(const char& spec);
-		bool IsValidCharSpec(const char& spec);
-		bool VerifySpec(msg_details::SpecType type, const char& spec);
-		bool IsSimpleSubstitution(msg_details::SpecType& argType, int& precision, int& width);
-
-		template<typename T> void FormatTokens(std::back_insert_iterator<T>&& Iter, msg_details::SpecType& argType);
+		template<typename T> void Format(std::back_insert_iterator<T>&& Iter, SpecType&& argType);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 		void AppendByPrecision(std::string_view val, int precision);
-		template<typename T> void FormatFloatTypeArg(T&& value, int precision);
+		template<typename T> void FormatFloatTypeArg(T&& value, int& precision);
 		template<typename T> void FormatIntTypeArg(T&& value);
-		void FormatRawValueToStr(int& precision, msg_details::SpecType type);
-		void LocalizeArgument(int precision, msg_details::SpecType type);
-		void LocalizeIntegral(int precision, msg_details::SpecType type);
-		void LocalizeFloatingPoint(int precision, msg_details::SpecType type);
+		void FormatRawValueToStr(int precision, const SpecType& type);
+		void LocalizeArgument(int precision, SpecType type);
+		void LocalizeIntegral(int precision, SpecType type);
+		void LocalizeFloatingPoint(int precision, SpecType type);
 		void LocalizeBool();
 		void FormatIntegralGrouping(std::string& section, char separator);
-		template<typename T> void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, msg_details::SpecType);
+		template<typename T> void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const SpecType&);
 
 	  private:
 		int argCounter { 0 };

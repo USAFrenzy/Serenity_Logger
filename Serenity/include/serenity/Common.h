@@ -239,14 +239,13 @@ namespace serenity {
 		"Warning: Format string token \"%e\" contains an invalid precision specifier.",
 		"Warning: Format string token \"%t\" contains an invalid precision specifier.",
 	};
-
 	// clang-format on
 
 	static bool IsDigit(const char& ch) {
 		return ((ch >= '0') && (ch <= '9'));
 	}
 
-	static bool IsAlpha(char ch) {
+	static bool IsAlpha(const char& ch) {
 		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 	}
 

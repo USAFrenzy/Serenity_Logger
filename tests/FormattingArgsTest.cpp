@@ -294,7 +294,6 @@ TEST_CASE("Sign Formatting") {
 }
 
 TEST_CASE("Localization Formatting") {
-
 	std::locale locale("en_US.UTF-8");
 	ArgFormatter formatter(locale);
 
@@ -411,7 +410,7 @@ TEST_CASE("Format Function Test") {
 
 	formatter.se_format_to(std::back_inserter(argFmtStr), fmt, a, width);
 	// once appveyor supports the new update in VS 16.14/16.15 then this macro can dissapear.
-	// Build is failing when using the normal std::vformat_to() due to how it used to work before 
+	// Build is failing when using the normal std::vformat_to() due to how it used to work before
 	// the back-ported fixes to <format>
 	VFORMAT_TO(stdStr, fmt, a, width);
 

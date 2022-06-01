@@ -24,6 +24,9 @@ static constexpr std::string_view details::SpecTypeString(SpecType type) {
 		}
 	return "";
 }
+constexpr size_t details::ArgContainer::CurrentSize() {
+	return counter;
+}
 
 template<typename T> static constexpr details::SpecType GetArgType(T&& val) {
 	using enum SpecType;
@@ -102,39 +105,39 @@ constexpr std::string_view details::ArgContainer::string_view_state(size_t index
 	return *std::get_if<3>(&argContainer[ index ]);
 }
 
-constexpr int details::ArgContainer::int_state(size_t index) {
+constexpr int& details::ArgContainer::int_state(size_t index) {
 	return *std::get_if<4>(&argContainer[ index ]);
 }
 
-constexpr unsigned int details::ArgContainer::uint_state(size_t index) {
+constexpr unsigned int& details::ArgContainer::uint_state(size_t index) {
 	return *std::get_if<5>(&argContainer[ index ]);
 }
 
-constexpr long long details::ArgContainer::long_long_state(size_t index) {
+constexpr long long& details::ArgContainer::long_long_state(size_t index) {
 	return *std::get_if<6>(&argContainer[ index ]);
 }
 
-unsigned constexpr long long details::ArgContainer::u_long_long_state(size_t index) {
+unsigned constexpr long long& details::ArgContainer::u_long_long_state(size_t index) {
 	return *std::get_if<7>(&argContainer[ index ]);
 }
 
-constexpr bool details::ArgContainer::bool_state(size_t index) {
+constexpr bool& details::ArgContainer::bool_state(size_t index) {
 	return *std::get_if<8>(&argContainer[ index ]);
 }
 
-constexpr char details::ArgContainer::char_state(size_t index) {
+constexpr char& details::ArgContainer::char_state(size_t index) {
 	return *std::get_if<9>(&argContainer[ index ]);
 }
 
-constexpr float details::ArgContainer::float_state(size_t index) {
+constexpr float& details::ArgContainer::float_state(size_t index) {
 	return *std::get_if<10>(&argContainer[ index ]);
 }
 
-constexpr double details::ArgContainer::double_state(size_t index) {
+constexpr double& details::ArgContainer::double_state(size_t index) {
 	return *std::get_if<11>(&argContainer[ index ]);
 }
 
-constexpr long double details::ArgContainer::long_double_state(size_t index) {
+constexpr long double& details::ArgContainer::long_double_state(size_t index) {
 	return *std::get_if<12>(&argContainer[ index ]);
 }
 constexpr const void* details::ArgContainer::const_void_ptr_state(size_t index) {

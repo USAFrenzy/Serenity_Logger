@@ -74,22 +74,22 @@ namespace serenity::msg_details {
 
 		constexpr std::array<VType, MAX_ARG_COUNT>& ArgStorage();
 		constexpr std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
+		constexpr size_t CurrentSize();
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 		template<typename... Args> constexpr void StoreArgs(Args&&... args);
 		constexpr std::string_view string_state(size_t index);
 		constexpr std::string_view c_string_state(size_t index);
 		constexpr std::string_view string_view_state(size_t index);
-		constexpr int int_state(size_t index);
-		constexpr unsigned int uint_state(size_t index);
-		constexpr long long long_long_state(size_t index);
-		constexpr unsigned long long u_long_long_state(size_t index);
-		constexpr bool bool_state(size_t index);
-		constexpr char char_state(size_t index);
-		constexpr float float_state(size_t index);
-		constexpr double double_state(size_t index);
-		constexpr long double long_double_state(size_t index);
+		constexpr int& int_state(size_t index);
+		constexpr unsigned int& uint_state(size_t index);
+		constexpr long long& long_long_state(size_t index);
+		constexpr unsigned long long& u_long_long_state(size_t index);
+		constexpr bool& bool_state(size_t index);
+		constexpr char& char_state(size_t index);
+		constexpr float& float_state(size_t index);
+		constexpr double& double_state(size_t index);
+		constexpr long double& long_double_state(size_t index);
 		constexpr const void* const_void_ptr_state(size_t index);
-
 		constexpr void* void_ptr_state(size_t index);
 
 	  private:
