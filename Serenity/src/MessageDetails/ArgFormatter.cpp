@@ -603,7 +603,11 @@ namespace serenity::arg_formatter {
 						if( specValues.typeSpec != '\0' && specValues.typeSpec != 's' ) {
 								FormatIntTypeArg(static_cast<unsigned char>(argStorage.bool_state(specValues.argPosition)));
 						} else {
-								rawValueTemp.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
+								using namespace std::string_view_literals;
+								std::memset(buffer.data(), 0, buffer.size());
+								auto sv { argStorage.bool_state(specValues.argPosition) ? "true"sv : "false"sv };
+								std::copy(sv.data(), sv.data() + sv.size(), buffer.begin());
+								valueSize = sv.size();
 							}
 						return;
 					}
@@ -612,7 +616,10 @@ namespace serenity::arg_formatter {
 						if( specValues.typeSpec != '\0' && specValues.typeSpec != 'c' ) {
 								FormatIntTypeArg(static_cast<int>(argStorage.char_state(specValues.argPosition)));
 						} else {
-								rawValueTemp += argStorage.char_state(specValues.argPosition);
+								std::memset(buffer.data(), 0, buffer.size());
+								std::string_view sv { &argStorage.char_state(specValues.argPosition), 1 };
+								std::copy(sv.data(), sv.data() + sv.size(), buffer.begin());
+								valueSize = 1;
 							}
 						return;
 					}
@@ -630,17 +637,24 @@ namespace serenity::arg_formatter {
 					}
 				case ConstVoidPtrType:
 					{
+						std::memset(buffer.data(), 0, buffer.size());
 						auto data { buffer.data() };
+						*(data + 0) = '0';
+						*(data + 1) = 'x';
 						charsResult =
-						std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16);
-						rawValueTemp.append("0x").append(buffer.data(), charsResult.ptr);
+						std::to_chars(data + 2, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16);
+						valueSize = charsResult.ptr - data;
 						return;
 					}
 				case VoidPtrType:
 					{
+						std::memset(buffer.data(), 0, buffer.size());
 						auto data { buffer.data() };
-						charsResult = std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16);
-						rawValueTemp.append("0x").append(buffer.data(), charsResult.ptr);
+						*(data + 0) = '0';
+						*(data + 1) = 'x';
+						charsResult =
+						std::to_chars(data + 2, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16);
+						valueSize = charsResult.ptr - data;
 						return;
 					}
 				default: return; break;
@@ -648,9 +662,9 @@ namespace serenity::arg_formatter {
 	}
 	void serenity::arg_formatter::ArgFormatter::AppendByPrecision(std::string_view val, int precision) {
 		int size { static_cast<int>(val.size()) };
+		std::memset(buffer.data(), 0, buffer.size());
 		precision = precision > 0 ? precision > size ? size : precision : size;
-		rawValueTemp.reserve(size);
-		rawValueTemp.append(val.data(), precision);
+		std::copy(val.data(), val.data() + precision, buffer.begin());
+		valueSize = precision;
 	}
-
 }    // namespace serenity::arg_formatter

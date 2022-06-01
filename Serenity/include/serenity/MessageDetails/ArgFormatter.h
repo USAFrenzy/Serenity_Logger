@@ -207,6 +207,8 @@ namespace serenity::arg_formatter {
 
 		std::string rawValueTemp;
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
+		long long valueSize {};
+		std::array<char, 512> fillBuffer {};
 		std::to_chars_result charsResult;
 
 		std::unique_ptr<std::locale> loc;

@@ -303,18 +303,18 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Format(std::bac
 					return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			}
 	}
-	rawValueTemp.clear();
+	// rawValueTemp.clear();
 	if( !specValues.localize ) {
 			FormatRawValueToStr(precision, argType);
 	} else {
 			LocalizeArgument(precision, argType);
 		}
-	const auto& size(rawValueTemp.size());
-	size_t fillAmount { (totalWidth > size) ? totalWidth - size : 0 };
+	auto formattedData { buffer.data() };
+	auto fillAmount { (totalWidth > valueSize) ? totalWidth - valueSize : 0 };
 	auto& container { *IteratorContainer(Iter).Container() };
 	if( fillAmount == 0 ) {
 			if constexpr( std::is_same_v<T, std::string> ) {
-					container.append(std::move(rawValueTemp).data(), size);
+					container.append(formattedData, valueSize);
 			} else {
 					Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 				}
@@ -323,13 +323,13 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Format(std::bac
 	// Reuse the buffer being used for formatting arithmetic to chars (leads to a massive performance gain vs a copying push_back/append call for a char).
 	// CPU cycles went from spending ~%18 per align loop with the fill char down to ~%2 with this change (std::fill() takes ~%2.3 so in the case of
 	// Align Center; this takes the cycles spent here down from ~%36 down to ~%6-%7).
-	auto data { buffer.data() };
-	std::memset(data, specValues.fillCharacter, buffer.size());
+	auto data { fillBuffer.data() };
+	std::memset(data, specValues.fillCharacter, fillAmount + 1);
 	switch( specValues.align ) {
 			case Alignment::AlignLeft:
 				{
 					if constexpr( std::is_same_v<T, std::string> ) {
-							container.append(std::move(rawValueTemp).data(), size).append(data, fillAmount);
+							container.append(formattedData, valueSize).append(data, fillAmount);
 					} else {
 							Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
 							Iter = std::move(data, data + fillAmount, Iter);
@@ -339,7 +339,7 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Format(std::bac
 			case Alignment::AlignRight:
 				{
 					if constexpr( std::is_same_v<T, std::string> ) {
-							container.append(data, fillAmount).append(std::move(rawValueTemp).data(), size);
+							container.append(data, fillAmount).append(formattedData, valueSize);
 					} else {
 							Iter = std::move(data, data + fillAmount, Iter);
 							Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
@@ -350,11 +350,11 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::Format(std::bac
 				{
 					fillAmount /= 2;
 					if constexpr( std::is_same_v<T, std::string> ) {
-							container.append(data, fillAmount).append(std::move(rawValueTemp).data(), size).append(data, (totalWidth - size - fillAmount));
+							container.append(data, fillAmount).append(formattedData, valueSize).append(data, (totalWidth - valueSize - fillAmount));
 					} else {
 							Iter = std::move(data, data + fillAmount, Iter);
 							Iter = std::move(rawValueTemp.begin(), rawValueTemp.end(), Iter);
-							Iter = std::move(data, data + (totalWidth - size - fillAmount), Iter);
+							Iter = std::move(data, data + (totalWidth - valueSize - fillAmount), Iter);
 						}
 					return;
 				}
@@ -428,11 +428,13 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatFloatType
 			default: break;
 		}
 	// clang-format off
-	rawValueTemp.append(data, (precision != 0 ? std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format, precision)
-	                                          : std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format)).ptr -data);
+	charsResult = precision != 0 ? std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format, precision)
+	                                                         : std::to_chars(data + pos, data + buffer.size(), std::forward<T>(value), format);
+	valueSize = charsResult.ptr - data;
 	// clang-format on
 	if( !isUpper ) return;
-	for( auto& ch: rawValueTemp ) {
+	for( auto& ch: buffer ) {
+			if( ch == '\0' ) break;
 			if( ch >= 'a' && ch <= 'z' ) {
 					ch -= 32;
 			}
@@ -476,9 +478,11 @@ template<typename T> void serenity::arg_formatter::ArgFormatter::FormatIntTypeAr
 				break;
 			default: base = 10; break;
 		}
-	rawValueTemp.append(data, std::to_chars(data + pos, data + buffer.size(), value, base).ptr - data);
+	charsResult = std::to_chars(data + pos, data + buffer.size(), value, base);
+	valueSize   = charsResult.ptr - data;
 	if( !isUpper ) return;
-	for( auto& ch: rawValueTemp ) {
+	for( auto& ch: buffer ) {
+			if( ch == '\0' ) break;
 			if( ch >= 'a' && ch <= 'z' ) {
 					ch -= 32;
 			}
