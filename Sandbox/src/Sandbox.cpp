@@ -227,7 +227,7 @@ int main() {
 		                             " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
 		                             " mi non odio." };
 
-	ArgFormatter parser(std::locale(""));
+	ArgFormatter parser;
 	Instrumentator timer;
 	std::string result;
 	std::string finalStr;

@@ -26,7 +26,7 @@ void* n       = static_cast<void*>(&b);
 // NOTE: Currently I have yet to add custom formatting
 
 TEST_CASE("Base Auto Index Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	static constexpr std::string_view formatString { "{}" };
 	REQUIRE(std::format(formatString, a) == formatter.se_format(formatString, a));
@@ -49,7 +49,7 @@ TEST_CASE("Base Auto Index Formatting") {
 }
 
 TEST_CASE("Base Manual Index Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{0}", a, b, c, d, e, f, g, h, i, j, k, l, m, n) == formatter.se_format("{0}", a, b, c, d, e, f, g, h, i, j, k, l, m, n));
 	REQUIRE(std::format("{1}", a, b, c, d, e, f, g, h, i, j, k, l, m, n) == formatter.se_format("{1}", a, b, c, d, e, f, g, h, i, j, k, l, m, n));
@@ -74,7 +74,7 @@ TEST_CASE("Base Manual Index Formatting") {
 }
 
 TEST_CASE("Type Specifier Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:b}", a) == formatter.se_format("{:b}", a));
 	REQUIRE(std::format("{:B}", a) == formatter.se_format("{:B}", a));
@@ -134,7 +134,7 @@ TEST_CASE("Type Specifier Formatting") {
 }
 
 TEST_CASE("Alternate Int Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:#}", a) == formatter.se_format("{:#}", a));
 	REQUIRE(std::format("{:#b}", a) == formatter.se_format("{:#b}", a));
@@ -146,7 +146,7 @@ TEST_CASE("Alternate Int Formatting") {
 }
 
 TEST_CASE("Alternate U_Int Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:#}", b) == formatter.se_format("{:#}", b));
 	REQUIRE(std::format("{:#b}", b) == formatter.se_format("{:#b}", b));
@@ -158,7 +158,7 @@ TEST_CASE("Alternate U_Int Formatting") {
 }
 
 TEST_CASE("Alternate Long Long Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:#}", c) == formatter.se_format("{:#}", c));
 	REQUIRE(std::format("{:#b}", c) == formatter.se_format("{:#b}", c));
@@ -170,7 +170,7 @@ TEST_CASE("Alternate Long Long Formatting") {
 }
 
 TEST_CASE("Alternate Unsigned Long Long Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:#}", d) == formatter.se_format("{:#}", d));
 	REQUIRE(std::format("{:#b}", d) == formatter.se_format("{:#b}", d));
@@ -182,7 +182,7 @@ TEST_CASE("Alternate Unsigned Long Long Formatting") {
 }
 
 TEST_CASE("Alternate Float Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:#}", e) == formatter.se_format("{:#}", e));
 	REQUIRE(std::format("{:#a}", e) == formatter.se_format("{:#a}", e));
@@ -190,7 +190,7 @@ TEST_CASE("Alternate Float Formatting") {
 }
 
 TEST_CASE("Alternate Double Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:#}", f) == formatter.se_format("{:#}", f));
 	REQUIRE(std::format("{:#a}", f) == formatter.se_format("{:#a}", f));
@@ -198,7 +198,7 @@ TEST_CASE("Alternate Double Formatting") {
 }
 
 TEST_CASE("Alternate Long Double Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:#}", g) == formatter.se_format("{:#}", g));
 	REQUIRE(std::format("{:#a}", g) == formatter.se_format("{:#a}", g));
@@ -206,7 +206,7 @@ TEST_CASE("Alternate Long Double Formatting") {
 }
 
 TEST_CASE("String Type Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:s}", h) == formatter.se_format("{:s}", h));
 	REQUIRE(std::format("{:s}", i) == formatter.se_format("{:s}", i));
@@ -214,7 +214,7 @@ TEST_CASE("String Type Formatting") {
 }
 
 TEST_CASE("Bool Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:b}", k) == formatter.se_format("{:b}", k));
 	REQUIRE(std::format("{:B}", k) == formatter.se_format("{:B}", k));
@@ -224,7 +224,7 @@ TEST_CASE("Bool Formatting") {
 }
 
 TEST_CASE("Char Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:b}", l) == formatter.se_format("{:b}", l));
 	REQUIRE(std::format("{:B}", l) == formatter.se_format("{:B}", l));
@@ -236,7 +236,7 @@ TEST_CASE("Char Formatting") {
 }
 
 TEST_CASE("Width Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:10}", a) == formatter.se_format("{:10}", a));
 	REQUIRE(std::format("{:10}", b) == formatter.se_format("{:10}", b));
@@ -255,7 +255,7 @@ TEST_CASE("Width Formatting") {
 }
 
 TEST_CASE("Precision Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:.5}", e) == formatter.se_format("{:.5}", e));
 	REQUIRE(std::format("{:.5}", f) == formatter.se_format("{:.5}", f));
@@ -266,7 +266,7 @@ TEST_CASE("Precision Formatting") {
 }
 
 TEST_CASE("Sign Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:+}", a) == formatter.se_format("{:+}", a));
 	REQUIRE(std::format("{:+}", b) == formatter.se_format("{:+}", b));
@@ -295,53 +295,50 @@ TEST_CASE("Sign Formatting") {
 
 TEST_CASE("Localization Formatting") {
 	std::locale locale("en_US.UTF-8");
-	ArgFormatter formatter(locale);
+	ArgFormatter formatter;
 
-	REQUIRE(std::format(locale, "{:L}", a) == formatter.se_format("{:L}", a));
-	REQUIRE(std::format(locale, "{:L}", b) == formatter.se_format("{:L}", b));
-	REQUIRE(std::format(locale, "{:L}", c) == formatter.se_format("{:L}", c));
-	REQUIRE(std::format(locale, "{:L}", d) == formatter.se_format("{:L}", d));
-	REQUIRE(std::format(locale, "{:L}", e) == formatter.se_format("{:L}", e));
-	REQUIRE(std::format(locale, "{:L}", f) == formatter.se_format("{:L}", f));
-	REQUIRE(std::format(locale, "{:L}", g) == formatter.se_format("{:L}", g));
-	REQUIRE(std::format(locale, "{:L}", k) == formatter.se_format("{:L}", k));
+	REQUIRE(std::format(locale, "{:L}", a) == formatter.se_format(locale, "{:L}", a));
+	REQUIRE(std::format(locale, "{:L}", b) == formatter.se_format(locale, "{:L}", b));
+	REQUIRE(std::format(locale, "{:L}", c) == formatter.se_format(locale, "{:L}", c));
+	REQUIRE(std::format(locale, "{:L}", d) == formatter.se_format(locale, "{:L}", d));
+	REQUIRE(std::format(locale, "{:L}", e) == formatter.se_format(locale, "{:L}", e));
+	REQUIRE(std::format(locale, "{:L}", f) == formatter.se_format(locale, "{:L}", f));
+	REQUIRE(std::format(locale, "{:L}", g) == formatter.se_format(locale, "{:L}", g));
+	REQUIRE(std::format(locale, "{:L}", k) == formatter.se_format(locale, "{:L}", k));
 
 	locale = std::locale("de_DE");
-	formatter.SetLocaleForUse(locale);
-	REQUIRE(std::format(locale, "{:L}", a) == formatter.se_format("{:L}", a));
-	REQUIRE(std::format(locale, "{:L}", b) == formatter.se_format("{:L}", b));
-	REQUIRE(std::format(locale, "{:L}", c) == formatter.se_format("{:L}", c));
-	REQUIRE(std::format(locale, "{:L}", d) == formatter.se_format("{:L}", d));
-	REQUIRE(std::format(locale, "{:L}", e) == formatter.se_format("{:L}", e));
-	REQUIRE(std::format(locale, "{:L}", f) == formatter.se_format("{:L}", f));
-	REQUIRE(std::format(locale, "{:L}", g) == formatter.se_format("{:L}", g));
-	REQUIRE(std::format(locale, "{:L}", k) == formatter.se_format("{:L}", k));
+	REQUIRE(std::format(locale, "{:L}", a) == formatter.se_format(locale, "{:L}", a));
+	REQUIRE(std::format(locale, "{:L}", b) == formatter.se_format(locale, "{:L}", b));
+	REQUIRE(std::format(locale, "{:L}", c) == formatter.se_format(locale, "{:L}", c));
+	REQUIRE(std::format(locale, "{:L}", d) == formatter.se_format(locale, "{:L}", d));
+	REQUIRE(std::format(locale, "{:L}", e) == formatter.se_format(locale, "{:L}", e));
+	REQUIRE(std::format(locale, "{:L}", f) == formatter.se_format(locale, "{:L}", f));
+	REQUIRE(std::format(locale, "{:L}", g) == formatter.se_format(locale, "{:L}", g));
+	REQUIRE(std::format(locale, "{:L}", k) == formatter.se_format(locale, "{:L}", k));
 
 	locale = std::locale("zh-HK");
-	formatter.SetLocaleForUse(locale);
-	REQUIRE(std::format(locale, "{:L}", a) == formatter.se_format("{:L}", a));
-	REQUIRE(std::format(locale, "{:L}", b) == formatter.se_format("{:L}", b));
-	REQUIRE(std::format(locale, "{:L}", c) == formatter.se_format("{:L}", c));
-	REQUIRE(std::format(locale, "{:L}", d) == formatter.se_format("{:L}", d));
-	REQUIRE(std::format(locale, "{:L}", e) == formatter.se_format("{:L}", e));
-	REQUIRE(std::format(locale, "{:L}", f) == formatter.se_format("{:L}", f));
-	REQUIRE(std::format(locale, "{:L}", g) == formatter.se_format("{:L}", g));
-	REQUIRE(std::format(locale, "{:L}", k) == formatter.se_format("{:L}", k));
+	REQUIRE(std::format(locale, "{:L}", a) == formatter.se_format(locale, "{:L}", a));
+	REQUIRE(std::format(locale, "{:L}", b) == formatter.se_format(locale, "{:L}", b));
+	REQUIRE(std::format(locale, "{:L}", c) == formatter.se_format(locale, "{:L}", c));
+	REQUIRE(std::format(locale, "{:L}", d) == formatter.se_format(locale, "{:L}", d));
+	REQUIRE(std::format(locale, "{:L}", e) == formatter.se_format(locale, "{:L}", e));
+	REQUIRE(std::format(locale, "{:L}", f) == formatter.se_format(locale, "{:L}", f));
+	REQUIRE(std::format(locale, "{:L}", g) == formatter.se_format(locale, "{:L}", g));
+	REQUIRE(std::format(locale, "{:L}", k) == formatter.se_format(locale, "{:L}", k));
 
 	locale = std::locale("hi_IN");
-	formatter.SetLocaleForUse(locale);
-	REQUIRE(std::format(locale, "{:L}", a) == formatter.se_format("{:L}", a));
-	REQUIRE(std::format(locale, "{:L}", b) == formatter.se_format("{:L}", b));
-	REQUIRE(std::format(locale, "{:L}", c) == formatter.se_format("{:L}", c));
-	REQUIRE(std::format(locale, "{:L}", d) == formatter.se_format("{:L}", d));
-	REQUIRE(std::format(locale, "{:L}", e) == formatter.se_format("{:L}", e));
-	REQUIRE(std::format(locale, "{:L}", f) == formatter.se_format("{:L}", f));
-	REQUIRE(std::format(locale, "{:L}", g) == formatter.se_format("{:L}", g));
-	REQUIRE(std::format(locale, "{:L}", k) == formatter.se_format("{:L}", k));
+	REQUIRE(std::format(locale, "{:L}", a) == formatter.se_format(locale, "{:L}", a));
+	REQUIRE(std::format(locale, "{:L}", b) == formatter.se_format(locale, "{:L}", b));
+	REQUIRE(std::format(locale, "{:L}", c) == formatter.se_format(locale, "{:L}", c));
+	REQUIRE(std::format(locale, "{:L}", d) == formatter.se_format(locale, "{:L}", d));
+	REQUIRE(std::format(locale, "{:L}", e) == formatter.se_format(locale, "{:L}", e));
+	REQUIRE(std::format(locale, "{:L}", f) == formatter.se_format(locale, "{:L}", f));
+	REQUIRE(std::format(locale, "{:L}", g) == formatter.se_format(locale, "{:L}", g));
+	REQUIRE(std::format(locale, "{:L}", k) == formatter.se_format(locale, "{:L}", k));
 }
 
 TEST_CASE("Fill-Align Formatting") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 
 	REQUIRE(std::format("{:*^20}", a) == formatter.se_format("{:*^20}", a));
 	REQUIRE(std::format("{:*<20}", a) == formatter.se_format("{:*<20}", a));
@@ -403,7 +400,7 @@ TEST_CASE("Fill-Align Formatting") {
 #include <serenity/Common.h>
 
 TEST_CASE("Format Function Test") {
-	ArgFormatter formatter(std::locale("en_US.UTF-8"));
+	ArgFormatter formatter;
 	int width { 20 };
 	std::string stdStr, argFmtStr;
 	constexpr std::string_view fmt { "{0:*^#{1}x}" };

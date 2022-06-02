@@ -241,11 +241,11 @@ namespace serenity {
 	};
 	// clang-format on
 
-	static bool IsDigit(const char& ch) {
+	static constexpr bool IsDigit(const char& ch) {
 		return ((ch >= '0') && (ch <= '9'));
 	}
 
-	static bool IsAlpha(const char& ch) {
+	static constexpr bool IsAlpha(const char& ch) {
 		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 	}
 

@@ -9,7 +9,7 @@ namespace serenity::msg_details {
 	}
 
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
-			: msgInfo(*&details), localeRef(&globals::default_locale), sourceFlag(source_flag::empty), argFormatter(globals::default_locale) {
+			: msgInfo(*&details), localeRef(&globals::default_locale), sourceFlag(source_flag::empty), argFormatter() {
 		SetPattern(pattern);
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;

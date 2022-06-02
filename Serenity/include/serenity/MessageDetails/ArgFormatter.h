@@ -88,7 +88,7 @@ namespace serenity::arg_formatter {
 
 	struct SpecFormatting
 	{
-		void ResetSpecs();
+		constexpr void ResetSpecs();
 		size_t argPosition { 0 };
 		int alignmentPadding { 0 };
 		int precision { 0 };
@@ -106,7 +106,7 @@ namespace serenity::arg_formatter {
 
 	struct BracketSearchResults
 	{
-		void Reset();
+		constexpr void Reset();
 		size_t beginPos { 0 };
 		size_t endPos { 0 };
 	};
@@ -155,68 +155,67 @@ namespace serenity::arg_formatter {
 	class ArgFormatter
 	{
 	  public:
-		ArgFormatter() = delete;
-		ArgFormatter(const std::locale& loc);
-		ArgFormatter(const ArgFormatter&)            = delete;
-		ArgFormatter& operator=(const ArgFormatter&) = delete;
-		~ArgFormatter()                              = default;
+		// due to setting locale settings, none of these can really be specified as constexpr...
+		constexpr ArgFormatter();
+		constexpr ArgFormatter(const ArgFormatter&)            = delete;
+		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
+		constexpr ~ArgFormatter()                              = default;
 
 		template<typename... Args> std::string se_format(std::string_view sv, Args&&... args);
+		template<typename... Args> std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
-		void SetLocaleForUse(const std::locale& locale);
+		template<typename T, typename... Args>
+		constexpr void se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
 
 	  private:
 		template<typename T> constexpr void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		// At the moment Parse and Format are coupled together where Parse calls Format, hence the
+		// need right now to have a version of Parse that takes a locale object to forward to Format
+		template<typename T> constexpr void Parse(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		template<typename T> constexpr void Format(std::back_insert_iterator<T>&& Iter, SpecType&& argType);
+		template<typename T> constexpr void Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, SpecType&& argType);
 
-		bool FindBrackets(std::string_view sv);
+		constexpr bool FindBrackets(std::string_view sv);
+		constexpr bool ParsePositionalField(std::string_view sv, size_t& start, size_t& positionValue);
 
-		bool ParsePositionalField(std::string_view sv, size_t& start, size_t& positionValue);
+		constexpr void VerifyArgumentBracket(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr void VerifyFillAlignField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr void VerifySignField(const char& ch, size_t& currentPosition);
+		constexpr void VerifyAltField(std::string_view sv, const SpecType& argType);
+		constexpr void VerifyWidthField(std::string_view sv, size_t& currentPosition);
+		constexpr void VerifyPrecisionField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr void VerifyLocaleField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr void HandlePotentialTypeField(const char& ch, const SpecType& argType);
+		constexpr void VerifyEscapedBracket(std::string_view sv, size_t& currentPosition);
+		constexpr bool IsSimpleSubstitution(const SpecType& argType, const int& precision);
 
-		void VerifyArgumentBracket(std::string_view sv, size_t& currentPosition, const SpecType& argType);
-		void VerifyFillAlignField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
-		void VerifySignField(const char& ch, size_t& currentPosition);
-		void VerifyAltField(std::string_view sv, const SpecType& argType);
-		void VerifyWidthField(std::string_view sv, size_t& currentPosition);
-		void VerifyPrecisionField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
-		void VerifyLocaleField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
-		void HandlePotentialTypeField(const char& ch, const SpecType& argType);
-		void VerifyEscapedBracket(std::string_view sv, size_t& currentPosition);
-		bool IsSimpleSubstitution(const SpecType& argType, const int& precision);
-
-		template<typename T> void Format(std::back_insert_iterator<T>&& Iter, SpecType&& argType);
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		void AppendByPrecision(std::string_view val, int precision);
-		template<typename T> void FormatFloatTypeArg(T&& value, int& precision);
-		template<typename T> void FormatIntTypeArg(T&& value);
-		void FormatRawValueToStr(int precision, const SpecType& type);
-		void LocalizeArgument(int precision, SpecType type);
-		void LocalizeIntegral(int precision, SpecType type);
-		void LocalizeFloatingPoint(int precision, SpecType type);
-		void LocalizeBool();
-		void FormatIntegralGrouping(std::string& section, char separator);
-		template<typename T> void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const SpecType&);
+		template<typename T> constexpr void FormatFloatTypeArg(T&& value, int& precision);
+		template<typename T> constexpr void FormatIntTypeArg(T&& value);
+		template<typename T> constexpr void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const SpecType&);
+		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, int totalWidth, size_t fillAmount);
+		constexpr void AppendByPrecision(std::string_view val, int precision);
+		constexpr void FormatRawValueToStr(int precision, const SpecType& type);
+		// Due to the usage of the numpunct functions, which are not
+		// constexpr, these functions can't really be specified as constexpr
+		void LocalizeArgument(const std::locale& loc, int precision, SpecType type);
+		void FormatIntegralGrouping(const std::locale& loc, std::string& section);
+		void LocalizeIntegral(const std::locale& loc, int precision, SpecType type);
+		void LocalizeFloatingPoint(const std::locale& loc, int precision, SpecType type);
+		void LocalizeBool(const std::locale& loc);
 
 	  private:
-		int argCounter { 0 };
-		IndexMode m_indexMode { IndexMode::automatic };
+		int argCounter;
+		IndexMode m_indexMode;
 
-		std::string_view remainder { "" };
-		BracketSearchResults bracketResults {};
-		SpecFormatting specValues {};
-		ArgContainer argStorage {};
+		std::string_view remainder;
+		BracketSearchResults bracketResults;
+		SpecFormatting specValues;
+		ArgContainer argStorage;
 
 		std::string rawValueTemp;
-		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer = {};
-		long long valueSize {};
-		std::array<char, 512> fillBuffer {};
+		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer;
 		std::to_chars_result charsResult;
-
-		std::unique_ptr<std::locale> loc;
-		char separator;
-		char decimal;
-		std::string falseStr;
-		std::string trueStr;
-		std::string groupings;
 		std::string localeTemp;
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
