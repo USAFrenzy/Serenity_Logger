@@ -5,11 +5,11 @@
 namespace serenity::msg_details {
 
 	void Message_Formatter::SetLocaleReference(std::locale* loc) {
-		localeRef = *&loc;
+		localeRef = *loc;
 	}
 
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
-			: msgInfo(*&details), localeRef(&globals::default_locale), sourceFlag(source_flag::empty), argFormatter() {
+			: msgInfo(*&details), localeRef(globals::default_locale), sourceFlag(source_flag::empty), argFormatter() {
 		SetPattern(pattern);
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;

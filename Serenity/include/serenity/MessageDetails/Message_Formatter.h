@@ -50,7 +50,7 @@ namespace serenity::msg_details {
 
 	  private:
 		Message_Info* msgInfo;
-		std::locale* localeRef;
+		std::locale& localeRef;
 		Formatters formatter;
 		std::string fmtPattern;
 		std::string lazy_message;

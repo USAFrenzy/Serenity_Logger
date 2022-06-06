@@ -215,7 +215,7 @@ int main() {
 
 	// clang-format off
 	std::cout << Tag::Yellow("\n\n***************************************************************************************\n"
-                                                                "****************** Instrumentation Data (Averaged Over ") << Tag::Yellow(std::to_string(iterations) + " Iterations: ******************\n")
+                                                                "*************** Instrumentation Data (Averaged Over ") << Tag::Yellow(std::to_string(iterations) + " Iterations): **************\n")
 		                        << Tag::Yellow("***************************************************************************************\n");
 	// clang-format on
 	std::cout << Tag::Bright_Yellow("Color Console Target (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")

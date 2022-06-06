@@ -61,9 +61,7 @@ template<typename T> static constexpr details::SpecType GetArgType(T&& val) {
 			return std::forward<SpecType>(ConstVoidPtrType);
 	} else if constexpr( std::is_same_v<base_type, void*> ) {
 			return std::forward<SpecType>(VoidPtrType);
-	} else {
-			static_assert("Value Type Not Supported\n");
-		}
+	}
 }
 
 constexpr std::array<details::ArgContainer::VType, details::MAX_ARG_COUNT>& details::ArgContainer::ArgStorage() {

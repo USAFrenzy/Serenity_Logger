@@ -61,8 +61,68 @@
 #include <string>
 #include <vector>
 
+namespace serenity {
+	// drop-in replacement for format_error for the ArgFormatter class
+	class format_error: public std::runtime_error
+	{
+	  public:
+		explicit format_error(const char* message): std::runtime_error(message) { }
+		explicit format_error(const std::string& message): std::runtime_error(message) { }
+		format_error(const format_error&)            = default;
+		format_error& operator=(const format_error&) = default;
+		format_error(format_error&&)                 = default;
+		format_error& operator=(format_error&&)      = default;
+		~format_error() noexcept override            = default;
+	};
+
+	enum class ErrorType
+	{
+		none = 0,
+		missing_bracket,
+		position_field_spec,
+		position_field_mode,
+		position_field_no_position,
+		position_field_runon,
+		max_args_exceeded,
+		invalid_fill_character,
+		invalid_alt_type,
+		invalid_precision_type,
+		invalid_locale_type,
+		invalid_int_spec,
+		invalid_float_spec,
+		invalid_string_spec,
+		invalid_bool_spec,
+		invalid_char_spec,
+		invalid_pointer_spec,
+	};
+
+	static constexpr std::array<const char*, 17> format_error_messages = {
+		"Unkown Formatting Error Occured.",
+		"Missing Closing '}' In Argument Spec Field.",
+		"Error In Position Field: No ':' Or '}' Found While In Automatic Indexing Mode.",
+		"Error In Postion Field: Cannot Mix Manual And Automatic Indexing For Arguments."
+		"Error In Position Field: Missing Positional Argument Before ':' In Manual Indexing Mode.",
+		"Formatting Error Detected: Missing ':' Before Next Specifier.",
+		"Error In Position Argument Field: Max Position (24) Exceeded.",
+		"Error In Fill/Align Field: Invalid Fill Character Provided.",
+		"Error In Alternate Field: Argument Type Has No Alternate Form.",
+		"Error In Precision Field: An Integral Type Is Not Allowed To Have A Precsision Field.",
+		"Error In Locale Field: Argument Type Cannot Be Localized.",
+		"Error In Format: Invalid Type Specifier For Int Type Argument.",
+		"Error In Format: Invalid Type Specifier For Float Type Argument.",
+		"Error In Format: Invalid Type Specifier For String Type Argument.",
+		"Error In Format: Invalid Type Specifier For Bool Type Argument.",
+		"Error In Format: Invalid Type Specifier For Char Type Argument.",
+		"Error In Format: Invalid Type Specifier For Pointer Type Argument.",
+	};
+}    // namespace serenity
+
 namespace serenity::arg_formatter {
+
 	using namespace msg_details;
+	constexpr size_t SERENITY_ARG_BUFFER_SIZE { 65 };
+	// defualt locale used for when no locale is provided, yet a locale flag is present when formatting
+	static std::locale default_locale { std::locale("") };
 
 	enum class Alignment : char
 	{
@@ -114,27 +174,22 @@ namespace serenity::arg_formatter {
 	template<typename T> struct IteratorContainer: std::back_insert_iterator<T>
 	{
 		using std::back_insert_iterator<T>::container_type;
-		IteratorContainer(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
-		const auto& Container() {
+		constexpr IteratorContainer(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
+		constexpr const auto& Container() {
 			return this->container;
 		}
 	};
 
 	template<typename... Args> static constexpr void ReserveCapacityImpl(size_t& totalSize, Args&&... args) {
-		// Most of the currently supported types are 8 bytes except for a select few, such as int being 4 bytes and its modified types being 8 bytes,
-		// float also being 4 bytes but a double is 8 and a long double is 12. Since even the 4 byte values can be interpreted differently when formatted
-		// and end up larger in the end, a happy medium is probably 8 bytes, but using 16 bytes as the default and will tweak from there. Since strings
-		// tend to be rather large and slow, on MSVC, it seems the size of a string is 40 bytes, so I'll start off allocating somewhere around 50% extra
-		// and tweak things from there.
 		(
 		[ = ](size_t& totalSize, auto&& arg) {
 			using base_type = std::decay_t<decltype(arg)>;
 			if constexpr( std::is_same_v<base_type, std::string> || std::is_same_v<base_type, std::string_view> ) {
 					totalSize += arg.size();
 			} else if constexpr( std::is_same_v<base_type, const char*> ) {
-					totalSize += 56;
+					totalSize += std::strlen(arg);
 			} else {
-					totalSize += 8;
+					totalSize += 16;
 				}
 		}(totalSize, args),
 		...);
@@ -146,38 +201,39 @@ namespace serenity::arg_formatter {
 		return std::forward<size_t>(totalSize);
 	}
 
-#ifndef SERENITY_ARG_BUFFER_SIZE
-	#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(65)
-#endif    // !SERENITY_ARG_BUFFER_SIZE
-
-	// Compatible class that provides some of the same functionality that mirrors <format> for pre C++23
-	// (In the hopes of eliminating the usage of /std:latest compiler flag to use <forrmat> functionality)
+	/**************************************************************************************************************************************************
+	    Compatible class that provides some of the same functionality that mirrors <format> and libfmt for basic formatting needs for pre  C++20 and
+	    MSVC's pre-backported fixes (which required C ++23) for some build versions of Visual Studio as well as for performance needs. Everything in
+	    this class either matches (in the case of simple double substitution) or greatly exceeds the performance of MSVC's implementation -  with the
+	    caveat of no custom formatting support, no utf-8 support, and no type-erasure as of right now. I believe libfmt is faster than this basic
+	    implementation  (and unarguably way more comprehensive as well) but I have yet to bench timings against it.
+	**************************************************************************************************************************************************/
 	class ArgFormatter
 	{
 	  public:
-		// due to setting locale settings, none of these can really be specified as constexpr...
 		constexpr ArgFormatter();
 		constexpr ArgFormatter(const ArgFormatter&)            = delete;
 		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
 		constexpr ~ArgFormatter()                              = default;
 
-		template<typename... Args> std::string se_format(std::string_view sv, Args&&... args);
-		template<typename... Args> std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
+		template<typename... Args> [[nodiscard]] std::string se_format(std::string_view sv, Args&&... args);
+		template<typename... Args> [[nodiscard]] std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
 		template<typename T, typename... Args>
 		constexpr void se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
 
 	  private:
+		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 		template<typename T> constexpr void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
 		// At the moment Parse and Format are coupled together where Parse calls Format, hence the
 		// need right now to have a version of Parse that takes a locale object to forward to Format
 		template<typename T> constexpr void Parse(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
-		template<typename T> constexpr void Format(std::back_insert_iterator<T>&& Iter, SpecType&& argType);
-		template<typename T> constexpr void Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, SpecType&& argType);
-
+		template<typename T> constexpr void Format(std::back_insert_iterator<T>&& Iter, const SpecType& argType);
+		template<typename T> constexpr void Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const SpecType& argType);
+		/******************************************************* Parsing/Verification Related Functions *******************************************************/
+		[[noreturn]] constexpr void ReportError(ErrorType err);
 		constexpr bool FindBrackets(std::string_view sv);
 		constexpr bool ParsePositionalField(std::string_view sv, size_t& start, size_t& positionValue);
-
 		constexpr void VerifyArgumentBracket(std::string_view sv, size_t& currentPosition, const SpecType& argType);
 		constexpr void VerifyFillAlignField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
 		constexpr void VerifySignField(const char& ch, size_t& currentPosition);
@@ -188,35 +244,30 @@ namespace serenity::arg_formatter {
 		constexpr void HandlePotentialTypeField(const char& ch, const SpecType& argType);
 		constexpr void VerifyEscapedBracket(std::string_view sv, size_t& currentPosition);
 		constexpr bool IsSimpleSubstitution(const SpecType& argType, const int& precision);
-
-		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		template<typename T> constexpr void FormatFloatTypeArg(T&& value, int& precision);
-		template<typename T> constexpr void FormatIntTypeArg(T&& value);
+		/*********************************************************** Formatting Related Functions ***********************************************************/
+		constexpr void FormatArgument(int precision, const SpecType& type);
+		template<typename T> constexpr void FormatInt(T&& value);
+		template<typename T> constexpr void FormatFloat(T&& value, int precision);
+		template<typename T> constexpr void FormatString(std::back_insert_iterator<T>&& Iter, std::string_view val, int precision);
 		template<typename T> constexpr void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const SpecType&);
-		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, int totalWidth, size_t fillAmount);
-		constexpr void AppendByPrecision(std::string_view val, int precision);
-		constexpr void FormatRawValueToStr(int precision, const SpecType& type);
-		// Due to the usage of the numpunct functions, which are not
-		// constexpr, these functions can't really be specified as constexpr
+		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, int totalWidth);
+		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, int totalWidth, int precision);
+		// Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
 		void LocalizeArgument(const std::locale& loc, int precision, SpecType type);
-		void FormatIntegralGrouping(const std::locale& loc, std::string& section);
 		void LocalizeIntegral(const std::locale& loc, int precision, SpecType type);
+		void FormatIntegralGrouping(const std::locale& loc, size_t end);
 		void LocalizeFloatingPoint(const std::locale& loc, int precision, SpecType type);
 		void LocalizeBool(const std::locale& loc);
 
 	  private:
 		int argCounter;
 		IndexMode m_indexMode;
-
-		std::string_view remainder;
 		BracketSearchResults bracketResults;
 		SpecFormatting specValues;
 		ArgContainer argStorage;
-
-		std::string rawValueTemp;
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer;
-		std::to_chars_result charsResult;
-		std::string localeTemp;
+		size_t valueSize;
+		std::vector<char> fillBuffer;
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
 

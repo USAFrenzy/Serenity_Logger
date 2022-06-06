@@ -280,9 +280,10 @@ int main() {
 			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(standardTime));
 			console.Info("With Result: {}", finalStr);
 
-			auto percentValue { ((serenityTime1 - standardTime) / serenityTime1) * 100 };
-			auto percentValue2 { ((serenityTime2 - standardTime) / serenityTime2) * 100 };
-			auto percentValue3 { ((serenityTime1 - serenityTime2) / serenityTime1) * 100 };
+			// Just realized why the percentages were so freaking out there - I had broken the formula (WOOPS!)
+			auto percentValue { ((serenityTime1 - standardTime) / standardTime) * 100 };
+			auto percentValue2 { ((serenityTime2 - standardTime) / standardTime) * 100 };
+			auto percentValue3 { ((serenityTime1 - serenityTime2) / serenityTime2) * 100 };
 
 			if( percentValue > 0 ) {
 					std::string percentStr { "[" };

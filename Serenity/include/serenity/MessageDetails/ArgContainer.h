@@ -29,11 +29,6 @@
 
 namespace serenity::msg_details {
 
-	template<typename T, typename U> struct is_supported;
-	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
-	{
-	};
-
 	enum class SpecType
 	{
 		MonoType         = 0,
@@ -56,7 +51,6 @@ namespace serenity::msg_details {
 	constexpr size_t MAX_ARG_COUNT = 25;
 	constexpr size_t MAX_ARG_INDEX = 24;
 
-	// This is marginally faster than using the above array with the variant.index() call I was using before-hand
 	template<typename T> static constexpr SpecType GetArgType(T&& val);
 	static constexpr std::string_view SpecTypeString(SpecType type);
 
