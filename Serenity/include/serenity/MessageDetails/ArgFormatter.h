@@ -224,19 +224,18 @@ namespace serenity::arg_formatter {
 
 	  private:
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		template<typename T> constexpr void Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv);
-		// At the moment Parse and Format are coupled together where Parse calls Format, hence the
-		// need right now to have a version of Parse that takes a locale object to forward to Format
-		template<typename T> constexpr void Parse(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		// At the moment ParseFormatString and Format are coupled together where ParseFormatString calls Format, hence the
+		// need right now to have a version of ParseFormatString that takes a locale object to forward to Format
+		template<typename T> constexpr void ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
 		template<typename T> constexpr void Format(std::back_insert_iterator<T>&& Iter, const SpecType& argType);
 		template<typename T> constexpr void Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const SpecType& argType);
 		/******************************************************* Parsing/Verification Related Functions *******************************************************/
 		[[noreturn]] constexpr void ReportError(ErrorType err);
 		constexpr bool FindBrackets(std::string_view sv);
-		constexpr bool ParsePositionalField(std::string_view sv, size_t& start, size_t& positionValue);
-		constexpr void VerifyArgumentBracket(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr void Parse(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr bool VerifyPositionalField(std::string_view sv, size_t& start, size_t& positionValue);
 		constexpr void VerifyFillAlignField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
-		constexpr void VerifySignField(const char& ch, size_t& currentPosition);
 		constexpr void VerifyAltField(std::string_view sv, const SpecType& argType);
 		constexpr void VerifyWidthField(std::string_view sv, size_t& currentPosition);
 		constexpr void VerifyPrecisionField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
@@ -244,6 +243,12 @@ namespace serenity::arg_formatter {
 		constexpr void HandlePotentialTypeField(const char& ch, const SpecType& argType);
 		constexpr void VerifyEscapedBracket(std::string_view sv, size_t& currentPosition);
 		constexpr bool IsSimpleSubstitution(const SpecType& argType, const int& precision);
+		constexpr void OnAlignLeft(const char& ch, size_t& pos);
+		constexpr void OnAlignRight(const char& ch, size_t& pos);
+		constexpr void OnAlignCenter(const char& ch, size_t& pos);
+		constexpr void OnAlignDefault(const SpecType& type, size_t& pos);
+		constexpr void OnValidTypeSpec(const SpecType& type, const char& ch);
+		constexpr void OnInvalidTypeSpec(const SpecType& type);
 		/*********************************************************** Formatting Related Functions ***********************************************************/
 		constexpr void FormatArgument(int precision, const SpecType& type);
 		template<typename T> constexpr void FormatInt(T&& value);
@@ -272,3 +277,26 @@ namespace serenity::arg_formatter {
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
 
 }    // namespace serenity::arg_formatter
+
+/********************************************************************** Note: ***********************************************************************/
+//    An idea for more efficient compile time formatting, once things are fleshed out here a bit more that is, is to  save the bracket offsets in the
+//    format string for a substitution bracket, then parse the bracket for validity checkes, rinse and repeat until the end of the format string is
+//    reached, then on Format(), splice the format string adding the formatted value to the offset and concatenate the results before returning the
+//    fully formatted string -> could speed things up a whole lot by basically just leaving the formatting step to runtime and quite literally everything
+//    else at compile time. If  there's no need to parse the format string for brackets, verify the specs in the bracket, and verify the specs are valid for
+//    the arg type given during runtime, then this could easily be a ~2x improvement as cpu cycles spend most of the time in the verification process
+//    and formatting process (finding the brackets and verifying a manual position are pretty negligible at ~6-8ns and ~5-10ns respectively) rather
+//    equally (with formatting leading the cycle usage by ~5-10% over the verify calls).
+/****************************************************************************************************************************************************/
+/********************************************************************** Note: ***********************************************************************/
+// As a second note, I may end up reworking some of this to mirror how libfmt has its formatters set up as I have literally no idea how to accomplish
+// custom formatting at this point without something akin to "template<> struct formatter<Type>{};" . I might be able to get away with using an
+// inheritance based approach but I think it would make more sense to follow libfmt/<format>'s lead here for the formatter approach. Storing a
+// custom type's value should be relatively easy as I can just cast the value to a 'const void*' , store that value in the VType variant, and enumerate on
+// 'CustomType' but without some sort of  function callback for both parsing the value for user specs and formatting the value based on those specs,
+//  I would have no idea how to allow a user type to be formatted - nor do I know right now if it's possible to somehow store function pointers as
+// callables when they aren't a member function (I assume it is as that would make sense for just being fptr, but I just have no idea how I would need
+//  to approach that right now). I remember  back when I was working on the time-stamp formatting part of this project, that function pointers were
+//  a bit slower, especially when you had to  index into a collection for the right offset to dispatch that function, but that was for already known functions;
+//  I don't know if that approach would work in this case.
+/***************************************************************************************************************************************************/

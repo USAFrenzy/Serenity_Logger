@@ -61,7 +61,10 @@ template<typename T> static constexpr details::SpecType GetArgType(T&& val) {
 			return std::forward<SpecType>(ConstVoidPtrType);
 	} else if constexpr( std::is_same_v<base_type, void*> ) {
 			return std::forward<SpecType>(VoidPtrType);
-	}
+	} else {
+			// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
+			static_assert(false, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
+		}
 }
 
 constexpr std::array<details::ArgContainer::VType, details::MAX_ARG_COUNT>& details::ArgContainer::ArgStorage() {

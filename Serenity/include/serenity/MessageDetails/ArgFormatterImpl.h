@@ -116,12 +116,12 @@ constexpr bool serenity::arg_formatter::ArgFormatter::FindBrackets(std::string_v
 		}
 }
 
-constexpr bool serenity::arg_formatter::ArgFormatter::ParsePositionalField(std::string_view sv, size_t& start, size_t& positionValue) {
-	// we're in automatic mode
+constexpr bool serenity::arg_formatter::ArgFormatter::VerifyPositionalField(std::string_view sv, size_t& start, size_t& positionValue) {
 	if( m_indexMode == IndexMode::automatic ) {
+			// we're in automatic mode
 			if( const auto& ch { sv[ start ] }; IsDigit(ch) ) {
 					m_indexMode = IndexMode::manual;
-					return ParsePositionalField(sv, start, positionValue);
+					return VerifyPositionalField(sv, start, positionValue);
 			} else if( ch == '}' ) {
 					positionValue = argCounter++;
 					return false;
@@ -172,7 +172,7 @@ constexpr bool serenity::arg_formatter::ArgFormatter::ParsePositionalField(std::
 											if( start >= size ) break;
 											if( sv[ ++start ] != ' ' ) break;
 										}
-									return ParsePositionalField(sv, start, positionValue);
+									return VerifyPositionalField(sv, start, positionValue);
 									break;
 								}
 							case ':': ReportError(ErrorType::position_field_no_position); break;
@@ -183,31 +183,43 @@ constexpr bool serenity::arg_formatter::ArgFormatter::ParsePositionalField(std::
 	unreachable();
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::VerifyFillAlignField(std::string_view sv, size_t& currentPos, const msg_details::SpecType& argType) {
-	using enum msg_details::SpecType;
-	if( sv[ currentPos ] == ':' ) {
+constexpr void serenity::arg_formatter::ArgFormatter::OnAlignLeft(const char& ch, size_t& pos) {
+	specValues.align = Alignment::AlignLeft;
+	++pos;
+	if( ch == ':' ) {
 			specValues.fillCharacter = ' ';
-	} else if( sv[ currentPos ] != '{' && sv[ currentPos ] != '}' ) {
-			specValues.fillCharacter = sv[ currentPos ];
+	} else if( ch != '{' && ch != '}' ) {
+			specValues.fillCharacter = ch;
 	} else {
 			ReportError(ErrorType::invalid_fill_character);
 		}
-	switch( ++currentPos >= sv.size() ? sv.back() : sv[ currentPos ] ) {
-			case '<':
-				specValues.align = Alignment::AlignLeft;
-				++currentPos;
-				return;
-			case '>':
-				specValues.align = Alignment::AlignRight;
-				++currentPos;
-				return;
-			case '^':
-				specValues.align = Alignment::AlignCenter;
-				++currentPos;
-				return;
-			default: --currentPos; break;
+}
+constexpr void serenity::arg_formatter::ArgFormatter::OnAlignRight(const char& ch, size_t& pos) {
+	specValues.align = Alignment::AlignRight;
+	++pos;
+	if( ch == ':' ) {
+			specValues.fillCharacter = ' ';
+	} else if( ch != '{' && ch != '}' ) {
+			specValues.fillCharacter = ch;
+	} else {
+			ReportError(ErrorType::invalid_fill_character);
 		}
-	// This sets the default behavior for the case that no alignment option is found
+}
+constexpr void serenity::arg_formatter::ArgFormatter::OnAlignCenter(const char& ch, size_t& pos) {
+	specValues.align = Alignment::AlignCenter;
+	++pos;
+	if( ch == ':' ) {
+			specValues.fillCharacter = ' ';
+	} else if( ch != '{' && ch != '}' ) {
+			specValues.fillCharacter = ch;
+	} else {
+			ReportError(ErrorType::invalid_fill_character);
+		}
+}
+constexpr void serenity::arg_formatter::ArgFormatter::OnAlignDefault(const SpecType& argType, size_t& pos) {
+	using enum msg_details::SpecType;
+	--pos;
+	specValues.fillCharacter = ' ';
 	switch( argType ) {
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
@@ -220,14 +232,17 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyFillAlignField(std::
 		}
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::VerifySignField(const char& ch, size_t& currentPosition) {
-	switch( ch ) {
-			case '+': specValues.signType = Sign::Plus; break;
-			case '-': specValues.signType = Sign::Minus; break;
-			case ' ': specValues.signType = Sign::Space; break;
-			default: specValues.signType = Sign::Empty; return;
+// Splitting up the logic into their own function calls made this slightly faster, most likely due to being able to aid in inlining?
+// I'm honestly not too sure why, but it saves ~0.45% CPU cycles being used and the timing for the complex format pattern
+// was reduced from ~0.457us down to ~0.442us. In an effort to just make it look cleaner, it saved some time, so I'll take it
+constexpr void serenity::arg_formatter::ArgFormatter::VerifyFillAlignField(std::string_view sv, size_t& currentPos, const msg_details::SpecType& argType) {
+	const auto& ch { sv[ currentPos ] };
+	switch( ++currentPos >= sv.size() ? sv.back() : sv[ currentPos ] ) {
+			case '<': OnAlignLeft(ch, currentPos); return;
+			case '>': OnAlignRight(ch, currentPos); return;
+			case '^': OnAlignCenter(ch, currentPos); return;
+			default: OnAlignDefault(argType, currentPos); return;
 		}
-	++currentPosition;
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::VerifyAltField(std::string_view sv, const msg_details::SpecType& argType) {
@@ -254,12 +269,12 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyWidthField(std::stri
 			switch( ch ) {
 					case '{':
 						{
-							ParsePositionalField(sv, ++currentPosition, specValues.nestedWidthArgPos);
+							VerifyPositionalField(sv, ++currentPosition, specValues.nestedWidthArgPos);
 							return;
 						}
 					case '}':
 						{
-							ParsePositionalField(sv, currentPosition, specValues.nestedWidthArgPos);
+							VerifyPositionalField(sv, currentPosition, specValues.nestedWidthArgPos);
 							return;
 						}
 					case ' ':
@@ -295,12 +310,12 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyPrecisionField(std::
 			switch( ch ) {
 					case '{':
 						{
-							ParsePositionalField(sv, ++currentPosition, specValues.nestedPrecArgPos);
+							VerifyPositionalField(sv, ++currentPosition, specValues.nestedPrecArgPos);
 							return;
 						}
 					case '}':
 						{
-							ParsePositionalField(sv, currentPosition, specValues.nestedPrecArgPos);
+							VerifyPositionalField(sv, currentPosition, specValues.nestedPrecArgPos);
 							return;
 						}
 					case ' ':
@@ -364,9 +379,52 @@ constexpr bool serenity::arg_formatter::ArgFormatter::IsSimpleSubstitution(const
 		}
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::HandlePotentialTypeField(const char& ch, const msg_details::SpecType& argType) {
+constexpr void serenity::arg_formatter::ArgFormatter::OnValidTypeSpec(const SpecType& type, const char& ch) {
 	using namespace std::literals::string_view_literals;
 	using enum msg_details::SpecType;
+	// if valid spec, set the spec and check for alternate form to prepend
+	specValues.typeSpec = ch;
+	if( !specValues.hasAlt ) return;
+	switch( type ) {
+			case IntType: [[fallthrough]];
+			case U_IntType: [[fallthrough]];
+			case LongLongType: [[fallthrough]];
+			case U_LongLongType: [[fallthrough]];
+			case BoolType: [[fallthrough]];
+			case CharType:
+				switch( ch ) {
+						case 'b': specValues.preAltForm = "0b"sv; return;
+						case 'B': specValues.preAltForm = "0B"sv; return;
+						case 'o': specValues.preAltForm = "0"sv; return;
+						case 'x': specValues.preAltForm = "0x"sv; return;
+						case 'X': specValues.preAltForm = "0X"sv; return;
+					}
+			default: return; break;
+		}
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::OnInvalidTypeSpec(const SpecType& type) {
+	using enum msg_details::SpecType;
+	// If not a valid spec, throw an error pertaining to the spec being invalid for that argument type
+	switch( type ) {
+			case IntType: [[fallthrough]];
+			case U_IntType: [[fallthrough]];
+			case LongLongType: [[fallthrough]];
+			case U_LongLongType: ReportError(ErrorType::invalid_int_spec); break;
+			case FloatType: [[fallthrough]];
+			case DoubleType: [[fallthrough]];
+			case LongDoubleType: ReportError(ErrorType::invalid_float_spec); break;
+			case StringType: [[fallthrough]];
+			case CharPointerType: [[fallthrough]];
+			case StringViewType: ReportError(ErrorType::invalid_string_spec); break;
+			case BoolType: ReportError(ErrorType::invalid_bool_spec); break;
+			case CharType: ReportError(ErrorType::invalid_char_spec); break;
+			case ConstVoidPtrType: [[fallthrough]];
+			case VoidPtrType: ReportError(ErrorType::invalid_pointer_spec); break;
+		}
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::HandlePotentialTypeField(const char& ch, const msg_details::SpecType& argType) {
 	switch( ch ) {
 			case 'a': [[fallthrough]];
 			case 'A': [[fallthrough]];
@@ -384,54 +442,28 @@ constexpr void serenity::arg_formatter::ArgFormatter::HandlePotentialTypeField(c
 			case 'p': [[fallthrough]];
 			case 's': [[fallthrough]];
 			case 'x': [[fallthrough]];
-			case 'X':
-				// if valid spec, set the spec and check for alternate form to prepend
-				specValues.typeSpec = ch;
-				if( !specValues.hasAlt ) return;
-				switch( argType ) {
-						case IntType: [[fallthrough]];
-						case U_IntType: [[fallthrough]];
-						case LongLongType: [[fallthrough]];
-						case U_LongLongType: [[fallthrough]];
-						case BoolType: [[fallthrough]];
-						case CharType:
-							switch( ch ) {
-									case 'b': specValues.preAltForm = "0b"sv; return;
-									case 'B': specValues.preAltForm = "0B"sv; return;
-									case 'o': specValues.preAltForm = "0"sv; return;
-									case 'x': specValues.preAltForm = "0x"sv; return;
-									case 'X': specValues.preAltForm = "0X"sv; return;
-									default: return; break;
-								}
-							break;
-						default: return; break;
-					}
-				break;
-				// If not a valid spec, throw an error pertaining to the spec being invalid for that argument type
-			default:
-				switch( argType ) {
-						case IntType: [[fallthrough]];
-						case U_IntType: [[fallthrough]];
-						case LongLongType: [[fallthrough]];
-						case U_LongLongType: ReportError(ErrorType::invalid_int_spec); break;
-						case FloatType: [[fallthrough]];
-						case DoubleType: [[fallthrough]];
-						case LongDoubleType: ReportError(ErrorType::invalid_float_spec); break;
-						case StringType: [[fallthrough]];
-						case CharPointerType: [[fallthrough]];
-						case StringViewType: ReportError(ErrorType::invalid_string_spec); break;
-						case BoolType: ReportError(ErrorType::invalid_bool_spec); break;
-						case CharType: ReportError(ErrorType::invalid_char_spec); break;
-						case ConstVoidPtrType: [[fallthrough]];
-						case VoidPtrType: ReportError(ErrorType::invalid_pointer_spec); break;
-					}
-				break;
+			case 'X': OnValidTypeSpec(argType, ch); return;
+			default: OnInvalidTypeSpec(argType); return;
 		}
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::VerifyArgumentBracket(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
+constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
 	VerifyFillAlignField(sv, start, argType);
-	VerifySignField(sv[ start ], start);
+	switch( sv[ start ] ) {
+			case '+':
+				specValues.signType = Sign::Plus;
+				++start;
+				break;
+			case '-':
+				specValues.signType = Sign::Minus;
+				++start;
+				break;
+			case ' ':
+				specValues.signType = Sign::Space;
+				++start;
+				break;
+			default: break;
+		}
 	if( sv[ start ] == '#' ) {
 			VerifyAltField(sv, argType);
 			++start;
@@ -451,23 +483,23 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyArgumentBracket(std:
 	if( sv[ start ] == 'L' ) {
 			VerifyLocaleField(sv, start, argType);
 	}
-	// clang-format off
-	 sv[start] != '}' ? HandlePotentialTypeField(sv[start], argType) : (IsAlpha(sv[--start]) && sv[start] != 'L') ? 
-		                            HandlePotentialTypeField(sv[start], argType) : VerifyEscapedBracket(sv, start);
-	// clang-format on
+	if( sv[ start ] != '}' ) {
+			HandlePotentialTypeField(sv[ start ], argType);
+	}
+	VerifyEscapedBracket(sv, start);
 }
 
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
-	Parse(std::forward<std::back_insert_iterator<T>>(Iter), sv);
+	ParseFormatString(std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv,
                                                                    Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
-	Parse(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
+	ParseFormatString(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
 template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(std::string_view sv, Args&&... args) {
@@ -484,7 +516,7 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 	return tmp;
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
 	for( ;; ) {
@@ -508,8 +540,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					++pos;
 			}
 			/*Handle Positional Args*/
-			if( !ParsePositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to Parse - just a simple substitution after position field
+			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
+					// Nothing Else to ParseFormatString - just a simple substitution after position field
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 					sv.remove_prefix(argBracket.size() + 1);
@@ -518,7 +550,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 			if( pos < argBracket.size() ) {
-					VerifyArgumentBracket(argBracket, pos, argType);
+					Parse(argBracket, pos, argType);
 			}
 			Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			if( specValues.hasClosingBrace ) {
@@ -532,7 +564,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 }
 
 template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::Parse(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv) {
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
 	for( ;; ) {
@@ -556,8 +588,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::Parse(const std::locale& l
 					++pos;
 			}
 			/*Handle Positional Args*/
-			if( !ParsePositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to Parse - just a simple substitution after position field
+			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
+					// Nothing Else to ParseFormatString - just a simple substitution after position field
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 					sv.remove_prefix(argBracket.size() + 1);
@@ -566,7 +598,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::Parse(const std::locale& l
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 			if( pos < argBracket.size() ) {
-					VerifyArgumentBracket(argBracket, pos, argType);
+					Parse(argBracket, pos, argType);
 			}
 			Format(loc, std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			if( specValues.hasClosingBrace ) {

@@ -3,7 +3,7 @@
 #define ENABLE_MEMORY_LEAK_DETECTION 0
 #define GENERAL_SANDBOX              0
 #define ROTATING_TESTING             0
-#define PARSE_TESTING                1
+#define ParseFormatString_TESTING    1
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	#define _CRTDBG_MAP_ALLOC
@@ -11,8 +11,8 @@
 	#include <stdlib.h>
 #endif
 
-#if PARSE_TESTING
-	#define ENABLE_PARSE_SECTION
+#if ParseFormatString_TESTING
+	#define ENABLE_ParseFormatString_SECTION
 	#include <serenity/MessageDetails/ArgFormatter.h>
 #endif
 
@@ -211,10 +211,10 @@ int main() {
 
 #endif    // !ENABLE_ROTATION_SECTION
 
-#ifdef ENABLE_PARSE_SECTION
+#ifdef ENABLE_ParseFormatString_SECTION
 
 	using namespace serenity::arg_formatter;
-	constexpr std::string_view parseString { "\n{0:*^#{5}X}\n{1:*^#{5}x}\n{2:*^#{5}a}\n{3:*^#{5}E}\n{4:*^#{5}b}\n{5:*^#{5}B}\n{6:s}" };
+	constexpr std::string_view ParseFormatStringString { "\n{0:*^#{5}X}\n{1:*^#{5}x}\n{2:*^#{5}a}\n{3:*^#{5}E}\n{4:*^#{5}b}\n{5:*^#{5}B}\n{6:s}" };
 	constexpr int a { 123456789 };
 	constexpr int b { 5 };
 	constexpr float c { 32.5f };
@@ -227,7 +227,7 @@ int main() {
 		                             " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
 		                             " mi non odio." };
 
-	ArgFormatter parser;
+	ArgFormatter ParseFormatStringr;
 	Instrumentator timer;
 	std::string result;
 	std::string finalStr;
@@ -239,7 +239,7 @@ int main() {
 			// serenity's format loop using back_insert_iterator
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
-					parser.se_format_to(std::back_inserter(finalStr), parseString, a, b, c, d, e, f, tmp);
+					ParseFormatStringr.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
 					finalStr.clear();
 				}
 			timer.StopWatch_Stop();
@@ -247,21 +247,21 @@ int main() {
 
 			auto serenityTime1 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime1));
-			parser.se_format_to(std::back_inserter(finalStr), parseString, a, b, c, d, e, f, tmp);
+			ParseFormatStringr.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Info("With Result: {}", finalStr);
 			finalStr.clear();
 
 			// serenity's format loop by returning a string
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
-					finalStr = parser.se_format(parseString, a, b, c, d, e, f, tmp);
+					finalStr = ParseFormatStringr.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
 				}
 			timer.StopWatch_Stop();
 			finalStr.clear();
 
 			auto serenityTime2 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime2));
-			finalStr = parser.se_format(parseString, a, b, c, d, e, f, tmp);
+			finalStr = ParseFormatStringr.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Info("With Result: {}", finalStr);
 			finalStr.clear();
 
@@ -269,14 +269,14 @@ int main() {
 			timer.StopWatch_Reset();
 			auto locale { std::locale("") };
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
-					L_VFORMAT_TO(finalStr, locale, parseString, a, b, c, d, e, f, tmp);
+					L_VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
 					finalStr.clear();
 				}
 			timer.StopWatch_Stop();
 			finalStr.clear();
 
 			auto standardTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-			L_VFORMAT_TO(finalStr, locale, parseString, a, b, c, d, e, f, tmp);
+			L_VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(standardTime));
 			console.Info("With Result: {}", finalStr);
 
@@ -317,7 +317,7 @@ int main() {
 			printf("\n");
 		}
 
-#endif    // ENABLE_PARSE_SECTION
+#endif    // ENABLE_ParseFormatString_SECTION
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	_CrtDumpMemoryLeaks();
