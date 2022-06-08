@@ -47,7 +47,10 @@ namespace serenity::msg_details {
 		ConstVoidPtrType = 13,
 		VoidPtrType      = 14,
 	};
-
+	template<typename T, typename U> struct is_supported;
+	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>> : std::bool_constant<(std::is_same<T, Ts>::value || ...)>
+	{
+	};
 	constexpr size_t MAX_ARG_COUNT = 25;
 	constexpr size_t MAX_ARG_INDEX = 24;
 

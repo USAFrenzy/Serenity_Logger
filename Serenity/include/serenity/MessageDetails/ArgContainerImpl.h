@@ -62,8 +62,11 @@ template<typename T> static constexpr details::SpecType GetArgType(T&& val) {
 	} else if constexpr( std::is_same_v<base_type, void*> ) {
 			return std::forward<SpecType>(VoidPtrType);
 	} else {
-			// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
-			static_assert(false, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
+			auto isSupported = is_supported<base_type, ArgContainer::VType> {};
+			if( !isSupported.value ) {
+					// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
+					static_assert(false, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
+			}
 		}
 }
 
