@@ -2,7 +2,7 @@
 
 namespace serenity::arg_formatter {
 
-	void ArgFormatter::FormatIntegerTypeegralGrouping(const std::locale& loc, size_t end) {
+	void ArgFormatter::FormatIntegralGrouping(const std::locale& loc, size_t end) {
 		auto groupings { std::use_facet<std::numpunct<char>>(loc).grouping() };
 		if( end <= *groupings.begin() ) return;
 		auto separator { std::use_facet<std::numpunct<char>>(loc).thousands_sep() };

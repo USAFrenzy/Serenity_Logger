@@ -224,10 +224,10 @@ namespace serenity::arg_formatter {
 
 	  private:
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		template<typename T> constexpr void ParseFormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view sv);
-		// At the moment ParseFormatStringType and Format are coupled together where ParseFormatStringType calls Format, hence the
-		// need right now to have a version of ParseFormatStringType that takes a locale object to forward to Format
-		template<typename T> constexpr void ParseFormatStringType(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		// At the moment ParseFormatString and Format are coupled together where ParseFormatString calls Format, hence the
+		// need right now to have a version of ParseFormatString that takes a locale object to forward to Format
+		template<typename T> constexpr void ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
 		template<typename T> constexpr void Format(std::back_insert_iterator<T>&& Iter, const SpecType& argType);
 		template<typename T> constexpr void Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const SpecType& argType);
 		/******************************************************* Parsing/Verification Related Functions *******************************************************/
@@ -280,7 +280,7 @@ namespace serenity::arg_formatter {
 		template<typename T>
 		void LocalizeFloatingPoint(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		template<typename T> void LocalizeBool(std::back_insert_iterator<T>&& Iter, const std::locale& loc);
-		void FormatIntegerTypeegralGrouping(const std::locale& loc, size_t end);
+		void FormatIntegralGrouping(const std::locale& loc, size_t end);
 
 	  private:
 		int argCounter;

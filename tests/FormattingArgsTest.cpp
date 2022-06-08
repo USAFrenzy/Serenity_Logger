@@ -28,21 +28,21 @@ void* n       = static_cast<void*>(&b);
 TEST_CASE("Base Auto Index Formatting") {
 	ArgFormatter formatter;
 
-	static constexpr std::string_view FormatStringType { "{}" };
-	REQUIRE(std::format(FormatStringType, a) == formatter.se_format(FormatStringType, a));
-	REQUIRE(std::format(FormatStringType, b) == formatter.se_format(FormatStringType, b));
-	REQUIRE(std::format(FormatStringType, c) == formatter.se_format(FormatStringType, c));
-	REQUIRE(std::format(FormatStringType, d) == formatter.se_format(FormatStringType, d));
-	REQUIRE(std::format(FormatStringType, e) == formatter.se_format(FormatStringType, e));
-	REQUIRE(std::format(FormatStringType, f) == formatter.se_format(FormatStringType, f));
-	REQUIRE(std::format(FormatStringType, g) == formatter.se_format(FormatStringType, g));
-	REQUIRE(std::format(FormatStringType, h) == formatter.se_format(FormatStringType, h));
-	REQUIRE(std::format(FormatStringType, i) == formatter.se_format(FormatStringType, i));
-	REQUIRE(std::format(FormatStringType, j) == formatter.se_format(FormatStringType, j));
-	REQUIRE(std::format(FormatStringType, k) == formatter.se_format(FormatStringType, k));
-	REQUIRE(std::format(FormatStringType, l) == formatter.se_format(FormatStringType, l));
-	REQUIRE(std::format(FormatStringType, m) == formatter.se_format(FormatStringType, m));
-	REQUIRE(std::format(FormatStringType, n) == formatter.se_format(FormatStringType, n));
+	static constexpr std::string_view parseString { "{}" };
+	REQUIRE(std::format(parseString, a) == formatter.se_format(parseString, a));
+	REQUIRE(std::format(parseString, b) == formatter.se_format(parseString, b));
+	REQUIRE(std::format(parseString, c) == formatter.se_format(parseString, c));
+	REQUIRE(std::format(parseString, d) == formatter.se_format(parseString, d));
+	REQUIRE(std::format(parseString, e) == formatter.se_format(parseString, e));
+	REQUIRE(std::format(parseString, f) == formatter.se_format(parseString, f));
+	REQUIRE(std::format(parseString, g) == formatter.se_format(parseString, g));
+	REQUIRE(std::format(parseString, h) == formatter.se_format(parseString, h));
+	REQUIRE(std::format(parseString, i) == formatter.se_format(parseString, i));
+	REQUIRE(std::format(parseString, j) == formatter.se_format(parseString, j));
+	REQUIRE(std::format(parseString, k) == formatter.se_format(parseString, k));
+	REQUIRE(std::format(parseString, l) == formatter.se_format(parseString, l));
+	REQUIRE(std::format(parseString, m) == formatter.se_format(parseString, m));
+	REQUIRE(std::format(parseString, n) == formatter.se_format(parseString, n));
 
 	REQUIRE(std::format("{} {} {} {} {} {} {} {} {} {} {} {} {} {}", a, b, c, d, e, f, g, h, i, j, k, l, m, n) ==
 	        formatter.se_format("{} {} {} {} {} {} {} {} {} {} {} {} {} {}", a, b, c, d, e, f, g, h, i, j, k, l, m, n));

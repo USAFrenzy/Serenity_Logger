@@ -470,14 +470,14 @@ constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv,
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
-	ParseFormatStringType(std::forward<std::back_insert_iterator<T>>(Iter), sv);
+	ParseFormatString(std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv,
                                                                    Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
-	ParseFormatStringType(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
+	ParseFormatString(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
 template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(std::string_view sv, Args&&... args) {
@@ -494,7 +494,7 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 	return tmp;
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
 	for( ;; ) {
@@ -519,7 +519,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			}
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to ParseFormatStringType - just a simple substitution after position field
+					// Nothing Else to ParseFormatString - just a simple substitution after position field
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 					sv.remove_prefix(argBracket.size() + 1);
@@ -542,7 +542,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 }
 
 template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatStringType(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv) {
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
 	for( ;; ) {
@@ -567,7 +567,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatStringType(cons
 			}
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to ParseFormatStringType - just a simple substitution after position field
+					// Nothing Else to ParseFormatString - just a simple substitution after position field
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 					sv.remove_prefix(argBracket.size() + 1);
@@ -1179,7 +1179,7 @@ template<typename T>
 void serenity::arg_formatter::ArgFormatter::LocalizeIntegral(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision,
                                                              const int& totalWidth, const msg_details::SpecType& type) {
 	FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, type);
-	FormatIntegerTypeegralGrouping(loc, valueSize);
+	FormatIntegralGrouping(loc, valueSize);
 }
 
 template<typename T>
@@ -1192,14 +1192,14 @@ void serenity::arg_formatter::ArgFormatter::LocalizeFloatingPoint(std::back_inse
 			if( pos >= valueSize ) break;
 			if( buffer[ pos ] == '.' ) {
 					hasMantissa = true;
-					FormatIntegerTypeegralGrouping(loc, pos);
+					FormatIntegralGrouping(loc, pos);
 					buffer[ pos++ ] = std::use_facet<std::numpunct<char>>(loc).decimal_point();
 					break;
 			}
 			++pos;
 		}
 	if( !hasMantissa ) {
-			FormatIntegerTypeegralGrouping(loc, valueSize);
+			FormatIntegralGrouping(loc, valueSize);
 	}
 }
 
