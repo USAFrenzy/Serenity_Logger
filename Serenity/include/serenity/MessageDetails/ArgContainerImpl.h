@@ -62,11 +62,9 @@ template<typename T> static constexpr details::SpecType GetArgType(T&& val) {
 	} else if constexpr( std::is_same_v<base_type, void*> ) {
 			return std::forward<SpecType>(VoidPtrType);
 	} else {
+			// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
 			auto isSupported = is_supported<base_type, ArgContainer::VType> {};
-			if( !isSupported.value ) {
-					// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
-					static_assert(false, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
-			}
+			static_assert(isSupported.value, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
 		}
 }
 
@@ -84,7 +82,7 @@ template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&
 		using base_type          = std::remove_cvref_t<decltype(arg)>;
 		using ref                = std::add_lvalue_reference_t<base_type>;
 		argContainer[ counter ]  = std::forward<ref>(ref(arg));
-		specContainer[ counter ] = GetArgType(arg);
+		specContainer[ counter ] = GetArgType(std::forward<ref>(ref(arg)));
 		if( ++counter > MAX_ARG_INDEX ) {
 				std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
 				return;
