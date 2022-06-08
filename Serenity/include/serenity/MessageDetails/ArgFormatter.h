@@ -224,10 +224,10 @@ namespace serenity::arg_formatter {
 
 	  private:
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv);
-		// At the moment ParseFormatString and Format are coupled together where ParseFormatString calls Format, hence the
-		// need right now to have a version of ParseFormatString that takes a locale object to forward to Format
-		template<typename T> constexpr void ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		template<typename T> constexpr void ParseFormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		// At the moment ParseFormatStringType and Format are coupled together where ParseFormatStringType calls Format, hence the
+		// need right now to have a version of ParseFormatStringType that takes a locale object to forward to Format
+		template<typename T> constexpr void ParseFormatStringType(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
 		template<typename T> constexpr void Format(std::back_insert_iterator<T>&& Iter, const SpecType& argType);
 		template<typename T> constexpr void Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const SpecType& argType);
 		/******************************************************* Parsing/Verification Related Functions *******************************************************/
@@ -250,19 +250,37 @@ namespace serenity::arg_formatter {
 		constexpr void OnValidTypeSpec(const SpecType& type, const char& ch);
 		constexpr void OnInvalidTypeSpec(const SpecType& type);
 		/*********************************************************** Formatting Related Functions ***********************************************************/
-		constexpr void FormatArgument(int precision, const SpecType& type);
-		template<typename T> constexpr void FormatInt(T&& value);
-		template<typename T> constexpr void FormatFloat(T&& value, int precision);
-		template<typename T> constexpr void FormatString(std::back_insert_iterator<T>&& Iter, std::string_view val, int precision);
+		template<typename T>
+		constexpr void FormatArgument(std::back_insert_iterator<T>&& Iter, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T> constexpr void FormatIntegerType(T&& value);
+		template<typename T> constexpr void FormatFloatType(T&& value, int precision);
+		template<typename T> constexpr void FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision);
 		template<typename T> constexpr void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const SpecType&);
-		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, int totalWidth);
-		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, int totalWidth, int precision);
+		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth);
+		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& width, int prec);
+		template<typename T> constexpr void WriteSimpleString(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleCString(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleStringView(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleInt(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleUInt(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleLongLong(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleULongLong(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleBool(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleFloat(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleDouble(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleLongDouble(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleConstVoidPtr(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteSimpleVoidPtr(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteString(std::back_insert_iterator<T>&& Iter, const SpecType& type, const int& precision, const int& totalWidth);
 		// Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
-		void LocalizeArgument(const std::locale& loc, int precision, SpecType type);
-		void LocalizeIntegral(const std::locale& loc, int precision, SpecType type);
-		void FormatIntegralGrouping(const std::locale& loc, size_t end);
-		void LocalizeFloatingPoint(const std::locale& loc, int precision, SpecType type);
-		void LocalizeBool(const std::locale& loc);
+		template<typename T>
+		void LocalizeArgument(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T>
+		void LocalizeIntegral(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T>
+		void LocalizeFloatingPoint(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T> void LocalizeBool(std::back_insert_iterator<T>&& Iter, const std::locale& loc);
+		void FormatIntegerTypeegralGrouping(const std::locale& loc, size_t end);
 
 	  private:
 		int argCounter;

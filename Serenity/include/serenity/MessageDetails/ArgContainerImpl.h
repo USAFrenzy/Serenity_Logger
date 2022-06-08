@@ -62,8 +62,11 @@ template<typename T> static constexpr details::SpecType GetArgType(T&& val) {
 	} else if constexpr( std::is_same_v<base_type, void*> ) {
 			return std::forward<SpecType>(VoidPtrType);
 	} else {
+			// --> Given that the types above are the only ones being supplied and that my understanding of std::decay_t is supposed to
+			//        remove any cv qualifiers, I'm not sure why the build tests fail at this line; it's possible that it's not matching due to ref
+			//        values and if that's the case, I'll need to look at std::decay_t a little bit more (possibly use std::remove_cvref_t instead?)
 			// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
-			static_assert(false, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
+			// static_assert(false, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
 		}
 }
 

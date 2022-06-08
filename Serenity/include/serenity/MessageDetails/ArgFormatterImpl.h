@@ -267,25 +267,9 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyWidthField(std::stri
 			return;
 	} else {
 			switch( ch ) {
-					case '{':
-						{
-							VerifyPositionalField(sv, ++currentPosition, specValues.nestedWidthArgPos);
-							return;
-						}
-					case '}':
-						{
-							VerifyPositionalField(sv, currentPosition, specValues.nestedWidthArgPos);
-							return;
-						}
-					case ' ':
-						{
-							auto size { sv.size() };
-							for( ;; ) {
-									if( currentPosition >= size ) break;
-									if( sv[ ++currentPosition ] != ' ' ) break;
-								}
-							return VerifyWidthField(sv, currentPosition);
-						}
+					case '{': VerifyPositionalField(sv, ++currentPosition, specValues.nestedWidthArgPos); return;
+					case '}': VerifyPositionalField(sv, currentPosition, specValues.nestedWidthArgPos); return;
+					default: ReportError(ErrorType::missing_bracket); return;
 				}
 		}
 }
@@ -308,25 +292,9 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyPrecisionField(std::
 			return;
 	} else {
 			switch( ch ) {
-					case '{':
-						{
-							VerifyPositionalField(sv, ++currentPosition, specValues.nestedPrecArgPos);
-							return;
-						}
-					case '}':
-						{
-							VerifyPositionalField(sv, currentPosition, specValues.nestedPrecArgPos);
-							return;
-						}
-					case ' ':
-						{
-							auto size { sv.size() };
-							for( ;; ) {
-									if( currentPosition >= size ) break;
-									if( sv[ ++currentPosition ] != ' ' ) break;
-								}
-							return VerifyPrecisionField(sv, currentPosition, argType);
-						}
+					case '{': VerifyPositionalField(sv, ++currentPosition, specValues.nestedPrecArgPos); return;
+					case '}': VerifyPositionalField(sv, currentPosition, specValues.nestedPrecArgPos); return;
+					default: ReportError(ErrorType::missing_bracket); return;
 				}
 		}
 }
@@ -356,7 +324,10 @@ constexpr bool serenity::arg_formatter::ArgFormatter::IsSimpleSubstitution(const
 	switch( argType ) {
 			case StringType: [[fallthrough]];
 			case CharPointerType: [[fallthrough]];
-			case StringViewType: return precision == 0; break;
+			case StringViewType:
+				{
+					return precision == 0;
+				}
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
 			case LongLongType: [[fallthrough]];
@@ -364,8 +335,14 @@ constexpr bool serenity::arg_formatter::ArgFormatter::IsSimpleSubstitution(const
 				{
 					return !specValues.hasAlt && specValues.signType == Sign::Empty && !specValues.localize && specValues.typeSpec == '\0';
 				}
-			case BoolType: return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 's'); break;
-			case CharType: return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 'c'); break;
+			case BoolType:
+				{
+					return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 's');
+				}
+			case CharType:
+				{
+					return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 'c');
+				}
 			case FloatType: [[fallthrough]];
 			case DoubleType: [[fallthrough]];
 			case LongDoubleType:
@@ -374,7 +351,10 @@ constexpr bool serenity::arg_formatter::ArgFormatter::IsSimpleSubstitution(const
 				}
 			// for pointer types, if the width field is 0, there's no fill/alignment to take into account and therefore it's a simple sub
 			case ConstVoidPtrType: [[fallthrough]];
-			case VoidPtrType: return true; break;
+			case VoidPtrType:
+				{
+					return true;
+				}
 			default: return false; break;
 		}
 }
@@ -382,10 +362,10 @@ constexpr bool serenity::arg_formatter::ArgFormatter::IsSimpleSubstitution(const
 constexpr void serenity::arg_formatter::ArgFormatter::OnValidTypeSpec(const SpecType& type, const char& ch) {
 	using namespace std::literals::string_view_literals;
 	using enum msg_details::SpecType;
-	// if valid spec, set the spec and check for alternate form to prepend
 	specValues.typeSpec = ch;
 	if( !specValues.hasAlt ) return;
 	switch( type ) {
+			default: return;
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
 			case LongLongType: [[fallthrough]];
@@ -399,13 +379,11 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnValidTypeSpec(const Spec
 						case 'x': specValues.preAltForm = "0x"sv; return;
 						case 'X': specValues.preAltForm = "0X"sv; return;
 					}
-			default: return; break;
 		}
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::OnInvalidTypeSpec(const SpecType& type) {
 	using enum msg_details::SpecType;
-	// If not a valid spec, throw an error pertaining to the spec being invalid for that argument type
 	switch( type ) {
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
@@ -492,14 +470,14 @@ constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv,
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
-	ParseFormatString(std::forward<std::back_insert_iterator<T>>(Iter), sv);
+	ParseFormatStringType(std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv,
                                                                    Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
-	ParseFormatString(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
+	ParseFormatStringType(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
 template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(std::string_view sv, Args&&... args) {
@@ -516,7 +494,7 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 	return tmp;
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
 	for( ;; ) {
@@ -541,7 +519,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			}
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to ParseFormatString - just a simple substitution after position field
+					// Nothing Else to ParseFormatStringType - just a simple substitution after position field
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 					sv.remove_prefix(argBracket.size() + 1);
@@ -564,7 +542,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 }
 
 template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatStringType(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv) {
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
 	for( ;; ) {
@@ -589,7 +567,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 			}
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to ParseFormatString - just a simple substitution after position field
+					// Nothing Else to ParseFormatStringType - just a simple substitution after position field
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 					sv.remove_prefix(argBracket.size() + 1);
@@ -611,188 +589,170 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 	}
 }
 
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleString(std::back_insert_iterator<T>&& Iter) {
+	std::string_view sv { std::move(argStorage.string_state(specValues.argPosition)) };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
+	} else {
+			std::copy(sv.begin(), sv.end(), Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCString(std::back_insert_iterator<T>&& Iter) {
+	std::string_view sv { std::move(argStorage.c_string_state(specValues.argPosition)) };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
+	} else {
+			std::copy(sv.begin(), sv.end(), Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleStringView(std::back_insert_iterator<T>&& Iter) {
+	std::string_view sv { std::move(argStorage.string_view_state(specValues.argPosition)) };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
+	} else {
+			std::copy(sv.begin(), sv.end(), Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleInt(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr - data);
+	} else {
+			std::move(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr, Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleUInt(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr - data);
+	} else {
+			std::move(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr, Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleLongLong(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr - data);
+	} else {
+			std::move(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr, Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleULongLong(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr - data);
+	} else {
+			std::move(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr, Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleBool(std::back_insert_iterator<T>&& Iter) {
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
+	} else {
+			std::string_view sv { argStorage.bool_state(specValues.argPosition) ? "true" : "false" };
+			std::copy(sv.begin(), sv.end(), Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleFloat(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	std::memset(data, 0, buffer.size());
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr - data);
+	} else {
+			std::move(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr, Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleDouble(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr - data);
+	} else {
+			std::move(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr, Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleLongDouble(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr - data);
+	} else {
+			std::move(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr, Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleConstVoidPtr(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append("0x").append(
+			data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr - data);
+	} else {
+			Iter = '0';
+			Iter = 'x';
+			std::move(data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr,
+			          Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleVoidPtr(std::back_insert_iterator<T>&& Iter) {
+	auto data { buffer.data() };
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append("0x").append(
+			data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr - data);
+	} else {
+			Iter = '0';
+			Iter = 'x';
+			std::move(data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr, Iter);
+		}
+}
+
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
 	using enum msg_details::SpecType;
 	switch( argType ) {
-			case StringType:
-				{
-					std::string_view sv { std::move(argStorage.string_state(specValues.argPosition)) };
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
-					} else {
-							std::copy(sv.begin(), sv.end(), Iter);
-						}
-					return;
-				}
-			case CharPointerType:
-				{
-					std::string_view sv { std::move(argStorage.c_string_state(specValues.argPosition)) };
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
-					} else {
-							std::copy(sv.begin(), sv.end(), Iter);
-						}
-					return;
-				}
-			case StringViewType:
-				{
-					std::string_view sv { std::move(argStorage.string_view_state(specValues.argPosition)) };
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
-					} else {
-							std::copy(sv.begin(), sv.end(), Iter);
-						}
-					return;
-				}
-			case IntType:
-				{
-					auto data { buffer.data() };
-					auto size { buffer.size() };
-					std::memset(data, 0, size);
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr -
-							                                                  data);
-					} else {
-							std::move(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr, Iter);
-						}
-					return;
-				}
-			case U_IntType:
-				{
-					auto data { buffer.data() };
-					auto size { buffer.size() };
-					std::memset(data, 0, size);
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(
-							data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr - data);
-					} else {
-							std::move(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr, Iter);
-						}
-					return;
-				}
-			case LongLongType:
-				{
-					auto data { buffer.data() };
-					auto size { buffer.size() };
-					std::memset(data, 0, size);
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(
-							data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr - data);
-					} else {
-							std::move(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr, Iter);
-						}
-					return;
-				}
-			case U_LongLongType:
-				{
-					auto data { buffer.data() };
-					auto size { buffer.size() };
-					std::memset(data, 0, size);
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(
-							data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr - data);
-					} else {
-							std::move(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr, Iter);
-						}
-					return;
-				}
-			case BoolType:
-				{
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
-					} else {
-							std::string_view sv { argStorage.bool_state(specValues.argPosition) ? "true" : "false" };
-							std::copy(sv.begin(), sv.end(), Iter);
-						}
-					return;
-				}
-			case CharType:
-				{
-					Iter = argStorage.char_state(specValues.argPosition);
-					return;
-				}
-			case FloatType:
-				{
-					auto data { buffer.data() };
-					std::memset(data, 0, buffer.size());
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(
-							data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr - data);
-					} else {
-							std::move(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr, Iter);
-						}
-					return;
-				}
-			case DoubleType:
-				{
-					auto data { buffer.data() };
-					auto size { buffer.size() };
-					std::memset(data, 0, size);
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(
-							data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr - data);
-					} else {
-							std::move(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr, Iter);
-						}
-					return;
-				}
-			case LongDoubleType:
-				{
-					auto data { buffer.data() };
-					auto size { buffer.size() };
-					std::memset(data, 0, size);
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append(
-							data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr - data);
-					} else {
-							std::move(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr, Iter);
-						}
-					return;
-				}
-			case ConstVoidPtrType:
-				{
-					auto data { buffer.data() };
-					auto size { buffer.size() };
-					std::memset(data, 0, size);
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append("0x").append(
-							data,
-							std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr -
-							data);
-					} else {
-							Iter = '0';
-							Iter = 'x';
-							std::move(
-							data,
-							std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr,
-							Iter);
-						}
-					return;
-				}
-			case VoidPtrType:
-				{
-					auto data { buffer.data() };
-					auto size { buffer.size() };
-					std::memset(data, 0, size);
-					if constexpr( std::is_same_v<T, std::string> ) {
-							IteratorContainer(Iter).Container()->append("0x").append(
-							data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr -
-								  data);
-					} else {
-							Iter = '0';
-							Iter = 'x';
-							std::move(
-							data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr,
-							Iter);
-						}
-					return;
-				}
-			default: return; break;
+			case StringType: WriteSimpleString(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case CharPointerType: WriteSimpleCString(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case StringViewType: WriteSimpleStringView(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case IntType: WriteSimpleInt(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case U_IntType: WriteSimpleUInt(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case LongLongType: WriteSimpleLongLong(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case U_LongLongType: WriteSimpleULongLong(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case BoolType: WriteSimpleBool(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case CharType: Iter = argStorage.char_state(specValues.argPosition); return;
+			case FloatType: WriteSimpleFloat(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case DoubleType: WriteSimpleDouble(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case LongDoubleType: WriteSimpleLongDouble(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case ConstVoidPtrType: WriteSimpleConstVoidPtr(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			case VoidPtrType: WriteSimpleVoidPtr(std::forward<std::back_insert_iterator<T>>(Iter)); return;
+			default: return;
 		}
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, int totalWidth) {
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
 	auto valueData { buffer.data() };
 	if( size_t fillAmount { (totalWidth > valueSize) ? totalWidth - valueSize : 0 }; fillAmount != 0 ) {
 			// swapping out the reuse of the buffer array for its own dedicated vector; using vector so there's no hard limit on fill amount -> in this way, the
@@ -849,7 +809,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 }
 
 template<typename T>    // string type overload for alignment
-constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, int totalWidth, int precision) {
+constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, const int &totalWidth, int precision) {
 	auto size { static_cast<int>(val.size()) };
 	precision = precision != 0 ? precision > size ? size : precision : size;
 	if( auto fillAmount { totalWidth > size ? totalWidth - size : 0 }; fillAmount != 0 ) {
@@ -900,94 +860,69 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_
 		}
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(int precision, const msg_details::SpecType& type) {
+template <typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(std::back_insert_iterator<T>&& Iter, const int &precision, const int  &totalWidth, const msg_details::SpecType& type) {
 	using enum msg_details::SpecType;
+	// clang-format off
 	switch( type ) {
-			case IntType:
-				{
-					return FormatInt(argStorage.int_state(specValues.argPosition));
-					break;
-				}
-			case U_IntType:
-				{
-					return FormatInt(argStorage.uint_state(specValues.argPosition));
-					break;
-				}
-			case LongLongType:
-				{
-					return FormatInt(argStorage.long_long_state(specValues.argPosition));
-					break;
-				}
-			case U_LongLongType:
-				{
-					return FormatInt(argStorage.u_long_long_state(specValues.argPosition));
-					break;
-				}
+			case IntType: FormatIntegerType(argStorage.int_state(specValues.argPosition)); break;
+			case U_IntType: FormatIntegerType(argStorage.uint_state(specValues.argPosition)); break;
+			case LongLongType: FormatIntegerType(argStorage.long_long_state(specValues.argPosition)); break;
+			case U_LongLongType: FormatIntegerType(argStorage.u_long_long_state(specValues.argPosition)); break;
 			case BoolType:
-				{
-					if( specValues.typeSpec != '\0' && specValues.typeSpec != 's' ) {
-							FormatInt(static_cast<unsigned char>(argStorage.bool_state(specValues.argPosition)));
-					} else {
-							using namespace std::string_view_literals;
-							auto sv { argStorage.bool_state(specValues.argPosition) ? "true"sv : "false"sv };
-							std::copy(sv.data(), sv.data() + sv.size(), buffer.begin());
-							valueSize = sv.size();
-						}
-					return;
-					break;
+			{
+				if (specValues.typeSpec != '\0' && specValues.typeSpec != 's') {
+					FormatIntegerType(static_cast<unsigned char>(argStorage.bool_state(specValues.argPosition)));
 				}
+				else {
+					using namespace std::string_view_literals;
+					auto sv{ argStorage.bool_state(specValues.argPosition) ? "true"sv : "false"sv };
+					std::copy(sv.data(), sv.data() + sv.size(), buffer.begin());
+					valueSize = sv.size();
+				}
+				break;
+			}
 			case CharType:
-				{
-					if( specValues.typeSpec != '\0' && specValues.typeSpec != 'c' ) {
-							FormatInt(static_cast<int>(argStorage.char_state(specValues.argPosition)));
-					} else {
-							valueSize   = 1;
-							buffer[ 0 ] = argStorage.char_state(specValues.argPosition);
-						}
-					return;
-					break;
+			{
+				if (specValues.typeSpec != '\0' && specValues.typeSpec != 'c') {
+					FormatIntegerType(static_cast<int>(argStorage.char_state(specValues.argPosition)));
 				}
-			case FloatType:
-				{
-					return FormatFloat(argStorage.float_state(specValues.argPosition), precision);
-					break;
+				else {
+					valueSize = 1;
+					buffer[0] = argStorage.char_state(specValues.argPosition);
 				}
-			case DoubleType:
-				{
-					return FormatFloat(argStorage.double_state(specValues.argPosition), precision);
-					break;
-				}
-			case LongDoubleType:
-				{
-					return FormatFloat(argStorage.long_double_state(specValues.argPosition), precision);
-					break;
-				}
+				break;
+			}
+			case FloatType: FormatFloatType(argStorage.float_state(specValues.argPosition), precision); break;
+			case DoubleType: FormatFloatType(argStorage.double_state(specValues.argPosition), precision); break;
+			case LongDoubleType: FormatFloatType(argStorage.long_double_state(specValues.argPosition), precision); break;
+			case StringType: [[fallthrough]];
+			case CharPointerType: [[fallthrough]];
+			case StringViewType: WriteString(std::forward<std::back_insert_iterator<T>>(Iter), type, precision, totalWidth); return;
 			case ConstVoidPtrType:
-				{
-					buffer[ 0 ] = '0';
-					buffer[ 1 ] = 'x';
-					auto data { buffer.data() };
-					valueSize =
+			{
+				buffer[0] = '0';
+				buffer[1] = 'x';
+				auto data{ buffer.data() };
+				valueSize =
 					std::to_chars(data + 2, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr - data;
-					return;
-					break;
-				}
+				break;
+			}
 			case VoidPtrType:
-				{
-					;
-					buffer[ 0 ] = '0';
-					buffer[ 1 ] = 'x';
-					auto data { buffer.data() };
-					valueSize =
+			{
+				buffer[0] = '0';
+				buffer[1] = 'x';
+				auto data{ buffer.data() };
+				valueSize =
 					std::to_chars(data + 2, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr - data;
-					return;
-					break;
-				}
+				break;
+			}
 			default: return; break;
 		}
+	// clang-format on
+	if( !specValues.localize ) FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatFloat(T&& value, int precision) {
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatFloatType(T&& value, int precision) {
 	int pos { 0 };
 	auto data { buffer.data() };
 	if( !std::is_constant_evaluated() ) {
@@ -1065,7 +1000,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		}
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatInt(T&& value) {
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& value) {
 	int pos {};
 	int base {};
 	auto data { buffer.data() };
@@ -1125,7 +1060,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 }
 
 template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::FormatString(std::back_insert_iterator<T>&& Iter, std::string_view val, int precision) {
+constexpr void serenity::arg_formatter::ArgFormatter::FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision) {
 	int size { static_cast<int>(val.size()) };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			IteratorContainer(Iter).Container()->append(val.data(), (precision != 0 ? precision > size ? size : precision : size));
@@ -1134,8 +1069,31 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatString(std::back_ins
 		}
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::WriteString(std::back_insert_iterator<T>&& Iter, const SpecType& type, const int& precision,
+                                                                  const int& totalWidth) {
 	using enum msg_details::SpecType;
+	switch( type ) {
+			case StringType:
+				totalWidth == 0
+				? FormatStringType(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.string_state(specValues.argPosition), precision)
+				: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.string_state(specValues.argPosition), totalWidth, precision);
+				return;
+			case CharPointerType:
+				totalWidth == 0
+				? FormatStringType(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.c_string_state(specValues.argPosition), precision)
+				: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.c_string_state(specValues.argPosition), totalWidth, precision);
+				return;
+			case StringViewType:
+				totalWidth == 0
+				? FormatStringType(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.string_view_state(specValues.argPosition), precision)
+				: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.string_view_state(specValues.argPosition), totalWidth, precision);
+				return;
+			default: break;
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
 	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
 		            : specValues.precision != 0      ? specValues.precision
 		                                             : 0 };
@@ -1147,32 +1105,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 					return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			}
 	}
-	switch( argType ) {
-			case StringType:
-				{
-					auto val { argStorage.string_state(specValues.argPosition) };
-					totalWidth == 0 ? FormatString(std::forward<std::back_insert_iterator<T>>(Iter), val, precision)
-									: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), val, totalWidth, precision);
-					return;
-				}
-			case CharPointerType:
-				{
-					auto val { argStorage.c_string_state(specValues.argPosition) };
-					totalWidth == 0 ? FormatString(std::forward<std::back_insert_iterator<T>>(Iter), val, precision)
-									: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), val, totalWidth, precision);
-					return;
-				}
-			case StringViewType:
-				{
-					auto val { argStorage.string_view_state(specValues.argPosition) };
-					totalWidth == 0 ? FormatString(std::forward<std::back_insert_iterator<T>>(Iter), val, precision)
-									: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), val, totalWidth, precision);
-					return;
-				}
-			default: break;
-		}
-	!specValues.localize ? FormatArgument(precision, argType) : LocalizeArgument(default_locale, precision, argType);
-	FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
+	!specValues.localize ? FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, argType)
+						 : LocalizeArgument(std::forward<std::back_insert_iterator<T>>(Iter), default_locale, precision, totalWidth, argType);
 }
 
 template<typename T>
@@ -1189,64 +1123,89 @@ constexpr void serenity::arg_formatter::ArgFormatter::Format(const std::locale& 
 					return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			}
 	}
-	switch( argType ) {
-			case StringType:
-				{
-					auto val { argStorage.string_state(specValues.argPosition) };
-					totalWidth == 0 ? FormatString(std::forward<std::back_insert_iterator<T>>(Iter), val, precision)
-									: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), val, totalWidth, precision);
-					return;
-					break;
-				}
-			case CharPointerType:
-				{
-					auto val { argStorage.c_string_state(specValues.argPosition) };
-					totalWidth == 0 ? FormatString(std::forward<std::back_insert_iterator<T>>(Iter), val, precision)
-									: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), val, totalWidth, precision);
-					return;
-					break;
-				}
-			case StringViewType:
-				{
-					auto val { argStorage.string_view_state(specValues.argPosition) };
-					totalWidth == 0 ? FormatString(std::forward<std::back_insert_iterator<T>>(Iter), val, precision)
-									: FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), val, totalWidth, precision);
-					return;
-					break;
-				}
-			default: break;
-		}
-
-	!specValues.localize ? FormatArgument(precision, argType) : LocalizeArgument(loc, precision, argType);
-	FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
+	!specValues.localize ? FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, argType)
+						 : LocalizeArgument(std::forward<std::back_insert_iterator<T>>(Iter), loc, precision, totalWidth, argType);
 }
 
 template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter::CaptureArgs(Args&&... args) {
 	argStorage.CaptureArgs(std::forward<Args>(args)...);
 }
 
-// Now that the runtime errors are organized in a neater fashion, would really love to figure out 
-// how libfmt does compile-time checking.  A lot of what is being used to verify things are all 
+// Now that the runtime errors are organized in a neater fashion, would really love to figure out
+// how libfmt does compile-time checking.  A lot of what is being used to verify things are all
 // runtime-access stuff so I'm assuming achieving this won't be easy at all =/
 constexpr void serenity::arg_formatter::ArgFormatter::ReportError(ErrorType err) {
 	using enum serenity::ErrorType;
-	switch (err) {
-	case missing_bracket: throw format_error(format_error_messages[1]); break;
-	case position_field_spec: throw format_error(format_error_messages[2]); break;
-	case position_field_mode: throw format_error(format_error_messages[3]); break;
-	case position_field_no_position: throw format_error(format_error_messages[4]); break;
-	case position_field_runon: throw format_error(format_error_messages[5]); break;
-	case max_args_exceeded: throw format_error(format_error_messages[6]); break;
-	case invalid_fill_character: throw format_error(format_error_messages[7]); break;
-	case invalid_alt_type: throw format_error(format_error_messages[8]); break;
-	case invalid_precision_type: throw format_error(format_error_messages[9]); break;
-	case invalid_locale_type: throw format_error(format_error_messages[10]); break;
-	case invalid_int_spec: throw format_error(format_error_messages[11]); break;
-	case invalid_float_spec: throw format_error(format_error_messages[12]); break;
-	case invalid_string_spec: throw format_error(format_error_messages[13]); break;
-	case invalid_bool_spec: throw format_error(format_error_messages[14]); break;
-	case invalid_char_spec: throw format_error(format_error_messages[15]); break;
-	case invalid_pointer_spec: throw format_error(format_error_messages[16]); break;
-	default: throw format_error(format_error_messages[0]); break;
+	switch( err ) {
+			case missing_bracket: throw format_error(format_error_messages[ 1 ]); break;
+			case position_field_spec: throw format_error(format_error_messages[ 2 ]); break;
+			case position_field_mode: throw format_error(format_error_messages[ 3 ]); break;
+			case position_field_no_position: throw format_error(format_error_messages[ 4 ]); break;
+			case position_field_runon: throw format_error(format_error_messages[ 5 ]); break;
+			case max_args_exceeded: throw format_error(format_error_messages[ 6 ]); break;
+			case invalid_fill_character: throw format_error(format_error_messages[ 7 ]); break;
+			case invalid_alt_type: throw format_error(format_error_messages[ 8 ]); break;
+			case invalid_precision_type: throw format_error(format_error_messages[ 9 ]); break;
+			case invalid_locale_type: throw format_error(format_error_messages[ 10 ]); break;
+			case invalid_int_spec: throw format_error(format_error_messages[ 11 ]); break;
+			case invalid_float_spec: throw format_error(format_error_messages[ 12 ]); break;
+			case invalid_string_spec: throw format_error(format_error_messages[ 13 ]); break;
+			case invalid_bool_spec: throw format_error(format_error_messages[ 14 ]); break;
+			case invalid_char_spec: throw format_error(format_error_messages[ 15 ]); break;
+			case invalid_pointer_spec: throw format_error(format_error_messages[ 16 ]); break;
+			default: throw format_error(format_error_messages[ 0 ]); break;
+		}
+}
+
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::LocalizeArgument(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision,
+                                                             const int& totalWidth, const msg_details::SpecType& type) {
+	using enum serenity::msg_details::SpecType;
+	// NOTE: The following types should have been caught in the verification process:  monostate, string, c-string, string view, const void*, void *
+	switch( type ) {
+			case IntType: [[fallthrough]];
+			case U_IntType: [[fallthrough]];
+			case LongLongType: LocalizeIntegral(std::forward<std::back_insert_iterator<T>>(Iter), loc, precision, totalWidth, type); break;
+			case FloatType: [[fallthrough]];
+			case DoubleType: [[fallthrough]];
+			case LongDoubleType: [[fallthrough]];
+			case U_LongLongType: LocalizeFloatingPoint(std::forward<std::back_insert_iterator<T>>(Iter), loc, precision, totalWidth, type); break;
+			case BoolType: LocalizeBool(std::forward<std::back_insert_iterator<T>>(Iter), loc); break;
+		}
+	FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
+}
+
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::LocalizeIntegral(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision,
+                                                             const int& totalWidth, const msg_details::SpecType& type) {
+	FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, type);
+	FormatIntegerTypeegralGrouping(loc, valueSize);
+}
+
+template<typename T>
+void serenity::arg_formatter::ArgFormatter::LocalizeFloatingPoint(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision,
+                                                                  const int& totalWidth, const msg_details::SpecType& type) {
+	FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, type);
+	size_t pos { 0 };
+	bool hasMantissa { false };
+	for( ;; ) {
+			if( pos >= valueSize ) break;
+			if( buffer[ pos ] == '.' ) {
+					hasMantissa = true;
+					FormatIntegerTypeegralGrouping(loc, pos);
+					buffer[ pos++ ] = std::use_facet<std::numpunct<char>>(loc).decimal_point();
+					break;
+			}
+			++pos;
+		}
+	if( !hasMantissa ) {
+			FormatIntegerTypeegralGrouping(loc, valueSize);
 	}
+}
+
+template<typename T> void serenity::arg_formatter::ArgFormatter::LocalizeBool(std::back_insert_iterator<T>&& Iter, const std::locale& loc) {
+	std::string_view sv { argStorage.bool_state(specValues.argPosition) ? std::use_facet<std::numpunct<char>>(loc).truename()
+		                                                                : std::use_facet<std::numpunct<char>>(loc).falsename() };
+	valueSize = sv.size();
+	std::copy(sv.data(), sv.data() + valueSize, buffer.begin());
 }

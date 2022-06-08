@@ -1,29 +1,8 @@
 #include <serenity/MessageDetails/ArgFormatter.h>
 
 namespace serenity::arg_formatter {
-	void ArgFormatter::LocalizeArgument(const std::locale& loc, int precision, msg_details::SpecType type) {
-		using enum serenity::msg_details::SpecType;
-		// NOTE: The following types should have been caught in the verification process:
-		//       monostate, string, c-string, string view, const void*, void *
-		switch( type ) {
-				case IntType: [[fallthrough]];
-				case U_IntType: [[fallthrough]];
-				case LongLongType: return LocalizeIntegral(loc, precision, type); break;
-				case FloatType: [[fallthrough]];
-				case DoubleType: [[fallthrough]];
-				case LongDoubleType: [[fallthrough]];
-				case U_LongLongType: return LocalizeFloatingPoint(loc, precision, type); break;
-				case BoolType: return LocalizeBool(loc); break;
-			}
-		unreachable();
-	}
 
-	void ArgFormatter::LocalizeIntegral(const std::locale& loc, int precision, msg_details::SpecType type) {
-		FormatArgument(precision, type);
-		FormatIntegralGrouping(loc, valueSize);
-	}
-
-	void ArgFormatter::FormatIntegralGrouping(const std::locale& loc, size_t end) {
+	void ArgFormatter::FormatIntegerTypeegralGrouping(const std::locale& loc, size_t end) {
 		auto groupings { std::use_facet<std::numpunct<char>>(loc).grouping() };
 		if( end <= *groupings.begin() ) return;
 		auto separator { std::use_facet<std::numpunct<char>>(loc).thousands_sep() };
@@ -127,31 +106,5 @@ namespace serenity::arg_formatter {
 					}
 				default: break;
 			}
-	}
-
-	void ArgFormatter::LocalizeFloatingPoint(const std::locale& loc, int precision, msg_details::SpecType type) {
-		FormatArgument(precision, type);
-		size_t pos { 0 };
-		bool hasMantissa { false };
-		for( ;; ) {
-				if( pos >= valueSize ) break;
-				if( buffer[ pos ] == '.' ) {
-						hasMantissa = true;
-						FormatIntegralGrouping(loc, pos);
-						buffer[ pos++ ] = std::use_facet<std::numpunct<char>>(loc).decimal_point();
-						break;
-				}
-				++pos;
-			}
-		if( !hasMantissa ) {
-				FormatIntegralGrouping(loc, valueSize);
-		}
-	}
-
-	void ArgFormatter::LocalizeBool(const std::locale& loc) {
-		std::string_view sv { argStorage.bool_state(specValues.argPosition) ? std::use_facet<std::numpunct<char>>(loc).truename()
-			                                                                : std::use_facet<std::numpunct<char>>(loc).falsename() };
-		valueSize = sv.size();
-		std::copy(sv.data(), sv.data() + valueSize, buffer.begin());
 	}
 }    // namespace serenity::arg_formatter
