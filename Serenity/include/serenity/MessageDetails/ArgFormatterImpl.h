@@ -75,10 +75,14 @@ constexpr void serenity::arg_formatter::SpecFormatting::ResetSpecs() {
 			localize = hasAlt = hasClosingBrace = false;
 			alignmentPadding = precision = 0;
 			fillCharacter = typeSpec = '\0';
-			Alignment align          = Alignment::Empty;
+			align                    = Alignment::Empty;
 			signType                 = Sign::Empty;
 			preAltForm               = "";
 		}
+}
+
+template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter::CaptureArgs(Args&&... args) {
+	argStorage.CaptureArgs(std::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>
@@ -105,6 +109,187 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 	tmp.reserve(ReserveCapacity(std::forward<Args>(args)...));
 	se_format_to(loc, std::back_inserter(tmp), sv, std::forward<Args>(args)...);
 	return tmp;
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
+	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
+	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
+		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
+		                                                 : 0 };
+	if( totalWidth == 0 ) {    // use this check to guard from any unnecessary additional checks
+			if( IsSimpleSubstitution(argType, precision) ) {
+					return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			}
+	}
+	!specValues.localize ? FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, argType)
+						 : LocalizeArgument(std::forward<std::back_insert_iterator<T>>(Iter), default_locale, precision, totalWidth, argType);
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
+	using enum msg_details::SpecType;
+	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
+	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
+		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
+		                                                 : 0 };
+	if( totalWidth == 0 ) {    // use this check to guard from any unnecessary additional checks
+			if( IsSimpleSubstitution(argType, precision) ) {
+					return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			}
+	}
+	!specValues.localize ? FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, argType)
+						 : LocalizeArgument(std::forward<std::back_insert_iterator<T>>(Iter), loc, precision, totalWidth, argType);
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
+	auto svSize { sv.size() };
+	VerifyFillAlignField(sv, start, argType);
+	if( start >= svSize ) return;
+	switch( sv[ start ] ) {
+			case '+':
+				specValues.signType = Sign::Plus;
+				++start;
+				break;
+			case '-':
+				specValues.signType = Sign::Minus;
+				++start;
+				break;
+			case ' ':
+				specValues.signType = Sign::Space;
+				++start;
+				break;
+			default: break;
+		}
+	if( start >= svSize ) return;
+	if( sv[ start ] == '#' ) {
+			VerifyAltField(sv, argType);
+			++start;
+	}
+	if( sv[ start ] == '0' ) {
+			if( specValues.fillCharacter == '\0' ) {
+					specValues.fillCharacter = '0';
+			}
+			if( ++start >= svSize ) return;
+	}
+	if( (sv[ start ] == '{') || (sv[ start ] >= '1' && sv[ start ] <= '9') ) {
+			VerifyWidthField(sv, start);
+			if( start >= svSize ) return;
+	}
+	if( sv[ start ] == '.' ) {
+			VerifyPrecisionField(sv, start, argType);
+			if( start >= svSize ) return;
+	}
+	if( sv[ start ] == 'L' ) {
+			VerifyLocaleField(sv, start, argType);
+			if( start >= svSize ) return;
+	}
+	if( sv[ start ] != '}' ) {
+			HandlePotentialTypeField(sv[ start ], argType);
+			if( start >= svSize ) return;
+	}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+	argCounter  = 0;
+	m_indexMode = IndexMode::automatic;
+	for( ;; ) {
+			if( sv.size() < 2 ) break;
+			specValues.ResetSpecs();
+			if( !FindBrackets(sv) ) {
+					std::copy(sv.data(), sv.data() + sv.size(), Iter);
+					return;
+			}
+			if( bracketResults.beginPos != 0 ) {
+					std::copy(sv.data(), sv.data() + bracketResults.beginPos, Iter);
+					sv.remove_prefix(bracketResults.beginPos);
+					bracketResults.endPos -= bracketResults.beginPos;
+					bracketResults.beginPos = 0;
+			}
+			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
+			size_t pos { 0 };
+			/*Handle Escaped Brackets*/
+			if( argBracket[ pos ] == '{' ) {
+					Iter = '{';
+					++pos;
+			}
+			auto bracketSize { argBracket.size() };
+			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
+			/*Handle Positional Args*/
+			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
+					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
+					WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.SpecTypesCaptured()[ specValues.argPosition ]);
+					if( specValues.hasClosingBrace ) {
+							Iter = '}';
+					}
+					sv.remove_prefix(bracketSize + 1);
+					continue;
+			}
+			/* Handle What's Left Of The Bracket */
+			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+			if( pos < bracketSize ) {
+					Parse(argBracket, pos, argType);
+			}
+			Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			if( specValues.hasClosingBrace ) {
+					Iter = '}';
+			}
+			sv.remove_prefix(bracketSize + 1);
+		}
+	if( sv.size() != 0 ) {
+			std::copy(sv.data(), sv.data() + sv.size(), Iter);
+	}
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+	argCounter  = 0;
+	m_indexMode = IndexMode::automatic;
+	for( ;; ) {
+			if( sv.size() < 2 ) break;
+			size_t pos { 0 };
+			specValues.ResetSpecs();
+			if( !FindBrackets(sv) ) {
+					std::copy(sv.data(), sv.data() + sv.size(), Iter);
+					return;
+			}
+			if( bracketResults.beginPos != 0 ) {
+					std::copy(sv.data(), sv.data() + bracketResults.beginPos, Iter);
+					sv.remove_prefix(bracketResults.beginPos);
+					bracketResults.endPos -= bracketResults.beginPos;
+					bracketResults.beginPos = 0;
+			}
+			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
+			/*Handle Escaped Bracket*/
+			if( argBracket[ pos ] == '{' ) {
+					Iter = '{';
+					++pos;
+			}
+			auto bracketSize { argBracket.size() };
+			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
+			/*Handle Positional Args*/
+			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
+					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
+					WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.SpecTypesCaptured()[ specValues.argPosition ]);
+					if( specValues.hasClosingBrace ) {
+							Iter = '}';
+					}
+					sv.remove_prefix(bracketSize + 1);
+					continue;
+			}
+			/* Handle What's Left Of The Bracket */
+			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+			if( pos < bracketSize ) {
+					Parse(argBracket, pos, argType);
+			}
+			Format(loc, std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			if( specValues.hasClosingBrace ) {
+					Iter = '}';
+			}
+			sv.remove_prefix(bracketSize + 1);
+		}
+	if( sv.size() != 0 ) {
+			std::copy(sv.data(), sv.data() + sv.size(), Iter);
+	}
 }
 
 constexpr bool serenity::arg_formatter::ArgFormatter::FindBrackets(std::string_view sv) {
@@ -447,157 +632,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::HandlePotentialTypeField(c
 		}
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
-	auto svSize { sv.size() };
-	VerifyFillAlignField(sv, start, argType);
-	if( start >= svSize ) return;
-	switch( sv[ start ] ) {
-			case '+':
-				specValues.signType = Sign::Plus;
-				++start;
-				break;
-			case '-':
-				specValues.signType = Sign::Minus;
-				++start;
-				break;
-			case ' ':
-				specValues.signType = Sign::Space;
-				++start;
-				break;
-			default: break;
-		}
-	if( start >= svSize ) return;
-	if( sv[ start ] == '#' ) {
-			VerifyAltField(sv, argType);
-			++start;
-	}
-	if( sv[ start ] == '0' ) {
-			if( specValues.fillCharacter == '\0' ) {
-					specValues.fillCharacter = '0';
-			}
-			if( ++start >= svSize ) return;
-	}
-	if( (sv[ start ] == '{') || (sv[ start ] >= '1' && sv[ start ] <= '9') ) {
-			VerifyWidthField(sv, start);
-			if( start >= svSize ) return;
-	}
-	if( sv[ start ] == '.' ) {
-			VerifyPrecisionField(sv, start, argType);
-			if( start >= svSize ) return;
-	}
-	if( sv[ start ] == 'L' ) {
-			VerifyLocaleField(sv, start, argType);
-			if( start >= svSize ) return;
-	}
-	if( sv[ start ] != '}' ) {
-			HandlePotentialTypeField(sv[ start ], argType);
-			if( start >= svSize ) return;
-	}
-}
-
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
-	argCounter  = 0;
-	m_indexMode = IndexMode::automatic;
-	for( ;; ) {
-			if( sv.size() < 2 ) break;
-			specValues.ResetSpecs();
-			if( !FindBrackets(sv) ) {
-					std::copy(sv.data(), sv.data() + sv.size(), Iter);
-					return;
-			}
-			if( bracketResults.beginPos != 0 ) {
-					std::copy(sv.data(), sv.data() + bracketResults.beginPos, Iter);
-					sv.remove_prefix(bracketResults.beginPos);
-					bracketResults.endPos -= bracketResults.beginPos;
-					bracketResults.beginPos = 0;
-			}
-			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
-			size_t pos { 0 };
-			/*Handle Escaped Brackets*/
-			if( argBracket[ pos ] == '{' ) {
-					Iter = '{';
-					++pos;
-			}
-			auto bracketSize { argBracket.size() };
-			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
-			/*Handle Positional Args*/
-			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
-					WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.SpecTypesCaptured()[ specValues.argPosition ]);
-					if( specValues.hasClosingBrace ) {
-							Iter = '}';
-					}
-					sv.remove_prefix(bracketSize + 1);
-					continue;
-			}
-			/* Handle What's Left Of The Bracket */
-			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( pos < bracketSize ) {
-					Parse(argBracket, pos, argType);
-			}
-			Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
-			if( specValues.hasClosingBrace ) {
-					Iter = '}';
-			}
-			sv.remove_prefix(bracketSize + 1);
-		}
-	if( sv.size() != 0 ) {
-			std::copy(sv.data(), sv.data() + sv.size(), Iter);
-	}
-}
-
-template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv) {
-	argCounter  = 0;
-	m_indexMode = IndexMode::automatic;
-	for( ;; ) {
-			if( sv.size() < 2 ) break;
-			size_t pos { 0 };
-			specValues.ResetSpecs();
-			if( !FindBrackets(sv) ) {
-					std::copy(sv.data(), sv.data() + sv.size(), Iter);
-					return;
-			}
-			if( bracketResults.beginPos != 0 ) {
-					std::copy(sv.data(), sv.data() + bracketResults.beginPos, Iter);
-					sv.remove_prefix(bracketResults.beginPos);
-					bracketResults.endPos -= bracketResults.beginPos;
-					bracketResults.beginPos = 0;
-			}
-			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
-			/*Handle Escaped Bracket*/
-			if( argBracket[ pos ] == '{' ) {
-					Iter = '{';
-					++pos;
-			}
-			auto bracketSize { argBracket.size() };
-			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
-			/*Handle Positional Args*/
-			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
-					WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.SpecTypesCaptured()[ specValues.argPosition ]);
-					if( specValues.hasClosingBrace ) {
-							Iter = '}';
-					}
-					sv.remove_prefix(bracketSize + 1);
-					continue;
-			}
-			/* Handle What's Left Of The Bracket */
-			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( pos < bracketSize ) {
-					Parse(argBracket, pos, argType);
-			}
-			Format(loc, std::forward<std::back_insert_iterator<T>>(Iter), argType);
-			if( specValues.hasClosingBrace ) {
-					Iter = '}';
-			}
-			sv.remove_prefix(bracketSize + 1);
-		}
-	if( sv.size() != 0 ) {
-			std::copy(sv.data(), sv.data() + sv.size(), Iter);
-	}
-}
-
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleString(std::back_insert_iterator<T>&& Iter) {
 	std::string_view sv { std::move(argStorage.string_state(specValues.argPosition)) };
 	if constexpr( std::is_same_v<T, std::string> ) {
@@ -881,7 +915,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_
 			switch( specValues.align ) {
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill);
-					case Alignment::AlignCenter: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill /= 2);
+					case Alignment::AlignCenter: return WriteAlignedCenter(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill /= 2);
 					default: return;
 				}
 	} else {
@@ -1137,40 +1171,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteString(std::back_inse
 				return;
 			default: break;
 		}
-}
-
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
-	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
-	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
-		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
-		                                                 : 0 };
-	if( totalWidth == 0 ) {    // use this check to guard from any unnecessary additional checks
-			if( IsSimpleSubstitution(argType, precision) ) {
-					return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
-			}
-	}
-	!specValues.localize ? FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, argType)
-						 : LocalizeArgument(std::forward<std::back_insert_iterator<T>>(Iter), default_locale, precision, totalWidth, argType);
-}
-
-template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
-	using enum msg_details::SpecType;
-	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
-	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
-		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
-		                                                 : 0 };
-	if( totalWidth == 0 ) {    // use this check to guard from any unnecessary additional checks
-			if( IsSimpleSubstitution(argType, precision) ) {
-					return WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
-			}
-	}
-	!specValues.localize ? FormatArgument(std::forward<std::back_insert_iterator<T>>(Iter), precision, totalWidth, argType)
-						 : LocalizeArgument(std::forward<std::back_insert_iterator<T>>(Iter), loc, precision, totalWidth, argType);
-}
-
-template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter::CaptureArgs(Args&&... args) {
-	argStorage.CaptureArgs(std::forward<Args>(args)...);
 }
 
 // Now that the runtime errors are organized in a neater fashion, would really love to figure out
