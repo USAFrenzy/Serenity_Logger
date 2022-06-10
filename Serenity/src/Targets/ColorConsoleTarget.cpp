@@ -24,7 +24,7 @@ namespace serenity::targets {
 	}
 
 	ColorConsole::ColorConsole(std::string_view name, std::string_view msgPattern)
-			: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false) {
+		: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false) {
 		TargetHelper()->WriteToBaseBuffer(false);
 		TargetHelper()->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::always);
 		SetConsoleInterface(consoleMode);

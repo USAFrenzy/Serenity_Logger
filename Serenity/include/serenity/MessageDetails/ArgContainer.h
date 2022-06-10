@@ -48,14 +48,11 @@ namespace serenity::msg_details {
 		VoidPtrType      = 14,
 	};
 	template<typename T, typename U> struct is_supported;
-	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>> : std::bool_constant<(std::is_same<T, Ts>::value || ...)>
+	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
 	{
 	};
 	constexpr size_t MAX_ARG_COUNT = 25;
 	constexpr size_t MAX_ARG_INDEX = 24;
-
-	template<typename T> static constexpr SpecType GetArgType(T&& val);
-	static constexpr std::string_view SpecTypeString(SpecType type);
 
 	class ArgContainer
 	{
@@ -94,5 +91,45 @@ namespace serenity::msg_details {
 		std::array<SpecType, MAX_ARG_COUNT> specContainer {};
 		size_t counter {};
 	};
+	// putting the definition here since clang was warning on extra qualifiers for some reason
+	template<typename T> static constexpr SpecType GetArgType(T&& val) {
+		using enum SpecType;
+		using base_type = std::remove_cvref_t<decltype(val)>;
+		if constexpr( std::is_same_v<base_type, std::monostate> ) {
+				return std::forward<SpecType>(MonoType);
+		} else if constexpr( std::is_same_v<base_type, std::string> ) {
+				return std::forward<SpecType>(StringType);
+		} else if constexpr( std::is_same_v<base_type, const char*> ) {
+				return std::forward<SpecType>(CharPointerType);
+		} else if constexpr( std::is_same_v<base_type, std::string_view> ) {
+				return std::forward<SpecType>(StringViewType);
+		} else if constexpr( std::is_same_v<base_type, int> ) {
+				return std::forward<SpecType>(IntType);
+		} else if constexpr( std::is_same_v<base_type, unsigned int> ) {
+				return std::forward<SpecType>(U_IntType);
+		} else if constexpr( std::is_same_v<base_type, long long> ) {
+				return std::forward<SpecType>(LongLongType);
+		} else if constexpr( std::is_same_v<base_type, unsigned long long> ) {
+				return std::forward<SpecType>(U_LongLongType);
+		} else if constexpr( std::is_same_v<base_type, bool> ) {
+				return std::forward<SpecType>(BoolType);
+		} else if constexpr( std::is_same_v<base_type, char> ) {
+				return std::forward<SpecType>(CharType);
+		} else if constexpr( std::is_same_v<base_type, float> ) {
+				return std::forward<SpecType>(FloatType);
+		} else if constexpr( std::is_same_v<base_type, double> ) {
+				return std::forward<SpecType>(DoubleType);
+		} else if constexpr( std::is_same_v<base_type, long double> ) {
+				return std::forward<SpecType>(LongDoubleType);
+		} else if constexpr( std::is_same_v<base_type, const void*> ) {
+				return std::forward<SpecType>(ConstVoidPtrType);
+		} else if constexpr( std::is_same_v<base_type, void*> ) {
+				return std::forward<SpecType>(VoidPtrType);
+		} else {
+				// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
+				auto isSupported = is_supported<base_type, ArgContainer::VType> {};
+				static_assert(isSupported.value, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
+			}
+	}
 #include <serenity/MessageDetails/ArgContainerImpl.h>
 }    // namespace serenity::msg_details

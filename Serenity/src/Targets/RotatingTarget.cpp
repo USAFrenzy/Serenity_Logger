@@ -26,7 +26,7 @@ namespace serenity::experimental {
 	}
 
 	RotateSettings::RotateSettings(const RotateLimits& limits)
-			: FileHelper(std::filesystem::current_path().string()), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
+		: FileHelper(std::filesystem::current_path().string()), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
 		FileCacheHelper()->CacheFile(std::filesystem::current_path().string(), true);
 		std::string fileName { "Rotating_Log.txt" };
 		std::string logDir { "Logs" };
@@ -40,7 +40,7 @@ namespace serenity::experimental {
 	}
 
 	RotateSettings::RotateSettings(const std::string& path, const RotateLimits& limits)
-			: FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
+		: FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
 		if( !path.empty() ) {
 				std::filesystem::path pathToCache = path;
 				FileCacheHelper()->CacheFile(pathToCache.string(), true);
@@ -98,8 +98,8 @@ namespace serenity::experimental {
 namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
-			: TargetBase("Rotating_Logger"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
-			  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		: TargetBase("Rotating_Logger"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
+		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
@@ -118,8 +118,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-			: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
-			  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
+		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 
 		SyncTargetHelpers(TargetHelper());
@@ -139,8 +139,8 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-			: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
-			  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };

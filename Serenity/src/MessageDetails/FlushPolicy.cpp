@@ -8,10 +8,10 @@ namespace serenity::experimental {
 	}
 
 	Flush_Policy::Flush_Policy(FlushSetting primaryOpt, PeriodicOptions secondaryOpt, PeriodicSettings settings)
-			: mainOpt(primaryOpt), subOpt(secondaryOpt), subSettings(settings) { }
+		: mainOpt(primaryOpt), subOpt(secondaryOpt), subSettings(settings) { }
 
 	Flush_Policy::Flush_Policy(PeriodicOptions secondaryOpt, PeriodicSettings settings)
-			: mainOpt(FlushSetting::periodically), subOpt(secondaryOpt), subSettings(settings) { }
+		: mainOpt(FlushSetting::periodically), subOpt(secondaryOpt), subSettings(settings) { }
 
 	Flush_Policy::Flush_Policy(FlushSetting primaryOpt, PeriodicOptions secondaryOpt): mainOpt(primaryOpt), subOpt(secondaryOpt) { }
 

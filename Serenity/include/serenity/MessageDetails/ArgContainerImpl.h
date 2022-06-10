@@ -2,70 +2,8 @@
 
 namespace details = serenity::msg_details;
 
-static constexpr std::string_view details::SpecTypeString(SpecType type) {
-	using enum SpecType;
-	switch( type ) {
-			case MonoType: return "MonoType"; break;
-			case StringType: return "String  Type"; break;
-			case CharPointerType: return "Const Char *"; break;
-			case StringViewType: "String View"; break;
-			case IntType: return "Int"; break;
-			case U_IntType: return "Unsigned Int"; break;
-			case LongLongType: return "Long Long"; break;
-			case U_LongLongType: return "Unsigned Long Long"; break;
-			case BoolType: return "Bool"; break;
-			case CharType: return "Char"; break;
-			case FloatType: return "Float"; break;
-			case DoubleType: return "Double"; break;
-			case LongDoubleType: return "Long Double"; break;
-			case ConstVoidPtrType: return "Const Void *"; break;
-			case VoidPtrType: return "Void *"; break;
-			default: break;
-		}
-	return "";
-}
 constexpr size_t details::ArgContainer::CurrentSize() {
 	return counter;
-}
-
-template<typename T> static constexpr details::SpecType GetArgType(T&& val) {
-	using enum SpecType;
-	using base_type = std::remove_cvref_t<decltype(val)>;
-	if constexpr( std::is_same_v<base_type, std::monostate> ) {
-			return std::forward<SpecType>(MonoType);
-	} else if constexpr( std::is_same_v<base_type, std::string> ) {
-			return std::forward<SpecType>(StringType);
-	} else if constexpr( std::is_same_v<base_type, const char*> ) {
-			return std::forward<SpecType>(CharPointerType);
-	} else if constexpr( std::is_same_v<base_type, std::string_view> ) {
-			return std::forward<SpecType>(StringViewType);
-	} else if constexpr( std::is_same_v<base_type, int> ) {
-			return std::forward<SpecType>(IntType);
-	} else if constexpr( std::is_same_v<base_type, unsigned int> ) {
-			return std::forward<SpecType>(U_IntType);
-	} else if constexpr( std::is_same_v<base_type, long long> ) {
-			return std::forward<SpecType>(LongLongType);
-	} else if constexpr( std::is_same_v<base_type, unsigned long long> ) {
-			return std::forward<SpecType>(U_LongLongType);
-	} else if constexpr( std::is_same_v<base_type, bool> ) {
-			return std::forward<SpecType>(BoolType);
-	} else if constexpr( std::is_same_v<base_type, char> ) {
-			return std::forward<SpecType>(CharType);
-	} else if constexpr( std::is_same_v<base_type, float> ) {
-			return std::forward<SpecType>(FloatType);
-	} else if constexpr( std::is_same_v<base_type, double> ) {
-			return std::forward<SpecType>(DoubleType);
-	} else if constexpr( std::is_same_v<base_type, long double> ) {
-			return std::forward<SpecType>(LongDoubleType);
-	} else if constexpr( std::is_same_v<base_type, const void*> ) {
-			return std::forward<SpecType>(ConstVoidPtrType);
-	} else if constexpr( std::is_same_v<base_type, void*> ) {
-			return std::forward<SpecType>(VoidPtrType);
-	} else {
-			// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
-			auto isSupported = is_supported<base_type, ArgContainer::VType> {};
-			static_assert(isSupported.value, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
-		}
 }
 
 constexpr std::array<details::ArgContainer::VType, details::MAX_ARG_COUNT>& details::ArgContainer::ArgStorage() {

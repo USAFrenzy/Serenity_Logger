@@ -222,7 +222,6 @@ namespace serenity::msg_details {
 		Format_Arg_s& operator=(const Format_Arg_s&) = delete;
 		~Format_Arg_s()                              = default;
 
-		size_t FindEndPos();
 		void FormatAll(std::string& container);
 		void FormatLine(std::string& container);
 		void FormatColumn(std::string& container);

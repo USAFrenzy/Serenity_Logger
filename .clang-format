@@ -349,7 +349,7 @@ BreakInheritanceList: BeforeColon
 #                 "ryVeryVeryVeryVeryVery"
 #                 "VeryLongString";
 BreakStringLiterals: true
-ColumnLimit: 160
+ColumnLimit: 165
 ########## A regular expression that describes comments with special meaning ##########
 CommentPragmas: '^///'
 ########## If false, each namespace is declared on a new line ##########
@@ -362,7 +362,7 @@ CommentPragmas: '^///'
 CompactNamespaces: false
 ##########     The number of characters to use for indentation of     ##########
 ########## constructor initializer lists as well as inheritance lists ##########
-ConstructorInitializerIndentWidth: 8
+ConstructorInitializerIndentWidth: 4
 ########## Indent width for line continuations ##########
 ContinuationIndentWidth: 0
 ########## If true, format braced lists as best suited for C++11 braced lists ##########
@@ -605,12 +605,12 @@ NamespaceIndentation: All
 #       cccccccccccccccccccc()
 # PackConstructorInitializers: NextLine # clang-format v14
 
-PenaltyBreakAssignment: 20
+PenaltyBreakAssignment: 15
 PenaltyBreakBeforeFirstCallParameter: 25
 PenaltyBreakComment: 10
 PenaltyBreakFirstLessLess: 15
 PenaltyBreakString: 5
-PenaltyBreakTemplateDeclaration: 20
+PenaltyBreakTemplateDeclaration: 10
 PenaltyExcessCharacter: 5
 PenaltyReturnTypeOnItsOwnLine: 50
 

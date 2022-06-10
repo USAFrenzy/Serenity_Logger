@@ -201,13 +201,39 @@ namespace serenity::arg_formatter {
 		return std::forward<size_t>(totalSize);
 	}
 
-	/**************************************************************************************************************************************************
-	    Compatible class that provides some of the same functionality that mirrors <format> and libfmt for basic formatting needs for pre  C++20 and
-	    MSVC's pre-backported fixes (which required C ++23) for some build versions of Visual Studio as well as for performance needs. Everything in
-	    this class either matches (in the case of simple double substitution) or greatly exceeds the performance of MSVC's implementation -  with the
-	    caveat of no custom formatting support, no utf-8 support, and no type-erasure as of right now. I believe libfmt is faster than this basic
-	    implementation  (and unarguably way more comprehensive as well) but I have yet to bench timings against it.
-	**************************************************************************************************************************************************/
+	// WIP concepts -> The idea is to add constraints similar to what fmtlib has instead of the limitation on explicitly using a
+	// back_insert_iterator; not sure why, but adding the OutputIter concept to the relevant functions drastically speeds up
+	// compile times but heavily reduces runtime performance. Even when limiting the OutputIter concept to only require
+	// the "is_iterator" concept and "has_output_functionality" concept, performance was heavily impacted. The complex
+	//  pattern formatting for instance went from ~0.44us down to ~1.13us... So obviously I'm doing something  wrong here =/
+	template<typename T>
+	concept is_iterator = requires {
+		T::iterator_category&& T::value_type&& T::difference_type&& T::pointer&& T::reference;
+	};
+	template<typename T>
+	concept has_iterator_traits = requires {
+		std::iterator_traits<T> {};
+	};
+	template<typename T>
+	concept valid_iter = requires {
+		is_iterator<T>&& has_iterator_traits<T>;
+	};
+	template<typename T>
+	concept has_output_functionality = requires {
+		valid_iter<T> && (std::forward_iterator<T> || std::bidirectional_iterator<T> || std::random_access_iterator<T>);
+	};
+	template<typename T>
+	concept OutputIter = requires {
+		has_output_functionality<T>;
+	};
+
+	/********************************************************************************************************************************************************
+	    Compatible class that provides some of the same functionality that mirrors <format> and libfmt for basic formatting needs for pre  C++20 and MSVC's
+	    pre-backported fixes (which required C ++23) for some build versions of Visual Studio as well as for performance needs. Everything in this class either
+	    matches (in the case of simple double substitution) or greatly exceeds the performance of MSVC's implementation -  with the caveat of no custom
+	    formatting support, no utf-8 support, and no type-erasure as of right now. I believe libfmt is faster than this basic implementation  (and unarguably
+	    way more comprehensive as well) but I have yet to bench timings against it.
+	********************************************************************************************************************************************************/
 	class ArgFormatter
 	{
 	  public:
@@ -215,7 +241,6 @@ namespace serenity::arg_formatter {
 		constexpr ArgFormatter(const ArgFormatter&)            = delete;
 		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
 		constexpr ~ArgFormatter()                              = default;
-
 		template<typename... Args> [[nodiscard]] std::string se_format(std::string_view sv, Args&&... args);
 		template<typename... Args> [[nodiscard]] std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
@@ -224,9 +249,9 @@ namespace serenity::arg_formatter {
 
 	  private:
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
+		// At the moment ParseFormatString() and Format() are coupled together where ParseFormatString calls Format, hence the need
+		// right now to have a version of ParseFormatString() that takes a locale object to forward to the locale overloaded Format()
 		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv);
-		// At the moment ParseFormatString and Format are coupled together where ParseFormatString calls Format, hence the
-		// need right now to have a version of ParseFormatString that takes a locale object to forward to Format
 		template<typename T> constexpr void ParseFormatString(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv);
 		template<typename T> constexpr void Format(std::back_insert_iterator<T>&& Iter, const SpecType& argType);
 		template<typename T> constexpr void Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const SpecType& argType);
@@ -241,7 +266,6 @@ namespace serenity::arg_formatter {
 		constexpr void VerifyPrecisionField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
 		constexpr void VerifyLocaleField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
 		constexpr void HandlePotentialTypeField(const char& ch, const SpecType& argType);
-		constexpr void VerifyEscapedBracket(std::string_view sv, size_t& currentPosition);
 		constexpr bool IsSimpleSubstitution(const SpecType& argType, const int& precision);
 		constexpr void OnAlignLeft(const char& ch, size_t& pos);
 		constexpr void OnAlignRight(const char& ch, size_t& pos);
@@ -249,12 +273,29 @@ namespace serenity::arg_formatter {
 		constexpr void OnAlignDefault(const SpecType& type, size_t& pos);
 		constexpr void OnValidTypeSpec(const SpecType& type, const char& ch);
 		constexpr void OnInvalidTypeSpec(const SpecType& type);
-		/*********************************************************** Formatting Related Functions ***********************************************************/
+		/************************************************************ Formatting Related Functions ************************************************************/
+		constexpr void FormatBoolType(bool& value);
+		constexpr void FormatCharType(char& value);
+		// clang-format off
 		template<typename T>
 		constexpr void FormatArgument(std::back_insert_iterator<T>&& Iter, const int& precision, const int& totalWidth, const SpecType& type);
-		template<typename T> constexpr void FormatIntegerType(T&& value);
-		template<typename T> constexpr void FormatFloatType(T&& value, int precision);
-		template<typename T> constexpr void FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision);
+		template<typename T> 
+		constexpr void FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision);
+		template<typename T> requires std::is_integral_v<std::remove_cvref_t<T>>
+		constexpr void FormatIntegerType(T&& value);
+		template<typename T> requires std::is_pointer_v<std::remove_cvref_t<T>>
+		constexpr void FormatPointerType(T&& value, const SpecType& type);
+		template<typename T> requires std::is_floating_point_v<std::remove_cvref_t<T>>
+		constexpr void FormatFloatType(T&& value, int precision);
+		// clang-format on
+		/******************************************************** Container Writing Related Functions *********************************************************/
+		constexpr void BufferToUpper(const char& end);
+		constexpr void SetIntegralFormat(int& base, bool& isUpper);
+		constexpr void SetFloatingFormat(std::chars_format& format, int& precision, bool& isUpper);
+		constexpr void WritePreFormatChars(int& pos);
+		constexpr void WriteChar(const char& value);
+		constexpr void WriteBool(const bool& value);
+		template<typename T> constexpr void WriteString(std::back_insert_iterator<T>&& Iter, const SpecType& type, const int& precision, const int& totalWidth);
 		template<typename T> constexpr void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const SpecType&);
 		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth);
 		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& width, int prec);
@@ -271,7 +312,19 @@ namespace serenity::arg_formatter {
 		template<typename T> constexpr void WriteSimpleLongDouble(std::back_insert_iterator<T>&& Iter);
 		template<typename T> constexpr void WriteSimpleConstVoidPtr(std::back_insert_iterator<T>&& Iter);
 		template<typename T> constexpr void WriteSimpleVoidPtr(std::back_insert_iterator<T>&& Iter);
-		template<typename T> constexpr void WriteString(std::back_insert_iterator<T>&& Iter, const SpecType& type, const int& precision, const int& totalWidth);
+		// clang-format off
+		template<typename T> constexpr void WriteAlignedLeft(std::back_insert_iterator<T>&& Iter, const int& totalWidth);
+		template<typename T>constexpr void WriteAlignedLeft(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision, const int& totalWidth);
+		template<typename T> constexpr void WriteAlignedRight(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount);
+		template<typename T>constexpr void WriteAlignedRight(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision, const int& totalWidth, const size_t& fillAmount);
+		template<typename T> constexpr void WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount);
+		template<typename T>constexpr void WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision, const int& totalWidth, const size_t& fillAmount);
+		template<typename T> constexpr void WriteNonAligned(std::back_insert_iterator<T>&& Iter);
+		template<typename T> constexpr void WriteNonAligned(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision);
+		template<typename T> requires std::is_arithmetic_v<std::remove_cvref_t<T>>
+		constexpr void WriteSign(T&& value, int& pos);
+		// clang-format on
+
 		// Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
 		template<typename T>
 		void LocalizeArgument(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
@@ -291,6 +344,7 @@ namespace serenity::arg_formatter {
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer;
 		size_t valueSize;
 		std::vector<char> fillBuffer;
+		size_t fillBufferDefaultSize;
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
 

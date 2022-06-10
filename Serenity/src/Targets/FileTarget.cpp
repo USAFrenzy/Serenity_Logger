@@ -68,7 +68,7 @@ namespace serenity::targets {
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
-			: TargetBase(name, formatPattern), FileHelper(fPath), fileMutex(std::mutex {}) {
+		: TargetBase(name, formatPattern), FileHelper(fPath), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
 		try {
 				if( !std::filesystem::exists(FileCacheHelper()->FilePath()) ) {

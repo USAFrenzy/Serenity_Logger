@@ -134,8 +134,7 @@ namespace serenity {
 					file_utils::ValidateFileName(newFile.filename().string());
 				}
 			catch( std::exception& fileName_err ) {
-					printf("Could Not Rename %s To %s\nReason: %s\n", oldFile.filename().string().c_str(), newFile.filename().string().c_str(),
-					       fileName_err.what());
+					printf("Could Not Rename %s To %s\nReason: %s\n", oldFile.filename().string().c_str(), newFile.filename().string().c_str(), fileName_err.what());
 					return false;
 				}
 

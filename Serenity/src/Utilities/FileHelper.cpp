@@ -5,8 +5,8 @@
 namespace serenity {
 
 	FileCache::FileCache(std::string_view path)
-			: filePath(std::filesystem::path {}), fileDir(std::string {}), fileName(std::string {}), extension(std::string {}), bufferSize(DEFAULT_BUFFER_SIZE),
-			  fileBuffer(bufferSize), dirPath(filePath) {
+		: filePath(std::filesystem::path {}), fileDir(std::string {}), fileName(std::string {}), extension(std::string {}), bufferSize(DEFAULT_BUFFER_SIZE),
+		  fileBuffer(bufferSize), dirPath(filePath) {
 		dirPath._Remove_filename_and_separator();
 		CacheFile(std::move(path));
 	}

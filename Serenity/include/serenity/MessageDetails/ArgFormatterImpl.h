@@ -7,7 +7,7 @@
 // a copy of this software and associated documentation files (the
 // "Software"), to deal in the Software without restriction, including
 // without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to
+// distribute, sub-license, and/or sell copies of the Software, and to
 // permit persons to whom the Software is furnished to do so, subject to
 // the following conditions:
 //
@@ -30,7 +30,7 @@
 // without including the above copyright and permission notices.
 
 /************************************** What The ArgFormatter And ArgContainer Classes Offer **************************************/
-// This work is a very simple reimplementation with limititations on my end of Victor Zverovich's fmt library.
+// This work is a very simple reimplementation with limitations on my end of Victor Zverovich's fmt library.
 // Currently the standard's implementation of his work is still underway although for the most part, it's feature
 // complete with Victor's library - there are some huge performance drops when it's not compiled under the /utf-8
 // flag on MSVC though.
@@ -40,7 +40,7 @@
 // as it is when compiled with /utf-8 for compilation without the need for this flag.
 //
 // With that being said, these classes provide the functionality of formatting to a container with a back insert iterator
-// object which mirrors the std::format_to()/std::vformat_to() via the se_format_to() function, as well as a way to recieve
+// object which mirrors the std::format_to()/std::vformat_to() via the se_format_to() function, as well as a way to receive
 // a string with the formatted result via the se_format() function, mirroring std::format()/std::vformat().
 // Unlike MSVC's implementations, however, the default locale used when the locale specifier is present will refer to the
 // default locale created on construction of this class. The downside is that this will not reflect any changes when the
@@ -58,8 +58,10 @@
 #include <string_view>
 
 constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
-		: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}),
-		  argStorage(serenity::msg_details::ArgContainer {}), buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(), fillBuffer() { }
+	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}),
+	  argStorage(serenity::msg_details::ArgContainer {}), buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(), fillBuffer(), fillBufferDefaultSize(512) {
+	fillBuffer.reserve(fillBufferDefaultSize);
+}
 
 constexpr void serenity::arg_formatter::BracketSearchResults::Reset() {
 	beginPos = endPos = 0;
@@ -77,6 +79,32 @@ constexpr void serenity::arg_formatter::SpecFormatting::ResetSpecs() {
 			signType                 = Sign::Empty;
 			preAltForm               = "";
 		}
+}
+
+template<typename T, typename... Args>
+constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
+	CaptureArgs(std::forward<Args>(args)...);
+	ParseFormatString(std::forward<std::back_insert_iterator<T>>(Iter), sv);
+}
+
+template<typename T, typename... Args>
+constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
+	CaptureArgs(std::forward<Args>(args)...);
+	ParseFormatString(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
+}
+
+template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(std::string_view sv, Args&&... args) {
+	std::string tmp;
+	tmp.reserve(ReserveCapacity(std::forward<Args>(args)...));
+	se_format_to(std::back_inserter(tmp), sv, std::forward<Args>(args)...);
+	return tmp;
+}
+
+template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(const std::locale& loc, std::string_view sv, Args&&... args) {
+	std::string tmp;
+	tmp.reserve(ReserveCapacity(std::forward<Args>(args)...));
+	se_format_to(loc, std::back_inserter(tmp), sv, std::forward<Args>(args)...);
+	return tmp;
 }
 
 constexpr bool serenity::arg_formatter::ArgFormatter::FindBrackets(std::string_view sv) {
@@ -299,12 +327,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyPrecisionField(std::
 		}
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::VerifyEscapedBracket(std::string_view sv, size_t& currentPosition) {
-	if( (currentPosition + 1) <= (sv.size() - 2) && (sv[ currentPosition + static_cast<size_t>(1) ] == '}') ) {
-			specValues.hasClosingBrace = true;
-	}
-}
-
 constexpr void serenity::arg_formatter::ArgFormatter::VerifyLocaleField(std::string_view sv, size_t& currentPosition, const msg_details::SpecType& argType) {
 	using SpecType = msg_details::SpecType;
 	++currentPosition;
@@ -426,7 +448,9 @@ constexpr void serenity::arg_formatter::ArgFormatter::HandlePotentialTypeField(c
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
+	auto svSize { sv.size() };
 	VerifyFillAlignField(sv, start, argType);
+	if( start >= svSize ) return;
 	switch( sv[ start ] ) {
 			case '+':
 				specValues.signType = Sign::Plus;
@@ -442,6 +466,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv,
 				break;
 			default: break;
 		}
+	if( start >= svSize ) return;
 	if( sv[ start ] == '#' ) {
 			VerifyAltField(sv, argType);
 			++start;
@@ -450,48 +475,24 @@ constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv,
 			if( specValues.fillCharacter == '\0' ) {
 					specValues.fillCharacter = '0';
 			}
-			++start;
+			if( ++start >= svSize ) return;
 	}
 	if( (sv[ start ] == '{') || (sv[ start ] >= '1' && sv[ start ] <= '9') ) {
 			VerifyWidthField(sv, start);
+			if( start >= svSize ) return;
 	}
 	if( sv[ start ] == '.' ) {
 			VerifyPrecisionField(sv, start, argType);
+			if( start >= svSize ) return;
 	}
 	if( sv[ start ] == 'L' ) {
 			VerifyLocaleField(sv, start, argType);
+			if( start >= svSize ) return;
 	}
 	if( sv[ start ] != '}' ) {
 			HandlePotentialTypeField(sv[ start ], argType);
+			if( start >= svSize ) return;
 	}
-	VerifyEscapedBracket(sv, start);
-}
-
-template<typename T, typename... Args>
-constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
-	CaptureArgs(std::forward<Args>(args)...);
-	ParseFormatString(std::forward<std::back_insert_iterator<T>>(Iter), sv);
-}
-
-template<typename T, typename... Args>
-constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv,
-                                                                   Args&&... args) {
-	CaptureArgs(std::forward<Args>(args)...);
-	ParseFormatString(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
-}
-
-template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(std::string_view sv, Args&&... args) {
-	std::string tmp;
-	tmp.reserve(ReserveCapacity(std::forward<Args>(args)...));
-	se_format_to(std::back_inserter(tmp), sv, std::forward<Args>(args)...);
-	return tmp;
-}
-
-template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(const std::locale& loc, std::string_view sv, Args&&... args) {
-	std::string tmp;
-	tmp.reserve(ReserveCapacity(std::forward<Args>(args)...));
-	se_format_to(loc, std::back_inserter(tmp), sv, std::forward<Args>(args)...);
-	return tmp;
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
@@ -512,29 +513,33 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			}
 			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
 			size_t pos { 0 };
-			/*Handle Escaped Bracket*/
+			/*Handle Escaped Brackets*/
 			if( argBracket[ pos ] == '{' ) {
 					Iter = '{';
 					++pos;
 			}
+			auto bracketSize { argBracket.size() };
+			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to ParseFormatString - just a simple substitution after position field
-					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
-					sv.remove_prefix(argBracket.size() + 1);
+					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
+					WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.SpecTypesCaptured()[ specValues.argPosition ]);
+					if( specValues.hasClosingBrace ) {
+							Iter = '}';
+					}
+					sv.remove_prefix(bracketSize + 1);
 					continue;
 			}
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( pos < argBracket.size() ) {
+			if( pos < bracketSize ) {
 					Parse(argBracket, pos, argType);
 			}
 			Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
 			}
-			sv.remove_prefix(argBracket.size() + 1);
+			sv.remove_prefix(bracketSize + 1);
 		}
 	if( sv.size() != 0 ) {
 			std::copy(sv.data(), sv.data() + sv.size(), Iter);
@@ -565,24 +570,28 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 					Iter = '{';
 					++pos;
 			}
+			auto bracketSize { argBracket.size() };
+			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					// Nothing Else to ParseFormatString - just a simple substitution after position field
-					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
-					sv.remove_prefix(argBracket.size() + 1);
+					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
+					WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.SpecTypesCaptured()[ specValues.argPosition ]);
+					if( specValues.hasClosingBrace ) {
+							Iter = '}';
+					}
+					sv.remove_prefix(bracketSize + 1);
 					continue;
 			}
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( pos < argBracket.size() ) {
+			if( pos < bracketSize ) {
 					Parse(argBracket, pos, argType);
 			}
 			Format(loc, std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
 			}
-			sv.remove_prefix(argBracket.size() + 1);
+			sv.remove_prefix(bracketSize + 1);
 		}
 	if( sv.size() != 0 ) {
 			std::copy(sv.data(), sv.data() + sv.size(), Iter);
@@ -711,8 +720,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	} else {
 			Iter = '0';
 			Iter = 'x';
-			std::move(data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr,
-			          Iter);
+			std::move(data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr, Iter);
 		}
 }
 
@@ -752,192 +760,208 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(std::back
 		}
 }
 
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
+	auto fillData { fillBuffer.data() };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			std::memcpy(fillData, buffer.data(), valueSize);
+			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+	} else {
+			std::memcpy(fillData, buffer.data(), valueSize);
+			std::copy(fillData, fillData + totalWidth, Iter);
+		}
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision,
+                                                                       const int& totalWidth) {
+	auto fillData { fillBuffer.data() };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			std::memcpy(fillData, val.data(), precision);
+			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+	} else {
+			std::copy(val.data(), val.data() + precision, Iter);
+			std::copy(fillData, fillData + totalWidth, Iter);
+		}
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount) {
+	auto fillData { fillBuffer.data() };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
+			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+	} else {
+			std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
+			std::copy(fillData, fillData + totalWidth, Iter);
+		}
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision,
+                                                                        const int& totalWidth, const size_t& fillAmount) {
+	auto fillData { fillBuffer.data() };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			std::memcpy(fillData + fillAmount, val.data(), precision);
+			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+	} else {
+			std::memcpy(fillData + fillAmount, val.data(), precision);
+			std::copy(fillData, fillData + totalWidth, Iter);
+		}
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount) {
+	auto fillData { fillBuffer.data() };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
+			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+	} else {
+			std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
+			std::copy(fillData, fillData + totalWidth, Iter);
+		}
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision,
+                                                                         const int& totalWidth, const size_t& fillAmount) {
+	auto fillData { fillBuffer.data() };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			std::memcpy(fillData + fillAmount, val.data(), precision);
+			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+	} else {
+			std::memcpy(fillData + fillAmount, val.data(), precision);
+			std::copy(fillData, fillData + totalWidth, Iter);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_insert_iterator<T>&& Iter) {
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(buffer.data(), valueSize);
+	} else {
+			std::copy(buffer.data(), buffer.data() + valueSize, Iter);
+		}
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision) {
+	if constexpr( std::is_same_v<T, std::string> ) {
+			IteratorContainer(Iter).Container()->append(val.data(), precision);
+	} else {
+			Iter = std::copy(val.data(), val.data() + precision, Iter);
+		}
+}
+
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
 	auto valueData { buffer.data() };
-	if( size_t fillAmount { (totalWidth > valueSize) ? totalWidth - valueSize : 0 }; fillAmount != 0 ) {
-			// swapping out the reuse of the buffer array for its own dedicated vector; using vector so there's no hard limit on fill amount -> in this way, the
-			// limit is pretty much just dictated by the max size of the container being formatted to. It's sliightly slower than, say, using memset on an array
-			// (only ~20ns-~30ns slower for smaller values up to 128 ) but it adds a lot more flexibility so it's definitely worth it I think
-			fillBuffer.reserve(fillAmount + 1);
-			fillBuffer.resize(fillAmount + 1, specValues.fillCharacter);
-			auto data { fillBuffer.data() };
+	if( size_t fill { (totalWidth > valueSize) ? totalWidth - valueSize : 0 }; fill != 0 ) {
+			fillBuffer.clear();
+			totalWidth <= fillBufferDefaultSize ? fillBuffer.reserve(fillBufferDefaultSize) : fillBuffer.reserve(totalWidth);
+			!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
+										  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
 			switch( specValues.align ) {
-					case Alignment::AlignLeft:
-						{
-							if constexpr( std::is_same_v<T, std::string> ) {
-									IteratorContainer(Iter).Container()->append(valueData, valueSize).append(data, fillAmount);
-							} else {
-									Iter = std::move(valueData, valueData + valueSize, Iter);
-									Iter = std::move(data, data + fillAmount, Iter);
-								}
-							return;
-						}
-					case Alignment::AlignRight:
-						{
-							if constexpr( std::is_same_v<T, std::string> ) {
-									IteratorContainer(Iter).Container()->append(data, fillAmount).append(valueData, valueSize);
-							} else {
-									Iter = std::move(data, data + fillAmount, Iter);
-									Iter = std::move(valueData, valueData + valueSize, Iter);
-								}
-							return;
-						}
-					case Alignment::AlignCenter:
-						{
-							fillAmount /= 2;
-							if constexpr( std::is_same_v<T, std::string> ) {
-									// clang-format off
-									IteratorContainer(Iter).Container()->append(data, fillAmount)
-									.append(valueData, valueSize).append(data, (totalWidth - valueSize - fillAmount));
-									// clang - format on
-							} else {
-									Iter = std::move(data, data + fillAmount, Iter);
-									Iter = std::move(valueData, valueData + valueSize, Iter);
-									Iter = std::move(data, data + (totalWidth - valueSize - fillAmount), Iter);
-								}
-							return;
-						}
-					default: return; break;
+					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
+					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth, fill);
+					case Alignment::AlignCenter: return WriteAlignedCenter(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth, fill /= 2);
+					default: return;
 				}
 	} else {
-			if constexpr( std::is_same_v<T, std::string> ) {
-					IteratorContainer(Iter).Container()->append(valueData, valueSize);
-			} else {
-					Iter = std::move(valueData, valueData + valueSize, Iter);
-				}
+			WriteNonAligned(std::forward<std::back_insert_iterator<T>>(Iter));
 		}
 }
 
 template<typename T>    // string type overload for alignment
-constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, const int &totalWidth, int precision) {
+constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& totalWidth, int precision) {
 	auto size { static_cast<int>(val.size()) };
 	precision = precision != 0 ? precision > size ? size : precision : size;
-	if( auto fillAmount { totalWidth > size ? totalWidth - size : 0 }; fillAmount != 0 ) {
-			fillBuffer.reserve(fillAmount + 1);
-			fillBuffer.resize(fillAmount + 1, specValues.fillCharacter);
-			auto data { fillBuffer.data() };
+	if( auto fill { totalWidth > size ? totalWidth - size : 0 }; fill != 0 ) {
+			fillBuffer.clear();
+			totalWidth <= fillBufferDefaultSize ? fillBuffer.reserve(fillBufferDefaultSize) : fillBuffer.reserve(totalWidth);
+			!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
+										  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
 			switch( specValues.align ) {
-					case Alignment::AlignLeft:
-						{
-							if constexpr( std::is_same_v<T, std::string> ) {
-									IteratorContainer(Iter).Container()->append(val.data(), precision).append(data, fillAmount);
-							} else {
-									Iter = std::copy(val.data(), val.data() + precision, Iter);
-									Iter = std::copy(data, data + fillAmount, Iter);
-								}
-							return;
-						}
-					case Alignment::AlignRight:
-						{
-							if constexpr( std::is_same_v<T, std::string> ) {
-									IteratorContainer(Iter).Container()->append(data, fillAmount).append(val.data(), precision);
-							} else {
-									Iter = std::copy(data, data + fillAmount, Iter);
-									Iter = std::copy(val.data(), val.data() + precision, Iter);
-								}
-							return;
-						}
-					case Alignment::AlignCenter:
-						{
-							fillAmount /= 2;
-							if constexpr( std::is_same_v<T, std::string> ) {
-									IteratorContainer(Iter).Container()->append(data, fillAmount).append(val.data(), precision).append(data, (totalWidth - size - fillAmount));
-							} else {
-									Iter = std::copy(data, data + fillAmount, Iter);
-									Iter = std::copy(val.data(), val.data() + precision, Iter);
-									Iter = std::copy(data, data + (totalWidth - size - fillAmount), Iter);
-								}
-							return;
-						}
-					default: return; break;
+					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth);
+					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill);
+					case Alignment::AlignCenter: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill /= 2);
+					default: return;
 				}
 	} else {
-			if constexpr( std::is_same_v<T, std::string> ) {
-					IteratorContainer(Iter).Container()->append(val.data(), precision);
-			} else {
-					Iter = std::copy(val.data(), val.data() + precision, Iter);
-				}
+			WriteNonAligned(std::forward<std::back_insert_iterator<T>>(Iter), val, precision);
 		}
 }
 
-template <typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(std::back_insert_iterator<T>&& Iter, const int &precision, const int  &totalWidth, const msg_details::SpecType& type) {
+constexpr void serenity::arg_formatter::ArgFormatter::FormatCharType(char& value) {
+	specValues.typeSpec != '\0' && specValues.typeSpec != 'c' ? FormatIntegerType(static_cast<int>(value)) : WriteChar(value);
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::WriteBool(const bool& value) {
+	using namespace std::string_view_literals;
+	auto sv { value ? "true"sv : "false"sv };
+	std::copy(sv.data(), sv.data() + sv.size(), buffer.begin());
+	valueSize = sv.size();
+}
+constexpr void serenity::arg_formatter::ArgFormatter::FormatBoolType(bool& value) {
+	specValues.typeSpec != '\0' && specValues.typeSpec != 's' ? FormatIntegerType(static_cast<unsigned char>(value)) : WriteBool(value);
+}
+
+template<typename T>
+requires std::is_pointer_v<std::remove_cvref_t<T>>
+constexpr void serenity::arg_formatter::ArgFormatter::FormatPointerType(T&& value, const msg_details::SpecType& type) {
 	using enum msg_details::SpecType;
-	// clang-format off
+	switch( type ) {
+			case ConstVoidPtrType:
+				{
+					buffer[ 0 ] = '0';
+					buffer[ 1 ] = 'x';
+					auto data { buffer.data() };
+					valueSize = std::to_chars(data + 2, data + buffer.size(), reinterpret_cast<size_t>(std::forward<T>(value)), 16).ptr - data;
+					return;
+				}
+			case VoidPtrType:
+				{
+					buffer[ 0 ] = '0';
+					buffer[ 1 ] = 'x';
+					auto data { buffer.data() };
+					valueSize = std::to_chars(data + 2, data + buffer.size(), reinterpret_cast<size_t>(std::forward<T>(value)), 16).ptr - data;
+					return;
+				}
+			default: return;
+		}
+}
+
+template<typename T>
+constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(std::back_insert_iterator<T>&& Iter, const int& precision, const int& totalWidth,
+                                                                     const msg_details::SpecType& type) {
+	using enum msg_details::SpecType;
 	switch( type ) {
 			case IntType: FormatIntegerType(argStorage.int_state(specValues.argPosition)); break;
 			case U_IntType: FormatIntegerType(argStorage.uint_state(specValues.argPosition)); break;
 			case LongLongType: FormatIntegerType(argStorage.long_long_state(specValues.argPosition)); break;
 			case U_LongLongType: FormatIntegerType(argStorage.u_long_long_state(specValues.argPosition)); break;
-			case BoolType:
-			{
-				if (specValues.typeSpec != '\0' && specValues.typeSpec != 's') {
-					FormatIntegerType(static_cast<unsigned char>(argStorage.bool_state(specValues.argPosition)));
-				}
-				else {
-					using namespace std::string_view_literals;
-					auto sv{ argStorage.bool_state(specValues.argPosition) ? "true"sv : "false"sv };
-					std::copy(sv.data(), sv.data() + sv.size(), buffer.begin());
-					valueSize = sv.size();
-				}
-				break;
-			}
-			case CharType:
-			{
-				if (specValues.typeSpec != '\0' && specValues.typeSpec != 'c') {
-					FormatIntegerType(static_cast<int>(argStorage.char_state(specValues.argPosition)));
-				}
-				else {
-					valueSize = 1;
-					buffer[0] = argStorage.char_state(specValues.argPosition);
-				}
-				break;
-			}
+			case BoolType: FormatBoolType(argStorage.bool_state(specValues.argPosition)); break;
+			case CharType: FormatCharType(argStorage.char_state(specValues.argPosition)); break;
 			case FloatType: FormatFloatType(argStorage.float_state(specValues.argPosition), precision); break;
 			case DoubleType: FormatFloatType(argStorage.double_state(specValues.argPosition), precision); break;
 			case LongDoubleType: FormatFloatType(argStorage.long_double_state(specValues.argPosition), precision); break;
 			case StringType: [[fallthrough]];
 			case CharPointerType: [[fallthrough]];
 			case StringViewType: WriteString(std::forward<std::back_insert_iterator<T>>(Iter), type, precision, totalWidth); return;
-			case ConstVoidPtrType:
-			{
-				buffer[0] = '0';
-				buffer[1] = 'x';
-				auto data{ buffer.data() };
-				valueSize =
-					std::to_chars(data + 2, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr - data;
-				break;
-			}
-			case VoidPtrType:
-			{
-				buffer[0] = '0';
-				buffer[1] = 'x';
-				auto data{ buffer.data() };
-				valueSize =
-					std::to_chars(data + 2, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr - data;
-				break;
-			}
+			case ConstVoidPtrType: FormatPointerType(argStorage.const_void_ptr_state(specValues.argPosition), type); break;
+			case VoidPtrType: FormatPointerType(argStorage.void_ptr_state(specValues.argPosition), type); break;
 			default: return; break;
 		}
-	// clang-format on
 	if( !specValues.localize ) FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatFloatType(T&& value, int precision) {
-	int pos { 0 };
-	auto data { buffer.data() };
-	if( !std::is_constant_evaluated() ) {
-			std::memset(data, 0, SERENITY_ARG_BUFFER_SIZE);
-	} else {
-			std::fill(buffer.begin(), buffer.end(), '\0');
+constexpr void serenity::arg_formatter::ArgFormatter::BufferToUpper(const char& end) {
+	for( auto& ch: buffer ) {
+			if( ch == end ) return;
+			if( ch >= 'a' && ch <= 'z' ) {
+					ch -= 32;
+			}
 		}
-	switch( specValues.signType == Sign::Space ? value < 0 ? Sign::Minus : Sign::Space : specValues.signType ) {
-			case Sign::Space: data[ pos++ ] = ' '; break;
-			case Sign::Plus: data[ pos++ ] = '+'; break;
-			case Sign::Empty: [[fallthrough]];
-			case Sign::Minus: break;
-		}
-	bool isUpper { false };
-	std::chars_format format {};
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::SetFloatingFormat(std::chars_format& format, int& precision, bool& isUpper) {
 	switch( specValues.typeSpec ) {
 			case '\0':
 				// default behaviors
@@ -987,48 +1011,41 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 				break;
 			default: break;
 		}
-	auto end { (precision != 0 ? std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format, precision)
-		                       : std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format))
-		       .ptr };
-	valueSize = end - data;
-	if( !isUpper ) return;
-	for( auto& ch: buffer ) {
-			if( ch == *end ) return;
-			if( ch >= 'a' && ch <= 'z' ) {
-					ch -= 32;
-			}
+}
+
+template<typename T>
+requires std::is_arithmetic_v<std::remove_cvref_t<T>>
+constexpr void serenity::arg_formatter::ArgFormatter::WriteSign(T&& value, int& pos) {
+	switch( specValues.signType == Sign::Space ? value < 0 ? Sign::Minus : Sign::Space : specValues.signType ) {
+			case Sign::Space: buffer[ pos++ ] = ' '; return;
+			case Sign::Plus: buffer[ pos++ ] = '+'; return;
+			case Sign::Empty: [[fallthrough]];
+			case Sign::Minus: return;
 		}
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& value) {
-	int pos {};
-	int base {};
-	auto data { buffer.data() };
-	if( !std::is_constant_evaluated() ) {
-			std::memset(data, 0, SERENITY_ARG_BUFFER_SIZE);
-	} else {
-			std::fill(buffer.begin(), buffer.end(), '\0');
-		}
-	switch( specValues.signType == Sign::Space ? value < 0 ? Sign::Minus : Sign::Space : specValues.signType ) {
-			case Sign::Space: data[ pos++ ] = ' '; break;
-			case Sign::Plus: data[ pos++ ] = '+'; break;
-			case Sign::Empty: [[fallthrough]];
-			case Sign::Minus: break;
-		}
-	// size is only ever 0, 1, or 2
+constexpr void serenity::arg_formatter::ArgFormatter::WritePreFormatChars(int& pos) {
 	switch( specValues.preAltForm.size() ) {
 			case 1:
-				data[ pos ] = specValues.preAltForm[ 0 ];
+				buffer[ pos ] = specValues.preAltForm[ 0 ];
 				++pos;
 				break;
 			case 2:
-				data[ pos ]   = specValues.preAltForm[ 0 ];
-				data[ ++pos ] = specValues.preAltForm[ 1 ];
+				buffer[ pos ]   = specValues.preAltForm[ 0 ];
+				buffer[ ++pos ] = specValues.preAltForm[ 1 ];
 				++pos;
 				break;
 			default: break;
 		}
-	bool isUpper { false };
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::WriteChar(const char& value) {
+	buffer[ 0 ] = value;
+	valueSize   = 1;
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::SetIntegralFormat(int& base, bool& isUpper) {
+	// spec 'c' is handled in FormatArgument() By direct write to buffer
 	switch( specValues.typeSpec ) {
 			case '\0': base = 10; break;
 			case 'b': base = 2; break;
@@ -1036,10 +1053,6 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 				base    = 2;
 				isUpper = true;
 				break;
-			case 'c':
-				buffer[ 0 ] = static_cast<char>(value);
-				valueSize   = 1;
-				return;
 			case 'o': base = 8; break;
 			case 'x': base = 16; break;
 			case 'X':
@@ -1048,15 +1061,48 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 				break;
 			default: base = 10; break;
 		}
+}
+
+template<typename T>
+requires std::is_floating_point_v<std::remove_cvref_t<T>>
+constexpr void serenity::arg_formatter::ArgFormatter::FormatFloatType(T&& value, int precision) {
+	auto data { buffer.data() };
+	int pos { 0 };
+	bool isUpper { false };
+	std::chars_format format {};
+
+	if( !std::is_constant_evaluated() ) {
+			std::memset(data, 0, SERENITY_ARG_BUFFER_SIZE);
+	} else {
+			std::fill(buffer.begin(), buffer.end(), '\0');
+		}
+	WriteSign(std::forward<T>(value), pos);
+	SetFloatingFormat(format, precision, isUpper);
+	auto end { (precision != 0 ? std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format, precision)
+		                       : std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format))
+		       .ptr };
+	valueSize = end - data;
+	if( isUpper ) BufferToUpper(*end);
+}
+
+template<typename T>
+requires std::is_integral_v<std::remove_cvref_t<T>>
+constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& value) {
+	int pos {};
+	int base {};
+	auto data { buffer.data() };
+	if( !std::is_constant_evaluated() ) {
+			std::memset(data, 0, SERENITY_ARG_BUFFER_SIZE);
+	} else {
+			std::fill(buffer.begin(), buffer.end(), '\0');
+		}
+	WriteSign(std::forward<T>(value), pos);
+	WritePreFormatChars(pos);
+	bool isUpper { false };
+	SetIntegralFormat(base, isUpper);
 	auto end { std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, base).ptr };
 	valueSize = end - data;
-	if( !isUpper ) return;
-	for( auto& ch: buffer ) {
-			if( ch == *end ) return;
-			if( ch >= 'a' && ch <= 'z' ) {
-					ch -= 32;
-			}
-		}
+	if( isUpper ) BufferToUpper(*end);
 }
 
 template<typename T>
@@ -1094,9 +1140,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteString(std::back_inse
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
-	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
-		            : specValues.precision != 0      ? specValues.precision
-		                                             : 0 };
+	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
@@ -1112,9 +1156,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
 	using enum msg_details::SpecType;
-	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos)
-		            : specValues.precision != 0      ? specValues.precision
-		                                             : 0 };
+	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };

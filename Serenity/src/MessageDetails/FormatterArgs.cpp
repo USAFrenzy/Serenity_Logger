@@ -46,15 +46,14 @@ namespace serenity::msg_details {
 
 	void Format_Arg_c::FormatUserPattern(std::string& container) {
 		auto& cache { timeRef.Cache() };
-		auto wkday { serenity::SERENITY_LUTS::short_weekdays[ cache.tm_wday ] };
-		auto mon { serenity::SERENITY_LUTS::short_months[ cache.tm_mon ] };
-		auto day { serenity::SERENITY_LUTS::numberStr[ cache.tm_mday ] };
-		auto hour { serenity::SERENITY_LUTS::numberStr[ cache.tm_hour ] };
-		auto min { serenity::SERENITY_LUTS::numberStr[ cache.tm_min ] };
-		auto sec { serenity::SERENITY_LUTS::numberStr[ cache.tm_sec ] };
+		auto& wkday { serenity::SERENITY_LUTS::short_weekdays[ cache.tm_wday ] };
+		auto& mon { serenity::SERENITY_LUTS::short_months[ cache.tm_mon ] };
+		auto& day { serenity::SERENITY_LUTS::numberStr[ cache.tm_mday ] };
+		auto& hour { serenity::SERENITY_LUTS::numberStr[ cache.tm_hour ] };
+		auto& min { serenity::SERENITY_LUTS::numberStr[ cache.tm_min ] };
+		auto& sec { serenity::SERENITY_LUTS::numberStr[ cache.tm_sec ] };
 		timeRef.CalculateCurrentYear(cache.tm_year);
 		auto year { timeRef.GetCurrentYearSV(false) };
-		result.reserve(wkday.size() + mon.size() + day.size() + hour.size() + min.size() + sec.size() + year.size() + 2);
 		container.append(wkday.data(), wkday.size())
 		.append(" ")
 		.append(mon.data(), mon.size())
@@ -142,7 +141,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_m::UpdateInternalView() {
 		lastMonth = cacheRef.tm_mon;
-		auto paddedMonth { SERENITY_LUTS::numberStr[ lastMonth ] };
+		auto& paddedMonth { SERENITY_LUTS::numberStr[ lastMonth ] };
 		result.clear();
 		return result.append(paddedMonth.data(), paddedMonth.size());
 	}
@@ -161,8 +160,8 @@ namespace serenity::msg_details {
 	std::string& Format_Arg_n::UpdateInternalView() {
 		lastDay = cacheRef.tm_mday;
 		result.clear();
-		auto day { SERENITY_LUTS::numberStr[ cacheRef.tm_mday ] };
-		auto month { SERENITY_LUTS::short_months[ cacheRef.tm_mon ] };
+		auto& day { SERENITY_LUTS::numberStr[ cacheRef.tm_mday ] };
+		auto& month { SERENITY_LUTS::short_months[ cacheRef.tm_mon ] };
 		auto year { timeRef.GetCurrentYearSV(true) };
 		return result.append(day.data(), day.size()).append(month.data(), month.size()).append(year.data(), year.size());
 	}
@@ -204,7 +203,7 @@ namespace serenity::msg_details {
 				hour    = (hr > 12) ? SERENITY_LUTS::numberStr[ static_cast<int64_t>(hr) - 12 ] : SERENITY_LUTS::numberStr[ hr ];
 				min     = SERENITY_LUTS::numberStr[ lastMin ];
 		}
-		auto sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
+		auto& sec = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		result.clear();
 		return result.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size()).append(" ").append(ampm);
 	}
@@ -218,26 +217,15 @@ namespace serenity::msg_details {
 	/*********************************************************************************************************************/
 	Format_Arg_s::Format_Arg_s(Message_Info& info, source_flag flag): srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag) { }
 
-	size_t Format_Arg_s::FindEndPos() {
-		size_t pos {};
-		for( ;; ) {
-				if( buff[ pos ] == '\0' ) return pos;
-				++pos;
-			}
-	}
-
 	void Format_Arg_s::FormatAll(std::string& container) {
 		file = srcLocation.file_name();
 		container.append("[ ").append(file.filename().string()).append("(");
-
-		std::fill(buff.data(), buff.data() + buff.size(), '\0');
-		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-		container.append(buff.data(), buff.data() + FindEndPos()).append(":");
-
-		std::fill(buff.data(), buff.data() + buff.size(), '\0');
-		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
-
-		container.append(buff.data(), buff.data() + FindEndPos()).append(") ");
+		std::memset(buff.data(), 0, buff.size());
+		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
+		container.append(buff.data(), end - buff.data()).append(":");
+		std::memset(buff.data(), 0, buff.size());
+		end = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column()).ptr;
+		container.append(buff.data(), end - buff.data()).append(") ");
 		container.append(srcLocation.function_name()).append(" ]");
 	}
 
@@ -246,14 +234,14 @@ namespace serenity::msg_details {
 		container.append(file.make_preferred().filename().string());
 	}
 	void Format_Arg_s::FormatLine(std::string& container) {
-		std::fill(buff.data(), buff.data() + buff.size(), '\0');
-		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-		container.append(buff.data(), buff.data() + FindEndPos());
+		std::memset(buff.data(), 0, buff.size());
+		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
+		container.append(buff.data(), end - buff.data());
 	}
 	void Format_Arg_s::FormatColumn(std::string& container) {
-		std::fill(buff.data(), buff.data() + buff.size(), '\0');
-		std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
-		container.append(buff.data(), buff.data() + FindEndPos());
+		std::memset(buff.data(), 0, buff.size());
+		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
+		container.append(buff.data(), end - buff.data());
 	}
 	void Format_Arg_s::FormatFunction(std::string& container) {
 		container.append(srcLocation.function_name());
@@ -379,8 +367,8 @@ namespace serenity::msg_details {
 		auto offset { timeRef.UtcOffset() };
 		auto hours { std::abs(std::chrono::duration_cast<std::chrono::hours>(offset).count()) };
 		std::string_view sign { (offset.count() >= 0) ? "+" : "-" };
-		auto hour { serenity::SERENITY_LUTS::numberStr[ hours ] };
-		auto min { serenity::SERENITY_LUTS::numberStr[ hours / 60 ] };
+		auto& hour { serenity::SERENITY_LUTS::numberStr[ hours ] };
+		auto& min { serenity::SERENITY_LUTS::numberStr[ hours / 60 ] };
 		container.append(sign.data(), sign.size()).append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
 	}
 	/*********************************************************************************************************************/
@@ -393,7 +381,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_A::UpdateInternalView() {
 		lastWkday = cacheRef.tm_wday;
-		auto lWkday { SERENITY_LUTS::long_weekdays[ lastWkday ] };
+		auto& lWkday { SERENITY_LUTS::long_weekdays[ lastWkday ] };
 		result.clear();
 		return result.append(lWkday.data(), lWkday.size());
 	}
@@ -411,7 +399,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_B::UpdateInternalView() {
 		lastMonth = cacheRef.tm_mon;
-		auto lMonth { SERENITY_LUTS::long_months[ lastMonth ] };
+		auto& lMonth { SERENITY_LUTS::long_months[ lastMonth ] };
 		result.clear();
 		return result.append(lMonth.data(), lMonth.size());
 	}
@@ -429,7 +417,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_C::UpdateInternalView() {
 		lastYear = cacheRef.tm_year;
-		auto year { SERENITY_LUTS::numberStr[ lastYear % 100 ] };
+		auto& year { SERENITY_LUTS::numberStr[ lastYear % 100 ] };
 		result.clear();
 		return result.append(year.data(), year.size());
 	}
@@ -450,8 +438,8 @@ namespace serenity::msg_details {
 		lastDay = cacheRef.tm_mday;
 		// static_cast to 8 byte value to remove C2451's warning (which would never
 		// occur here anyways...)
-		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>(cacheRef.tm_mon) + 1 ] };
-		auto d { SERENITY_LUTS::numberStr[ lastDay ] };
+		auto& m { SERENITY_LUTS::numberStr[ static_cast<int64_t>(cacheRef.tm_mon) + 1 ] };
+		auto& d { SERENITY_LUTS::numberStr[ lastDay ] };
 		auto y { timeRef.GetCurrentYearSV(true) };
 		return result.append(m.data(), m.size()).append("/").append(d.data(), d.size()).append("/").append(y.data(), y.size());
 	}
@@ -473,8 +461,8 @@ namespace serenity::msg_details {
 		auto y { timeRef.GetCurrentYearSV(false) };
 		// static_cast to 8 byte value to remove C2451's warning (which would never
 		// occur here anyways...)
-		auto m { SERENITY_LUTS::numberStr[ static_cast<int64_t>(cacheRef.tm_mon) + 1 ] };
-		auto d { SERENITY_LUTS::numberStr[ lastDay ] };
+		auto& m { SERENITY_LUTS::numberStr[ static_cast<int64_t>(cacheRef.tm_mon) + 1 ] };
+		auto& d { SERENITY_LUTS::numberStr[ lastDay ] };
 		return result.append(y.data(), y.size()).append("-").append(m.data(), m.size()).append("-").append(d.data(), d.size());
 	}
 
@@ -491,7 +479,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_H::UpdateInternalView() {
 		lastHour = cacheRef.tm_hour;
-		auto hr { SERENITY_LUTS::numberStr[ lastHour ] };
+		auto& hr { SERENITY_LUTS::numberStr[ lastHour ] };
 		result.clear();
 		return result.append(hr.data(), hr.size());
 	}
@@ -546,7 +534,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_M::UpdateInternalView() {
 		lastMin = cacheRef.tm_min;
-		auto minute { SERENITY_LUTS::numberStr[ lastMin ] };
+		auto& minute { SERENITY_LUTS::numberStr[ lastMin ] };
 		result.clear();
 		return result.append(minute.data(), minute.size());
 	}
@@ -570,8 +558,8 @@ namespace serenity::msg_details {
 	Format_Arg_R::Format_Arg_R(Message_Info& info): cacheRef(info.TimeInfo()) { }
 
 	void Format_Arg_R::FormatUserPattern(std::string& container) {
-		auto hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
-		auto min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
+		auto& hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
+		auto& min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
 		container.append(hour.data(), hour.size()).append(":").append(min.data(), min.size());
 	}
 	/*********************************************************************************************************************/
@@ -584,7 +572,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_S::UpdateInternalView() {
 		lastSec = cacheRef.tm_sec;
-		auto second { SERENITY_LUTS::numberStr[ lastSec ] };
+		auto& second { SERENITY_LUTS::numberStr[ lastSec ] };
 		result.clear();
 		return result.append(second.data(), second.size());
 	}
@@ -599,9 +587,9 @@ namespace serenity::msg_details {
 	Format_Arg_T::Format_Arg_T(Message_Info& info): cacheRef(info.TimeInfo()) { }
 
 	void Format_Arg_T::FormatUserPattern(std::string& container) {
-		auto hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
-		auto min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
-		auto sec  = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
+		auto& hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
+		auto& min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
+		auto& sec  = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
 		container.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size());
 	}
 	/*********************************************************************************************************************/
