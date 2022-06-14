@@ -23,8 +23,8 @@
 //             the performance times of serenity is STILL faster than the MSVC's implementation (for most cases) - the consistency of their
 //             performance is now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
-
-#include <serenity/Common.h>
+#include <string_view>
+#include <array>
 #include <variant>
 
 namespace serenity::msg_details {

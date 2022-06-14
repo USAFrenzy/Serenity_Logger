@@ -3,17 +3,12 @@
 #define ENABLE_MEMORY_LEAK_DETECTION 0
 #define GENERAL_SANDBOX              0
 #define ROTATING_TESTING             0
-#define ParseFormatString_TESTING    1
+#define PARSE_TESTING                1
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	#define _CRTDBG_MAP_ALLOC
 	#include <crtdbg.h>
 	#include <stdlib.h>
-#endif
-
-#if ParseFormatString_TESTING
-	#define ENABLE_PARSE_SECTION
-	#include <serenity/MessageDetails/ArgFormatter.h>
 #endif
 
 #include <serenity/Targets/ColorConsoleTarget.h>
@@ -23,6 +18,27 @@
 #include <serenity/Utilities/Utilities.h>
 
 #include <iostream>
+
+#if PARSE_TESTING
+	#include <serenity/MessageDetails/ArgFormatter.h>
+	#include <format>
+	#define ENABLE_PARSE_SECTION
+	// Since the inclusion of USE_STD_FORMAT and USE_FMTLIB , need to force this to be MSVC for testing purposes atm
+	#ifdef VFORMAT_TO
+		#undef VFORMAT_TO
+		#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)
+			#define CONTEXT                         std::back_insert_iterator<std::basic_string<char>>
+			#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to<CONTEXT>(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+		#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
+			#if _MSC_FULL_VER >= 192930145    // MSVC build that backported fixes for <format> under C++20 switch instead of C++ latest
+				#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+			#else
+				#define CONTEXT                         std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
+				#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args<CONTEXT>(__VA_ARGS__))
+			#endif
+		#endif
+	#endif    // VFORMAT_TO
+#endif        // PARSE_TESTING
 
 std::filesystem::path LogDirPath() {
 	return (std::filesystem::current_path() /= "Logs");
@@ -212,7 +228,6 @@ int main() {
 #endif    // !ENABLE_ROTATION_SECTION
 
 #ifdef ENABLE_PARSE_SECTION
-
 	using namespace serenity::arg_formatter;
 	constexpr std::string_view ParseFormatStringString { "\n{0:*^#{5}X}\n{1:*^#{5}x}\n{2:*^#{5}a}\n{3:*^#{5}E}\n{4:*^#{5}b}\n{5:*^#{5}B}\n{6:s}" };
 	constexpr int a { 123456789 };
@@ -269,14 +284,14 @@ int main() {
 			timer.StopWatch_Reset();
 			auto locale { std::locale("") };
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
-					L_VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
+					VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
 					finalStr.clear();
 				}
 			timer.StopWatch_Stop();
 			finalStr.clear();
 
 			auto standardTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-			L_VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
+			VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(standardTime));
 			console.Info("With Result: {}", finalStr);
 

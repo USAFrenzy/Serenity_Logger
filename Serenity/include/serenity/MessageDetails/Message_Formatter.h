@@ -1,7 +1,6 @@
 #pragma once
 
 #include <serenity/Common.h>
-#include <serenity/MessageDetails/ArgFormatter.h>
 #include <serenity/MessageDetails/FormatterArgs.h>
 #include <serenity/MessageDetails/Message_Info.h>
 
@@ -57,7 +56,6 @@ namespace serenity::msg_details {
 		LineEnd platformEOL;
 		std::string temp;
 		source_flag sourceFlag;
-		arg_formatter::ArgFormatter argFormatter;
 	};
 #include <serenity/MessageDetails/Message_Formatter_Impl.h>
 }    // namespace serenity::msg_details

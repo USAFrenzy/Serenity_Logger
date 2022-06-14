@@ -54,13 +54,14 @@
 //             performance is now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
+#include <serenity/MessageDetails/ArgContainer.h>
 #include <serenity/MessageDetails/ArgFormatter.h>
 #include <string_view>
 
 constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
-	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}),
-	  argStorage(serenity::msg_details::ArgContainer {}), buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(), fillBuffer(), fillBufferDefaultSize(512) {
-	fillBuffer.reserve(fillBufferDefaultSize);
+	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}), argStorage(ArgContainer {}),
+	  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(), fillBuffer() {
+	fillBuffer.reserve(512);
 }
 
 constexpr void serenity::arg_formatter::BracketSearchResults::Reset() {
@@ -92,7 +93,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_ins
 }
 
 template<typename T, typename... Args>
-constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
+constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args) {
 	CaptureArgs(std::forward<Args>(args)...);
 	ParseFormatString(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
@@ -107,7 +108,7 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se_format(const std::locale& loc, std::string_view sv, Args&&... args) {
 	std::string tmp;
 	tmp.reserve(ReserveCapacity(std::forward<Args>(args)...));
-	se_format_to(loc, std::back_inserter(tmp), sv, std::forward<Args>(args)...);
+	se_format_to(std::back_inserter(tmp), loc, sv, std::forward<Args>(args)...);
 	return tmp;
 }
 
@@ -393,7 +394,7 @@ constexpr bool serenity::arg_formatter::ArgFormatter::VerifyPositionalField(std:
 						}
 				}
 		}
-	unreachable();
+	ReportError(ErrorType::none);
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::OnAlignLeft(const char& ch, size_t& pos) {
@@ -527,7 +528,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyLocaleField(std::str
 }
 
 constexpr bool serenity::arg_formatter::ArgFormatter::IsSimpleSubstitution(const msg_details::SpecType& argType, const int& precision) {
-	using enum serenity::msg_details::SpecType;
+	using enum SpecType;
 	switch( argType ) {
 			case StringType: [[fallthrough]];
 			case CharPointerType: [[fallthrough]];
@@ -796,11 +797,10 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(std::back
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
 	auto fillData { fillBuffer.data() };
+	std::memcpy(fillData, buffer.data(), valueSize);
 	if constexpr( std::is_same_v<T, std::string> ) {
-			std::memcpy(fillData, buffer.data(), valueSize);
 			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
 	} else {
-			std::memcpy(fillData, buffer.data(), valueSize);
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
 }
@@ -809,11 +809,10 @@ template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision,
                                                                        const int& totalWidth) {
 	auto fillData { fillBuffer.data() };
+	std::memcpy(fillData, val.data(), precision);
 	if constexpr( std::is_same_v<T, std::string> ) {
-			std::memcpy(fillData, val.data(), precision);
 			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
 	} else {
-			std::copy(val.data(), val.data() + precision, Iter);
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
 }
@@ -821,11 +820,10 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
+	std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
 	if constexpr( std::is_same_v<T, std::string> ) {
-			std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
 			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
 	} else {
-			std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
 }
@@ -834,11 +832,10 @@ template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision,
                                                                         const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
+	std::memcpy(fillData + fillAmount, val.data(), precision);
 	if constexpr( std::is_same_v<T, std::string> ) {
-			std::memcpy(fillData + fillAmount, val.data(), precision);
 			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
 	} else {
-			std::memcpy(fillData + fillAmount, val.data(), precision);
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
 }
@@ -846,11 +843,10 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::bac
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
+	std::memcpy(fillData + fillAmount / 2, buffer.data(), valueSize);
 	if constexpr( std::is_same_v<T, std::string> ) {
-			std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
 			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
 	} else {
-			std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
 }
@@ -859,11 +855,10 @@ template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision,
                                                                          const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
+	std::memcpy(fillData + fillAmount / 2, val.data(), precision);
 	if constexpr( std::is_same_v<T, std::string> ) {
-			std::memcpy(fillData + fillAmount, val.data(), precision);
 			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
 	} else {
-			std::memcpy(fillData + fillAmount, val.data(), precision);
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
 }
@@ -885,17 +880,64 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_
 		}
 }
 
+/************************************************************************* Possible TODO? ************************************************************************/
+// A possible enhancement to this approach might be to just reserve the size in the value buffer (making it a vector instead of an array) then memset from the
+// valueSize to the end of the new capacity with the fill character, and finally use std::rotate to rotate the appropriate amount for right/center aligned (left
+// aligned would be done  before the rotate step) -> don't really know if there will be a performance benfit or hit but it's worth testing either way. If it matches
+// the current performance or beats it out-right, then I'll roll with that change as it gets rid of an extra member variable that way and streamlines some usage; if
+// it doesn't, then the two buffers  remain as they are.
+/*****************************************************************************************************************************************************************/
+/*************************************************************************** EDIT:********************************************************************************/
+// Due to the intial approach (I NEED to research more into this) I presume that the use of  underlying unitialized storage is obviously a no-go; stepping through
+// the debugger shows the logic works and under MSVC's  "_MyVal2" variable, the value is indeed what is expected after formatting the value and then adding the
+// appropriate number of fill characters, but once we get to the rotation step, this function throws. I would like to see how I can get the unitialized values into
+// the actual underlying array. Not sure if I'm missing something simple here or if the unitialized storage is somehow different from the reserved memory? Kind of
+// thought that by calling the unitialized_copy/fill  functions here and in the formatting functions that the in-place memory would have initialized those values
+// from the reserved memory =/ Honestly, I think what I have in mind for this requires a custom allocator of sorts so I may end up just abandoning this idea for now
+// as that's not  the path I wanted to head down here...
+/*****************************************************************************************************************************************************************/
+//
+//     template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Test_Alignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
+//    	auto SetFill = [&]() {
+//    		if (!std::is_constant_evaluated()) {
+//    			static_cast<void>(std::memset(testBuffer.data() + valueSize, specValues.fillCharacter, totalWidth - valueSize));
+//    		}
+//    		else {
+//    			std::uninitialized_fill(testBuffer.begin() + valueSize, testBuffer.begin() + totalWidth, specValues.fillCharacter);
+//    		}
+//    	};
+//    	auto ReserveAndSetFill = [&]() {
+//    		testBuffer.reserve(totalWidth);
+//    		SetFill();
+//    	};
+//    	totalWidth <= testBuffer.size() ? SetFill() : ReserveAndSetFill();
+//    	switch (specValues.align) {
+//    	case Alignment::AlignCenter:
+//    	{
+//             // TODO: make this simpler; was just trying to get it to work, so, this is messy hack for finding the center cut-off
+//             auto begin { testBuffer.begin() };
+//    		auto rotatePoint{ begin + (testBuffer.end() - (begin + valueSize)) / 2 };
+//    		std::rotate(begin + valueSize, begin, rotatePoint);
+//    		return;
+//    	}
+//    	case Alignment::AlignRight: std::rotate(testBuffer.begin() + valueSize, testBuffer.begin(), testBuffer.end()); return;
+//    	case Alignment::AlignLeft: [[fallthrough]]; /* Due To The Fill Above, Left Aligned Is Done At This Step */
+//    	default: return;
+//    	}
+//    }
+//
+
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
 	auto valueData { buffer.data() };
-	if( size_t fill { (totalWidth > valueSize) ? totalWidth - valueSize : 0 }; fill != 0 ) {
+	if( auto fill { (totalWidth > valueSize) ? totalWidth - valueSize : 0 }; fill != 0 ) {
 			fillBuffer.clear();
-			totalWidth <= fillBufferDefaultSize ? fillBuffer.reserve(fillBufferDefaultSize) : fillBuffer.reserve(totalWidth);
+			fillBuffer.reserve(totalWidth);
 			!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
 										  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
 			switch( specValues.align ) {
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth, fill);
-					case Alignment::AlignCenter: return WriteAlignedCenter(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth, fill /= 2);
+					case Alignment::AlignCenter: return WriteAlignedCenter(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth, fill);
 					default: return;
 				}
 	} else {
@@ -909,13 +951,13 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_
 	precision = precision != 0 ? precision > size ? size : precision : size;
 	if( auto fill { totalWidth > size ? totalWidth - size : 0 }; fill != 0 ) {
 			fillBuffer.clear();
-			totalWidth <= fillBufferDefaultSize ? fillBuffer.reserve(fillBufferDefaultSize) : fillBuffer.reserve(totalWidth);
+			fillBuffer.reserve(totalWidth);
 			!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
 										  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
 			switch( specValues.align ) {
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill);
-					case Alignment::AlignCenter: return WriteAlignedCenter(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill /= 2);
+					case Alignment::AlignCenter: return WriteAlignedCenter(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill);
 					default: return;
 				}
 	} else {
@@ -1177,7 +1219,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteString(std::back_inse
 // how libfmt does compile-time checking.  A lot of what is being used to verify things are all
 // runtime-access stuff so I'm assuming achieving this won't be easy at all =/
 constexpr void serenity::arg_formatter::ArgFormatter::ReportError(ErrorType err) {
-	using enum serenity::ErrorType;
+	using enum ErrorType;
 	switch( err ) {
 			case missing_bracket: throw format_error(format_error_messages[ 1 ]); break;
 			case position_field_spec: throw format_error(format_error_messages[ 2 ]); break;

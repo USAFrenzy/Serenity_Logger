@@ -398,19 +398,33 @@ TEST_CASE("Fill-Align Formatting") {
 }
 
 #include <serenity/Common.h>
+// Since the inclusion of USE_STD_FORMAT and USE_FMTLIB , need to force this to be MSVC for testing purposes atm
+#ifdef VFORMAT_TO
+	#undef VFORMAT_TO
+	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)
+		#define CONTEXT                         std::back_insert_iterator<std::basic_string<char>>
+		#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to<CONTEXT>(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
+		#if _MSC_FULL_VER >= 192930145    // MSVC build that backported fixes for <format> under C++20 switch instead of C++ latest
+			#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+		#else
+			#define CONTEXT                         std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
+			#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args<CONTEXT>(__VA_ARGS__))
+		#endif
+	#endif
+#endif    // VFORMAT_TO
 
 TEST_CASE("Format Function Test") {
 	ArgFormatter formatter;
+	std::locale loc("");
 	int width { 20 };
 	std::string stdStr, argFmtStr;
 	constexpr std::string_view fmt { "{0:*^#{1}x}" };
 
-	formatter.se_format_to(std::back_inserter(argFmtStr), fmt, a, width);
-	// once appveyor supports the new update in VS 16.14/16.15 then this macro can dissapear.
-	// Build is failing when using the normal std::vformat_to() due to how it used to work before
-	// the back-ported fixes to <format>
-	VFORMAT_TO(stdStr, fmt, a, width);
-
+	// Once appveyor supports the new update in VS 16.14/16.15 then this macro can dissapear. Build is failing
+	// when using the normal std::vformat_to() due to how it used to work before the back-ported fixes to <format>
+	VFORMAT_TO(stdStr, loc, fmt, a, width);
+	formatter.se_format_to(std::back_inserter(argFmtStr), loc, fmt, a, width);
 	REQUIRE(std::format(fmt, a, width) == formatter.se_format(fmt, a, width));
 	REQUIRE(stdStr == argFmtStr);
 }

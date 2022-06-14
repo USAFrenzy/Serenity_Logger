@@ -57,10 +57,12 @@
 #include <serenity/MessageDetails/ArgContainer.h>
 
 #include <array>
-#include <memory>
-#include <string>
+#include <charconv>
+#include <locale>
+#include <stdexcept>
 #include <vector>
 
+using namespace serenity::msg_details;
 namespace serenity {
 	// drop-in replacement for format_error for the ArgFormatter class
 	class format_error: public std::runtime_error
@@ -115,11 +117,19 @@ namespace serenity {
 		"Error In Format: Invalid Type Specifier For Char Type Argument.",
 		"Error In Format: Invalid Type Specifier For Pointer Type Argument.",
 	};
+
+	static constexpr bool IsDigit(const char& ch) {
+		return ((ch >= '0') && (ch <= '9'));
+	}
+
+	static constexpr bool IsAlpha(const char& ch) {
+		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+	}
+
 }    // namespace serenity
 
 namespace serenity::arg_formatter {
 
-	using namespace msg_details;
 	constexpr size_t SERENITY_ARG_BUFFER_SIZE { 65 };
 	// defualt locale used for when no locale is provided, yet a locale flag is present when formatting
 	static std::locale default_locale { std::locale("") };
@@ -245,7 +255,7 @@ namespace serenity::arg_formatter {
 		template<typename... Args> [[nodiscard]] std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
 		template<typename T, typename... Args>
-		constexpr void se_format_to(const std::locale& loc, std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
+		constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args);
 
 	  private:
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
@@ -344,22 +354,39 @@ namespace serenity::arg_formatter {
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer;
 		size_t valueSize;
 		std::vector<char> fillBuffer;
-		size_t fillBufferDefaultSize;
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
 
 }    // namespace serenity::arg_formatter
 
-/********************************************************************** Note: ***********************************************************************/
-//    An idea for more efficient compile time formatting, once things are fleshed out here a bit more that is, is to  save the bracket offsets in the
-//    format string for a substitution bracket, then parse the bracket for validity checkes, rinse and repeat until the end of the format string is
-//    reached, then on Format(), splice the format string adding the formatted value to the offset and concatenate the results before returning the
-//    fully formatted string -> could speed things up a whole lot by basically just leaving the formatting step to runtime and quite literally everything
-//    else at compile time. If  there's no need to parse the format string for brackets, verify the specs in the bracket, and verify the specs are valid for
-//    the arg type given during runtime, then this could easily be a ~2x improvement as cpu cycles spend most of the time in the verification process
-//    and formatting process (finding the brackets and verifying a manual position are pretty negligible at ~6-8ns and ~5-10ns respectively) rather
-//    equally (with formatting leading the cycle usage by ~5-10% over the verify calls).
-/****************************************************************************************************************************************************/
+// These are made static so that when including this file, one can either use and modify the above class or just call the
+// formatting functions directly, like the logger-side of this project where the VFORMAT_TO macros are defined
+namespace serenity {
+	static auto StaticFormatterInstance() {
+		static std::shared_ptr<arg_formatter::ArgFormatter> staticFormatter { std::make_shared<arg_formatter::ArgFormatter>() };
+		return staticFormatter;
+	}
+	template<typename T, typename... Args> static constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
+		StaticFormatterInstance()->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), sv, std::forward<Args>(args)...);
+	}
+	template<typename T, typename... Args>
+	static constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& locale, std::string_view sv, Args&&... args) {
+		StaticFormatterInstance()->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), locale, sv, std::forward<Args>(args)...);
+	}
+	template<typename... Args> [[nodiscard]] static std::string se_format(std::string_view sv, Args&&... args) {
+		StaticFormatterInstance()->se_format(sv, std::forward<Args>(args)...);
+	}
+	template<typename... Args> [[nodiscard]] static std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args) {
+		StaticFormatterInstance()->se_format(locale, sv, std::forward<Args>(args)...);
+	}
+}    // namespace serenity
+
+/* ********************************************************************* TODO **********************************************************************/
+// Ended up just implementing defines to work-around custom formatting support for now. I would still love to implement this in the future though,
+// but I feel like for the deadline I've set for myself  for this project, I may not get around to it this pass-through. The below note is probably how I'll
+// end up approaching this when I revisit this project or have time before the self-imposed deadline of September comes around. Same thing goes
+// for the second note about making this possibly even more efficient at runtime.
+
 /********************************************************************** Note: ***********************************************************************/
 // As a second note, I may end up reworking some of this to mirror how libfmt has its formatters set up as I have literally no idea how to accomplish
 // custom formatting at this point without something akin to "template<> struct formatter<Type>{};" . I might be able to get away with using an
@@ -372,3 +399,14 @@ namespace serenity::arg_formatter {
 //  a bit slower, especially when you had to  index into a collection for the right offset to dispatch that function, but that was for already known functions;
 //  I don't know if that approach would work in this case.
 /***************************************************************************************************************************************************/
+
+/********************************************************************** Note: ***********************************************************************/
+//    An idea for more efficient compile time formatting, once things are fleshed out here a bit more that is, is to  save the bracket offsets in the
+//    format string for a substitution bracket, then parse the bracket for validity checkes, rinse and repeat until the end of the format string is
+//    reached, then on Format(), splice the format string adding the formatted value to the offset and concatenate the results before returning the
+//    fully formatted string -> could speed things up a whole lot by basically just leaving the formatting step to runtime and quite literally everything
+//    else at compile time. If  there's no need to parse the format string for brackets, verify the specs in the bracket, and verify the specs are valid for
+//    the arg type given during runtime, then this could easily be a ~2x improvement as cpu cycles spend most of the time in the verification process
+//    and formatting process (finding the brackets and verifying a manual position are pretty negligible at ~6-8ns and ~5-10ns respectively) rather
+//    equally (with formatting leading the cycle usage by ~5-10% over the verify calls).
+/****************************************************************************************************************************************************/
