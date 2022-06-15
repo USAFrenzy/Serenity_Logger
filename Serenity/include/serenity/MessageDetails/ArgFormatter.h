@@ -1,6 +1,5 @@
 #pragma once
-// Copyright from <format> header extending to libfmt
-
+/******************* Copyright from <format> header extending to libfmt *******************/
 // Copyright (c) 2012 - present, Victor Zverovich
 //
 // Permission is hereby granted, free of charge, to any person obtaining
@@ -50,8 +49,8 @@
 // are available and supported.
 //
 // EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib; however,
-//             the performance times of serenity is STILL faster than the MSVC's implementation (for most cases) - the consistency of their
-//             performance is now a non-issue though (same performance with or without the UTF-8 flag)
+//             the performance times of serenity is STILL faster than the MSVC's implementation - the consistency of their performance is
+//             now a non-issue though (same performance with or without the UTF-8 flag)
 /**********************************************************************************************************************************/
 
 #include <serenity/MessageDetails/ArgContainer.h>
@@ -251,11 +250,13 @@ namespace serenity::arg_formatter {
 		constexpr ArgFormatter(const ArgFormatter&)            = delete;
 		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
 		constexpr ~ArgFormatter()                              = default;
-		template<typename... Args> [[nodiscard]] std::string se_format(std::string_view sv, Args&&... args);
-		template<typename... Args> [[nodiscard]] std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
+
+		// clang-format off
+		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args);
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
-		template<typename T, typename... Args>
-		constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args);
+		template<typename... Args> [[nodiscard]] std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
+		template<typename... Args> [[nodiscard]] std::string se_format(std::string_view sv, Args&&... args);
+		// clang-format on
 
 	  private:
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
@@ -284,20 +285,30 @@ namespace serenity::arg_formatter {
 		constexpr void OnValidTypeSpec(const SpecType& type, const char& ch);
 		constexpr void OnInvalidTypeSpec(const SpecType& type);
 		/************************************************************ Formatting Related Functions ************************************************************/
+		template<typename T> constexpr void FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision);
+		template<typename T> constexpr void FormatArgument(std::back_insert_iterator<T>&& Iter, const int& precision, const int& totalWidth, const SpecType& type);
 		constexpr void FormatBoolType(bool& value);
 		constexpr void FormatCharType(char& value);
-		// clang-format off
 		template<typename T>
-		constexpr void FormatArgument(std::back_insert_iterator<T>&& Iter, const int& precision, const int& totalWidth, const SpecType& type);
-		template<typename T> 
-		constexpr void FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision);
-		template<typename T> requires std::is_integral_v<std::remove_cvref_t<T>>
+		requires std::is_integral_v<std::remove_cvref_t<T>>
 		constexpr void FormatIntegerType(T&& value);
-		template<typename T> requires std::is_pointer_v<std::remove_cvref_t<T>>
+		template<typename T>
+		requires std::is_pointer_v<std::remove_cvref_t<T>>
 		constexpr void FormatPointerType(T&& value, const SpecType& type);
-		template<typename T> requires std::is_floating_point_v<std::remove_cvref_t<T>>
+		template<typename T>
+		requires std::is_floating_point_v<std::remove_cvref_t<T>>
 		constexpr void FormatFloatType(T&& value, int precision);
-		// clang-format on
+		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
+		// TODO: I know off the top of my head that uppercase cases for localization need some TLC as well as adding logic to check for exponents.
+		//              This is done in the base formatting functions but , as of right now, the localization functions only handle groupings and nothing else.
+		template<typename T> void LocalizeBool(std::back_insert_iterator<T>&& Iter, const std::locale& loc);
+		void FormatIntegralGrouping(const std::locale& loc, size_t end);
+		template<typename T>
+		void LocalizeArgument(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T>
+		void LocalizeIntegral(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T>
+		void LocalizeFloatingPoint(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		/******************************************************** Container Writing Related Functions *********************************************************/
 		constexpr void BufferToUpper(const char& end);
 		constexpr void SetIntegralFormat(int& base, bool& isUpper);
@@ -335,16 +346,6 @@ namespace serenity::arg_formatter {
 		constexpr void WriteSign(T&& value, int& pos);
 		// clang-format on
 
-		// Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
-		template<typename T>
-		void LocalizeArgument(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
-		template<typename T>
-		void LocalizeIntegral(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
-		template<typename T>
-		void LocalizeFloatingPoint(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
-		template<typename T> void LocalizeBool(std::back_insert_iterator<T>&& Iter, const std::locale& loc);
-		void FormatIntegralGrouping(const std::locale& loc, size_t end);
-
 	  private:
 		int argCounter;
 		IndexMode m_indexMode;
@@ -356,27 +357,27 @@ namespace serenity::arg_formatter {
 		std::vector<char> fillBuffer;
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
-
 }    // namespace serenity::arg_formatter
 
 // These are made static so that when including this file, one can either use and modify the above class or just call the
 // formatting functions directly, like the logger-side of this project where the VFORMAT_TO macros are defined
 namespace serenity {
 	static auto StaticFormatterInstance() {
+		// shared_ptr so that the ArgFormatter  instance isn't destroyed until the end of the process including this file
 		static std::shared_ptr<arg_formatter::ArgFormatter> staticFormatter { std::make_shared<arg_formatter::ArgFormatter>() };
 		return staticFormatter;
 	}
-	template<typename T, typename... Args> static constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
+	template<typename T, typename... Args> static constexpr void format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
 		StaticFormatterInstance()->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), sv, std::forward<Args>(args)...);
 	}
 	template<typename T, typename... Args>
-	static constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& locale, std::string_view sv, Args&&... args) {
+	static constexpr void format_to(std::back_insert_iterator<T>&& Iter, const std::locale& locale, std::string_view sv, Args&&... args) {
 		StaticFormatterInstance()->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), locale, sv, std::forward<Args>(args)...);
 	}
-	template<typename... Args> [[nodiscard]] static std::string se_format(std::string_view sv, Args&&... args) {
+	template<typename... Args> [[nodiscard]] static std::string format(std::string_view sv, Args&&... args) {
 		StaticFormatterInstance()->se_format(sv, std::forward<Args>(args)...);
 	}
-	template<typename... Args> [[nodiscard]] static std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args) {
+	template<typename... Args> [[nodiscard]] static std::string format(const std::locale& locale, std::string_view sv, Args&&... args) {
 		StaticFormatterInstance()->se_format(locale, sv, std::forward<Args>(args)...);
 	}
 }    // namespace serenity

@@ -1,5 +1,15 @@
 #include <serenity/Targets/RotatingTarget.h>
 
+#if defined BUILT_IN_FORMATTING_ENABLED && !defined DISABLE_CFMT_WARN
+	#ifdef WINDOWS_PLATFORM
+		#pragma message(                                                                                                                                            \
+		"\tBuilt-in Argument Formatting Is Enabled.\n\tFor Custom Formatting, Please Define Either 'USE_STD_FORMAT' or 'USE_FMTLIB' Instead.\n\tTo Disable This Message, Please Define 'DISABLE_CFMT_WARN'")
+	#else
+		#warning                                                                                                                                                    \
+		"\tBuilt-in Argument Formatting Is Enabled.\n\tFor Custom Formatting, Please Define Either 'USE_STD_FORMAT' or 'USE_FMTLIB' Instead.\n\tTo Disable This Message, Please Define 'DISABLE_CFMT_WARN'"
+	#endif    // WINDOWS_PLATFORM
+#endif        // BUILT_IN_FORMATTING_ENABLED
+
 #include <iostream>
 
 namespace serenity::experimental {

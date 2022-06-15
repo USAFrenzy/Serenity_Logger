@@ -54,10 +54,11 @@
 #elif defined USE_FMTLIB
 	#include <fmt/format.h>
 	#define VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
-// Figure out how to implement this portion
 #else
 	#include <serenity/MessageDetails/ArgFormatter.h>
-	#define VFORMAT_TO(cont, loc, msg, ...) serenity::se_format_to(std::back_inserter(cont), loc, msg, __VA_ARGS__)
+	#define VFORMAT_TO(cont, loc, msg, ...) serenity::format_to(std::back_inserter(cont), loc, msg, __VA_ARGS__)
+	// Only used at the moment to issue a warning about custom formatting support and how to disable that message
+	#define BUILT_IN_FORMATTING_ENABLED
 #endif
 
 #ifdef WINDOWS_PLATFORM

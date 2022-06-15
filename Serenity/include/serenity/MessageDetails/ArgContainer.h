@@ -1,28 +1,5 @@
 #pragma once
-/************************************** What The ArgFormatter And ArgContainer Classes Offer **************************************/
-// This work is a very simple reimplementation with limititations on my end of Victor Zverovich's fmt library.
-// Currently the standard's implementation of his work is still underway although for the most part, it's feature
-// complete with Victor's library - there are some huge performance drops when it's not compiled under the /utf-8
-// flag on MSVC though.
-//
-// The ArgFormatter and ArgContainer classes work in tandem to deliver a very bare-bones version of what the fmt,
-// and MSVC's implementation of fmt, libraries provides and is only intended for usage until MSVC's code is as performant
-// as it is when compiled with /utf-8 for compilation without the need for this flag.
-//
-// With that being said, these classes provide the functionality of formatting to a container with a back insert iterator
-// object which mirrors the std::format_to()/std::vformat_to() via the se_format_to() function, as well as a way to recieve
-// a string with the formatted result via the se_format() function, mirroring std::format()/std::vformat().
-// Unlike MSVC's implementations, however, the default locale used when the locale specifier is present will refer to the
-// default locale created on construction of this class. The downside is that this will not reflect any changes when the
-// locale is changed globally; but the benefit of this approach is reducing the construction of an empty locale on every
-// format, as well as the ability to change the locale with "SetLocale(const std::locale &)" function without affecting
-// the locale of the rest of the program. All formatting specifiers and manual/automatic indexing from the fmt library
-// are available and supported.
-//
-// EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib; however,
-//             the performance times of serenity is STILL faster than the MSVC's implementation (for most cases) - the consistency of their
-//             performance is now a non-issue though (same performance with or without the UTF-8 flag)
-/**********************************************************************************************************************************/
+
 #include <string_view>
 #include <array>
 #include <variant>
@@ -47,6 +24,7 @@ namespace serenity::msg_details {
 		ConstVoidPtrType = 13,
 		VoidPtrType      = 14,
 	};
+
 	template<typename T, typename U> struct is_supported;
 	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
 	{
@@ -59,7 +37,7 @@ namespace serenity::msg_details {
 	  public:
 		// clang-format off
 		using VType = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, 
-			                                                     long long, unsigned long long,bool, char, float, double, long double, const void*, void*>;
+			                         long long, unsigned long long,bool, char, float, double, long double, const void*, void*>;
 		// clang-format on
 		constexpr ArgContainer()                               = default;
 		constexpr ArgContainer(const ArgContainer&)            = delete;
@@ -126,7 +104,6 @@ namespace serenity::msg_details {
 		} else if constexpr( std::is_same_v<base_type, void*> ) {
 				return std::forward<SpecType>(VoidPtrType);
 		} else {
-				// TODO: Write the logic for and include the build options for using either <format> or libfmt instead of the built-in formatter
 				auto isSupported = is_supported<base_type, ArgContainer::VType> {};
 				static_assert(isSupported.value, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
 			}
