@@ -113,7 +113,7 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
-	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
+	auto precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
@@ -129,7 +129,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::Format(const std::locale& loc, std::back_insert_iterator<T>&& Iter, const msg_details::SpecType& argType) {
 	using enum msg_details::SpecType;
-	int precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
+	auto precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
@@ -928,9 +928,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_
 //
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
-	auto valueData { buffer.data() };
 	if( auto fill { (totalWidth > valueSize) ? totalWidth - valueSize : 0 }; fill != 0 ) {
-			fillBuffer.clear();
 			fillBuffer.reserve(totalWidth);
 			!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
 										  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
@@ -950,7 +948,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_
 	auto size { static_cast<int>(val.size()) };
 	precision = precision != 0 ? precision > size ? size : precision : size;
 	if( auto fill { totalWidth > size ? totalWidth - size : 0 }; fill != 0 ) {
-			fillBuffer.clear();
 			fillBuffer.reserve(totalWidth);
 			!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
 										  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
@@ -1105,13 +1102,13 @@ constexpr void serenity::arg_formatter::ArgFormatter::WritePreFormatChars(int& p
 			case 1:
 				buffer[ pos ] = specValues.preAltForm[ 0 ];
 				++pos;
-				break;
+				return;
 			case 2:
 				buffer[ pos ]   = specValues.preAltForm[ 0 ];
 				buffer[ ++pos ] = specValues.preAltForm[ 1 ];
 				++pos;
-				break;
-			default: break;
+				return;
+			default: return;
 		}
 }
 
@@ -1166,7 +1163,9 @@ requires std::is_integral_v<std::remove_cvref_t<T>>
 constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& value) {
 	int pos {};
 	int base {};
+	bool isUpper { false };
 	auto data { buffer.data() };
+
 	if( !std::is_constant_evaluated() ) {
 			std::memset(data, 0, SERENITY_ARG_BUFFER_SIZE);
 	} else {
@@ -1174,7 +1173,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& valu
 		}
 	WriteSign(std::forward<T>(value), pos);
 	WritePreFormatChars(pos);
-	bool isUpper { false };
 	SetIntegralFormat(base, isUpper);
 	auto end { std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, base).ptr };
 	valueSize = end - data;

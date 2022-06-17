@@ -141,7 +141,7 @@ namespace serenity::arg_formatter {
 		AlignCenter
 	};
 
-	enum class Sign
+	enum class Sign : char
 	{
 		Empty = 0,
 		Plus,
@@ -149,7 +149,7 @@ namespace serenity::arg_formatter {
 		Space
 	};
 
-	enum class IndexMode
+	enum class IndexMode : char
 	{
 		automatic,
 		manual
@@ -164,8 +164,8 @@ namespace serenity::arg_formatter {
 		size_t nestedWidthArgPos { 0 };
 		size_t nestedPrecArgPos { 0 };
 		Alignment align { Alignment::Empty };
-		char fillCharacter { '\0' };
-		char typeSpec { '\0' };
+		unsigned char fillCharacter { '\0' };
+		unsigned char typeSpec { '\0' };
 		std::string_view preAltForm { "" };
 		Sign signType { Sign::Empty };
 		bool localize { false };
@@ -287,6 +287,8 @@ namespace serenity::arg_formatter {
 		/************************************************************ Formatting Related Functions ************************************************************/
 		template<typename T> constexpr void FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision);
 		template<typename T> constexpr void FormatArgument(std::back_insert_iterator<T>&& Iter, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth);
+		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& width, int prec);
 		constexpr void FormatBoolType(bool& value);
 		constexpr void FormatCharType(char& value);
 		template<typename T>
@@ -299,8 +301,6 @@ namespace serenity::arg_formatter {
 		requires std::is_floating_point_v<std::remove_cvref_t<T>>
 		constexpr void FormatFloatType(T&& value, int precision);
 		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
-		// TODO: I know off the top of my head that uppercase cases for localization need some TLC as well as adding logic to check for exponents.
-		//              This is done in the base formatting functions but , as of right now, the localization functions only handle groupings and nothing else.
 		template<typename T> void LocalizeBool(std::back_insert_iterator<T>&& Iter, const std::locale& loc);
 		void FormatIntegralGrouping(const std::locale& loc, size_t end);
 		template<typename T>
@@ -318,8 +318,6 @@ namespace serenity::arg_formatter {
 		constexpr void WriteBool(const bool& value);
 		template<typename T> constexpr void WriteString(std::back_insert_iterator<T>&& Iter, const SpecType& type, const int& precision, const int& totalWidth);
 		template<typename T> constexpr void WriteSimpleValue(std::back_insert_iterator<T>&& Iter, const SpecType&);
-		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth);
-		template<typename T> constexpr void FormatAlignment(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& width, int prec);
 		template<typename T> constexpr void WriteSimpleString(std::back_insert_iterator<T>&& Iter);
 		template<typename T> constexpr void WriteSimpleCString(std::back_insert_iterator<T>&& Iter);
 		template<typename T> constexpr void WriteSimpleStringView(std::back_insert_iterator<T>&& Iter);
@@ -410,4 +408,6 @@ namespace serenity {
 //    the arg type given during runtime, then this could easily be a ~2x improvement as cpu cycles spend most of the time in the verification process
 //    and formatting process (finding the brackets and verifying a manual position are pretty negligible at ~6-8ns and ~5-10ns respectively) rather
 //    equally (with formatting leading the cycle usage by ~5-10% over the verify calls).
+//    EDIT: Reading a lot about SIMD instructions and I feel like there might be some niche cases where that could apply here, such as if there are
+//                multiple arguments of the same type - could then format them in tandem with one another?
 /****************************************************************************************************************************************************/
