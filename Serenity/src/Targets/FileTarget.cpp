@@ -105,7 +105,6 @@ namespace serenity::targets {
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		VFORMAT_TO(FileBuffer(), MsgFmt()->Locale(), formatted, );
 		WriteToFile(formatted);
 		if( lock.owns_lock() ) {
 				lock.unlock();
