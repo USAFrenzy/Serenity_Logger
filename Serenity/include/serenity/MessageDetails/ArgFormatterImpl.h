@@ -58,10 +58,11 @@
 #include <serenity/MessageDetails/ArgFormatter.h>
 #include <string_view>
 
+constexpr auto fillBuffDefaultCapacity { 512 };
 constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
 	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}), argStorage(ArgContainer {}),
 	  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(), fillBuffer() {
-	fillBuffer.reserve(512);
+	fillBuffer.reserve(fillBuffDefaultCapacity);
 }
 
 constexpr void serenity::arg_formatter::BracketSearchResults::Reset() {
@@ -927,11 +928,15 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_
 //    }
 //
 
+constexpr void serenity::arg_formatter::ArgFormatter::FillBuffWithChar(const int& totalWidth) {
+	!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
+								  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
+}
+
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
 	if( auto fill { (totalWidth > valueSize) ? totalWidth - valueSize : 0 }; fill != 0 ) {
-			fillBuffer.reserve(totalWidth);
-			!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
-										  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
+			if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
+			FillBuffWithChar(totalWidth);
 			switch( specValues.align ) {
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth, fill);
@@ -948,9 +953,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_
 	auto size { static_cast<int>(val.size()) };
 	precision = precision != 0 ? precision > size ? size : precision : size;
 	if( auto fill { totalWidth > size ? totalWidth - size : 0 }; fill != 0 ) {
-			fillBuffer.reserve(totalWidth);
-			!std::is_constant_evaluated() ? static_cast<void>(std::memset(fillBuffer.data(), specValues.fillCharacter, totalWidth))
-										  : fillBuffer.resize(totalWidth, specValues.fillCharacter);
+			if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
+			FillBuffWithChar(totalWidth);
 			switch( specValues.align ) {
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill);
@@ -1120,19 +1124,19 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteChar(const char& valu
 constexpr void serenity::arg_formatter::ArgFormatter::SetIntegralFormat(int& base, bool& isUpper) {
 	// spec 'c' is handled in FormatArgument() By direct write to buffer
 	switch( specValues.typeSpec ) {
-			case '\0': base = 10; break;
-			case 'b': base = 2; break;
+			case '\0': base = 10; return;
+			case 'b': base = 2; return;
 			case 'B':
 				base    = 2;
 				isUpper = true;
-				break;
-			case 'o': base = 8; break;
-			case 'x': base = 16; break;
+				return;
+			case 'o': base = 8; return;
+			case 'x': base = 16; return;
 			case 'X':
 				base    = 16;
 				isUpper = true;
-				break;
-			default: base = 10; break;
+				return;
+			default: base = 10; return;
 		}
 }
 

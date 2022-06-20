@@ -4,8 +4,12 @@
 
 namespace serenity::msg_details {
 
-	void Message_Formatter::SetLocaleReference(std::locale* loc) {
-		localeRef = *loc;
+	void Message_Formatter::SetLocaleReference(const std::locale& loc) {
+		localeRef = loc;
+	}
+
+	std::locale Message_Formatter::Locale() {
+		return localeRef;
 	}
 
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
@@ -204,6 +208,12 @@ namespace serenity::msg_details {
 		m_Formatter.emplace_back(std::move(formatter));
 		localBuffer.reserve(m_Formatter.size() * ESTIMATED_ARG_SIZE);
 	}
+	// clang-format off
+	// TODO: See how I change this up to take advantage of the ArgFormatter class (Besides the kernel call to file writing, time is spent the most in here).
+   //               I'm not sure I can get file writing all that much faster so the other three functions are the priority here instead.
+	//              Current hierarchy of  functions that most time is spent in: WriteToFile() -> FormatUserPattern() -> FormatMsgArgs() -> PolicyFlushOn()
+	//                                                  With The Current Cpu Usage Of About:       42.25%                         25.61%                            14.50%                              4.82%
+	// clang-format on
 
 	std::string_view Message_Formatter::Formatters::FormatUserPattern() {
 		localBuffer.clear();

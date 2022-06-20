@@ -170,6 +170,14 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::~RotatingTarget() {
 		StopBackgroundThread();
+		/*********************  Kind of a work-around for the new version of file IO introduced *********************/
+		// Since we're explicitly controlling the buffer now, we need to see if  the buffer is empty or not.
+		// If it's not empty, then we need to check if we need to rotate within the file size limit  and then
+		// write out what's left of the buffer.
+		SetMessageSize(FileBufferSize());
+		if( ShouldRotate() ) {
+				RotateFile();
+		}
 		CloseFile();
 	}
 
@@ -276,7 +284,7 @@ namespace serenity::experimental::targets {
 				originalPrimaryMode = TargetHelper()->Policy()->PrimarySetting();
 				PauseBackgroundThread();
 		}
-		CloseFile();
+		CloseFile(true);
 		if( !RenameFileInRotation(OriginalPath()) ) {
 				if( !ReplaceOldFileInRotation() ) {
 						// If we can't rotate to a new file or replace the oldest file,
@@ -298,7 +306,7 @@ namespace serenity::experimental::targets {
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
 		auto& backgroundThread { BackgoundThreadInfo() };
-		auto flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
+		const auto& flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( !backgroundThread->flushComplete.load() ) {
 						backgroundThread->flushComplete.wait(false);
@@ -311,22 +319,22 @@ namespace serenity::experimental::targets {
 
 		size_t formattedSize { formatted.size() };
 		SetMessageSize(formattedSize);
-
+		auto fileSizeLimit { RotationLimits().fileSizeLimit };
 		if( !ShouldRotate() ) {
-				FileHandle().rdbuf()->sputn(formatted.data(), formattedSize);
+				WriteToFile(formatted, fileSizeLimit, truncateMessage);
 				SetCurrentFileSize(FileSize() + formattedSize);
 		} else if( (m_mode == IntervalMode::file_size) && isAboveMsgLimit ) {
 				formattedSize = RotationLimits().fileSizeLimit - FileSize();
 				auto remainder { formatted.substr(formattedSize, formatted.size()) };
-				FileHandle().rdbuf()->sputn(formatted.data(), formattedSize);
+				WriteToFile(formatted, fileSizeLimit, truncateMessage);
 				RotateFile();
 				if( !truncateMessage ) {
-						FileHandle().rdbuf()->sputn(remainder.data(), remainder.size());
+						WriteToFile(remainder, fileSizeLimit, truncateMessage);
 						SetCurrentFileSize(FileSize() + remainder.size());
 				}
 		} else {
 				RotateFile();
-				FileHandle().rdbuf()->sputn(formatted.data(), formattedSize);
+				WriteToFile(formatted, fileSizeLimit, truncateMessage);
 				SetCurrentFileSize(FileSize() + formattedSize);
 			}
 		if( lock.owns_lock() ) {
@@ -525,9 +533,6 @@ namespace serenity::experimental::targets {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
-		}
-		if( FileHandle().getloc() != loc ) {
-				FileHandle().imbue(loc);
 		}
 		TargetBase::SetLocale(loc);
 	}

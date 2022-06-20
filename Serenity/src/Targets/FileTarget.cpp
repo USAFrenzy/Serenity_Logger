@@ -30,9 +30,6 @@ namespace serenity::targets {
 				std::cerr << e.what() << "\n";
 				CloseFile();
 			}
-		if( FileHandle().getloc() != MsgInfo()->GetLocale() ) {
-				FileHandle().imbue(MsgInfo()->GetLocale());
-		}
 	}
 
 	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists): TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
@@ -51,9 +48,6 @@ namespace serenity::targets {
 				std::cerr << e.what() << "\n";
 				CloseFile();
 			}
-		if( FileHandle().getloc() != MsgInfo()->GetLocale() ) {
-				FileHandle().imbue(MsgInfo()->GetLocale());
-		}
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists): TargetBase(name), FileHelper(fPath), fileMutex(std::mutex {}) {
@@ -72,9 +66,6 @@ namespace serenity::targets {
 				std::cerr << e.what() << "\n";
 				CloseFile();
 			}
-		if( FileHandle().getloc() != MsgInfo()->GetLocale() ) {
-				FileHandle().imbue(MsgInfo()->GetLocale());
-		}
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
@@ -94,9 +85,6 @@ namespace serenity::targets {
 				std::cerr << e.what() << "\n";
 				CloseFile();
 			}
-		if( FileHandle().getloc() != MsgInfo()->GetLocale() ) {
-				FileHandle().imbue(MsgInfo()->GetLocale());
-		}
 	}
 
 	FileTarget::~FileTarget() {
@@ -107,7 +95,7 @@ namespace serenity::targets {
 	void FileTarget::PrintMessage(std::string_view formatted) {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
 		auto& backgroundThread { BackgoundThreadInfo() };
-		auto flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
+		const auto& flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( !backgroundThread->flushComplete.load() ) {
 						backgroundThread->flushComplete.wait(false);
@@ -117,7 +105,7 @@ namespace serenity::targets {
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		FileHandle().rdbuf()->sputn(formatted.data(), formatted.size());
+		WriteToFile(formatted);
 		if( lock.owns_lock() ) {
 				lock.unlock();
 		}
@@ -131,9 +119,6 @@ namespace serenity::targets {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
-		}
-		if( FileHandle().getloc() != loc ) {
-				FileHandle().imbue(loc);
 		}
 		TargetBase::SetLocale(loc);
 	}

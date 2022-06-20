@@ -311,6 +311,7 @@ namespace serenity::arg_formatter {
 		void LocalizeFloatingPoint(std::back_insert_iterator<T>&& Iter, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		/******************************************************** Container Writing Related Functions *********************************************************/
 		constexpr void BufferToUpper(const char& end);
+		constexpr void FillBuffWithChar(const int& totalWidth);
 		constexpr void SetIntegralFormat(int& base, bool& isUpper);
 		constexpr void SetFloatingFormat(std::chars_format& format, int& precision, bool& isUpper);
 		constexpr void WritePreFormatChars(int& pos);

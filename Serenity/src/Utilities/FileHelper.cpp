@@ -1,12 +1,20 @@
 #include <serenity/Utilities/FileHelper.h>
+#include <fcntl.h>
 
-#include <iostream>
+#ifdef WINDOWS_PLATFORM
+	#define OPEN(file, pathname, flags) _sopen_s(&file, pathname, flags, SH_DENYNO, _S_IREAD | _S_IWRITE)
+	#define WRITE(file, src, size)      _write(file, src, static_cast<unsigned int>(size))
+	#define CLOSE(file)                 _close(file)
+#else
+	#define OPEN(file, pathname, flags) open(file, pathname, flags)
+	#define Write(file, src, size)      write(file, src, size)
+	#define CLOSE(file)                 close(file)
+#endif    // WINDOWS_PLATFORM
 
 namespace serenity {
 
 	FileCache::FileCache(std::string_view path)
-		: filePath(std::filesystem::path {}), fileDir(std::string {}), fileName(std::string {}), extension(std::string {}), bufferSize(DEFAULT_BUFFER_SIZE),
-		  fileBuffer(bufferSize), dirPath(filePath) {
+		: filePath(std::filesystem::path {}), fileDir(std::string {}), fileName(std::string {}), extension(std::string {}), dirPath(filePath) {
 		dirPath._Remove_filename_and_separator();
 		CacheFile(std::move(path));
 	}
@@ -29,20 +37,8 @@ namespace serenity {
 			}
 	}
 
-	std::vector<char>& FileCache::FileBuffer() {
-		return fileBuffer;
-	}
-
-	size_t FileCache::FileBufferSize() const {
-		return bufferSize;
-	}
-
 	std::filesystem::path FileCache::FilePath() const {
 		return filePath;
-	}
-
-	void FileCache::SetBufferSize(size_t value) {
-		bufferSize = value;
 	}
 
 	std::string FileCache::DirName() const {
@@ -77,12 +73,26 @@ namespace serenity {
 
 }    // namespace serenity
 
+static constexpr size_t PageSize() {
+#if defined(_WIN32) && not defined(_WIN64)
+	/** x86-32 has large page sizes of 2MB available, so use that instead **/
+	return static_cast<size_t>(2 * MB);
+#elif defined _WIN64
+	/** x86-64 has large page sizes of 4MB available, so use that instead **/
+	return static_cast<size_t>(4 * MB);
+#else
+	/** We'll default to just  using the default value that was being used before **/
+	return static_cast<size_t>(DEFAULT_BUFFER_SIZE);
+#endif    // _WIN32 && !_WIN64
+}
+
 namespace serenity::targets::helpers {
 
-	FileHelper::FileHelper(const std::string_view fpath): retryAttempt(5) {
+	FileHelper::FileHelper(const std::string_view fpath): retryAttempt(5), fileOpen(false), file(int {}), pageSize(PageSize()), buffer(std::vector<char> {}) {
 		fileCache    = std::make_unique<FileCache>(fpath);
 		targetHelper = std::make_unique<BaseTargetHelper>();
 		flushWorker  = std::make_unique<BackgroundThread>();
+		buffer.reserve(pageSize);
 	}
 
 	void FileHelper::InitializeFilePath(std::string_view fileName) {
@@ -93,12 +103,15 @@ namespace serenity::targets::helpers {
 		fileCache->CacheFile(fullFilePath.string());
 	}
 
-	void FileHelper::SetFileBufferSize(size_t value) {
-		if( fileHandle.is_open() ) {
-				CloseFile();
-		}
-		fileCache->SetBufferSize(value);
-		OpenFile();
+	void FileHelper::SetBufferCapacity(size_t value) {
+		buffer.reserve(value);
+	}
+	std::vector<char>& FileHelper::FileBuffer() {
+		return buffer;
+	}
+
+	size_t FileHelper::FileBufferSize() {
+		return buffer.size();
 	}
 
 	bool FileHelper::OpenFile(bool truncate) {
@@ -107,19 +120,12 @@ namespace serenity::targets::helpers {
 				lock.lock();
 		}
 		auto TryOpen = [ &, this ]() {
-#ifndef WINDOWS_PLATFORM
-			fileHandle.rdbuf()->pubsetbuf(fileBuffer.data(), bufferSize);
-#endif    // !WINDOWS_PLATFORM
 			if( !truncate ) {
-					fileHandle.open(FileCacheHelper()->FilePath(), std::ios_base::binary | std::ios_base::app);
+					OpenImpl(truncate);
 			} else {
-					fileHandle.open(FileCacheHelper()->FilePath(), std::ios_base::binary | std::ios_base::trunc);
+					OpenImpl(truncate);
 				}
-#ifdef WINDOWS_PLATFORM
-			fileHandle.rdbuf()->pubsetbuf(fileCache->FileBuffer().data(), fileCache->FileBufferSize());
-#endif    // WINDOWS_PLATFORM
-			auto fileOpen { fileHandle.is_open() };
-			if( fileOpen ) {
+			if( file != -1 ) {
 					ResumeBackgroundThread();
 					return true;
 			}
@@ -127,9 +133,8 @@ namespace serenity::targets::helpers {
 		};
 
 		for( int tries = 0; tries < retryAttempt; ++tries ) {
-				fileHandle.clear();
 				if( tries == retryAttempt ) {
-						std::cerr << "Max Attempts At Opening File Reached - Unable To Open File\n";
+						printf("Max Attempts At Opening File Reached - Unable To Open File\n");
 						return false;
 				}
 				if( TryOpen() ) break;
@@ -138,18 +143,17 @@ namespace serenity::targets::helpers {
 		return true;
 	}
 
-	bool FileHelper::CloseFile() {
+	bool FileHelper::CloseFile(bool onRotation) {
 		PauseBackgroundThread();
-		Flush();
+		if( !onRotation ) Flush();
 
 		auto TryClose = [ this ]() {
-			fileHandle.close();
-			return !fileHandle.is_open();
+			CloseImpl();
+			return true;
 		};
 		for( int tries = 0; tries < retryAttempt; ++tries ) {
-				fileHandle.clear();
 				if( tries == retryAttempt ) {
-						std::cerr << "Max Attempts At Closing File Reached - Unable To Close File\n";
+						printf("Max Attempts At Closing File Reached - Unable To Close File\n");
 						return false;
 				}
 				if( TryClose() ) break;
@@ -160,7 +164,7 @@ namespace serenity::targets::helpers {
 
 	void FileHelper::Flush() {
 		std::unique_lock<std::mutex> lock(fileHelperMutex, std::defer_lock);
-		auto flushThreadEnabled { flushWorker->flushThreadEnabled.load() };
+		const auto& flushThreadEnabled { flushWorker->flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( flushWorker->threadWriting.load() ) {
 						flushWorker->threadWriting.wait(true);
@@ -170,13 +174,14 @@ namespace serenity::targets::helpers {
 		if( targetHelper->isMTSupportEnabled() ) {
 				lock.lock();
 		}
+		// NOTE: due to file IO changes, this may very well just disappear from here along wiht the Buffer() related stuff
 		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
 		if( targetHelper->Buffer()->size() != 0 ) {
 				auto& buffer { *targetHelper->Buffer() };
-				fileHandle.rdbuf()->sputn(buffer.data(), buffer.size());
+				WriteImpl(buffer);
 				buffer.clear();
 		}
-		fileHandle.flush();
+		FlushImpl();
 		if( lock.owns_lock() ) {
 				lock.unlock();
 		}
@@ -184,10 +189,6 @@ namespace serenity::targets::helpers {
 				flushWorker->flushComplete.store(true);
 				flushWorker->flushComplete.notify_all();
 		}
-	}
-
-	std::ofstream& FileHelper::FileHandle() {
-		return fileHandle;
 	}
 
 	const std::unique_ptr<FileCache>& FileHelper::FileCacheHelper() const {
@@ -261,10 +262,73 @@ namespace serenity::targets::helpers {
 				return OpenFile();
 			}
 		catch( const std::exception& e ) {
-				std::cerr << "Error In Renaming File:\n";
-				std::cerr << e.what();
+				printf("Error In Renaming File: %s\n", e.what());
 				return false;
 			}
+	}
+
+	void FileHelper::OpenImpl(bool truncate) {
+		if( !std::filesystem::exists(fileCache->FilePath()) ) {
+				OPEN(file, fileCache->FilePath().string().c_str(), O_CREAT | _O_WRONLY | _O_BINARY);
+		} else {
+				truncate ? OPEN(file, fileCache->FilePath().string().c_str(), O_TRUNC | _O_WRONLY | _O_BINARY)
+						 : OPEN(file, fileCache->FilePath().string().c_str(), O_APPEND | _O_WRONLY | _O_BINARY);
+			}
+		if( file != -1 ) {
+				fileOpen = true;
+		} else {
+				switch( errno ) {
+						case EACCES: throw std::system_error(EACCES, std::system_category());
+						case EEXIST: throw std::system_error(EEXIST, std::system_category());
+						case EINVAL: throw std::system_error(EINVAL, std::system_category());
+						case EMFILE: throw std::system_error(EMFILE, std::system_category());
+						case ENOENT: throw std::system_error(ENOENT, std::system_category());
+					}
+			}
+	}
+
+	// This seems to be ~35ns- to ~45ns faster than the fileHandle.rdbuf()->sputn(formatted.data(), formatted.size())
+	//  method and brings the throughput from ~1450 MB/s up to ~1715 MB/s
+	void FileHelper::WriteImpl(std::string_view msg) {
+		buffer.insert(buffer.end(), msg.begin(), msg.end());
+		if( buffer.size() >= pageSize ) {
+				WRITE(file, buffer.data(), pageSize);
+				buffer.erase(buffer.begin(), buffer.begin() + pageSize);
+		}
+	}
+
+	void FileHelper::WriteImpl(std::string_view msg, size_t writeLimit, bool truncateRest) {
+		buffer.insert(buffer.end(), msg.begin(), msg.end());
+		if( buffer.size() >= writeLimit ) {
+				WRITE(file, buffer.data(), writeLimit);
+				truncateRest ? buffer.erase(buffer.begin(), buffer.end()) : buffer.erase(buffer.begin(), buffer.begin() + writeLimit);
+		}
+	}
+
+	void FileHelper::FlushImpl() {
+		if( buffer.size() >= pageSize ) {
+				auto pages { buffer.size() / pageSize };
+				for( pages; pages != 0; --pages ) {
+						WRITE(file, buffer.data(), pageSize);
+						buffer.erase(buffer.begin(), buffer.begin() + pageSize);
+					}
+		}
+		if( buffer.size() != 0 ) {
+				WRITE(file, buffer.data(), buffer.size());
+		}
+		buffer.clear();
+	}
+
+	void FileHelper::CloseImpl() {
+		if( fileOpen ) {
+				CLOSE(file);
+				fileOpen = false;
+		}
+		buffer.clear();
+	}
+
+	void FileHelper::WriteToFile(std::string_view msg, size_t writeLimit, bool truncateRest) {
+		writeLimit == max_size_size_t ? WriteImpl(msg) : WriteImpl(msg, writeLimit, truncateRest);
 	}
 
 }    // namespace serenity::targets::helpers

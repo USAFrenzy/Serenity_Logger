@@ -3,8 +3,6 @@
 #include <serenity/Common.h>
 #include <serenity/Utilities/TargetHelper.h>
 
-#include <fstream>
-
 namespace serenity {
 
 	struct BackgroundThread
@@ -26,11 +24,8 @@ namespace serenity {
 		FileCache& operator=(FileCache&) = delete;
 		~FileCache()                     = default;
 		void CacheFile(std::string_view path, bool ignoreExtInFileName = false);
-		std::vector<char>& FileBuffer();
-		size_t FileBufferSize() const;
 		std::filesystem::path FilePath() const;
 		std::filesystem::path DirPath() const;
-		void SetBufferSize(size_t value);
 		std::string DirName() const;
 		std::string FileName() const;
 		std::string Extenstion() const;
@@ -47,15 +42,13 @@ namespace serenity {
 		std::string fileName;
 		std::string extension;
 		std::filesystem::path dirPath;
-
-	  private:
-		size_t bufferSize;
-		std::vector<char> fileBuffer;
 	};
 
 }    // namespace serenity
 
 namespace serenity::targets::helpers {
+
+	constexpr size_t max_size_size_t { (size_t)-1 };
 
 	class FileHelper
 	{
@@ -66,10 +59,12 @@ namespace serenity::targets::helpers {
 		~FileHelper()                      = default;
 
 		bool OpenFile(bool truncate = false);
-		bool CloseFile();
+		void WriteToFile(std::string_view msg, size_t writeLimit = max_size_size_t, bool truncateRest = false);
 		void Flush();
-		void SetFileBufferSize(size_t value);
-		std::ofstream& FileHandle();
+		bool CloseFile(bool onRotation = false);
+		std::vector<char>& FileBuffer();
+		size_t FileBufferSize();
+		void SetBufferCapacity(size_t value);
 		void InitializeFilePath(std::string_view fileName = "");
 		virtual bool RenameFile(std::string_view newFileName);
 		void BackgroundFlushThread(std::stop_token stopToken);
@@ -82,8 +77,18 @@ namespace serenity::targets::helpers {
 		const std::unique_ptr<BackgroundThread>& BackgoundThreadInfo() const;
 
 	  private:
+		void OpenImpl(bool truncate);
+		void WriteImpl(std::string_view msg);
+		void WriteImpl(std::string_view msg, size_t writeLimit, bool truncateRest = false);
+		void FlushImpl();
+		void CloseImpl();
+
+	  private:
 		int retryAttempt;
-		std::ofstream fileHandle;
+		bool fileOpen;
+		int file;
+		size_t pageSize;
+		std::vector<char> buffer;
 		std::mutex fileHelperMutex;
 		std::unique_ptr<FileCache> fileCache;
 		std::shared_ptr<BaseTargetHelper> targetHelper;

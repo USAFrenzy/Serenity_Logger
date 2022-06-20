@@ -58,9 +58,8 @@ namespace serenity::targets {
 		if( baseHelper->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		if( loc != MsgInfo()->GetLocale() ) {
-				MsgInfo()->SetLocale(loc);
-				MsgFmt()->SetLocaleReference(&MsgInfo()->GetLocale());
+		if( loc != MsgFmt()->Locale() ) {
+				MsgFmt()->SetLocaleReference(loc);
 		}
 	}
 
@@ -69,7 +68,7 @@ namespace serenity::targets {
 		if( baseHelper->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		return MsgInfo()->GetLocale();
+		return MsgFmt()->Locale();
 	}
 
 	std::shared_ptr<helpers::BaseTargetHelper>& TargetBase::TargetHelper() {
