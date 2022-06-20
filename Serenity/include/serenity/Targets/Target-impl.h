@@ -13,17 +13,14 @@ template<typename... Args> void serenity::targets::TargetBase::Trace(serenity::M
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::trace);
+			msgDetails->SourceLocation() = s.source;
+
+			msgPattern->FormatMessageArgs(s.msg, std::forward<Args>(args)...);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
-			if( baseHelper->isWriteToBuf() ) {
-					baseHelper->Buffer()->append(formatted.data(), formatted.size());
-					PolicyFlushOn();
-			} else {
-					PrintMessage(formatted);
-					PolicyFlushOn();
-				}
+			PrintMessage(formatted);
+			PolicyFlushOn();
 	}
 }
 
@@ -36,17 +33,14 @@ template<typename... Args> void serenity::targets::TargetBase::Info(serenity::Ms
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::info);
+			msgDetails->SourceLocation() = s.source;
+
+			msgPattern->FormatMessageArgs(s.msg, std::forward<Args>(args)...);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
-			if( baseHelper->isWriteToBuf() ) {
-					baseHelper->Buffer()->append(formatted.data(), formatted.size());
-					PolicyFlushOn();
-			} else {
-					PrintMessage(formatted);
-					PolicyFlushOn();
-				}
+			PrintMessage(formatted);
+			PolicyFlushOn();
 	}
 }
 
@@ -59,17 +53,14 @@ template<typename... Args> void serenity::targets::TargetBase::Debug(serenity::M
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::debug);
+			msgDetails->SourceLocation() = s.source;
+
+			msgPattern->FormatMessageArgs(s.msg, std::forward<Args>(args)...);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
-			if( baseHelper->isWriteToBuf() ) {
-					baseHelper->Buffer()->append(formatted.data(), formatted.size());
-					PolicyFlushOn();
-			} else {
-					PrintMessage(formatted);
-					PolicyFlushOn();
-				}
+			PrintMessage(formatted);
+			PolicyFlushOn();
 	}
 }
 
@@ -82,17 +73,14 @@ template<typename... Args> void serenity::targets::TargetBase::Warn(serenity::Ms
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::warning);
+			msgDetails->SourceLocation() = s.source;
+
+			msgPattern->FormatMessageArgs(s.msg, std::forward<Args>(args)...);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
-			if( baseHelper->isWriteToBuf() ) {
-					baseHelper->Buffer()->append(formatted.data(), formatted.size());
-					PolicyFlushOn();
-			} else {
-					PrintMessage(formatted);
-					PolicyFlushOn();
-				}
+			PrintMessage(formatted);
+			PolicyFlushOn();
 	}
 }
 
@@ -105,17 +93,14 @@ template<typename... Args> void serenity::targets::TargetBase::Error(serenity::M
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::error);
+			msgDetails->SourceLocation() = s.source;
+
+			msgPattern->FormatMessageArgs(s.msg, std::forward<Args>(args)...);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
-			if( baseHelper->isWriteToBuf() ) {
-					baseHelper->Buffer()->append(formatted.data(), formatted.size());
-					PolicyFlushOn();
-			} else {
-					PrintMessage(formatted);
-					PolicyFlushOn();
-				}
+			PrintMessage(formatted);
+			PolicyFlushOn();
 	}
 }
 
@@ -128,16 +113,13 @@ template<typename... Args> void serenity::targets::TargetBase::Fatal(serenity::M
 			if( messageTimePoint != msgDetails->TimeDetails().LastLogPoint() ) {
 					msgDetails->TimeDetails().UpdateCache(now);
 			}
-			msgPattern->FormatMessageArgs(s, std::forward<Args>(args)...);
 			msgDetails->SetMsgLevel(LoggerLevel::fatal);
+			msgDetails->SourceLocation() = s.source;
+
+			msgPattern->FormatMessageArgs(s.msg, std::forward<Args>(args)...);
 			auto formatted { msgPattern->GetFormatters().FormatUserPattern() };
 
-			if( baseHelper->isWriteToBuf() ) {
-					baseHelper->Buffer()->append(formatted.data(), formatted.size());
-					PolicyFlushOn();
-			} else {
-					PrintMessage(formatted);
-					PolicyFlushOn();
-				}
+			PrintMessage(formatted);
+			PolicyFlushOn();
 	}
 }

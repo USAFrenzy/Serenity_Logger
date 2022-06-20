@@ -245,7 +245,15 @@ int main() {
 	ArgFormatter parseString;
 	Instrumentator timer;
 	std::string result;
+
+	// Now std::vector<char> and string containers are more or less on par with one another, with strings being only ~20ns faster
+	#define TEST_STRING_CASE 1
+
+	#if TEST_STRING_CASE
 	std::string finalStr;
+	#else
+	std::vector<char> finalStr {};
+	#endif
 
 	serenity::targets::ColorConsole console("", "%+");
 	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
@@ -263,21 +271,25 @@ int main() {
 			auto serenityTime1 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime1));
 			parseString.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
-			console.Info("With Result: {}", finalStr);
+			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 			finalStr.clear();
 
 			// serenity's format loop by returning a string
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
+	#if TEST_STRING_CASE
 					finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
+	#endif
 				}
 			timer.StopWatch_Stop();
 			finalStr.clear();
 
 			auto serenityTime2 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime2));
+	#if TEST_STRING_CASE
 			finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
-			console.Info("With Result: {}", finalStr);
+	#endif
+			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 			finalStr.clear();
 
 			// Standard's std::vformat_to() loop
@@ -293,7 +305,7 @@ int main() {
 			auto standardTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(standardTime));
-			console.Info("With Result: {}", finalStr);
+			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 
 			// Just realized why the percentages were so freaking out there - I had broken the formula (WOOPS!)
 			auto percentValue { ((serenityTime1 - standardTime) / standardTime) * 100 };

@@ -174,13 +174,6 @@ namespace serenity::targets::helpers {
 		if( targetHelper->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		// NOTE: due to file IO changes, this may very well just disappear from here along wiht the Buffer() related stuff
-		// If formatted message wasn't written to file and instead was written to the buffer, write to file now
-		if( targetHelper->Buffer()->size() != 0 ) {
-				auto& buffer { *targetHelper->Buffer() };
-				WriteImpl(buffer);
-				buffer.clear();
-		}
 		FlushImpl();
 		if( lock.owns_lock() ) {
 				lock.unlock();

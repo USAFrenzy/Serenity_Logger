@@ -43,7 +43,7 @@ namespace serenity::msg_details {
 		Formatters& GetFormatters();
 		void StoreFormat();
 		const Message_Info* MessageDetails();
-		template<typename... Args> void FormatMessageArgs(MsgWithLoc& message, Args&&... args);
+		template<typename... Args> void FormatMessageArgs(std::string_view message, Args&&... args);
 		void SetLocaleReference(const std::locale& loc);
 		std::locale Locale();
 		std::string_view LineEnding() const;
@@ -56,6 +56,8 @@ namespace serenity::msg_details {
 		LineEnd platformEOL;
 		std::string temp;
 		source_flag sourceFlag;
+		/**************************  TESTING **************************/
+		std::string internalFmt;
 	};
 #include <serenity/MessageDetails/Message_Formatter_Impl.h>
 }    // namespace serenity::msg_details

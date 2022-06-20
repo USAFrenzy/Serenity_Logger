@@ -60,13 +60,83 @@ namespace serenity::msg_details {
 				case 31: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
 				case 32: formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(*msgInfo)); break;
 				case 33: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
-				default:
-					// This function is only accessed if an index is found in allValidFlags array
-					break;
+				default: break;
 			}
+
+		/**************************************************************  TESTING **************************************************************/
+		// NOTE: I do get the appropriate string when all is settled -> now to figure out how to structure the formatting aspect and simplify the
+		//              FormatterArgs functions. I could probably just add some logic to the current ArgFormatter class for when it encounters a '%'
+		//              sign and call a separate function alltogether since verification of args in this case may not be needed? Either that or call a
+		//              different validator function that would have to be implemented for these cases and the arguments supplied to the format func.
+		//              One idea is just to update the std::tm cache and supply the cache to the formatter since all but logger level, logger name, and
+		//              message use this. I could then just hard-code the order that the logger levels, name, and message appear in the formatter call.
+		//              I could even supply overloads for combinations of what is needed.
+		//              ************************************************************ EX ************************************************************
+		//               - Where the call may be something like FormatUserPattern(...) -> with the overloads being a buffer, a string_view,  and then
+		//                  any combo of std::tm, LoggerLevel, string_view (AND be able to reserve an appropriate size as well with these calls) such as:
+		//              ****************************************************************************************************************************
+		//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Level(), MsgInfo()->Name());
+		//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Level());
+		//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Name());
+		//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache());
+		//              - se_format_to(buffer, internalFmt, MsgInfo()->Level());
+		//              - se_format_to(buffer, internalFmt, MsgInfo()->Name());
+		//              ****************************************************************************************************************************
+		// NOTE 2: With the above idea, I could then focus on getting std::vector<> cases of formatting optimized and just format to the file
+		//                  buffer directly with this; with the '%+' specifier in place, I could  then just straight-up format the message as-is  as well so
+		//                  this would essentially go from formatting the time-stamp into a string by repeated calls of append and no real way of
+		//                  reserving capacity before-hand, copying said string to the buffer, formatting the message into another string, copying that
+		//                  string to the buffer, and then writing to the file when either the file size limit or page size has been matched to just simply
+		//                  formatting everything in one go into the buffer and essentially only incurring the cost of writing to the file buffer itself.
+		// NOTE 3: Now that I've fixed some of the speed problems associated with using a std::vector<char> with the se_format_to(), this idea
+		//                   is much more realistic in the sense of writing directly to the file buffer if the target is a file type target given there's basically
+		//                   no trade-off in formatting performance now.
+
+		// switch( index ) {
+		//		case 0: internalFmt.append("{:%a}"); break;
+		//		case 1: internalFmt.append("{:%b}"); break;
+		//		case 2: internalFmt.append("{:%c}"); break;
+		//		case 3: internalFmt.append("{:%d}"); break;
+		//		case 4: internalFmt.append("{:%e}"); break;
+		//		case 5: internalFmt.append("{:%b}"); break;
+		//		case 6: internalFmt.append("{:%l}"); break;
+		//		case 7: internalFmt.append("{:%m}"); break;
+		//		case 8: internalFmt.append("{:%n}"); break;
+		//		case 9: internalFmt.append("{:%p}"); break;
+		//		case 10: internalFmt.append("{:%r}"); break;
+		//		case 11: internalFmt.append("{:%s}"); break;
+		//		case 12: internalFmt.append("{:%t}"); break;
+		//		case 13: internalFmt.append("{:%w}"); break;
+		//		case 14: internalFmt.append("{:%D}"); break;
+		//		case 15: internalFmt.append("{:%y}"); break;
+		//		case 16: internalFmt.append("{:%z}"); break;
+		//		case 17: internalFmt.append("{:%A}"); break;
+		//		case 18: internalFmt.append("{:%B}"); break;
+		//		case 19: internalFmt.append("{:%C}"); break;
+		//		case 20: internalFmt.append("{:%D}"); break;
+		//		case 21: internalFmt.append("{:%F}"); break;
+		//		case 22: internalFmt.append("{:%H}"); break;
+		//		case 23: internalFmt.append("{:%I}"); break;
+		//		case 24: internalFmt.append("{:%L}"); break;
+		//		case 25: internalFmt.append("{:%M}"); break;
+		//		case 26: internalFmt.append("{:%N}"); break;
+		//		case 27: internalFmt.append("{:%R}"); break;
+		//		case 28: internalFmt.append("{:%S}"); break;
+		//		case 29: internalFmt.append("{:%T}"); break;
+		//		case 30: internalFmt.append("{:%Y}"); break;
+		//		case 31: internalFmt.append("{:%T}"); break;
+		//		case 32: internalFmt.append("{:%Z}"); break;
+		//		case 33: internalFmt.append("{:%+}"); break;
+		//		default: break;
+		//	}
+
+		/**************************************************************************************************************************************/
 	}
 
 	void Message_Formatter::SetPattern(std::string_view pattern) {
+		/*********** TESTING ***********/
+		/*internalFmt.clear();*/
+		/*******************************/
 		fmtPattern.clear();
 		fmtPattern.append(pattern.data(), pattern.size());
 		StoreFormat();
@@ -101,11 +171,17 @@ namespace serenity::msg_details {
 						if( pos == std::string::npos ) {
 								formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(temp));
 								temp.clear();
+								/*********** TESTING ***********/
+								/*	internalFmt.append(temp);*/
+								/*******************************/
 								continue;
 						}
 						std::string subStr { temp.substr(0, pos) };
 						formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(subStr));
 						temp.erase(0, subStr.size());
+						/*********** TESTING ***********/
+						/*	internalFmt.append(subStr);*/
+						/*******************************/
 					}
 			}
 	}
@@ -210,20 +286,22 @@ namespace serenity::msg_details {
 	}
 	// clang-format off
 	// TODO: See how I change this up to take advantage of the ArgFormatter class (Besides the kernel call to file writing, time is spent the most in here).
-   //               I'm not sure I can get file writing all that much faster so the other three functions are the priority here instead.
+   //                I'm not sure I can get file writing all that much faster so the other three functions are the priority here instead.
 	//              Current hierarchy of  functions that most time is spent in: WriteToFile() -> FormatUserPattern() -> FormatMsgArgs() -> PolicyFlushOn()
-	//                                                  With The Current Cpu Usage Of About:       42.25%                         25.61%                            14.50%                              4.82%
+	//              With The Current Cpu Usage Of About:                                        42.25%                         25.61%                            14.50%                              4.82%
 	// clang-format on
+	// Realistically though, this is pretty fast as-is in only taking ~50ns to complete for the default pattern; dropping the default pattern to only contain
+	// '%+' for the message to be printed -> times went from ~223ns down to ~174ns so I'm not entirely sure this is a real bottleneck in all fairness...
 
 	std::string_view Message_Formatter::Formatters::FormatUserPattern() {
 		localBuffer.clear();
-		for( auto& formatter: m_Formatter ) {
+		for( const auto& formatter: m_Formatter ) {
 				formatter->FormatUserPattern(localBuffer);
 			}
 		return localBuffer;
 	}
 
 	std::string_view serenity::msg_details::Message_Formatter::LineEnding() const {
-		return SERENITY_LUTS::line_ending.at(platformEOL);
+		return SERENITY_LUTS::line_ending[ platformEOL ];
 	}
 }    // namespace serenity::msg_details

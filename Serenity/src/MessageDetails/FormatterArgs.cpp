@@ -14,7 +14,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_a::UpdateInternalView() {
 		lastWkday = cacheRef.tm_wday;
-		auto sWkday { SERENITY_LUTS::short_weekdays[ lastWkday ] };
+		auto& sWkday { SERENITY_LUTS::short_weekdays[ lastWkday ] };
 		result.clear();
 		return result.append(sWkday.data(), sWkday.size());
 	}
@@ -30,7 +30,7 @@ namespace serenity::msg_details {
 
 	std::string& Format_Arg_b::UpdateInternalView() {
 		lastMonth = cacheRef.tm_mon;
-		auto mon { SERENITY_LUTS::short_months[ lastMonth ] };
+		auto& mon { SERENITY_LUTS::short_months[ lastMonth ] };
 		result.clear();
 		return result.append(mon.data(), mon.size());
 	}
@@ -584,13 +584,21 @@ namespace serenity::msg_details {
 
 	// Format %T Functions
 	/*********************************************************************************************************************/
-	Format_Arg_T::Format_Arg_T(Message_Info& info): cacheRef(info.TimeInfo()) { }
+	Format_Arg_T::Format_Arg_T(Message_Info& info): cacheRef(info.TimeInfo()), cachedHour(cacheRef.tm_hour), cachedMin(cacheRef.tm_min) {
+		using SERENITY_LUTS::numberStr;
+		result.append(numberStr[ cacheRef.tm_hour ]).append(":").append(numberStr[ cacheRef.tm_min ]).append(":");
+	}
 
 	void Format_Arg_T::FormatUserPattern(std::string& container) {
-		auto& hour = SERENITY_LUTS::numberStr[ cacheRef.tm_hour ];
-		auto& min  = SERENITY_LUTS::numberStr[ cacheRef.tm_min ];
-		auto& sec  = SERENITY_LUTS::numberStr[ cacheRef.tm_sec ];
-		container.append(hour.data(), hour.size()).append(":").append(min.data(), min.size()).append(":").append(sec.data(), sec.size());
+		using SERENITY_LUTS::numberStr;
+		if( cacheRef.tm_hour == cachedHour && cacheRef.tm_min == cachedMin ) {
+				container.append(result.data(), result.size()).append(numberStr[ cacheRef.tm_sec ]);
+		} else {
+				cachedHour = cacheRef.tm_hour;
+				cachedMin  = cacheRef.tm_min;
+				result.clear();
+				container.append(result.append(numberStr[ cachedHour ]).append(":").append(numberStr[ cachedMin ])).append(numberStr[ cacheRef.tm_sec ]);
+			}
 	}
 	/*********************************************************************************************************************/
 

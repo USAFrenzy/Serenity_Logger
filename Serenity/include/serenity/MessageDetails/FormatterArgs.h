@@ -519,6 +519,7 @@ namespace serenity::msg_details {
 
 	  private:
 		const std::tm& cacheRef;
+		int cachedHour, cachedMin;
 	};
 
 	// Year in YYYY format

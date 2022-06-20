@@ -636,8 +636,14 @@ constexpr void serenity::arg_formatter::ArgFormatter::HandlePotentialTypeField(c
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleString(std::back_insert_iterator<T>&& Iter) {
 	std::string_view sv { std::move(argStorage.string_state(specValues.argPosition)) };
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
+			cont.append(sv.data(), sv.size());
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), sv.begin(), sv.end());
+			if( sv.back() != '\0' ) {
+					cont.push_back('\0');
+			}
 	} else {
 			std::copy(sv.begin(), sv.end(), Iter);
 		}
@@ -645,8 +651,14 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCString(std::back_insert_iterator<T>&& Iter) {
 	std::string_view sv { std::move(argStorage.c_string_state(specValues.argPosition)) };
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
+			cont.append(sv.data(), sv.size());
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), sv.begin(), sv.end());
+			if( sv.back() != '\0' ) {
+					cont.push_back('\0');
+			}
 	} else {
 			std::copy(sv.begin(), sv.end(), Iter);
 		}
@@ -654,8 +666,14 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleStringView(std::back_insert_iterator<T>&& Iter) {
 	std::string_view sv { std::move(argStorage.string_view_state(specValues.argPosition)) };
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(sv.data(), sv.size());
+			cont.append(sv.data(), sv.size());
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), sv.begin(), sv.end());
+			if( sv.back() != '\0' ) {
+					cont.push_back('\0');
+			}
 	} else {
 			std::copy(sv.begin(), sv.end(), Iter);
 		}
@@ -665,8 +683,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr - data);
+			cont.append(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr);
 	} else {
 			std::move(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr, Iter);
 		}
@@ -676,8 +697,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr - data);
+			cont.append(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr);
 	} else {
 			std::move(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr, Iter);
 		}
@@ -687,8 +711,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr - data);
+			cont.append(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr);
 	} else {
 			std::move(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr, Iter);
 		}
@@ -698,16 +725,23 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr - data);
+			cont.append(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr);
 	} else {
 			std::move(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr, Iter);
 		}
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleBool(std::back_insert_iterator<T>&& Iter) {
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
+			cont.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			std::string_view sv { argStorage.bool_state(specValues.argPosition) ? "true" : "false" };
+			cont.insert(cont.end(), sv.begin(), sv.end());
 	} else {
 			std::string_view sv { argStorage.bool_state(specValues.argPosition) ? "true" : "false" };
 			std::copy(sv.begin(), sv.end(), Iter);
@@ -717,8 +751,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleFloat(std::back_insert_iterator<T>&& Iter) {
 	auto data { buffer.data() };
 	std::memset(data, 0, buffer.size());
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr - data);
+			cont.append(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr);
 	} else {
 			std::move(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr, Iter);
 		}
@@ -728,8 +765,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr - data);
+			cont.append(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr);
 	} else {
 			std::move(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr, Iter);
 		}
@@ -739,8 +779,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr - data);
+			cont.append(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr);
 	} else {
 			std::move(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr, Iter);
 		}
@@ -750,9 +793,15 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append("0x").append(
+			cont.append("0x").append(
 			data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			static std::string_view sv { "0x" };
+			cont.insert(cont.end(), sv.begin(), sv.end());
+			cont.insert(cont.end(), data,
+			            std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr);
 	} else {
 			Iter = '0';
 			Iter = 'x';
@@ -764,9 +813,15 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append("0x").append(
+			cont.append("0x").append(
 			data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr - data);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			static std::string_view sv { "0x" };
+			cont.insert(cont.end(), sv.begin(), sv.end());
+			cont.insert(cont.end(), data,
+			            std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr);
 	} else {
 			Iter = '0';
 			Iter = 'x';
@@ -799,8 +854,11 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(std::back
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData, buffer.data(), valueSize);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+			cont.append(fillData, totalWidth);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), fillData, fillData + totalWidth);
 	} else {
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
@@ -811,8 +869,11 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back
                                                                        const int& totalWidth) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData, val.data(), precision);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+			cont.append(fillData, totalWidth);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), fillData, fillData + totalWidth);
 	} else {
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
@@ -822,8 +883,11 @@ template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+			cont.append(fillData, totalWidth);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), fillData, fillData + totalWidth);
 	} else {
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
@@ -834,8 +898,11 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::bac
                                                                         const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData + fillAmount, val.data(), precision);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+			cont.append(fillData, totalWidth);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), fillData, fillData + totalWidth);
 	} else {
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
@@ -845,8 +912,11 @@ template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData + fillAmount / 2, buffer.data(), valueSize);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+			cont.append(fillData, totalWidth);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), fillData, fillData + totalWidth);
 	} else {
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
@@ -857,16 +927,22 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::ba
                                                                          const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData + fillAmount / 2, val.data(), precision);
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(fillData, totalWidth);
+			cont.append(fillData, totalWidth);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), fillData, fillData + totalWidth);
 	} else {
 			std::copy(fillData, fillData + totalWidth, Iter);
 		}
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_insert_iterator<T>&& Iter) {
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(buffer.data(), valueSize);
+			cont.append(buffer.data(), valueSize);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), buffer.data(), buffer.data() + valueSize);
 	} else {
 			std::copy(buffer.data(), buffer.data() + valueSize, Iter);
 		}
@@ -874,10 +950,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision) {
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(val.data(), precision);
+			cont.append(val.data(), precision);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), val.data(), val.data() + precision);
 	} else {
-			Iter = std::copy(val.data(), val.data() + precision, Iter);
+			std::copy(val.data(), val.data() + precision, Iter);
 		}
 }
 
@@ -1186,8 +1265,14 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& valu
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision) {
 	int size { static_cast<int>(val.size()) };
+	auto& cont { *IteratorContainer(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
-			IteratorContainer(Iter).Container()->append(val.data(), (precision != 0 ? precision > size ? size : precision : size));
+			cont.append(val.data(), (precision != 0 ? precision > size ? size : precision : size));
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), val.data(), val.data() + (precision != 0 ? precision > size ? size : precision : size));
+			if( val.back() != '\0' ) {
+					cont.push_back('\0');
+			}
 	} else {
 			std::copy(val.data(), val.data() + (precision != 0 ? precision > size ? size : precision : size), Iter);
 		}

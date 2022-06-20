@@ -15,15 +15,10 @@ namespace serenity::targets::helpers {
 
 		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 		bool isMTSupportEnabled();
-		void WriteToBaseBuffer(bool fmtToBuf = true);
-		bool isWriteToBuf() const;
 		void SetFlushPolicy(const serenity::experimental::Flush_Policy& fPolicy);
-		std::string* Buffer();
 		const std::unique_ptr<serenity::experimental::Flush_Policy>& Policy() const;
 
 	  private:
-		bool toBuffer;
-		std::string internalBuffer;
 		bool multiThreadSupport;
 
 	  protected:
