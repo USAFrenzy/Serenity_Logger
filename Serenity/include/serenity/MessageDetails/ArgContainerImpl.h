@@ -2,11 +2,7 @@
 
 namespace details = serenity::msg_details;
 
-constexpr size_t details::ArgContainer::CurrentSize() {
-	return counter;
-}
-
-constexpr std::array<details::ArgContainer::VType, details::MAX_ARG_COUNT>& details::ArgContainer::ArgStorage() {
+constexpr std::array<serenity::VType, details::MAX_ARG_COUNT>& details::ArgContainer::ArgStorage() {
 	return argContainer;
 }
 
@@ -14,17 +10,32 @@ constexpr std::array<details::SpecType, details::MAX_ARG_COUNT>& details::ArgCon
 	return specContainer;
 }
 
+template<typename T> constexpr void details::ArgContainer::StoreCustomArg(T&& value) {
+	using type              = std::remove_cvref_t<decltype(value)>;
+	argContainer[ counter ] = std::make_unique<CustomValue<type>>(std::forward<type>(type(value)));
+}
+
+template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& value) {
+	using base_type         = std::remove_cvref_t<decltype(value)>;
+	using ref               = std::add_lvalue_reference_t<base_type>;
+	argContainer[ counter ] = std::forward<ref>(ref(value));
+}
+
 template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&&... args) {
 	(
 	[ = ](auto&& arg) {
 		using base_type          = std::remove_cvref_t<decltype(arg)>;
 		using ref                = std::add_lvalue_reference_t<base_type>;
-		argContainer[ counter ]  = std::forward<ref>(ref(arg));
 		specContainer[ counter ] = GetArgType(std::forward<ref>(ref(arg)));
+		if constexpr( is_supported<base_type, VType>::value ) {
+				StoreNativeArg(std::forward<ref>(ref(arg)));
+		} else {
+				StoreCustomArg(std::forward<ref>(ref(arg)));
+			}
 		if( ++counter > MAX_ARG_INDEX ) {
 				std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
 				return;
-		}
+		};
 	}(args),
 	...);
 }
@@ -86,4 +97,9 @@ constexpr const void* details::ArgContainer::const_void_ptr_state(size_t index) 
 
 constexpr void* details::ArgContainer::void_ptr_state(size_t index) {
 	return *std::get_if<14>(&argContainer[ index ]);
+}
+
+constexpr std::unique_ptr<serenity::CustomBase>& serenity::msg_details::ArgContainer::custom_state(size_t index) {
+	return *std::get_if<15>(&argContainer[ index ]);
+	;
 }

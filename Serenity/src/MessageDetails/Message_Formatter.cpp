@@ -26,43 +26,146 @@ namespace serenity::msg_details {
 
 	void Message_Formatter::FlagFormatter(size_t index, size_t precision) {
 		switch( index ) {
-				case 0: formatter.Emplace_Back(std::make_unique<Format_Arg_a>(*msgInfo)); break;
-				case 1: formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo)); break;
-				case 2: formatter.Emplace_Back(std::make_unique<Format_Arg_c>(*msgInfo)); break;
-				case 3: formatter.Emplace_Back(std::make_unique<Format_Arg_d>(*msgInfo)); break;
-				case 4: formatter.Emplace_Back(std::make_unique<Format_Arg_e>(precision)); break;
-				case 5: formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo)); break;
-				case 6: formatter.Emplace_Back(std::make_unique<Format_Arg_l>(*msgInfo)); break;
-				case 7: formatter.Emplace_Back(std::make_unique<Format_Arg_m>(*msgInfo)); break;
-				case 8: formatter.Emplace_Back(std::make_unique<Format_Arg_n>(*msgInfo)); break;
-				case 9: formatter.Emplace_Back(std::make_unique<Format_Arg_p>(*msgInfo)); break;
-				case 10: formatter.Emplace_Back(std::make_unique<Format_Arg_r>(*msgInfo)); break;
-				case 11: formatter.Emplace_Back(std::make_unique<Format_Arg_s>(*msgInfo, sourceFlag)); break;
-				case 12: formatter.Emplace_Back(std::make_unique<Format_Arg_t>(precision)); break;
-				case 13: formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo)); break;
-				case 14: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
-				case 15: formatter.Emplace_Back(std::make_unique<Format_Arg_y>(*msgInfo)); break;
-				case 16: formatter.Emplace_Back(std::make_unique<Format_Arg_z>(*msgInfo)); break;
-				case 17: formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo)); break;
-				case 18: formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo)); break;
-				case 19: formatter.Emplace_Back(std::make_unique<Format_Arg_C>(*msgInfo)); break;
-				case 20: formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo)); break;
-				case 21: formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo)); break;
-				case 22: formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo)); break;
-				case 23: formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo)); break;
-				case 24: formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo)); break;
-				case 25: formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo)); break;
-				case 26: formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo)); break;
-				case 27: formatter.Emplace_Back(std::make_unique<Format_Arg_R>(*msgInfo)); break;
-				case 28: formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo)); break;
-				case 29: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
-				case 30: formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo)); break;
-				case 31: formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo)); break;
-				case 32: formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(*msgInfo)); break;
-				case 33: formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo)); break;
+				case 0:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_a>(*msgInfo));
+					formatter.reserveCapacity += 3;
+					break;
+				case 1:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo));
+					formatter.reserveCapacity += 3;
+					break;
+				case 2:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_c>(*msgInfo));
+					formatter.reserveCapacity += 24;
+					break;
+				case 3:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_d>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 4:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_e>(precision));
+					formatter.reserveCapacity += 10;
+					break;
+				case 5:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_b>(*msgInfo));
+					formatter.reserveCapacity += 3;
+					break;
+				case 6:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_l>(*msgInfo));
+					++formatter.reserveCapacity;
+					break;
+				case 7:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_m>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 8:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_n>(*msgInfo));
+					formatter.reserveCapacity += 7;
+					break;
+				case 9:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_p>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 10:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_r>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 11:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_s>(*msgInfo, sourceFlag));
+					formatter.reserveCapacity += 2;
+					break;
+				case 12:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_t>(precision));
+					formatter.reserveCapacity += 8;
+					break;
+				case 13:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_w>(*msgInfo));
+					++formatter.reserveCapacity;
+					break;
+				case 14:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo));
+					formatter.reserveCapacity += 8;
+					break;
+				case 15:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_y>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 16:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_z>(*msgInfo));
+					formatter.reserveCapacity += 4;
+					break;
+				case 17:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_A>(*msgInfo));
+					formatter.reserveCapacity += 10;
+					break;
+				case 18:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_B>(*msgInfo));
+					formatter.reserveCapacity += 10;
+					break;
+				case 19:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_C>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 20:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_D>(*msgInfo));
+					formatter.reserveCapacity += 8;
+					break;
+				case 21:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_F>(*msgInfo));
+					formatter.reserveCapacity += 10;
+					break;
+				case 22:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_H>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 23:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_I>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 24:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_L>(*msgInfo));
+					formatter.reserveCapacity += 6;
+					break;
+				case 25:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_M>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 26:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_N>(*msgInfo));
+					formatter.reserveCapacity += msgInfo->Name().size();
+					break;
+				case 27:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_R>(*msgInfo));
+					formatter.reserveCapacity += 5;
+					break;
+				case 28:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_S>(*msgInfo));
+					formatter.reserveCapacity += 2;
+					break;
+				case 29:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo));
+					formatter.reserveCapacity += 8;
+					break;
+				case 30:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_Y>(*msgInfo));
+					formatter.reserveCapacity += 4;
+					break;
+				case 31:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_T>(*msgInfo));
+					formatter.reserveCapacity += 8;
+					break;
+				case 32:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(*msgInfo));
+					formatter.reserveCapacity += 4;
+					break;
+				case 33:
+					formatter.Emplace_Back(std::make_unique<Format_Arg_Message>(*msgInfo));
+					// this is most likely where additional allocations would be made so reserve is called on the formatting side
+					break;
 				default: break;
 			}
 
+		// TODO: Come back to this if there's enough time to flesh this out. Need to just continue wrapping this project up instead of adding more work right now.
 		/**************************************************************  TESTING **************************************************************/
 		// NOTE: I do get the appropriate string when all is settled -> now to figure out how to structure the formatting aspect and simplify the
 		//              FormatterArgs functions. I could probably just add some logic to the current ArgFormatter class for when it encounters a '%'
@@ -91,21 +194,26 @@ namespace serenity::msg_details {
 		// NOTE 3: Now that I've fixed some of the speed problems associated with using a std::vector<char> with the se_format_to(), this idea
 		//                   is much more realistic in the sense of writing directly to the file buffer if the target is a file type target given there's basically
 		//                   no trade-off in formatting performance now.
+		// NOTE 4: First thing to do here is implement Time Spec Formatting, but that still leaves the custom flags of  'L', 'l', 'n', 'N', 's', 'e', 't' and '+'...
+		//                  So for now, this will be left as-is since I still have no idea how to go about adding a callback for custom types. Adding time spec
+		//                  formatting won't be hard at all - I just need to add a time spec char field in FormatterSpecs and the relevant formatter function
+		//                  calls for the spec provided, it's just the damn custom formatting I need to figure out here... (which would be nice since the whole
+		//                  ArgFormatter class would finally be considered a light-weight drop-in replacement for libfmt and <format> at that point)
 
 		// switch( index ) {
 		//		case 0: internalFmt.append("{:%a}"); break;
 		//		case 1: internalFmt.append("{:%b}"); break;
 		//		case 2: internalFmt.append("{:%c}"); break;
 		//		case 3: internalFmt.append("{:%d}"); break;
-		//		case 4: internalFmt.append("{:%e}"); break;
+		//		case 4: internalFmt.append("{:%e}"); break;		/*  Custom Flag */
 		//		case 5: internalFmt.append("{:%b}"); break;
-		//		case 6: internalFmt.append("{:%l}"); break;
+		//		case 6: internalFmt.append("{:%l}"); break;		/*  Custom Flag */
 		//		case 7: internalFmt.append("{:%m}"); break;
-		//		case 8: internalFmt.append("{:%n}"); break;
+		//		case 8: internalFmt.append("{:%n}"); break;		/*  Custom Flag */
 		//		case 9: internalFmt.append("{:%p}"); break;
 		//		case 10: internalFmt.append("{:%r}"); break;
-		//		case 11: internalFmt.append("{:%s}"); break;
-		//		case 12: internalFmt.append("{:%t}"); break;
+		//		case 11: internalFmt.append("{:%s}"); break;	/*  Custom Flag */
+		//		case 12: internalFmt.append("{:%t}"); break;		/*  Custom Flag */
 		//		case 13: internalFmt.append("{:%w}"); break;
 		//		case 14: internalFmt.append("{:%D}"); break;
 		//		case 15: internalFmt.append("{:%y}"); break;
@@ -117,16 +225,16 @@ namespace serenity::msg_details {
 		//		case 21: internalFmt.append("{:%F}"); break;
 		//		case 22: internalFmt.append("{:%H}"); break;
 		//		case 23: internalFmt.append("{:%I}"); break;
-		//		case 24: internalFmt.append("{:%L}"); break;
+		//		case 24: internalFmt.append("{:%L}"); break;	/*  Custom Flag */
 		//		case 25: internalFmt.append("{:%M}"); break;
-		//		case 26: internalFmt.append("{:%N}"); break;
+		//		case 26: internalFmt.append("{:%N}"); break;	/*  Custom Flag */
 		//		case 27: internalFmt.append("{:%R}"); break;
 		//		case 28: internalFmt.append("{:%S}"); break;
 		//		case 29: internalFmt.append("{:%T}"); break;
 		//		case 30: internalFmt.append("{:%Y}"); break;
 		//		case 31: internalFmt.append("{:%T}"); break;
 		//		case 32: internalFmt.append("{:%Z}"); break;
-		//		case 33: internalFmt.append("{:%+}"); break;
+		//		case 33: internalFmt.append("{:%+}"); break;	/*  Custom Flag */
 		//		default: break;
 		//	}
 
@@ -134,12 +242,10 @@ namespace serenity::msg_details {
 	}
 
 	void Message_Formatter::SetPattern(std::string_view pattern) {
-		/*********** TESTING ***********/
-		/*internalFmt.clear();*/
-		/*******************************/
 		fmtPattern.clear();
 		fmtPattern.append(pattern.data(), pattern.size());
 		StoreFormat();
+		formatter.Reserve();
 	}
 
 	Message_Formatter::Formatters& Message_Formatter::GetFormatters() {
@@ -171,17 +277,11 @@ namespace serenity::msg_details {
 						if( pos == std::string::npos ) {
 								formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(temp));
 								temp.clear();
-								/*********** TESTING ***********/
-								/*	internalFmt.append(temp);*/
-								/*******************************/
 								continue;
 						}
 						std::string subStr { temp.substr(0, pos) };
 						formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(subStr));
 						temp.erase(0, subStr.size());
-						/*********** TESTING ***********/
-						/*	internalFmt.append(subStr);*/
-						/*******************************/
 					}
 			}
 	}
@@ -273,32 +373,23 @@ namespace serenity::msg_details {
 	const Message_Info* Message_Formatter::MessageDetails() {
 		return msgInfo;
 	}
-
 	// Formatters Functions
-	constexpr size_t ESTIMATED_ARG_SIZE = 32;
-	Message_Formatter::Formatters::Formatters(std::vector<std::unique_ptr<Formatter>>&& container): m_Formatter(std::move(container)) {
-		localBuffer.reserve(m_Formatter.size() * ESTIMATED_ARG_SIZE);
-	}
+	Message_Formatter::Formatters::Formatters(std::vector<std::unique_ptr<Formatter>>&& container): m_Formatter(std::move(container)) { }
 
 	void Message_Formatter::Formatters::Emplace_Back(std::unique_ptr<Formatter>&& formatter) {
 		m_Formatter.emplace_back(std::move(formatter));
-		localBuffer.reserve(m_Formatter.size() * ESTIMATED_ARG_SIZE);
 	}
-	// clang-format off
-	// TODO: See how I change this up to take advantage of the ArgFormatter class (Besides the kernel call to file writing, time is spent the most in here).
-   //                I'm not sure I can get file writing all that much faster so the other three functions are the priority here instead.
-	//              Current hierarchy of  functions that most time is spent in: WriteToFile() -> FormatUserPattern() -> FormatMsgArgs() -> PolicyFlushOn()
-	//              With The Current Cpu Usage Of About:                                        42.25%                         25.61%                            14.50%                              4.82%
-	// clang-format on
-	// Realistically though, this is pretty fast as-is in only taking ~50ns to complete for the default pattern; dropping the default pattern to only contain
-	// '%+' for the message to be printed -> times went from ~223ns down to ~174ns so I'm not entirely sure this is a real bottleneck in all fairness...
+
+	void Message_Formatter::Formatters::Reserve() {
+		localBuffer.reserve(reserveCapacity);
+	}
 
 	std::string_view Message_Formatter::Formatters::FormatUserPattern() {
 		localBuffer.clear();
 		for( const auto& formatter: m_Formatter ) {
 				formatter->FormatUserPattern(localBuffer);
 			}
-		return localBuffer;
+		return std::string_view(localBuffer.data(), localBuffer.size());
 	}
 
 	std::string_view serenity::msg_details::Message_Formatter::LineEnding() const {

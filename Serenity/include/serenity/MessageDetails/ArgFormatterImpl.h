@@ -59,6 +59,7 @@
 #include <string_view>
 
 constexpr auto fillBuffDefaultCapacity { 512 };
+
 constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
 	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}), argStorage(ArgContainer {}),
 	  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(), fillBuffer() {
@@ -218,8 +219,22 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
+					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
-					WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.SpecTypesCaptured()[ specValues.argPosition ]);
+					if( argType == SpecType::CustomType ) {
+							/************************************************************* TODO *************************************************************/
+							// I can store the custom type, verify it has a specialization, throw a compiler error if it doesn't, store the value and value size. but
+							// I cannot for the life of me get this to work... I'm running into object slicing at the moment, which makes a little bit of sense due
+							//  to not templating the CustomBase, but I have no idea how to do this correctly... I tried just adding  the following ---------------->
+							//  template<typename ArgType> VType. = ..CustomValue<ArgType>; but that made a mess of the ArgFormatter class where I
+							// had to then template the class and was forcing even the static forms of the formatting functions to require a templated type
+							// value... I just need to sit down and think of how to approach this. All I reealllyy need right now is just simply the value type; the
+							// CustomBase struct holds the raw value and value size, but I can't reinterpret it to the original value type OR call the value type's
+							// CustomFormatter specialization without being able to track it's typing...
+							auto& customArg { argStorage.custom_state(specValues.argPosition) };
+					} else {
+							WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+						}
 					if( specValues.hasClosingBrace ) {
 							Iter = '}';
 					}
@@ -228,10 +243,15 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			}
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( pos < bracketSize ) {
-					Parse(argBracket, pos, argType);
-			}
-			Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+
+			if( argType == SpecType::CustomType ) {
+					// TODO
+			} else {
+					if( pos < bracketSize ) {
+							Parse(argBracket, pos, argType);
+					}
+					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+				}
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
 			}

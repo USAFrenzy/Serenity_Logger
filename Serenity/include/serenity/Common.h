@@ -250,8 +250,8 @@ namespace serenity {
 		utc
 	};
 
-	// This lovely and amazing end to my headaches for getting the correct call site
-	// was provided by ivank at https://stackoverflow.com/a/66402319/11410972
+	// This lovely and amazing end to my headaches for getting the correct call site was provided by ivank at :
+	//   https://stackoverflow.com/a/66402319/11410972
 	struct MsgWithLoc
 	{
 		std::string_view msg;

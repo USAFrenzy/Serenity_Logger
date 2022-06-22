@@ -63,6 +63,7 @@
 
 using namespace serenity::msg_details;
 namespace serenity {
+
 	// drop-in replacement for format_error for the ArgFormatter class
 	class format_error: public std::runtime_error
 	{
@@ -361,23 +362,21 @@ namespace serenity::arg_formatter {
 // These are made static so that when including this file, one can either use and modify the above class or just call the
 // formatting functions directly, like the logger-side of this project where the VFORMAT_TO macros are defined
 namespace serenity {
-	static auto StaticFormatterInstance() {
-		// shared_ptr so that the ArgFormatter  instance isn't destroyed until the end of the process including this file
-		static std::shared_ptr<arg_formatter::ArgFormatter> staticFormatter { std::make_shared<arg_formatter::ArgFormatter>() };
-		return staticFormatter;
+	namespace globals {
+		static std::unique_ptr<arg_formatter::ArgFormatter> staticFormatter { std::make_unique<arg_formatter::ArgFormatter>() };
 	}
 	template<typename T, typename... Args> static constexpr void format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
-		StaticFormatterInstance()->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), sv, std::forward<Args>(args)...);
+		globals::staticFormatter->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), sv, std::forward<Args>(args)...);
 	}
 	template<typename T, typename... Args>
 	static constexpr void format_to(std::back_insert_iterator<T>&& Iter, const std::locale& locale, std::string_view sv, Args&&... args) {
-		StaticFormatterInstance()->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), locale, sv, std::forward<Args>(args)...);
+		globals::staticFormatter->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), locale, sv, std::forward<Args>(args)...);
 	}
 	template<typename... Args> [[nodiscard]] static std::string format(std::string_view sv, Args&&... args) {
-		StaticFormatterInstance()->se_format(sv, std::forward<Args>(args)...);
+		globals::staticFormatter->se_format(sv, std::forward<Args>(args)...);
 	}
 	template<typename... Args> [[nodiscard]] static std::string format(const std::locale& locale, std::string_view sv, Args&&... args) {
-		StaticFormatterInstance()->se_format(locale, sv, std::forward<Args>(args)...);
+		globals::staticFormatter->se_format(locale, sv, std::forward<Args>(args)...);
 	}
 }    // namespace serenity
 

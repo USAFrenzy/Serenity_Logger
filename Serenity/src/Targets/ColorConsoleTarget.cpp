@@ -1,17 +1,5 @@
 #include <serenity/Targets/ColorConsoleTarget.h>
 
-#if defined BUILT_IN_FORMATTING_ENABLED && !defined DISABLE_CFMT_WARN
-	#ifdef WINDOWS_PLATFORM
-		#pragma message(                                                                                                                                            \
-		"\tBuilt-in Argument Formatting Is Enabled.\n\tFor Custom Formatting, Please Define Either 'USE_STD_FORMAT' or 'USE_FMTLIB' Instead.\n\tTo Disable This Message, Please Define 'DISABLE_CFMT_WARN'")
-	#else
-		#warning                                                                                                                                                    \
-		"\tBuilt-in Argument Formatting Is Enabled.\n\tFor Custom Formatting, Please Define Either 'USE_STD_FORMAT' or 'USE_FMTLIB' Instead.\n\tTo Disable This Message, Please Define 'DISABLE_CFMT_WARN'"
-	#endif    // WINDOWS_PLATFORM
-#endif        // BUILT_IN_FORMATTING_ENABLED
-
-#include <iostream>
-
 namespace serenity::targets {
 	ColorConsole::ColorConsole(): TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false) {
 		TargetHelper()->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::always);
@@ -167,35 +155,11 @@ namespace serenity::targets {
 		}    // IsValidHandle() Check
 	}        // PrintMessage()
 
-	// TODO: Add a function that checks if locale needs to be swapped as well
-	// TODO: as reset the old mode to its default if mode is changed in SetConsoleMode()
 	void ColorConsole::SetLocale(const std::locale& loc) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		using enum console_interface;
-		switch( consoleMode ) {
-				case std_out:
-					if( std::cout.getloc() != loc ) {
-							std::cout.imbue(loc);
-							std::wcout.imbue(loc);
-					}
-					break;
-				case std_err:
-					if( std::cerr.getloc() != loc ) {
-							std::cerr.imbue(loc);
-							std::wcerr.imbue(loc);
-					}
-					break;
-				case std_log:
-					if( std::clog.getloc() != loc ) {
-							std::clog.imbue(loc);
-							std::wclog.imbue(loc);
-					}
-					break;
-			}
-
 		TargetBase::SetLocale(loc);
 	}
 

@@ -50,6 +50,7 @@ namespace serenity::targets {
 		std::unique_ptr<msg_details::Message_Info> msgDetails;
 		std::unique_ptr<msg_details::Message_Formatter> msgPattern;
 		std::shared_ptr<helpers::BaseTargetHelper> baseHelper;
+		template<typename... Args> void LogMessage(std::string_view msg, Args&&... args);
 	};
 
 #include "Target-impl.h"

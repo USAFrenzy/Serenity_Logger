@@ -4,6 +4,8 @@
 #define GENERAL_SANDBOX              0
 #define ROTATING_TESTING             0
 #define PARSE_TESTING                1
+#define ENABLE_PARSE_BENCHING        0
+#define ENABLE_PARSE_SANDBOX         1
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	#define _CRTDBG_MAP_ALLOC
@@ -53,6 +55,20 @@ template<typename T> std::string SetPrecision(const T value, const int precision
 	temp << std::fixed << value;
 	return temp.str();
 }
+
+struct point
+{
+	int x, y;
+};
+
+// Test for specialization
+template<> struct serenity::CustomFormatter<point>
+{
+	constexpr void Parse(std::string_view parse) { }
+	constexpr std::string_view Format(point const& p) {
+		return std::string_view();
+	}
+};
 
 int main() {
 	using namespace serenity;
@@ -229,6 +245,8 @@ int main() {
 
 #ifdef ENABLE_PARSE_SECTION
 	using namespace serenity::arg_formatter;
+
+	#if ENABLE_PARSE_BENCHING
 	constexpr std::string_view ParseFormatStringString { "\n{0:*^#{5}X}\n{1:*^#{5}x}\n{2:*^#{5}a}\n{3:*^#{5}E}\n{4:*^#{5}b}\n{5:*^#{5}B}\n{6:s}" };
 	constexpr int a { 123456789 };
 	constexpr int b { 5 };
@@ -246,14 +264,14 @@ int main() {
 	Instrumentator timer;
 	std::string result;
 
-	// Now std::vector<char> and string containers are more or less on par with one another, with strings being only ~20ns faster
-	#define TEST_STRING_CASE 1
+		// Now std::vector<char> and string containers are more or less on par with one another, with strings being only ~20ns faster
+		#define TEST_STRING_CASE 1
 
-	#if TEST_STRING_CASE
+		#if TEST_STRING_CASE
 	std::string finalStr;
-	#else
+		#else
 	std::vector<char> finalStr {};
-	#endif
+		#endif
 
 	serenity::targets::ColorConsole console("", "%+");
 	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
@@ -277,18 +295,18 @@ int main() {
 			// serenity's format loop by returning a string
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
-	#if TEST_STRING_CASE
+		#if TEST_STRING_CASE
 					finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
-	#endif
+		#endif
 				}
 			timer.StopWatch_Stop();
 			finalStr.clear();
 
 			auto serenityTime2 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime2));
-	#if TEST_STRING_CASE
+		#if TEST_STRING_CASE
 			finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
-	#endif
+		#endif
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 			finalStr.clear();
 
@@ -343,6 +361,16 @@ int main() {
 				}
 			printf("\n");
 		}
+	#endif
+
+	#if ENABLE_PARSE_SANDBOX
+	ArgFormatter formatter;
+
+	point test { .x { 5 }, .y { 8 } };
+
+	auto value = formatter.se_format("{}", test);
+
+	#endif
 
 #endif    // ENABLE_PARSE_SECTION
 

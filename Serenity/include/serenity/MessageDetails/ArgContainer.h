@@ -1,8 +1,77 @@
 #pragma once
 
 #include <string_view>
+#include <any>    // testing
 #include <array>
+#include <iterator>
+#include <memory>
 #include <variant>
+
+namespace serenity {
+
+	template<typename T, typename U> struct is_supported;
+	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
+	{
+	};
+
+	template<typename T> struct CustomFormatter
+	{
+		virtual constexpr void Parse(std::string_view) = 0;
+		virtual constexpr std::string_view Format()    = 0;
+	};
+
+	template<typename T> struct has_formatter: std::bool_constant<std::is_default_constructible_v<CustomFormatter<T>>>
+	{
+	};
+
+	/****************************************************************** NOTE ******************************************************************/
+	// CustomBase correctly stores the value address and it's alignment size, however, when storing a unique_ptr to CustomValue<T>, the type is
+	// lost and cannot be used later to call the type's specialization of CustomFormatter<T>. Given that fact, I either need some clever way of
+	// holding and transferring the type to the non-templated base, or somehow have a type-erased way of calling the CustomFormatter<T>.
+	// I know very little of type erasure other than simple duck-typing from polymorphism so this is going to be particularly hard I think...
+	struct CustomBase
+	{
+		explicit CustomBase(void* value, size_t size): rawValue(value), valueSize(size) { }
+		~CustomBase()                            = default;
+		CustomBase(const CustomBase&)            = delete;
+		CustomBase& operator=(const CustomBase&) = delete;
+		void* rawValue;
+		size_t valueSize;
+	};
+
+	template<typename T> struct CustomValue: CustomBase
+	{
+		explicit CustomValue(T&& value): CustomBase(static_cast<void*>(std::addressof(value)), std::alignment_of_v<decltype(value)>) { }
+		~CustomValue()                             = default;
+		CustomValue(const CustomValue&)            = delete;
+		CustomValue& operator=(const CustomValue&) = delete;
+	};
+	/****************************************************************** NOTE ******************************************************************/
+	// With the above note on losing the value's type, this obviously encounters the same issue as it cannot instantiate the CustomFormatter<T>
+	// struct specialization without that type value to pass in... The goal of this struct was to have a direct interface to parse the argument bracket
+	// with the custom parse method and then format the value  directly into the provided iterator container using the custom Format function by
+	// getting the value  form it's address using it's type alignment to ensure we grab the whole address alignment of the data storage
+	template<typename T, typename U> struct CustomStateFormatter
+	{
+		using ValueType = std::remove_cvref_t<U>;
+		CustomStateFormatter(CustomValue<U>& value, std::string_view parseView, std::back_insert_iterator<T>&& Iter)
+			: pView(std::move(parseView)), iter(std::forward<std::back_insert_iterator<T>>(Iter)), formatter(CustomFormatter<ValueType> {}) { }
+
+		std::string_view pView;
+		std::back_insert_iterator<T> iter;
+		CustomFormatter<ValueType> formatter;
+	};
+
+	// clang-format off
+	using VType = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int,
+		long long, unsigned long long, bool, char, float, double, long double, const void*, void*, std::unique_ptr<CustomBase>>;
+	// clang-format on
+
+	template<typename T> struct is_formattable;
+	template<typename T> struct is_formattable: std::bool_constant<is_supported<T, VType>::value || has_formatter<T>::value>
+	{
+	};
+}    // namespace serenity
 
 namespace serenity::msg_details {
 
@@ -23,32 +92,27 @@ namespace serenity::msg_details {
 		LongDoubleType   = 12,
 		ConstVoidPtrType = 13,
 		VoidPtrType      = 14,
+		CustomType       = 15,
 	};
 
-	template<typename T, typename U> struct is_supported;
-	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
-	{
-	};
 	constexpr size_t MAX_ARG_COUNT = 25;
 	constexpr size_t MAX_ARG_INDEX = 24;
 
 	class ArgContainer
 	{
 	  public:
-		// clang-format off
-		using VType = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, 
-			                         long long, unsigned long long,bool, char, float, double, long double, const void*, void*>;
-		// clang-format on
 		constexpr ArgContainer()                               = default;
 		constexpr ArgContainer(const ArgContainer&)            = delete;
 		constexpr ArgContainer& operator=(const ArgContainer&) = delete;
 		constexpr ~ArgContainer()                              = default;
 
-		constexpr std::array<VType, MAX_ARG_COUNT>& ArgStorage();
-		constexpr std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
-		constexpr size_t CurrentSize();
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 		template<typename... Args> constexpr void StoreArgs(Args&&... args);
+		template<typename T> constexpr void StoreNativeArg(T&& arg);
+		template<typename T> constexpr void StoreCustomArg(T&& arg);
+
+		constexpr std::array<VType, MAX_ARG_COUNT>& ArgStorage();
+		constexpr std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
 		constexpr std::string_view string_state(size_t index);
 		constexpr std::string_view c_string_state(size_t index);
 		constexpr std::string_view string_view_state(size_t index);
@@ -63,6 +127,7 @@ namespace serenity::msg_details {
 		constexpr long double& long_double_state(size_t index);
 		constexpr const void* const_void_ptr_state(size_t index);
 		constexpr void* void_ptr_state(size_t index);
+		constexpr std::unique_ptr<CustomBase>& custom_state(size_t index);
 
 	  private:
 		std::array<VType, MAX_ARG_COUNT> argContainer {};
@@ -104,8 +169,10 @@ namespace serenity::msg_details {
 		} else if constexpr( std::is_same_v<base_type, void*> ) {
 				return std::forward<SpecType>(VoidPtrType);
 		} else {
-				auto isSupported = is_supported<base_type, ArgContainer::VType> {};
-				static_assert(isSupported.value, "Type Not Natively Supported. Please Enable USE_STD_FORMAT Or USE_FMTLIB  Instead.");
+				static_assert(is_formattable<base_type>::value, "A Template Specialization Must Exist For A Custom Type Argument.\n\t"
+				                                                "For Serenity, This Can Be Done By Specializing The CustomFormatter Template For Your Type And "
+				                                                "Implementing The Parse() And Format() Functions.");
+				return std::forward<SpecType>(CustomType);
 			}
 	}
 #include <serenity/MessageDetails/ArgContainerImpl.h>

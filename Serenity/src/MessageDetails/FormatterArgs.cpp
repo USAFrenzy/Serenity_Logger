@@ -591,13 +591,14 @@ namespace serenity::msg_details {
 
 	void Format_Arg_T::FormatUserPattern(std::string& container) {
 		using SERENITY_LUTS::numberStr;
+		auto& sec { numberStr[ cacheRef.tm_sec ] };
 		if( cacheRef.tm_hour == cachedHour && cacheRef.tm_min == cachedMin ) {
-				container.append(result.data(), result.size()).append(numberStr[ cacheRef.tm_sec ]);
+				container.append(result.data(), result.size()).append(sec.data(), sec.size());
 		} else {
 				cachedHour = cacheRef.tm_hour;
 				cachedMin  = cacheRef.tm_min;
 				result.clear();
-				container.append(result.append(numberStr[ cachedHour ]).append(":").append(numberStr[ cachedMin ])).append(numberStr[ cacheRef.tm_sec ]);
+				container.append(result.append(numberStr[ cachedHour ]).append(":").append(numberStr[ cachedMin ])).append(sec.data(), sec.size());
 			}
 	}
 	/*********************************************************************************************************************/
@@ -641,6 +642,7 @@ namespace serenity::msg_details {
 	Format_Arg_Message::Format_Arg_Message(Message_Info& info): message(info.Message()) { }
 
 	void Format_Arg_Message::FormatUserPattern(std::string& container) {
+		container.reserve(container.size() + message.size());
 		container.append(message);
 	}
 	/*********************************************************************************************************************/

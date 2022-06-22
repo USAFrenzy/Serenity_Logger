@@ -17,15 +17,18 @@ namespace serenity::msg_details {
 		class Formatters
 		{
 		  public:
+			size_t reserveCapacity {};
+
+		  public:
 			Formatters(std::vector<std::unique_ptr<Formatter>>&& container);
 			Formatters() = default;
 			void Emplace_Back(std::unique_ptr<Formatter>&& formatter);
 			std::string_view FormatUserPattern();
 			void Clear();
+			void Reserve();
 
 		  private:
 			std::string localBuffer;
-			std::string temp;
 			std::vector<std::unique_ptr<Formatter>> m_Formatter;
 		};
 
@@ -56,8 +59,6 @@ namespace serenity::msg_details {
 		LineEnd platformEOL;
 		std::string temp;
 		source_flag sourceFlag;
-		/**************************  TESTING **************************/
-		std::string internalFmt;
 	};
 #include <serenity/MessageDetails/Message_Formatter_Impl.h>
 }    // namespace serenity::msg_details

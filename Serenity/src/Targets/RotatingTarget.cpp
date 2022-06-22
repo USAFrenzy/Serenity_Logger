@@ -1,17 +1,5 @@
 #include <serenity/Targets/RotatingTarget.h>
 
-#if defined BUILT_IN_FORMATTING_ENABLED && !defined DISABLE_CFMT_WARN
-	#ifdef WINDOWS_PLATFORM
-		#pragma message(                                                                                                                                            \
-		"\tBuilt-in Argument Formatting Is Enabled.\n\tFor Custom Formatting, Please Define Either 'USE_STD_FORMAT' or 'USE_FMTLIB' Instead.\n\tTo Disable This Message, Please Define 'DISABLE_CFMT_WARN'")
-	#else
-		#warning                                                                                                                                                    \
-		"\tBuilt-in Argument Formatting Is Enabled.\n\tFor Custom Formatting, Please Define Either 'USE_STD_FORMAT' or 'USE_FMTLIB' Instead.\n\tTo Disable This Message, Please Define 'DISABLE_CFMT_WARN'"
-	#endif    // WINDOWS_PLATFORM
-#endif        // BUILT_IN_FORMATTING_ENABLED
-
-#include <iostream>
-
 namespace serenity::experimental {
 
 	RotateSettings::RotateSettings(const std::string& path): FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(RotateLimits {}) {
@@ -195,8 +183,7 @@ namespace serenity::experimental::targets {
 				return true;
 			}
 		catch( const std::exception& e ) {
-				std::cerr << "Error In Renaming File:\n";
-				std::cerr << e.what();
+				std::printf("Error In Renaming File:%s\n", e.what());
 				return false;
 			}
 	}
@@ -261,15 +248,15 @@ namespace serenity::experimental::targets {
 		if( !fileToReplace.empty() ) {
 				FileCacheHelper()->SetFilePath(fileToReplace);
 		} else {
-				std::cerr << "Warning: Unable To Locate Oldest File With Base Name \"" << OriginalName() << "\". Opening And Truncating Previous File, \""
-						  << previousFile << "\"\n";
+				std::printf("Warning: Unable To Locate Oldest File With Base Name \"%s\". Opening And Truncating Previous File, \"%s\"\n", OriginalName().c_str(),
+				            previousFile.c_str());
 				success = false;
 			}
 		if( !OpenFile(true) ) {
 				if( FileCacheHelper()->FilePath() != previousFile ) {
-						std::cerr << "Error: Unable To Finish Rotating From File \"" << previousFile << "\" To File \"" << FileCacheHelper()->FileName() << "\"\n";
+						std::printf("Error: Unable To Finish Rotating From File \"%s\" To File \"%s\"\n", previousFile.c_str(), FileCacheHelper()->FileName().c_str());
 				} else {
-						std::cerr << "Error: Unable To Open And Truncate File \"" << previousFile << "\"\n";
+						std::printf("Error: Unable To Open And Truncate File \"%s\"\n", previousFile.c_str());
 					}
 				success = false;
 		}
@@ -554,19 +541,19 @@ namespace serenity::experimental::targets {
 					{
 						if( (setting > 23) || (setting < 0) ) {
 								// clang-format off
-						std::cerr << "Hour setting passed in for IntervalMode::daily is out of bounds.\n";
-						std::cerr << "Value expected is between 0-23 where 0 is 12AM and 23 is 11PM.\n";
-						std::cerr << "Value passed in: " << setting << " \n";
-						setting = 0;
+								std::printf("Hour setting passed in for IntervalMode::daily is out of bounds.\n"
+									                 "Value expected is between 0-23 where 0 is 12AM and 23 is 11PM.\n"
+									                 "Value passed in: %d\n", setting);
 								// clang-format on
+								setting = 0;
 						}
 						if( (secondSetting > 59) || (secondSetting < 0) ) {
 								// clang-format off
-						std::cerr << "Minute setting passed in for IntervalMode::daily is out of bounds.\n";
-						std::cerr << "Value expected is between 0-59.\n";
-						std::cerr << "Value passed in: " << secondSetting << " \n";
-						secondSetting = 0;
+								std::printf("Minute setting passed in for IntervalMode::daily is out of bounds.\n"
+									                 "Value expected is between 0-59.\n"
+									                 "Value passed in: %d\n", secondSetting);
 								// clang-format on
+								secondSetting = 0;
 						}
 						limits.dayModeSettingHour   = setting;
 						limits.dayModeSettingMinute = secondSetting;
@@ -576,11 +563,11 @@ namespace serenity::experimental::targets {
 					{
 						if( (setting > 6) || (setting < 0) ) {
 								// clang-format off
-						std::cerr << "Weekday setting passed in for IntervalMode::weekly is out of bounds.\n";
-						std::cerr << "Value expected is between 0-6 where 0 is Sunday and 6 is Saturday.\n";
-						std::cerr << "Value passed in: " << setting << " \n";
-						setting = 0;
+								std::printf("Weekday setting passed in for IntervalMode::weekly is out of bounds.\n"
+									                  "Value expected is between 0-6 where 0 is Sunday and 6 is Saturday.\n"
+									                  "Value passed in: %d\n", setting);
 								// clang-format on
+								setting = 0;
 						}
 						limits.weekModeSetting = setting;
 					}
@@ -589,12 +576,11 @@ namespace serenity::experimental::targets {
 					{
 						if( (setting > 31) || (setting < 1) ) {
 								// clang-format off
-						std::cerr << "Day setting passed in for IntervalMode::monthly is out of bounds.\n";
-						std::cerr << "Value expected is between 1-31 where 1 is the first day of the "
-							"month and 31 is the max value of possible days in a month.\n";
-						std::cerr << "Value passed in: " << setting << " \n";
-						setting = 1;
+								std::printf("Day setting passed in for IntervalMode::monthly is out of bounds.\n"
+									                  "Value expected is between 1-31 where 1 is the first day of the month and 31 is the max value of possible days in a month.\n"
+									                   "Value passed in: %d\n", setting);
 								// clang-format on
+								setting = 1;
 						}
 						limits.monthModeSetting = setting;
 					}
