@@ -3,6 +3,7 @@
 #include <string_view>
 #include <any>    // testing
 #include <array>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <variant>
@@ -17,7 +18,7 @@ namespace serenity {
 	template<typename T> struct CustomFormatter
 	{
 		virtual constexpr void Parse(std::string_view) = 0;
-		virtual constexpr std::string_view Format()    = 0;
+		virtual constexpr void Format()                = 0;
 	};
 
 	template<typename T> struct has_formatter: std::bool_constant<std::is_default_constructible_v<CustomFormatter<T>>>
@@ -31,17 +32,30 @@ namespace serenity {
 	// I know very little of type erasure other than simple duck-typing from polymorphism so this is going to be particularly hard I think...
 	struct CustomBase
 	{
-		explicit CustomBase(void* value, size_t size): rawValue(value), valueSize(size) { }
+		explicit CustomBase(void* value, size_t size, void (*format)()): rawValue(value), valueSize(size), formatFunction([ = ]() { format(); }) { }
 		~CustomBase()                            = default;
 		CustomBase(const CustomBase&)            = delete;
 		CustomBase& operator=(const CustomBase&) = delete;
 		void* rawValue;
 		size_t valueSize;
+		std::function<void()> formatFunction;
 	};
+
+	template<typename T> auto Formatter(T&&) {
+		using Type = std::remove_cvref_t<T>;
+		CustomFormatter<Type> formatter { CustomFormatter<Type> {} };
+		return std::forward<CustomFormatter<Type>>(formatter);
+	}
 
 	template<typename T> struct CustomValue: CustomBase
 	{
-		explicit CustomValue(T&& value): CustomBase(static_cast<void*>(std::addressof(value)), std::alignment_of_v<decltype(value)>) { }
+		using ValueType = std::remove_cvref_t<T>;
+		explicit CustomValue(T&& value)
+			: CustomBase(static_cast<void*>(std::addressof(value)), std::alignment_of_v<decltype(value)>,
+		                 /* Definitely feel like I'm on the right path, the only thing I can't seem to do here is erase the type of the formatter for
+		                    std::fucntion  for storing the related Format function */
+		                 &decltype(Formatter(std::forward<T>(value)))::Format) { }
+
 		~CustomValue()                             = default;
 		CustomValue(const CustomValue&)            = delete;
 		CustomValue& operator=(const CustomValue&) = delete;

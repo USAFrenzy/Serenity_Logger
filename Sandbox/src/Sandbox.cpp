@@ -65,9 +65,7 @@ struct point
 template<> struct serenity::CustomFormatter<point>
 {
 	constexpr void Parse(std::string_view parse) { }
-	constexpr std::string_view Format(point const& p) {
-		return std::string_view();
-	}
+	constexpr void Format() { }
 };
 
 int main() {
@@ -368,7 +366,7 @@ int main() {
 
 	point test { .x { 5 }, .y { 8 } };
 
-	auto value = formatter.se_format("{}", test);
+		// auto value = formatter.se_format("{}", test);
 
 	#endif
 
