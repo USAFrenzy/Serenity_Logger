@@ -47,7 +47,7 @@ std::filesystem::path LogDirPath() {
 }
 
 // This is from
-// (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-TestPoint-values/16606128)
+// (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128)
 // Just using this to set throughput precision
 template<typename T> std::string SetPrecision(const T value, const int precision = 3) {
 	std::ostringstream temp;
@@ -395,12 +395,6 @@ int main() {
 	cTimer.StopWatch_Stop();
 	auto standardElapsed { cTimer.Elapsed_In(time_mode::us) / 100'000'000.0f };
 	std::cout << serenity::format("Standard Took An Average Of [{} us]\nWith Result: {}\n", standardElapsed, test);
-		#else
-	//
-	// Debug mode still has issues of  garbage values appearing
-	auto _ { formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}\n", test) };
-	std::cout << _;
-
 		#endif    // !NDEBUG
 
 	#endif
