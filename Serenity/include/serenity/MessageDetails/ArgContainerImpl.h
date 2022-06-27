@@ -11,8 +11,9 @@ constexpr std::array<details::SpecType, details::MAX_ARG_COUNT>& details::ArgCon
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreCustomArg(T&& value) {
-	using type              = std::remove_cvref_t<decltype(value)>;
-	argContainer[ counter ] = std::make_unique<CustomValue<type>>(std::forward<type>(type(value)));
+	using type = std::remove_cvref_t<T>;
+	using ref  = std::add_lvalue_reference_t<type>;
+	argContainer[ counter ].emplace<15>(std::forward<ref>(value));
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& value) {
@@ -99,7 +100,6 @@ constexpr void* details::ArgContainer::void_ptr_state(size_t index) {
 	return *std::get_if<14>(&argContainer[ index ]);
 }
 
-constexpr std::unique_ptr<serenity::CustomBase>& serenity::msg_details::ArgContainer::custom_state(size_t index) {
+constexpr serenity::CustomValue& serenity::msg_details::ArgContainer::custom_state(size_t index) {
 	return *std::get_if<15>(&argContainer[ index ]);
-	;
 }

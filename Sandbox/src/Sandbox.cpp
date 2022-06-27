@@ -47,7 +47,7 @@ std::filesystem::path LogDirPath() {
 }
 
 // This is from
-// (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-point-values/16606128)
+// (https://stackoverflow.com/questions/16605967/set-precision-of-stdto-string-when-converting-floating-TestPoint-values/16606128)
 // Just using this to set throughput precision
 template<typename T> std::string SetPrecision(const T value, const int precision = 3) {
 	std::ostringstream temp;
@@ -56,16 +56,29 @@ template<typename T> std::string SetPrecision(const T value, const int precision
 	return temp.str();
 }
 
-struct point
+struct TestPoint
 {
 	int x, y;
 };
 
 // Test for specialization
-template<> struct serenity::CustomFormatter<point>
+// The requirement mine has is that both parse and format must be at least defined
+template<> struct serenity::CustomFormatter<TestPoint>
 {
-	constexpr void Parse(std::string_view parse) { }
-	constexpr void Format() { }
+	constexpr void Parse(std::string_view parse) {
+		if( parse.begin() == parse.end() ) return;
+	}
+
+	std::string Format(const TestPoint& p) {
+		return serenity::format("({},{})", p.x, p.y);
+	}
+};
+
+template<> struct std::formatter<TestPoint>: std::formatter<std::string>
+{
+	auto format(TestPoint const& p, std::format_context& ctx) {
+		return std::formatter<std::string>::format(std::format("({},{})", p.x, p.y), ctx);
+	}
 };
 
 int main() {
@@ -363,13 +376,34 @@ int main() {
 
 	#if ENABLE_PARSE_SANDBOX
 	ArgFormatter formatter;
+	TestPoint test { .x { 5 }, .y { 8 } };
 
-	point test { .x { 5 }, .y { 8 } };
+		#ifdef NDEBUG
+	Instrumentator cTimer;
+	cTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < 100'000'000; ++i ) {
+			auto _ { formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}", test) };
+		}
+	cTimer.StopWatch_Stop();
+	auto serenityElapsed { cTimer.Elapsed_In(time_mode::us) / 100'000'000.0f };
+	std::cout << serenity::format("Serenity Took An Average Of [{} us]\nWith Result: {}\n", serenityElapsed, test);
 
-		// auto value = formatter.se_format("{}", test);
+	cTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < 100'000'000; ++i ) {
+			auto _ { std::format("Custom Formated Value Of Struct TestPoint Using The Standard: {}", test) };
+		}
+	cTimer.StopWatch_Stop();
+	auto standardElapsed { cTimer.Elapsed_In(time_mode::us) / 100'000'000.0f };
+	std::cout << serenity::format("Standard Took An Average Of [{} us]\nWith Result: {}\n", standardElapsed, test);
+		#else
+	//
+	// Debug mode still has issues of  garbage values appearing
+	auto _ { formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}\n", test) };
+	std::cout << _;
+
+		#endif    // !NDEBUG
 
 	#endif
-
 #endif    // ENABLE_PARSE_SECTION
 
 #if ENABLE_MEMORY_LEAK_DETECTION

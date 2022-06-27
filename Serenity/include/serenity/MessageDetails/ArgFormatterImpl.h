@@ -203,7 +203,17 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					return;
 			}
 			if( bracketResults.beginPos != 0 ) {
-					std::copy(sv.data(), sv.data() + bracketResults.beginPos, Iter);
+					auto& cont { *IteratorContainer(Iter).Container() };
+					if constexpr( std::is_same_v<T, std::string> ) {
+							cont.append(sv.data(), sv.data() + bracketResults.beginPos);
+					} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+							cont.insert(cont.end(), sv.begin(), sv.begin() + bracketResults.beginPos);
+							if( sv.back() != '\0' ) {
+									cont.push_back('\0');
+							}
+					} else {
+							std::copy(sv.begin(), sv.begin() + bracketResults.beginPos, Iter);
+						}
 					sv.remove_prefix(bracketResults.beginPos);
 					bracketResults.endPos -= bracketResults.beginPos;
 					bracketResults.beginPos = 0;
@@ -222,16 +232,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
 					if( argType == SpecType::CustomType ) {
-							/************************************************************* TODO *************************************************************/
-							// I can store the custom type, verify it has a specialization, throw a compiler error if it doesn't, store the value and value size. but
-							// I cannot for the life of me get this to work... I'm running into object slicing at the moment, which makes a little bit of sense due
-							//  to not templating the CustomBase, but I have no idea how to do this correctly... I tried just adding  the following ---------------->
-							//  template<typename ArgType> VType. = ..CustomValue<ArgType>; but that made a mess of the ArgFormatter class where I
-							// had to then template the class and was forcing even the static forms of the formatting functions to require a templated type
-							// value... I just need to sit down and think of how to approach this. All I reealllyy need right now is just simply the value type; the
-							// CustomBase struct holds the raw value and value size, but I can't reinterpret it to the original value type OR call the value type's
-							// CustomFormatter specialization without being able to track it's typing...
-							auto& customArg { argStorage.custom_state(specValues.argPosition) };
+							argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
 					} else {
 							WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 						}
@@ -243,9 +244,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			}
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-
 			if( argType == SpecType::CustomType ) {
-					// TODO
+					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
 			} else {
 					if( pos < bracketSize ) {
 							Parse(argBracket, pos, argType);
@@ -275,7 +275,17 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 					return;
 			}
 			if( bracketResults.beginPos != 0 ) {
-					std::copy(sv.data(), sv.data() + bracketResults.beginPos, Iter);
+					auto& cont { *IteratorContainer(Iter).Container() };
+					if constexpr( std::is_same_v<T, std::string> ) {
+							cont.append(sv.data(), sv.data() + bracketResults.beginPos);
+					} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+							cont.insert(cont.end(), sv.begin(), sv.begin() + bracketResults.beginPos);
+							if( sv.back() != '\0' ) {
+									cont.push_back('\0');
+							}
+					} else {
+							std::copy(sv.begin(), sv.begin() + bracketResults.beginPos, Iter);
+						}
 					sv.remove_prefix(bracketResults.beginPos);
 					bracketResults.endPos -= bracketResults.beginPos;
 					bracketResults.beginPos = 0;
@@ -290,8 +300,13 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
+					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
-					WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argStorage.SpecTypesCaptured()[ specValues.argPosition ]);
+					if( argType == SpecType::CustomType ) {
+							argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
+					} else {
+							WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+						}
 					if( specValues.hasClosingBrace ) {
 							Iter = '}';
 					}
@@ -300,10 +315,14 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 			}
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( pos < bracketSize ) {
-					Parse(argBracket, pos, argType);
-			}
-			Format(loc, std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			if( argType == SpecType::CustomType ) {
+					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
+			} else {
+					if( pos < bracketSize ) {
+							Parse(argBracket, pos, argType);
+					}
+					Format(loc, std::forward<std::back_insert_iterator<T>>(Iter), argType);
+				}
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
 			}

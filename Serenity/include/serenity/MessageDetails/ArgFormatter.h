@@ -130,7 +130,7 @@ namespace serenity {
 
 namespace serenity::arg_formatter {
 
-	constexpr size_t SERENITY_ARG_BUFFER_SIZE { 65 };
+	constexpr size_t SERENITY_ARG_BUFFER_SIZE { 66 };
 	// defualt locale used for when no locale is provided, yet a locale flag is present when formatting
 	static std::locale default_locale { std::locale("") };
 
@@ -179,15 +179,6 @@ namespace serenity::arg_formatter {
 		constexpr void Reset();
 		size_t beginPos { 0 };
 		size_t endPos { 0 };
-	};
-
-	template<typename T> struct IteratorContainer: std::back_insert_iterator<T>
-	{
-		using std::back_insert_iterator<T>::container_type;
-		constexpr IteratorContainer(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
-		constexpr const auto& Container() {
-			return this->container;
-		}
 	};
 
 	template<typename... Args> static constexpr void ReserveCapacityImpl(size_t& totalSize, Args&&... args) {
@@ -373,10 +364,16 @@ namespace serenity {
 		globals::staticFormatter->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), locale, sv, std::forward<Args>(args)...);
 	}
 	template<typename... Args> [[nodiscard]] static std::string format(std::string_view sv, Args&&... args) {
-		globals::staticFormatter->se_format(sv, std::forward<Args>(args)...);
+		std::string tmp;
+		tmp.reserve(serenity::arg_formatter::ReserveCapacity(std::forward<Args>(args)...));
+		globals::staticFormatter->se_format_to(std::back_inserter(tmp), sv, std::forward<Args>(args)...);
+		return std::move(tmp);
 	}
 	template<typename... Args> [[nodiscard]] static std::string format(const std::locale& locale, std::string_view sv, Args&&... args) {
-		globals::staticFormatter->se_format(locale, sv, std::forward<Args>(args)...);
+		std::string tmp;
+		tmp.reserve(serenity::arg_formatter::ReserveCapacity(std::forward<Args>(args)...));
+		globals::staticFormatter->se_format_to(std::back_inserter(tmp), locale, sv, std::forward<Args>(args)...);
+		return std::move(tmp);
 	}
 }    // namespace serenity
 

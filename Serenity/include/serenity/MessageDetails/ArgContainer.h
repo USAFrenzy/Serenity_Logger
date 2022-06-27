@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string_view>
-#include <any>    // testing
 #include <array>
 #include <functional>
 #include <iterator>
@@ -9,76 +8,99 @@
 #include <variant>
 
 namespace serenity {
+	template<typename T> struct IteratorContainer: std::back_insert_iterator<T>
+	{
+		using std::back_insert_iterator<T>::container_type;
+		constexpr IteratorContainer(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
+		constexpr const auto& Container() {
+			return this->container;
+		}
+	};
 
 	template<typename T, typename U> struct is_supported;
 	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
 	{
 	};
-
-	template<typename T> struct CustomFormatter
+	// NOTE: Would love to have the Format() overloads either return string_views or  directly write into the buffer.
+	//               The second option hasn't been tried and seems like a decent option; the first one left garbage values
+	//               being returned in Debug mode, although, in Release mode it worked fine.
+	struct CustomFormatterBase
 	{
+		explicit CustomFormatterBase() = default;
+		CustomFormatterBase(const CustomFormatterBase&) { }
+		CustomFormatterBase& operator=(const CustomFormatterBase&) = default;
+		CustomFormatterBase(CustomFormatterBase&&)                 = default;
+		CustomFormatterBase& operator=(CustomFormatterBase&&)      = default;
+		virtual ~CustomFormatterBase()                             = default;
+
+		constexpr std::string Format(auto&&) {
+			return std::string();
+		}
 		virtual constexpr void Parse(std::string_view) = 0;
-		virtual constexpr void Format()                = 0;
+	};
+
+	template<typename T> struct CustomFormatter: public CustomFormatterBase
+	{
+		explicit CustomFormatter(): CustomFormatterBase() { }
+		CustomFormatter(const CustomFormatter&) { }
+		CustomFormatter& operator=(const CustomFormatter&) = default;
+		CustomFormatter(CustomFormatter&& o)               = default;
+		CustomFormatter& operator=(CustomFormatter&& o)    = default;
+		~CustomFormatter()                                 = default;
+
+		constexpr void Parse(std::string_view) override { }
+		constexpr std::string Format(auto&&) {
+			return std::string();
+		}
 	};
 
 	template<typename T> struct has_formatter: std::bool_constant<std::is_default_constructible_v<CustomFormatter<T>>>
 	{
 	};
 
-	/****************************************************************** NOTE ******************************************************************/
-	// CustomBase correctly stores the value address and it's alignment size, however, when storing a unique_ptr to CustomValue<T>, the type is
-	// lost and cannot be used later to call the type's specialization of CustomFormatter<T>. Given that fact, I either need some clever way of
-	// holding and transferring the type to the non-templated base, or somehow have a type-erased way of calling the CustomFormatter<T>.
-	// I know very little of type erasure other than simple duck-typing from polymorphism so this is going to be particularly hard I think...
-	struct CustomBase
+	struct CustomValue
 	{
-		explicit CustomBase(void* value, size_t size, void (*format)()): rawValue(value), valueSize(size), formatFunction([ = ]() { format(); }) { }
-		~CustomBase()                            = default;
-		CustomBase(const CustomBase&)            = delete;
-		CustomBase& operator=(const CustomBase&) = delete;
-		void* rawValue;
-		size_t valueSize;
-		std::function<void()> formatFunction;
-	};
-
-	template<typename T> auto Formatter(T&&) {
-		using Type = std::remove_cvref_t<T>;
-		CustomFormatter<Type> formatter { CustomFormatter<Type> {} };
-		return std::forward<CustomFormatter<Type>>(formatter);
-	}
-
-	template<typename T> struct CustomValue: CustomBase
-	{
-		using ValueType = std::remove_cvref_t<T>;
+		template<typename T>
 		explicit CustomValue(T&& value)
-			: CustomBase(static_cast<void*>(std::addressof(value)), std::alignment_of_v<decltype(value)>,
-		                 /* Definitely feel like I'm on the right path, the only thing I can't seem to do here is erase the type of the formatter for
-		                    std::fucntion  for storing the related Format function */
-		                 &decltype(Formatter(std::forward<T>(value)))::Format) { }
+			: data(std::addressof(value)), CustomFormatCallBack([](std::string_view parseView, const void* ptr) -> std::string {
+				  using UnqualifiedType = std::remove_cvref_t<T>;
+				  using QualifiedType   = std::add_const_t<UnqualifiedType>;
+				  auto formatter { CustomFormatter<UnqualifiedType> {} };
+				  formatter.Parse(parseView);
+				  return formatter.Format(*static_cast<QualifiedType*>(ptr));
+			  }) { }
+
+		template<typename T> constexpr void FormatCallBack(std::string_view parseView, std::back_insert_iterator<T>&& iter) {
+			std::string sv { CustomFormatCallBack(parseView, data) };
+			auto& cont { *IteratorContainer(iter).Container() };
+			if constexpr( std::is_same_v<T, std::string> ) {
+					cont.append(sv.data(), sv.size());
+			} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+					cont.insert(cont.end(), sv.begin(), sv.end());
+					if( sv.back() != '\0' ) {
+							cont.push_back('\0');
+					}
+			} else {
+					std::copy(sv.begin(), sv.end(), iter);
+				}
+		}
 
 		~CustomValue()                             = default;
 		CustomValue(const CustomValue&)            = delete;
 		CustomValue& operator=(const CustomValue&) = delete;
-	};
-	/****************************************************************** NOTE ******************************************************************/
-	// With the above note on losing the value's type, this obviously encounters the same issue as it cannot instantiate the CustomFormatter<T>
-	// struct specialization without that type value to pass in... The goal of this struct was to have a direct interface to parse the argument bracket
-	// with the custom parse method and then format the value  directly into the provided iterator container using the custom Format function by
-	// getting the value  form it's address using it's type alignment to ensure we grab the whole address alignment of the data storage
-	template<typename T, typename U> struct CustomStateFormatter
-	{
-		using ValueType = std::remove_cvref_t<U>;
-		CustomStateFormatter(CustomValue<U>& value, std::string_view parseView, std::back_insert_iterator<T>&& Iter)
-			: pView(std::move(parseView)), iter(std::forward<std::back_insert_iterator<T>>(Iter)), formatter(CustomFormatter<ValueType> {}) { }
+		CustomValue(CustomValue&& o): data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
+		CustomValue& operator=(CustomValue&& o) {
+			CustomFormatCallBack = std::move(o.CustomFormatCallBack);
+			return *this;
+		}
 
-		std::string_view pView;
-		std::back_insert_iterator<T> iter;
-		CustomFormatter<ValueType> formatter;
+		const void* data;
+		std::function<std::string(std::string_view parseView, const void* data)> CustomFormatCallBack;
 	};
 
 	// clang-format off
 	using VType = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int,
-		long long, unsigned long long, bool, char, float, double, long double, const void*, void*, std::unique_ptr<CustomBase>>;
+		long long, unsigned long long, bool, char, float, double, long double, const void*, void*, CustomValue>;
 	// clang-format on
 
 	template<typename T> struct is_formattable;
@@ -141,7 +163,7 @@ namespace serenity::msg_details {
 		constexpr long double& long_double_state(size_t index);
 		constexpr const void* const_void_ptr_state(size_t index);
 		constexpr void* void_ptr_state(size_t index);
-		constexpr std::unique_ptr<CustomBase>& custom_state(size_t index);
+		constexpr CustomValue& custom_state(size_t index);
 
 	  private:
 		std::array<VType, MAX_ARG_COUNT> argContainer {};
