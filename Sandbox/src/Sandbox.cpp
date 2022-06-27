@@ -70,7 +70,9 @@ template<> struct serenity::CustomFormatter<TestPoint>
 	}
 
 	std::string Format(const TestPoint& p) {
-		return serenity::format("({},{})", p.x, p.y);
+		std::string tmp;
+		serenity::format_to(std::back_inserter(tmp), "({},{})", p.x, p.y);
+		return tmp;
 	}
 };
 
@@ -378,24 +380,26 @@ int main() {
 	ArgFormatter formatter;
 	TestPoint test { .x { 5 }, .y { 8 } };
 
-		#ifdef NDEBUG
 	Instrumentator cTimer;
+
+	// This line is just here for me to toggle between benching and just doing a one-liner test
+	// std::cout << formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}", test) ;
+
 	cTimer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 100'000'000; ++i ) {
+	for( size_t i { 0 }; i < 10'000'000; ++i ) {
 			auto _ { formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}", test) };
 		}
 	cTimer.StopWatch_Stop();
-	auto serenityElapsed { cTimer.Elapsed_In(time_mode::us) / 100'000'000.0f };
+	auto serenityElapsed { cTimer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 	std::cout << serenity::format("Serenity Took An Average Of [{} us]\nWith Result: {}\n", serenityElapsed, test);
 
 	cTimer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 100'000'000; ++i ) {
+	for( size_t i { 0 }; i < 10'000'000; ++i ) {
 			auto _ { std::format("Custom Formated Value Of Struct TestPoint Using The Standard: {}", test) };
 		}
 	cTimer.StopWatch_Stop();
-	auto standardElapsed { cTimer.Elapsed_In(time_mode::us) / 100'000'000.0f };
+	auto standardElapsed { cTimer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 	std::cout << serenity::format("Standard Took An Average Of [{} us]\nWith Result: {}\n", standardElapsed, test);
-		#endif    // !NDEBUG
 
 	#endif
 #endif    // ENABLE_PARSE_SECTION

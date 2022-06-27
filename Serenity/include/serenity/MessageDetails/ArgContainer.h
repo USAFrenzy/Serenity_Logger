@@ -33,9 +33,7 @@ namespace serenity {
 		CustomFormatterBase& operator=(CustomFormatterBase&&)      = default;
 		virtual ~CustomFormatterBase()                             = default;
 
-		constexpr std::string Format(auto&&) {
-			return std::string();
-		}
+		template<typename T> constexpr auto Format(T&&) { }
 		virtual constexpr void Parse(std::string_view) = 0;
 	};
 
@@ -49,9 +47,7 @@ namespace serenity {
 		~CustomFormatter()                                 = default;
 
 		constexpr void Parse(std::string_view) override { }
-		constexpr std::string Format(auto&&) {
-			return std::string();
-		}
+		template<typename T> constexpr auto Format(T&&) { }
 	};
 
 	template<typename T> struct has_formatter: std::bool_constant<std::is_default_constructible_v<CustomFormatter<T>>>
@@ -90,12 +86,14 @@ namespace serenity {
 		CustomValue& operator=(const CustomValue&) = delete;
 		CustomValue(CustomValue&& o): data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
 		CustomValue& operator=(CustomValue&& o) {
+			data                 = o.data;
 			CustomFormatCallBack = std::move(o.CustomFormatCallBack);
 			return *this;
 		}
 
 		const void* data;
-		std::function<std::string(std::string_view parseView, const void* data)> CustomFormatCallBack;
+		std::string (*CustomFormatCallBack)(std::string_view parseView, const void* data);
+		// std::function<std::string(std::string_view parseView, const void* data)> CustomFormatCallBack;
 	};
 
 	// clang-format off

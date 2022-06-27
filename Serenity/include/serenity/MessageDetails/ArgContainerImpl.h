@@ -11,9 +11,9 @@ constexpr std::array<details::SpecType, details::MAX_ARG_COUNT>& details::ArgCon
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreCustomArg(T&& value) {
-	using type = std::remove_cvref_t<T>;
-	using ref  = std::add_lvalue_reference_t<type>;
-	argContainer[ counter ].emplace<15>(std::forward<ref>(value));
+	using type              = std::remove_cvref_t<T>;
+	using ref               = std::add_lvalue_reference_t<type>;
+	argContainer[ counter ] = std::move(CustomValue(std::forward<ref>(ref(value))));
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& value) {

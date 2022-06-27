@@ -229,13 +229,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
-					if( argType == SpecType::CustomType ) {
-							argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
-					} else {
-							WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
-						}
+					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+					argType != SpecType::CustomType
+					? WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType)
+					: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
 					if( specValues.hasClosingBrace ) {
 							Iter = '}';
 					}
@@ -300,13 +298,11 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
 			/*Handle Positional Args*/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
-					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
-					if( argType == SpecType::CustomType ) {
-							argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
-					} else {
-							WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType);
-						}
+					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
+					argType != SpecType::CustomType
+					? WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType)
+					: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
 					if( specValues.hasClosingBrace ) {
 							Iter = '}';
 					}
