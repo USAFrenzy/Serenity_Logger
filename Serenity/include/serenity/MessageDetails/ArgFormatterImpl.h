@@ -84,19 +84,19 @@ constexpr void serenity::arg_formatter::SpecFormatting::ResetSpecs() {
 		}
 }
 
-template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter::CaptureArgs(Args&&... args) {
-	argStorage.CaptureArgs(std::forward<Args>(args)...);
+template<typename Iter, typename... Args> constexpr void serenity::arg_formatter::ArgFormatter::CaptureArgs(Iter&& iter, Args&&... args) {
+	argStorage.CaptureArgs(std::forward<Iter>(iter), std::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
-	CaptureArgs(std::forward<Args>(args)...);
+	CaptureArgs(std::forward<std::back_insert_iterator<T>>(Iter), std::forward<Args>(args)...);
 	ParseFormatString(std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args) {
-	CaptureArgs(std::forward<Args>(args)...);
+	CaptureArgs(std::forward<std::back_insert_iterator<T>>(Iter), std::forward<Args>(args)...);
 	ParseFormatString(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 

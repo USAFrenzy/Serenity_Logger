@@ -10,10 +10,10 @@ constexpr std::array<details::SpecType, details::MAX_ARG_COUNT>& details::ArgCon
 	return specContainer;
 }
 
-template<typename T> constexpr void details::ArgContainer::StoreCustomArg(T&& value) {
-	using type              = std::remove_cvref_t<T>;
-	using ref               = std::add_lvalue_reference_t<type>;
-	argContainer[ counter ] = std::move(CustomValue(std::forward<ref>(ref(value))));
+template<typename Iter, typename T> constexpr void details::ArgContainer::StoreCustomArg(Iter&& iter, T&& value) {
+	using ref               = std::add_lvalue_reference_t<std::remove_cvref_t<T>>;
+	using iterRef           = std::add_lvalue_reference_t<std::remove_cvref_t<Iter>>;
+	argContainer[ counter ] = std::move(CustomValue(std::forward<ref>(ref(value)), std::forward<iterRef>(iterRef(iter))));
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& value) {
@@ -26,7 +26,7 @@ template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& va
 		}
 }
 
-template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&&... args) {
+template<typename Iter, typename... Args> constexpr void details::ArgContainer::StoreArgs(Iter&& iter, Args&&... args) {
 	(
 	[ = ](auto&& arg) {
 		using base_type          = std::remove_cvref_t<decltype(arg)>;
@@ -35,7 +35,7 @@ template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&
 		if constexpr( is_supported_v<base_type> ) {
 				StoreNativeArg(std::forward<ref>(ref(arg)));
 		} else {
-				StoreCustomArg(std::forward<ref>(ref(arg)));
+				StoreCustomArg(std::forward<Iter>(Iter(iter)), std::forward<ref>(ref(arg)));
 			}
 		if( ++counter > MAX_ARG_INDEX ) {
 				std::printf("Warning: Max Argument Count Of  25 Reached - Ignoring Any Further Arguments\n");
@@ -44,10 +44,10 @@ template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&
 	}(args),
 	...);
 }
-template<typename... Args> constexpr void details::ArgContainer::CaptureArgs(Args&&... args) {
+template<typename Iter, typename... Args> constexpr void details::ArgContainer::CaptureArgs(Iter&& iter, Args&&... args) {
 	counter = 0;
 	std::memset(specContainer.data(), 0, details::MAX_ARG_COUNT);
-	StoreArgs(std::forward<Args>(args)...);
+	StoreArgs(std::forward<Iter>(iter), std::forward<Args>(args)...);
 }
 
 constexpr std::string_view details::ArgContainer::string_state(size_t index) {

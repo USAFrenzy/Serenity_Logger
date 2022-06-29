@@ -10,12 +10,16 @@
 namespace serenity {
 	template<typename T> struct IteratorContainer: std::back_insert_iterator<T>
 	{
-		using std::back_insert_iterator<T>::container_type;
+		// using type = std::remove_cvref_t<T>;
+		using type = std::back_insert_iterator<T>::container_type;
 		constexpr IteratorContainer(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
 		constexpr const auto& Container() {
 			return this->container;
 		}
+		type value_type;
 	};
+
+	template<typename T> using IterContainerType = IteratorContainer<T>::type;
 
 	// NOTE: Changed the signature of Format(), but at the moment, it's really only useful for when a string is the iterator container
 	template<typename Value> struct CustomFormatter
@@ -24,16 +28,45 @@ namespace serenity {
 		template<typename ValueType = std::remove_cvref_t<Value>, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
 	};
 
+	static std::string dummy_str {};
+	static auto dummy_iter = std::back_insert_iterator<std::string>(dummy_str);
+
+	struct CallBackContainer
+	{
+		template<typename Iter> CallBackContainer(Iter&& iter) {
+			AccessContainer(std::forward<std::remove_cvref_t<Iter>>(iter), true);
+		}
+		template<typename Iter> auto AccessContainer(Iter&& iter, bool firstPass = false) {
+			using iter_type      = std::remove_cv_t<Iter>;
+			using container_type = decltype(IteratorContainer(iter).value_type);
+			using ref            = std::add_lvalue_reference_t<iter_type>;
+			static const iter_type type { iter };
+
+			static void* containerPtr;
+			if( firstPass && (std::addressof(iter) != std::addressof(dummy_iter)) ) {
+					containerPtr = std::addressof(iter);
+					return IteratorContainer(*static_cast<std::remove_cvref_t<decltype(type)>*>(containerPtr)).Container();
+			} else {
+					return IteratorContainer(*static_cast<std::remove_cvref_t<decltype(type)>*>(containerPtr)).Container();
+				}
+		}
+		// Having issues with this...
+		decltype(auto) IterContainer() {
+			return AccessContainer(dummy_iter);
+		}
+	};
+
 	struct CustomValue
 	{
-		template<typename T>
-		explicit CustomValue(T&& value)
-			: tmpContainer(), data(std::addressof(value)), CustomFormatCallBack([](std::string_view parseView, const void* ptr, std::string& container) -> void {
+		template<typename T, typename Iter>
+		explicit CustomValue(T&& value, Iter&& iter)
+			: container(std::forward<Iter>(iter)), data(std::addressof(value)),
+			  CustomFormatCallBack([](std::string_view parseView, const void* ptr, CallBackContainer& container) -> void {
 				  using UnqualifiedType = std::remove_cvref_t<T>;
 				  using QualifiedType   = std::add_const_t<UnqualifiedType>;
 				  auto formatter { CustomFormatter<UnqualifiedType> {} };
 				  formatter.Parse(parseView);
-				  formatter.Format(*static_cast<QualifiedType*>(ptr), container);
+				  formatter.Format(*static_cast<QualifiedType*>(ptr), *container.IterContainer());
 			  }) { }
 
 		// Given the callback uses a string out param, I can easily make the string case more efficient here, but would like to somehow store or pass the format
@@ -42,34 +75,23 @@ namespace serenity {
 		// class on the container type (which may not be all that bad in all honesty -> If I understand it correctly, that's what the whole format_contex amd
 		// templated 'Context' basically are there for in libfmt and <format>?)
 		template<typename T> constexpr void FormatCallBack(std::string_view parseView, std::back_insert_iterator<T>&& iter) {
-			auto& cont { *IteratorContainer(iter).Container() };
-			if constexpr( std::is_same_v<T, std::string> ) {
-					CustomFormatCallBack(parseView, data, cont);
-			} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
-					tmpContainer.clear();
-					CustomFormatCallBack(parseView, data, tmpContainer);
-					cont.insert(cont.end(), tmpContainer.begin(), tmpContainer.end());
-			} else {
-					tmpContainer.clear();
-					CustomFormatCallBack(parseView, data, tmpContainer);
-					std::copy(tmpContainer.begin(), tmpContainer.end(), iter);
-				}
+			CustomFormatCallBack(parseView, data, container);
 		}
 
 		~CustomValue()                             = default;
 		CustomValue(const CustomValue&)            = delete;
 		CustomValue& operator=(const CustomValue&) = delete;
-		CustomValue(CustomValue&& o): tmpContainer(std::move(tmpContainer)), data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
+		CustomValue(CustomValue&& o): container(std::move(o.container)), data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
 		CustomValue& operator=(CustomValue&& o) {
-			tmpContainer         = std::move(o.tmpContainer);
+			container            = std::move(o.container);
 			data                 = o.data;
 			CustomFormatCallBack = std::move(o.CustomFormatCallBack);
 			return *this;
 		}
 
-		std::string tmpContainer;
+		CallBackContainer container;
 		const void* data;
-		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, std::string& outResult);
+		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, CallBackContainer& outResult);
 	};
 
 	// clang-format off
@@ -139,10 +161,10 @@ namespace serenity::msg_details {
 		constexpr ArgContainer& operator=(const ArgContainer&) = delete;
 		constexpr ~ArgContainer()                              = default;
 
-		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		template<typename... Args> constexpr void StoreArgs(Args&&... args);
+		template<typename Iter, typename... Args> constexpr void CaptureArgs(Iter&&, Args&&... args);
+		template<typename Iter, typename... Args> constexpr void StoreArgs(Iter&&, Args&&... args);
 		template<typename T> constexpr void StoreNativeArg(T&& arg);
-		template<typename T> constexpr void StoreCustomArg(T&& arg);
+		template<typename Iter, typename T> constexpr void StoreCustomArg(Iter&&, T&& arg);
 
 		constexpr std::array<VType, MAX_ARG_COUNT>& ArgStorage();
 		constexpr std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();

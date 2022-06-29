@@ -251,7 +251,7 @@ namespace serenity::arg_formatter {
 		// clang-format on
 
 	  private:
-		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
+		template<typename Iter, typename... Args> constexpr void CaptureArgs(Iter&& iter, Args&&... args);
 		// At the moment ParseFormatString() and Format() are coupled together where ParseFormatString calls Format, hence the need
 		// right now to have a version of ParseFormatString() that takes a locale object to forward to the locale overloaded Format()
 		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv);
