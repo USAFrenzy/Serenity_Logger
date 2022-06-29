@@ -331,6 +331,8 @@ namespace serenity::arg_formatter {
 		template<typename T>constexpr void WriteAlignedRight(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision, const int& totalWidth, const size_t& fillAmount);
 		template<typename T> constexpr void WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount);
 		template<typename T>constexpr void WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision, const int& totalWidth, const size_t& fillAmount);
+		template<typename T>constexpr void WriteSimplePadding(std::back_insert_iterator<T>&& Iter, const size_t& fillAmount);
+
 		template<typename T> constexpr void WriteNonAligned(std::back_insert_iterator<T>&& Iter);
 		template<typename T> constexpr void WriteNonAligned(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision);
 		template<typename T> requires std::is_arithmetic_v<std::remove_cvref_t<T>>

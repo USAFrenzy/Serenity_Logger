@@ -8,6 +8,7 @@ namespace serenity {
 	namespace se_utils {
 		enum class time_mode
 		{
+			ns,
 			us,
 			ms,
 			sec,
@@ -16,6 +17,7 @@ namespace serenity {
 		};
 
 		// for more precision
+		template<class T> using pNano  = std::chrono::duration<T, std::nano>;
 		template<class T> using pMicro = std::chrono::duration<T, std::micro>;
 		template<class T> using pMilli = std::chrono::duration<T, std::milli>;
 		template<class T> using pSec   = std::chrono::duration<T, std::ratio<1>>;

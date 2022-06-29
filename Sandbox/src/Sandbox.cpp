@@ -69,10 +69,8 @@ template<> struct serenity::CustomFormatter<TestPoint>
 		if( parse.begin() == parse.end() ) return;
 	}
 
-	std::string Format(const TestPoint& p) {
-		std::string tmp;
-		serenity::format_to(std::back_inserter(tmp), "({},{})", p.x, p.y);
-		return tmp;
+	template<typename ContainerCtx> constexpr auto Format(const TestPoint& p, ContainerCtx& ctx) {
+		serenity::format_to(std::back_inserter(ctx), "({},{})", p.x, p.y);
 	}
 };
 
@@ -300,7 +298,7 @@ int main() {
 			finalStr.clear();
 
 			auto serenityTime1 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime1));
+			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime1));
 			parseString.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 			finalStr.clear();
@@ -316,7 +314,7 @@ int main() {
 			finalStr.clear();
 
 			auto serenityTime2 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(serenityTime2));
+			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime2));
 		#if TEST_STRING_CASE
 			finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
 		#endif
@@ -335,7 +333,7 @@ int main() {
 
 			auto standardTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
 			VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
-			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} us]", std::to_string(standardTime));
+			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(standardTime));
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 
 			// Just realized why the percentages were so freaking out there - I had broken the formula (WOOPS!)
@@ -377,29 +375,60 @@ int main() {
 	#endif
 
 	#if ENABLE_PARSE_SANDBOX
-	ArgFormatter formatter;
-	TestPoint test { .x { 5 }, .y { 8 } };
 
-	Instrumentator cTimer;
+	ArgFormatter formatter;
+	Instrumentator cTimer, microTimer;
+	constexpr TestPoint test { .x { 5 }, .y { 8 } };
+
+	constexpr std::string_view sv { "[Loop Averages]" };
+	std::string loopStr { "[Loop " };
+	constexpr int repeatTest = 5;
+	constexpr size_t iterations { 100'000'000 };
+	float seTotal {}, stdTotal {};
 
 	// This line is just here for me to toggle between benching and just doing a one-liner test
 	// std::cout << formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}", test) ;
 
-	cTimer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 10'000'000; ++i ) {
-			auto _ { formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}", test) };
-		}
-	cTimer.StopWatch_Stop();
-	auto serenityElapsed { cTimer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-	std::cout << serenity::format("Serenity Took An Average Of [{} us]\nWith Result: {}\n", serenityElapsed, test);
+	/******** Major goal is to get my version as close as possible to ~50 % faster than the standard's  custom formatting ********/
+	// Main reason being that some of the custom flags used in Serenity will be a tad slower than others (namely things like %n)
+	// so being able to make cases like those as fast as possible will be a huge benefit and provide value for the change I want to
+	// implement in MessageFormatter; the whole create a format string and provide both that string and the approriate args to
+	//  se_format_to() call to format directly to the file buffer idea.
+	for( int i { 0 }; i < repeatTest; ++i ) {
+			std::cout << serenity::format("{:*^55}\n", (loopStr + std::to_string(i + 1) + "]"));
+			cTimer.StopWatch_Reset();
+			for( size_t i { 0 }; i < iterations; ++i ) {
+					auto _ { formatter.se_format("{}", test) };
+				}
+			cTimer.StopWatch_Stop();
+			auto serenityElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
+			seTotal += serenityElapsed;
+			std::cout << serenity::format("Serenity Took An Average Of [{} ns]\nWith Result: {}\n", serenityElapsed, test);
 
-	cTimer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 10'000'000; ++i ) {
-			auto _ { std::format("Custom Formated Value Of Struct TestPoint Using The Standard: {}", test) };
+			cTimer.StopWatch_Reset();
+			for( size_t i { 0 }; i < iterations; ++i ) {
+					auto _ { std::format("{}", test) };
+				}
+			cTimer.StopWatch_Stop();
+			auto standardElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
+			stdTotal += standardElapsed;
+			std::cout << serenity::format("Standard Took An Average Of [{} ns]\nWith Result: {}\n", standardElapsed, test);
+			std::cout << serenity::format("{:*55}\n\n");
 		}
-	cTimer.StopWatch_Stop();
-	auto standardElapsed { cTimer.Elapsed_In(time_mode::us) / 10'000'000.0f };
-	std::cout << serenity::format("Standard Took An Average Of [{} us]\nWith Result: {}\n", standardElapsed, test);
+
+	/************ Current Stats Ran As Of  28Jun22 ************/
+	// ********************[Loop Averages] ********************
+	// Serenity Total Average Among Loops[106.004295 ns]
+	// Standard Total Average Among Loops[157.90103 ns]
+	// Serenity Is 32.867 % Faster Than The Standard
+	// *******************************************************
+	auto seAvg { seTotal / repeatTest };
+	auto stdAvg { stdTotal / repeatTest };
+	std::cout << serenity::format("{:*^55}\n", sv);
+	std::cout << serenity::format("Serenity Total Average Among Loops [{} ns]\n", seAvg);
+	std::cout << serenity::format("Standard Total Average Among Loops [{} ns]\n", stdAvg);
+	std::cout << serenity::format("Serenity Is {}% Faster Than The Standard\n", SetPrecision((std::abs(stdAvg - seAvg) / stdAvg) * 100));
+	std::cout << serenity::format("{:*55}\n");
 
 	#endif
 #endif    // ENABLE_PARSE_SECTION

@@ -25,24 +25,20 @@ namespace serenity {
 
 		float Instrumentator::Elapsed_In(time_mode mode) {    // clang-format off
 			switch( mode ) {
-				case time_mode::us:
-					return std::chrono::duration_cast<pMicro<float>>( m_End - m_Start ).count( );
-					break;
-				case time_mode::ms:
-					return std::chrono::duration_cast<pMilli<float>>( m_End - m_Start ).count( );
-					break;
-				case time_mode::sec: 
-					return std::chrono::duration_cast<pSec<float>>( m_End - m_Start ).count( ); 
-					break;
-				case time_mode::min: 
-					return std::chrono::duration_cast<pMin<float>>( m_End - m_Start ).count( ); 
-					break;
-				case time_mode::hr: 
-					return std::chrono::duration_cast<pHour<float>>( m_End - m_Start ).count( ); 
-					break;
+			case time_mode::ns:
+				return std::chrono::duration_cast<pNano<float>>(m_End - m_Start).count();
+			case time_mode::us:
+				return std::chrono::duration_cast<pMicro<float>>(m_End - m_Start).count();
+			case time_mode::ms:
+				return std::chrono::duration_cast<pMilli<float>>(m_End - m_Start).count();
+			case time_mode::sec:
+				return std::chrono::duration_cast<pSec<float>>(m_End - m_Start).count();
+			case time_mode::min:
+				return std::chrono::duration_cast<pMin<float>>(m_End - m_Start).count();
+			case time_mode::hr:
+				return std::chrono::duration_cast<pHour<float>>( m_End - m_Start ).count( );
 				default: 
 					return 0; 
-					break;
 			}
 		}    // clang-format on
 

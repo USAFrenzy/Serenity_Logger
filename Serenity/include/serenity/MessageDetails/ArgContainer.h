@@ -2,10 +2,10 @@
 
 #include <string_view>
 #include <array>
-#include <functional>
 #include <iterator>
 #include <memory>
 #include <variant>
+#include <vector>
 
 namespace serenity {
 	template<typename T> struct IteratorContainer: std::back_insert_iterator<T>
@@ -17,83 +17,59 @@ namespace serenity {
 		}
 	};
 
-	template<typename T, typename U> struct is_supported;
-	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same<T, Ts>::value || ...)>
+	// NOTE: Changed the signature of Format(), but at the moment, it's really only useful for when a string is the iterator container
+	template<typename Value> struct CustomFormatter
 	{
-	};
-	// NOTE: Would love to have the Format() overloads either return string_views or  directly write into the buffer.
-	//               The second option hasn't been tried and seems like a decent option; the first one left garbage values
-	//               being returned in Debug mode, although, in Release mode it worked fine.
-	struct CustomFormatterBase
-	{
-		explicit CustomFormatterBase() = default;
-		CustomFormatterBase(const CustomFormatterBase&) { }
-		CustomFormatterBase& operator=(const CustomFormatterBase&) = default;
-		CustomFormatterBase(CustomFormatterBase&&)                 = default;
-		CustomFormatterBase& operator=(CustomFormatterBase&&)      = default;
-		virtual ~CustomFormatterBase()                             = default;
-
-		template<typename T> constexpr auto Format(T&&) { }
-		virtual constexpr void Parse(std::string_view) = 0;
-	};
-
-	template<typename T> struct CustomFormatter: public CustomFormatterBase
-	{
-		explicit CustomFormatter(): CustomFormatterBase() { }
-		CustomFormatter(const CustomFormatter&) { }
-		CustomFormatter& operator=(const CustomFormatter&) = default;
-		CustomFormatter(CustomFormatter&& o)               = default;
-		CustomFormatter& operator=(CustomFormatter&& o)    = default;
-		~CustomFormatter()                                 = default;
-
-		constexpr void Parse(std::string_view) override { }
-		template<typename T> constexpr auto Format(T&&) { }
-	};
-
-	template<typename T> struct has_formatter: std::bool_constant<std::is_default_constructible_v<CustomFormatter<T>>>
-	{
+		constexpr void Parse(std::string_view) { }
+		template<typename ValueType = std::remove_cvref_t<Value>, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
 	};
 
 	struct CustomValue
 	{
 		template<typename T>
 		explicit CustomValue(T&& value)
-			: data(std::addressof(value)), CustomFormatCallBack([](std::string_view parseView, const void* ptr) -> std::string {
+			: tmpContainer(), data(std::addressof(value)), CustomFormatCallBack([](std::string_view parseView, const void* ptr, std::string& container) -> void {
 				  using UnqualifiedType = std::remove_cvref_t<T>;
 				  using QualifiedType   = std::add_const_t<UnqualifiedType>;
 				  auto formatter { CustomFormatter<UnqualifiedType> {} };
 				  formatter.Parse(parseView);
-				  return formatter.Format(*static_cast<QualifiedType*>(ptr));
+				  formatter.Format(*static_cast<QualifiedType*>(ptr), container);
 			  }) { }
 
+		// Given the callback uses a string out param, I can easily make the string case more efficient here, but would like to somehow store or pass the format
+		// container without incurring a huge overhead; after tying a container forwarding approach into the call back and CustomValue constructor, there was a
+		// pretty hefty overhead. I could store the container as a member variable, but that would also require templating both the ArgContainer and ArgFormatter
+		// class on the container type (which may not be all that bad in all honesty -> If I understand it correctly, that's what the whole format_contex amd
+		// templated 'Context' basically are there for in libfmt and <format>?)
 		template<typename T> constexpr void FormatCallBack(std::string_view parseView, std::back_insert_iterator<T>&& iter) {
-			std::string sv { CustomFormatCallBack(parseView, data) };
 			auto& cont { *IteratorContainer(iter).Container() };
 			if constexpr( std::is_same_v<T, std::string> ) {
-					cont.append(sv.data(), sv.size());
+					CustomFormatCallBack(parseView, data, cont);
 			} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
-					cont.insert(cont.end(), sv.begin(), sv.end());
-					if( sv.back() != '\0' ) {
-							cont.push_back('\0');
-					}
+					tmpContainer.clear();
+					CustomFormatCallBack(parseView, data, tmpContainer);
+					cont.insert(cont.end(), tmpContainer.begin(), tmpContainer.end());
 			} else {
-					std::copy(sv.begin(), sv.end(), iter);
+					tmpContainer.clear();
+					CustomFormatCallBack(parseView, data, tmpContainer);
+					std::copy(tmpContainer.begin(), tmpContainer.end(), iter);
 				}
 		}
 
 		~CustomValue()                             = default;
 		CustomValue(const CustomValue&)            = delete;
 		CustomValue& operator=(const CustomValue&) = delete;
-		CustomValue(CustomValue&& o): data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
+		CustomValue(CustomValue&& o): tmpContainer(std::move(tmpContainer)), data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
 		CustomValue& operator=(CustomValue&& o) {
+			tmpContainer         = std::move(o.tmpContainer);
 			data                 = o.data;
 			CustomFormatCallBack = std::move(o.CustomFormatCallBack);
 			return *this;
 		}
 
+		std::string tmpContainer;
 		const void* data;
-		std::string (*CustomFormatCallBack)(std::string_view parseView, const void* data);
-		// std::function<std::string(std::string_view parseView, const void* data)> CustomFormatCallBack;
+		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, std::string& outResult);
 	};
 
 	// clang-format off
@@ -101,10 +77,33 @@ namespace serenity {
 		long long, unsigned long long, bool, char, float, double, long double, const void*, void*, CustomValue>;
 	// clang-format on
 
-	template<typename T> struct is_formattable;
-	template<typename T> struct is_formattable: std::bool_constant<is_supported<T, VType>::value || has_formatter<T>::value>
+	template<typename T, typename U> struct is_supported;
+	template<typename T, typename... Ts> struct is_supported<T, std::variant<Ts...>>: std::bool_constant<(std::is_same_v<std::remove_reference_t<T>, Ts> || ...)>
 	{
 	};
+	template<typename T> inline constexpr bool is_supported_v = is_supported<T, VType>::value;
+
+	template<typename T> struct is_native_ptr_type;
+	template<typename T>
+	struct is_native_ptr_type
+		: std::bool_constant<std::is_same_v<std::remove_reference_t<T>, std::string_view> || std::is_same_v<std::remove_reference_t<T>, const char*> ||
+	                         std::is_same_v<std::remove_reference_t<T>, void*> || std::is_same_v<std::remove_reference_t<T>, const void*>>
+	{
+	};
+	template<typename T> inline constexpr bool is_native_ptr_type_v = is_native_ptr_type<std::remove_reference_t<T>>::value;
+
+	template<typename T> struct has_formatter: std::bool_constant<std::is_default_constructible_v<CustomFormatter<T>>>
+	{
+	};
+	template<typename T> inline constexpr bool has_formatter_v = has_formatter<T>::value;
+
+	template<typename T> struct is_formattable;
+	template<typename T>
+	struct is_formattable: std::bool_constant<is_supported<std::remove_reference_t<T>, VType>::value || has_formatter<std::remove_cvref_t<T>>::value>
+	{
+	};
+	template<typename T> inline constexpr bool is_formattable_v = is_formattable<T>::value;
+
 }    // namespace serenity
 
 namespace serenity::msg_details {
@@ -203,9 +202,9 @@ namespace serenity::msg_details {
 		} else if constexpr( std::is_same_v<base_type, void*> ) {
 				return std::forward<SpecType>(VoidPtrType);
 		} else {
-				static_assert(is_formattable<base_type>::value, "A Template Specialization Must Exist For A Custom Type Argument.\n\t"
-				                                                "For Serenity, This Can Be Done By Specializing The CustomFormatter Template For Your Type And "
-				                                                "Implementing The Parse() And Format() Functions.");
+				static_assert(is_formattable_v<base_type>, "A Template Specialization Must Exist For A Custom Type Argument.\n\t"
+				                                           "For Serenity, This Can Be Done By Specializing The CustomFormatter Template For Your Type And "
+				                                           "Implementing The Parse() And Format() Functions.");
 				return std::forward<SpecType>(CustomType);
 			}
 	}

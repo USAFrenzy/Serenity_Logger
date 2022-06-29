@@ -17,9 +17,13 @@ template<typename T> constexpr void details::ArgContainer::StoreCustomArg(T&& va
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& value) {
-	using base_type         = std::remove_cvref_t<decltype(value)>;
-	using ref               = std::add_lvalue_reference_t<base_type>;
-	argContainer[ counter ] = std::forward<ref>(ref(value));
+	using base_type = std::remove_cvref_t<decltype(value)>;
+	using ref       = std::add_lvalue_reference_t<base_type>;
+	if constexpr( is_native_ptr_type_v<T> ) {
+			argContainer[ counter ] = std::forward<base_type>(base_type(value));
+	} else {
+			argContainer[ counter ] = std::forward<ref>(ref(value));
+		}
 }
 
 template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&&... args) {
@@ -28,7 +32,7 @@ template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&
 		using base_type          = std::remove_cvref_t<decltype(arg)>;
 		using ref                = std::add_lvalue_reference_t<base_type>;
 		specContainer[ counter ] = GetArgType(std::forward<ref>(ref(arg)));
-		if constexpr( is_supported<base_type, VType>::value ) {
+		if constexpr( is_supported_v<base_type> ) {
 				StoreNativeArg(std::forward<ref>(ref(arg)));
 		} else {
 				StoreCustomArg(std::forward<ref>(ref(arg)));
@@ -42,6 +46,7 @@ template<typename... Args> constexpr void details::ArgContainer::StoreArgs(Args&
 }
 template<typename... Args> constexpr void details::ArgContainer::CaptureArgs(Args&&... args) {
 	counter = 0;
+	std::memset(specContainer.data(), 0, details::MAX_ARG_COUNT);
 	StoreArgs(std::forward<Args>(args)...);
 }
 

@@ -205,7 +205,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			if( bracketResults.beginPos != 0 ) {
 					auto& cont { *IteratorContainer(Iter).Container() };
 					if constexpr( std::is_same_v<T, std::string> ) {
-							cont.append(sv.data(), sv.data() + bracketResults.beginPos);
+							cont.append(sv.data(), bracketResults.beginPos);
 					} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
 							cont.insert(cont.end(), sv.begin(), sv.begin() + bracketResults.beginPos);
 							if( sv.back() != '\0' ) {
@@ -242,13 +242,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			}
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( argType == SpecType::CustomType ) {
-					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
-			} else {
+			if( argType != SpecType::CustomType ) {
 					if( pos < bracketSize ) {
 							Parse(argBracket, pos, argType);
 					}
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			} else {
+					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
 				}
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
@@ -311,13 +311,13 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 			}
 			/* Handle What's Left Of The Bracket */
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( argType == SpecType::CustomType ) {
-					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
-			} else {
+			if( argType != SpecType::CustomType ) {
 					if( pos < bracketSize ) {
 							Parse(argBracket, pos, argType);
 					}
-					Format(loc, std::forward<std::back_insert_iterator<T>>(Iter), argType);
+					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
+			} else {
+					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
 				}
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
@@ -469,24 +469,38 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnAlignCenter(const char& 
 constexpr void serenity::arg_formatter::ArgFormatter::OnAlignDefault(const SpecType& argType, size_t& pos) {
 	using enum msg_details::SpecType;
 	--pos;
-	specValues.fillCharacter = ' ';
 	switch( argType ) {
+			case MonoType: return;
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
 			case DoubleType: [[fallthrough]];
 			case FloatType: [[fallthrough]];
 			case LongDoubleType: [[fallthrough]];
 			case LongLongType: [[fallthrough]];
-			case U_LongLongType: specValues.align = Alignment::AlignRight; return;
-			default: specValues.align = Alignment::AlignLeft; return;
+			case U_LongLongType: specValues.align = Alignment::AlignRight; break;
+			default: specValues.align = Alignment::AlignLeft; break;
 		}
+	specValues.fillCharacter = ' ';
 }
 
-// Splitting up the logic into their own function calls made this slightly faster, most likely due to being able to aid in inlining?
-// I'm honestly not too sure why, but it saves ~0.45% CPU cycles being used and the timing for the complex format pattern
-// was reduced from ~0.457us down to ~0.442us. In an effort to just make it look cleaner, it saved some time, so I'll take it
 constexpr void serenity::arg_formatter::ArgFormatter::VerifyFillAlignField(std::string_view sv, size_t& currentPos, const msg_details::SpecType& argType) {
 	const auto& ch { sv[ currentPos ] };
+	// handle padding with and without argument to pad
+	/*
+	    format("{:*5}")        results in -> *****
+	    format("{:*5}", 'a')  results in -> a****
+	*/
+	if( argType == SpecType::MonoType ) {
+			specValues.fillCharacter = ch;
+			// for monotype cases, don't have to worry about alignment, so just check if the position needs to be adjusted or not
+			switch( ++currentPos >= sv.size() ? sv.back() : sv[ currentPos ] ) {
+					default: return;
+					case '<': [[fallthrough]];
+					case '>': [[fallthrough]];
+					case '^': ++currentPos; return;
+				}
+	}
+
 	switch( ++currentPos >= sv.size() ? sv.back() : sv[ currentPos ] ) {
 			case '<': OnAlignLeft(ch, currentPos); return;
 			case '>': OnAlignRight(ch, currentPos); return;
@@ -629,6 +643,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnValidTypeSpec(const Spec
 constexpr void serenity::arg_formatter::ArgFormatter::OnInvalidTypeSpec(const SpecType& type) {
 	using enum msg_details::SpecType;
 	switch( type ) {
+			case MonoType: return;    // possibly issue warning on a type spec being provided on no argument?
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
 			case LongLongType: [[fallthrough]];
@@ -995,6 +1010,17 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_
 		}
 }
 
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimplePadding(std::back_insert_iterator<T>&& Iter, const size_t& fillAmount) {
+	auto& cont { *IteratorContainer(Iter).Container() };
+	if constexpr( std::is_same_v<T, std::string> ) {
+			cont.append(fillBuffer.data(), fillAmount);
+	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
+			cont.insert(cont.end(), fillBuffer.data(), fillBuffer.data() + fillAmount);
+	} else {
+			std::copy(fillBuffer.data(), fillBuffer.data() + fillAmount, Iter);
+		}
+}
+
 /************************************************************************* Possible TODO? ************************************************************************/
 // A possible enhancement to this approach might be to just reserve the size in the value buffer (making it a vector instead of an array) then memset from the
 // valueSize to the end of the new capacity with the fill character, and finally use std::rotate to rotate the appropriate amount for right/center aligned (left
@@ -1055,7 +1081,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth, fill);
 					case Alignment::AlignCenter: return WriteAlignedCenter(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth, fill);
-					default: return;
+					default: return WriteSimplePadding(std::forward<std::back_insert_iterator<T>>(Iter), fill);
 				}
 	} else {
 			WriteNonAligned(std::forward<std::back_insert_iterator<T>>(Iter));
@@ -1073,7 +1099,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(std::back_
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill);
 					case Alignment::AlignCenter: return WriteAlignedCenter(std::forward<std::back_insert_iterator<T>>(Iter), val, precision, totalWidth, fill);
-					default: return;
+					default: return WriteSimplePadding(std::forward<std::back_insert_iterator<T>>(Iter), fill);
 				}
 	} else {
 			WriteNonAligned(std::forward<std::back_insert_iterator<T>>(Iter), val, precision);
@@ -1138,7 +1164,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(std::back_i
 			case StringViewType: WriteString(std::forward<std::back_insert_iterator<T>>(Iter), type, precision, totalWidth); return;
 			case ConstVoidPtrType: FormatPointerType(argStorage.const_void_ptr_state(specValues.argPosition), type); break;
 			case VoidPtrType: FormatPointerType(argStorage.void_ptr_state(specValues.argPosition), type); break;
-			default: return; break;
+			default: break;
 		}
 	if( !specValues.localize ) FormatAlignment(std::forward<std::back_insert_iterator<T>>(Iter), totalWidth);
 }
