@@ -8,18 +8,16 @@
 #include <vector>
 
 namespace serenity {
-	template<typename T> struct IteratorContainer: std::back_insert_iterator<T>
+	template<typename T> struct IteratorAccessHelper: std::back_insert_iterator<T>
 	{
 		// using type = std::remove_cvref_t<T>;
 		using type = std::back_insert_iterator<T>::container_type;
-		constexpr IteratorContainer(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
+		constexpr IteratorAccessHelper(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
 		constexpr const auto& Container() {
 			return this->container;
 		}
 		type value_type;
 	};
-
-	template<typename T> using IterContainerType = IteratorContainer<T>::type;
 
 	// NOTE: Changed the signature of Format(), but at the moment, it's really only useful for when a string is the iterator container
 	template<typename Value> struct CustomFormatter
@@ -31,50 +29,73 @@ namespace serenity {
 	static std::string dummy_str {};
 	static auto dummy_iter = std::back_insert_iterator<std::string>(dummy_str);
 
-	struct CallBackContainer
+	// Will ABSOLUTELY need to optimize this a bit but finally got a non-templated class working for getting the underlying container.
+	// What's kind of neat about this approach, at the very least anyways, is the ability to take the iterator as a member variable (will be
+	// doing this in the near future) and eliminate having to forward the iterator everywhere as I can now just pull up the member variable
+	// and still write based on it's typing
+	// NOTE: Also need to figure a way to compare types without the "static const container_type"variable since that's holding this up from being
+	//               able to be used in a constexpr manner and preventing the wide-scale use of this instead of forwarding the iterator everywhere
+	struct IteratorContainer
 	{
-		template<typename Iter> CallBackContainer(Iter&& iter) {
-			AccessContainer(std::forward<std::remove_cvref_t<Iter>>(iter), true);
-		}
-		template<typename Iter> auto AccessContainer(Iter&& iter, bool firstPass = false) {
-			using iter_type      = std::remove_cv_t<Iter>;
-			using container_type = decltype(IteratorContainer(iter).value_type);
-			using ref            = std::add_lvalue_reference_t<iter_type>;
-			static const iter_type type { iter };
+		const void* containerPtr;
 
-			static void* containerPtr;
-			if( firstPass && (std::addressof(iter) != std::addressof(dummy_iter)) ) {
-					containerPtr = std::addressof(iter);
-					return IteratorContainer(*static_cast<std::remove_cvref_t<decltype(type)>*>(containerPtr)).Container();
+		template<typename Iter> decltype(auto) AccessContainer(Iter&& iter, bool firstPass = false) {
+			using container_type = std::remove_cvref_t<decltype(*IteratorAccessHelper(iter).Container())>;
+			static const container_type temp;
+			using type           = decltype(temp);
+			using UnqualifiedRef = std::add_lvalue_reference_t<std::remove_cvref_t<type>>;
+			if( firstPass ) {
+					containerPtr = std::addressof(*IteratorAccessHelper(iter).Container());
+					return std::forward<UnqualifiedRef>(UnqualifiedRef(*static_cast<type*>(containerPtr)));
 			} else {
-					return IteratorContainer(*static_cast<std::remove_cvref_t<decltype(type)>*>(containerPtr)).Container();
+					return std::forward<UnqualifiedRef>(UnqualifiedRef(*static_cast<type*>(containerPtr)));
 				}
 		}
-		// Having issues with this...
-		decltype(auto) IterContainer() {
+
+		decltype(auto) UnderlyingContainer() {
 			return AccessContainer(dummy_iter);
 		}
+
+		decltype(auto) ContainerValueType() {
+			using type = std::remove_cvref_t<decltype(UnderlyingContainer())>;
+			static type type_value;
+			return std::forward<std::remove_cvref_t<type>>(type_value);
+		}
+
+		IteratorContainer()                                    = default;
+		IteratorContainer(const IteratorContainer&)            = delete;
+		IteratorContainer& operator=(const IteratorContainer&) = delete;
+		template<typename Iter> IteratorContainer(Iter&& iter) {
+			AccessContainer(std::forward<std::remove_cvref_t<Iter>>(iter), true);
+		}
+		IteratorContainer(IteratorContainer&& o) {
+			auto& cont { o.UnderlyingContainer() };
+			using type = std::remove_cvref_t<decltype(cont)>;
+			AccessContainer(std::back_insert_iterator<std::remove_cvref_t<decltype(cont)>>(cont), true);
+		}
+		IteratorContainer& operator=(IteratorContainer&& o) {
+			auto& cont { o.UnderlyingContainer() };
+			using type = std::remove_cvref_t<decltype(cont)>;
+			AccessContainer(std::back_insert_iterator<std::remove_cvref_t<decltype(cont)>>(cont), true);
+			return *this;
+		}
+		~IteratorContainer() = default;
 	};
 
 	struct CustomValue
 	{
-		template<typename T, typename Iter>
-		explicit CustomValue(T&& value, Iter&& iter)
-			: container(std::forward<Iter>(iter)), data(std::addressof(value)),
-			  CustomFormatCallBack([](std::string_view parseView, const void* ptr, CallBackContainer& container) -> void {
+		template<typename T, typename U = IteratorContainer>
+		explicit CustomValue(T&& value, U&& iter)
+			: data(std::addressof(value)), container(std::move(iter)),
+			  CustomFormatCallBack([](std::string_view parseView, const void* ptr, IteratorContainer& container) -> void {
 				  using UnqualifiedType = std::remove_cvref_t<T>;
 				  using QualifiedType   = std::add_const_t<UnqualifiedType>;
 				  auto formatter { CustomFormatter<UnqualifiedType> {} };
 				  formatter.Parse(parseView);
-				  formatter.Format(*static_cast<QualifiedType*>(ptr), *container.IterContainer());
+				  formatter.Format(*static_cast<QualifiedType*>(ptr), container.UnderlyingContainer());
 			  }) { }
 
-		// Given the callback uses a string out param, I can easily make the string case more efficient here, but would like to somehow store or pass the format
-		// container without incurring a huge overhead; after tying a container forwarding approach into the call back and CustomValue constructor, there was a
-		// pretty hefty overhead. I could store the container as a member variable, but that would also require templating both the ArgContainer and ArgFormatter
-		// class on the container type (which may not be all that bad in all honesty -> If I understand it correctly, that's what the whole format_contex amd
-		// templated 'Context' basically are there for in libfmt and <format>?)
-		template<typename T> constexpr void FormatCallBack(std::string_view parseView, std::back_insert_iterator<T>&& iter) {
+		constexpr void FormatCallBack(std::string_view parseView) {
 			CustomFormatCallBack(parseView, data, container);
 		}
 
@@ -89,9 +110,9 @@ namespace serenity {
 			return *this;
 		}
 
-		CallBackContainer container;
 		const void* data;
-		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, CallBackContainer& outResult);
+		IteratorContainer container;
+		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, IteratorContainer& outResult);
 	};
 
 	// clang-format off
@@ -161,10 +182,10 @@ namespace serenity::msg_details {
 		constexpr ArgContainer& operator=(const ArgContainer&) = delete;
 		constexpr ~ArgContainer()                              = default;
 
-		template<typename Iter, typename... Args> constexpr void CaptureArgs(Iter&&, Args&&... args);
-		template<typename Iter, typename... Args> constexpr void StoreArgs(Iter&&, Args&&... args);
+		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
+		template<typename... Args> constexpr void StoreArgs(Args&&... args);
 		template<typename T> constexpr void StoreNativeArg(T&& arg);
-		template<typename Iter, typename T> constexpr void StoreCustomArg(Iter&&, T&& arg);
+		template<typename T> constexpr void StoreCustomArg(T&& arg);
 
 		constexpr std::array<VType, MAX_ARG_COUNT>& ArgStorage();
 		constexpr std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
@@ -183,11 +204,13 @@ namespace serenity::msg_details {
 		constexpr const void* const_void_ptr_state(size_t index);
 		constexpr void* void_ptr_state(size_t index);
 		constexpr CustomValue& custom_state(size_t index);
+		constexpr IteratorContainer& IterContainer();
 
 	  private:
 		std::array<VType, MAX_ARG_COUNT> argContainer {};
 		std::array<SpecType, MAX_ARG_COUNT> specContainer {};
 		size_t counter {};
+		IteratorContainer iterContainer;
 	};
 	// putting the definition here since clang was warning on extra qualifiers for some reason
 	template<typename T> static constexpr SpecType GetArgType(T&& val) {

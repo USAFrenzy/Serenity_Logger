@@ -84,19 +84,21 @@ constexpr void serenity::arg_formatter::SpecFormatting::ResetSpecs() {
 		}
 }
 
-template<typename Iter, typename... Args> constexpr void serenity::arg_formatter::ArgFormatter::CaptureArgs(Iter&& iter, Args&&... args) {
-	argStorage.CaptureArgs(std::forward<Iter>(iter), std::forward<Args>(args)...);
+template<typename... Args> constexpr void serenity::arg_formatter::ArgFormatter::CaptureArgs(Args&&... args) {
+	argStorage.CaptureArgs(std::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
-	CaptureArgs(std::forward<std::back_insert_iterator<T>>(Iter), std::forward<Args>(args)...);
+	argStorage.IterContainer() = std::move(IteratorContainer(std::forward<std::back_insert_iterator<T>>(Iter)));
+	CaptureArgs(std::forward<Args>(args)...);
 	ParseFormatString(std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
 template<typename T, typename... Args>
 constexpr void serenity::arg_formatter::ArgFormatter::se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args) {
-	CaptureArgs(std::forward<std::back_insert_iterator<T>>(Iter), std::forward<Args>(args)...);
+	argStorage.IterContainer() = std::move(IteratorContainer(std::forward<std::back_insert_iterator<T>>(Iter)));
+	CaptureArgs(std::forward<Args>(args)...);
 	ParseFormatString(loc, std::forward<std::back_insert_iterator<T>>(Iter), sv);
 }
 
@@ -203,7 +205,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					return;
 			}
 			if( bracketResults.beginPos != 0 ) {
-					auto& cont { *IteratorContainer(Iter).Container() };
+					auto& cont { *IteratorAccessHelper(Iter).Container() };
 					if constexpr( std::is_same_v<T, std::string> ) {
 							cont.append(sv.data(), bracketResults.beginPos);
 					} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -231,9 +233,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-					argType != SpecType::CustomType
-					? WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType)
-					: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
+					argType != SpecType::CustomType ? WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType)
+													: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
 					if( specValues.hasClosingBrace ) {
 							Iter = '}';
 					}
@@ -248,7 +249,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					}
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			} else {
-					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
+					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
 				}
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
@@ -273,7 +274,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 					return;
 			}
 			if( bracketResults.beginPos != 0 ) {
-					auto& cont { *IteratorContainer(Iter).Container() };
+					auto& cont { *IteratorAccessHelper(Iter).Container() };
 					if constexpr( std::is_same_v<T, std::string> ) {
 							cont.append(sv.data(), sv.data() + bracketResults.beginPos);
 					} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -300,9 +301,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-					argType != SpecType::CustomType
-					? WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType)
-					: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
+					argType != SpecType::CustomType ? WriteSimpleValue(std::forward<std::back_insert_iterator<T>>(Iter), argType)
+													: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
 					if( specValues.hasClosingBrace ) {
 							Iter = '}';
 					}
@@ -317,7 +317,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(const st
 					}
 					Format(std::forward<std::back_insert_iterator<T>>(Iter), argType);
 			} else {
-					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket, std::forward<std::back_insert_iterator<T>>(Iter));
+					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
 				}
 			if( specValues.hasClosingBrace ) {
 					Iter = '}';
@@ -686,7 +686,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::HandlePotentialTypeField(c
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleString(std::back_insert_iterator<T>&& Iter) {
 	std::string_view sv { std::move(argStorage.string_state(specValues.argPosition)) };
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(sv.data(), sv.size());
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -701,7 +701,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCString(std::back_insert_iterator<T>&& Iter) {
 	std::string_view sv { std::move(argStorage.c_string_state(specValues.argPosition)) };
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(sv.data(), sv.size());
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -716,7 +716,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleStringView(std::back_insert_iterator<T>&& Iter) {
 	std::string_view sv { std::move(argStorage.string_view_state(specValues.argPosition)) };
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(sv.data(), sv.size());
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -733,7 +733,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr - data);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -747,7 +747,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr - data);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -761,7 +761,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr - data);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -775,7 +775,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr - data);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -786,7 +786,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleBool(std::back_insert_iterator<T>&& Iter) {
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -801,7 +801,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleFloat(std::back_insert_iterator<T>&& Iter) {
 	auto data { buffer.data() };
 	std::memset(data, 0, buffer.size());
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr - data);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -815,7 +815,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr - data);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -829,7 +829,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr - data);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -843,7 +843,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append("0x").append(
 			data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr - data);
@@ -863,7 +863,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append("0x").append(
 			data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr - data);
@@ -904,7 +904,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(std::back
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back_insert_iterator<T>&& Iter, const int& totalWidth) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData, buffer.data(), valueSize);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(fillData, totalWidth);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -919,7 +919,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(std::back
                                                                        const int& totalWidth) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData, val.data(), precision);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(fillData, totalWidth);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -933,7 +933,7 @@ template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(fillData, totalWidth);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -948,7 +948,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(std::bac
                                                                         const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData + fillAmount, val.data(), precision);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(fillData, totalWidth);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -962,7 +962,7 @@ template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::back_insert_iterator<T>&& Iter, const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData + fillAmount / 2, buffer.data(), valueSize);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(fillData, totalWidth);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -977,7 +977,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::ba
                                                                          const int& totalWidth, const size_t& fillAmount) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData + fillAmount / 2, val.data(), precision);
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(fillData, totalWidth);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -988,7 +988,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(std::ba
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_insert_iterator<T>&& Iter) {
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(buffer.data(), valueSize);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -1000,7 +1000,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision) {
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(val.data(), precision);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -1011,7 +1011,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(std::back_
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimplePadding(std::back_insert_iterator<T>&& Iter, const size_t& fillAmount) {
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(fillBuffer.data(), fillAmount);
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
@@ -1326,7 +1326,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& valu
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::FormatStringType(std::back_insert_iterator<T>&& Iter, std::string_view val, const int& precision) {
 	int size { static_cast<int>(val.size()) };
-	auto& cont { *IteratorContainer(Iter).Container() };
+	auto& cont { *IteratorAccessHelper(Iter).Container() };
 	if constexpr( std::is_same_v<T, std::string> ) {
 			cont.append(val.data(), (precision != 0 ? precision > size ? size : precision : size));
 	} else if constexpr( std::is_same_v<T, std::vector<typename T::value_type>> ) {
