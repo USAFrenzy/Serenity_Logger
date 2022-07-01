@@ -11,12 +11,8 @@ constexpr std::array<details::SpecType, details::MAX_ARG_COUNT>& details::ArgCon
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreCustomArg(T&& value) {
-	using ref = std::add_lvalue_reference_t<std::remove_cvref_t<T>>;
-	auto& cont { iterContainer.UnderlyingContainer() };
-	IteratorContainer tmp {};
-	tmp.AccessContainer(std::back_insert_iterator<std::remove_cvref_t<decltype(cont)>>(iterContainer.UnderlyingContainer()), true);
-	using IterRef           = std::add_rvalue_reference_t<std::remove_cvref_t<decltype(tmp)>>;
-	argContainer[ counter ] = std::move(CustomValue(std::forward<ref>(ref(value)), std::forward<IterRef>(IterRef(tmp))));
+	using ref               = std::add_lvalue_reference_t<std::remove_cvref_t<T>>;
+	argContainer[ counter ] = std::move(CustomValue(std::forward<ref>(ref(value))));
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& value) {

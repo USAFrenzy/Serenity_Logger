@@ -297,7 +297,7 @@ int main() {
 			timer.StopWatch_Stop();
 			finalStr.clear();
 
-			auto serenityTime1 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
+			auto serenityTime1 { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
 			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime1));
 			parseString.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
@@ -313,7 +313,7 @@ int main() {
 			timer.StopWatch_Stop();
 			finalStr.clear();
 
-			auto serenityTime2 { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
+			auto serenityTime2 { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
 			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime2));
 		#if TEST_STRING_CASE
 			finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
@@ -331,7 +331,7 @@ int main() {
 			timer.StopWatch_Stop();
 			finalStr.clear();
 
-			auto standardTime { timer.Elapsed_In(time_mode::us) / 10'000'000.0f };
+			auto standardTime { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
 			VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(standardTime));
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
@@ -416,12 +416,16 @@ int main() {
 			std::cout << serenity::format("{:*55}\n\n");
 		}
 
-	/************ Current Stats Ran As Of  28Jun22 ************/
-	// ********************[Loop Averages] ********************
-	// Serenity Total Average Among Loops[106.004295 ns]
-	// Standard Total Average Among Loops[157.90103 ns]
-	// Serenity Is 32.867 % Faster Than The Standard
-	// *******************************************************
+	/************************** Current Stats Ran As Of  30Jun22 **************************/
+	// **********************************[Loop Averages] **********************************
+	// Serenity Total Average Among Loops[117.29978 ns]
+	// Standard Total Average Among Loops[159.64954 ns]
+	// Serenity Is 26.527 % Faster Than The Standard
+	// ***********************************************************************************
+	// Note: Took a ~10ns hit for the container forwarding to the format call back. While
+	//             I'm stoked that I can now have the custom formatters format directly into the
+	//             original container, I hope to gain back that time and then some.
+
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };
 	std::cout << serenity::format("{:*^55}\n", sv);

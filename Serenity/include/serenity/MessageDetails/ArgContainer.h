@@ -11,12 +11,12 @@ namespace serenity {
 	template<typename T> struct IteratorAccessHelper: std::back_insert_iterator<T>
 	{
 		// using type = std::remove_cvref_t<T>;
-		using type = std::back_insert_iterator<T>::container_type;
+		using std::back_insert_iterator<T>::container_type;
+
 		constexpr IteratorAccessHelper(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
 		constexpr const auto& Container() {
 			return this->container;
 		}
-		type value_type;
 	};
 
 	// NOTE: Changed the signature of Format(), but at the moment, it's really only useful for when a string is the iterator container
@@ -26,57 +26,62 @@ namespace serenity {
 		template<typename ValueType = std::remove_cvref_t<Value>, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
 	};
 
-	static std::string dummy_str {};
-	static auto dummy_iter = std::back_insert_iterator<std::string>(dummy_str);
+	// Initially was using a static variable to keep track of the typing in IteratorContainer::AccessContainer(),
+	// however, that prevented the function from being declared constexpr. This is a work around for that,
+	// though, for the same reasons as the initial reason, this only works in runtime context and not constexpr
+	// context
+	struct IteratorContainerHelper
+	{
+		template<typename T> auto StoreStaticTyping(T&&) {
+			using value_type = std::remove_cvref_t<T>;
+			const static value_type type;
+			// can add lvalue ref  here due to const static storage
+			using Ref = std::add_lvalue_reference_t<decltype(type)>;
+			return std::forward<Ref>(type);
+		}
+	};
+	namespace dummy_obj {
+		static std::string dummy_str;
+		static std::back_insert_iterator<std::string> dummy_iter = std::back_insert_iterator<std::string> { dummy_str };
+	}    // namespace dummy_obj
 
-	// Will ABSOLUTELY need to optimize this a bit but finally got a non-templated class working for getting the underlying container.
-	// What's kind of neat about this approach, at the very least anyways, is the ability to take the iterator as a member variable (will be
-	// doing this in the near future) and eliminate having to forward the iterator everywhere as I can now just pull up the member variable
-	// and still write based on it's typing
-	// NOTE: Also need to figure a way to compare types without the "static const container_type"variable since that's holding this up from being
-	//               able to be used in a constexpr manner and preventing the wide-scale use of this instead of forwarding the iterator everywhere
 	struct IteratorContainer
 	{
-		const void* containerPtr;
+		mutable const void* containerPtr;
+		mutable IteratorContainerHelper helper;
 
-		template<typename Iter> decltype(auto) AccessContainer(Iter&& iter, bool firstPass = false) {
-			using container_type = std::remove_cvref_t<decltype(*IteratorAccessHelper(iter).Container())>;
-			static const container_type temp;
-			using type           = decltype(temp);
-			using UnqualifiedRef = std::add_lvalue_reference_t<std::remove_cvref_t<type>>;
+		template<typename Iter> constexpr decltype(auto) AccessContainer(Iter&& iter, bool firstPass = false) const {
 			if( firstPass ) {
+					using container_type = std::remove_cvref_t<decltype(IteratorAccessHelper(iter))::container_type>;
+					helper.StoreStaticTyping(container_type {});
 					containerPtr = std::addressof(*IteratorAccessHelper(iter).Container());
-					return std::forward<UnqualifiedRef>(UnqualifiedRef(*static_cast<type*>(containerPtr)));
-			} else {
-					return std::forward<UnqualifiedRef>(UnqualifiedRef(*static_cast<type*>(containerPtr)));
-				}
+			}
+			using type         = std::add_const_t<decltype(helper.StoreStaticTyping(dummy_obj::dummy_str))>;
+			using ContainerRef = std::add_lvalue_reference_t<std::remove_const_t<type>>;
+			return std::forward<ContainerRef>(ContainerRef(*static_cast<type*>(containerPtr)));
 		}
 
-		decltype(auto) UnderlyingContainer() {
-			return AccessContainer(dummy_iter);
+		constexpr decltype(auto) UnderlyingContainer() const {
+			return AccessContainer(dummy_obj::dummy_iter);
 		}
 
-		decltype(auto) ContainerValueType() {
-			using type = std::remove_cvref_t<decltype(UnderlyingContainer())>;
-			static type type_value;
-			return std::forward<std::remove_cvref_t<type>>(type_value);
+		template<typename Iter> IteratorContainer(Iter&& iter) {
+			AccessContainer(std::forward<std::add_rvalue_reference_t<std::remove_cvref_t<Iter>>>(iter), true);
 		}
-
+		template<typename Iter> IteratorContainer(Iter& iter) {
+			AccessContainer(std::forward<std::add_lvalue_reference_t<std::remove_cvref_t<Iter>>>(iter), true);
+		}
 		IteratorContainer()                                    = default;
 		IteratorContainer(const IteratorContainer&)            = delete;
 		IteratorContainer& operator=(const IteratorContainer&) = delete;
-		template<typename Iter> IteratorContainer(Iter&& iter) {
-			AccessContainer(std::forward<std::remove_cvref_t<Iter>>(iter), true);
-		}
-		IteratorContainer(IteratorContainer&& o) {
-			auto& cont { o.UnderlyingContainer() };
-			using type = std::remove_cvref_t<decltype(cont)>;
-			AccessContainer(std::back_insert_iterator<std::remove_cvref_t<decltype(cont)>>(cont), true);
+		IteratorContainer(IteratorContainer&& o)
+			: containerPtr(std::move(o.containerPtr)), helper(IteratorContainerHelper {} /*no data members so no need to move, just instantiate it*/) {
+			helper.StoreStaticTyping(o.helper.StoreStaticTyping(dummy_obj::dummy_str));
 		}
 		IteratorContainer& operator=(IteratorContainer&& o) {
-			auto& cont { o.UnderlyingContainer() };
-			using type = std::remove_cvref_t<decltype(cont)>;
-			AccessContainer(std::back_insert_iterator<std::remove_cvref_t<decltype(cont)>>(cont), true);
+			containerPtr = std::move(o.containerPtr);
+			helper       = IteratorContainerHelper {};    // like move ctr, no need to move since it's empty, just instantiate it
+			helper.StoreStaticTyping(o.helper.StoreStaticTyping(dummy_obj::dummy_str));
 			return *this;
 		}
 		~IteratorContainer() = default;
@@ -84,10 +89,9 @@ namespace serenity {
 
 	struct CustomValue
 	{
-		template<typename T, typename U = IteratorContainer>
-		explicit CustomValue(T&& value, U&& iter)
-			: data(std::addressof(value)), container(std::move(iter)),
-			  CustomFormatCallBack([](std::string_view parseView, const void* ptr, IteratorContainer& container) -> void {
+		template<typename T>
+		explicit CustomValue(T&& value)
+			: data(std::addressof(value)), CustomFormatCallBack([](std::string_view parseView, const void* ptr, IteratorContainer&& container) -> void {
 				  using UnqualifiedType = std::remove_cvref_t<T>;
 				  using QualifiedType   = std::add_const_t<UnqualifiedType>;
 				  auto formatter { CustomFormatter<UnqualifiedType> {} };
@@ -95,24 +99,35 @@ namespace serenity {
 				  formatter.Format(*static_cast<QualifiedType*>(ptr), container.UnderlyingContainer());
 			  }) { }
 
-		constexpr void FormatCallBack(std::string_view parseView) {
-			CustomFormatCallBack(parseView, data, container);
+		template<typename Container> constexpr void FormatCallBack(Container&& container, std::string_view parseView) {
+			using ContainerType = std::remove_cvref_t<Container>;
+			using ContainerRef  = std::add_lvalue_reference_t<ContainerType>;
+			/**********************************************************************  NOTE **********************************************************************/
+			// Debating about backtracking just a little bit. Right now I'm forwarding the underlying container instead of the iterator like I was doing before, but
+			// if I just go back to forwarding the iterator, then I could forward the iterator here and just construct the IteratorContainer object with the already
+			// constructed iterator object instead of adding a call to the back_insert_iterator constructor. In which case, I could also remove the move assignment
+			// of the IteratorContainer move constructor in the se_format_to() functions. I would imagine that  the ~10ns hit would likely disappear  if I do it this
+			// way? Will have to test this out tomorrow if I can get around to it then. I would be stoked if I could actually straight up gain a net positive over
+			// the current use case and the previous use case while still being able to directly format into the container object with the custom formatters.
+			// For my own reference, the current use case is ~26% faster than the standard, the previous use case (which didn't offer direct formatting to the
+			// container) was ~35% faster than the standard. So if I revert some of these changes and end up at ~35% or  faster than the standard while still being
+			// able to directly format to the container from the custom formatters, then I would consider it a win.
+			CustomFormatCallBack(parseView, data,
+			                     std::move(IteratorContainer(std::move(std::back_insert_iterator<ContainerType>(std::forward<ContainerRef>(container))))));
 		}
 
 		~CustomValue()                             = default;
 		CustomValue(const CustomValue&)            = delete;
 		CustomValue& operator=(const CustomValue&) = delete;
-		CustomValue(CustomValue&& o): container(std::move(o.container)), data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
+		CustomValue(CustomValue&& o): data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
 		CustomValue& operator=(CustomValue&& o) {
-			container            = std::move(o.container);
 			data                 = o.data;
 			CustomFormatCallBack = std::move(o.CustomFormatCallBack);
 			return *this;
 		}
 
 		const void* data;
-		IteratorContainer container;
-		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, IteratorContainer& outResult);
+		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, IteratorContainer&& outResult);
 	};
 
 	// clang-format off
