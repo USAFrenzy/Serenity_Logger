@@ -875,7 +875,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	} else {
 			constexpr std::string_view sv { "0x" };
 			auto& iter { std::back_inserter(container) };
-			std::move(sv.data(), sv.data() + sv.size(), iter);
+			std::copy(sv.data(), sv.data() + sv.size(), iter);
 			std::move(data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr, iter);
 		}
 }
@@ -895,7 +895,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	} else {
 			constexpr std::string_view sv { "0x" };
 			auto& iter { std::back_inserter(container) };
-			std::move(sv.data(), sv.data() + sv.size(), iter);
+			std::copy(sv.data(), sv.data() + sv.size(), iter);
 			std::move(data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr, iter);
 		}
 }

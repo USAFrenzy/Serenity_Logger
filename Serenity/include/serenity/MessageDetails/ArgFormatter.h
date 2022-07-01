@@ -237,8 +237,6 @@ namespace serenity::arg_formatter {
 	********************************************************************************************************************************************************/
 	class ArgFormatter
 	{
-		template<typename T> using Iterator = std::back_insert_iterator<std::remove_cvref_t<T>>;
-
 	  public:
 		constexpr ArgFormatter();
 		constexpr ArgFormatter(const ArgFormatter&)            = delete;

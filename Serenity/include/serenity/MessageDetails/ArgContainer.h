@@ -9,10 +9,12 @@
 
 namespace serenity {
 
+	// convenience typedefs
 	template<typename T> using type        = std::remove_cvref_t<T>;
 	template<typename T> using FwdRef      = std::add_lvalue_reference_t<type<T>>;
 	template<typename T> using FwdMove     = std::add_rvalue_reference_t<type<T>>;
-	template<typename T> using FwdMoveIter = std::add_rvalue_reference_t<std::remove_cvref_t<std::back_insert_iterator<T>>>;
+	template<typename T> using Iterator    = std::back_insert_iterator<type<T>>;
+	template<typename T> using FwdMoveIter = std::add_rvalue_reference_t<Iterator<T>>;
 
 	template<typename T> struct IteratorAccessHelper: std::back_insert_iterator<T>
 	{
@@ -105,8 +107,7 @@ namespace serenity {
 
 		template<typename Container>
 		constexpr auto FormatCallBack(std::back_insert_iterator<Container>&& Iter, std::string_view parseView) -> std::back_insert_iterator<type<Container>> {
-			using Iterator = std::back_insert_iterator<type<Container>>;
-			return std::move(Iterator(CustomFormatCallBack(parseView, data, std::move(IteratorContainer(std::move(Iter))))));
+			return std::move(Iterator<Container>(CustomFormatCallBack(parseView, data, std::move(IteratorContainer(std::move(Iter))))));
 		}
 
 		~CustomValue()                             = default;
