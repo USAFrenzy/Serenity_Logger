@@ -225,7 +225,7 @@ int main() {
 		                        << Tag::Yellow("***************************************************************************************\n");
 	// clang-format on
 	std::cout << Tag::Bright_Yellow("Color Console Target (ST)\n") << Tag::Bright_Cyan("\t- In Nanoseconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(consoleNanoSec / iterations) + " s\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
+			  << Tag::Bright_Green(std::to_string(consoleNanoSec / iterations) + " ns\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(consoleMicroSec / iterations) + " us\n") << Tag::Bright_Cyan("\t- In Milliseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(consoleMillSec / iterations) + " ms\n") << Tag::Bright_Cyan("\t- In Seconds:\t\t\t\t")
 			  << Tag::Bright_Green(std::to_string(consoleSeconds / iterations) + " s\n");
@@ -239,13 +239,13 @@ int main() {
 	std::cout << Tag::Bright_Magenta("Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n");
 
 	std::cout << Tag::Bright_Yellow("File Target (ST)\n") << Tag::Bright_Cyan("\t- In Nanoseconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(fileNanoSec / iterations) + " s\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
+			  << Tag::Bright_Green(std::to_string(fileNanoSec / iterations) + " ns\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(fileMicroSec / iterations) + " us\n") << Tag::Bright_Cyan("\t- In Milliseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(fileMillSec / iterations) + " ms\n") << Tag::Bright_Cyan("\t- In Seconds:\t\t\t\t")
 			  << Tag::Bright_Green(std::to_string(fileSeconds / iterations) + " s\n");
 
 	std::cout << Tag::Bright_Yellow("Spdlog Basic File Sink (ST)\n") << Tag::Bright_Cyan("\t- In Nanoseconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogFileNanoSec / iterations) + " s\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
+			  << Tag::Bright_Green(std::to_string(spdlogFileNanoSec / iterations) + " ns\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(spdlogFileMicroSec / iterations) + " us\n") << Tag::Bright_Cyan("\t- In Milliseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(spdlogFileMillSec / iterations) + " ms\n") << Tag::Bright_Cyan("\t- In Seconds:\t\t\t\t")
 			  << Tag::Bright_Green(std::to_string(spdlogFileSeconds / iterations) + " s\n");
@@ -253,13 +253,13 @@ int main() {
 	std::cout << Tag::Bright_Magenta("File Target Is " + filePercent + " Percent Of Spdlog's File Sink Speed\n");
 
 	std::cout << Tag::Bright_Yellow("Roating Target (ST)\n") << Tag::Bright_Cyan("\t- In Nanoseconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(rotateNanoSec / iterations) + " s\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
+			  << Tag::Bright_Green(std::to_string(rotateNanoSec / iterations) + " ns\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(rotateMicroSec / iterations) + " us\n") << Tag::Bright_Cyan("\t- In Milliseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(rotateMillSec / iterations) + " ms\n") << Tag::Bright_Cyan("\t- In Seconds:\t\t\t\t")
 			  << Tag::Bright_Green(std::to_string(rotateSeconds / iterations) + " s\n");
 
 	std::cout << Tag::Bright_Yellow("Spdlog Rotating File Sink (ST)\n") << Tag::Bright_Cyan("\t- In Nanoseconds:\t\t\t")
-			  << Tag::Bright_Green(std::to_string(spdlogRotateNanoSec / iterations) + " s\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
+			  << Tag::Bright_Green(std::to_string(spdlogRotateNanoSec / iterations) + " ns\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(spdlogRotateMicroSec / iterations) + " us\n") << Tag::Bright_Cyan("\t- In Milliseconds:\t\t\t")
 			  << Tag::Bright_Green(std::to_string(spdlogRotateMillSec / iterations) + " ms\n") << Tag::Bright_Cyan("\t- In Seconds:\t\t\t\t")
 			  << Tag::Bright_Green(std::to_string(spdlogRotateSeconds / iterations) + " s\n");

@@ -8,22 +8,25 @@
 #include <vector>
 
 namespace serenity {
+
+	template<typename T> using type        = std::remove_cvref_t<T>;
+	template<typename T> using FwdRef      = std::add_lvalue_reference_t<type<T>>;
+	template<typename T> using FwdMove     = std::add_rvalue_reference_t<type<T>>;
+	template<typename T> using FwdMoveIter = std::add_rvalue_reference_t<std::remove_cvref_t<std::back_insert_iterator<T>>>;
+
 	template<typename T> struct IteratorAccessHelper: std::back_insert_iterator<T>
 	{
-		// using type = std::remove_cvref_t<T>;
 		using std::back_insert_iterator<T>::container_type;
-
 		constexpr IteratorAccessHelper(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
 		constexpr const auto& Container() {
 			return this->container;
 		}
 	};
 
-	// NOTE: Changed the signature of Format(), but at the moment, it's really only useful for when a string is the iterator container
 	template<typename Value> struct CustomFormatter
 	{
 		constexpr void Parse(std::string_view) { }
-		template<typename ValueType = std::remove_cvref_t<Value>, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
+		template<typename ValueType, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
 	};
 
 	// Initially was using a static variable to keep track of the typing in IteratorContainer::AccessContainer(),
@@ -33,13 +36,12 @@ namespace serenity {
 	struct IteratorContainerHelper
 	{
 		template<typename T> auto StoreStaticTyping(T&&) {
-			using value_type = std::remove_cvref_t<T>;
-			const static value_type type;
+			const static type<T> type {};
 			// can add lvalue ref  here due to const static storage
-			using Ref = std::add_lvalue_reference_t<decltype(type)>;
-			return std::forward<Ref>(type);
+			return std::forward<FwdRef<decltype(type)>>(FwdRef<decltype(type)>(type));
 		}
 	};
+
 	namespace dummy_obj {
 		static std::string dummy_str;
 		static std::back_insert_iterator<std::string> dummy_iter = std::back_insert_iterator<std::string> { dummy_str };
@@ -52,13 +54,12 @@ namespace serenity {
 
 		template<typename Iter> constexpr decltype(auto) AccessContainer(Iter&& iter, bool firstPass = false) const {
 			if( firstPass ) {
-					using container_type = std::remove_cvref_t<decltype(IteratorAccessHelper(iter))::container_type>;
-					helper.StoreStaticTyping(container_type {});
+					helper.StoreStaticTyping(type<decltype(IteratorAccessHelper(iter))::container_type> {});
 					containerPtr = std::addressof(*IteratorAccessHelper(iter).Container());
 			}
-			using type         = std::add_const_t<decltype(helper.StoreStaticTyping(dummy_obj::dummy_str))>;
-			using ContainerRef = std::add_lvalue_reference_t<std::remove_const_t<type>>;
-			return std::forward<ContainerRef>(ContainerRef(*static_cast<type*>(containerPtr)));
+			using ConstType    = std::add_const_t<decltype(helper.StoreStaticTyping(dummy_obj::dummy_str))>;
+			using ContainerRef = std::add_lvalue_reference_t<std::remove_const_t<ConstType>>;
+			return std::forward<ContainerRef>(ContainerRef(*static_cast<ConstType*>(containerPtr)));
 		}
 
 		constexpr decltype(auto) UnderlyingContainer() const {
@@ -66,21 +67,23 @@ namespace serenity {
 		}
 
 		template<typename Iter> IteratorContainer(Iter&& iter) {
-			AccessContainer(std::forward<std::add_rvalue_reference_t<std::remove_cvref_t<Iter>>>(iter), true);
-		}
-		template<typename Iter> IteratorContainer(Iter& iter) {
-			AccessContainer(std::forward<std::add_lvalue_reference_t<std::remove_cvref_t<Iter>>>(iter), true);
+			// If it's a reference, then pass it by reference. iI it was a copy by value param, the copy can be moved
+			// so treat it as an rvalue and just move both the copy and rvalue cases
+			if constexpr( std::is_same_v<FwdRef<Iter>, Iter> ) {
+					AccessContainer(std::forward<FwdRef<Iter>>(iter), true);
+			} else {
+					AccessContainer(std::forward<FwdMove<Iter>>(iter), true);
+				}
 		}
 		IteratorContainer()                                    = default;
 		IteratorContainer(const IteratorContainer&)            = delete;
 		IteratorContainer& operator=(const IteratorContainer&) = delete;
-		IteratorContainer(IteratorContainer&& o)
-			: containerPtr(std::move(o.containerPtr)), helper(IteratorContainerHelper {} /*no data members so no need to move, just instantiate it*/) {
+		IteratorContainer(IteratorContainer&& o): containerPtr(std::move(o.containerPtr)), helper(std::move(o.helper)) {
 			helper.StoreStaticTyping(o.helper.StoreStaticTyping(dummy_obj::dummy_str));
 		}
 		IteratorContainer& operator=(IteratorContainer&& o) {
 			containerPtr = std::move(o.containerPtr);
-			helper       = IteratorContainerHelper {};    // like move ctr, no need to move since it's empty, just instantiate it
+			helper       = std::move(o.helper);
 			helper.StoreStaticTyping(o.helper.StoreStaticTyping(dummy_obj::dummy_str));
 			return *this;
 		}
@@ -91,29 +94,19 @@ namespace serenity {
 	{
 		template<typename T>
 		explicit CustomValue(T&& value)
-			: data(std::addressof(value)), CustomFormatCallBack([](std::string_view parseView, const void* ptr, IteratorContainer&& container) -> void {
-				  using UnqualifiedType = std::remove_cvref_t<T>;
-				  using QualifiedType   = std::add_const_t<UnqualifiedType>;
-				  auto formatter { CustomFormatter<UnqualifiedType> {} };
+			: data(std::addressof(value)),
+			  CustomFormatCallBack([](std::string_view parseView, const void* ptr, IteratorContainer&& container) -> decltype(container.UnderlyingContainer()) {
+				  using QualifiedType = std::add_const_t<type<T>>;
+				  auto formatter { CustomFormatter<type<T>> {} };
 				  formatter.Parse(parseView);
 				  formatter.Format(*static_cast<QualifiedType*>(ptr), container.UnderlyingContainer());
+				  return container.UnderlyingContainer();
 			  }) { }
 
-		template<typename Container> constexpr void FormatCallBack(Container&& container, std::string_view parseView) {
-			using ContainerType = std::remove_cvref_t<Container>;
-			using ContainerRef  = std::add_lvalue_reference_t<ContainerType>;
-			/**********************************************************************  NOTE **********************************************************************/
-			// Debating about backtracking just a little bit. Right now I'm forwarding the underlying container instead of the iterator like I was doing before, but
-			// if I just go back to forwarding the iterator, then I could forward the iterator here and just construct the IteratorContainer object with the already
-			// constructed iterator object instead of adding a call to the back_insert_iterator constructor. In which case, I could also remove the move assignment
-			// of the IteratorContainer move constructor in the se_format_to() functions. I would imagine that  the ~10ns hit would likely disappear  if I do it this
-			// way? Will have to test this out tomorrow if I can get around to it then. I would be stoked if I could actually straight up gain a net positive over
-			// the current use case and the previous use case while still being able to directly format into the container object with the custom formatters.
-			// For my own reference, the current use case is ~26% faster than the standard, the previous use case (which didn't offer direct formatting to the
-			// container) was ~35% faster than the standard. So if I revert some of these changes and end up at ~35% or  faster than the standard while still being
-			// able to directly format to the container from the custom formatters, then I would consider it a win.
-			CustomFormatCallBack(parseView, data,
-			                     std::move(IteratorContainer(std::move(std::back_insert_iterator<ContainerType>(std::forward<ContainerRef>(container))))));
+		template<typename Container>
+		constexpr auto FormatCallBack(std::back_insert_iterator<Container>&& Iter, std::string_view parseView) -> std::back_insert_iterator<type<Container>> {
+			using Iterator = std::back_insert_iterator<type<Container>>;
+			return std::move(Iterator(CustomFormatCallBack(parseView, data, std::move(IteratorContainer(std::move(Iter))))));
 		}
 
 		~CustomValue()                             = default;
@@ -127,7 +120,7 @@ namespace serenity {
 		}
 
 		const void* data;
-		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, IteratorContainer&& outResult);
+		auto(*CustomFormatCallBack)(std::string_view parseView, const void* data, IteratorContainer&& container) -> decltype(container.UnderlyingContainer());
 	};
 
 	// clang-format off
@@ -230,41 +223,40 @@ namespace serenity::msg_details {
 	// putting the definition here since clang was warning on extra qualifiers for some reason
 	template<typename T> static constexpr SpecType GetArgType(T&& val) {
 		using enum SpecType;
-		using base_type = std::remove_cvref_t<decltype(val)>;
-		if constexpr( std::is_same_v<base_type, std::monostate> ) {
+		if constexpr( std::is_same_v<type<T>, std::monostate> ) {
 				return std::forward<SpecType>(MonoType);
-		} else if constexpr( std::is_same_v<base_type, std::string> ) {
+		} else if constexpr( std::is_same_v<type<T>, std::string> ) {
 				return std::forward<SpecType>(StringType);
-		} else if constexpr( std::is_same_v<base_type, const char*> ) {
+		} else if constexpr( std::is_same_v<type<T>, const char*> ) {
 				return std::forward<SpecType>(CharPointerType);
-		} else if constexpr( std::is_same_v<base_type, std::string_view> ) {
+		} else if constexpr( std::is_same_v<type<T>, std::string_view> ) {
 				return std::forward<SpecType>(StringViewType);
-		} else if constexpr( std::is_same_v<base_type, int> ) {
+		} else if constexpr( std::is_same_v<type<T>, int> ) {
 				return std::forward<SpecType>(IntType);
-		} else if constexpr( std::is_same_v<base_type, unsigned int> ) {
+		} else if constexpr( std::is_same_v<type<T>, unsigned int> ) {
 				return std::forward<SpecType>(U_IntType);
-		} else if constexpr( std::is_same_v<base_type, long long> ) {
+		} else if constexpr( std::is_same_v<type<T>, long long> ) {
 				return std::forward<SpecType>(LongLongType);
-		} else if constexpr( std::is_same_v<base_type, unsigned long long> ) {
+		} else if constexpr( std::is_same_v<type<T>, unsigned long long> ) {
 				return std::forward<SpecType>(U_LongLongType);
-		} else if constexpr( std::is_same_v<base_type, bool> ) {
+		} else if constexpr( std::is_same_v<type<T>, bool> ) {
 				return std::forward<SpecType>(BoolType);
-		} else if constexpr( std::is_same_v<base_type, char> ) {
+		} else if constexpr( std::is_same_v<type<T>, char> ) {
 				return std::forward<SpecType>(CharType);
-		} else if constexpr( std::is_same_v<base_type, float> ) {
+		} else if constexpr( std::is_same_v<type<T>, float> ) {
 				return std::forward<SpecType>(FloatType);
-		} else if constexpr( std::is_same_v<base_type, double> ) {
+		} else if constexpr( std::is_same_v<type<T>, double> ) {
 				return std::forward<SpecType>(DoubleType);
-		} else if constexpr( std::is_same_v<base_type, long double> ) {
+		} else if constexpr( std::is_same_v<type<T>, long double> ) {
 				return std::forward<SpecType>(LongDoubleType);
-		} else if constexpr( std::is_same_v<base_type, const void*> ) {
+		} else if constexpr( std::is_same_v<type<T>, const void*> ) {
 				return std::forward<SpecType>(ConstVoidPtrType);
-		} else if constexpr( std::is_same_v<base_type, void*> ) {
+		} else if constexpr( std::is_same_v<type<T>, void*> ) {
 				return std::forward<SpecType>(VoidPtrType);
 		} else {
-				static_assert(is_formattable_v<base_type>, "A Template Specialization Must Exist For A Custom Type Argument.\n\t"
-				                                           "For Serenity, This Can Be Done By Specializing The CustomFormatter Template For Your Type And "
-				                                           "Implementing The Parse() And Format() Functions.");
+				static_assert(is_formattable_v<type<T>>, "A Template Specialization Must Exist For A Custom Type Argument.\n\t"
+				                                         "For Serenity, This Can Be Done By Specializing The CustomFormatter Template For Your Type And "
+				                                         "Implementing The Parse() And Format() Functions.");
 				return std::forward<SpecType>(CustomType);
 			}
 	}

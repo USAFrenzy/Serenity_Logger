@@ -184,7 +184,7 @@ namespace serenity::arg_formatter {
 	template<typename... Args> static constexpr void ReserveCapacityImpl(size_t& totalSize, Args&&... args) {
 		(
 		[ = ](size_t& totalSize, auto&& arg) {
-			using base_type = std::decay_t<decltype(arg)>;
+			using base_type = type<decltype(arg)>;
 			if constexpr( std::is_same_v<base_type, std::string> || std::is_same_v<base_type, std::string_view> ) {
 					totalSize += arg.size();
 			} else if constexpr( std::is_same_v<base_type, const char*> ) {
@@ -237,6 +237,8 @@ namespace serenity::arg_formatter {
 	********************************************************************************************************************************************************/
 	class ArgFormatter
 	{
+		template<typename T> using Iterator = std::back_insert_iterator<std::remove_cvref_t<T>>;
+
 	  public:
 		constexpr ArgFormatter();
 		constexpr ArgFormatter(const ArgFormatter&)            = delete;
@@ -254,10 +256,10 @@ namespace serenity::arg_formatter {
 		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
 		// At the moment ParseFormatString() and Format() are coupled together where ParseFormatString calls Format, hence the need
 		// right now to have a version of ParseFormatString() that takes a locale object to forward to the locale overloaded Format()
-		template<typename T> constexpr void ParseFormatString(T&& container, std::string_view sv);
-		template<typename T> constexpr void ParseFormatString(T&& container, const std::locale& loc, std::string_view sv);
-		template<typename T> constexpr void Format(T&& container, const SpecType& argType);
-		template<typename T> constexpr void Format(T&& container, const std::locale& loc, const SpecType& argType);
+		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv);
+		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv);
+		template<typename T> constexpr auto Format(T&& container, const SpecType& argType) -> Iterator<T>;
+		template<typename T> constexpr auto Format(T&& container, const std::locale& loc, const SpecType& argType) -> Iterator<T>;
 		/******************************************************* Parsing/Verification Related Functions *******************************************************/
 		[[noreturn]] constexpr void ReportError(ErrorType err);
 		constexpr bool FindBrackets(std::string_view sv);
@@ -307,7 +309,7 @@ namespace serenity::arg_formatter {
 		constexpr void WriteChar(const char& value);
 		constexpr void WriteBool(const bool& value);
 		template<typename T> constexpr void WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth);
-		template<typename T> constexpr void WriteSimpleValue(T&& container, const SpecType&);
+		template<typename T> constexpr auto WriteSimpleValue(T&& container, const SpecType&) -> Iterator<T>;
 		template<typename T> constexpr void WriteSimpleString(T&& container);
 		template<typename T> constexpr void WriteSimpleCString(T&& container);
 		template<typename T> constexpr void WriteSimpleStringView(T&& container);
@@ -356,11 +358,11 @@ namespace serenity {
 		static std::unique_ptr<arg_formatter::ArgFormatter> staticFormatter { std::make_unique<arg_formatter::ArgFormatter>() };
 	}
 	template<typename T, typename... Args> static constexpr void format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
-		globals::staticFormatter->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), sv, std::forward<Args>(args)...);
+		globals::staticFormatter->se_format_to(std::forward<FwdMoveIter<T>>(Iter), sv, std::forward<Args>(args)...);
 	}
 	template<typename T, typename... Args>
 	static constexpr void format_to(std::back_insert_iterator<T>&& Iter, const std::locale& locale, std::string_view sv, Args&&... args) {
-		globals::staticFormatter->se_format_to(std::forward<std::back_insert_iterator<T>>(Iter), locale, sv, std::forward<Args>(args)...);
+		globals::staticFormatter->se_format_to(std::forward<FwdMoveIter<T>>(Iter), locale, sv, std::forward<Args>(args)...);
 	}
 	template<typename... Args> [[nodiscard]] static std::string format(std::string_view sv, Args&&... args) {
 		std::string tmp;

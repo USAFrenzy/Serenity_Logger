@@ -416,15 +416,18 @@ int main() {
 			std::cout << serenity::format("{:*55}\n\n");
 		}
 
-	/************************** Current Stats Ran As Of  30Jun22 **************************/
+	/************************** Current Stats Ran As Of  31Jun22 **************************/
 	// **********************************[Loop Averages] **********************************
-	// Serenity Total Average Among Loops[117.29978 ns]
-	// Standard Total Average Among Loops[159.64954 ns]
-	// Serenity Is 26.527 % Faster Than The Standard
+	// Serenity Total Average Among Loops [97.59958 ns]
+	// Standard Total Average Among Loops [159.95975 ns]
+	// Serenity Is 38.985 % Faster Than The Standard
 	// ***********************************************************************************
-	// Note: Took a ~10ns hit for the container forwarding to the format call back. While
-	//             I'm stoked that I can now have the custom formatters format directly into the
-	//             original container, I hope to gain back that time and then some.
+	// Note: Some backtracking on forwarding the iterator vs forwarding the container itself
+	//             and using the underlying container directly for some ops ended up working out
+	//             better than I had hoped. Not only did I gain the initial time lost back, it's actually
+	//            ~2%, almost 3%, faster than it originally was to begin with. Definitely on the right
+	//            track here. What's better is that all tests are passing and timings for native types
+	//            hasn't been negatively impacted by this change. All-in-all, a big win here =]
 
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };
