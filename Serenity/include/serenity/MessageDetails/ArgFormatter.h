@@ -190,7 +190,9 @@ namespace serenity::arg_formatter {
 			} else if constexpr( std::is_same_v<base_type, const char*> ) {
 					totalSize += std::strlen(arg);
 			} else {
-					totalSize += 16;
+					if( sizeof(arg) + totalSize > sizeof(std::string) + totalSize ) {
+							totalSize += sizeof(arg);
+					}
 				}
 		}(totalSize, args),
 		...);
@@ -278,7 +280,7 @@ namespace serenity::arg_formatter {
 		constexpr void OnInvalidTypeSpec(const SpecType& type);
 		/************************************************************ Formatting Related Functions ************************************************************/
 		template<typename T> constexpr void FormatStringType(T&& container, std::string_view val, const int& precision);
-		template<typename T> constexpr void FormatArgument(T&& container, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T> constexpr auto FormatArgument(T&& container, const int& precision, const int& totalWidth, const SpecType& type) -> Iterator<T>;
 		template<typename T> constexpr void FormatAlignment(T&& container, const int& totalWidth);
 		template<typename T> constexpr void FormatAlignment(T&& container, std::string_view val, const int& width, int prec);
 		constexpr void FormatBoolType(bool& value);
@@ -295,7 +297,8 @@ namespace serenity::arg_formatter {
 		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
 		template<typename T> void LocalizeBool(T&& container, const std::locale& loc);
 		void FormatIntegralGrouping(const std::locale& loc, size_t end);
-		template<typename T> void LocalizeArgument(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		template<typename T>
+		auto LocalizeArgument(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type) -> Iterator<T>;
 		template<typename T> void LocalizeIntegral(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		template<typename T> void LocalizeFloatingPoint(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		/******************************************************** Container Writing Related Functions *********************************************************/
@@ -306,7 +309,7 @@ namespace serenity::arg_formatter {
 		constexpr void WritePreFormatChars(int& pos);
 		constexpr void WriteChar(const char& value);
 		constexpr void WriteBool(const bool& value);
-		template<typename T> constexpr void WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth);
+		template<typename T> constexpr auto WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth) -> Iterator<T>;
 		template<typename T> constexpr auto WriteSimpleValue(T&& container, const SpecType&) -> Iterator<T>;
 		template<typename T> constexpr void WriteSimpleString(T&& container);
 		template<typename T> constexpr void WriteSimpleCString(T&& container);

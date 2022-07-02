@@ -31,16 +31,11 @@ namespace serenity {
 		template<typename ValueType, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
 	};
 
-	// Initially was using a static variable to keep track of the typing in IteratorContainer::AccessContainer(),
-	// however, that prevented the function from being declared constexpr. This is a work around for that,
-	// though, for the same reasons as the initial reason, this only works in runtime context and not constexpr
-	// context
 	struct IteratorContainerHelper
 	{
-		template<typename T> auto StoreStaticTyping(T&&) {
-			const static type<T> type {};
-			// can add lvalue ref  here due to const static storage
-			return std::forward<FwdRef<decltype(type)>>(FwdRef<decltype(type)>(type));
+		template<typename T> constexpr auto StoreStaticTyping(T&&) {
+			const static type<T> type;
+			return std::forward<decltype(type)>(type);
 		}
 	};
 
@@ -68,7 +63,7 @@ namespace serenity {
 			return AccessContainer(dummy_obj::dummy_iter);
 		}
 
-		template<typename Iter> IteratorContainer(Iter&& iter) {
+		template<typename Iter> constexpr IteratorContainer(Iter&& iter) {
 			// If it's a reference, then pass it by reference. iI it was a copy by value param, the copy can be moved
 			// so treat it as an rvalue and just move both the copy and rvalue cases
 			if constexpr( std::is_same_v<FwdRef<Iter>, Iter> ) {
@@ -77,19 +72,19 @@ namespace serenity {
 					AccessContainer(std::forward<FwdMove<Iter>>(iter), true);
 				}
 		}
-		IteratorContainer()                                    = default;
-		IteratorContainer(const IteratorContainer&)            = delete;
-		IteratorContainer& operator=(const IteratorContainer&) = delete;
-		IteratorContainer(IteratorContainer&& o): containerPtr(std::move(o.containerPtr)), helper(std::move(o.helper)) {
+		constexpr IteratorContainer()                                    = default;
+		constexpr IteratorContainer(const IteratorContainer&)            = delete;
+		constexpr IteratorContainer& operator=(const IteratorContainer&) = delete;
+		constexpr IteratorContainer(IteratorContainer&& o): containerPtr(std::move(o.containerPtr)), helper(std::move(o.helper)) {
 			helper.StoreStaticTyping(o.helper.StoreStaticTyping(dummy_obj::dummy_str));
 		}
-		IteratorContainer& operator=(IteratorContainer&& o) {
+		constexpr IteratorContainer& operator=(IteratorContainer&& o) {
 			containerPtr = std::move(o.containerPtr);
 			helper       = std::move(o.helper);
 			helper.StoreStaticTyping(o.helper.StoreStaticTyping(dummy_obj::dummy_str));
 			return *this;
 		}
-		~IteratorContainer() = default;
+		constexpr ~IteratorContainer() = default;
 	};
 
 	struct CustomValue
@@ -107,7 +102,7 @@ namespace serenity {
 
 		template<typename Container>
 		constexpr auto FormatCallBack(std::back_insert_iterator<Container>&& Iter, std::string_view parseView) -> std::back_insert_iterator<type<Container>> {
-			return std::move(Iterator<Container>(CustomFormatCallBack(parseView, data, std::move(IteratorContainer(std::move(Iter))))));
+			return std::move(std::back_inserter(CustomFormatCallBack(parseView, data, std::move(IteratorContainer(std::move(Iter))))));
 		}
 
 		~CustomValue()                             = default;

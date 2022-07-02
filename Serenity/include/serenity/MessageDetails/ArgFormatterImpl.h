@@ -123,9 +123,8 @@ template<typename T> constexpr auto serenity::arg_formatter::ArgFormatter::Forma
 					return WriteSimpleValue(std::forward<FwdRef<T>>(container), argType);
 			}
 	}
-	!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
-						 : LocalizeArgument(std::forward<FwdRef<T>>(container), default_locale, precision, totalWidth, argType);
-	return std::back_insert_iterator<type<T>>(container);
+	return std::move(!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
+	                                      : LocalizeArgument(std::forward<FwdRef<T>>(container), default_locale, precision, totalWidth, argType));
 }
 
 template<typename T>
@@ -140,9 +139,8 @@ constexpr auto serenity::arg_formatter::ArgFormatter::Format(T&& container, cons
 					return WriteSimpleValue(std::forward<FwdRef<T>>(container), argType);
 			}
 	}
-	!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
-						 : LocalizeArgument(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, argType);
-	return std::back_insert_iterator<type<T>>(container);
+	return std::move(!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
+	                                      : LocalizeArgument(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, argType));
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
@@ -919,7 +917,7 @@ template<typename T> constexpr auto serenity::arg_formatter::ArgFormatter::Write
 			case VoidPtrType: WriteSimpleVoidPtr(std::forward<FwdRef<T>>(container)); break;
 			default: break;
 		}
-	return std::back_insert_iterator<type<T>>(container);
+	return std::move(std::back_inserter(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(T&& container, const int& totalWidth) {
@@ -1154,7 +1152,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatPointerType(T&& valu
 }
 
 template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(T&& container, const int& precision, const int& totalWidth, const msg_details::SpecType& type) {
+constexpr auto serenity::arg_formatter::ArgFormatter::FormatArgument(T&& container, const int& precision, const int& totalWidth, const msg_details::SpecType& type)
+-> Iterator<T> {
 	using enum msg_details::SpecType;
 	switch( type ) {
 			case IntType: FormatIntegerType(argStorage.int_state(specValues.argPosition)); break;
@@ -1168,12 +1167,13 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(T&& contain
 			case LongDoubleType: FormatFloatType(argStorage.long_double_state(specValues.argPosition), precision); break;
 			case StringType: [[fallthrough]];
 			case CharPointerType: [[fallthrough]];
-			case StringViewType: WriteString(std::forward<FwdRef<T>>(container), type, precision, totalWidth); return;
+			case StringViewType: return std::move(WriteString(std::forward<FwdRef<T>>(container), type, precision, totalWidth)); break;
 			case ConstVoidPtrType: FormatPointerType(argStorage.const_void_ptr_state(specValues.argPosition), type); break;
 			case VoidPtrType: FormatPointerType(argStorage.void_ptr_state(specValues.argPosition), type); break;
 			default: break;
 		}
 	if( !specValues.localize ) FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
+	return std::move(std::back_inserter(container));
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::BufferToUpper(const char& end) {
@@ -1343,23 +1343,24 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 }
 
 template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth) {
+constexpr auto serenity::arg_formatter::ArgFormatter::WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth) -> Iterator<T> {
 	using enum msg_details::SpecType;
 	switch( type ) {
 			case StringType:
 				totalWidth == 0 ? FormatStringType(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), precision)
 								: FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), totalWidth, precision);
-				return;
+				break;
 			case CharPointerType:
 				totalWidth == 0 ? FormatStringType(std::forward<FwdRef<T>>(container), argStorage.c_string_state(specValues.argPosition), precision)
 								: FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.c_string_state(specValues.argPosition), totalWidth, precision);
-				return;
+				break;
 			case StringViewType:
 				totalWidth == 0 ? FormatStringType(std::forward<FwdRef<T>>(container), argStorage.string_view_state(specValues.argPosition), precision)
 								: FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_view_state(specValues.argPosition), totalWidth, precision);
-				return;
+				break;
 			default: break;
 		}
+	return std::move(std::back_inserter(container));
 }
 
 // Now that the runtime errors are organized in a neater fashion, would really love to figure out
@@ -1389,8 +1390,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::ReportError(ErrorType err)
 }
 
 template<typename T>
-void serenity::arg_formatter::ArgFormatter::LocalizeArgument(T&& container, const std::locale& loc, const int& precision, const int& totalWidth,
-                                                             const msg_details::SpecType& type) {
+auto serenity::arg_formatter::ArgFormatter::LocalizeArgument(T&& container, const std::locale& loc, const int& precision, const int& totalWidth,
+                                                             const msg_details::SpecType& type) -> Iterator<T> {
 	using enum serenity::msg_details::SpecType;
 	// NOTE: The following types should have been caught in the verification process:  monostate, string, c-string, string view, const void*, void *
 	switch( type ) {
@@ -1404,6 +1405,7 @@ void serenity::arg_formatter::ArgFormatter::LocalizeArgument(T&& container, cons
 			case BoolType: LocalizeBool(std::forward<FwdRef<T>>(container), loc); break;
 		}
 	FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
+	return std::move(std::back_inserter(container));
 }
 
 template<typename T>

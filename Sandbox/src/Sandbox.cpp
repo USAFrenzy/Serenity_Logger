@@ -389,11 +389,6 @@ int main() {
 	// This line is just here for me to toggle between benching and just doing a one-liner test
 	// std::cout << formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}", test) ;
 
-	/******** Major goal is to get my version as close as possible to ~50 % faster than the standard's  custom formatting ********/
-	// Main reason being that some of the custom flags used in Serenity will be a tad slower than others (namely things like %n)
-	// so being able to make cases like those as fast as possible will be a huge benefit and provide value for the change I want to
-	// implement in MessageFormatter; the whole create a format string and provide both that string and the approriate args to
-	//  se_format_to() call to format directly to the file buffer idea.
 	for( int i { 0 }; i < repeatTest; ++i ) {
 			std::cout << serenity::format("{:*^55}\n", (loopStr + std::to_string(i + 1) + "]"));
 			cTimer.StopWatch_Reset();
@@ -416,18 +411,16 @@ int main() {
 			std::cout << serenity::format("{:*55}\n\n");
 		}
 
-	/************************** Current Stats Ran As Of  31Jun22 **************************/
+	/************************** Current Stats Ran As Of  01Jul22 **************************/
 	// **********************************[Loop Averages] **********************************
-	// Serenity Total Average Among Loops [97.59958 ns]
-	// Standard Total Average Among Loops [159.95975 ns]
-	// Serenity Is 38.985 % Faster Than The Standard
+	// Serenity Total Average Among Loops[63.20512 ns]
+	// Standard Total Average Among Loops[176.59734 ns]
+	// Serenity Is 64.209 % Faster Than The Standard
 	// ***********************************************************************************
-	// Note: Some backtracking on forwarding the iterator vs forwarding the container itself
-	//             and using the underlying container directly for some ops ended up working out
-	//             better than I had hoped. Not only did I gain the initial time lost back, it's actually
-	//            ~2%, almost 3%, faster than it originally was to begin with. Definitely on the right
-	//            track here. What's better is that all tests are passing and timings for native types
-	//            hasn't been negatively impacted by this change. All-in-all, a big win here =]
+	// Note: Changing the ReserveCapacity() implementation slightly had little to no negative
+	//             effects on native format yet had a HUGE positive effect on the custom formatting.
+	//             Up from ~38% to 64% faster than the standard - current timings are from my
+	//             laptop
 
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };
