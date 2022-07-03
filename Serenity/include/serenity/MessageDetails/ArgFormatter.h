@@ -55,11 +55,9 @@
 
 #include <serenity/MessageDetails/ArgContainer.h>
 
-#include <array>
 #include <charconv>
 #include <locale>
 #include <stdexcept>
-#include <vector>
 
 using namespace serenity::msg_details;
 namespace serenity {
@@ -158,6 +156,13 @@ namespace serenity::arg_formatter {
 
 	struct SpecFormatting
 	{
+		constexpr SpecFormatting()                                 = default;
+		constexpr SpecFormatting(const SpecFormatting&)            = default;
+		constexpr SpecFormatting& operator=(const SpecFormatting&) = default;
+		constexpr SpecFormatting(SpecFormatting&&)                 = default;
+		constexpr SpecFormatting& operator=(SpecFormatting&&)      = default;
+		constexpr ~SpecFormatting()                                = default;
+
 		constexpr void ResetSpecs();
 		size_t argPosition { 0 };
 		int alignmentPadding { 0 };
@@ -167,7 +172,7 @@ namespace serenity::arg_formatter {
 		Alignment align { Alignment::Empty };
 		unsigned char fillCharacter { '\0' };
 		unsigned char typeSpec { '\0' };
-		std::string_view preAltForm { "" };
+		std::string_view preAltForm {};
 		Sign signType { Sign::Empty };
 		bool localize { false };
 		bool hasAlt { false };
@@ -176,6 +181,13 @@ namespace serenity::arg_formatter {
 
 	struct BracketSearchResults
 	{
+		constexpr BracketSearchResults()                                       = default;
+		constexpr BracketSearchResults(const BracketSearchResults&)            = default;
+		constexpr BracketSearchResults& operator=(const BracketSearchResults&) = default;
+		constexpr BracketSearchResults(BracketSearchResults&&)                 = default;
+		constexpr BracketSearchResults& operator=(BracketSearchResults&&)      = default;
+		constexpr ~BracketSearchResults()                                      = default;
+
 		constexpr void Reset();
 		size_t beginPos { 0 };
 		size_t endPos { 0 };
@@ -243,6 +255,8 @@ namespace serenity::arg_formatter {
 		constexpr ArgFormatter();
 		constexpr ArgFormatter(const ArgFormatter&)            = delete;
 		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
+		constexpr ArgFormatter(ArgFormatter&&)                 = default;
+		constexpr ArgFormatter& operator=(ArgFormatter&&)      = default;
 		constexpr ~ArgFormatter()                              = default;
 
 		// clang-format off
@@ -253,13 +267,13 @@ namespace serenity::arg_formatter {
 		// clang-format on
 
 	  private:
-		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
+		template<typename Iter, typename... Args> constexpr auto CaptureArgs(Iter&& iter, Args&&... args) -> decltype(iter);
 		// At the moment ParseFormatString() and Format() are coupled together where ParseFormatString calls Format, hence the need
 		// right now to have a version of ParseFormatString() that takes a locale object to forward to the locale overloaded Format()
 		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv);
 		template<typename T> constexpr void ParseFormatString(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv);
-		template<typename T> constexpr auto Format(T&& container, const SpecType& argType) -> Iterator<T>;
-		template<typename T> constexpr auto Format(T&& container, const std::locale& loc, const SpecType& argType) -> Iterator<T>;
+		template<typename T> constexpr void Format(T&& container, const SpecType& argType);
+		template<typename T> constexpr void Format(T&& container, const std::locale& loc, const SpecType& argType);
 		/******************************************************* Parsing/Verification Related Functions *******************************************************/
 		[[noreturn]] constexpr void ReportError(ErrorType err);
 		constexpr bool FindBrackets(std::string_view sv);
@@ -280,7 +294,7 @@ namespace serenity::arg_formatter {
 		constexpr void OnInvalidTypeSpec(const SpecType& type);
 		/************************************************************ Formatting Related Functions ************************************************************/
 		template<typename T> constexpr void FormatStringType(T&& container, std::string_view val, const int& precision);
-		template<typename T> constexpr auto FormatArgument(T&& container, const int& precision, const int& totalWidth, const SpecType& type) -> Iterator<T>;
+		template<typename T> constexpr void FormatArgument(T&& container, const int& precision, const int& totalWidth, const SpecType& type);
 		template<typename T> constexpr void FormatAlignment(T&& container, const int& totalWidth);
 		template<typename T> constexpr void FormatAlignment(T&& container, std::string_view val, const int& width, int prec);
 		constexpr void FormatBoolType(bool& value);
@@ -297,8 +311,7 @@ namespace serenity::arg_formatter {
 		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
 		template<typename T> void LocalizeBool(T&& container, const std::locale& loc);
 		void FormatIntegralGrouping(const std::locale& loc, size_t end);
-		template<typename T>
-		auto LocalizeArgument(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type) -> Iterator<T>;
+		template<typename T> void LocalizeArgument(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		template<typename T> void LocalizeIntegral(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		template<typename T> void LocalizeFloatingPoint(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		/******************************************************** Container Writing Related Functions *********************************************************/
@@ -309,8 +322,8 @@ namespace serenity::arg_formatter {
 		constexpr void WritePreFormatChars(int& pos);
 		constexpr void WriteChar(const char& value);
 		constexpr void WriteBool(const bool& value);
-		template<typename T> constexpr auto WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth) -> Iterator<T>;
-		template<typename T> constexpr auto WriteSimpleValue(T&& container, const SpecType&) -> Iterator<T>;
+		template<typename T> constexpr void WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth);
+		template<typename T> constexpr void WriteSimpleValue(T&& container, const SpecType&);
 		template<typename T> constexpr void WriteSimpleString(T&& container);
 		template<typename T> constexpr void WriteSimpleCString(T&& container);
 		template<typename T> constexpr void WriteSimpleStringView(T&& container);
@@ -369,21 +382,15 @@ namespace serenity {
 		std::string tmp;
 		tmp.reserve(serenity::arg_formatter::ReserveCapacity(std::forward<Args>(args)...));
 		globals::staticFormatter->se_format_to(std::back_inserter(tmp), sv, std::forward<Args>(args)...);
-		return std::move(tmp);
+		return tmp;
 	}
 	template<typename... Args> [[nodiscard]] static std::string format(const std::locale& locale, std::string_view sv, Args&&... args) {
 		std::string tmp;
 		tmp.reserve(serenity::arg_formatter::ReserveCapacity(std::forward<Args>(args)...));
 		globals::staticFormatter->se_format_to(std::back_inserter(tmp), locale, sv, std::forward<Args>(args)...);
-		return std::move(tmp);
+		return tmp;
 	}
 }    // namespace serenity
-
-/* ********************************************************************* TODO **********************************************************************/
-// Ended up just implementing defines to work-around custom formatting support for now. I would still love to implement this in the future though,
-// but I feel like for the deadline I've set for myself  for this project, I may not get around to it this pass-through. The below note is probably how I'll
-// end up approaching this when I revisit this project or have time before the self-imposed deadline of September comes around. Same thing goes
-// for the second note about making this possibly even more efficient at runtime.
 
 /********************************************************************** Note: ***********************************************************************/
 // As a second note, I may end up reworking some of this to mirror how libfmt has its formatters set up as I have literally no idea how to accomplish

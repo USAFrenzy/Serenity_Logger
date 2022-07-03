@@ -3,7 +3,6 @@
 #include <string_view>
 #include <array>
 #include <iterator>
-#include <memory>
 #include <variant>
 #include <vector>
 
@@ -15,108 +14,69 @@ namespace serenity {
 	template<typename T> using FwdMove     = std::add_rvalue_reference_t<type<T>>;
 	template<typename T> using Iterator    = std::back_insert_iterator<type<T>>;
 	template<typename T> using FwdMoveIter = std::add_rvalue_reference_t<Iterator<T>>;
+	template<typename T> using FwdRefIter  = std::add_lvalue_reference_t<Iterator<T>>;
+
+	template<typename Value> struct CustomFormatter
+	{
+		constexpr CustomFormatter()                                  = default;
+		constexpr CustomFormatter(const CustomFormatter&)            = default;
+		constexpr CustomFormatter& operator=(const CustomFormatter&) = default;
+		constexpr CustomFormatter(CustomFormatter&&)                 = default;
+		constexpr CustomFormatter& operator=(CustomFormatter&&)      = default;
+		constexpr ~CustomFormatter()                                 = default;
+
+		constexpr void Parse(std::string_view) { }
+		template<typename ValueType, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
+	};
 
 	template<typename T> struct IteratorAccessHelper: std::back_insert_iterator<T>
 	{
 		using std::back_insert_iterator<T>::container_type;
-		constexpr IteratorAccessHelper(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(Iter) { }
+		constexpr explicit IteratorAccessHelper(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(std::forward<FwdRefIter<T>>(Iter)) { }
+		constexpr explicit IteratorAccessHelper(std::back_insert_iterator<T> && (Iter)): std::back_insert_iterator<T>(std::forward<FwdMoveIter<T>>(Iter)) { }
+		constexpr IteratorAccessHelper()                                       = delete;
+		constexpr IteratorAccessHelper(const IteratorAccessHelper&)            = delete;
+		constexpr IteratorAccessHelper& operator=(const IteratorAccessHelper&) = delete;
+		constexpr IteratorAccessHelper(IteratorAccessHelper&&)                 = default;
+		constexpr IteratorAccessHelper& operator=(IteratorAccessHelper&&)      = default;
+		constexpr ~IteratorAccessHelper()                                      = default;
+
 		constexpr const auto& Container() {
 			return this->container;
 		}
 	};
 
-	template<typename Value> struct CustomFormatter
-	{
-		constexpr void Parse(std::string_view) { }
-		template<typename ValueType, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
-	};
-
-	struct IteratorContainerHelper
-	{
-		template<typename T> constexpr auto StoreStaticTyping(T&&) {
-			const static type<T> type;
-			return std::forward<decltype(type)>(type);
-		}
-	};
-
-	namespace dummy_obj {
-		static std::string dummy_str;
-		static std::back_insert_iterator<std::string> dummy_iter = std::back_insert_iterator<std::string> { dummy_str };
-	}    // namespace dummy_obj
-
-	struct IteratorContainer
-	{
-		mutable const void* containerPtr;
-		mutable IteratorContainerHelper helper;
-
-		template<typename Iter> constexpr decltype(auto) AccessContainer(Iter&& iter, bool firstPass = false) const {
-			if( firstPass ) {
-					helper.StoreStaticTyping(type<decltype(IteratorAccessHelper(iter))::container_type> {});
-					containerPtr = std::addressof(*IteratorAccessHelper(iter).Container());
-			}
-			using ConstType    = std::add_const_t<decltype(helper.StoreStaticTyping(dummy_obj::dummy_str))>;
-			using ContainerRef = std::add_lvalue_reference_t<std::remove_const_t<ConstType>>;
-			return std::forward<ContainerRef>(ContainerRef(*static_cast<ConstType*>(containerPtr)));
-		}
-
-		constexpr decltype(auto) UnderlyingContainer() const {
-			return AccessContainer(dummy_obj::dummy_iter);
-		}
-
-		template<typename Iter> constexpr IteratorContainer(Iter&& iter) {
-			// If it's a reference, then pass it by reference. iI it was a copy by value param, the copy can be moved
-			// so treat it as an rvalue and just move both the copy and rvalue cases
-			if constexpr( std::is_same_v<FwdRef<Iter>, Iter> ) {
-					AccessContainer(std::forward<FwdRef<Iter>>(iter), true);
-			} else {
-					AccessContainer(std::forward<FwdMove<Iter>>(iter), true);
-				}
-		}
-		constexpr IteratorContainer()                                    = default;
-		constexpr IteratorContainer(const IteratorContainer&)            = delete;
-		constexpr IteratorContainer& operator=(const IteratorContainer&) = delete;
-		constexpr IteratorContainer(IteratorContainer&& o): containerPtr(std::move(o.containerPtr)), helper(std::move(o.helper)) {
-			helper.StoreStaticTyping(o.helper.StoreStaticTyping(dummy_obj::dummy_str));
-		}
-		constexpr IteratorContainer& operator=(IteratorContainer&& o) {
-			containerPtr = std::move(o.containerPtr);
-			helper       = std::move(o.helper);
-			helper.StoreStaticTyping(o.helper.StoreStaticTyping(dummy_obj::dummy_str));
-			return *this;
-		}
-		constexpr ~IteratorContainer() = default;
-	};
-
 	struct CustomValue
 	{
-		template<typename T>
-		explicit CustomValue(T&& value)
-			: data(std::addressof(value)),
-			  CustomFormatCallBack([](std::string_view parseView, const void* ptr, IteratorContainer&& container) -> decltype(container.UnderlyingContainer()) {
+		template<typename Container, typename T>
+		explicit constexpr CustomValue(Container&& cont, T&& value)
+			: data(std::addressof(value)), container(std::addressof(cont)), CustomFormatCallBack([](std::string_view parseView, const void* ptr, const void* contPtr) {
 				  using QualifiedType = std::add_const_t<type<T>>;
+				  using ContainerType = type<Container>;
+				  using ContainerRef  = std::add_lvalue_reference_t<ContainerType>;
 				  auto formatter { CustomFormatter<type<T>> {} };
 				  formatter.Parse(parseView);
-				  formatter.Format(*static_cast<QualifiedType*>(ptr), container.UnderlyingContainer());
-				  return container.UnderlyingContainer();
+				  formatter.Format(*static_cast<QualifiedType*>(ptr), ContainerRef(*static_cast<const ContainerType*>(contPtr)));
 			  }) { }
-
-		template<typename Container>
-		constexpr auto FormatCallBack(std::back_insert_iterator<Container>&& Iter, std::string_view parseView) -> std::back_insert_iterator<type<Container>> {
-			return std::move(std::back_inserter(CustomFormatCallBack(parseView, data, std::move(IteratorContainer(std::move(Iter))))));
-		}
-
-		~CustomValue()                             = default;
-		CustomValue(const CustomValue&)            = delete;
-		CustomValue& operator=(const CustomValue&) = delete;
-		CustomValue(CustomValue&& o): data(o.data), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
-		CustomValue& operator=(CustomValue&& o) {
+		constexpr CustomValue()                              = delete;
+		constexpr CustomValue(const CustomValue&)            = delete;
+		constexpr CustomValue& operator=(const CustomValue&) = delete;
+		constexpr CustomValue(CustomValue&& o): data(o.data), container(o.container), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
+		constexpr CustomValue& operator=(CustomValue&& o) {
 			data                 = o.data;
+			container            = o.container;
 			CustomFormatCallBack = std::move(o.CustomFormatCallBack);
 			return *this;
 		}
+		constexpr ~CustomValue() = default;
+
+		constexpr void FormatCallBack(std::string_view parseView) {
+			CustomFormatCallBack(parseView, data, container);
+		}
 
 		const void* data;
-		auto(*CustomFormatCallBack)(std::string_view parseView, const void* data, IteratorContainer&& container) -> decltype(container.UnderlyingContainer());
+		const void* container;
+		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, const void* contPtr);
 	};
 
 	// clang-format off
@@ -184,12 +144,14 @@ namespace serenity::msg_details {
 		constexpr ArgContainer()                               = default;
 		constexpr ArgContainer(const ArgContainer&)            = delete;
 		constexpr ArgContainer& operator=(const ArgContainer&) = delete;
+		constexpr ArgContainer(ArgContainer&&)                 = default;
+		constexpr ArgContainer& operator=(ArgContainer&&)      = default;
 		constexpr ~ArgContainer()                              = default;
 
-		template<typename... Args> constexpr void CaptureArgs(Args&&... args);
-		template<typename... Args> constexpr void StoreArgs(Args&&... args);
+		template<typename Iter, typename... Args> constexpr auto CaptureArgs(Iter&& iter, Args&&... args) -> decltype(iter);
+		template<typename Iter, typename... Args> constexpr auto StoreArgs(Iter&& iter, size_t numOfArgs, Args&&... args) -> decltype(iter);
 		template<typename T> constexpr void StoreNativeArg(T&& arg);
-		template<typename T> constexpr void StoreCustomArg(T&& arg);
+		template<typename Iter, typename T> constexpr auto StoreCustomArg(Iter&& iter, T&& arg) -> decltype(iter);
 
 		constexpr std::array<VType, MAX_ARG_COUNT>& ArgStorage();
 		constexpr std::array<SpecType, MAX_ARG_COUNT>& SpecTypesCaptured();
@@ -208,13 +170,11 @@ namespace serenity::msg_details {
 		constexpr const void* const_void_ptr_state(size_t index);
 		constexpr void* void_ptr_state(size_t index);
 		constexpr CustomValue& custom_state(size_t index);
-		constexpr IteratorContainer& IterContainer();
 
 	  private:
 		std::array<VType, MAX_ARG_COUNT> argContainer {};
 		std::array<SpecType, MAX_ARG_COUNT> specContainer {};
 		size_t counter {};
-		IteratorContainer iterContainer;
 	};
 	// putting the definition here since clang was warning on extra qualifiers for some reason
 	template<typename T> static constexpr SpecType GetArgType(T&& val) {

@@ -376,7 +376,7 @@ int main() {
 
 	#if ENABLE_PARSE_SANDBOX
 
-	ArgFormatter formatter;
+	ArgFormatter formatter {};
 	Instrumentator cTimer, microTimer;
 	constexpr TestPoint test { .x { 5 }, .y { 8 } };
 
