@@ -17,7 +17,7 @@ template<typename Iter, typename T> constexpr auto details::ArgContainer::StoreC
 }
 
 template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& value) {
-	if constexpr( is_native_ptr_type_v<T> ) {
+	if constexpr( is_supported_ptr_type_v<T> || std::is_same_v<type<T>, std::string> ) {
 			argContainer[ counter ] = std::forward<type<T>>(type<T>(value));
 	} else {
 			argContainer[ counter ] = std::forward<FwdConstRef<T>>(FwdConstRef<T>(value));

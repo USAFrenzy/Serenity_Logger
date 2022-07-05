@@ -94,14 +94,14 @@ namespace serenity {
 	};
 	template<typename T> inline constexpr bool is_supported_v = is_supported<T, VType>::value;
 
-	template<typename T> struct is_native_ptr_type;
+	template<typename T> struct is_supported_ptr_type;
 	template<typename T>
-	struct is_native_ptr_type
+	struct is_supported_ptr_type
 		: std::bool_constant<std::is_same_v<std::remove_reference_t<T>, std::string_view> || std::is_same_v<std::remove_reference_t<T>, const char*> ||
 	                         std::is_same_v<std::remove_reference_t<T>, void*> || std::is_same_v<std::remove_reference_t<T>, const void*>>
 	{
 	};
-	template<typename T> inline constexpr bool is_native_ptr_type_v = is_native_ptr_type<std::remove_reference_t<T>>::value;
+	template<typename T> inline constexpr bool is_supported_ptr_type_v = is_supported_ptr_type<std::remove_reference_t<T>>::value;
 
 	template<typename T> struct has_formatter: std::bool_constant<std::is_default_constructible_v<CustomFormatter<T>>>
 	{

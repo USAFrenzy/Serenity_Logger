@@ -447,7 +447,7 @@ constexpr bool serenity::arg_formatter::ArgFormatter::FindBrackets(std::string_v
 		}
 }
 
-constexpr bool serenity::arg_formatter::ArgFormatter::VerifyPositionalField(std::string_view sv, size_t& start, size_t& positionValue) {
+constexpr bool serenity::arg_formatter::ArgFormatter::VerifyPositionalField(std::string_view sv, size_t& start, unsigned char& positionValue) {
 	if( m_indexMode == IndexMode::automatic ) {
 			// we're in automatic mode
 			if( const auto& ch { sv[ start ] }; IsDigit(ch) ) {

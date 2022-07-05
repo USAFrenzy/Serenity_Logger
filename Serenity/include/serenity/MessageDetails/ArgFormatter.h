@@ -68,11 +68,11 @@ namespace serenity {
 	  public:
 		explicit format_error(const char* message): std::runtime_error(message) { }
 		explicit format_error(const std::string& message): std::runtime_error(message) { }
-		format_error(const format_error&) = default;
+		format_error(const format_error&)            = default;
 		format_error& operator=(const format_error&) = default;
 		format_error(format_error&&)                 = default;
-		format_error& operator=(format_error&&) = default;
-		~format_error() noexcept override       = default;
+		format_error& operator=(format_error&&)      = default;
+		~format_error() noexcept override            = default;
 	};
 
 	enum class ErrorType
@@ -156,19 +156,19 @@ namespace serenity::arg_formatter {
 
 	struct SpecFormatting
 	{
-		constexpr SpecFormatting()                      = default;
-		constexpr SpecFormatting(const SpecFormatting&) = default;
+		constexpr SpecFormatting()                                 = default;
+		constexpr SpecFormatting(const SpecFormatting&)            = default;
 		constexpr SpecFormatting& operator=(const SpecFormatting&) = default;
 		constexpr SpecFormatting(SpecFormatting&&)                 = default;
-		constexpr SpecFormatting& operator=(SpecFormatting&&) = default;
-		constexpr ~SpecFormatting()                           = default;
+		constexpr SpecFormatting& operator=(SpecFormatting&&)      = default;
+		constexpr ~SpecFormatting()                                = default;
 
 		constexpr void ResetSpecs();
-		size_t argPosition { 0 };
+		unsigned char argPosition { 0 };
 		int alignmentPadding { 0 };
 		int precision { 0 };
-		size_t nestedWidthArgPos { 0 };
-		size_t nestedPrecArgPos { 0 };
+		unsigned char nestedWidthArgPos { 0 };
+		unsigned char nestedPrecArgPos { 0 };
 		Alignment align { Alignment::Empty };
 		unsigned char fillCharacter { '\0' };
 		unsigned char typeSpec { '\0' };
@@ -181,12 +181,12 @@ namespace serenity::arg_formatter {
 
 	struct BracketSearchResults
 	{
-		constexpr BracketSearchResults()                            = default;
-		constexpr BracketSearchResults(const BracketSearchResults&) = default;
+		constexpr BracketSearchResults()                                       = default;
+		constexpr BracketSearchResults(const BracketSearchResults&)            = default;
 		constexpr BracketSearchResults& operator=(const BracketSearchResults&) = default;
 		constexpr BracketSearchResults(BracketSearchResults&&)                 = default;
-		constexpr BracketSearchResults& operator=(BracketSearchResults&&) = default;
-		constexpr ~BracketSearchResults()                                 = default;
+		constexpr BracketSearchResults& operator=(BracketSearchResults&&)      = default;
+		constexpr ~BracketSearchResults()                                      = default;
 
 		constexpr void Reset();
 		size_t beginPos { 0 };
@@ -231,11 +231,11 @@ namespace serenity::arg_formatter {
 	{
 	  public:
 		constexpr ArgFormatter();
-		constexpr ArgFormatter(const ArgFormatter&) = delete;
+		constexpr ArgFormatter(const ArgFormatter&)            = delete;
 		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
 		constexpr ArgFormatter(ArgFormatter&&)                 = default;
-		constexpr ArgFormatter& operator=(ArgFormatter&&) = default;
-		constexpr ~ArgFormatter()                         = default;
+		constexpr ArgFormatter& operator=(ArgFormatter&&)      = default;
+		constexpr ~ArgFormatter()                              = default;
 
 		// clang-format off
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args);
@@ -256,7 +256,7 @@ namespace serenity::arg_formatter {
 		[[noreturn]] constexpr void ReportError(ErrorType err);
 		constexpr bool FindBrackets(std::string_view sv);
 		constexpr void Parse(std::string_view sv, size_t& currentPosition, const SpecType& argType);
-		constexpr bool VerifyPositionalField(std::string_view sv, size_t& start, size_t& positionValue);
+		constexpr bool VerifyPositionalField(std::string_view sv, size_t& start, unsigned char& positionValue);
 		constexpr void VerifyFillAlignField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
 		constexpr void VerifyAltField(std::string_view sv, const SpecType& argType);
 		constexpr void VerifyWidthField(std::string_view sv, size_t& currentPosition);
