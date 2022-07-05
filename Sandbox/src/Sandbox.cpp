@@ -66,16 +66,32 @@ struct TestPoint
 template<> struct serenity::CustomFormatter<TestPoint>
 {
 	constexpr void Parse(std::string_view parse) {
-		if( parse.begin() == parse.end() ) return;
+		return;
 	}
 
-	template<typename ContainerCtx> constexpr auto Format(const TestPoint& p, ContainerCtx& ctx) {
+	template<typename ContainerCtx> constexpr auto Format(const TestPoint& p, ContainerCtx& ctx) const {
 		serenity::format_to(std::back_inserter(ctx), "({},{})", p.x, p.y);
 	}
 };
 
-template<> struct std::formatter<TestPoint>: std::formatter<std::string>
+template<> struct std::formatter<TestPoint>: std::formatter<std::string>, std::formatter<int>
 {
+	auto parse(std::format_parse_context& pc) {
+		return pc.end();
+	}
+	// The original method I was testing against was:
+	// "return std::formatter<std::string>::format(std::format("({},{})", p.x, p.y), ctx);"
+	// However, the below method resulted in much faster formatting and brings it pretty
+	//  close to my timings (Serenity is ~54ns and this is ~90ns vs the ~158ns this had before)
+	// The change:
+	//		ctx.out() = '(';
+	//		std::formatter<int>::format(p.x, ctx);
+	//		std::formatter<int>::format(p.y, ctx);
+	//		ctx.out() = ')';
+	//		return ctx.out();
+	// This is good to know when I start implementing the custom flags for the time stamps but,
+	//  the downside is that you would still need to use the original method (as far as I'm aware)
+	// to be able to parse any specifiers in the brackets, so leaving this as the original for now
 	auto format(TestPoint const& p, std::format_context& ctx) {
 		return std::formatter<std::string>::format(std::format("({},{})", p.x, p.y), ctx);
 	}
@@ -298,7 +314,7 @@ int main() {
 			finalStr.clear();
 
 			auto serenityTime1 { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
-			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime1));
+			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} ns]", std::move(std::to_string(serenityTime1)));
 			parseString.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 			finalStr.clear();
@@ -314,7 +330,7 @@ int main() {
 			finalStr.clear();
 
 			auto serenityTime2 { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
-			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime2));
+			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::move(std::to_string(serenityTime2)));
 		#if TEST_STRING_CASE
 			finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
 		#endif
@@ -333,7 +349,7 @@ int main() {
 
 			auto standardTime { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
 			VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
-			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(standardTime));
+			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::move(std::to_string(standardTime)));
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 
 			// Just realized why the percentages were so freaking out there - I had broken the formula (WOOPS!)
@@ -386,9 +402,6 @@ int main() {
 	constexpr size_t iterations { 100'000'000 };
 	float seTotal {}, stdTotal {};
 
-	// This line is just here for me to toggle between benching and just doing a one-liner test
-	// std::cout << formatter.se_format("Custom Formated Value Of Struct TestPoint Using Serenity: {}", test) ;
-
 	for( int i { 0 }; i < repeatTest; ++i ) {
 			std::cout << serenity::format("{:*^55}\n", (loopStr + std::to_string(i + 1) + "]"));
 			cTimer.StopWatch_Reset();
@@ -399,7 +412,6 @@ int main() {
 			auto serenityElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
 			seTotal += serenityElapsed;
 			std::cout << serenity::format("Serenity Took An Average Of [{} ns]\nWith Result: {}\n", serenityElapsed, test);
-
 			cTimer.StopWatch_Reset();
 			for( size_t i { 0 }; i < iterations; ++i ) {
 					auto _ { std::format("{}", test) };
@@ -407,21 +419,16 @@ int main() {
 			cTimer.StopWatch_Stop();
 			auto standardElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
 			stdTotal += standardElapsed;
-			std::cout << serenity::format("Standard Took An Average Of [{} ns]\nWith Result: {}\n", standardElapsed, test);
+			std::cout << std::format("Standard Took An Average Of [{} ns]\nWith Result: {}\n", standardElapsed, test);
 			std::cout << serenity::format("{:*55}\n\n");
 		}
 
-	/************************** Current Stats Ran As Of  01Jul22 **************************/
-	// **********************************[Loop Averages] **********************************
-	// Serenity Total Average Among Loops[63.20512 ns]
-	// Standard Total Average Among Loops[176.59734 ns]
-	// Serenity Is 64.209 % Faster Than The Standard
-	// ***********************************************************************************
-	// Note: Changing the ReserveCapacity() implementation slightly had little to no negative
-	//             effects on native format yet had a HUGE positive effect on the custom formatting.
-	//             Up from ~38% to 64% faster than the standard - current timings are from my
-	//             laptop
-
+	/*************************** Current Stats Ran As Of  04Jul22 ***************************/
+	// ********************************** [Loop Averages] **********************************
+	// Serenity Total Average Among Loops [50.24368 ns]
+	// Standard Total Average Among Loops [155.30533 ns]
+	// Serenity Is 67.648 % Faster Than The Standard
+	// *************************************************************************************
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };
 	std::cout << serenity::format("{:*^55}\n", sv);

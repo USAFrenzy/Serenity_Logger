@@ -68,11 +68,11 @@ namespace serenity {
 	  public:
 		explicit format_error(const char* message): std::runtime_error(message) { }
 		explicit format_error(const std::string& message): std::runtime_error(message) { }
-		format_error(const format_error&)            = default;
+		format_error(const format_error&) = default;
 		format_error& operator=(const format_error&) = default;
 		format_error(format_error&&)                 = default;
-		format_error& operator=(format_error&&)      = default;
-		~format_error() noexcept override            = default;
+		format_error& operator=(format_error&&) = default;
+		~format_error() noexcept override       = default;
 	};
 
 	enum class ErrorType
@@ -156,12 +156,12 @@ namespace serenity::arg_formatter {
 
 	struct SpecFormatting
 	{
-		constexpr SpecFormatting()                                 = default;
-		constexpr SpecFormatting(const SpecFormatting&)            = default;
+		constexpr SpecFormatting()                      = default;
+		constexpr SpecFormatting(const SpecFormatting&) = default;
 		constexpr SpecFormatting& operator=(const SpecFormatting&) = default;
 		constexpr SpecFormatting(SpecFormatting&&)                 = default;
-		constexpr SpecFormatting& operator=(SpecFormatting&&)      = default;
-		constexpr ~SpecFormatting()                                = default;
+		constexpr SpecFormatting& operator=(SpecFormatting&&) = default;
+		constexpr ~SpecFormatting()                           = default;
 
 		constexpr void ResetSpecs();
 		size_t argPosition { 0 };
@@ -172,7 +172,7 @@ namespace serenity::arg_formatter {
 		Alignment align { Alignment::Empty };
 		unsigned char fillCharacter { '\0' };
 		unsigned char typeSpec { '\0' };
-		std::string_view preAltForm {};
+		std::string_view preAltForm { "" };
 		Sign signType { Sign::Empty };
 		bool localize { false };
 		bool hasAlt { false };
@@ -181,12 +181,12 @@ namespace serenity::arg_formatter {
 
 	struct BracketSearchResults
 	{
-		constexpr BracketSearchResults()                                       = default;
-		constexpr BracketSearchResults(const BracketSearchResults&)            = default;
+		constexpr BracketSearchResults()                            = default;
+		constexpr BracketSearchResults(const BracketSearchResults&) = default;
 		constexpr BracketSearchResults& operator=(const BracketSearchResults&) = default;
 		constexpr BracketSearchResults(BracketSearchResults&&)                 = default;
-		constexpr BracketSearchResults& operator=(BracketSearchResults&&)      = default;
-		constexpr ~BracketSearchResults()                                      = default;
+		constexpr BracketSearchResults& operator=(BracketSearchResults&&) = default;
+		constexpr ~BracketSearchResults()                                 = default;
 
 		constexpr void Reset();
 		size_t beginPos { 0 };
@@ -194,20 +194,24 @@ namespace serenity::arg_formatter {
 	};
 
 	template<typename... Args> static constexpr void ReserveCapacityImpl(size_t& totalSize, Args&&... args) {
+		size_t unreservedSize {};
 		(
-		[ = ](size_t& totalSize, auto&& arg) {
+		[](size_t& totalSize, auto&& arg, size_t& unreserved) {
 			using base_type = type<decltype(arg)>;
 			if constexpr( std::is_same_v<base_type, std::string> || std::is_same_v<base_type, std::string_view> ) {
 					totalSize += arg.size();
 			} else if constexpr( std::is_same_v<base_type, const char*> ) {
-					totalSize += std::strlen(arg);
+					totalSize += std::strlen(arg) + 1;
 			} else {
-					if( sizeof(arg) + totalSize > sizeof(std::string) + totalSize ) {
-							totalSize += sizeof(arg);
-					}
+					// since this block is called for all other types, reserve double as there's no way to
+					// know the formatted representation (ex: could be binary, scientific notation, etc...)
+					auto argSize { sizeof(arg) * 2 };
+					argSize + totalSize > sizeof(std::string) ? totalSize += argSize : unreserved += argSize;
 				}
-		}(totalSize, args),
+		}(totalSize, args, unreservedSize),
 		...);
+		// similar to the internal check, but now estimating whether or not the unreserved bytes can be stored via SBO
+		totalSize + unreservedSize > sizeof(std::string) ? totalSize += unreservedSize : 0;
 	}
 
 	template<typename... Args> static constexpr size_t ReserveCapacity(Args&&... args) {
@@ -216,54 +220,28 @@ namespace serenity::arg_formatter {
 		return std::forward<size_t>(totalSize);
 	}
 
-	// WIP concepts -> The idea is to add constraints similar to what fmtlib has instead of the limitation on explicitly using a
-	// back_insert_iterator; not sure why, but adding the OutputIter concept to the relevant functions drastically speeds up
-	// compile times but heavily reduces runtime performance. Even when limiting the OutputIter concept to only require
-	// the "is_iterator" concept and "has_output_functionality" concept, performance was heavily impacted. The complex
-	//  pattern formatting for instance went from ~0.44us down to ~1.13us... So obviously I'm doing something  wrong here =/
-	template<typename T>
-	concept is_iterator = requires {
-		T::iterator_category&& T::value_type&& T::difference_type&& T::pointer&& T::reference;
-	};
-	template<typename T>
-	concept has_iterator_traits = requires {
-		std::iterator_traits<T> {};
-	};
-	template<typename T>
-	concept valid_iter = requires {
-		is_iterator<T>&& has_iterator_traits<T>;
-	};
-	template<typename T>
-	concept has_output_functionality = requires {
-		valid_iter<T> && (std::forward_iterator<T> || std::bidirectional_iterator<T> || std::random_access_iterator<T>);
-	};
-	template<typename T>
-	concept OutputIter = requires {
-		has_output_functionality<T>;
-	};
-
 	/********************************************************************************************************************************************************
 	    Compatible class that provides some of the same functionality that mirrors <format> and libfmt for basic formatting needs for pre  C++20 and MSVC's
 	    pre-backported fixes (which required C ++23) for some build versions of Visual Studio as well as for performance needs. Everything in this class either
-	    matches (in the case of simple double substitution) or greatly exceeds the performance of MSVC's implementation -  with the caveat of no custom
-	    formatting support, no utf-8 support, and no type-erasure as of right now. I believe libfmt is faster than this basic implementation  (and unarguably
-	    way more comprehensive as well) but I have yet to bench timings against it.
+	    matches (in the case of simple double substitution) or greatly exceeds the performance of MSVC's implementation -  with the caveat no utf-8 support and
+	    no type-erasure as of right now. I believe libfmt is faster than this basic implementation  (and unarguably way more comprehensive as well) but I have yet
+	    to bench timings against it.
 	********************************************************************************************************************************************************/
 	class ArgFormatter
 	{
 	  public:
 		constexpr ArgFormatter();
-		constexpr ArgFormatter(const ArgFormatter&)            = delete;
+		constexpr ArgFormatter(const ArgFormatter&) = delete;
 		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
 		constexpr ArgFormatter(ArgFormatter&&)                 = default;
-		constexpr ArgFormatter& operator=(ArgFormatter&&)      = default;
-		constexpr ~ArgFormatter()                              = default;
+		constexpr ArgFormatter& operator=(ArgFormatter&&) = default;
+		constexpr ~ArgFormatter()                         = default;
 
 		// clang-format off
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args);
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args);
-		template<typename... Args> [[nodiscard]] std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
-		template<typename... Args> [[nodiscard]] std::string se_format(std::string_view sv, Args&&... args);
+		template<typename... Args> [[nodiscard]]  std::string se_format(const std::locale& locale, std::string_view sv, Args&&... args);
+		template<typename... Args> [[nodiscard]]  std::string se_format(std::string_view sv, Args&&... args);
 		// clang-format on
 
 	  private:
@@ -370,7 +348,7 @@ namespace serenity::arg_formatter {
 namespace serenity {
 	namespace globals {
 		static std::unique_ptr<arg_formatter::ArgFormatter> staticFormatter { std::make_unique<arg_formatter::ArgFormatter>() };
-	}
+	}    // namespace globals
 	template<typename T, typename... Args> static constexpr void format_to(std::back_insert_iterator<T>&& Iter, std::string_view sv, Args&&... args) {
 		globals::staticFormatter->se_format_to(std::forward<FwdMoveIter<T>>(Iter), sv, std::forward<Args>(args)...);
 	}

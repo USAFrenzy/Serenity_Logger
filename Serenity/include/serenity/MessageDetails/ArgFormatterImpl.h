@@ -65,7 +65,11 @@ constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
 }
 
 constexpr void serenity::arg_formatter::BracketSearchResults::Reset() {
-	beginPos = endPos = 0;
+	if( !std::is_constant_evaluated() ) {
+			std::memset(this, 0, sizeof(BracketSearchResults));
+	} else {
+			beginPos = endPos = 0;
+		}
 }
 
 constexpr void serenity::arg_formatter::SpecFormatting::ResetSpecs() {
@@ -141,8 +145,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 
 constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
 	auto svSize { sv.size() };
-	VerifyFillAlignField(sv, start, argType);
 	if( start >= svSize ) return;
+	VerifyFillAlignField(sv, start, argType);
 	switch( sv[ start ] ) {
 			case '+':
 				specValues.signType = Sign::Plus;
@@ -186,13 +190,58 @@ constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv,
 			if( start >= svSize ) return;
 	}
 }
+
+// As cluttered as this is, I kind of have to leave it like it is at the moment. When decluttering and abstracting some
+// of the common calls into functions, the call site ended up actually making this whole process ~4-5% slower
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
 	auto& container { *IteratorAccessHelper(Iter).Container() };
 	for( ;; ) {
-			if( sv.size() < 2 ) break;
 			specValues.ResetSpecs();
+			/****************************************************************  NOTE ****************************************************************/
+			// This check saw ~24-27% performance gain in most cases, however, if this check is abstracted into a function call, the function call saw
+			//  ~60% drop in performance. For reference, on my desktop -> current timings are ~49ns for the custom sandbox case of formatting
+			// TestPoint, without this check, it drops to ~67ns, but abstract this into a function and call it from there and it dropped to ~121ns. I have
+			// no idea why there is such a hefty overhead for the call site, especially when I was forwarding a reference to the container and just the
+			// string view and performing this exact check, but I'll be leaving this as-is here.
+			/****************************************************************  NOTE ****************************************************************/
+			// Check small sv size conditions and handle the niche cases, otherwise break and continue onward
+			switch( sv.size() ) {
+					case 0: return;
+					case 1:
+						if constexpr( std::is_same_v<type<T>, std::string> ) {
+								container += sv[ 0 ];
+						} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+								container.emplace_back(sv[ 0 ]);
+						} else {
+								std::copy(sv.data(), sv.data() + 1, std::back_inserter(container));
+							}
+						return;
+					case 2:
+						/*******************************************************  NOTE *******************************************************/
+						// Simple custom args saw a ~3% gain in performance with this check while native args saw ~1% gain in performance
+						/*******************************************************  NOTE *******************************************************/
+						// Handle If format string only contains '{}' and no other text
+						if( sv[ 0 ] == '{' && sv[ 1 ] == '}' ) {
+								auto& argType { argStorage.SpecTypesCaptured()[ 0 ] };
+								argType != SpecType::CustomType ? WriteSimpleValue(std::forward<FwdRef<T>>(container), std::move(argType))
+																: argStorage.custom_state(0).FormatCallBack(sv);
+								return;
+						}
+						// Otherwise, write out any remaining characters as-is and bypass the check that would have found
+						// this case in FindBrackets(). In most cases, ending early here saw ~2-3% gain in performance
+						if constexpr( std::is_same_v<type<T>, std::string> ) {
+								container.append(sv.data(), sv.data() + 2);
+						} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+								container.insert(container.end(), sv.data(), sv.data() + 2);
+						} else {
+								std::copy(sv.data(), sv.data() + 2, std::back_inserter(container));
+							}
+						return;
+					default: break;
+				}
+			// If the above wasn't executed, then find the first pair of curly brackets and if none were found, write out the parse string as-is
 			if( !FindBrackets(sv) ) {
 					if constexpr( std::is_same_v<type<T>, std::string> ) {
 							container.append(sv.data(), sv.size());
@@ -206,6 +255,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 						}
 					return;
 			}
+			// If the position of the first curly bracket found isn't the beginning of the parse string, then write the text as-is up until the bracket position
 			if( bracketResults.beginPos != 0 ) {
 					if constexpr( std::is_same_v<type<T>, std::string> ) {
 							bracketResults.beginPos >= 2 ? container.append(sv.data(), bracketResults.beginPos) : container += sv[ 0 ];
@@ -218,16 +268,18 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					bracketResults.endPos -= bracketResults.beginPos;
 					bracketResults.beginPos = 0;
 			}
-			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
 			size_t pos { 0 };
-			/*Handle Escaped Brackets*/
+			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
+			/* Since we advance the begin position by 1 in the argBracket construction, if the first char is '{' then it was an escaped bracket */
 			if( argBracket[ pos ] == '{' ) {
 					container.push_back('{');
 					++pos;
 			}
 			auto bracketSize { argBracket.size() };
+			// NOTE: Since a well-formed substitution bracket should end with '}' and we can assume it's well formed due to the check in FindBrackets(),
+			//                argBracket[ bracketSize - 2 ] is used here to check if the position before the close bracket is another closing bracket instead.
 			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
-			/*Handle Positional Args*/
+			/************************************* Handle Positional Args *************************************/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
@@ -239,7 +291,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 					sv.remove_prefix(bracketSize + 1);
 					continue;
 			}
-			/* Handle What's Left Of The Bracket */
+			/****************************** Handle What's Left Of The Bracket ******************************/
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 			if( argType != SpecType::CustomType ) {
 					if( pos < bracketSize ) {
@@ -254,29 +306,53 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			}
 			sv.remove_prefix(bracketSize + 1);
 		}
-	auto remainderSize { sv.size() };
-	if( remainderSize != 0 ) {
-			if constexpr( std::is_same_v<type<T>, std::string> ) {
-					remainderSize >= 2 ? container.append(sv.data(), remainderSize) : container += sv[ 0 ];
-			} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-					container.insert(container.end(), sv.data(), sv.data() + remainderSize);
-					if( sv.back() != '\0' ) {
-							container.push_back('\0');
-					}
-			} else {
-					std::copy(sv.data(), sv.data() + remainderSize, std::back_inserter(container));
-				}
-	}
 }
 
+// Same Note as the non-localized version of this function:
+// As cluttered as this is, I kind of have to leave it like it is at the moment. When decluttering and abstracting some
+// of the common calls into functions, the call site ended up actually making this whole process ~4-5% slower
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv) {
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
 	auto& container { *IteratorAccessHelper(Iter).Container() };
 	for( ;; ) {
-			if( sv.size() < 2 ) break;
 			specValues.ResetSpecs();
+			/****************************************************************  NOTE ****************************************************************/
+			// This check saw ~24-27% performance gain in most cases, however, if this check is abstracted into a function call, the function call saw
+			//  ~60% drop in performance. For reference, on my desktop -> current timings are ~49ns for the custom sandbox case of formatting
+			// TestPoint, without this check, it drops to ~67ns, but abstract this into a function and call it from there and it dropped to ~121ns. I have
+			// no idea why there is such a hefty overhead for the call site, especially when I was forwarding a reference to the container and just the
+			// string view and performing this exact check, but I'll be leaving this as-is here.
+			/****************************************************************  NOTE ****************************************************************/
+			// Check small sv size conditions and handle the niche cases, otherwise break and continue onward
+			switch( sv.size() ) {
+					case 0: return;
+					case 1: Iter = sv[ 0 ]; return;
+					case 2:
+						/*******************************************************  NOTE *******************************************************/
+						// Simple custom args saw a ~3% gain in performance with this check while native args saw ~1% gain in performance
+						/*******************************************************  NOTE *******************************************************/
+						// Handle If format string only contains '{}' and no other text
+						if( sv[ 0 ] == '{' && sv[ 1 ] == '}' ) {
+								auto& argType { argStorage.SpecTypesCaptured()[ 0 ] };
+								argType != SpecType::CustomType ? WriteSimpleValue(std::forward<FwdRef<T>>(container), std::move(argType))
+																: argStorage.custom_state(0).FormatCallBack(sv);
+								return;
+						}
+						// Otherwise, write out any remaining characters as-is and bypass the check that would have found
+						// this case in FindBrackets(). In most cases, ending early here saw ~2-3% gain in performance
+						if constexpr( std::is_same_v<type<T>, std::string> ) {
+								container.append(sv.data(), sv.data() + 2);
+						} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+								container.insert(container.end(), sv.data(), sv.data() + 2);
+						} else {
+								std::copy(sv.data(), sv.data() + sv.size(), std::back_inserter(container));
+							}
+						return;
+					default: break;
+				}
+			// If the above wasn't executed, then find the first pair of curly brackets and if none were found, write out the parse string as-is
 			if( !FindBrackets(sv) ) {
 					if constexpr( std::is_same_v<type<T>, std::string> ) {
 							container.append(sv.data(), sv.size());
@@ -290,14 +366,12 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::bac
 						}
 					return;
 			}
+			// If the position of the first curly bracket found isn't the beginning of the parse string, then write the text as-is up until the bracket position
 			if( bracketResults.beginPos != 0 ) {
 					if constexpr( std::is_same_v<type<T>, std::string> ) {
 							bracketResults.beginPos >= 2 ? container.append(sv.data(), bracketResults.beginPos) : container += sv[ 0 ];
 					} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
 							container.insert(container.end(), sv.begin(), sv.begin() + bracketResults.beginPos);
-							if( sv.back() != '\0' ) {
-									container.push_back('\0');
-							}
 					} else {
 							std::copy(sv.data(), sv.data() + bracketResults.beginPos, std::back_inserter(container));
 						}
@@ -305,16 +379,18 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::bac
 					bracketResults.endPos -= bracketResults.beginPos;
 					bracketResults.beginPos = 0;
 			}
-			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
 			size_t pos { 0 };
-			/*Handle Escaped Brackets*/
+			std::string_view argBracket(sv.data() + (++bracketResults.beginPos), sv.data() + (++bracketResults.endPos));
+			/* Since we advance the begin position by 1 in the argBracket construction, if the first char is '{' then it was an escaped bracket */
 			if( argBracket[ pos ] == '{' ) {
 					container.push_back('{');
 					++pos;
 			}
 			auto bracketSize { argBracket.size() };
+			// NOTE: Since a well-formed substitution bracket should end with '}' and we can assume it's well formed due to the check in FindBrackets(),
+			//                argBracket[ bracketSize - 2 ] is used here to check if the position before the close bracket is another closing bracket instead.
 			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
-			/*Handle Positional Args*/
+			/************************************* Handle Positional Args *************************************/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
@@ -326,7 +402,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::bac
 					sv.remove_prefix(bracketSize + 1);
 					continue;
 			}
-			/* Handle What's Left Of The Bracket */
+			/****************************** Handle What's Left Of The Bracket ******************************/
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
 			if( argType != SpecType::CustomType ) {
 					if( pos < bracketSize ) {
@@ -336,56 +412,37 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::bac
 			} else {
 					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
 				}
+			if( specValues.hasClosingBrace ) {
+					container.push_back('}');
+			}
 			sv.remove_prefix(bracketSize + 1);
 		}
-	auto remainderSize { sv.size() };
-	if( remainderSize != 0 ) {
-			if constexpr( std::is_same_v<type<T>, std::string> ) {
-					remainderSize >= 2 ? container.append(sv.data(), remainderSize) : container += sv[ 0 ];
-			} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-					container.insert(container.end(), sv.data(), sv.data() + remainderSize);
-					if( sv.back() != '\0' ) {
-							container.push_back('\0');
-					}
-			} else {
-					std::copy(sv.data(), sv.data() + remainderSize, std::back_inserter(container));
-				}
-	}
 }
 
 constexpr bool serenity::arg_formatter::ArgFormatter::FindBrackets(std::string_view sv) {
 	bracketResults.Reset();
+
 	const auto svSize { sv.size() };
+	if( svSize < 2 ) return false;
+
+	auto& begin { bracketResults.beginPos };
+	auto& end { bracketResults.endPos };
 	for( ;; ) {
-			if( bracketResults.beginPos >= svSize ) {
-					return false;
-			}
-			if( sv[ bracketResults.beginPos ] != '{' ) {
-					++bracketResults.beginPos;
-					continue;
-			}
-			bracketResults.endPos = bracketResults.beginPos + 1;
-			for( ;; ) {
-					if( bracketResults.endPos >= svSize ) {
-							ReportError(ErrorType::missing_bracket);
-					}
-					switch( sv[ bracketResults.endPos ] ) {
-							case '{':
-								for( ;; ) {
-										if( ++bracketResults.endPos >= svSize ) {
-												return false;
-										}
-										if( sv[ bracketResults.endPos ] == '}' ) break;
-									}
-								++bracketResults.endPos;
-								continue;
-								break;
-							case '}': return true; break;
-							default:
-								++bracketResults.endPos;
-								continue;
-								break;
-						}
+			if( sv[ begin ] == '{' ) break;
+			if( ++begin >= svSize ) return false;
+		}
+	end = begin;
+	for( ;; ) {
+			if( ++end >= svSize ) ReportError(ErrorType::missing_bracket);
+			switch( sv[ end ] ) {
+					case '}': return true; break;
+					case '{':
+						for( ;; ) {
+								if( ++end >= svSize ) ReportError(ErrorType::missing_bracket);
+								if( sv[ end ] == '}' ) break;
+							}
+						continue;
+					default: continue;
 				}
 		}
 }
@@ -1290,7 +1347,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatFloatType(T&& value,
 	} else {
 			std::fill(buffer.begin(), buffer.end(), '\0');
 		}
-	WriteSign(std::forward<T>(value), pos);
+	if( specValues.signType != Sign::Empty ) WriteSign(std::forward<T>(value), pos);
 	SetFloatingFormat(format, precision, isUpper);
 	auto end { (precision != 0 ? std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format, precision)
 		                       : std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format))
@@ -1311,8 +1368,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& valu
 	} else {
 			std::fill(buffer.begin(), buffer.end(), '\0');
 		}
-	WriteSign(std::forward<T>(value), pos);
-	WritePreFormatChars(pos);
+	if( specValues.signType != Sign::Empty ) WriteSign(std::forward<T>(value), pos);
+	if( specValues.preAltForm.size() != 0 ) WritePreFormatChars(pos);
 	SetIntegralFormat(base, isUpper);
 	auto end { std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, base).ptr };
 	valueSize = end - data;

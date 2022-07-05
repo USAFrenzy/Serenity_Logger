@@ -11,6 +11,7 @@ namespace serenity {
 	// convenience typedefs
 	template<typename T> using type        = std::remove_cvref_t<T>;
 	template<typename T> using FwdRef      = std::add_lvalue_reference_t<type<T>>;
+	template<typename T> using FwdConstRef = std::add_lvalue_reference_t<std::add_const_t<type<T>>>;
 	template<typename T> using FwdMove     = std::add_rvalue_reference_t<type<T>>;
 	template<typename T> using Iterator    = std::back_insert_iterator<type<T>>;
 	template<typename T> using FwdMoveIter = std::add_rvalue_reference_t<Iterator<T>>;
@@ -48,15 +49,18 @@ namespace serenity {
 
 	struct CustomValue
 	{
+		using FormatCallBackFunc = void (*)(std::string_view parseView, const void* data, const void* contPtr);
 		template<typename Container, typename T>
 		explicit constexpr CustomValue(Container&& cont, T&& value)
 			: data(std::addressof(value)), container(std::addressof(cont)), CustomFormatCallBack([](std::string_view parseView, const void* ptr, const void* contPtr) {
 				  using QualifiedType = std::add_const_t<type<T>>;
+				  using QualifiedRef  = std::add_lvalue_reference_t<QualifiedType>;
 				  using ContainerType = type<Container>;
 				  using ContainerRef  = std::add_lvalue_reference_t<ContainerType>;
+				  /*  Above are just  some convenient typedefs from the paramater value types for use below in casting the pointers to  the correct types */
 				  auto formatter { CustomFormatter<type<T>> {} };
 				  formatter.Parse(parseView);
-				  formatter.Format(*static_cast<QualifiedType*>(ptr), ContainerRef(*static_cast<const ContainerType*>(contPtr)));
+				  formatter.Format(QualifiedRef(*static_cast<QualifiedType*>(ptr)), ContainerRef(*static_cast<const ContainerType*>(contPtr)));
 			  }) { }
 		constexpr CustomValue()                              = delete;
 		constexpr CustomValue(const CustomValue&)            = delete;
@@ -76,7 +80,7 @@ namespace serenity {
 
 		const void* data;
 		const void* container;
-		void (*CustomFormatCallBack)(std::string_view parseView, const void* data, const void* contPtr);
+		FormatCallBackFunc CustomFormatCallBack;
 	};
 
 	// clang-format off
@@ -149,7 +153,7 @@ namespace serenity::msg_details {
 		constexpr ~ArgContainer()                              = default;
 
 		template<typename Iter, typename... Args> constexpr auto CaptureArgs(Iter&& iter, Args&&... args) -> decltype(iter);
-		template<typename Iter, typename... Args> constexpr auto StoreArgs(Iter&& iter, size_t numOfArgs, Args&&... args) -> decltype(iter);
+		template<typename Iter, typename... Args> constexpr auto StoreArgs(Iter&& iter, Args&&... args) -> decltype(iter);
 		template<typename T> constexpr void StoreNativeArg(T&& arg);
 		template<typename Iter, typename T> constexpr auto StoreCustomArg(Iter&& iter, T&& arg) -> decltype(iter);
 
