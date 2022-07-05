@@ -25,12 +25,12 @@
   - This library will be updated to support clang and g++ once libfmt is <br>
   implemented on those compilers.
 - ```fmtlib``` by Viktor Zverovich if using the option ```UST_FMTLIB```
-- If not using the above two options, you're all set! This logging framework includes a striped down but fully functional<br>
-  version of the formatting interface via the ```ArgFormatter.h``` header file and is enabled by default if the other options<br>
+- If not using the above two options, you're all set! This logging framework includes a stripped down but fully<br>functional
+  version of the formatting interface via the ```ArgFormatter.h``` header file and is enabled by default<br>if the other options
   aren't defined.
-  - The only caveats to the built-in version is that there's no type erasure of arguments captured and no utf-8 support as of yet. 
-- With the addition of the ```ArgFormatter.h``` header, the goal in the future is to fully drop the requirements down to C++17<br>
-  and only require C++20 when ```USE_STD_FORMAT``` has been defined, however, for now anyways, C++20 is the default requirement.
+  - The only caveats to the built-in version is that there's no type erasure of arguments captured<br>and no utf-8 support as of yet. 
+- With the addition of the ```ArgFormatter.h``` header, the goal in the future is to fully drop the requirements<br>down to C++17
+  and only require C++20 when ```USE_STD_FORMAT``` has been defined, however, for now anyways, <br>C++20 is the default requirement.
 
 --------------------------------------
 <h1 align="center"> Motivation </h1>
