@@ -6,6 +6,22 @@
 #include <variant>
 #include <vector>
 
+// For whatever reason, the SE_ASSERT statement wasn't being seen in ArgFormatterImpl.h
+// when including Common.h, so added an #ifndef for the macro define and placed a copy here
+#ifdef _DEBUG
+	#ifndef SE_ASSERT
+		#define SE_ASSERT(condition, message)                                                                                                                       \
+			if( !(condition) ) {                                                                                                                                    \
+					fprintf(stderr, "Assertion Failed: (%s) |File: %s | Line: %i\nMessage:%s\n", #condition, __FILE__, __LINE__, message);                          \
+					abort();                                                                                                                                        \
+			}
+	#endif
+#else
+	#ifndef SE_ASSERT
+		#define SE_ASSERT(condition, message) void(0)
+	#endif
+#endif
+
 namespace serenity {
 
 	// convenience typedefs
@@ -30,7 +46,7 @@ namespace serenity {
 		template<typename ValueType, typename ContainerCtx> constexpr auto Format(ValueType&&, ContainerCtx&&) { }
 	};
 
-	template<typename T> struct IteratorAccessHelper: std::back_insert_iterator<T>
+	template<typename T> struct IteratorAccessHelper: public std::back_insert_iterator<T>
 	{
 		using std::back_insert_iterator<T>::container_type;
 		constexpr explicit IteratorAccessHelper(std::back_insert_iterator<T>&(Iter)): std::back_insert_iterator<T>(std::forward<FwdRefIter<T>>(Iter)) { }
@@ -42,8 +58,8 @@ namespace serenity {
 		constexpr IteratorAccessHelper& operator=(IteratorAccessHelper&&)      = default;
 		constexpr ~IteratorAccessHelper()                                      = default;
 
-		constexpr const auto& Container() {
-			return this->container;
+		constexpr auto& Container() {
+			return *(this->container);
 		}
 	};
 
@@ -97,11 +113,10 @@ namespace serenity {
 	template<typename T> struct is_supported_ptr_type;
 	template<typename T>
 	struct is_supported_ptr_type
-		: std::bool_constant<std::is_same_v<std::remove_reference_t<T>, std::string_view> || std::is_same_v<std::remove_reference_t<T>, const char*> ||
-	                         std::is_same_v<std::remove_reference_t<T>, void*> || std::is_same_v<std::remove_reference_t<T>, const void*>>
+		: std::bool_constant<std::is_same_v<T, std::string_view> || std::is_same_v<T, const char*> || std::is_same_v<T, void*> || std::is_same_v<T, const void*>>
 	{
 	};
-	template<typename T> inline constexpr bool is_supported_ptr_type_v = is_supported_ptr_type<std::remove_reference_t<T>>::value;
+	template<typename T> inline constexpr bool is_supported_ptr_type_v = is_supported_ptr_type<type<T>>::value;
 
 	template<typename T> struct has_formatter: std::bool_constant<std::is_default_constructible_v<CustomFormatter<T>>>
 	{

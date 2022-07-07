@@ -28,31 +28,6 @@
 // source code, you may redistribute such embedded portions in such object form
 // without including the above copyright and permission notices.
 
-/************************************** What The ArgFormatter And ArgContainer Classes Offer **************************************/
-// This work is a very simple reimplementation with limititations on my end of Victor Zverovich's fmt library.
-// Currently the standard's implementation of his work is still underway although for the most part, it's feature
-// complete with Victor's library - there are some huge performance drops when it's not compiled under the /utf-8
-// flag on MSVC though.
-//
-// The ArgFormatter and ArgContainer classes work in tandem to deliver a very bare-bones version of what the fmt,
-// and MSVC's implementation of fmt, libraries provides and is only intended for usage until MSVC's code is as performant
-// as it is when compiled with /utf-8 for compilation without the need for this flag.
-//
-// With that being said, these classes provide the functionality of formatting to a container with a back insert iterator
-// object which mirrors the std::format_to()/std::vformat_to() via the se_format_to() function, as well as a way to recieve
-// a string with the formatted result via the se_format() function, mirroring std::format()/std::vformat().
-// Unlike MSVC's implementations, however, the default locale used when the locale specifier is present will refer to the
-// default locale created on construction of this class. The downside is that this will not reflect any changes when the
-// locale is changed globally; but the benefit of this approach is reducing the construction of an empty locale on every
-// format, as well as the ability to change the locale with "SetLocale(const std::locale &)" function without affecting
-// the locale of the rest of the program. All formatting specifiers and manual/automatic indexing from the fmt library
-// are available and supported.
-//
-// EDIT: It now seems that MSVC build  192930145 fixes the performance issues among other things with the <format> lib; however,
-//             the performance times of serenity is STILL faster than the MSVC's implementation - the consistency of their performance is
-//             now a non-issue though (same performance with or without the UTF-8 flag)
-/**********************************************************************************************************************************/
-
 #include <serenity/MessageDetails/ArgContainer.h>
 
 #include <charconv>
@@ -293,11 +268,10 @@ namespace serenity::arg_formatter {
 		template<typename T> void LocalizeIntegral(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		template<typename T> void LocalizeFloatingPoint(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		/******************************************************** Container Writing Related Functions *********************************************************/
-		constexpr void BufferToUpper(const char& end);
+		constexpr void BufferToUpper(char* begin, const char* end);
 		constexpr void FillBuffWithChar(const int& totalWidth);
 		constexpr void SetIntegralFormat(int& base, bool& isUpper);
 		constexpr void SetFloatingFormat(std::chars_format& format, int& precision, bool& isUpper);
-		constexpr void WritePreFormatChars(int& pos);
 		constexpr void WriteChar(const char& value);
 		constexpr void WriteBool(const bool& value);
 		template<typename T> constexpr void WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth);

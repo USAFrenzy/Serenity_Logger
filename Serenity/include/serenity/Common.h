@@ -97,8 +97,21 @@
 #define DEFAULT_BUFFER_SIZE (64 * KB)    // used for file buffers
 //#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)    // used for lazy parsing
 
-namespace serenity {
+#ifdef _DEBUG
+	#ifndef SE_ASSERT
+		#define SE_ASSERT(condition, message)                                                                                                                       \
+			if( !(condition) ) {                                                                                                                                    \
+					fprintf(stderr, "Assertion Failed: (%s) |File: %s | Line: %i\nMessage:%s\n", #condition, __FILE__, __LINE__, message);                          \
+					abort();                                                                                                                                        \
+			}
+	#endif
+#else
+	#ifndef SE_ASSERT
+		#define SE_ASSERT(condition, message) void(0)
+	#endif
+#endif
 
+namespace serenity {
 	namespace globals {
 		static std::locale default_locale { std::locale("en_US.UTF-8") };
 	}

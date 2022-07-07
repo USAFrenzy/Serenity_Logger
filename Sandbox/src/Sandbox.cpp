@@ -411,17 +411,12 @@ int main() {
 			std::cout << serenity::format("{:*55}\n\n");
 		}
 
-	/*************************** Current Stats Ran As Of  04Jul22 ***************************/
+	/*************************** Current Stats Ran As Of  07Jul22 ***************************/
 	// ********************************** [Loop Averages] **********************************
-	// Serenity Total Average Among Loops [49.24133 ns]
-	// Standard Total Average Among Loops [83.46996 ns]
-	// Serenity Is 41.007% Faster Than The Standard
+	// Serenity Total Average Among Loops[48.50637 ns]
+	// Standard Total Average Among Loops[83.96735 ns]
+	// Serenity Is 42.232 % Faster Than The Standard
 	// *************************************************************************************
-	// NOTE: I was kind of an idiot on this one... totally forgot about the whole ctx.out() bit of
-	//              std::formatter<> actually being an iterator based function... So just ended up
-	//              swapping the methodology over to that use case and now the timings are more
-	//              in line with what was originally expected -> still good to know that Serenity is
-	//             still winning in this case though =]
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };
 	std::cout << serenity::format("{:*^55}\n", sv);
