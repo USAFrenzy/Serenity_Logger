@@ -4,8 +4,8 @@
 #define GENERAL_SANDBOX              0
 #define ROTATING_TESTING             0
 #define PARSE_TESTING                1
-#define ENABLE_PARSE_BENCHING        0
-#define ENABLE_PARSE_SANDBOX         1
+#define ENABLE_PARSE_BENCHING        1
+#define ENABLE_PARSE_SANDBOX         0
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	#define _CRTDBG_MAP_ALLOC

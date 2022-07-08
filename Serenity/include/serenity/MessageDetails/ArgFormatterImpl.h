@@ -238,16 +238,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& contai
 		}
 }
 
-/*************************************************************************  NOTE *************************************************************************/
-// Moved the alignment functions from where there were to above Format(). Given some changes made a while ago, the check IsSimpleSubstitution()
-// provides the means to write the value directly to the container without formatting. The bottom half  of Format() first formats and then aligns the
-// value if alignment was set. However, it may be beneficial to first check if alignment was set and allow the formatting to happen in place of the ali-
-// ment buffer instead and avoid the current case of formatting to the 'buffer' and then copying it to the 'fillBuffer' before copying it again to the
-// container. I believe I can achieve this by resizing the fillBuffer with memset during run-time since I'm already reserving more than the size of the
-// original 'buffer' that was being used, then format and write the formatted value to the fillBuffer, and then memset the remaining width from the total
-// width with the fill character specified. I think at that point, it's just a simple rotation call to fulfill the alignment spec and then write to the container.
-// I would still have something similar like what is currently being used though in the case  that the value to be written out has other specs and if
-// its not aligned  (This could be adapted and modified from the current WriteNonAligned() call).
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(T&& container, const msg_details::SpecType& argType) {
 	auto precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
@@ -270,8 +260,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 					case SpecType::StringType: WriteFormattedString(std::forward<FwdRef<T>>(container), argType, precision); return;
 				}
 	}
-	// Handles The Case Of Specifiers WITH Alignment -> this is the case I want to make more efficient with the above note by eliminating one
-	// possibly unnecessary copy call
+	// Handles The Case Of Specifiers WITH Alignment
 	switch( argType ) {
 			default:
 				!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
