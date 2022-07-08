@@ -411,11 +411,11 @@ int main() {
 			std::cout << serenity::format("{:*55}\n\n");
 		}
 
-	/*************************** Current Stats Ran As Of  07Jul22 ***************************/
+	/*************************** Current Stats Ran As Of  08Jul22 ***************************/
 	// ********************************** [Loop Averages] **********************************
-	// Serenity Total Average Among Loops[48.50637 ns]
-	// Standard Total Average Among Loops[83.96735 ns]
-	// Serenity Is 42.232 % Faster Than The Standard
+	// Serenity Total Average Among Loops [48.059757 ns]
+	// Standard Total Average Among Loops [83.25582 ns]
+	// Serenity Is 42.275 % Faster Than The Standard
 	// *************************************************************************************
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };

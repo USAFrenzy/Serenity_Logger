@@ -274,7 +274,7 @@ namespace serenity::arg_formatter {
 		constexpr void SetFloatingFormat(std::chars_format& format, int& precision, bool& isUpper);
 		constexpr void WriteChar(const char& value);
 		constexpr void WriteBool(const bool& value);
-		template<typename T> constexpr void WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth);
+		template<typename T> constexpr void WriteFormattedString(T&& container, const SpecType& type, const int& precisionFormatted);
 		template<typename T> constexpr void WriteSimpleValue(T&& container, const SpecType&);
 		template<typename T> constexpr void WriteSimpleString(T&& container);
 		template<typename T> constexpr void WriteSimpleCString(T&& container);
@@ -303,6 +303,7 @@ namespace serenity::arg_formatter {
 		template<typename T> requires std::is_arithmetic_v<std::remove_cvref_t<T>>
 		constexpr void WriteSign(T&& value, int& pos);
 		// clang-format on
+		template<typename T> constexpr void WriteBufferToContainer(T&& container);
 
 	  private:
 		int argCounter;

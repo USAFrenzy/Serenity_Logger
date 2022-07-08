@@ -255,26 +255,90 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		                                                 : 0 };
 	if( totalWidth == 0 ) {    // use this check to guard from any unnecessary additional checks
 			if( IsSimpleSubstitution(argType, precision) ) {
+					// Handles The Case Of No Specifiers And No Alignment
 					return WriteSimpleValue(std::forward<FwdRef<T>>(container), argType);
 			}
+			// Handles The Case Of Specifiers And No Alignment
+			switch( argType ) {
+					default:
+						!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
+											 : LocalizeArgument(std::forward<FwdRef<T>>(container), default_locale, precision, totalWidth, argType);
+						WriteBufferToContainer(std::forward<FwdRef<T>>(container));
+						return;
+					case SpecType::StringViewType: [[fallthrough]];
+					case SpecType::CharPointerType: [[fallthrough]];
+					case SpecType::StringType: WriteFormattedString(std::forward<FwdRef<T>>(container), argType, precision); return;
+				}
 	}
-	!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
-						 : LocalizeArgument(std::forward<FwdRef<T>>(container), default_locale, precision, totalWidth, argType);
+	// Handles The Case Of Specifiers WITH Alignment -> this is the case I want to make more efficient with the above note by eliminating one
+	// possibly unnecessary copy call
+	switch( argType ) {
+			default:
+				!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
+									 : LocalizeArgument(std::forward<FwdRef<T>>(container), default_locale, precision, totalWidth, argType);
+				FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
+				return;
+			case SpecType::StringViewType:
+				FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_view_state(specValues.argPosition), totalWidth, precision);
+				return;
+			case SpecType::CharPointerType:
+				FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.c_string_state(specValues.argPosition), totalWidth, precision);
+				return;
+			case SpecType::StringType:
+				FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), totalWidth, precision);
+				return;
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
+	if constexpr( std::is_same_v<type<T>, std::string> ) {
+			container.append(buffer.data(), valueSize);
+	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+			container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
+	} else {
+			std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
+		}
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(T&& container, const std::locale& loc, const msg_details::SpecType& argType) {
-	using enum msg_details::SpecType;
 	auto precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
 	if( totalWidth == 0 ) {    // use this check to guard from any unnecessary additional checks
 			if( IsSimpleSubstitution(argType, precision) ) {
+					// Handles The Case Of No Specifiers And No Alignment
 					return WriteSimpleValue(std::forward<FwdRef<T>>(container), argType);
 			}
+			// Handles The Case Of Specifiers And No Alignment
+			switch( argType ) {
+					default:
+						!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
+											 : LocalizeArgument(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, argType);
+						WriteBufferToContainer(std::forward<FwdRef<T>>(container));
+						return;
+					case SpecType::StringViewType: [[fallthrough]];
+					case SpecType::CharPointerType: [[fallthrough]];
+					case SpecType::StringType: WriteFormattedString(std::forward<FwdRef<T>>(container), argType, precision); return;
+				}
 	}
-	!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
-						 : LocalizeArgument(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, argType);
+	// Handles The Case Of Specifiers WITH Alignment
+	switch( argType ) {
+			default:
+				!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
+									 : LocalizeArgument(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, argType);
+				FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
+				return;
+			case SpecType::StringViewType:
+				FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_view_state(specValues.argPosition), totalWidth, precision);
+				return;
+			case SpecType::CharPointerType:
+				FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.c_string_state(specValues.argPosition), totalWidth, precision);
+				return;
+			case SpecType::StringType:
+				FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), totalWidth, precision);
+				return;
+		}
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
@@ -1079,9 +1143,9 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(T&& container, const msg_details::SpecType& argType) {
 	using enum msg_details::SpecType;
 	switch( argType ) {
-			case StringType: WriteSimpleString(std::forward<FwdRef<T>>(container)); break;
-			case CharPointerType: WriteSimpleCString(std::forward<FwdRef<T>>(container)); break;
-			case StringViewType: WriteSimpleStringView(std::forward<FwdRef<T>>(container)); break;
+			case StringType: WriteSimpleString(std::forward<FwdRef<T>>(container)); return;
+			case CharPointerType: WriteSimpleCString(std::forward<FwdRef<T>>(container)); return;
+			case StringViewType: WriteSimpleStringView(std::forward<FwdRef<T>>(container)); return;
 			case IntType: WriteSimpleInt(std::forward<FwdRef<T>>(container)); break;
 			case U_IntType: WriteSimpleUInt(std::forward<FwdRef<T>>(container)); break;
 			case LongLongType: WriteSimpleLongLong(std::forward<FwdRef<T>>(container)); break;
@@ -1139,23 +1203,19 @@ template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(T&& container, const int& precision, const int& totalWidth, const msg_details::SpecType& type) {
 	using enum msg_details::SpecType;
 	switch( type ) {
-			case IntType: FormatIntegerType(argStorage.int_state(specValues.argPosition)); break;
-			case U_IntType: FormatIntegerType(argStorage.uint_state(specValues.argPosition)); break;
-			case LongLongType: FormatIntegerType(argStorage.long_long_state(specValues.argPosition)); break;
-			case U_LongLongType: FormatIntegerType(argStorage.u_long_long_state(specValues.argPosition)); break;
-			case BoolType: FormatBoolType(argStorage.bool_state(specValues.argPosition)); break;
-			case CharType: FormatCharType(argStorage.char_state(specValues.argPosition)); break;
-			case FloatType: FormatFloatType(argStorage.float_state(specValues.argPosition), precision); break;
-			case DoubleType: FormatFloatType(argStorage.double_state(specValues.argPosition), precision); break;
-			case LongDoubleType: FormatFloatType(argStorage.long_double_state(specValues.argPosition), precision); break;
-			case StringType: [[fallthrough]];
-			case CharPointerType: [[fallthrough]];
-			case StringViewType: return WriteString(std::forward<FwdRef<T>>(container), type, precision, totalWidth); break;
-			case ConstVoidPtrType: FormatPointerType(argStorage.const_void_ptr_state(specValues.argPosition), type); break;
-			case VoidPtrType: FormatPointerType(argStorage.void_ptr_state(specValues.argPosition), type); break;
-			default: break;
+			case IntType: FormatIntegerType(argStorage.int_state(specValues.argPosition)); return;
+			case U_IntType: FormatIntegerType(argStorage.uint_state(specValues.argPosition)); return;
+			case LongLongType: FormatIntegerType(argStorage.long_long_state(specValues.argPosition)); return;
+			case U_LongLongType: FormatIntegerType(argStorage.u_long_long_state(specValues.argPosition)); return;
+			case BoolType: FormatBoolType(argStorage.bool_state(specValues.argPosition)); return;
+			case CharType: FormatCharType(argStorage.char_state(specValues.argPosition)); return;
+			case FloatType: FormatFloatType(argStorage.float_state(specValues.argPosition), precision); return;
+			case DoubleType: FormatFloatType(argStorage.double_state(specValues.argPosition), precision); return;
+			case LongDoubleType: FormatFloatType(argStorage.long_double_state(specValues.argPosition), precision); return;
+			case ConstVoidPtrType: FormatPointerType(argStorage.const_void_ptr_state(specValues.argPosition), type); return;
+			case VoidPtrType: FormatPointerType(argStorage.void_ptr_state(specValues.argPosition), type); return;
+			default: return;
 		}
-	if( !specValues.localize ) FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::BufferToUpper(char* begin, const char* end) {
@@ -1313,23 +1373,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		}
 }
 
-template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::WriteString(T&& container, const SpecType& type, const int& precision, const int& totalWidth) {
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteFormattedString(T&& container, const SpecType& type, const int& precision) {
 	using enum msg_details::SpecType;
 	switch( type ) {
-			case StringType:
-				totalWidth == 0 ? FormatStringType(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), precision)
-								: FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), totalWidth, precision);
-				break;
-			case CharPointerType:
-				totalWidth == 0 ? FormatStringType(std::forward<FwdRef<T>>(container), argStorage.c_string_state(specValues.argPosition), precision)
-								: FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.c_string_state(specValues.argPosition), totalWidth, precision);
-				break;
-			case StringViewType:
-				totalWidth == 0 ? FormatStringType(std::forward<FwdRef<T>>(container), argStorage.string_view_state(specValues.argPosition), precision)
-								: FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_view_state(specValues.argPosition), totalWidth, precision);
-				break;
-			default: break;
+			case StringViewType: return FormatStringType(std::forward<FwdRef<T>>(container), argStorage.string_view_state(specValues.argPosition), precision);
+			case StringType: return FormatStringType(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), precision);
+			case CharPointerType: return FormatStringType(std::forward<FwdRef<T>>(container), argStorage.c_string_state(specValues.argPosition), precision);
+			default: return;
 		}
 }
 
@@ -1374,7 +1424,6 @@ void serenity::arg_formatter::ArgFormatter::LocalizeArgument(T&& container, cons
 			case U_LongLongType: LocalizeFloatingPoint(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, type); break;
 			case BoolType: LocalizeBool(std::forward<FwdRef<T>>(container), loc); break;
 		}
-	FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
 }
 
 template<typename T>
