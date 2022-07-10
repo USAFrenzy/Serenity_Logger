@@ -288,6 +288,17 @@ int main() {
 	std::vector<char> finalStr {};
 		#endif
 
+	auto tz { std::chrono::current_zone() };
+	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
+	std::cout << std::format("{:*^55%T}\n\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	/*************************************** NOTES ABOUT ABOVE ***************************************/
+	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
+	//
+	// I need to test the precision more and see what's allowed/disallowed because I couldn't get the result
+	// I wanted without using std::chrono::floor() here . Also need to test how locale affects this.
+	// For the time being anyways, I think I'll imlement c-time's tm struct instead as that's what I'm currently
+	// using in the logger right now.
+
 	serenity::targets::ColorConsole console("", "%+");
 	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
 

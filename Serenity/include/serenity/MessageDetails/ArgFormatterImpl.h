@@ -238,6 +238,16 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& contai
 		}
 }
 
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
+	if constexpr( std::is_same_v<type<T>, std::string> ) {
+			container.append(buffer.data(), valueSize);
+	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+			container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
+	} else {
+			std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
+		}
+}
+
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Format(T&& container, const msg_details::SpecType& argType) {
 	auto precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
@@ -276,16 +286,6 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 			case SpecType::StringType:
 				FormatAlignment(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), totalWidth, precision);
 				return;
-		}
-}
-
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(buffer.data(), valueSize);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
-	} else {
-			std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
 		}
 }
 
@@ -330,7 +330,67 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		}
 }
 
+constexpr void serenity::arg_formatter::ArgFormatter::ParseTimeSpec(const char& ch, const char& next) {
+	// this is more or less the std::formatter<> setup for chrono specs, will be adding the c-time ones I support -> this is just placeholder atm
+	switch( ch ) {
+			case '%': break;
+			case 'n': break;
+			case 'p': break;
+			case 'q': break;
+			case 'r': break;
+			case 't': break;
+			case 'E':
+				if( next == 'X' ) /*do something*/
+					break;
+			case 'H': break;
+			case 'I': break;
+			case 'M': break;
+			case '0':
+				switch( next ) {
+						case 'H': break;
+						case 'I': break;
+						case 'M': break;
+						case 'S': break;
+						default: break;
+					}
+				break;
+			case 'Q': break;
+			case 'R': break;
+			case 'S': break;
+			case 'T': break;
+			case 'X': break;
+			default: ReportError(ErrorType::invalid_ctime_spec);
+		}
+}
+
+// Time Spec: [fill-align] [width] [precision] [locale] [chrono spec]
+constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string_view sv, size_t& start, const SpecType& argType) {
+	auto svSize { sv.size() };
+	VerifyFillAlignField(sv, start, argType);
+	if( (sv[ start ] == '{') || (sv[ start ] >= '1' && sv[ start ] <= '9') ) {
+			VerifyWidthField(sv, start);
+			if( start >= svSize ) return;
+	}
+	if( sv[ start ] == '.' ) {
+			VerifyPrecisionField(sv, start, argType);
+			if( start >= svSize ) return;
+	}
+	if( sv[ start ] == 'L' ) {
+			VerifyLocaleField(sv, start, argType);
+			if( start >= svSize ) return;
+	}
+	if( sv[ start ] != '}' ) {
+			(start + 1 < svSize && sv[ start + 1 ] != '}') ? ParseTimeSpec(sv[ start ], sv[ ++start ]) : ParseTimeSpec(sv[ start ]);
+	}
+}
+
 constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
+	if( argType == SpecType::CTimeType ) {
+			if( sv[ start ] == '%' ) {
+					VerifyTimeSpec(sv, start, argType);
+			}
+			return;
+	}
 	auto svSize { sv.size() };
 	VerifyFillAlignField(sv, start, argType);
 	if( start >= svSize ) return;
@@ -1317,16 +1377,15 @@ constexpr void serenity::arg_formatter::ArgFormatter::SetIntegralFormat(int& bas
 template<typename T>
 requires std::is_floating_point_v<std::remove_cvref_t<T>>
 constexpr void serenity::arg_formatter::ArgFormatter::FormatFloatType(T&& value, int precision) {
-	int pos {};
+	int pos { 0 };
 	bool isUpper { false };
 	auto data { buffer.data() };
 	std::chars_format format {};
 	!std::is_constant_evaluated() ? static_cast<void>(std::memset(data, 0, SERENITY_ARG_BUFFER_SIZE)) : std::fill(buffer.begin(), buffer.end(), 0);
 	if( specValues.signType != Sign::Empty ) WriteSign(std::forward<T>(value), pos);
 	SetFloatingFormat(format, precision, isUpper);
-	auto end { (precision != 0 ? std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format, precision)
-		                       : std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format))
-		       .ptr };
+	auto end { precision != 0 ? std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format, precision).ptr
+		                      : std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, format).ptr };
 	valueSize = end - data;
 	if( isUpper ) BufferToUpper(data, end);
 }
@@ -1334,7 +1393,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatFloatType(T&& value,
 template<typename T>
 requires std::is_integral_v<std::remove_cvref_t<T>>
 constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& value) {
-	int pos {}, base { 10 };
+	int pos { 0 }, base { 10 };
 	bool isUpper { false };
 	auto data { buffer.data() };
 	!std::is_constant_evaluated() ? static_cast<void>(std::memset(data, 0, SERENITY_ARG_BUFFER_SIZE)) : std::fill(buffer.begin(), buffer.end(), 0);
@@ -1344,8 +1403,9 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& valu
 			pos += static_cast<int>(specValues.preAltForm.size());    // safe to downcast as it will only ever be positive and max val of 2
 	}
 	SetIntegralFormat(base, isUpper);
-	valueSize = std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, base).ptr - data;
-	if( isUpper ) BufferToUpper(data, data + valueSize);
+	auto end { std::to_chars(data + pos, data + SERENITY_ARG_BUFFER_SIZE, value, base).ptr };
+	valueSize = end - data;
+	if( isUpper ) BufferToUpper(data, end);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatStringType(T&& container, std::string_view val, const int& precision) {
@@ -1394,6 +1454,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ReportError(ErrorType err)
 			case invalid_bool_spec: throw format_error(format_error_messages[ 14 ]); break;
 			case invalid_char_spec: throw format_error(format_error_messages[ 15 ]); break;
 			case invalid_pointer_spec: throw format_error(format_error_messages[ 16 ]); break;
+			case invalid_ctime_spec: throw format_error(format_error_messages[ 17 ]); break;
 			default: throw format_error(format_error_messages[ 0 ]); break;
 		}
 }

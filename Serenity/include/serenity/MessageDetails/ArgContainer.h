@@ -25,13 +25,14 @@
 namespace serenity {
 
 	// convenience typedefs
-	template<typename T> using type        = std::remove_cvref_t<T>;
-	template<typename T> using FwdRef      = std::add_lvalue_reference_t<type<T>>;
-	template<typename T> using FwdConstRef = std::add_lvalue_reference_t<std::add_const_t<type<T>>>;
-	template<typename T> using FwdMove     = std::add_rvalue_reference_t<type<T>>;
-	template<typename T> using Iterator    = std::back_insert_iterator<type<T>>;
-	template<typename T> using FwdMoveIter = std::add_rvalue_reference_t<Iterator<T>>;
-	template<typename T> using FwdRefIter  = std::add_lvalue_reference_t<Iterator<T>>;
+	template<typename T> using type         = std::remove_cvref_t<T>;
+	template<typename T> using FwdRef       = std::add_lvalue_reference_t<type<T>>;
+	template<typename T> using FwdRmvPtrRef = std::add_lvalue_reference_t<std::remove_pointer_t<type<T>>>;
+	template<typename T> using FwdConstRef  = std::add_lvalue_reference_t<std::add_const_t<type<T>>>;
+	template<typename T> using FwdMove      = std::add_rvalue_reference_t<type<T>>;
+	template<typename T> using Iterator     = std::back_insert_iterator<type<T>>;
+	template<typename T> using FwdMoveIter  = std::add_rvalue_reference_t<Iterator<T>>;
+	template<typename T> using FwdRefIter   = std::add_lvalue_reference_t<Iterator<T>>;
 
 	template<typename Value> struct CustomFormatter
 	{
@@ -100,8 +101,8 @@ namespace serenity {
 	};
 
 	// clang-format off
-	using VType = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int,
-		long long, unsigned long long, bool, char, float, double, long double, const void*, void*, CustomValue>;
+	using VType = std::variant<std::monostate, std::string, const char*, std::string_view, int, unsigned int, long long, 
+		                          unsigned long long, bool, char, float, double, long double, const void*, void*, std::tm, CustomValue>;
 	// clang-format on
 
 	template<typename T, typename U> struct is_supported;
@@ -112,8 +113,8 @@ namespace serenity {
 
 	template<typename T> struct is_supported_ptr_type;
 	template<typename T>
-	struct is_supported_ptr_type
-		: std::bool_constant<std::is_same_v<T, std::string_view> || std::is_same_v<T, const char*> || std::is_same_v<T, void*> || std::is_same_v<T, const void*>>
+	struct is_supported_ptr_type: std::bool_constant<std::is_same_v<T, std::string_view> || std::is_same_v<T, const char*> || std::is_same_v<T, void*> ||
+	                                                 std::is_same_v<T, const void*> || std::is_same_v<T, std::tm*>>
 	{
 	};
 	template<typename T> inline constexpr bool is_supported_ptr_type_v = is_supported_ptr_type<type<T>>::value;
@@ -151,7 +152,8 @@ namespace serenity::msg_details {
 		LongDoubleType   = 12,
 		ConstVoidPtrType = 13,
 		VoidPtrType      = 14,
-		CustomType       = 15,
+		CTimeType        = 15,
+		CustomType       = 16,
 	};
 
 	constexpr size_t MAX_ARG_COUNT = 25;
@@ -188,6 +190,7 @@ namespace serenity::msg_details {
 		constexpr long double& long_double_state(size_t index);
 		constexpr const void* const_void_ptr_state(size_t index);
 		constexpr void* void_ptr_state(size_t index);
+		constexpr std::tm& c_time_state(size_t index);
 		constexpr CustomValue& custom_state(size_t index);
 
 	  private:
@@ -228,6 +231,8 @@ namespace serenity::msg_details {
 				return std::forward<SpecType>(ConstVoidPtrType);
 		} else if constexpr( std::is_same_v<type<T>, void*> ) {
 				return std::forward<SpecType>(VoidPtrType);
+		} else if constexpr( std::is_same_v<type<T>, std::tm> ) {
+				return std::forward<SpecType>(CTimeType);
 		} else {
 				static_assert(is_formattable_v<type<T>>, "A Template Specialization Must Exist For A Custom Type Argument.\n\t"
 				                                         "For Serenity, This Can Be Done By Specializing The CustomFormatter Template For Your Type And "

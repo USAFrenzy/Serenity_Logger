@@ -69,6 +69,7 @@ namespace serenity {
 		invalid_bool_spec,
 		invalid_char_spec,
 		invalid_pointer_spec,
+		invalid_ctime_spec,
 	};
 
 	static constexpr std::array<const char*, 17> format_error_messages = {
@@ -89,6 +90,7 @@ namespace serenity {
 		"Error In Format: Invalid Type Specifier For Bool Type Argument.",
 		"Error In Format: Invalid Type Specifier For Char Type Argument.",
 		"Error In Format: Invalid Type Specifier For Pointer Type Argument.",
+		"Error In Format: Invalid Time Specifier For C-Time Type Argument.",
 	};
 
 	static constexpr bool IsDigit(const char& ch) {
@@ -231,6 +233,8 @@ namespace serenity::arg_formatter {
 		[[noreturn]] constexpr void ReportError(ErrorType err);
 		constexpr bool FindBrackets(std::string_view sv);
 		constexpr void Parse(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr void VerifyTimeSpec(std::string_view sv, size_t& start, const SpecType& argType);
+		constexpr void ParseTimeSpec(const char& ch, const char& nextCh = '\0');
 		constexpr bool VerifyPositionalField(std::string_view sv, size_t& start, unsigned char& positionValue);
 		constexpr void VerifyFillAlignField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
 		constexpr void VerifyAltField(std::string_view sv, const SpecType& argType);
