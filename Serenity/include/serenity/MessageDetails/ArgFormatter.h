@@ -31,6 +31,7 @@
 #include <serenity/MessageDetails/ArgContainer.h>
 
 #include <charconv>
+#include <cstring>
 #include <locale>
 #include <stdexcept>
 

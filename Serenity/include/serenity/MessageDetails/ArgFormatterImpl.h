@@ -380,7 +380,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 			if( start >= svSize ) return;
 	}
 	if( sv[ start ] != '}' ) {
-			(start + 1 < svSize && sv[ start + 1 ] != '}') ? ParseTimeSpec(sv[ start ], sv[ ++start ]) : ParseTimeSpec(sv[ start ]);
+			(start + 1 < svSize && sv[ start + 1 ] != '}') ? ParseTimeSpec(sv[ start ], sv[ start + 1 ]) : ParseTimeSpec(sv[ start ]);
 	}
 }
 
@@ -964,7 +964,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnValidTypeSpec(const Spec
 constexpr void serenity::arg_formatter::ArgFormatter::OnInvalidTypeSpec(const SpecType& type) {
 	using enum msg_details::SpecType;
 	switch( type ) {
-			case MonoType: return;    // possibly issue warning on a type spec being provided on no argument?
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
 			case LongLongType: [[fallthrough]];
@@ -979,6 +978,9 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnInvalidTypeSpec(const Sp
 			case CharType: ReportError(ErrorType::invalid_char_spec); break;
 			case ConstVoidPtrType: [[fallthrough]];
 			case VoidPtrType: ReportError(ErrorType::invalid_pointer_spec); break;
+			case MonoType: [[fallthrough]];
+			case CustomType: [[fallthrough]];
+			case CTimeType: return;    // possibly issue warning on a type spec being provided on no argument?
 		}
 }
 
