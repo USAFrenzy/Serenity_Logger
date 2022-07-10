@@ -197,13 +197,22 @@ namespace serenity::arg_formatter {
 		return std::forward<size_t>(totalSize);
 	}
 
-	/********************************************************************************************************************************************************
+	/**********************************************************************************************************************************************************
 	    Compatible class that provides some of the same functionality that mirrors <format> and libfmt for basic formatting needs for pre  C++20 and MSVC's
 	    pre-backported fixes (which required C ++23) for some build versions of Visual Studio as well as for performance needs. Everything in this class either
 	    matches (in the case of simple double substitution) or greatly exceeds the performance of MSVC's implementation -  with the caveat no utf-8 support and
 	    no type-erasure as of right now. I believe libfmt is faster than this basic implementation  (and unarguably way more comprehensive as well) but I have yet
 	    to bench timings against it.
-	********************************************************************************************************************************************************/
+	***********************************************************************************************************************************************************/
+	/*************************************************************************  NOTE *************************************************************************/
+	/************************************************** Building this project on Ubuntu emitted the following **************************************************
+	 * The class defaulted functions are not constexpr due to being defualt
+	 *  Need to explicitly add headers for std::memset, std::strlen, std::memcpy,
+	 *  Unsequenced modification and access to 'start' in ArgFormatterImpl.h: 383:84
+	 *  enumeration values 'CTimeType' and 'CustomType' not handled in switch ArgFormatterImple.h: 966:10
+	 *  There's probably more errors to be honest, build step automatically stopped due to the number of errors from the above
+	 *  -- Kind of surprised MSVC didn't emit these warnings with '/Wall' and '/WX' ...
+	 **********************************************************************************************************************************************************/
 	class ArgFormatter
 	{
 	  public:
