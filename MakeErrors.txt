@@ -1,0 +1,111 @@
+[  3%] Building CXX object Serenity/CMakeFiles/Serenity.dir/src/MessageDetails/Message_Info.cpp.o
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/src/MessageDetails/Message_Info.cpp:1:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/Message_Info.h:3:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:58:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatter.h:31:
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgContainer.h:170:3: error: defaulted definition of destructor is not constexpr
+                constexpr ~ArgContainer()                              = default;
+                ^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgContainer.h:168:3: error: defaulted definition of move constructor is not constexpr
+                constexpr ArgContainer(ArgContainer&&)                 = default;
+                ^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgContainer.h:169:3: error: defaulted definition of move assignment operator is not constexpr
+                constexpr ArgContainer& operator=(ArgContainer&&)      = default;
+                ^
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/src/MessageDetails/Message_Info.cpp:1:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/Message_Info.h:3:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:58:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatter.h:31:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgContainer.h:243:
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgContainerImpl.h:48:7: error: no member named 'memset' in namespace 'std'
+        std::memset(specContainer.data(), 0, details::MAX_ARG_COUNT);
+        ~~~~~^
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/src/MessageDetails/Message_Info.cpp:1:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/Message_Info.h:3:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:58:
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatter.h:225:3: error: defaulted definition of destructor is not constexpr
+                constexpr ~ArgFormatter()                              = default;
+                ^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatter.h:223:3: error: defaulted definition of move constructor is not constexpr
+                constexpr ArgFormatter(ArgFormatter&&)                 = default;
+                ^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatter.h:224:3: error: defaulted definition of move assignment operator is not constexpr
+                constexpr ArgFormatter& operator=(ArgFormatter&&)      = default;
+                ^
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/src/MessageDetails/Message_Info.cpp:1:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/Message_Info.h:3:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:58:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatter.h:332:
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatterImpl.h:40:50: error: constexpr constructor never produces a constant expression [-Winvalid-constexpr]
+constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
+                                                 ^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatterImpl.h:42:92: note: non-constexpr constructor 'vector' cannot be used in a constant expression
+          buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(size_t {}), fillBuffer(std::vector<char> {}) {
+                                                                                                  ^
+/usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/bits/stl_vector.h:487:7: note: declared here
+      vector() = default;
+      ^
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/src/MessageDetails/Message_Info.cpp:1:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/Message_Info.h:3:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:58:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatter.h:332:
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatterImpl.h:1233:36: error: static variable not permitted in a constexpr function
+        static constexpr std::string_view sv { "0x" };
+                                          ^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatterImpl.h:1266:27: error: no matching member function for call to 'FormatPointerType'
+                        case ConstVoidPtrType: FormatPointerType(argStorage.const_void_ptr_state(specValues.argPosition), type); return;
+                                               ^~~~~~~~~~~~~~~~~
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatterImpl.h:1231:55: note: candidate template ignored: substitution failure [with T = const void *]
+constexpr void serenity::arg_formatter::ArgFormatter::FormatPointerType(T&& value, const msg_details::SpecType& type) {
+                                                      ^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatterImpl.h:1267:22: error: no matching member function for call to 'FormatPointerType'
+                        case VoidPtrType: FormatPointerType(argStorage.void_ptr_state(specValues.argPosition), type); return;
+                                          ^~~~~~~~~~~~~~~~~
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatterImpl.h:1231:55: note: candidate template ignored: substitution failure [with T = void *]
+constexpr void serenity::arg_formatter::ArgFormatter::FormatPointerType(T&& value, const msg_details::SpecType& type) {
+                                                      ^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/ArgFormatterImpl.h:1469:10: warning: 9 enumeration values not handled in switch: 'MonoType', 'StringType', 'CharPointerType'... [-Wswitch]
+        switch( type ) {
+                ^
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/src/MessageDetails/Message_Info.cpp:1:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/Message_Info.h:3:
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:121:3: error: expected identifier
+                linux   = 0,
+                ^
+<built-in>:401:15: note: expanded from here
+#define linux 1
+              ^
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/src/MessageDetails/Message_Info.cpp:1:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/Message_Info.h:3:
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:164:14: error: expected unqualified-id
+                        {LineEnd::linux,    "\n"  },
+                                  ^
+<built-in>:401:15: note: expanded from here
+#define linux 1
+              ^
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/src/MessageDetails/Message_Info.cpp:1:
+In file included from /home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/MessageDetails/Message_Info.h:3:
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:271:8: error: no type named 'source_location' in namespace 'std'
+                std::source_location source;
+                ~~~~~^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:272:46: error: no type named 'source_location' in namespace 'std'
+                MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+                                                      ~~~~~^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:273:42: error: no type named 'source_location' in namespace 'std'
+                MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+                                                  ~~~~~^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:274:41: error: no type named 'source_location' in namespace 'std'
+                MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+                                                 ~~~~~^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:275:48: error: no type named 'source_location' in namespace 'std'
+                MsgWithLoc(const std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+                                                        ~~~~~^
+/home/ryan/Desktop/Serenity/Serenity_Logger/Serenity/include/serenity/Common.h:272:74: error: no member named 'source_location' in namespace 'std'
+                MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+                                                                                  ~~~~~^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+1 warning and 20 errors generated.
+gmake[2]: *** [Serenity/CMakeFiles/Serenity.dir/build.make:82: Serenity/CMakeFiles/Serenity.dir/src/MessageDetails/Message_Info.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:216: Serenity/CMakeFiles/Serenity.dir/all] Error 2
+gmake: *** [Makefile:114: all] Error 2
+
