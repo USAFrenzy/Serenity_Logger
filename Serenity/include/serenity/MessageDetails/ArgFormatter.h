@@ -31,6 +31,7 @@
 #include <serenity/MessageDetails/ArgContainer.h>
 
 #include <charconv>
+#include <chrono>
 #include <cstring>
 #include <locale>
 #include <stdexcept>
@@ -155,6 +156,9 @@ namespace serenity::arg_formatter {
 		bool localize { false };
 		bool hasAlt { false };
 		bool hasClosingBrace { false };
+		unsigned char timeSpec { '\0' };
+		bool isLocalizedTimeAlt { false };
+		bool isLocalizedNumAlt { false };
 	};
 
 	struct BracketSearchResults
@@ -243,13 +247,15 @@ namespace serenity::arg_formatter {
 		[[noreturn]] constexpr void ReportError(ErrorType err);
 		constexpr bool FindBrackets(std::string_view sv);
 		constexpr void Parse(std::string_view sv, size_t& currentPosition, const SpecType& argType);
-		constexpr void VerifyTimeSpec(std::string_view sv, size_t& start, const SpecType& argType);
-		constexpr void ParseTimeSpec(const char& ch, const char& nextCh = '\0');
+		constexpr void VerifyTimeSpec(std::string_view sv, size_t& position);
+		constexpr void ParseTimeField(std::string_view sv, size_t& currentPosition);
 		constexpr bool VerifyPositionalField(std::string_view sv, size_t& start, unsigned char& positionValue);
 		constexpr void VerifyFillAlignField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr void VerifyFillAlignTimeField(std::string_view sv, size_t& currentPosition);
 		constexpr void VerifyAltField(std::string_view sv, const SpecType& argType);
 		constexpr void VerifyWidthField(std::string_view sv, size_t& currentPosition);
 		constexpr void VerifyPrecisionField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
+		constexpr void VerifyTimePrecisionField(std::string_view sv, size_t& currentPosition);
 		constexpr void VerifyLocaleField(std::string_view sv, size_t& currentPosition, const SpecType& argType);
 		constexpr void HandlePotentialTypeField(const char& ch, const SpecType& argType);
 		constexpr bool IsSimpleSubstitution(const SpecType& argType, const int& precision);
@@ -261,7 +267,7 @@ namespace serenity::arg_formatter {
 		constexpr void OnInvalidTypeSpec(const SpecType& type);
 		/************************************************************ Formatting Related Functions ************************************************************/
 		template<typename T> constexpr void FormatStringType(T&& container, std::string_view val, const int& precision);
-		template<typename T> constexpr void FormatArgument(T&& container, const int& precision, const int& totalWidth, const SpecType& type);
+		constexpr void FormatArgument(const int& precision, const int& totalWidth, const SpecType& type);
 		template<typename T> constexpr void FormatAlignment(T&& container, const int& totalWidth);
 		template<typename T> constexpr void FormatAlignment(T&& container, std::string_view val, const int& width, int prec);
 		constexpr void FormatBoolType(bool& value);
@@ -275,12 +281,22 @@ namespace serenity::arg_formatter {
 		template<typename T>
 		requires std::is_floating_point_v<std::remove_cvref_t<T>>
 		constexpr void FormatFloatType(T&& value, int precision);
+		/********************************************************** Time Formatting Related Functions *********************************************************/
+		template<typename T> constexpr void FormatTimeField(T&& container);
+		template<typename T> constexpr void FormatTimeAlignment(T&& container, const int& totalWidth);    // not implemented
+		constexpr void FormatCTime(const std::tm& cTimeStruct, const int& precision);
+		constexpr void Format24HourTime(const int& hour, const int& min, const int& sec, const int& precision = 0);
+		template<typename T> constexpr void Write24HourTime(T&& container, const int& hour, const int& min, const int& sec);
+		constexpr void FormatLocalizedCTime(const std::tm& cTimeStruct, const int& precision);
+		void LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision);    // not implemented
+		template<typename T> constexpr void WriteSimpleCTime(T&& container);
+
 		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
-		template<typename T> void LocalizeBool(T&& container, const std::locale& loc);
+		void LocalizeBool(const std::locale& loc);
 		void FormatIntegralGrouping(const std::locale& loc, size_t end);
-		template<typename T> void LocalizeArgument(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
-		template<typename T> void LocalizeIntegral(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
-		template<typename T> void LocalizeFloatingPoint(T&& container, const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		void LocalizeArgument(const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		void LocalizeIntegral(const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
+		void LocalizeFloatingPoint(const std::locale& loc, const int& precision, const int& totalWidth, const SpecType& type);
 		/******************************************************** Container Writing Related Functions *********************************************************/
 		constexpr void BufferToUpper(char* begin, const char* end);
 		constexpr void FillBuffWithChar(const int& totalWidth);
@@ -303,6 +319,7 @@ namespace serenity::arg_formatter {
 		template<typename T> constexpr void WriteSimpleLongDouble(T&& container);
 		template<typename T> constexpr void WriteSimpleConstVoidPtr(T&& container);
 		template<typename T> constexpr void WriteSimpleVoidPtr(T&& container);
+
 		// clang-format off
 		template<typename T> constexpr void WriteAlignedLeft(T &&container, const int& totalWidth);
 		template<typename T>constexpr void WriteAlignedLeft(T &&container, std::string_view val, const int& precision, const int& totalWidth);

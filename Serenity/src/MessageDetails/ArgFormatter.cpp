@@ -2,6 +2,55 @@
 
 namespace serenity::arg_formatter {
 
+	// not implemented
+	void ArgFormatter::LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision) { }
+
+	void ArgFormatter::LocalizeArgument(const std::locale& loc, const int& precision, const int& totalWidth, const msg_details::SpecType& type) {
+		using enum serenity::msg_details::SpecType;
+		// NOTE: The following types should have been caught in the verification process:  monostate, string, c-string, string view, const void*, void *
+		switch( type ) {
+				case IntType: [[fallthrough]];
+				case U_IntType: [[fallthrough]];
+				case LongLongType: LocalizeIntegral(loc, precision, totalWidth, type); break;
+				case FloatType: [[fallthrough]];
+				case DoubleType: [[fallthrough]];
+				case LongDoubleType: [[fallthrough]];
+				case U_LongLongType: LocalizeFloatingPoint(loc, precision, totalWidth, type); break;
+				case BoolType: LocalizeBool(loc); break;
+			}
+	}
+
+	void ArgFormatter::LocalizeIntegral(const std::locale& loc, const int& precision, const int& totalWidth, const msg_details::SpecType& type) {
+		FormatArgument(precision, totalWidth, type);
+		FormatIntegralGrouping(loc, valueSize);
+	}
+
+	void ArgFormatter::LocalizeFloatingPoint(const std::locale& loc, const int& precision, const int& totalWidth, const msg_details::SpecType& type) {
+		FormatArgument(precision, totalWidth, type);
+		size_t pos { 0 };
+		bool hasMantissa { false };
+		for( ;; ) {
+				if( pos >= valueSize ) break;
+				if( buffer[ pos ] == '.' ) {
+						hasMantissa = true;
+						FormatIntegralGrouping(loc, pos);
+						buffer[ pos++ ] = std::use_facet<std::numpunct<char>>(loc).decimal_point();
+						break;
+				}
+				++pos;
+			}
+		if( !hasMantissa ) {
+				FormatIntegralGrouping(loc, valueSize);
+		}
+	}
+
+	void ArgFormatter::LocalizeBool(const std::locale& loc) {
+		std::string_view sv { argStorage.bool_state(specValues.argPosition) ? std::use_facet<std::numpunct<char>>(loc).truename()
+			                                                                : std::use_facet<std::numpunct<char>>(loc).falsename() };
+		valueSize = sv.size();
+		std::copy(sv.data(), sv.data() + valueSize, buffer.begin());
+	}
+
 	void ArgFormatter::FormatIntegralGrouping(const std::locale& loc, size_t end) {
 		auto groupings { std::use_facet<std::numpunct<char>>(loc).grouping() };
 		if( end <= *groupings.begin() ) return;

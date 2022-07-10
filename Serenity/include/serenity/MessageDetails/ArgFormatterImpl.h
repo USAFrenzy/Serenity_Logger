@@ -36,6 +36,24 @@
 //              I'm done with the the current cases. All that's left here is to add std::tm inclusion and the custom formatters for the custom flags from the logger
 //              side. After which, I can go ahead and format everything into the file buffer being used directly and hopefully streamline the entire logging pipeline.
 
+// Only handles a max of two digits and foregoes any real safety checks but is faster than std::from_chars()
+// in regards to its usage in VerifyPositionField() by ~38% when compiled with -02. For reference,
+// std::from_chars() averaged ~2.1ns and se_from_chars() averages ~1.3ns for this specific use case.
+static constexpr int offset { 48 };    // offset used to get the actual value represented in this use case
+template<typename IntergralType>
+requires std::is_integral_v<std::remove_cvref_t<IntergralType>>
+static constexpr size_t se_from_chars(const char* begin, const char* end, IntergralType&& value) {
+	for( ;; ) {
+			if( !serenity::IsDigit(*begin) ) {
+					if( ++begin == end ) return 0;
+			}
+			value = *begin - offset;
+			if( !serenity::IsDigit(*(++begin)) ) return 1;
+			(value *= 10) += (*begin - offset);
+			return 2;
+		}
+}
+
 constexpr auto fillBuffDefaultCapacity { 256 };
 constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
 	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}), argStorage(ArgContainer {}),
@@ -261,8 +279,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 			// Handles The Case Of Specifiers And No Alignment
 			switch( argType ) {
 					default:
-						!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
-											 : LocalizeArgument(std::forward<FwdRef<T>>(container), default_locale, precision, totalWidth, argType);
+						!specValues.localize ? FormatArgument(precision, totalWidth, argType) : LocalizeArgument(default_locale, precision, totalWidth, argType);
 						WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 						return;
 					case SpecType::StringViewType: [[fallthrough]];
@@ -273,8 +290,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 	// Handles The Case Of Specifiers WITH Alignment
 	switch( argType ) {
 			default:
-				!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
-									 : LocalizeArgument(std::forward<FwdRef<T>>(container), default_locale, precision, totalWidth, argType);
+				!specValues.localize ? FormatArgument(precision, totalWidth, argType) : LocalizeArgument(default_locale, precision, totalWidth, argType);
 				FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
 				return;
 			case SpecType::StringViewType:
@@ -302,8 +318,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 			// Handles The Case Of Specifiers And No Alignment
 			switch( argType ) {
 					default:
-						!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
-											 : LocalizeArgument(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, argType);
+						!specValues.localize ? FormatArgument(precision, totalWidth, argType) : LocalizeArgument(loc, precision, totalWidth, argType);
 						WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 						return;
 					case SpecType::StringViewType: [[fallthrough]];
@@ -314,8 +329,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 	// Handles The Case Of Specifiers WITH Alignment
 	switch( argType ) {
 			default:
-				!specValues.localize ? FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, argType)
-									 : LocalizeArgument(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, argType);
+				!specValues.localize ? FormatArgument(precision, totalWidth, argType) : LocalizeArgument(loc, precision, totalWidth, argType);
 				FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
 				return;
 			case SpecType::StringViewType:
@@ -330,8 +344,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		}
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::ParseTimeSpec(const char& ch, const char& next) {
-	// this is more or less the std::formatter<> setup for chrono specs, will be adding the c-time ones I support -> this is just placeholder atm
+static constexpr void ParseChronoSpec(const char& ch, const char& next) {
+	// this will be for chrono types
 	switch( ch ) {
 			case '%': break;
 			case 'n': break;
@@ -359,38 +373,162 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseTimeSpec(const char& 
 			case 'S': break;
 			case 'T': break;
 			case 'X': break;
+			default: /*ReportError(ErrorType::invalid_ctime_spec);*/ break;
+		}
+}
+
+// most of these have been covered already in FormatterArgs.h, so porting their usage over should be easy -> just debating
+// on a couple of these cases though as they seem redundant (like %g/%G)
+constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string_view sv, size_t& pos) {
+	// this is for c-time formatting
+	switch( sv[ pos ] ) {
+			case 'a': [[fallthrough]];
+			case 'b': [[fallthrough]];
+			case 'c': [[fallthrough]];
+			case 'd': [[fallthrough]];
+			case 'e': [[fallthrough]];    // this is currently being used as subsecond precision -> supposed to be space padded day of month
+			case 'g': [[fallthrough]];    // this is supposed to be week-based year last two digits (I'm unsure how this is different from %y)
+			case 'j': [[fallthrough]];    // this is supposed to be the day of the year out of 365 days (003, 234, 252, etc)
+			case 'm': [[fallthrough]];
+			case 'n': [[fallthrough]];    // this is being used as ddmmyy (08Jul22) -> supposed to be newline
+			case 'p': [[fallthrough]];
+			case 'r': [[fallthrough]];
+			case 't': [[fallthrough]];    // this is being used as thread id -> supposed to be tab character
+			case 'w': [[fallthrough]];
+			case 'x': [[fallthrough]];
+			case 'y': [[fallthrough]];
+			case 'z': [[fallthrough]];
+			case 'A': [[fallthrough]];
+			case 'B': [[fallthrough]];
+			case 'C': [[fallthrough]];
+			case 'D': [[fallthrough]];
+			case 'F': [[fallthrough]];
+			case 'G': [[fallthrough]];    // this is the week based full year (unsure how this is different from %Y)
+			case 'H': [[fallthrough]];
+			case 'I': [[fallthrough]];
+			case 'M': [[fallthrough]];
+			case 'R': [[fallthrough]];
+			case 'S': [[fallthrough]];
+			case 'T': [[fallthrough]];
+			case 'U': [[fallthrough]];    // this is supposed to be week number with the first Sunday as the first day of week one
+			case 'V': [[fallthrough]];    // Supposed to be ISO 8601 week number (1-52)
+			case 'W': [[fallthrough]];    // supposed to be week number with the first Monday as the first day of week one
+			case 'X': [[fallthrough]];
+			case 'Y': [[fallthrough]];
+			case 'Z': [[fallthrough]];
+			case '%': specValues.timeSpec = sv[ pos ]; return;    // supposed to be a literal '%'
+			case 'E':
+				switch( ++pos < sv.size() ? sv[ pos ] : '}' ) {
+						case 'c': [[fallthrough]];
+						case 'x': [[fallthrough]];
+						case 'y': [[fallthrough]];
+						case 'C': [[fallthrough]];
+						case 'X': [[fallthrough]];
+						case 'Y':
+							specValues.isLocalizedTimeAlt = true;
+							specValues.timeSpec           = sv[ pos ];
+							return;
+						default: ReportError(ErrorType::invalid_ctime_spec);
+					}
+				return;
+			case 'O':
+				switch( ++pos < sv.size() ? sv[ pos ] : '}' ) {
+						case 'd': [[fallthrough]];
+						case 'e': [[fallthrough]];
+						case 'm': [[fallthrough]];
+						case 'u': [[fallthrough]];
+						case 'w': [[fallthrough]];
+						case 'y': [[fallthrough]];
+						case 'H': [[fallthrough]];
+						case 'I': [[fallthrough]];
+						case 'M': [[fallthrough]];
+						case 'S': [[fallthrough]];
+						case 'U': [[fallthrough]];
+						case 'V': [[fallthrough]];
+						case 'W':
+							specValues.isLocalizedNumAlt;
+							specValues.timeSpec = sv[ pos ];
+							return;
+						default: ReportError(ErrorType::invalid_ctime_spec);
+					}
+				return;
 			default: ReportError(ErrorType::invalid_ctime_spec);
 		}
 }
 
-// Time Spec: [fill-align] [width] [precision] [locale] [chrono spec]
-constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string_view sv, size_t& start, const SpecType& argType) {
+constexpr void serenity::arg_formatter::ArgFormatter::VerifyFillAlignTimeField(std::string_view sv, size_t& currentPos) {
+	const auto& ch { sv[ currentPos ] };
+	switch( ++currentPos >= sv.size() ? '}' : sv[ currentPos ] ) {
+			case '<': OnAlignLeft(ch, currentPos); return;
+			case '>': OnAlignRight(ch, currentPos); return;
+			case '^': OnAlignCenter(ch, currentPos); return;
+			default:
+				--currentPos;
+				specValues.fillCharacter = ' ';
+				break;
+		}
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimePrecisionField(std::string_view sv, size_t& currentPosition) {
+	using enum msg_details::SpecType;
+	// maybe handle the subsecond precision here instead? would remove the %e custom flag on the logger side
+	if( const auto& ch { sv[ ++currentPosition ] }; IsDigit(ch) ) {
+			auto data { sv.data() };
+			currentPosition += se_from_chars(data + currentPosition, data + sv.size(), specValues.precision);
+			++argCounter;
+			return;
+	} else {
+			switch( ch ) {
+					case '{': VerifyPositionalField(sv, ++currentPosition, specValues.nestedPrecArgPos); return;
+					case '}': VerifyPositionalField(sv, currentPosition, specValues.nestedPrecArgPos); return;
+					default: ReportError(ErrorType::missing_bracket); return;
+				}
+		}
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::ParseTimeField(std::string_view sv, size_t& start) {
 	auto svSize { sv.size() };
-	VerifyFillAlignField(sv, start, argType);
+	if( sv[ start ] != '%' ) {
+			VerifyFillAlignTimeField(sv, start);
+			if( start >= svSize ) return;
+	}
 	if( (sv[ start ] == '{') || (sv[ start ] >= '1' && sv[ start ] <= '9') ) {
 			VerifyWidthField(sv, start);
 			if( start >= svSize ) return;
 	}
 	if( sv[ start ] == '.' ) {
-			VerifyPrecisionField(sv, start, argType);
+			VerifyTimePrecisionField(sv, start);
 			if( start >= svSize ) return;
 	}
 	if( sv[ start ] == 'L' ) {
-			VerifyLocaleField(sv, start, argType);
-			if( start >= svSize ) return;
+			specValues.localize = true;
+			if( ++start >= svSize ) return;
 	}
-	if( sv[ start ] != '}' ) {
-			(start + 1 < svSize && sv[ start + 1 ] != '}') ? ParseTimeSpec(sv[ start ], sv[ start + 1 ]) : ParseTimeSpec(sv[ start ]);
-	}
+	// assume the next ch is '%' and advance past it
+	VerifyTimeSpec(sv, ++start);
+}
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatTimeField(T&& container) {
+	auto precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
+	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
+		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
+		                                                 : 0 };
+	if( totalWidth == 0 && precision == 0 ) {
+			return WriteSimpleCTime(std::forward<FwdRef<T>>(container));
+	} else if( totalWidth == 0 ) {
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision)
+								 : LocalizeCTime(default_locale, argStorage.c_time_state(specValues.argPosition), precision);
+			return WriteBufferToContainer(std::forward<FwdRef<T>>(container));
+	} else {
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision)
+								 : LocalizeCTime(default_locale, argStorage.c_time_state(specValues.argPosition), precision);
+			FormatTimeAlignment(std::forward<FwdRef<T>>(container), totalWidth);
+		}
 }
 
+// not implemented
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatTimeAlignment(T&& container, const int& totalWidth) { }
+
 constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
-	if( argType == SpecType::CTimeType ) {
-			if( sv[ start ] == '%' ) {
-					VerifyTimeSpec(sv, start, argType);
-			}
-			return;
-	}
 	auto svSize { sv.size() };
 	VerifyFillAlignField(sv, start, argType);
 	if( start >= svSize ) return;
@@ -470,9 +608,10 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 						// Handle If format string only contains '{}' and no other text
 						if( sv[ 0 ] == '{' && sv[ 1 ] == '}' ) {
 								auto& argType { argStorage.SpecTypesCaptured()[ 0 ] };
-								argType != SpecType::CustomType ? WriteSimpleValue(std::forward<FwdRef<T>>(container), std::move(argType))
-																: argStorage.custom_state(0).FormatCallBack(sv);
-								return;
+								switch( argType ) {
+										case SpecType::CustomType: argStorage.custom_state(0).FormatCallBack(sv); return;
+										default: WriteSimpleValue(std::forward<FwdRef<T>>(container), std::move(argType)); return;
+									}
 						}
 						// Otherwise, write out any remaining characters as-is and bypass the check that would have found
 						// this case in FindBrackets(). In most cases, ending early here saw ~2-3% gain in performance
@@ -530,8 +669,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
 					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-					argType != SpecType::CustomType ? WriteSimpleValue(std::forward<FwdRef<T>>(container), argType)
-													: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
+					switch( argType ) {
+							case SpecType::CustomType: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket); break;
+							case SpecType::CTimeType: WriteSimpleCTime(std::forward<FwdRef<T>>(container)); break;
+							default: WriteSimpleValue(std::forward<FwdRef<T>>(container), argType); break;
+						}
 					if( specValues.hasClosingBrace ) {
 							container.push_back('}');
 					}
@@ -540,11 +682,16 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 			}
 			/****************************** Handle What's Left Of The Bracket ******************************/
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( argType != SpecType::CustomType ) {
-					Parse(argBracket, pos, argType);
-					Format(std::forward<FwdRef<T>>(container), argType);
-			} else {
-					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
+			switch( argType ) {
+					case SpecType::CustomType: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket); break;
+					case SpecType::CTimeType:
+						ParseTimeField(argBracket, pos);
+						FormatTimeField(std::forward<FwdRef<T>>(container));
+						break;
+					default:
+						Parse(argBracket, pos, argType);
+						Format(std::forward<FwdRef<T>>(container), argType);
+						break;
 				}
 			if( specValues.hasClosingBrace ) {
 					container.push_back('}');
@@ -669,24 +816,6 @@ constexpr bool serenity::arg_formatter::ArgFormatter::FindBrackets(std::string_v
 							}
 					default: continue;
 				}
-		}
-}
-
-// Only handles a max of two digits and foregoes any real safety checks but is faster than std::from_chars()
-// in regards to its usage in VerifyPositionField() by ~38% when compiled with -02. For reference,
-// std::from_chars() averaged ~2.1ns and se_from_chars() averages ~1.3ns for this specific use case.
-static constexpr int offset { 48 };    // offset used to get the actual value represented in this use case
-template<typename IntergralType>
-requires std::is_integral_v<std::remove_cvref_t<IntergralType>>
-static constexpr size_t se_from_chars(const char* begin, const char* end, IntergralType&& value) {
-	for( ;; ) {
-			if( !serenity::IsDigit(*begin) ) {
-					if( ++begin == end ) return 0;
-			}
-			value = *begin - offset;
-			if( !serenity::IsDigit(*(++begin)) ) return 1;
-			(value *= 10) += (*begin - offset);
-			return 2;
 		}
 }
 
@@ -898,42 +1027,24 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyLocaleField(std::str
 		}
 }
 
-constexpr bool serenity::arg_formatter::ArgFormatter::IsSimpleSubstitution(const msg_details::SpecType& argType, const int& precision) {
+constexpr bool serenity::arg_formatter::ArgFormatter::IsSimpleSubstitution(const msg_details::SpecType& argType, const int& prec) {
 	using enum SpecType;
 	switch( argType ) {
 			case StringType: [[fallthrough]];
 			case CharPointerType: [[fallthrough]];
-			case StringViewType:
-				{
-					return precision == 0;
-				}
+			case StringViewType: return prec == 0;
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
 			case LongLongType: [[fallthrough]];
-			case U_LongLongType:
-				{
-					return !specValues.hasAlt && specValues.signType == Sign::Empty && !specValues.localize && specValues.typeSpec == '\0';
-				}
-			case BoolType:
-				{
-					return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 's');
-				}
-			case CharType:
-				{
-					return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 'c');
-				}
+			case U_LongLongType: return !specValues.hasAlt && specValues.signType == Sign::Empty && !specValues.localize && specValues.typeSpec == '\0';
+			case BoolType: return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 's');
+			case CharType: return !specValues.hasAlt && (specValues.typeSpec == '\0' || specValues.typeSpec == 'c');
 			case FloatType: [[fallthrough]];
 			case DoubleType: [[fallthrough]];
-			case LongDoubleType:
-				{
-					return !specValues.localize && precision == 0 && specValues.signType == Sign::Empty && !specValues.hasAlt && specValues.typeSpec == '\0';
-				}
+			case LongDoubleType: return !specValues.localize && prec == 0 && specValues.signType == Sign::Empty && !specValues.hasAlt && specValues.typeSpec == '\0';
 			// for pointer types, if the width field is 0, there's no fill/alignment to take into account and therefore it's a simple sub
 			case ConstVoidPtrType: [[fallthrough]];
-			case VoidPtrType:
-				{
-					return true;
-				}
+			case VoidPtrType: return true;
 			default: return false; break;
 		}
 }
@@ -1191,24 +1302,96 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 		}
 }
 
+constexpr void serenity::arg_formatter::ArgFormatter::Format24HourTime(const int& hour, const int& min, const int& sec, const int& precision) {
+	buffer[ 2 ] = buffer[ 5 ] = ':';
+	buffer[ 0 ]               = hour > 9 ? static_cast<char>(hour / 10 + offset) : '0';
+	buffer[ 1 ]               = static_cast<char>(hour % 10 + offset);
+	buffer[ 3 ]               = min > 9 ? static_cast<char>(min / 10 + offset) : '0';
+	buffer[ 4 ]               = static_cast<char>(min % 10 + offset);
+	buffer[ 6 ]               = min > 9 ? static_cast<char>(sec / 10 + offset) : '0';
+	buffer[ 7 ]               = static_cast<char>(sec % 10 + offset);
+	if( precision != 0 ) {
+			SE_ASSERT(precision > 0 && precision <= 9, "Precision For Time Spec %T Is Out Of Range. Allowed Range Is 0-9.");
+			buffer[ 8 ] = '.';
+			auto subSeconds { std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count() };
+			std::to_chars(&buffer[ 9 ], &buffer[ 0 ] + SERENITY_ARG_BUFFER_SIZE, subSeconds);
+			valueSize = static_cast<size_t>(9) + precision;
+	} else {
+			valueSize = 8;
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write24HourTime(T&& container, const int& hour, const int& min, const int& sec) {
+	Format24HourTime(hour, min, sec);
+	if constexpr( std::is_same_v<type<T>, std::string> ) {
+			container.append(&buffer[ 0 ], valueSize);
+	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+			container.insert(container.end(), &buffer[ 0 ], &buffer[ 0 ] + valueSize);
+	} else {
+			std::copy(&buffer[ 0 ], &buffer[ 0 ] + valueSize, std::back_inserter(container));
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCTime(T&& container) {
+	const auto& tm { argStorage.c_time_state(specValues.argPosition) };
+	switch( specValues.timeSpec ) {
+			case 'a': return;
+			case 'b': return;
+			case 'c': return;
+			case 'd': return;
+			case 'e': return;    // this is currently being used as subsecond precision -> supposed to be space padded day of month
+			case 'g': return;    // this is supposed to be week-based year last two digits (I'm unsure how this is different from %y)
+			case 'j': return;    // this is supposed to be the day of the year out of 365 days (003, 234, 252, etc)
+			case 'm': return;
+			case 'n': return;    // this is being used as ddmmyy (08Jul22) -> supposed to be newline
+			case 'p': return;
+			case 'r': return;
+			case 't': return;    // this is being used as thread id -> supposed to be tab character
+			case 'w': return;
+			case 'x': return;
+			case 'y': return;
+			case 'z': return;
+			case 'A': return;
+			case 'B': return;
+			case 'C': return;
+			case 'D': return;
+			case 'F': return;
+			case 'G': return;    // this is the week based full year (unsure how this is different from %Y)
+			case 'H': return;
+			case 'I': return;
+			case 'M': return;
+			case 'R': return;
+			case 'S': return;
+			case 'T': Write24HourTime(std::forward<FwdRef<T>>(container), tm.tm_hour, tm.tm_min, tm.tm_sec); return;
+			case 'U': return;    // this is supposed to be week number with the first Sunday as the first day of week one
+			case 'V': return;    // Supposed to be ISO 8601 week number (1-52)
+			case 'W': return;    // supposed to be week number with the first Monday as the first day of week one
+			case 'X': return;
+			case 'Y': return;
+			case 'Z': return;
+			case '%': return;    // supposed to be a literal '%'
+			default: return;
+		}
+}
+
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleValue(T&& container, const msg_details::SpecType& argType) {
 	using enum msg_details::SpecType;
 	switch( argType ) {
 			case StringType: WriteSimpleString(std::forward<FwdRef<T>>(container)); return;
 			case CharPointerType: WriteSimpleCString(std::forward<FwdRef<T>>(container)); return;
 			case StringViewType: WriteSimpleStringView(std::forward<FwdRef<T>>(container)); return;
-			case IntType: WriteSimpleInt(std::forward<FwdRef<T>>(container)); break;
-			case U_IntType: WriteSimpleUInt(std::forward<FwdRef<T>>(container)); break;
-			case LongLongType: WriteSimpleLongLong(std::forward<FwdRef<T>>(container)); break;
-			case U_LongLongType: WriteSimpleULongLong(std::forward<FwdRef<T>>(container)); break;
-			case BoolType: WriteSimpleBool(std::forward<FwdRef<T>>(container)); break;
-			case CharType: container.insert(container.end(), argStorage.char_state(specValues.argPosition)); break;
-			case FloatType: WriteSimpleFloat(std::forward<FwdRef<T>>(container)); break;
-			case DoubleType: WriteSimpleDouble(std::forward<FwdRef<T>>(container)); break;
-			case LongDoubleType: WriteSimpleLongDouble(std::forward<FwdRef<T>>(container)); break;
-			case ConstVoidPtrType: WriteSimpleConstVoidPtr(std::forward<FwdRef<T>>(container)); break;
-			case VoidPtrType: WriteSimpleVoidPtr(std::forward<FwdRef<T>>(container)); break;
-			default: break;
+			case IntType: WriteSimpleInt(std::forward<FwdRef<T>>(container)); return;
+			case U_IntType: WriteSimpleUInt(std::forward<FwdRef<T>>(container)); return;
+			case LongLongType: WriteSimpleLongLong(std::forward<FwdRef<T>>(container)); return;
+			case U_LongLongType: WriteSimpleULongLong(std::forward<FwdRef<T>>(container)); return;
+			case BoolType: WriteSimpleBool(std::forward<FwdRef<T>>(container)); return;
+			case CharType: container.insert(container.end(), argStorage.char_state(specValues.argPosition)); return;
+			case FloatType: WriteSimpleFloat(std::forward<FwdRef<T>>(container)); return;
+			case DoubleType: WriteSimpleDouble(std::forward<FwdRef<T>>(container)); return;
+			case LongDoubleType: WriteSimpleLongDouble(std::forward<FwdRef<T>>(container)); return;
+			case ConstVoidPtrType: WriteSimpleConstVoidPtr(std::forward<FwdRef<T>>(container)); return;
+			case VoidPtrType: WriteSimpleVoidPtr(std::forward<FwdRef<T>>(container)); return;
+			default: return;
 		}
 }
 
@@ -1230,7 +1413,7 @@ template<typename T>
 requires std::is_pointer_v<std::remove_cvref_t<T>>
 constexpr void serenity::arg_formatter::ArgFormatter::FormatPointerType(T&& value, const msg_details::SpecType& type) {
 	using enum msg_details::SpecType;
-	static constexpr std::string_view sv { "0x" };
+	constexpr std::string_view sv { "0x" };
 	switch( type ) {
 			case ConstVoidPtrType:
 				{
@@ -1250,8 +1433,48 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatPointerType(T&& valu
 		}
 }
 
-template<typename T>
-constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(T&& container, const int& precision, const int& totalWidth, const msg_details::SpecType& type) {
+constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm& cTimeStruct, const int& precision) {
+	switch( specValues.timeSpec ) {
+			case 'a': return;
+			case 'b': return;
+			case 'c': return;
+			case 'd': return;
+			case 'e': return;    // this is currently being used as subsecond precision -> supposed to be space padded day of month
+			case 'g': return;    // this is supposed to be week-based year last two digits (I'm unsure how this is different from %y)
+			case 'j': return;    // this is supposed to be the day of the year out of 365 days (003, 234, 252, etc)
+			case 'm': return;
+			case 'n': return;    // this is being used as ddmmyy (08Jul22) -> supposed to be newline
+			case 'p': return;
+			case 'r': return;
+			case 't': return;    // this is being used as thread id -> supposed to be tab character
+			case 'w': return;
+			case 'x': return;
+			case 'y': return;
+			case 'z': return;
+			case 'A': return;
+			case 'B': return;
+			case 'C': return;
+			case 'D': return;
+			case 'F': return;
+			case 'G': return;    // this is the week based full year (unsure how this is different from %Y)
+			case 'H': return;
+			case 'I': return;
+			case 'M': return;
+			case 'R': return;
+			case 'S': return;
+			case 'T': Format24HourTime(cTimeStruct.tm_hour, cTimeStruct.tm_min, cTimeStruct.tm_sec, precision); return;
+			case 'U': return;    // this is supposed to be week number with the first Sunday as the first day of week one
+			case 'V': return;    // Supposed to be ISO 8601 week number (1-52)
+			case 'W': return;    // supposed to be week number with the first Monday as the first day of week one
+			case 'X': return;
+			case 'Y': return;
+			case 'Z': return;
+			case '%': return;    // supposed to be a literal '%'
+			default: return;
+		}
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::FormatArgument(const int& precision, const int& totalWidth, const msg_details::SpecType& type) {
 	using enum msg_details::SpecType;
 	switch( type ) {
 			case IntType: FormatIntegerType(argStorage.int_state(specValues.argPosition)); return;
@@ -1459,56 +1682,4 @@ constexpr void serenity::arg_formatter::ArgFormatter::ReportError(ErrorType err)
 			case invalid_ctime_spec: throw format_error(format_error_messages[ 17 ]); break;
 			default: throw format_error(format_error_messages[ 0 ]); break;
 		}
-}
-
-template<typename T>
-void serenity::arg_formatter::ArgFormatter::LocalizeArgument(T&& container, const std::locale& loc, const int& precision, const int& totalWidth,
-                                                             const msg_details::SpecType& type) {
-	using enum serenity::msg_details::SpecType;
-	// NOTE: The following types should have been caught in the verification process:  monostate, string, c-string, string view, const void*, void *
-	switch( type ) {
-			case IntType: [[fallthrough]];
-			case U_IntType: [[fallthrough]];
-			case LongLongType: LocalizeIntegral(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, type); break;
-			case FloatType: [[fallthrough]];
-			case DoubleType: [[fallthrough]];
-			case LongDoubleType: [[fallthrough]];
-			case U_LongLongType: LocalizeFloatingPoint(std::forward<FwdRef<T>>(container), loc, precision, totalWidth, type); break;
-			case BoolType: LocalizeBool(std::forward<FwdRef<T>>(container), loc); break;
-		}
-}
-
-template<typename T>
-void serenity::arg_formatter::ArgFormatter::LocalizeIntegral(T&& container, const std::locale& loc, const int& precision, const int& totalWidth,
-                                                             const msg_details::SpecType& type) {
-	FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, type);
-	FormatIntegralGrouping(loc, valueSize);
-}
-
-template<typename T>
-void serenity::arg_formatter::ArgFormatter::LocalizeFloatingPoint(T&& container, const std::locale& loc, const int& precision, const int& totalWidth,
-                                                                  const msg_details::SpecType& type) {
-	FormatArgument(std::forward<FwdRef<T>>(container), precision, totalWidth, type);
-	size_t pos { 0 };
-	bool hasMantissa { false };
-	for( ;; ) {
-			if( pos >= valueSize ) break;
-			if( buffer[ pos ] == '.' ) {
-					hasMantissa = true;
-					FormatIntegralGrouping(loc, pos);
-					buffer[ pos++ ] = std::use_facet<std::numpunct<char>>(loc).decimal_point();
-					break;
-			}
-			++pos;
-		}
-	if( !hasMantissa ) {
-			FormatIntegralGrouping(loc, valueSize);
-	}
-}
-
-template<typename T> void serenity::arg_formatter::ArgFormatter::LocalizeBool(T&& container, const std::locale& loc) {
-	std::string_view sv { argStorage.bool_state(specValues.argPosition) ? std::use_facet<std::numpunct<char>>(loc).truename()
-		                                                                : std::use_facet<std::numpunct<char>>(loc).falsename() };
-	valueSize = sv.size();
-	std::copy(sv.data(), sv.data() + valueSize, buffer.begin());
 }

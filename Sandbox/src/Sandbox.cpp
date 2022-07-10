@@ -4,8 +4,9 @@
 #define GENERAL_SANDBOX              0
 #define ROTATING_TESTING             0
 #define PARSE_TESTING                1
-#define ENABLE_PARSE_BENCHING        1
+#define ENABLE_PARSE_BENCHING        0
 #define ENABLE_PARSE_SANDBOX         0
+#define ENABLE_CTIME_SANDBOX         1
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	#define _CRTDBG_MAP_ALLOC
@@ -288,17 +289,6 @@ int main() {
 	std::vector<char> finalStr {};
 		#endif
 
-	auto tz { std::chrono::current_zone() };
-	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
-	std::cout << std::format("{:*^55%T}\n\n", std::chrono::floor<std::chrono::seconds>(localTime));
-	/*************************************** NOTES ABOUT ABOVE ***************************************/
-	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
-	//
-	// I need to test the precision more and see what's allowed/disallowed because I couldn't get the result
-	// I wanted without using std::chrono::floor() here . Also need to test how locale affects this.
-	// For the time being anyways, I think I'll imlement c-time's tm struct instead as that's what I'm currently
-	// using in the logger right now.
-
 	serenity::targets::ColorConsole console("", "%+");
 	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
 
@@ -392,7 +382,7 @@ int main() {
 	#if ENABLE_PARSE_SANDBOX
 
 	ArgFormatter formatter {};
-	Instrumentator cTimer, microTimer;
+	Instrumentator cTimer;
 	constexpr TestPoint test { .x { 5 }, .y { 8 } };
 
 	constexpr std::string_view sv { "[Loop Averages]" };
@@ -438,6 +428,72 @@ int main() {
 
 	#endif
 #endif    // ENABLE_PARSE_SECTION
+
+#if ENABLE_CTIME_SANDBOX
+	auto tz { std::chrono::current_zone() };
+	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
+	std::cout << std::format("{:*^65%T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	/*************************************** NOTES ABOUT ABOVE ***************************************/
+	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
+	//
+	// I need to test the precision more and see what's allowed/disallowed because I couldn't get the result
+	// I wanted without using std::chrono::floor() here . Also need to test how locale affects this.
+	// For the time being anyways, I think I'll imlement c-time's tm struct instead as that's what I'm currently
+	// using in the logger right now.
+
+	std::tm cTime {};
+	auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
+	LOCAL_TIME(cTime, now);
+	serenity::msg_details::Message_Formatter::Formatters formatter {};
+	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
+	formatter.Emplace_Back(std::make_unique<Format_Arg_T>(info));
+	formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(std::string_view(".", 1)));
+	formatter.Emplace_Back(std::make_unique<Format_Arg_e>(3));
+	std::string timeStr;
+	Instrumentator cTimeTimer;
+
+	// just benching strictly the formatting -> not the time updates
+
+	// takes ~28ns as %T
+	// adding subsecond precision to the mix drops this to ~72ns
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < 100'000'000; ++i ) {
+			timeStr.clear();
+			serenity::format_to(std::back_inserter(timeStr), "{:.3%T}", cTime);
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << serenity::format("Serenity Formatter For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.f, timeStr);
+
+	// takes ~14ns as %T
+	// adding subsecond precision to the mix drops this down to ~68ns
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < 100'000'000; ++i ) {
+			timeStr.clear();
+			timeStr.append(formatter.FormatUserPattern());
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << serenity::format("FormatterArgs Struct For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.f, timeStr);
+	// NOTE: due to the struct formatter never dealing with fill-align-width-precision-or spec verification before formatting the result, it will probably always be
+	// faster
+	//               than the ArgFormatter version, however, a ~14ns delta isn't a terrible start at all for plain %T, especially when subsecond precision's delta is
+	//               only ~4ns. Not to mention the ability to drop the numberStr array in the near future here as the whole finding the digit as a char with the
+	//               offset is coming in at roughly the same timings as indexing into that array.
+
+	// Commenting out MSVC standard as it's incredibly slow (~98% slower than the above 2 methods) taking ~1360ns
+	// -> stepping through the calls and I presume a lot of time is spent checking  the chrono specific bits before it ever
+	//       gets to filling the tm struct they call. Therefore, instead of benching against MSVC, I'll be using it to make sure
+	//      the formatted results match up.
+
+	// cTimeTimer.StopWatch_Reset();
+	// for (size_t i{ 0 }; i < 100'000; ++i) {
+	//	timeStr.clear();
+	//	std::format_to(std::back_inserter(timeStr), "{:%T}", std::chrono::floor<std::chrono::seconds>(localTime));
+	// }
+	// cTimeTimer.StopWatch_Stop();
+	// std::cout << serenity::format("Standard Formatter For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000.f,
+	// timeStr); serenity::format_to(std::back_inserter(timeStr), "{:%T}", cTime);
+
+#endif    // ENABLE_CTIME_SANDBOX
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	_CrtDumpMemoryLeaks();

@@ -25,14 +25,13 @@
 namespace serenity {
 
 	// convenience typedefs
-	template<typename T> using type         = std::remove_cvref_t<T>;
-	template<typename T> using FwdRef       = std::add_lvalue_reference_t<type<T>>;
-	template<typename T> using FwdRmvPtrRef = std::add_lvalue_reference_t<std::remove_pointer_t<type<T>>>;
-	template<typename T> using FwdConstRef  = std::add_lvalue_reference_t<std::add_const_t<type<T>>>;
-	template<typename T> using FwdMove      = std::add_rvalue_reference_t<type<T>>;
-	template<typename T> using Iterator     = std::back_insert_iterator<type<T>>;
-	template<typename T> using FwdMoveIter  = std::add_rvalue_reference_t<Iterator<T>>;
-	template<typename T> using FwdRefIter   = std::add_lvalue_reference_t<Iterator<T>>;
+	template<typename T> using type        = std::remove_cvref_t<T>;
+	template<typename T> using FwdRef      = std::add_lvalue_reference_t<type<T>>;
+	template<typename T> using FwdConstRef = std::add_lvalue_reference_t<std::add_const_t<type<T>>>;
+	template<typename T> using FwdMove     = std::add_rvalue_reference_t<type<T>>;
+	template<typename T> using Iterator    = std::back_insert_iterator<type<T>>;
+	template<typename T> using FwdMoveIter = std::add_rvalue_reference_t<Iterator<T>>;
+	template<typename T> using FwdRefIter  = std::add_lvalue_reference_t<Iterator<T>>;
 
 	template<typename Value> struct CustomFormatter
 	{

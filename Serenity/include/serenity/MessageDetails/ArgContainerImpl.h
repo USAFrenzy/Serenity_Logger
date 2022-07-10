@@ -19,12 +19,12 @@ template<typename Iter, typename T> constexpr auto details::ArgContainer::StoreC
 template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& value) {
 	if constexpr( is_supported_ptr_type_v<T> || std::is_same_v<type<T>, std::string> ) {
 			if constexpr( std::is_same_v<type<T>, std::tm*> ) {
-					argContainer[ counter ] = std::forward<FwdRmvPtrRef<T>>(FwdRef<T>(*value));
+					argContainer[ counter ] = std::forward<FwdRef<T>>(FwdRef<T>(*value));
 			} else {
 					argContainer[ counter ] = std::forward<type<T>>(type<T>(value));
 				}
 	} else {
-			argContainer[ counter ] = std::forward<FwdConstRef<T>>(FwdConstRef<T>(value));
+			argContainer[ counter ] = std::forward<FwdRef<T>>(FwdRef<T>(value));
 		}
 }
 
@@ -33,13 +33,13 @@ template<typename Iter, typename... Args> constexpr auto details::ArgContainer::
 	[ this ](auto&& arg, auto&& iter) {
 		specContainer[ counter ] = GetArgType(std::forward<FwdRef<decltype(arg)>>(FwdRef<decltype(arg)>(arg)));
 		if constexpr( is_supported_v<type<decltype(arg)>> ) {
-				StoreNativeArg(std::forward<FwdConstRef<decltype(arg)>>(FwdConstRef<decltype(arg)>(arg)));
+				StoreNativeArg(std::forward<FwdRef<decltype(arg)>>(FwdRef<decltype(arg)>(arg)));
 		} else {
-				iter = std::move(StoreCustomArg(std::move(iter), std::forward<FwdConstRef<decltype(arg)>>(FwdConstRef<decltype(arg)>(arg))));
+				iter = std::move(StoreCustomArg(std::move(iter), std::forward<FwdRef<decltype(arg)>>(FwdRef<decltype(arg)>(arg))));
 			}
 		++counter;
 		SE_ASSERT(counter < MAX_ARG_COUNT, "Too Many Arguments Supplied To Formatting Function");
-	}(std::forward<FwdConstRef<Args>>(args), std::move(iter)),
+	}(std::forward<FwdRef<Args>>(FwdRef<Args>(args)), std::move(iter)),
 	...);
 	return std::move(iter);
 }
