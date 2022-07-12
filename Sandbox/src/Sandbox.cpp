@@ -432,7 +432,7 @@ int main() {
 #if ENABLE_CTIME_SANDBOX
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
-	std::cout << std::format("{:*^65%p}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	std::cout << std::format("{:*^65%x}\n", std::chrono::floor<std::chrono::seconds>(localTime));
 	/*************************************** NOTES ABOUT ABOVE ***************************************/
 	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
 	// Need to test how locale affects this. For the time being anyways, I think I'll imlement c-time's tm struct
@@ -444,7 +444,7 @@ int main() {
 	serenity::msg_details::Message_Formatter::Formatters formatter {};
 	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
 	info.TimeDetails().UpdateCache(std::chrono::system_clock::now());
-	formatter.Emplace_Back(std::make_unique<Format_Arg_p>(info));
+	formatter.Emplace_Back(std::make_unique<Format_Arg_w>(info));
 	std::string timeStr;
 	Instrumentator cTimeTimer;
 
@@ -462,15 +462,20 @@ int main() {
 	// %m Padded Month takes~27ns
 	// %n newline takes ~27ns
 	// %p AMPM takes ~26ns
+	// %r 12hour time takes ~34ns (on laptop)
+	// %t tab character takes ~26ns(on laptop)
+	// %u ISO day of the week number takes (To Be Implemented)
+	// %w decimal weekday takes ~28ns (on laptop)
+	// %x MM/DD/YY takes ~32ns (on laptop)
 	// takes ~28ns as %T -> adding subsecond precision to the mix drops this to ~72ns
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 100'000'000; ++i ) {
 			timeStr.clear();
-			serenity::format_to(std::back_inserter(timeStr), "{:%p}", cTime);
+			serenity::format_to(std::back_inserter(timeStr), "{:%x}", cTime);
 		}
 	cTimeTimer.StopWatch_Stop();
 	timeStr.clear();
-	serenity::format_to(std::back_inserter(timeStr), "{:%p}", cTime);
+	serenity::format_to(std::back_inserter(timeStr), "{:%x}", cTime);
 	std::cout << serenity::format("Serenity Formatter For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.f, timeStr);
 
 	// %a Short Day takes ~15ns
@@ -482,6 +487,11 @@ int main() {
 	// %y Short year takes ~14ns
 	// %n here is custom typing and not newline therefore no valid comparison can be made
 	// %p AMPM takes ~15ns
+	// %r 12hour time takes ~28ns (on laptop)
+	// %t is used as thread id here so no comparison can be made
+	// %u was never imlemented here
+	// %w decimal weekday takes ~16ns (on laptop)
+	// Apparently I never implemented %x here, so there's no comparison to be made...
 	// takes ~14ns as %T -> adding subsecond precision to the mix drops this down to ~68ns
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 100'000'000; ++i ) {

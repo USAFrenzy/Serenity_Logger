@@ -390,12 +390,14 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 			case 'd': [[fallthrough]];
 			case 'e': [[fallthrough]];    // this is currently being used as subsecond precision -> supposed to be space padded day of month
 			case 'g': [[fallthrough]];    // this is supposed to be week-based year last two digits (I'm unsure how this is different from %y)
+			case 'h': [[fallthrough]];
 			case 'j': [[fallthrough]];    // this is supposed to be the day of the year out of 365 days (003, 234, 252, etc)
 			case 'm': [[fallthrough]];
 			case 'n': [[fallthrough]];    // this is being used as ddmmyy (08Jul22) -> supposed to be newline
 			case 'p': [[fallthrough]];
 			case 'r': [[fallthrough]];
 			case 't': [[fallthrough]];    // this is being used as thread id -> supposed to be tab character
+			case 'u': [[fallthrough]];
 			case 'w': [[fallthrough]];
 			case 'x': [[fallthrough]];
 			case 'y': [[fallthrough]];
@@ -1338,9 +1340,12 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatShortMonth(int mon) {
-	auto month { short_months[ mon ] };
-	std::copy(month, month + 3, buffer.data());
-	valueSize = 3;
+	if( !specValues.localize ) {
+			auto month { short_months[ mon ] };
+			std::copy(month, month + 3, buffer.data());
+			valueSize = 3;
+	}
+	// handle localization here
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteShortMonth(T&& container, const int& mon) {
@@ -1355,9 +1360,12 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatShortWeekday(int wkday) {
-	auto wkDay { short_weekdays[ wkday ] };
-	std::copy(wkDay, wkDay + 3, buffer.data());
-	valueSize = 3;
+	if( !specValues.localize ) {
+			auto wkDay { short_weekdays[ wkday ] };
+			std::copy(wkDay, wkDay + 3, buffer.data());
+			valueSize = 3;
+	}
+	// handle localization here
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteShortWeekday(T&& container, const int& wkday) {
@@ -1373,36 +1381,39 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatTimeDate(const std::tm& time) {
-	auto wkday { short_weekdays[ time.tm_wday ] };
-	auto month { short_months[ time.tm_mon ] };
-	auto nDay { time.tm_mday };
-	auto hour { time.tm_hour }, min { time.tm_min }, sec { time.tm_sec };
-	auto year { time.tm_year + 1900 };
+	if( !specValues.localize ) {
+			auto wkday { short_weekdays[ time.tm_wday ] };
+			auto month { short_months[ time.tm_mon ] };
+			auto nDay { time.tm_mday };
+			auto hour { time.tm_hour }, min { time.tm_min }, sec { time.tm_sec };
+			auto year { time.tm_year + 1900 };
 
-	buffer[ 3 ] = buffer[ 7 ] = buffer[ 10 ] = buffer[ 19 ] = ' ';
-	buffer[ 13 ] = buffer[ 16 ] = ':';
-	buffer[ 0 ]                 = wkday[ 0 ];
-	buffer[ 1 ]                 = wkday[ 1 ];
-	buffer[ 2 ]                 = wkday[ 2 ];
-	buffer[ 4 ]                 = month[ 0 ];
-	buffer[ 5 ]                 = month[ 1 ];
-	buffer[ 6 ]                 = month[ 2 ];
-	buffer[ 8 ]                 = static_cast<char>(nDay > 9 ? (nDay / 10 + offset) : '0');
-	buffer[ 9 ]                 = static_cast<char>(nDay % 10 + offset);
-	buffer[ 11 ]                = hour > 9 ? static_cast<char>(hour / 10 + offset) : '0';
-	buffer[ 12 ]                = static_cast<char>(hour % 10 + offset);
-	buffer[ 14 ]                = min > 9 ? static_cast<char>(min / 10 + offset) : '0';
-	buffer[ 15 ]                = static_cast<char>(min % 10 + offset);
-	buffer[ 17 ]                = sec > 9 ? static_cast<char>(sec / 10 + offset) : '0';
-	buffer[ 18 ]                = static_cast<char>(sec % 10 + offset);
-	buffer[ 23 ]                = static_cast<char>(year % 10 + offset);
-	year /= 10;
-	buffer[ 22 ] = static_cast<char>(year % 10 + offset);
-	year /= 10;
-	buffer[ 21 ] = static_cast<char>(year % 10 + offset);
-	year /= 10;
-	buffer[ 20 ] = static_cast<char>(year % 10 + offset);
-	valueSize    = 24;
+			buffer[ 3 ] = buffer[ 7 ] = buffer[ 10 ] = buffer[ 19 ] = ' ';
+			buffer[ 13 ] = buffer[ 16 ] = ':';
+			buffer[ 0 ]                 = wkday[ 0 ];
+			buffer[ 1 ]                 = wkday[ 1 ];
+			buffer[ 2 ]                 = wkday[ 2 ];
+			buffer[ 4 ]                 = month[ 0 ];
+			buffer[ 5 ]                 = month[ 1 ];
+			buffer[ 6 ]                 = month[ 2 ];
+			buffer[ 8 ]                 = static_cast<char>(nDay > 9 ? (nDay / 10 + offset) : '0');
+			buffer[ 9 ]                 = static_cast<char>(nDay % 10 + offset);
+			buffer[ 11 ]                = hour > 9 ? static_cast<char>(hour / 10 + offset) : '0';
+			buffer[ 12 ]                = static_cast<char>(hour % 10 + offset);
+			buffer[ 14 ]                = min > 9 ? static_cast<char>(min / 10 + offset) : '0';
+			buffer[ 15 ]                = static_cast<char>(min % 10 + offset);
+			buffer[ 17 ]                = sec > 9 ? static_cast<char>(sec / 10 + offset) : '0';
+			buffer[ 18 ]                = static_cast<char>(sec % 10 + offset);
+			buffer[ 23 ]                = static_cast<char>(year % 10 + offset);
+			year /= 10;
+			buffer[ 22 ] = static_cast<char>(year % 10 + offset);
+			year /= 10;
+			buffer[ 21 ] = static_cast<char>(year % 10 + offset);
+			year /= 10;
+			buffer[ 20 ] = static_cast<char>(year % 10 + offset);
+			valueSize    = 24;
+	}
+	// handle localization here
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteTimeDate(T&& container, const std::tm& time) {
@@ -1541,7 +1552,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatLiteral(unsigned cha
 	buffer[ 0 ] = lit;
 }
 
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAMPM(T&& container, int hour) {
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAMPM(T&& container, const int& hour) {
 	FormatAMPM(hour);
 	if constexpr( std::is_same_v<type<T>, std::string> ) {
 			container.append(buffer.data(), valueSize);
@@ -1557,10 +1568,95 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAMPM(int hour) {
 	buffer[ 1 ] = 'M';
 	valueSize   = 2;
 }
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write12HourTime(T&& container, const int& hour, const int& min, const int& sec) {
+	Format12HourTime(hour, min, sec);
+	if constexpr( std::is_same_v<type<T>, std::string> ) {
+			container.append(buffer.data(), valueSize);
+	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+			container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
+	} else {
+			std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
+		}
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::Format12HourTime(int hour, int min, int sec, int precision) {
+	if( !specValues.localize ) {
+			char dayHalf { hour >= 12 ? 'P' : 'A' };
+			if( hour > 12 ) hour -= 12;
+			buffer[ 2 ] = buffer[ 5 ] = ':';
+			buffer[ 0 ]               = hour > 9 ? static_cast<char>(hour / 10 + offset) : '0';
+			buffer[ 1 ]               = static_cast<char>(hour % 10 + offset);
+			buffer[ 3 ]               = min > 9 ? static_cast<char>(min / 10 + offset) : '0';
+			buffer[ 4 ]               = static_cast<char>(min % 10 + offset);
+			buffer[ 6 ]               = min > 9 ? static_cast<char>(sec / 10 + offset) : '0';
+			buffer[ 7 ]               = static_cast<char>(sec % 10 + offset);
+			if( precision != 0 ) {
+					SE_ASSERT(precision > 0 && precision <= 9, "Precision For Time Spec %T Is Out Of Range. Allowed Range Is 0-9.");
+					buffer[ 8 ] = '.';
+					auto subSeconds { std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count() };
+					std::to_chars(&buffer[ 9 ], buffer.data() + SERENITY_ARG_BUFFER_SIZE, subSeconds);
+					valueSize = static_cast<size_t>(9) + precision;
+			} else {
+					valueSize = 8;
+				}
+			// since value size is technically +1 off the index, just using it as-is to offset the AM/PM section
+			buffer[ valueSize ]   = ' ';
+			buffer[ ++valueSize ] = dayHalf;
+			buffer[ ++valueSize ] = 'M';
+			++valueSize;    // increment to account usage as index for space
+	}
+	// handle localization here
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteWeekdayDec(T&& container, const int& wkday) {
+	FormatWeekdayDec(wkday);
+	if constexpr( std::is_same_v<type<T>, std::string> ) {
+			container.append(buffer.data(), valueSize);
+	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+			container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
+	} else {
+			std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
+		}
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::FormatWeekdayDec(int wkday) {
+	buffer[ 0 ] = static_cast<char>(wkday += offset);
+	valueSize   = 1;
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteMMDDYY(T&& container, const int& month, const int& day, const int& year) {
+	FormatMMDDYY(month, day, year);
+	if constexpr( std::is_same_v<type<T>, std::string> ) {
+			container.append(buffer.data(), valueSize);
+	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+			container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
+	} else {
+			std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
+		}
+}
+
+constexpr void serenity::arg_formatter::ArgFormatter::FormatMMDDYY(int month, int day, int year) {
+	if( !specValues.localize ) {
+			year %= 100;
+			++month;
+			buffer[ 2 ] = buffer[ 5 ] = '/';
+			buffer[ 0 ]               = month > 9 ? static_cast<char>(month / 10 + offset) : '0';
+			buffer[ 1 ]               = static_cast<char>(month % 10 + offset);
+			buffer[ 3 ]               = day > 9 ? static_cast<char>(day / 10 + offset) : '0';
+			buffer[ 4 ]               = static_cast<char>(day % 10 + offset);
+			buffer[ 6 ]               = static_cast<char>((year / 10) + offset);
+			buffer[ 7 ]               = static_cast<char>((year % 10) + offset);
+			valueSize                 = 8;
+	}
+	// handle localization here
+}
+
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCTime(T&& container) {
 	const auto& tm { argStorage.c_time_state(specValues.argPosition) };
 	switch( specValues.timeSpec ) {
 			case 'a': WriteShortWeekday(std::forward<FwdRef<T>>(container), tm.tm_wday); return;
+			case 'h': [[fallthrough]];
 			case 'b': WriteShortMonth(std::forward<FwdRef<T>>(container), tm.tm_mon); return;
 			case 'c': WriteTimeDate(std::forward<FwdRef<T>>(container), tm); return;
 			case 'd': WritePaddedDay(std::forward<FwdRef<T>>(container), tm.tm_mday); return;
@@ -1570,10 +1666,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 			case 'm': WritePaddedMonth(std::forward<FwdRef<T>>(container), tm.tm_mon); return;
 			case 'n': WriteLiteral(std::forward<FwdRef<T>>(container), '\n'); return;
 			case 'p': WriteAMPM(std::forward<FwdRef<T>>(container), tm.tm_hour); return;
-			case 'r': return;
-			case 't': return;    // this is being used as thread id -> supposed to be tab character
-			case 'w': return;
-			case 'x': return;
+			case 'r': Write12HourTime(std::forward<FwdRef<T>>(container), tm.tm_hour, tm.tm_min, tm.tm_sec); return;
+			case 't': WriteLiteral(std::forward<FwdRef<T>>(container), '\t'); return;
+			case 'u': return;
+			case 'w': WriteWeekdayDec(std::forward<FwdRef<T>>(container), tm.tm_wday); return;
+			case 'x': WriteMMDDYY(std::forward<FwdRef<T>>(container), tm.tm_mon, tm.tm_mday, tm.tm_year); return;
 			case 'y': WriteShortYear(std::forward<FwdRef<T>>(container), tm.tm_year); return;
 			case 'z': return;
 			case 'A': return;
@@ -1602,6 +1699,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm& time, const int& precision) {
 	switch( specValues.timeSpec ) {
 			case 'a': FormatShortWeekday(time.tm_wday); return;
+			case 'h': [[fallthrough]];
 			case 'b': FormatShortMonth(time.tm_mon); return;
 			case 'c': FormatTimeDate(time); return;
 			case 'd': FormatPaddedDay(time.tm_mday); return;
@@ -1611,10 +1709,11 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm&
 			case 'm': FormatPaddedMonth(time.tm_mon); return;
 			case 'n': FormatLiteral('\n'); return;
 			case 'p': FormatAMPM(time.tm_hour); return;
-			case 'r': return;
-			case 't': return;    // this is being used as thread id -> supposed to be tab character
-			case 'w': return;
-			case 'x': return;
+			case 'r': Format12HourTime(time.tm_hour, time.tm_min, time.tm_sec, precision); return;
+			case 't': FormatLiteral('\t'); return;
+			case 'w': FormatWeekdayDec(time.tm_wday); return;
+			case 'u': return;
+			case 'x': FormatMMDDYY(time.tm_mon, time.tm_mday, time.tm_year); return;
 			case 'y': FormatShortYear(time.tm_year); return;
 			case 'z': return;
 			case 'A': return;

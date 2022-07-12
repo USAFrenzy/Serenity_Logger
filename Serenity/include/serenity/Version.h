@@ -5,7 +5,7 @@
 
 #define SERENITY_VERSION_MAJOR 0
 #define SERENITY_VERSION_MINOR 2
-#define SERENITY_VERSION_REVISION 309
+#define SERENITY_VERSION_REVISION 310
 
 // clang-format on
 
@@ -16,4 +16,4 @@
 #define SE_DAY                                        12
 #define SE_MONTH                                      07
 #define SE_YEAR                                       2022
-#define SE_LAST_BUILT                                 "12:36:19"
+#define SE_LAST_BUILT                                 "13:36:23"

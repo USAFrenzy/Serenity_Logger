@@ -209,7 +209,7 @@ namespace serenity::arg_formatter {
 	***********************************************************************************************************************************************************/
 	/*************************************************************************  NOTE *************************************************************************/
 	/************************************************** Building this project on Ubuntu emitted the following **************************************************
-	 * The class defaulted functions are not constexpr due to being defualt
+	 * The class defaulted functions are not constexpr due to being default
 	 *  Need to explicitly add headers for std::memset, std::strlen, std::memcpy,
 	 *  Unsequenced modification and access to 'start' in ArgFormatterImpl.h: 383:84
 	 *  enumeration values 'CTimeType' and 'CustomType' not handled in switch ArgFormatterImple.h: 966:10
@@ -297,7 +297,10 @@ namespace serenity::arg_formatter {
 		template<typename T> constexpr void WriteDayOfYear(T&& container, const int& day);
 		template<typename T> constexpr void WritePaddedMonth(T&& container, const int& month);
 		template<typename T> constexpr void WriteLiteral(T&& container, unsigned char lit);
-		template<typename T> constexpr void WriteAMPM(T&& container, int hr);
+		template<typename T> constexpr void WriteAMPM(T&& container, const int& hr);
+		template<typename T> constexpr void Write12HourTime(T&& container, const int& hour, const int& min, const int& sec);
+		template<typename T> constexpr void WriteWeekdayDec(T&& container, const int& wkday);
+		template<typename T> constexpr void WriteMMDDYY(T&& container, const int& month, const int& day, const int& year);
 
 		// the distinct difference from these functions vs the 'Write' variants is that they should also handle localization & precision
 		// Right now, they are just one-for-one with one-another, minus the actual container writing portion
@@ -313,6 +316,9 @@ namespace serenity::arg_formatter {
 		constexpr void FormatPaddedMonth(int month);
 		constexpr void FormatLiteral(unsigned char lit);
 		constexpr void FormatAMPM(int hr);
+		constexpr void Format12HourTime(int hour, int min, int sec, int precision = 0);
+		constexpr void FormatWeekdayDec(int wkday);
+		constexpr void FormatMMDDYY(int month, int day, int year);
 
 		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
 		void LocalizeBool(const std::locale& loc);
