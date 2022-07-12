@@ -157,8 +157,6 @@ namespace serenity::arg_formatter {
 		bool hasAlt { false };
 		bool hasClosingBrace { false };
 		unsigned char timeSpec { '\0' };
-		bool isLocalizedTimeAlt { false };
-		bool isLocalizedNumAlt { false };
 	};
 
 	struct BracketSearchResults
@@ -283,13 +281,38 @@ namespace serenity::arg_formatter {
 		constexpr void FormatFloatType(T&& value, int precision);
 		/********************************************************** Time Formatting Related Functions *********************************************************/
 		template<typename T> constexpr void FormatTimeField(T&& container);
-		template<typename T> constexpr void FormatTimeAlignment(T&& container, const int& totalWidth);    // not implemented
 		constexpr void FormatCTime(const std::tm& cTimeStruct, const int& precision);
-		constexpr void Format24HourTime(const int& hour, const int& min, const int& sec, const int& precision = 0);
-		template<typename T> constexpr void Write24HourTime(T&& container, const int& hour, const int& min, const int& sec);
+		template<typename T> constexpr void FormatTimeAlignment(T&& container, const int& totalWidth);    // not implemented
 		constexpr void FormatLocalizedCTime(const std::tm& cTimeStruct, const int& precision);
 		void LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision);    // not implemented
 		template<typename T> constexpr void WriteSimpleCTime(T&& container);
+		template<typename T> constexpr void Write24HourTime(T&& container, const int& hour, const int& min, const int& sec);
+		template<typename T> constexpr void WriteShortMonth(T&& container, const int& mon);
+		template<typename T> constexpr void WriteShortWeekday(T&& container, const int& wkday);
+		template<typename T> constexpr void WriteTimeDate(T&& container, const std::tm& time);
+		template<typename T> constexpr void WriteShortYear(T&& container, const int& year);
+		template<typename T> constexpr void WritePaddedDay(T&& container, const int& day);
+		template<typename T> constexpr void WriteSpacePaddedDay(T&& container, const int& day);
+		template<typename T> constexpr void WriteShortIsoWeekYear(T&& container, const std::tm time);
+		template<typename T> constexpr void WriteDayOfYear(T&& container, const int& day);
+		template<typename T> constexpr void WritePaddedMonth(T&& container, const int& month);
+		template<typename T> constexpr void WriteLiteral(T&& container, unsigned char lit);
+		template<typename T> constexpr void WriteAMPM(T&& container, int hr);
+
+		// the distinct difference from these functions vs the 'Write' variants is that they should also handle localization & precision
+		// Right now, they are just one-for-one with one-another, minus the actual container writing portion
+		constexpr void Format24HourTime(int hour, int min, int sec, int precision = 0);
+		constexpr void FormatShortWeekday(int wkday);
+		constexpr void FormatShortMonth(int mon);
+		constexpr void FormatTimeDate(const std::tm& time);
+		constexpr void FormatShortYear(int year);
+		constexpr void FormatPaddedDay(int day);
+		constexpr void FormatSpacePaddedDay(int day);
+		constexpr void FormatShortIsoWeekYear(std::tm time);
+		constexpr void FormatDayOfYear(int day);
+		constexpr void FormatPaddedMonth(int month);
+		constexpr void FormatLiteral(unsigned char lit);
+		constexpr void FormatAMPM(int hr);
 
 		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
 		void LocalizeBool(const std::locale& loc);

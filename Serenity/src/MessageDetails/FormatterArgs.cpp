@@ -140,7 +140,7 @@ namespace serenity::msg_details {
 	}
 
 	std::string& Format_Arg_m::UpdateInternalView() {
-		lastMonth = cacheRef.tm_mon;
+		lastMonth = cacheRef.tm_mon + 1;
 		auto& paddedMonth { SERENITY_LUTS::numberStr[ lastMonth ] };
 		result.clear();
 		return result.append(paddedMonth.data(), paddedMonth.size());
@@ -337,7 +337,7 @@ namespace serenity::msg_details {
 
 	// Format %y Functions
 	/*********************************************************************************************************************/
-	Format_Arg_y::Format_Arg_y(Message_Info& info): timeRef(info.TimeDetails()), cacheRef(timeRef.Cache()), lastYear(cacheRef.tm_year) {
+	Format_Arg_y::Format_Arg_y(Message_Info& info): timeRef(info.TimeDetails()), cacheRef(info.TimeDetails().Cache()), lastYear(info.TimeDetails().Cache().tm_year) {
 		UpdateInternalView();
 	}
 

@@ -432,58 +432,73 @@ int main() {
 #if ENABLE_CTIME_SANDBOX
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
-	std::cout << std::format("{:*^65%T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	std::cout << std::format("{:*^65%p}\n", std::chrono::floor<std::chrono::seconds>(localTime));
 	/*************************************** NOTES ABOUT ABOVE ***************************************/
 	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
-	//
-	// I need to test the precision more and see what's allowed/disallowed because I couldn't get the result
-	// I wanted without using std::chrono::floor() here . Also need to test how locale affects this.
-	// For the time being anyways, I think I'll imlement c-time's tm struct instead as that's what I'm currently
-	// using in the logger right now.
+	// Need to test how locale affects this. For the time being anyways, I think I'll imlement c-time's tm struct
+	// instead as that's what I'm currently using in the logger right now.
 
 	std::tm cTime {};
 	auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
 	LOCAL_TIME(cTime, now);
 	serenity::msg_details::Message_Formatter::Formatters formatter {};
 	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
-	formatter.Emplace_Back(std::make_unique<Format_Arg_T>(info));
-	formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(std::string_view(".", 1)));
-	formatter.Emplace_Back(std::make_unique<Format_Arg_e>(3));
+	info.TimeDetails().UpdateCache(std::chrono::system_clock::now());
+	formatter.Emplace_Back(std::make_unique<Format_Arg_p>(info));
 	std::string timeStr;
 	Instrumentator cTimeTimer;
 
-	// just benching strictly the formatting -> not the time updates
+	/**********************************************************  NOTE **********************************************************/
+	// It may just have to do with the fact that ArgFormatter has to parse the validity of arguments, but I should definitely look
+	// into what can be done to speed these up a bit. Right now, only %c is faster than the original polymorphic struct approach.
+	/***************************************************************************************************************************/
 
-	// takes ~28ns as %T
-	// adding subsecond precision to the mix drops this to ~72ns
+	// %a Short Day takes ~25ns
+	// %b Short Month takes ~26ns
+	// %c Time-Date takes ~34ns
+	// %d Padded Day takes ~28ns -> %e being the more or less the same had same result
+	// %y Short year takes ~29ns -> %g takes ~30-31ns
+	// %j Day Of Year takes ~29ns
+	// %m Padded Month takes~27ns
+	// %n newline takes ~27ns
+	// %p AMPM takes ~26ns
+	// takes ~28ns as %T -> adding subsecond precision to the mix drops this to ~72ns
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 100'000'000; ++i ) {
 			timeStr.clear();
-			serenity::format_to(std::back_inserter(timeStr), "{:.3%T}", cTime);
+			serenity::format_to(std::back_inserter(timeStr), "{:%p}", cTime);
 		}
 	cTimeTimer.StopWatch_Stop();
+	timeStr.clear();
+	serenity::format_to(std::back_inserter(timeStr), "{:%p}", cTime);
 	std::cout << serenity::format("Serenity Formatter For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.f, timeStr);
 
-	// takes ~14ns as %T
-	// adding subsecond precision to the mix drops this down to ~68ns
+	// %a Short Day takes ~15ns
+	// %b Short Month takes ~18ns
+	// %c Time-Date takes ~45ns
+	// %d PaddedDay takes ~14ns
+	//  Formatter structs don't have %g, %j, or %e(as space-padded day) so times are absent here
+	// %m Padded Month takes~18ns
+	// %y Short year takes ~14ns
+	// %n here is custom typing and not newline therefore no valid comparison can be made
+	// %p AMPM takes ~15ns
+	// takes ~14ns as %T -> adding subsecond precision to the mix drops this down to ~68ns
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 100'000'000; ++i ) {
 			timeStr.clear();
 			timeStr.append(formatter.FormatUserPattern());
 		}
 	cTimeTimer.StopWatch_Stop();
+	timeStr.clear();
+	timeStr.append(formatter.FormatUserPattern());
 	std::cout << serenity::format("FormatterArgs Struct For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.f, timeStr);
-	// NOTE: due to the struct formatter never dealing with fill-align-width-precision-or spec verification before formatting the result, it will probably always be
-	// faster
-	//               than the ArgFormatter version, however, a ~14ns delta isn't a terrible start at all for plain %T, especially when subsecond precision's delta is
-	//               only ~4ns. Not to mention the ability to drop the numberStr array in the near future here as the whole finding the digit as a char with the
-	//               offset is coming in at roughly the same timings as indexing into that array.
+
+	std::cout << std::format("{:*^65}\n", "");
 
 	// Commenting out MSVC standard as it's incredibly slow (~98% slower than the above 2 methods) taking ~1360ns
 	// -> stepping through the calls and I presume a lot of time is spent checking  the chrono specific bits before it ever
 	//       gets to filling the tm struct they call. Therefore, instead of benching against MSVC, I'll be using it to make sure
 	//      the formatted results match up.
-
 	// cTimeTimer.StopWatch_Reset();
 	// for (size_t i{ 0 }; i < 100'000; ++i) {
 	//	timeStr.clear();
