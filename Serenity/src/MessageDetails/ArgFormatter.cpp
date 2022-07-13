@@ -5,6 +5,32 @@ namespace serenity::arg_formatter {
 	// not implemented
 	void ArgFormatter::LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision) { }
 
+	void ArgFormatter::FormatSubseconds(int precision) {
+		buffer[ valueSize++ ] = '.';
+		auto subSeconds { std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count() };
+		std::to_chars(&buffer[ 9 ], buffer.data() + SERENITY_ARG_BUFFER_SIZE, subSeconds);
+		valueSize += precision;
+	}
+
+	void ArgFormatter::FormatUtcOffset() {
+		auto& utcOffset { serenity::globals::UtcOffset() };
+		auto hours { std::chrono::duration_cast<std::chrono::hours>(utcOffset).count() };
+		if( hours < 0 ) hours *= -1;
+		auto min { static_cast<int>(hours * 0.166f) };
+		buffer[ valueSize++ ] = (utcOffset.count() >= 0) ? '+' : '-';
+		Format24HM(hours, min);
+	}
+
+	void ArgFormatter::FormatTZName() {
+		std::string_view name { serenity::globals::TZInfo().abbrev };
+		auto size { name.size() };
+		int pos {};
+		for( ;; ) {
+				buffer[ valueSize++ ] = name[ pos ];
+				if( ++pos >= size ) return;
+			}
+	}
+
 	void ArgFormatter::LocalizeArgument(const std::locale& loc, const int& precision, const int& totalWidth, const msg_details::SpecType& type) {
 		using enum serenity::msg_details::SpecType;
 		// NOTE: The following types should have been caught in the verification process:  monostate, string, c-string, string view, const void*, void *

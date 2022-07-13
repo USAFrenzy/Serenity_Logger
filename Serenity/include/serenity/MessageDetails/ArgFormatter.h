@@ -105,6 +105,24 @@ namespace serenity {
 
 }    // namespace serenity
 
+namespace serenity::globals {
+	static auto& TimeZoneInstance() {
+		static const auto& timeZoneData { std::chrono::get_tzdb() };
+		return timeZoneData;
+	}
+	static auto TimeZone() {
+		static auto timeZone { TimeZoneInstance().current_zone() };
+		return timeZone;
+	}
+	static auto& TZInfo() {
+		static auto data { TimeZone()->get_info(std::chrono::system_clock::now()) };
+		return data;
+	}
+	static auto& UtcOffset() {
+		return TZInfo().offset;
+	}
+}    // namespace serenity::globals
+
 namespace serenity::arg_formatter {
 
 	constexpr size_t SERENITY_ARG_BUFFER_SIZE { 66 };
@@ -293,7 +311,7 @@ namespace serenity::arg_formatter {
 		template<typename T> constexpr void WriteShortYear(T&& container, const int& year);
 		template<typename T> constexpr void WritePaddedDay(T&& container, const int& day);
 		template<typename T> constexpr void WriteSpacePaddedDay(T&& container, const int& day);
-		template<typename T> constexpr void WriteShortIsoWeekYear(T&& container, const std::tm time);
+		template<typename T> constexpr void WriteShortIsoWeekYear(T&& container, const int& year, const int& yrday, const int& wkday);
 		template<typename T> constexpr void WriteDayOfYear(T&& container, const int& day);
 		template<typename T> constexpr void WritePaddedMonth(T&& container, const int& month);
 		template<typename T> constexpr void WriteLiteral(T&& container, unsigned char lit);
@@ -301,9 +319,29 @@ namespace serenity::arg_formatter {
 		template<typename T> constexpr void Write12HourTime(T&& container, const int& hour, const int& min, const int& sec);
 		template<typename T> constexpr void WriteWeekdayDec(T&& container, const int& wkday);
 		template<typename T> constexpr void WriteMMDDYY(T&& container, const int& month, const int& day, const int& year);
-
+		template<typename T> constexpr void WriteIsoWeekDec(T&& container, const int& wkday);
+		template<typename T> constexpr void WriteUtcOffset(T&& container);
+		template<typename T> constexpr void WriteLongWeekday(T&& container, const int& wkday);
+		template<typename T> constexpr void WriteLongMonth(T&& container, const int& mon);
+		template<typename T> constexpr void WriteYYYYMMDD(T&& container, const int& year, const int& mon, const int& day);
+		template<typename T> constexpr void WriteLongIsoWeekYear(T&& container, const int& year, const int& yrday, const int& wkday);
+		template<typename T> constexpr void WriteLongYear(T&& container, int year);
+		template<typename T> constexpr void WriteTruncatedYear(T&& container, const int& year);
+		template<typename T> constexpr void Write24Hour(T&& container, const int& hour);
+		template<typename T> constexpr void Write12Hour(T&& container, const int& hour);
+		template<typename T> constexpr void WriteMinute(T&& container, const int& min);
+		template<typename T> constexpr void Write24HM(T&& container, const int& hour, const int& min);
+		template<typename T> constexpr void WriteSecond(T&& container, const int& sec);
+		template<typename T> constexpr void WriteTime(T&& container, const int& hour, const int& min, const int& sec);
+		template<typename T> constexpr void WriteTZName(T&& container);
+		template<typename T> constexpr void WriteWeek(T&& container, const int& yrday, const int& wkday);
+		template<typename T> constexpr void WriteIsoWeek(T&& container, const int& yrday, const int& wkday);
+		template<typename T> constexpr void WriteIsoWeekNumber(T&& container, const int& year, const int& yrday, const int& wkday);
 		// the distinct difference from these functions vs the 'Write' variants is that they should also handle localization & precision
 		// Right now, they are just one-for-one with one-another, minus the actual container writing portion
+		void FormatSubseconds(int precision);
+		void FormatUtcOffset();
+		void FormatTZName();
 		constexpr void Format24HourTime(int hour, int min, int sec, int precision = 0);
 		constexpr void FormatShortWeekday(int wkday);
 		constexpr void FormatShortMonth(int mon);
@@ -311,7 +349,7 @@ namespace serenity::arg_formatter {
 		constexpr void FormatShortYear(int year);
 		constexpr void FormatPaddedDay(int day);
 		constexpr void FormatSpacePaddedDay(int day);
-		constexpr void FormatShortIsoWeekYear(std::tm time);
+		constexpr void FormatShortIsoWeekYear(int year, int yrday, int wkday);
 		constexpr void FormatDayOfYear(int day);
 		constexpr void FormatPaddedMonth(int month);
 		constexpr void FormatLiteral(unsigned char lit);
@@ -319,6 +357,22 @@ namespace serenity::arg_formatter {
 		constexpr void Format12HourTime(int hour, int min, int sec, int precision = 0);
 		constexpr void FormatWeekdayDec(int wkday);
 		constexpr void FormatMMDDYY(int month, int day, int year);
+		constexpr void FormatIsoWeekDec(int wkday);
+		constexpr void FormatLongWeekday(int wkday);
+		constexpr void FormatLongMonth(int mon);
+		constexpr void FormatYYYYMMDD(int year, int mon, int day);
+		constexpr void FormatLongIsoWeekYear(int year, int yrday, int wkday);
+		constexpr void FormatLongYear(int year);
+		constexpr void FormatTruncatedYear(int year);
+		constexpr void Format24Hour(int hour);
+		constexpr void Format12Hour(int hour);
+		constexpr void FormatMinute(int min);
+		constexpr void Format24HM(int hour, int min);
+		constexpr void FormatSecond(int sec);
+		constexpr void FormatTime(int hour, int min, int sec, int precision = 0);
+		constexpr void FormatWeek(int yrday, int wkday);
+		constexpr void FormatIsoWeek(int yrday, int wkday);
+		constexpr void FormatIsoWeekNumber(int year, int yrday, int wkday);
 
 		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr
 		void LocalizeBool(const std::locale& loc);

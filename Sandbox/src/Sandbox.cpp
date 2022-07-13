@@ -388,7 +388,7 @@ int main() {
 	constexpr std::string_view sv { "[Loop Averages]" };
 	std::string loopStr { "[Loop " };
 	constexpr int repeatTest = 5;
-	constexpr size_t iterations { 100'000'000 };
+	constexpr size_t iterations { 1 };
 	float seTotal {}, stdTotal {};
 
 	for( int i { 0 }; i < repeatTest; ++i ) {
@@ -432,7 +432,7 @@ int main() {
 #if ENABLE_CTIME_SANDBOX
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
-	std::cout << std::format("{:*^65%x}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	std::cout << std::format("{:*^65%V}\n", std::chrono::floor<std::chrono::seconds>(localTime));
 	/*************************************** NOTES ABOUT ABOVE ***************************************/
 	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
 	// Need to test how locale affects this. For the time being anyways, I think I'll imlement c-time's tm struct
@@ -444,39 +444,55 @@ int main() {
 	serenity::msg_details::Message_Formatter::Formatters formatter {};
 	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
 	info.TimeDetails().UpdateCache(std::chrono::system_clock::now());
-	formatter.Emplace_Back(std::make_unique<Format_Arg_w>(info));
+	formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(info));
 	std::string timeStr;
 	Instrumentator cTimeTimer;
 
-	/**********************************************************  NOTE **********************************************************/
-	// It may just have to do with the fact that ArgFormatter has to parse the validity of arguments, but I should definitely look
-	// into what can be done to speed these up a bit. Right now, only %c is faster than the original polymorphic struct approach.
-	/***************************************************************************************************************************/
+	/********************************************  NOTE ********************************************/
+	// It may just have to do with the fact that ArgFormatter has to parse the validity of arguments,
+	// but I should definitely look into what can be done to speed these up a bit.
+	/***********************************************************************************************/
 
 	// %a Short Day takes ~25ns
 	// %b Short Month takes ~26ns
-	// %c Time-Date takes ~34ns
+	// %c Time-Date takes ~46ns
 	// %d Padded Day takes ~28ns -> %e being the more or less the same had same result
 	// %y Short year takes ~29ns -> %g takes ~30-31ns
 	// %j Day Of Year takes ~29ns
 	// %m Padded Month takes~27ns
 	// %n newline takes ~27ns
 	// %p AMPM takes ~26ns
-	// %r 12hour time takes ~34ns (on laptop)
+	// %r 12hour time takes ~34ns (on laptop) and ~31ns on desktop
 	// %t tab character takes ~26ns(on laptop)
-	// %u ISO day of the week number takes (To Be Implemented)
-	// %w decimal weekday takes ~28ns (on laptop)
-	// %x MM/DD/YY takes ~32ns (on laptop)
-	// takes ~28ns as %T -> adding subsecond precision to the mix drops this to ~72ns
+	// %u ISO day of the week number takes ~25ns
+	// %w decimal weekday takes ~28ns (on laptop) and ~26ns on desktop
+	// %x MM/DD/YY takes ~32ns (on laptop) and ~29ns on desktop
+	// %z UtcOffset takes ~32ns -> first time usage latency somewhat addressed with runtime initialization before formatting occurs
+	// %A Long Weekday takes ~28ns
+	// %B Long Month takes~29ns
+	// %C Truncated Year takes ~30ns
+	// %D is using %z
+	// %F YYYY-MM-DD takes ~35ns
+	// %H 24 Hour takes ~30ns
+	// %I 12 Hour takes ~31ns
+	// %M minute takes ~30ns
+	// %R 24HourMin takes ~33ns
+	// %S Seconds takes ~31ns
+	// %T 24 hour full time takes ~28ns -> adding subsecond precision to the mix drops this to ~72ns
+	// %U Week takes ~29ns
+	// %V Iso Week Number takes ~28ns
+	// %W Iso Week takes ~31ns
+	// %X Same as %T unless localized (localization not implemented yet)
+	// %Y Long Year takes ~32ns
+	// %Z timezone abbreviated takes ~32ns -> first time usage latency somewhat addressed with runtime initialization before formatting occurs
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 100'000'000; ++i ) {
 			timeStr.clear();
-			serenity::format_to(std::back_inserter(timeStr), "{:%x}", cTime);
+			serenity::format_to(std::back_inserter(timeStr), "{:%V}", cTime);
 		}
 	cTimeTimer.StopWatch_Stop();
-	timeStr.clear();
-	serenity::format_to(std::back_inserter(timeStr), "{:%x}", cTime);
-	std::cout << serenity::format("Serenity Formatter For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.f, timeStr);
+	std::cout << serenity::format("Serenity Formatter For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.0f,
+	                              serenity::format("{:%V}", cTime));
 
 	// %a Short Day takes ~15ns
 	// %b Short Month takes ~18ns
@@ -489,19 +505,33 @@ int main() {
 	// %p AMPM takes ~15ns
 	// %r 12hour time takes ~28ns (on laptop)
 	// %t is used as thread id here so no comparison can be made
-	// %u was never imlemented here
+	// %u was never imlemented hera
 	// %w decimal weekday takes ~16ns (on laptop)
+	// %z UtcOffset takes ~14ns
 	// Apparently I never implemented %x here, so there's no comparison to be made...
-	// takes ~14ns as %T -> adding subsecond precision to the mix drops this down to ~68ns
+	// %A Long Weekday takes ~13ns
+	// %B Long Month takes ~15ns
+	// %F YYYY-MM-DD takes ~13ns
+	// %H 24 Hour takes ~15ns
+	// %I 12 Hour takes ~15ns
+	// %M minute takes ~14ns
+	// %R 24HourMin takes ~18ns
+	// %S Seconds takes ~15ns
+	// %T 24 hour full time takes ~14ns -> adding subsecond precision to the mix drops this to ~68ns
+	// %U was never implemented here
+	// %V was never implemented here
+	// %W was never implemented here
+	// %X Same as %T unless localized (localization not implemented yet)
+	// %Y Long Year takes ~15ns
+	// %Z timezone abbreviated takes ~15ns
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < 100'000'000; ++i ) {
 			timeStr.clear();
 			timeStr.append(formatter.FormatUserPattern());
 		}
 	cTimeTimer.StopWatch_Stop();
-	timeStr.clear();
-	timeStr.append(formatter.FormatUserPattern());
-	std::cout << serenity::format("FormatterArgs Struct For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.f, timeStr);
+	std::cout << serenity::format("FormatterArgs Struct For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.0f,
+	                              formatter.FormatUserPattern());
 
 	std::cout << std::format("{:*^65}\n", "");
 
