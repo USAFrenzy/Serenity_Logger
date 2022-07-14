@@ -8,7 +8,7 @@ namespace serenity::arg_formatter {
 	void ArgFormatter::FormatSubseconds(int precision) {
 		buffer[ valueSize++ ] = '.';
 		auto subSeconds { std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count() };
-		std::to_chars(&buffer[ 9 ], buffer.data() + SERENITY_ARG_BUFFER_SIZE, subSeconds);
+		std::to_chars(buffer.data() + valueSize, buffer.data() + SERENITY_ARG_BUFFER_SIZE, subSeconds);
 		valueSize += precision;
 	}
 

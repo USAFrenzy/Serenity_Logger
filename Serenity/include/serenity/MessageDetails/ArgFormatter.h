@@ -174,7 +174,9 @@ namespace serenity::arg_formatter {
 		bool localize { false };
 		bool hasAlt { false };
 		bool hasClosingBrace { false };
-		unsigned char timeSpec { '\0' };
+
+		std::array<unsigned char, 25> timeSpecContainer {};
+		int timeSpecCounter { 0 };
 	};
 
 	struct BracketSearchResults

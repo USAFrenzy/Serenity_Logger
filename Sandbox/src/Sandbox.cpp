@@ -388,7 +388,7 @@ int main() {
 	constexpr std::string_view sv { "[Loop Averages]" };
 	std::string loopStr { "[Loop " };
 	constexpr int repeatTest = 5;
-	constexpr size_t iterations { 1 };
+	constexpr size_t iterations { 100'000'000 };
 	float seTotal {}, stdTotal {};
 
 	for( int i { 0 }; i < repeatTest; ++i ) {
@@ -430,32 +430,49 @@ int main() {
 #endif    // ENABLE_PARSE_SECTION
 
 #if ENABLE_CTIME_SANDBOX
-	auto tz { std::chrono::current_zone() };
-	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
-	std::cout << std::format("{:*^65%V}\n", std::chrono::floor<std::chrono::seconds>(localTime));
-	/*************************************** NOTES ABOUT ABOVE ***************************************/
-	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
-	// Need to test how locale affects this. For the time being anyways, I think I'll imlement c-time's tm struct
-	// instead as that's what I'm currently using in the logger right now.
 
+	std::string timeStr;
+	Instrumentator cTimeTimer;
+	constexpr size_t timeIterations { 1'000'000 };
+	constexpr std::string_view formatString { "{:%d%b%y %T}" };
+	constexpr const char* strftimeString { "%d%b%y %T" };
 	std::tm cTime {};
 	auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
 	LOCAL_TIME(cTime, now);
 	serenity::msg_details::Message_Formatter::Formatters formatter {};
 	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
 	info.TimeDetails().UpdateCache(std::chrono::system_clock::now());
-	formatter.Emplace_Back(std::make_unique<Format_Arg_Z>(info));
-	std::string timeStr;
-	Instrumentator cTimeTimer;
+	formatter.Emplace_Back(std::make_unique<Format_Arg_d>(info));
+	formatter.Emplace_Back(std::make_unique<Format_Arg_b>(info));
+	formatter.Emplace_Back(std::make_unique<Format_Arg_y>(info));
+	formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(std::string_view(" ")));
+	formatter.Emplace_Back(std::make_unique<Format_Arg_T>(info));
+
+	auto tz { std::chrono::current_zone() };
+	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
+	std::cout << std::format("{:*^85%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	std::cout << std::format("Note:\tBench Times Are Based On {} Iterations For Each Case Being Benched\n", timeIterations);
+	std::cout << std::format("\tTime Updates Are Ignored In These Loops And Use The Initial Time.\n\n");
+
+	/*************************************** NOTES ABOUT ABOVE ***************************************/
+	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
+	// Need to test how locale affects this. For the time being anyways, I think I'll imlement c-time's tm struct
+	// instead as that's what I'm currently using in the logger right now.
 
 	/********************************************  NOTE ********************************************/
 	// It may just have to do with the fact that ArgFormatter has to parse the validity of arguments,
 	// but I should definitely look into what can be done to speed these up a bit.
+	// EDIT: Complex Time Formatting isn't too off the mark though:
+	//             * For the format string of "{:%d%b%y %T}"  :
+	//                - ArgFormattter took ~53ns
+	//                - FormatterArgs struct version took ~32ns
+	// EDIT 2: Given the changes made to allow the complex formatting to occur, the below times have
+	//                 been hit by ~5ns performance penalty which is basically nothing, but is worth noting.
 	/***********************************************************************************************/
 
 	// %a Short Day takes ~25ns
 	// %b Short Month takes ~26ns
-	// %c Time-Date takes ~46ns
+	// %c Time-Date takes ~36ns
 	// %d Padded Day takes ~28ns -> %e being the more or less the same had same result
 	// %y Short year takes ~29ns -> %g takes ~30-31ns
 	// %j Day Of Year takes ~29ns
@@ -486,13 +503,13 @@ int main() {
 	// %Y Long Year takes ~32ns
 	// %Z timezone abbreviated takes ~32ns -> first time usage latency somewhat addressed with runtime initialization before formatting occurs
 	cTimeTimer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 100'000'000; ++i ) {
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			timeStr.clear();
-			serenity::format_to(std::back_inserter(timeStr), "{:%V}", cTime);
+			serenity::format_to(std::back_inserter(timeStr), formatString, cTime);
 		}
 	cTimeTimer.StopWatch_Stop();
-	std::cout << serenity::format("Serenity Formatter For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.0f,
-	                              serenity::format("{:%V}", cTime));
+	std::cout << serenity::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(formatString, cTime));
 
 	// %a Short Day takes ~15ns
 	// %b Short Month takes ~18ns
@@ -525,28 +542,54 @@ int main() {
 	// %Y Long Year takes ~15ns
 	// %Z timezone abbreviated takes ~15ns
 	cTimeTimer.StopWatch_Reset();
-	for( size_t i { 0 }; i < 100'000'000; ++i ) {
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			timeStr.clear();
 			timeStr.append(formatter.FormatUserPattern());
 		}
 	cTimeTimer.StopWatch_Stop();
-	std::cout << serenity::format("FormatterArgs Struct For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000'000.0f,
-	                              formatter.FormatUserPattern());
+	std::cout << serenity::format("FormatterArgs Struct For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), formatter.FormatUserPattern());
 
-	std::cout << std::format("{:*^65}\n", "");
+	// standard
+	auto flooredTime { std::chrono::floor<std::chrono::seconds>(localTime) };    // taking this out of the loop (should've been outside the loop anyways)
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			timeStr.clear();
+			std::format_to(std::back_inserter(timeStr), formatString, flooredTime);
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << std::format("Standard Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	                         cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::format(formatString, flooredTime));
 
-	// Commenting out MSVC standard as it's incredibly slow (~98% slower than the above 2 methods) taking ~1360ns
-	// -> stepping through the calls and I presume a lot of time is spent checking  the chrono specific bits before it ever
-	//       gets to filling the tm struct they call. Therefore, instead of benching against MSVC, I'll be using it to make sure
-	//      the formatted results match up.
-	// cTimeTimer.StopWatch_Reset();
-	// for (size_t i{ 0 }; i < 100'000; ++i) {
-	//	timeStr.clear();
-	//	std::format_to(std::back_inserter(timeStr), "{:%T}", std::chrono::floor<std::chrono::seconds>(localTime));
-	// }
-	// cTimeTimer.StopWatch_Stop();
-	// std::cout << serenity::format("Standard Formatter For Time Spec Took: [{} ns] \nWith Result: {}\n", cTimeTimer.Elapsed_In(time_mode::ns) / 100'000.f,
-	// timeStr); serenity::format_to(std::back_inserter(timeStr), "{:%T}", cTime);
+	// ctime standard
+	constexpr size_t buffSize { 66 };    // mirror size of buff used internally
+	// Note: internal buff used was for arithmetic formatting but since it makes sense to reuse it, doubling its usage case
+	// for time formatting as well - hence why the size is larger than it probably needs to be for time related formatting
+	char buff[ buffSize ] {};
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			std::memset(&buff, 0, buffSize);
+			std::strftime(buff, buffSize, strftimeString, &cTime);
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << serenity::format("Strftime Formatting For Format Specs Took: [{} ns] \nWith Result: {}\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::string_view(buff, buffSize));
+
+	localTime = tz->to_local(std::chrono::system_clock::now());
+	std::cout << std::format("{:*^85%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+
+	// *****************************************************************************************************************************
+	// In order of performance of time related formatting from the results of the above loops (fastest to slowest):
+	// FormatterArgs -> ArgFormatter -> strftime -> std::format
+	// *****************************************************************************************************************************
+	// Honestly unsure why std::format is relatively fast with other types of formatting but horrendously slow with time formatting.
+	// To put it in perspective, FormatterArgs is ~1.5x to ~2x faster than ArgFormatter which is ~6x times faster than strftime
+	// which is ~8x faster than std::format... I am going to assume it absolutely has to do with the chrono type checking std::format
+	// does when given a time point as I couldn't get std::format to format a std::tm struct -> I assume if they allowed tm struct
+	// formatting, the times wouldn't be so heavily skewed as they are. When trying "std::format(formatString, cTime);", the compiler
+	// complains about an unknown type and that it can't deduce the type of the tm struct. Same thing  happens when taking a pointer
+	// or a reference to the tm struct -> obviously meaning that the tm struct isn't natively supported here.
+	// *****************************************************************************************************************************
 
 #endif    // ENABLE_CTIME_SANDBOX
 

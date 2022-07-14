@@ -390,78 +390,86 @@ static constexpr void ParseChronoSpec(const char& ch, const char& next) {
 // on a couple of these cases though as they seem redundant (like %g/%G)
 constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string_view sv, size_t& pos) {
 	// this is for c-time formatting
-	switch( sv[ pos ] ) {
-			case 'E':
-				switch( ++pos < sv.size() ? sv[ pos ] : '}' ) {
-						case 'c': [[fallthrough]];
-						case 'x': [[fallthrough]];
-						case 'y': [[fallthrough]];
-						case 'C': [[fallthrough]];
-						case 'X': [[fallthrough]];
-						case 'Y':
-							specValues.localize = true;
-							specValues.timeSpec = sv[ pos ];
-							return;
-						default: ReportError(ErrorType::invalid_ctime_spec);
-					}
-			case 'O':
-				switch( ++pos < sv.size() ? sv[ pos ] : '}' ) {
-						case 'd': [[fallthrough]];
-						case 'e': [[fallthrough]];
-						case 'm': [[fallthrough]];
-						case 'u': [[fallthrough]];
-						case 'w': [[fallthrough]];
-						case 'y': [[fallthrough]];
-						case 'H': [[fallthrough]];
-						case 'I': [[fallthrough]];
-						case 'M': [[fallthrough]];
-						case 'S': [[fallthrough]];
-						case 'U': [[fallthrough]];
-						case 'V': [[fallthrough]];
-						case 'W':
-							specValues.localize = true;
-							specValues.timeSpec = sv[ pos ];
-							return;
-						default: ReportError(ErrorType::invalid_ctime_spec);
-					}
-			case 'a': [[fallthrough]];
-			case 'b': [[fallthrough]];
-			case 'c': [[fallthrough]];
-			case 'd': [[fallthrough]];
-			case 'e': [[fallthrough]];
-			case 'g': [[fallthrough]];
-			case 'h': [[fallthrough]];
-			case 'j': [[fallthrough]];
-			case 'm': [[fallthrough]];
-			case 'n': [[fallthrough]];
-			case 'p': [[fallthrough]];
-			case 'r': [[fallthrough]];
-			case 't': [[fallthrough]];
-			case 'u': [[fallthrough]];
-			case 'w': [[fallthrough]];
-			case 'x': [[fallthrough]];
-			case 'y': [[fallthrough]];
-			case 'z': [[fallthrough]];
-			case 'A': [[fallthrough]];
-			case 'B': [[fallthrough]];
-			case 'C': [[fallthrough]];
-			case 'D': [[fallthrough]];
-			case 'F': [[fallthrough]];
-			case 'G': [[fallthrough]];
-			case 'H': [[fallthrough]];
-			case 'I': [[fallthrough]];
-			case 'M': [[fallthrough]];
-			case 'R': [[fallthrough]];
-			case 'S': [[fallthrough]];
-			case 'T': [[fallthrough]];
-			case 'U': [[fallthrough]];
-			case 'V': [[fallthrough]];
-			case 'W': [[fallthrough]];
-			case 'X': [[fallthrough]];
-			case 'Y': [[fallthrough]];
-			case 'Z': [[fallthrough]];
-			case '%': [[fallthrough]];
-			default: specValues.timeSpec = sv[ pos ];
+	auto size { sv.size() };
+	for( ;; ) {
+			switch( sv[ pos ] ) {
+					case 'E':
+						switch( ++pos < sv.size() ? sv[ pos ] : '}' ) {
+								case 'c': [[fallthrough]];
+								case 'x': [[fallthrough]];
+								case 'y': [[fallthrough]];
+								case 'C': [[fallthrough]];
+								case 'X': [[fallthrough]];
+								case 'Y':
+									specValues.localize                                          = true;
+									specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
+									break;
+								default: ReportError(ErrorType::invalid_ctime_spec);
+							}
+					case 'O':
+						switch( ++pos < sv.size() ? sv[ pos ] : '}' ) {
+								case 'd': [[fallthrough]];
+								case 'e': [[fallthrough]];
+								case 'm': [[fallthrough]];
+								case 'u': [[fallthrough]];
+								case 'w': [[fallthrough]];
+								case 'y': [[fallthrough]];
+								case 'H': [[fallthrough]];
+								case 'I': [[fallthrough]];
+								case 'M': [[fallthrough]];
+								case 'S': [[fallthrough]];
+								case 'U': [[fallthrough]];
+								case 'V': [[fallthrough]];
+								case 'W':
+									specValues.localize                                          = true;
+									specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
+									break;
+								default: ReportError(ErrorType::invalid_ctime_spec);
+							}
+					case 'a': [[fallthrough]];
+					case 'b': [[fallthrough]];
+					case 'c': [[fallthrough]];
+					case 'd': [[fallthrough]];
+					case 'e': [[fallthrough]];
+					case 'g': [[fallthrough]];
+					case 'h': [[fallthrough]];
+					case 'j': [[fallthrough]];
+					case 'm': [[fallthrough]];
+					case 'n': [[fallthrough]];
+					case 'p': [[fallthrough]];
+					case 'r': [[fallthrough]];
+					case 't': [[fallthrough]];
+					case 'u': [[fallthrough]];
+					case 'w': [[fallthrough]];
+					case 'x': [[fallthrough]];
+					case 'y': [[fallthrough]];
+					case 'z': [[fallthrough]];
+					case 'A': [[fallthrough]];
+					case 'B': [[fallthrough]];
+					case 'C': [[fallthrough]];
+					case 'D': [[fallthrough]];
+					case 'F': [[fallthrough]];
+					case 'G': [[fallthrough]];
+					case 'H': [[fallthrough]];
+					case 'I': [[fallthrough]];
+					case 'M': [[fallthrough]];
+					case 'R': [[fallthrough]];
+					case 'S': [[fallthrough]];
+					case 'T': [[fallthrough]];
+					case 'U': [[fallthrough]];
+					case 'V': [[fallthrough]];
+					case 'W': [[fallthrough]];
+					case 'X': [[fallthrough]];
+					case 'Y': [[fallthrough]];
+					case 'Z': [[fallthrough]];
+					case '%': [[fallthrough]];
+					default: specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ]; break;
+				}
+			// it's a little inefficient, but initially check that we're not at the end before checking if  the next char is a conversion specifier.
+			// the second check is to make sure that if a conversion specifier was present, we aren't advancing past the end of  'sv'.
+			if( ++pos >= size ) return;
+			if( sv[ pos ] != '%' && sv[ pos ] != '}' ) continue;
+			if( ++pos >= size ) return;
 		}
 }
 
@@ -521,7 +529,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
-	if( totalWidth == 0 && precision == 0 ) {
+	if( totalWidth == 0 && precision == 0 && specValues.timeSpecCounter < 2 ) {
 			return WriteSimpleCTime(std::forward<FwdRef<T>>(container));
 	} else if( totalWidth == 0 ) {
 			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision)
@@ -1747,7 +1755,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIsoWeekNumber(int ye
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCTime(T&& container) {
 	const auto& tm { argStorage.c_time_state(specValues.argPosition) };
-	switch( specValues.timeSpec ) {
+	switch( specValues.timeSpecContainer[ 0 ] ) {
 			case 'a': WriteShortWeekday(std::forward<FwdRef<T>>(container), tm.tm_wday); return;
 			case 'h': [[fallthrough]];
 			case 'b': WriteShortMonth(std::forward<FwdRef<T>>(container), tm.tm_mon); return;
@@ -1785,50 +1793,55 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 			case 'n': [[fallthrough]];
 			case 't': [[fallthrough]];
 			case '%': [[fallthrough]];
-			default: WriteLiteral(std::forward<FwdRef<T>>(container), specValues.timeSpec); return;
+			default: WriteLiteral(std::forward<FwdRef<T>>(container), specValues.timeSpecContainer[ 0 ]); return;
 		}
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm& time, const int& precision) {
-	switch( specValues.timeSpec ) {
-			case 'a': FormatShortWeekday(time.tm_wday); return;
-			case 'h': [[fallthrough]];
-			case 'b': FormatShortMonth(time.tm_mon); return;
-			case 'c': FormatTimeDate(time); return;
-			case 'd': FormatPaddedDay(time.tm_mday); return;
-			case 'e': FormatSpacePaddedDay(time.tm_mday); return;
-			case 'g': FormatShortIsoWeekYear(time.tm_year, time.tm_yday, time.tm_wday); return;
-			case 'j': FormatDayOfYear(time.tm_yday); return;
-			case 'm': FormatPaddedMonth(time.tm_mon); return;
-			case 'p': FormatAMPM(time.tm_hour); return;
-			case 'r': Format12HourTime(time.tm_hour, time.tm_min, time.tm_sec, precision); return;
-			case 'w': FormatWeekdayDec(time.tm_wday); return;
-			case 'u': FormatIsoWeekDec(time.tm_wday); return;
-			case 'D': [[fallthrough]];
-			case 'x': FormatMMDDYY(time.tm_mon, time.tm_mday, time.tm_year); return;
-			case 'y': FormatShortYear(time.tm_year); return;
-			case 'z': FormatUtcOffset(); return;
-			case 'A': FormatLongWeekday(time.tm_wday); return;
-			case 'B': FormatLongMonth(time.tm_mon); return;
-			case 'C': FormatTruncatedYear(time.tm_year); return;
-			case 'F': FormatYYYYMMDD(time.tm_year, time.tm_mon, time.tm_mday); return;
-			case 'G': FormatLongIsoWeekYear(time.tm_year, time.tm_yday, time.tm_wday); return;
-			case 'H': Format24Hour(time.tm_hour); return;
-			case 'I': Format12Hour(time.tm_hour); return;
-			case 'M': FormatMinute(time.tm_min); return;
-			case 'R': Format24HM(time.tm_hour, time.tm_min); return;
-			case 'S': FormatSecond(time.tm_sec); return;
-			case 'T': Format24HourTime(time.tm_hour, time.tm_min, time.tm_sec, precision); return;
-			case 'U': FormatWeek(time.tm_yday, time.tm_wday); return;
-			case 'V': FormatIsoWeekNumber(time.tm_year, time.tm_yday, time.tm_wday); return;
-			case 'W': FormatIsoWeek(time.tm_yday, time.tm_wday); return;
-			case 'X': FormatTime(time.tm_hour, time.tm_min, time.tm_sec, precision); return;
-			case 'Y': FormatLongYear(time.tm_year); return;
-			case 'Z': FormatTZName(); return;
-			case 'n': [[fallthrough]];
-			case 't': [[fallthrough]];
-			case '%': [[fallthrough]];
-			default: FormatLiteral(specValues.timeSpec); return;
+	auto count { specValues.timeSpecCounter };
+	int pos {};
+	for( ;; ) {
+			switch( specValues.timeSpecContainer[ pos ] ) {
+					case 'a': FormatShortWeekday(time.tm_wday); break;
+					case 'h': [[fallthrough]];
+					case 'b': FormatShortMonth(time.tm_mon); break;
+					case 'c': FormatTimeDate(time); break;
+					case 'd': FormatPaddedDay(time.tm_mday); break;
+					case 'e': FormatSpacePaddedDay(time.tm_mday); break;
+					case 'g': FormatShortIsoWeekYear(time.tm_year, time.tm_yday, time.tm_wday); break;
+					case 'j': FormatDayOfYear(time.tm_yday); break;
+					case 'm': FormatPaddedMonth(time.tm_mon); break;
+					case 'p': FormatAMPM(time.tm_hour); break;
+					case 'r': Format12HourTime(time.tm_hour, time.tm_min, time.tm_sec, precision); break;
+					case 'w': FormatWeekdayDec(time.tm_wday); break;
+					case 'u': FormatIsoWeekDec(time.tm_wday); break;
+					case 'D': [[fallthrough]];
+					case 'x': FormatMMDDYY(time.tm_mon, time.tm_mday, time.tm_year); break;
+					case 'y': FormatShortYear(time.tm_year); break;
+					case 'z': FormatUtcOffset(); break;
+					case 'A': FormatLongWeekday(time.tm_wday); break;
+					case 'B': FormatLongMonth(time.tm_mon); break;
+					case 'C': FormatTruncatedYear(time.tm_year); break;
+					case 'F': FormatYYYYMMDD(time.tm_year, time.tm_mon, time.tm_mday); break;
+					case 'G': FormatLongIsoWeekYear(time.tm_year, time.tm_yday, time.tm_wday); break;
+					case 'H': Format24Hour(time.tm_hour); break;
+					case 'I': Format12Hour(time.tm_hour); break;
+					case 'M': FormatMinute(time.tm_min); break;
+					case 'R': Format24HM(time.tm_hour, time.tm_min); break;
+					case 'S': FormatSecond(time.tm_sec); break;
+					case 'T': Format24HourTime(time.tm_hour, time.tm_min, time.tm_sec, precision); break;
+					case 'U': FormatWeek(time.tm_yday, time.tm_wday); break;
+					case 'V': FormatIsoWeekNumber(time.tm_year, time.tm_yday, time.tm_wday); break;
+					case 'W': FormatIsoWeek(time.tm_yday, time.tm_wday); break;
+					case 'X': FormatTime(time.tm_hour, time.tm_min, time.tm_sec, precision); break;
+					case 'Y': FormatLongYear(time.tm_year); break;
+					case 'Z': FormatTZName(); break;
+					case 'n': [[fallthrough]];
+					case 't': [[fallthrough]];
+					case '%': [[fallthrough]];
+					default: FormatLiteral(specValues.timeSpecContainer[ pos ]); break;
+				}
+			if( ++pos >= count ) return;
 		}
 }
 
