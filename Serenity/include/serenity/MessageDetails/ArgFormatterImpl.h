@@ -1401,7 +1401,9 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatShortYear(int year) {
-	TwoDigitToBuff(year %= 100);
+	year %= 100;
+	buffer[ valueSize++ ] = static_cast<char>((year / 10) + offset);
+	buffer[ valueSize++ ] = static_cast<char>((year % 10) + offset);
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatPaddedDay(int day) {
@@ -1623,7 +1625,9 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatTruncatedYear(int year) {
-	TwoDigitToBuff((year += 1900) /= 100);
+	(year += 1900) /= 100;
+	buffer[ valueSize++ ] = static_cast<char>((year / 10) + offset);
+	buffer[ valueSize++ ] = static_cast<char>((year % 10) + offset);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write24Hour(T&& container, const int& hour) {
