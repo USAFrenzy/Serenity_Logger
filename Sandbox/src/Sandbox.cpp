@@ -433,7 +433,7 @@ int main() {
 
 	std::string timeStr;
 	Instrumentator cTimeTimer;
-	constexpr size_t timeIterations { 1'000'000 };
+	constexpr size_t timeIterations { 10'000'000 };
 	constexpr std::string_view formatString { "{:%d%b%y %T}" };
 	constexpr const char* strftimeString { "%d%b%y %T" };
 	std::tm cTime {};
@@ -451,7 +451,7 @@ int main() {
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
 	std::cout << std::format("{:*^85%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
-	std::cout << std::format("Note:\tBench Times Are Based On {} Iterations For Each Case Being Benched\n", timeIterations);
+	std::cout << std::format(std::locale("en_US"), "Note:\tBench Times Are Based On {:L} Iterations For Each Case Being Benched\n", timeIterations);
 	std::cout << std::format("\tTime Updates Are Ignored In These Loops And Use The Initial Time.\n\n");
 
 	/*************************************** NOTES ABOUT ABOVE ***************************************/

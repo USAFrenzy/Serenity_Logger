@@ -72,9 +72,10 @@ namespace serenity {
 		invalid_char_spec,
 		invalid_pointer_spec,
 		invalid_ctime_spec,
+		missing_ctime_spec,
 	};
 
-	static constexpr std::array<const char*, 17> format_error_messages = {
+	static constexpr std::array<const char*, 18> format_error_messages = {
 		"Unkown Formatting Error Occured.",
 		"Missing Closing '}' In Argument Spec Field.",
 		"Error In Position Field: No ':' Or '}' Found While In Automatic Indexing Mode.",
@@ -93,6 +94,7 @@ namespace serenity {
 		"Error In Format: Invalid Type Specifier For Char Type Argument.",
 		"Error In Format: Invalid Type Specifier For Pointer Type Argument.",
 		"Error In Format: Invalid Time Specifier For C-Time Type Argument.",
+		"Error In Format: Missing C-Time Specifier After '%'.",
 	};
 
 	static constexpr bool IsDigit(const char& ch) {
@@ -300,11 +302,12 @@ namespace serenity::arg_formatter {
 		requires std::is_floating_point_v<std::remove_cvref_t<T>>
 		constexpr void FormatFloatType(T&& value, int precision);
 		/********************************************************** Time Formatting Related Functions *********************************************************/
+		template<typename T>
+		requires std::is_integral_v<std::remove_cvref_t<T>>
+		constexpr void TwoDigitToBuff(T val);
 		template<typename T> constexpr void FormatTimeField(T&& container);
 		constexpr void FormatCTime(const std::tm& cTimeStruct, const int& precision);
-		template<typename T> constexpr void FormatTimeAlignment(T&& container, const int& totalWidth);    // not implemented
-		constexpr void FormatLocalizedCTime(const std::tm& cTimeStruct, const int& precision);
-		void LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision);    // not implemented
+		void LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision);    // TODO: Implement this
 		template<typename T> constexpr void WriteSimpleCTime(T&& container);
 		template<typename T> constexpr void Write24HourTime(T&& container, const int& hour, const int& min, const int& sec);
 		template<typename T> constexpr void WriteShortMonth(T&& container, const int& mon);

@@ -465,11 +465,12 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 					case '%': [[fallthrough]];
 					default: specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ]; break;
 				}
-			// it's a little inefficient, but initially check that we're not at the end before checking if  the next char is a conversion specifier.
-			// the second check is to make sure that if a conversion specifier was present, we aren't advancing past the end of  'sv'.
 			if( ++pos >= size ) return;
-			if( sv[ pos ] != '%' && sv[ pos ] != '}' ) continue;
-			if( ++pos >= size ) return;
+			switch( sv[ pos ] ) {
+					case '%': ++pos >= size ? ReportError(ErrorType::missing_ctime_spec) : void(0); continue;
+					case '}': return;
+					default: continue;
+				}
 		}
 }
 
@@ -538,12 +539,9 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 	} else {
 			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision)
 								 : LocalizeCTime(default_locale, argStorage.c_time_state(specValues.argPosition), precision);
-			FormatTimeAlignment(std::forward<FwdRef<T>>(container), totalWidth);
+			FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
 		}
 }
-
-// not implemented
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatTimeAlignment(T&& container, const int& totalWidth) { }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv, size_t& start, const msg_details::SpecType& argType) {
 	auto svSize { sv.size() };
@@ -1324,6 +1322,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 		}
 }
 
+template<typename T>
+requires std::is_integral_v<std::remove_cvref_t<T>>
+constexpr void serenity::arg_formatter::ArgFormatter::TwoDigitToBuff(T val) {
+	buffer[ valueSize++ ] = val > 9 ? static_cast<char>((val / 10) + offset) : '0';
+	buffer[ valueSize++ ] = static_cast<char>((val % 10) + offset);
+}
+
 constexpr void serenity::arg_formatter::ArgFormatter::Format24HourTime(int hour, int min, int sec, int precision) {
 	Format24HM(hour, min);
 	buffer[ valueSize++ ] = ':';
@@ -1396,14 +1401,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatShortYear(int year) {
-	year %= 100;
-	buffer[ valueSize++ ] = static_cast<char>((year / 10) + offset);
-	buffer[ valueSize++ ] = static_cast<char>((year % 10) + offset);
+	TwoDigitToBuff(year %= 100);
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatPaddedDay(int day) {
-	buffer[ valueSize++ ] = day > 9 ? static_cast<char>((day / 10) + offset) : '0';
-	buffer[ valueSize++ ] = static_cast<char>((day % 10) + offset);
+	TwoDigitToBuff(day);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WritePaddedDay(T&& container, const int& day) {
@@ -1417,8 +1419,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatSpacePaddedDay(int day) {
-	buffer[ valueSize++ ] = day > 9 ? static_cast<char>(day / 10 + offset) : ' ';
-	buffer[ valueSize++ ] = static_cast<char>(day % 10 + offset);
+	TwoDigitToBuff(day);
 }
 
 template<typename T>
@@ -1455,9 +1456,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatPaddedMonth(int month) {
-	++month;    // increment due to the inclusion of 0 -> month 0 is January
-	buffer[ valueSize++ ] = month > 9 ? static_cast<char>(month / 10 + offset) : '0';
-	buffer[ valueSize++ ] = static_cast<char>(month % 10 + offset);
+	TwoDigitToBuff(++month);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteLiteral(T&& container, unsigned char lit) {
@@ -1623,9 +1622,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatTruncatedYear(int year) {
-	(year += 1900) /= 100;
-	buffer[ valueSize++ ] = static_cast<char>((year / 10) + offset);
-	buffer[ valueSize++ ] = static_cast<char>((year % 10) + offset);
+	TwoDigitToBuff((year += 1900) /= 100);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write24Hour(T&& container, const int& hour) {
@@ -1634,8 +1631,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Format24Hour(int hour) {
-	buffer[ valueSize++ ] = hour > 9 ? static_cast<char>(hour / 10 + offset) : '0';
-	buffer[ valueSize++ ] = static_cast<char>(hour % 10 + offset);
+	TwoDigitToBuff(hour);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write12Hour(T&& container, const int& hour) {
@@ -1644,9 +1640,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Format12Hour(int hour) {
-	if( hour > 12 ) hour -= 12;
-	buffer[ valueSize++ ] = hour > 9 ? static_cast<char>(hour / 10 + offset) : '0';
-	buffer[ valueSize++ ] = static_cast<char>(hour % 10 + offset);
+	TwoDigitToBuff(hour > 12 ? hour -= 12 : hour);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteMinute(T&& container, const int& min) {
@@ -1655,8 +1649,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatMinute(int min) {
-	buffer[ valueSize++ ] = min > 9 ? static_cast<char>(min / 10 + offset) : '0';
-	buffer[ valueSize++ ] = static_cast<char>(min % 10 + offset);
+	TwoDigitToBuff(min);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write24HM(T&& container, const int& hour, const int& min) {
@@ -1676,8 +1669,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatSecond(int sec) {
-	buffer[ valueSize++ ] = sec > 9 ? static_cast<char>(sec / 10 + offset) : '0';
-	buffer[ valueSize++ ] = static_cast<char>(sec % 10 + offset);
+	TwoDigitToBuff(sec);
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatTime(int hour, int min, int sec, int precision) {
@@ -1704,9 +1696,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatWeek(int yrday, int wkday) {
 	if( !specValues.localize ) {
-			auto wk { (10 + yrday - wkday) / 7 };
-			buffer[ valueSize++ ] = wk > 9 ? static_cast<char>(wk / 10 + offset) : '0';
-			buffer[ valueSize++ ] = static_cast<char>(wk % 10 + offset);
+			TwoDigitToBuff((10 + yrday - wkday) / 7);
 	}
 	// handle localization here
 }
@@ -1718,9 +1708,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatIsoWeek(int yrday, int wkday) {
 	if( !specValues.localize ) {
-			auto wk { (yrday + 7 - (wkday == 0 ? 6 : --wkday)) / 7 };
-			buffer[ valueSize++ ] = wk > 9 ? static_cast<char>(wk / 10 + offset) : '0';
-			buffer[ valueSize++ ] = static_cast<char>(wk % 10 + offset);
+			TwoDigitToBuff((yrday + 7 - (wkday == 0 ? 6 : --wkday)) / 7);
 	}
 	// handle localization here
 }
@@ -1737,8 +1725,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIsoWeekNumber(int ye
 					--year;
 					auto prevYear = year - 1;
 					int weeks { 52 + ((year / 4 - year / 100 - year / 400 == 4) || ((prevYear / 4 - prevYear / 100 - prevYear / 400) == 3) ? 1 : 0) };
-					buffer[ valueSize++ ] = weeks > 9 ? static_cast<char>(weeks / 10 + offset) : '0';
-					buffer[ valueSize++ ] = static_cast<char>(weeks % 10 + offset);
+					TwoDigitToBuff(weeks);
 					return;
 			}
 			auto prevYear = year - 1;
@@ -1747,12 +1734,14 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIsoWeekNumber(int ye
 					buffer[ valueSize++ ] = 1;
 					return;
 			}
-			buffer[ valueSize++ ] = w > 9 ? static_cast<char>(w / 10 + offset) : '0';
-			buffer[ valueSize++ ] = static_cast<char>(w % 10 + offset);
+			TwoDigitToBuff(w);
 	}
 	// handle localization here
 }
 
+// TODO: Streamline both this and FormatCTime() with just a direct call to TwoDigitToBuff () and eliminate unneccessary Format'x'
+//               functions where appropriate (such as where this is the only call and no localization branch needs to be considered)
+// The above TODO note is just to eliminate some function clutter in the header since a lot of calls were being made to do the same thing
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCTime(T&& container) {
 	const auto& tm { argStorage.c_time_state(specValues.argPosition) };
 	switch( specValues.timeSpecContainer[ 0 ] ) {
@@ -2110,6 +2099,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ReportError(ErrorType err)
 			case invalid_char_spec: throw format_error(format_error_messages[ 15 ]); break;
 			case invalid_pointer_spec: throw format_error(format_error_messages[ 16 ]); break;
 			case invalid_ctime_spec: throw format_error(format_error_messages[ 17 ]); break;
+			case missing_ctime_spec: throw format_error(format_error_messages[ 18 ]); break;
 			default: throw format_error(format_error_messages[ 0 ]); break;
 		}
 }
