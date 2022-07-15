@@ -1419,7 +1419,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatSpacePaddedDay(int day) {
-	TwoDigitToBuff(day);
+	buffer[ valueSize++ ] = day > 9 ? static_cast<char>((day / 10) + offset) : ' ';
+	buffer[ valueSize++ ] = static_cast<char>((day % 10) + offset);
 }
 
 template<typename T>
