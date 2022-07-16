@@ -1332,7 +1332,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::TwoDigitToBuff(T val) {
 constexpr void serenity::arg_formatter::ArgFormatter::Format24HourTime(int hour, int min, int sec, int precision) {
 	Format24HM(hour, min);
 	buffer[ valueSize++ ] = ':';
-	FormatSecond(sec);
+	TwoDigitToBuff(sec);
 	if( precision != 0 ) FormatSubseconds(precision);
 }
 
@@ -1342,15 +1342,12 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatShortMonth(int mon) {
-	if( !specValues.localize ) {
-			auto month { short_months[ mon ] };
-			int pos { 0 };
-			for( ;; ) {
-					buffer[ valueSize++ ] = month[ pos ];
-					if( ++pos >= 3 ) return;
-				}
-	}
-	// handle localization here
+	auto month { short_months[ mon ] };
+	int pos { 0 };
+	for( ;; ) {
+			buffer[ valueSize++ ] = month[ pos ];
+			if( ++pos >= 3 ) return;
+		}
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteShortMonth(T&& container, const int& mon) {
@@ -1359,15 +1356,12 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatShortWeekday(int wkday) {
-	if( !specValues.localize ) {
-			auto wkDay { short_weekdays[ wkday ] };
-			int pos { 0 };
-			for( ;; ) {
-					buffer[ valueSize++ ] = wkDay[ pos ];
-					if( ++pos >= 3 ) return;
-				}
-	}
-	// handle localization here
+	auto wkDay { short_weekdays[ wkday ] };
+	int pos { 0 };
+	for( ;; ) {
+			buffer[ valueSize++ ] = wkDay[ pos ];
+			if( ++pos >= 3 ) return;
+		}
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteShortWeekday(T&& container, const int& wkday) {
@@ -1376,18 +1370,15 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatTimeDate(const std::tm& time) {
-	if( !specValues.localize ) {
-			FormatShortWeekday(time.tm_wday);
-			buffer[ valueSize++ ] = ' ';
-			FormatShortMonth(time.tm_mon);
-			buffer[ valueSize++ ] = ' ';
-			FormatPaddedDay(time.tm_mday);
-			buffer[ valueSize++ ] = ' ';
-			Format24HourTime(time.tm_hour, time.tm_min, time.tm_sec);
-			buffer[ valueSize++ ] = ' ';
-			FormatLongYear(time.tm_year);
-	}
-	// handle localization here
+	FormatShortWeekday(time.tm_wday);
+	buffer[ valueSize++ ] = ' ';
+	FormatShortMonth(time.tm_mon);
+	buffer[ valueSize++ ] = ' ';
+	TwoDigitToBuff(time.tm_mday);
+	buffer[ valueSize++ ] = ' ';
+	Format24HourTime(time.tm_hour, time.tm_min, time.tm_sec);
+	buffer[ valueSize++ ] = ' ';
+	FormatLongYear(time.tm_year);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteTimeDate(T&& container, const std::tm& time) {
@@ -1406,12 +1397,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatShortYear(int year) 
 	buffer[ valueSize++ ] = static_cast<char>((year % 10) + offset);
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::FormatPaddedDay(int day) {
-	TwoDigitToBuff(day);
-}
-
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WritePaddedDay(T&& container, const int& day) {
-	FormatPaddedDay(day);
+	TwoDigitToBuff(day);
 	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 }
 
@@ -1454,12 +1441,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatDayOfYear(int day) {
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WritePaddedMonth(T&& container, const int& month) {
-	FormatPaddedMonth(month);
+	TwoDigitToBuff(month + 1);
 	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
-}
-
-constexpr void serenity::arg_formatter::ArgFormatter::FormatPaddedMonth(int month) {
-	TwoDigitToBuff(++month);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteLiteral(T&& container, unsigned char lit) {
@@ -1487,17 +1470,13 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAMPM(int hour) {
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write12HourTime(T&& container, const int& hour, const int& min, const int& sec) {
-	Format12HourTime(hour, min, sec);
+	Format24HourTime(hour > 12 ? hour - 12 : hour, min, sec);
 	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Format12HourTime(int hour, int min, int sec, int precision) {
-	if( !specValues.localize ) {
-			FormatTime(hour > 12 ? hour - 12 : hour, min, sec, precision);
-			if( precision != 0 ) FormatSubseconds(precision);
-			FormatAMPM(hour);
-	}
-	// handle localization here
+	Format24HourTime(hour > 12 ? hour - 12 : hour, min, sec, precision);
+	FormatAMPM(hour);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteWeekdayDec(T&& container, const int& wkday) {
@@ -1515,16 +1494,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatMMDDYY(int month, int day, int year) {
-	if( !specValues.localize ) {
-			year %= 100;
-			++month;
-			FormatShortMonth(month);
-			buffer[ valueSize++ ] = '/';
-			FormatPaddedDay(day);
-			buffer[ valueSize++ ] = '/';
-			FormatShortYear(year);
-	}
-	// handle localization here
+	year %= 100;
+	++month;
+	FormatShortMonth(month);
+	buffer[ valueSize++ ] = '/';
+	TwoDigitToBuff(day);
+	buffer[ valueSize++ ] = '/';
+	FormatShortYear(year);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteIsoWeekDec(T&& container, const int& wkday) {
@@ -1547,16 +1523,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatLongWeekday(int wkday) {
-	if( !specValues.localize ) {
-			std::string_view weekday { long_weekdays[ wkday ] };
-			int pos { 0 };
-			auto size { weekday.size() };
-			for( ;; ) {
-					buffer[ valueSize++ ] = weekday[ pos ];
-					if( ++pos >= size ) return;
-				}
-	}
-	// handle localization here
+	std::string_view weekday { long_weekdays[ wkday ] };
+	int pos { 0 };
+	auto size { weekday.size() };
+	for( ;; ) {
+			buffer[ valueSize++ ] = weekday[ pos ];
+			if( ++pos >= size ) return;
+		}
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteLongMonth(T&& container, const int& mon) {
@@ -1565,16 +1538,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatLongMonth(int mon) {
-	if( !specValues.localize ) {
-			std::string_view month { long_months[ mon ] };
-			int pos { 0 };
-			auto size { month.size() };
-			for( ;; ) {
-					buffer[ valueSize++ ] = month[ pos ];
-					if( ++pos >= size ) return;
-				}
-	}
-	// handle localization here
+	std::string_view month { long_months[ mon ] };
+	int pos { 0 };
+	auto size { month.size() };
+	for( ;; ) {
+			buffer[ valueSize++ ] = month[ pos ];
+			if( ++pos >= size ) return;
+		}
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteYYYYMMDD(T&& container, const int& year, const int& mon, const int& day) {
@@ -1589,7 +1559,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatYYYYMMDD(int year, i
 	buffer[ valueSize++ ] = '-';
 	FormatShortMonth(mon);
 	buffer[ valueSize++ ] = '-';
-	FormatPaddedDay(day);
+	TwoDigitToBuff(day);
 }
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteLongYear(T&& container, int year) {
 	FormatLongYear(year);
@@ -1631,30 +1601,18 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatTruncatedYear(int ye
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write24Hour(T&& container, const int& hour) {
-	Format24Hour(hour);
-	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
-}
-
-constexpr void serenity::arg_formatter::ArgFormatter::Format24Hour(int hour) {
 	TwoDigitToBuff(hour);
+	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write12Hour(T&& container, const int& hour) {
-	Format12Hour(hour);
+	TwoDigitToBuff(hour > 12 ? hour - 12 : hour);
 	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
-}
-
-constexpr void serenity::arg_formatter::ArgFormatter::Format12Hour(int hour) {
-	TwoDigitToBuff(hour > 12 ? hour -= 12 : hour);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteMinute(T&& container, const int& min) {
-	FormatMinute(min);
-	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
-}
-
-constexpr void serenity::arg_formatter::ArgFormatter::FormatMinute(int min) {
 	TwoDigitToBuff(min);
+	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write24HM(T&& container, const int& hour, const int& min) {
@@ -1663,29 +1621,19 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Format24HM(int hour, int min) {
-	Format24Hour(hour);
+	TwoDigitToBuff(hour);
 	buffer[ valueSize++ ] = ':';
-	FormatMinute(min);
+	TwoDigitToBuff(min);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSecond(T&& container, const int& sec) {
-	FormatSecond(sec);
+	TwoDigitToBuff(sec);
 	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::FormatSecond(int sec) {
-	TwoDigitToBuff(sec);
-}
-
-constexpr void serenity::arg_formatter::ArgFormatter::FormatTime(int hour, int min, int sec, int precision) {
-	if( !specValues.localize ) {
-			return Format24HourTime(hour, min, sec, precision);
-	}
-	// handle localization here
-}
-
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteTime(T&& container, const int& hour, const int& min, const int& sec) {
-	FormatTime(hour, min, sec);
+	Format24HourTime(hour, min, sec);
+	(hour, min, sec);
 	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 }
 
@@ -1695,27 +1643,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteWeek(T&& container, const int& yrday, const int& wkday) {
-	FormatWeek(yrday, wkday);
+	TwoDigitToBuff((10 + yrday - wkday) / 7);
 	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
-}
-
-constexpr void serenity::arg_formatter::ArgFormatter::FormatWeek(int yrday, int wkday) {
-	if( !specValues.localize ) {
-			TwoDigitToBuff((10 + yrday - wkday) / 7);
-	}
-	// handle localization here
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteIsoWeek(T&& container, const int& yrday, const int& wkday) {
-	FormatIsoWeek(yrday, wkday);
+	TwoDigitToBuff((yrday + 7 - (wkday == 0 ? 6 : wkday - 1)) / 7);
 	WriteBufferToContainer(std::forward<FwdRef<T>>(container));
-}
-
-constexpr void serenity::arg_formatter::ArgFormatter::FormatIsoWeek(int yrday, int wkday) {
-	if( !specValues.localize ) {
-			TwoDigitToBuff((yrday + 7 - (wkday == 0 ? 6 : --wkday)) / 7);
-	}
-	// handle localization here
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteIsoWeekNumber(T&& container, const int& year, const int& yrday, const int& wkday) {
@@ -1724,29 +1658,23 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatIsoWeekNumber(int year, int yrday, int wkday) {
-	if( !specValues.localize ) {
-			auto w = (10 + yrday - wkday) / 7;
-			if( w < 1 ) {
-					--year;
-					auto prevYear = year - 1;
-					int weeks { 52 + ((year / 4 - year / 100 - year / 400 == 4) || ((prevYear / 4 - prevYear / 100 - prevYear / 400) == 3) ? 1 : 0) };
-					TwoDigitToBuff(weeks);
-					return;
-			}
+	auto w = (10 + yrday - wkday) / 7;
+	if( w < 1 ) {
+			--year;
 			auto prevYear = year - 1;
 			int weeks { 52 + ((year / 4 - year / 100 - year / 400 == 4) || ((prevYear / 4 - prevYear / 100 - prevYear / 400) == 3) ? 1 : 0) };
-			if( w > weeks ) {
-					buffer[ valueSize++ ] = 1;
-					return;
-			}
-			TwoDigitToBuff(w);
+			TwoDigitToBuff(weeks);
+			return;
 	}
-	// handle localization here
+	auto prevYear = year - 1;
+	int weeks { 52 + ((year / 4 - year / 100 - year / 400 == 4) || ((prevYear / 4 - prevYear / 100 - prevYear / 400) == 3) ? 1 : 0) };
+	if( w > weeks ) {
+			buffer[ valueSize++ ] = 1;
+			return;
+	}
+	TwoDigitToBuff(w);
 }
 
-// TODO: Streamline both this and FormatCTime() with just a direct call to TwoDigitToBuff () and eliminate unneccessary Format'x'
-//               functions where appropriate (such as where this is the only call and no localization branch needs to be considered)
-// The above TODO note is just to eliminate some function clutter in the header since a lot of calls were being made to do the same thing
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCTime(T&& container) {
 	const auto& tm { argStorage.c_time_state(specValues.argPosition) };
 	switch( specValues.timeSpecContainer[ 0 ] ) {
@@ -1800,11 +1728,11 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm&
 					case 'h': [[fallthrough]];
 					case 'b': FormatShortMonth(time.tm_mon); break;
 					case 'c': FormatTimeDate(time); break;
-					case 'd': FormatPaddedDay(time.tm_mday); break;
+					case 'd': TwoDigitToBuff(time.tm_mday); break;
 					case 'e': FormatSpacePaddedDay(time.tm_mday); break;
 					case 'g': FormatShortIsoWeekYear(time.tm_year, time.tm_yday, time.tm_wday); break;
 					case 'j': FormatDayOfYear(time.tm_yday); break;
-					case 'm': FormatPaddedMonth(time.tm_mon); break;
+					case 'm': TwoDigitToBuff(time.tm_mon + 1); break;
 					case 'p': FormatAMPM(time.tm_hour); break;
 					case 'r': Format12HourTime(time.tm_hour, time.tm_min, time.tm_sec, precision); break;
 					case 'w': FormatWeekdayDec(time.tm_wday); break;
@@ -1818,16 +1746,16 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm&
 					case 'C': FormatTruncatedYear(time.tm_year); break;
 					case 'F': FormatYYYYMMDD(time.tm_year, time.tm_mon, time.tm_mday); break;
 					case 'G': FormatLongIsoWeekYear(time.tm_year, time.tm_yday, time.tm_wday); break;
-					case 'H': Format24Hour(time.tm_hour); break;
-					case 'I': Format12Hour(time.tm_hour); break;
-					case 'M': FormatMinute(time.tm_min); break;
+					case 'H': TwoDigitToBuff(time.tm_hour); break;
+					case 'I': TwoDigitToBuff(time.tm_hour > 12 ? time.tm_hour - 12 : time.tm_hour); break;
+					case 'M': TwoDigitToBuff(time.tm_min); break;
 					case 'R': Format24HM(time.tm_hour, time.tm_min); break;
-					case 'S': FormatSecond(time.tm_sec); break;
+					case 'S': TwoDigitToBuff(time.tm_sec); break;
 					case 'T': Format24HourTime(time.tm_hour, time.tm_min, time.tm_sec, precision); break;
-					case 'U': FormatWeek(time.tm_yday, time.tm_wday); break;
+					case 'U': TwoDigitToBuff((10 + time.tm_yday - time.tm_wday) / 7); break;
 					case 'V': FormatIsoWeekNumber(time.tm_year, time.tm_yday, time.tm_wday); break;
-					case 'W': FormatIsoWeek(time.tm_yday, time.tm_wday); break;
-					case 'X': FormatTime(time.tm_hour, time.tm_min, time.tm_sec, precision); break;
+					case 'W': TwoDigitToBuff((time.tm_yday + 7 - (time.tm_wday == 0 ? 6 : time.tm_wday - 1)) / 7); break;
+					case 'X': Format24HourTime(time.tm_hour, time.tm_min, time.tm_sec, precision); break;
 					case 'Y': FormatLongYear(time.tm_year); break;
 					case 'Z': FormatTZName(); break;
 					case 'n': [[fallthrough]];

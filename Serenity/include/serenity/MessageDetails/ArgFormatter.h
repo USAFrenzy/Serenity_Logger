@@ -352,11 +352,9 @@ namespace serenity::arg_formatter {
 		constexpr void FormatShortMonth(int mon);
 		constexpr void FormatTimeDate(const std::tm& time);
 		constexpr void FormatShortYear(int year);
-		constexpr void FormatPaddedDay(int day);
 		constexpr void FormatSpacePaddedDay(int day);
 		constexpr void FormatShortIsoWeekYear(int year, int yrday, int wkday);
 		constexpr void FormatDayOfYear(int day);
-		constexpr void FormatPaddedMonth(int month);
 		constexpr void FormatLiteral(unsigned char lit);
 		constexpr void FormatAMPM(int hr);
 		constexpr void Format12HourTime(int hour, int min, int sec, int precision = 0);
@@ -369,14 +367,7 @@ namespace serenity::arg_formatter {
 		constexpr void FormatLongIsoWeekYear(int year, int yrday, int wkday);
 		constexpr void FormatLongYear(int year);
 		constexpr void FormatTruncatedYear(int year);
-		constexpr void Format24Hour(int hour);
-		constexpr void Format12Hour(int hour);
-		constexpr void FormatMinute(int min);
 		constexpr void Format24HM(int hour, int min);
-		constexpr void FormatSecond(int sec);
-		constexpr void FormatTime(int hour, int min, int sec, int precision = 0);
-		constexpr void FormatWeek(int yrday, int wkday);
-		constexpr void FormatIsoWeek(int yrday, int wkday);
 		constexpr void FormatIsoWeekNumber(int year, int yrday, int wkday);
 
 		//  NOTE: Due to the usage of the numpunct functions, which are not constexpr, these functions can't really be specified as constexpr

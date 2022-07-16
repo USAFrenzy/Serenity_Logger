@@ -2,8 +2,28 @@
 
 namespace serenity::arg_formatter {
 
-	// not implemented
-	void ArgFormatter::LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision) { }
+	// may not be the best approach to this problem -> the idea is that if the localization flag was set, then iterate through the container for these specific cases
+	// and localize them if they match, otherwise, there was nothing to actually localize, so default to just making a normal Format call
+	void ArgFormatter::LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision) {
+		int pos {};
+		auto count { specValues.timeSpecCounter };
+		for( ;; ) {
+				switch( specValues.timeSpecContainer[ pos++ ] ) {
+						case 'a': break;
+						case 'A': break;
+						case 'b': break;
+						case 'B': break;
+						case 'c': break;
+						case 'h': break;
+						case 'r': break;
+						case 'x': break;
+						case 'X': break;
+						case 'Z': break;
+						default: FormatCTime(timeStruct, precision); break;
+					}
+				if( ++pos >= count ) return;
+			}
+	}
 
 	void ArgFormatter::FormatSubseconds(int precision) {
 		buffer[ valueSize++ ] = '.';
