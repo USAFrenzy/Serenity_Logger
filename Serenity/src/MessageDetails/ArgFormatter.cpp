@@ -2,33 +2,46 @@
 
 namespace serenity::arg_formatter {
 
-	// may not be the best approach to this problem -> the idea is that if the localization flag was set, then iterate through the container for these specific cases
-	// and localize them if they match, otherwise, there was nothing to actually localize, so default to just making a normal Format call
-	void ArgFormatter::LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision) {
-		int pos {};
-		auto count { specValues.timeSpecCounter };
+	// This doesn't take into account 'E' & 'O' modifiers as they were effectively erased when storing into the container -> need to update its usage for this case
+	void ArgFormatter::LocalizeCTime(const std::locale& loc, std::tm& timeStruct, const int& precision) {
+		static std::basic_ostringstream<wchar_t> localeStream;
+		std::wstring localeFmt;
+		int pos { -1 };
+		auto end { specValues.timeSpecCounter };
+		auto& cont { specValues.timeSpecContainer };
 		for( ;; ) {
-				switch( specValues.timeSpecContainer[ pos++ ] ) {
-						case 'a': break;
-						case 'A': break;
-						case 'b': break;
-						case 'B': break;
-						case 'c': break;
-						case 'h': break;
-						case 'r': break;
-						case 'x': break;
-						case 'X': break;
-						case 'Z': break;
-						default: FormatCTime(timeStruct, precision); break;
+				if( ++pos >= end ) break;
+				localeFmt += L'%';
+				if( cont[ pos ] != ' ' ) {
+						localeFmt += static_cast<wchar_t>(cont[ pos ]);
+				} else {
+						// replace the automatic placement of '%'
+						localeFmt[ localeFmt.size() - 1 ] = L' ';
 					}
-				if( ++pos >= count ) return;
 			}
+		localeStream.str(std::wstring());
+		localeStream.clear();
+		localeStream.imbue(loc);
+		localeStream << std::put_time(&timeStruct, localeFmt.data());
+		auto& localeBuff { specValues.localizationBuffer };
+		for( auto& ch: localeStream.str() ) localeBuff[ valueSize++ ] = ch;
 	}
 
 	void ArgFormatter::FormatSubseconds(int precision) {
-		buffer[ valueSize++ ] = '.';
+		auto begin { buffer.data() };
 		auto subSeconds { std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count() };
-		std::to_chars(buffer.data() + valueSize, buffer.data() + SERENITY_ARG_BUFFER_SIZE, subSeconds);
+		if( !specValues.localize ) {
+				buffer[ valueSize++ ] = '.';
+				std::to_chars(begin + valueSize, begin + SERENITY_ARG_BUFFER_SIZE, subSeconds);
+		} else {
+				auto& localeBuff { specValues.localizationBuffer };
+				localeBuff[ valueSize++ ] = L'.';
+				auto end { std::to_chars(begin + valueSize, begin + SERENITY_ARG_BUFFER_SIZE, subSeconds).ptr };
+				for( ;; ) {
+						if( begin == end ) return;
+						localeBuff[ valueSize++ ] = static_cast<wchar_t>(*begin++);
+					}
+			}
 		valueSize += precision;
 	}
 
@@ -37,7 +50,11 @@ namespace serenity::arg_formatter {
 		auto hours { std::chrono::duration_cast<std::chrono::hours>(utcOffset).count() };
 		if( hours < 0 ) hours *= -1;
 		auto min { static_cast<int>(hours * 0.166f) };
-		buffer[ valueSize++ ] = (utcOffset.count() >= 0) ? '+' : '-';
+		if( !specValues.localize ) {
+				buffer[ valueSize++ ] = (utcOffset.count() >= 0) ? '+' : '-';
+		} else {
+				specValues.localizationBuffer[ valueSize++ ] = (utcOffset.count() >= 0) ? L'+' : L'-';
+			}
 		Format24HM(hours, min);
 	}
 

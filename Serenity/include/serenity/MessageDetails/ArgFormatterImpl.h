@@ -265,6 +265,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& contai
 		}
 }
 
+// TODO: Need to find a way to get the localized formatted time value into the container here.
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
 	if constexpr( std::is_same_v<type<T>, std::string> ) {
 			container.append(buffer.data(), valueSize);
@@ -406,6 +407,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 									break;
 								default: ReportError(ErrorType::invalid_ctime_spec);
 							}
+						break;
 					case 'O':
 						switch( ++pos < sv.size() ? sv[ pos ] : '}' ) {
 								case 'd': [[fallthrough]];
@@ -426,6 +428,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 									break;
 								default: ReportError(ErrorType::invalid_ctime_spec);
 							}
+						break;
 					case 'a': [[fallthrough]];
 					case 'b': [[fallthrough]];
 					case 'c': [[fallthrough]];
@@ -525,6 +528,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseTimeField(std::string
 	// assume the next ch is '%' and advance past it
 	VerifyTimeSpec(sv, ++start);
 }
+
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatTimeField(T&& container) {
 	auto precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
@@ -533,12 +537,30 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 	if( totalWidth == 0 && precision == 0 && specValues.timeSpecCounter < 2 ) {
 			return WriteSimpleCTime(std::forward<FwdRef<T>>(container));
 	} else if( totalWidth == 0 ) {
-			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision)
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, specValues.timeSpecCounter)
 								 : LocalizeCTime(default_locale, argStorage.c_time_state(specValues.argPosition), precision);
 			return WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 	} else {
-			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision)
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, specValues.timeSpecCounter)
 								 : LocalizeCTime(default_locale, argStorage.c_time_state(specValues.argPosition), precision);
+			FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
+		}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatTimeField(T&& container, const std::locale& loc) {
+	auto precision { specValues.nestedPrecArgPos != 0 ? argStorage.int_state(specValues.nestedPrecArgPos) : specValues.precision != 0 ? specValues.precision : 0 };
+	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
+		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
+		                                                 : 0 };
+	if( totalWidth == 0 && precision == 0 && specValues.timeSpecCounter < 2 ) {
+			return WriteSimpleCTime(std::forward<FwdRef<T>>(container));
+	} else if( totalWidth == 0 ) {
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, specValues.timeSpecCounter)
+								 : LocalizeCTime(loc, argStorage.c_time_state(specValues.argPosition), precision);
+			return WriteBufferToContainer(std::forward<FwdRef<T>>(container));
+	} else {
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, specValues.timeSpecCounter)
+								 : LocalizeCTime(loc, argStorage.c_time_state(specValues.argPosition), precision);
 			FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
 		}
 }
@@ -727,26 +749,50 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::bac
 	auto& container { IteratorAccessHelper(Iter).Container() };
 	for( ;; ) {
 			specValues.ResetSpecs();
+			/****************************************************************  NOTE ****************************************************************/
+			// This check saw ~24-27% performance gain in most cases, however, if this check is abstracted into a function call, the function call saw
+			//  ~60% drop in performance. For reference, on my desktop -> current timings are ~49ns for the custom sandbox case of formatting
+			// TestPoint, without this check, it drops to ~67ns, but abstract this into a function and call it from there and it dropped to ~121ns. I have
+			// no idea why there is such a hefty overhead for the call site, especially when I was forwarding a reference to the container and just the
+			// string view and performing this exact check, but I'll be leaving this as-is here.
+			/****************************************************************  NOTE ****************************************************************/
+			// Check small sv size conditions and handle the niche cases, otherwise break and continue onward
 			switch( sv.size() ) {
 					case 0: return;
-					case 1: Iter = sv[ 0 ]; return;
+					case 1:
+						if constexpr( std::is_same_v<type<T>, std::string> ) {
+								container += sv[ 0 ];
+						} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+								container.emplace_back(sv[ 0 ]);
+						} else {
+								std::copy(sv.data(), sv.data() + 1, std::back_inserter(container));
+							}
+						return;
 					case 2:
+						/*******************************************************  NOTE *******************************************************/
+						// Simple custom args saw a ~3% gain in performance with this check while native args saw ~1% gain in performance
+						/*******************************************************  NOTE *******************************************************/
+						// Handle If format string only contains '{}' and no other text
 						if( sv[ 0 ] == '{' && sv[ 1 ] == '}' ) {
 								auto& argType { argStorage.SpecTypesCaptured()[ 0 ] };
-								argType != SpecType::CustomType ? WriteSimpleValue(std::forward<FwdRef<T>>(container), std::move(argType))
-																: argStorage.custom_state(0).FormatCallBack(sv);
-								return;
+								switch( argType ) {
+										case SpecType::CustomType: argStorage.custom_state(0).FormatCallBack(sv); return;
+										default: WriteSimpleValue(std::forward<FwdRef<T>>(container), std::move(argType)); return;
+									}
 						}
+						// Otherwise, write out any remaining characters as-is and bypass the check that would have found
+						// this case in FindBrackets(). In most cases, ending early here saw ~2-3% gain in performance
 						if constexpr( std::is_same_v<type<T>, std::string> ) {
 								container.append(sv.data(), sv.data() + 2);
 						} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
 								container.insert(container.end(), sv.data(), sv.data() + 2);
 						} else {
-								std::copy(sv.data(), sv.data() + sv.size(), std::back_inserter(container));
+								std::copy(sv.data(), sv.data() + 2, std::back_inserter(container));
 							}
 						return;
 					default: break;
 				}
+			// If the above wasn't executed, then find the first pair of curly brackets and if none were found, write out the parse string as-is
 			if( !FindBrackets(sv) ) {
 					if constexpr( std::is_same_v<type<T>, std::string> ) {
 							container.append(sv.data(), sv.size());
@@ -760,6 +806,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::bac
 						}
 					return;
 			}
+			// If the position of the first curly bracket found isn't the beginning of the parse string, then write the text as-is up until the bracket position
 			auto& begin { bracketResults.beginPos };
 			auto& end { bracketResults.endPos };
 			if( begin > 0 ) {
@@ -775,29 +822,43 @@ constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::bac
 					begin = 0;
 			}
 			size_t pos { 0 };
-			std::string_view argBracket(sv.data() + (++begin), sv.data() + (++end));
+			auto bracketSize { end - begin };
+			std::string_view argBracket(sv.data() + 1, sv.data() + bracketSize + 1);
+			/* Since we advance the begin position by 1 in the argBracket construction, if the first char is '{' then it was an escaped bracket */
 			if( argBracket[ pos ] == '{' ) {
 					container.push_back('{');
 					++pos;
 			}
-			auto bracketSize { end - begin };
+			// NOTE: Since a well-formed substitution bracket should end with '}' and we can assume it's well formed due to the check in FindBrackets(),
+			//                argBracket[ bracketSize - 2 ] is used here to check if the position before the close bracket is another closing bracket instead.
 			if( bracketSize > 3 && argBracket[ bracketSize - 2 ] == '}' ) specValues.hasClosingBrace = true;
+			/************************************* Handle Positional Args *************************************/
 			if( !VerifyPositionalField(argBracket, pos, specValues.argPosition) ) {
+					// Nothing Else to Parse- just a simple substitution after position field so write it and continute parsing format string
 					auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-					argType != SpecType::CustomType ? WriteSimpleValue(std::forward<FwdRef<T>>(container), argType)
-													: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
+					switch( argType ) {
+							case SpecType::CustomType: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket); break;
+							case SpecType::CTimeType: WriteSimpleCTime(std::forward<FwdRef<T>>(container)); break;
+							default: WriteSimpleValue(std::forward<FwdRef<T>>(container), argType); break;
+						}
 					if( specValues.hasClosingBrace ) {
 							container.push_back('}');
 					}
 					sv.remove_prefix(bracketSize + 1);
 					continue;
 			}
+			/****************************** Handle What's Left Of The Bracket ******************************/
 			auto& argType { argStorage.SpecTypesCaptured()[ specValues.argPosition ] };
-			if( argType != SpecType::CustomType ) {
-					Parse(argBracket, pos, argType);
-					Format(std::forward<FwdRef<T>>(container), loc, argType);
-			} else {
-					argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket);
+			switch( argType ) {
+					case SpecType::CustomType: argStorage.custom_state(specValues.argPosition).FormatCallBack(argBracket); break;
+					case SpecType::CTimeType:
+						ParseTimeField(argBracket, pos);
+						FormatTimeField(std::forward<FwdRef<T>>(container), loc);
+						break;
+					default:
+						Parse(argBracket, pos, argType);
+						Format(std::forward<FwdRef<T>>(container), loc, argType);
+						break;
 				}
 			if( specValues.hasClosingBrace ) {
 					container.push_back('}');
@@ -1719,11 +1780,9 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 		}
 }
 
-constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm& time, const int& precision) {
-	auto count { specValues.timeSpecCounter };
-	int pos {};
+constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm& time, const int& precision, int startPos, int endPos) {
 	for( ;; ) {
-			switch( specValues.timeSpecContainer[ pos ] ) {
+			switch( specValues.timeSpecContainer[ startPos ] ) {
 					case 'a': FormatShortWeekday(time.tm_wday); break;
 					case 'h': [[fallthrough]];
 					case 'b': FormatShortMonth(time.tm_mon); break;
@@ -1761,9 +1820,9 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm&
 					case 'n': [[fallthrough]];
 					case 't': [[fallthrough]];
 					case '%': [[fallthrough]];
-					default: FormatLiteral(specValues.timeSpecContainer[ pos ]); break;
+					default: FormatLiteral(specValues.timeSpecContainer[ startPos ]); break;
 				}
-			if( ++pos >= count ) return;
+			if( ++startPos >= endPos ) return;
 		}
 }
 

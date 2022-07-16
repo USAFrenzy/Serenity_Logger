@@ -179,6 +179,7 @@ namespace serenity::arg_formatter {
 
 		std::array<unsigned char, 25> timeSpecContainer {};
 		int timeSpecCounter { 0 };
+		std::array<wchar_t, 128> localizationBuffer {};
 	};
 
 	struct BracketSearchResults
@@ -306,8 +307,9 @@ namespace serenity::arg_formatter {
 		requires std::is_integral_v<std::remove_cvref_t<T>>
 		constexpr void TwoDigitToBuff(T val);
 		template<typename T> constexpr void FormatTimeField(T&& container);
-		constexpr void FormatCTime(const std::tm& cTimeStruct, const int& precision);
-		void LocalizeCTime(const std::locale& loc, const std::tm& timeStruct, const int& precision);    // TODO: Implement this
+		template<typename T> constexpr void FormatTimeField(T&& container, const std::locale& loc);
+		constexpr void FormatCTime(const std::tm& cTimeStruct, const int& precision, int startPos = 0, int endPos = 0);
+		void LocalizeCTime(const std::locale& loc, std::tm& timeStruct, const int& precision);
 		template<typename T> constexpr void WriteSimpleCTime(T&& container);
 		template<typename T> constexpr void Write24HourTime(T&& container, const int& hour, const int& min, const int& sec);
 		template<typename T> constexpr void WriteShortMonth(T&& container, const int& mon);
@@ -342,6 +344,7 @@ namespace serenity::arg_formatter {
 		template<typename T> constexpr void WriteWeek(T&& container, const int& yrday, const int& wkday);
 		template<typename T> constexpr void WriteIsoWeek(T&& container, const int& yrday, const int& wkday);
 		template<typename T> constexpr void WriteIsoWeekNumber(T&& container, const int& year, const int& yrday, const int& wkday);
+
 		// the distinct difference from these functions vs the 'Write' variants is that they should also handle localization & precision
 		// Right now, they are just one-for-one with one-another, minus the actual container writing portion
 		void FormatSubseconds(int precision);
@@ -454,29 +457,3 @@ namespace serenity {
 		return tmp;
 	}
 }    // namespace serenity
-
-/********************************************************************** Note: ***********************************************************************/
-// As a second note, I may end up reworking some of this to mirror how libfmt has its formatters set up as I have literally no idea how to accomplish
-// custom formatting at this point without something akin to "template<> struct formatter<Type>{};" . I might be able to get away with using an
-// inheritance based approach but I think it would make more sense to follow libfmt/<format>'s lead here for the formatter approach. Storing a
-// custom type's value should be relatively easy as I can just cast the value to a 'const void*' , store that value in the VType variant, and enumerate on
-// 'CustomType' but without some sort of  function callback for both parsing the value for user specs and formatting the value based on those specs,
-//  I would have no idea how to allow a user type to be formatted - nor do I know right now if it's possible to somehow store function pointers as
-// callables when they aren't a member function (I assume it is as that would make sense for just being fptr, but I just have no idea how I would need
-//  to approach that right now). I remember  back when I was working on the time-stamp formatting part of this project, that function pointers were
-//  a bit slower, especially when you had to  index into a collection for the right offset to dispatch that function, but that was for already known functions;
-//  I don't know if that approach would work in this case.
-/***************************************************************************************************************************************************/
-
-/********************************************************************** Note: ***********************************************************************/
-//    An idea for more efficient compile time formatting, once things are fleshed out here a bit more that is, is to  save the bracket offsets in the
-//    format string for a substitution bracket, then parse the bracket for validity checkes, rinse and repeat until the end of the format string is
-//    reached, then on Format(), splice the format string adding the formatted value to the offset and concatenate the results before returning the
-//    fully formatted string -> could speed things up a whole lot by basically just leaving the formatting step to runtime and quite literally everything
-//    else at compile time. If  there's no need to parse the format string for brackets, verify the specs in the bracket, and verify the specs are valid for
-//    the arg type given during runtime, then this could easily be a ~2x improvement as cpu cycles spend most of the time in the verification process
-//    and formatting process (finding the brackets and verifying a manual position are pretty negligible at ~6-8ns and ~5-10ns respectively) rather
-//    equally (with formatting leading the cycle usage by ~5-10% over the verify calls).
-//    EDIT: Reading a lot about SIMD instructions and I feel like there might be some niche cases where that could apply here, such as if there are
-//                multiple arguments of the same type - could then format them in tandem with one another?
-/****************************************************************************************************************************************************/
