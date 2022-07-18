@@ -23,8 +23,23 @@ namespace serenity::arg_formatter {
 		localeStream.clear();
 		localeStream.imbue(loc);
 		localeStream << std::put_time(&timeStruct, localeFmt.data());
-		auto& localeBuff { specValues.localizationBuffer };
-		for( auto& ch: localeStream.str() ) localeBuff[ valueSize++ ] = ch;
+
+		//************************************************************************************************************************************
+		// NOTE: May have to look into std::u8string family as that may fit better with both cases and simplify the buffer conversion quite a bit
+		//************************************************************************************************************************************
+
+		// method 1 correctly narrows but is lossy -> replacing non-ascii chars with '?'
+		auto locData { std::move(localeStream.str()) };
+		auto size { locData.size() };
+		SE_ASSERT(valueSize + size < buffer.size(), "Multibyte string is too large");
+		std::use_facet<std::ctype<wchar_t>>(loc).narrow(locData.data(), locData.data() + size, '?', buffer.data() + valueSize);
+		valueSize += size;
+
+		// method 2 works for storing but no valid way to convert -> could use the above method when localizing into a
+		// narrower container and otherwise just use the localization buffer if the container is wide enough?
+		//
+		// auto &localeBuff{specValues.localizationBuffer}; for( auto& ch: localeStream.str() ) localeBuff[
+		// valueSize++ ] = ch;
 	}
 
 	void ArgFormatter::FormatSubseconds(int precision) {

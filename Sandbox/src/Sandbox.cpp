@@ -434,7 +434,7 @@ int main() {
 	std::string timeStr;
 	Instrumentator cTimeTimer;
 	constexpr size_t timeIterations { 10'000'000 };
-	constexpr std::string_view formatString { "{:%d%b%y %T}" };
+	constexpr std::string_view formatString { "{:L%d%b%y %T}" };
 	constexpr const char* strftimeString { "%d%b%y %T" };
 	std::tm cTime {};
 	auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
@@ -502,14 +502,15 @@ int main() {
 	// %X Same as %T unless localized (localization not implemented yet)
 	// %Y Long Year takes ~32ns
 	// %Z timezone abbreviated takes ~32ns -> first time usage latency somewhat addressed with runtime initialization before formatting occurs
+	std::locale loc("zh_CN");
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			timeStr.clear();
-			serenity::format_to(std::back_inserter(timeStr), formatString, cTime);
+			serenity::format_to(std::back_inserter(timeStr), loc, formatString, cTime);
 		}
 	cTimeTimer.StopWatch_Stop();
 	std::cout << serenity::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(formatString, cTime));
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(loc, formatString, cTime));
 
 	// %a Short Day takes ~15ns
 	// %b Short Month takes ~18ns
