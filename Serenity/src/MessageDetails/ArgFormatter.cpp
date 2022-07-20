@@ -4,42 +4,39 @@ namespace serenity::arg_formatter {
 
 	// This doesn't take into account 'E' & 'O' modifiers as they were effectively erased when storing into the container -> need to update its usage for this case
 	void ArgFormatter::LocalizeCTime(const std::locale& loc, std::tm& timeStruct, const int& precision) {
-		static std::basic_ostringstream<wchar_t> localeStream;
-		std::wstring localeFmt;
+		static std::basic_ostringstream<char> localeStream;
+		std::string localeFmt;
 		int pos { -1 };
 		auto end { specValues.timeSpecCounter };
 		auto& cont { specValues.timeSpecContainer };
 		for( ;; ) {
 				if( ++pos >= end ) break;
-				localeFmt += L'%';
+				localeFmt += '%';
 				if( cont[ pos ] != ' ' ) {
-						localeFmt += static_cast<wchar_t>(cont[ pos ]);
+						localeFmt += static_cast<unsigned char>(cont[ pos ]);
 				} else {
 						// replace the automatic placement of '%'
-						localeFmt[ localeFmt.size() - 1 ] = L' ';
+						localeFmt[ localeFmt.size() - 1 ] = ' ';
 					}
 			}
-		localeStream.str(std::wstring());
+		localeStream.str(std::string());
 		localeStream.clear();
 		localeStream.imbue(loc);
 		localeStream << std::put_time(&timeStruct, localeFmt.data());
 
-		//************************************************************************************************************************************
-		// NOTE: May have to look into std::u8string family as that may fit better with both cases and simplify the buffer conversion quite a bit
-		//************************************************************************************************************************************
-
-		// method 1 correctly narrows but is lossy -> replacing non-ascii chars with '?'
 		auto locData { std::move(localeStream.str()) };
-		auto size { locData.size() };
-		SE_ASSERT(valueSize + size < buffer.size(), "Multibyte string is too large");
-		std::use_facet<std::ctype<wchar_t>>(loc).narrow(locData.data(), locData.data() + size, '?', buffer.data() + valueSize);
-		valueSize += size;
-
-		// method 2 works for storing but no valid way to convert -> could use the above method when localizing into a
-		// narrower container and otherwise just use the localization buffer if the container is wide enough?
-		//
-		// auto &localeBuff{specValues.localizationBuffer}; for( auto& ch: localeStream.str() ) localeBuff[
-		// valueSize++ ] = ch;
+		for( auto& ch: locData ) {
+				if( static_cast<unsigned char>(ch) >= 0x80 ) {
+						/*********************************************  handle code points above ascii codepoints here *********************************************/
+						// Unsure how to approach this atm, I believe I might just need to somehow form the appropriate grapheme cluster to get how many
+						// codepoints are present and increment the buffer in a manner that makes sense with this. I'm currently reading through utf8everywhere.org
+						// and doing some more research into this, but as of now, this is unhandled. In all honesty, I may be misunderstanding what I have to do in
+						// this block. I don't believe I have to do any widening or narrowing here but I do think I need to adequately space out the buffer based on
+						// what the grapheme cluster is.
+				} else {
+						buffer[ valueSize++ ] = ch;
+					}
+			}
 	}
 
 	void ArgFormatter::FormatSubseconds(int precision) {
