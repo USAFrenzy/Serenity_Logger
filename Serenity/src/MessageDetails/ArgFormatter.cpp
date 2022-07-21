@@ -1,38 +1,58 @@
 #include <serenity/MessageDetails/ArgFormatter.h>
 
 namespace serenity::arg_formatter {
+	using u8_string_stream = std::basic_ostringstream<unsigned char>;
+	using u8_string        = std::basic_string<unsigned char>;
 
-	// This doesn't take into account 'E' & 'O' modifiers as they were effectively erased when storing into the container -> need to update its usage for this case
+	// Note: there's no distinction made here for the overlapping case of 'Ey' and 'Oy' yet
+	static u8_string LocalizedFormat(const char& ch) {
+		u8_string tmp;
+		switch( ch ) {
+				case 'c': [[fallthrough]];
+				case 'x': [[fallthrough]];
+				case 'C': [[fallthrough]];
+				case 'X': [[fallthrough]];
+				case 'Y': tmp.append(1, 'E').append(1, ch); break;
+				default: tmp.append(1, 'O').append(1, ch); break;
+			}
+		return tmp;
+	}
+
+	// NOTE: After comparing with the use of std::format() in this case, this result actually matches up, so it may be container-based. I would still need to be able
+	// to adequately store the values though, but the conversion may only need to occur on the container writing portion instead
 	void ArgFormatter::LocalizeCTime(const std::locale& loc, std::tm& timeStruct, const int& precision) {
-		static std::basic_ostringstream<char> localeStream;
-		std::string localeFmt;
+		static u8_string_stream localeStream;
+		u8_string localeFmt;
 		int pos { -1 };
 		auto end { specValues.timeSpecCounter };
 		auto& cont { specValues.timeSpecContainer };
+		auto format { specValues.timeSpecFormat };
 		for( ;; ) {
 				if( ++pos >= end ) break;
-				localeFmt += '%';
 				if( cont[ pos ] != ' ' ) {
-						localeFmt += static_cast<unsigned char>(cont[ pos ]);
+						localeFmt += '%';
+						format[ pos ] == LocaleFormat::standard ? localeFmt.append(1, cont[ pos ]) : localeFmt.append(LocalizedFormat(cont[ pos ]));
 				} else {
-						// replace the automatic placement of '%'
-						localeFmt[ localeFmt.size() - 1 ] = ' ';
+						localeFmt.append(1, ' ');
 					}
 			}
-		localeStream.str(std::string());
+		localeStream.str(u8_string {});
 		localeStream.clear();
 		localeStream.imbue(loc);
+		// NOTE: most likely due to using unsigned char as the code unit, what was showing up as a valid character for the chinese locale now only shows up as a '?'
+		// with this line; it may be a MSVC thing, but changing the code unit to use char16_t or char32_t doesn't work here either, only wchar_t does, which is
+		// striking me as odd since char32_t in and of itself should be more than adequate here for the Chinese locale test case...
 		localeStream << std::put_time(&timeStruct, localeFmt.data());
-
 		auto locData { std::move(localeStream.str()) };
 		for( auto& ch: locData ) {
 				if( static_cast<unsigned char>(ch) >= 0x80 ) {
-						/*********************************************  handle code points above ascii codepoints here *********************************************/
+						buffer[ valueSize++ ] = '?';    // placeholder for now
+						/*********************************************  handle code units above ascii codepoints here *********************************************/
 						// Unsure how to approach this atm, I believe I might just need to somehow form the appropriate grapheme cluster to get how many
-						// codepoints are present and increment the buffer in a manner that makes sense with this. I'm currently reading through utf8everywhere.org
-						// and doing some more research into this, but as of now, this is unhandled. In all honesty, I may be misunderstanding what I have to do in
-						// this block. I don't believe I have to do any widening or narrowing here but I do think I need to adequately space out the buffer based on
-						// what the grapheme cluster is.
+						// code units are present and increment the buffer in a manner that makes sense with this. I'm currently reading through utf8everywhere.org
+						// and doing some more research into this, but as of now, this is unhandled and just replaces the character with '?' instead. In all honesty,
+						// I may be misunderstanding what I have to do in this block. I don't believe I have to do any widening or narrowing here but I do think I
+						// need to adequately space out the buffer based on what the codepoint is.
 				} else {
 						buffer[ valueSize++ ] = ch;
 					}
@@ -45,15 +65,7 @@ namespace serenity::arg_formatter {
 		if( !specValues.localize ) {
 				buffer[ valueSize++ ] = '.';
 				std::to_chars(begin + valueSize, begin + SERENITY_ARG_BUFFER_SIZE, subSeconds);
-		} else {
-				auto& localeBuff { specValues.localizationBuffer };
-				localeBuff[ valueSize++ ] = L'.';
-				auto end { std::to_chars(begin + valueSize, begin + SERENITY_ARG_BUFFER_SIZE, subSeconds).ptr };
-				for( ;; ) {
-						if( begin == end ) return;
-						localeBuff[ valueSize++ ] = static_cast<wchar_t>(*begin++);
-					}
-			}
+		}
 		valueSize += precision;
 	}
 
@@ -64,9 +76,7 @@ namespace serenity::arg_formatter {
 		auto min { static_cast<int>(hours * 0.166f) };
 		if( !specValues.localize ) {
 				buffer[ valueSize++ ] = (utcOffset.count() >= 0) ? '+' : '-';
-		} else {
-				specValues.localizationBuffer[ valueSize++ ] = (utcOffset.count() >= 0) ? L'+' : L'-';
-			}
+		}
 		Format24HM(hours, min);
 	}
 

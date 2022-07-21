@@ -431,10 +431,12 @@ int main() {
 
 #if ENABLE_CTIME_SANDBOX
 
+	std::locale loc("zh_CN");
+
 	std::string timeStr;
 	Instrumentator cTimeTimer;
 	constexpr size_t timeIterations { 10'000'000 };
-	constexpr std::string_view formatString { "{:L%d%b%y %T}" };
+	constexpr std::string_view formatString { "{:L%Od%b%Oy %T}" };
 	constexpr const char* strftimeString { "%d%b%y %T" };
 	std::tm cTime {};
 	auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
@@ -503,15 +505,14 @@ int main() {
 	// %Y Long Year takes ~32ns
 	// %Z timezone abbreviated takes ~32ns -> first time usage latency somewhat addressed with runtime initialization before formatting occurs
 
-	// std::locale loc("zh_CN");
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			timeStr.clear();
-			serenity::format_to(std::back_inserter(timeStr), /*loc,*/ formatString, cTime);
+			serenity::format_to(std::back_inserter(timeStr), loc, formatString, cTime);
 		}
 	cTimeTimer.StopWatch_Stop();
 	std::cout << serenity::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(/*loc,*/ formatString, cTime));
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(loc, formatString, cTime));
 
 	// %a Short Day takes ~15ns
 	// %b Short Month takes ~18ns
@@ -557,11 +558,11 @@ int main() {
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			timeStr.clear();
-			std::format_to(std::back_inserter(timeStr), formatString, flooredTime);
+			std::format_to(std::back_inserter(timeStr), loc, formatString, flooredTime);
 		}
 	cTimeTimer.StopWatch_Stop();
 	std::cout << std::format("Standard Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	                         cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::format(formatString, flooredTime));
+	                         cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::format(loc, formatString, flooredTime));
 
 	// ctime standard
 	constexpr size_t buffSize { 66 };    // mirror size of buff used internally

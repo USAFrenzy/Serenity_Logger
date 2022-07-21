@@ -402,7 +402,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 								case 'C': [[fallthrough]];
 								case 'X': [[fallthrough]];
 								case 'Y':
-									specValues.localize                                          = true;
+									specValues.timeSpecFormat[ specValues.timeSpecCounter ]      = LocaleFormat::localized;
 									specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
 									break;
 								default: ReportError(ErrorType::invalid_ctime_spec);
@@ -423,7 +423,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 								case 'U': [[fallthrough]];
 								case 'V': [[fallthrough]];
 								case 'W':
-									specValues.localize                                          = true;
+									specValues.timeSpecFormat[ specValues.timeSpecCounter ]      = LocaleFormat::localized;
 									specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
 									break;
 								default: ReportError(ErrorType::invalid_ctime_spec);
@@ -466,7 +466,10 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 					case 'Y': [[fallthrough]];
 					case 'Z': [[fallthrough]];
 					case '%': [[fallthrough]];
-					default: specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ]; break;
+					default:
+						specValues.timeSpecFormat[ specValues.timeSpecCounter ]      = LocaleFormat::standard;
+						specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
+						break;
 				}
 			if( ++pos >= size ) return;
 			switch( sv[ pos ] ) {

@@ -153,6 +153,12 @@ namespace serenity::arg_formatter {
 		manual
 	};
 
+	enum class LocaleFormat
+	{
+		standard = 0,
+		localized,
+	};
+
 	struct SpecFormatting
 	{
 		constexpr SpecFormatting()                                 = default;
@@ -177,9 +183,9 @@ namespace serenity::arg_formatter {
 		bool hasAlt { false };
 		bool hasClosingBrace { false };
 
+		std::array<LocaleFormat, 25> timeSpecFormat {};
 		std::array<unsigned char, 25> timeSpecContainer {};
 		int timeSpecCounter { 0 };
-		std::array<wchar_t, 128> localizationBuffer {};
 	};
 
 	struct BracketSearchResults
