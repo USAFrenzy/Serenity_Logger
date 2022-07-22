@@ -1,32 +1,41 @@
 #include <serenity/MessageDetails/ArgFormatter.h>
 
 namespace serenity::arg_formatter {
-	using u8_string_stream = std::basic_ostringstream<unsigned char>;
-	using u8_string        = std::basic_string<unsigned char>;
 
 	// Note: there's no distinction made here for the overlapping case of 'Ey' and 'Oy' yet
-	static u8_string LocalizedFormat(const char& ch) {
-		u8_string tmp;
+	static constexpr std::u32string LocalizedFormat(const char& ch) {
+		std::u32string tmp;
 		switch( ch ) {
 				case 'c': [[fallthrough]];
 				case 'x': [[fallthrough]];
 				case 'C': [[fallthrough]];
 				case 'X': [[fallthrough]];
-				case 'Y': tmp.append(1, 'E').append(1, ch); break;
-				default: tmp.append(1, 'O').append(1, ch); break;
+				case 'Y': tmp.append(1, U'E').append(1, static_cast<char32_t>(ch)); break;
+				default: tmp.append(1, U'O').append(1, static_cast<char32_t>(ch)); break;
 			}
-		return tmp;
+		return std::move(tmp);
 	}
 
-	// NOTE: After comparing with the use of std::format() in this case, this result actually matches up, so it may be container-based. I would still need to be able
-	// to adequately store the values though, but the conversion may only need to occur on the container writing portion instead
+	// NOTE: The use of std::put_time() incurs some massive overhead -> there may be a faster way to do this with the
+	//               locale's facets  instead but haven't looked into this quite yet, so currently unsure if that's a valid approach.
+	//              Other than that though, the recreation of the format string to use for std::put_time() also has some overhead;
+	//              only a small fraction of the overhead of std::put_time() itself, but it's the next line of code that hogs cycles in
+	//              this funtion. For reference, in 100,000,000 iterations, std::put_time() took ~60% of cpu cycles while the
+	//              reconstruction of the format string took ~13% of cpu cycles. So this can definitely be optimized more I think.
+	//              Still results (in a char based container) in timings that are ~2.5x faster than MSVC though -> though I'm not
+	//              encoding/decoding which may be why they have some more overhead.
 	void ArgFormatter::LocalizeCTime(const std::locale& loc, std::tm& timeStruct, const int& precision) {
-		static u8_string_stream localeStream;
-		u8_string localeFmt;
-		int pos { -1 };
 		auto end { specValues.timeSpecCounter };
-		auto& cont { specValues.timeSpecContainer };
+		// If the locale matches any of the below, they're taken care of by standard formatting via FormatCTime()
+		if( auto name { loc.name() }; name == "" || name == "C" || name == "en_US" || name == "en_US.UTF8" ) {
+				specValues.localize = false;    // set to false so that when writing to the container, it doesn't call the localization buffer
+				return FormatCTime(timeStruct, precision, 0, end);
+		}
+		static std::basic_ostringstream<char32_t> localeStream;
+		std::u32string localeFmt;
+		auto pos { -1 };
 		auto format { specValues.timeSpecFormat };
+		auto& cont { specValues.timeSpecContainer };
 		for( ;; ) {
 				if( ++pos >= end ) break;
 				if( cont[ pos ] != ' ' ) {
@@ -36,27 +45,14 @@ namespace serenity::arg_formatter {
 						localeFmt.append(1, ' ');
 					}
 			}
-		localeStream.str(u8_string {});
+		localeStream.str(std::u32string {});
 		localeStream.clear();
 		localeStream.imbue(loc);
-		// NOTE: most likely due to using unsigned char as the code unit, what was showing up as a valid character for the chinese locale now only shows up as a '?'
-		// with this line; it may be a MSVC thing, but changing the code unit to use char16_t or char32_t doesn't work here either, only wchar_t does, which is
-		// striking me as odd since char32_t in and of itself should be more than adequate here for the Chinese locale test case...
 		localeStream << std::put_time(&timeStruct, localeFmt.data());
 		auto locData { std::move(localeStream.str()) };
-		for( auto& ch: locData ) {
-				if( static_cast<unsigned char>(ch) >= 0x80 ) {
-						buffer[ valueSize++ ] = '?';    // placeholder for now
-						/*********************************************  handle code units above ascii codepoints here *********************************************/
-						// Unsure how to approach this atm, I believe I might just need to somehow form the appropriate grapheme cluster to get how many
-						// code units are present and increment the buffer in a manner that makes sense with this. I'm currently reading through utf8everywhere.org
-						// and doing some more research into this, but as of now, this is unhandled and just replaces the character with '?' instead. In all honesty,
-						// I may be misunderstanding what I have to do in this block. I don't believe I have to do any widening or narrowing here but I do think I
-						// need to adequately space out the buffer based on what the codepoint is.
-				} else {
-						buffer[ valueSize++ ] = ch;
-					}
-			}
+		auto& localeBuff { specValues.localizationBuff };
+		localeBuff.resize(locData.size());
+		for( auto& ch: locData ) localeBuff[ valueSize++ ] = ch;
 	}
 
 	void ArgFormatter::FormatSubseconds(int precision) {

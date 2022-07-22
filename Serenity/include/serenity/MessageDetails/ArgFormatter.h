@@ -185,6 +185,7 @@ namespace serenity::arg_formatter {
 
 		std::array<LocaleFormat, 25> timeSpecFormat {};
 		std::array<unsigned char, 25> timeSpecContainer {};
+		std::vector<char32_t> localizationBuff {};
 		int timeSpecCounter { 0 };
 	};
 

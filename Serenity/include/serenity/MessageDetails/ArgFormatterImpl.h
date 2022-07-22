@@ -265,14 +265,32 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& contai
 		}
 }
 
-// TODO: Need to find a way to get the localized formatted time value into the container here.
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(buffer.data(), valueSize);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
+	if( !specValues.localize ) {
+			if constexpr( std::is_same_v<type<T>, std::string> ) {
+					container.append(buffer.data(), valueSize);
+			} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+					container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
+			} else {
+					std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
+				}
 	} else {
-			std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
+			auto& localeBuff { specValues.localizationBuff };
+			if constexpr( std::is_same_v<type<T>, std::wstring> ) {
+					container.append(localeBuff.data(), valueSize);
+			} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
+					container.insert(container.end(), localeBuff.data(), localeBuff.data() + valueSize);
+			} else {
+					// I'm still learning and researching things related to encoding/decoding so I'm not even sure if there's a way to perform a lossless
+					// conversion between encodings and add the correct codepoints for glyphs to the same underlying container if that container is
+					//  narrower than the codepoint -> would you just skip the next byte if a 'ch' here has a byte value > 0x80? How does one figure
+					// out the total length of that codepoint? Obviously skipping the next byte might work for smaller codepoints but what about
+					// larger ones such as most eastern languages glyphs happen to be larger than two bytes?
+
+					// NOTE: This is just a naive approach as I'm unsure as of right now how to handle cases where the container may not be wide enough.
+					auto iter { std::back_inserter(container) };
+					for( auto& ch: localeBuff ) ch >= 0x80 ? iter = '?' : iter = static_cast<char>(ch);
+				}
 		}
 }
 
