@@ -39,6 +39,82 @@
 using namespace serenity::msg_details;
 namespace serenity {
 
+	// this struct will probably be moved someplace else, such as Common.h, to work on adding full utf-8 support project-wide
+	struct utf_helper
+	{
+		// Stick to using wchar_t here and deal with UTF-16/UTF-32 decoding to UTF-8 encoding. If the standard changes to
+		// require specializations for char16_t & char32_t for stringstreams with time formatting, then this SHOULD also change
+		using se_wchar        = wchar_t;
+		using se_wstring      = std::basic_string<se_wchar>;
+		using se_wstring_view = std::basic_string_view<se_wchar>;
+
+		// NOTE: Still need to add support for values that would require up to 6 bytes
+		static constexpr size_t CodeUnitLength(se_wstring_view sv) {
+			size_t reserveSize {};
+			int pos { -1 };
+			auto size { sv.size() };
+			for( ;; ) {
+					if( ++pos >= size ) return reserveSize;
+					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
+							++reserveSize;
+							continue;
+					} else if( ch <= 0x7FF ) {
+							reserveSize += 2;
+							continue;
+					} else if( ch <= 0xFFFF ) {
+							reserveSize += 3;
+							continue;
+					} else if( ch <= 0x10FFFF ) {
+							reserveSize += 4;
+							continue;
+					}
+				}
+		}
+
+		// NOTE: For the case of windows or any environment where wchar_t is 2 bytes, may need to check for surrogate pairs?
+		// Need to check if windows uses them in their wchar_t types. Since wchar_t is either 2 or 4 bytes long, the check itself
+		// isn't needed for the 4 bytes long case as it's large enough to encode an entire unicode codepoint as-is.
+		static constexpr void WidenTo32(se_wstring_view wstr, std::u32string& result) {
+			int pos { -1 };
+			auto size { wstr.size() };
+			for( ;; ) {
+					if( ++pos >= size ) return;
+					result += static_cast<char32_t>(wstr[ pos ]);
+				}
+		}
+
+		// NOTE: Still need to add support for values that would require up to 6 bytes
+		static constexpr void U32ToU8(std::u32string_view sv, std::vector<unsigned char>& localeBuff, size_t& startingPos) {
+			int pos = -1;
+			auto size { sv.size() };
+			for( ;; ) {
+					if( ++pos >= size ) return;
+					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
+							localeBuff[ startingPos++ ] = static_cast<unsigned char>(ch);
+							continue;
+					} else if( ch <= 0x7FF ) {
+							// handle encoding to 2 byte utf-8 sequence here
+							localeBuff[ startingPos++ ] = 0xC0 | (ch >> 6);
+							localeBuff[ startingPos++ ] = 0x80 | (ch & 0x3F);
+							continue;
+					} else if( ch <= 0xFFFF ) {
+							// handle encoding to 3 byte utf-8 sequence here
+							localeBuff[ startingPos++ ] = 0xE0 | (ch >> 12);
+							localeBuff[ startingPos++ ] = 0x80 | ((ch >> 6) & 0x3F);
+							localeBuff[ startingPos++ ] = 0x80 | (ch & 0x3F);
+							continue;
+					} else if( ch <= 0x10FFFF ) {
+							// handle encoding to 4 byte utf-8 sequence here
+							localeBuff[ startingPos++ ] = 0xF0 | (ch >> 18);
+							localeBuff[ startingPos++ ] = 0x80 | ((ch >> 12) & 0x3F);
+							localeBuff[ startingPos++ ] = 0x80 | ((ch >> 6) & 0x3F);
+							localeBuff[ startingPos++ ] = 0x80 | (ch & 0x3F);
+							continue;
+					}
+				}
+		}
+	};
+
 	// drop-in replacement for format_error for the ArgFormatter class
 	class format_error: public std::runtime_error
 	{
@@ -73,9 +149,10 @@ namespace serenity {
 		invalid_pointer_spec,
 		invalid_ctime_spec,
 		missing_ctime_spec,
+		invalid_codepoint,
 	};
 
-	static constexpr std::array<const char*, 18> format_error_messages = {
+	static constexpr std::array<const char*, 19> format_error_messages = {
 		"Unkown Formatting Error Occured.",
 		"Missing Closing '}' In Argument Spec Field.",
 		"Error In Position Field: No ':' Or '}' Found While In Automatic Indexing Mode.",
@@ -95,6 +172,7 @@ namespace serenity {
 		"Error In Format: Invalid Type Specifier For Pointer Type Argument.",
 		"Error In Format: Invalid Time Specifier For C-Time Type Argument.",
 		"Error In Format: Missing C-Time Specifier After '%'.",
+		"Error In Decoding Character Set: Illegal Code Point Present In Code Unit",
 	};
 
 	static constexpr bool IsDigit(const char& ch) {
@@ -185,7 +263,7 @@ namespace serenity::arg_formatter {
 
 		std::array<LocaleFormat, 25> timeSpecFormat {};
 		std::array<unsigned char, 25> timeSpecContainer {};
-		std::vector<char32_t> localizationBuff {};
+		std::vector<unsigned char> localizationBuff {};
 		int timeSpecCounter { 0 };
 	};
 

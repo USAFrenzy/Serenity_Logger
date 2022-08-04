@@ -431,7 +431,8 @@ int main() {
 
 #if ENABLE_CTIME_SANDBOX
 
-	std::locale loc("zh_CN");
+	std::locale loc("zh_CN.UTF-8");
+	SetConsoleOutputCP(CP_UTF8);
 
 	std::string timeStr;
 	Instrumentator cTimeTimer;
@@ -508,11 +509,11 @@ int main() {
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			timeStr.clear();
-			serenity::format_to(std::back_inserter(timeStr), /*loc, */ formatString, cTime);
+			serenity::format_to(std::back_inserter(timeStr), loc, formatString, cTime);
 		}
 	cTimeTimer.StopWatch_Stop();
 	std::cout << serenity::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(/*loc, */ formatString, cTime));
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(loc, formatString, cTime));
 
 	// %a Short Day takes ~15ns
 	// %b Short Month takes ~18ns
@@ -558,11 +559,11 @@ int main() {
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			timeStr.clear();
-			std::format_to(std::back_inserter(timeStr), /*loc,*/ formatString, flooredTime);
+			std::format_to(std::back_inserter(timeStr), loc, formatString, flooredTime);
 		}
 	cTimeTimer.StopWatch_Stop();
 	std::cout << std::format("Standard Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	                         cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::format(/*loc,*/ formatString, flooredTime));
+	                         cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::format(loc, formatString, flooredTime));
 
 	// ctime standard
 	constexpr size_t buffSize { 66 };    // mirror size of buff used internally

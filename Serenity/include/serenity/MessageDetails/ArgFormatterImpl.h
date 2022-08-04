@@ -265,31 +265,52 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& contai
 		}
 }
 
+static constexpr std::vector<char> ConvBuffToSigned(std::vector<unsigned char>& buff, size_t endPos) {
+	std::vector<char> signedTemp(endPos);
+	auto pos { -1 };
+	for( ;; ) {
+			if( ++pos >= endPos ) break;
+			signedTemp[ pos ] = static_cast<signed char>(buff[ pos ]);
+		}
+	return std::move(signedTemp);
+}
+
+template<typename T> struct is_basic_char_buff;
+template<typename T>
+struct is_basic_char_buff: std::bool_constant<std::is_same_v<T, std::array<char, serenity::arg_formatter::SERENITY_ARG_BUFFER_SIZE>> ||
+                                              std::is_same_v<T, std::vector<unsigned char>> || std::is_same_v<T, std::vector<char>>>
+{
+};
+template<typename T> inline constexpr bool is_basic_char_buff_v = is_basic_char_buff<T>::value;
+
+template<typename T, typename U> static constexpr void FlushBuffer(T&& buff, size_t endPos, U&& container) requires is_basic_char_buff_v<serenity::type<T>> {
+	if constexpr( std::is_same_v<type<U>, std::string> ) {
+			container.append(buff.data(), endPos);
+	} else if constexpr( std::is_same_v<type<U>, std::vector<typename type<U>::value_type>> ) {
+			container.insert(container.end(), buff.data(), buff.data() + endPos);
+	} else {
+			auto iter { std::back_inserter(container) };
+			std::copy(buff.data(), buff.data() + endPos, iter);
+		}
+}
+
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
 	if( !specValues.localize ) {
-			if constexpr( std::is_same_v<type<T>, std::string> ) {
-					container.append(buffer.data(), valueSize);
-			} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-					container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
-			} else {
-					std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
-				}
+			using BuffRef = FwdRef<std::array<char, SERENITY_ARG_BUFFER_SIZE>>;
+			FlushBuffer(std::forward<BuffRef>(buffer), valueSize, std::forward<T>(container));
 	} else {
+			using BuffRef = FwdRef<std::vector<unsigned char>>;
 			auto& localeBuff { specValues.localizationBuff };
-			if constexpr( std::is_same_v<type<T>, std::wstring> ) {
-					container.append(localeBuff.data(), valueSize);
-			} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-					container.insert(container.end(), localeBuff.data(), localeBuff.data() + valueSize);
+			// This is some rudimentary utf-8 byte validation, need to actually validate in the conversion functions
+			for( auto& ch: localeBuff ) {
+					if( ch != 0xFF && ch != 0xFE ) continue;
+					ReportError(ErrorType::invalid_codepoint);
+				}
+			if constexpr( std::is_signed_v<char> ) {
+					// Since localeBuff is of unsigned char tyoe, need to convert to signed char for systems that use signed char as the basic char type
+					FlushBuffer(std::move(ConvBuffToSigned(localeBuff, valueSize)), valueSize, std::forward<T>(container));
 			} else {
-					// I'm still learning and researching things related to encoding/decoding so I'm not even sure if there's a way to perform a lossless
-					// conversion between encodings and add the correct codepoints for glyphs to the same underlying container if that container is
-					//  narrower than the codepoint -> would you just skip the next byte if a 'ch' here has a byte value > 0x80? How does one figure
-					// out the total length of that codepoint? Obviously skipping the next byte might work for smaller codepoints but what about
-					// larger ones such as most eastern languages glyphs happen to be larger than two bytes?
-
-					// NOTE: This is just a naive approach as I'm unsure as of right now how to handle cases where the container may not be wide enough.
-					auto iter { std::back_inserter(container) };
-					for( auto& ch: localeBuff ) ch >= 0x80 ? iter = '?' : iter = static_cast<char>(ch);
+					FlushBuffer(std::forward<BuffRef>(localeBuff), valueSize, std::forward<T>(container));
 				}
 		}
 }
@@ -405,8 +426,6 @@ static constexpr void ParseChronoSpec(const char& ch, const char& next) {
 		}
 }
 
-// most of these have been covered already in FormatterArgs.h, so porting their usage over should be easy -> just debating
-// on a couple of these cases though as they seem redundant (like %g/%G)
 constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string_view sv, size_t& pos) {
 	// this is for c-time formatting
 	auto size { sv.size() };
@@ -513,7 +532,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyFillAlignTimeField(s
 
 constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimePrecisionField(std::string_view sv, size_t& currentPosition) {
 	using enum msg_details::SpecType;
-	// maybe handle the subsecond precision here instead? would remove the %e custom flag on the logger side
 	if( const auto& ch { sv[ ++currentPosition ] }; IsDigit(ch) ) {
 			auto data { sv.data() };
 			currentPosition += se_from_chars(data + currentPosition, data + sv.size(), specValues.precision);
@@ -2113,6 +2131,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::ReportError(ErrorType err)
 			case invalid_pointer_spec: throw format_error(format_error_messages[ 16 ]); break;
 			case invalid_ctime_spec: throw format_error(format_error_messages[ 17 ]); break;
 			case missing_ctime_spec: throw format_error(format_error_messages[ 18 ]); break;
+			case invalid_codepoint: throw format_error(format_error_messages[ 19 ]); break;
 			default: throw format_error(format_error_messages[ 0 ]); break;
 		}
 }
