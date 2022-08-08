@@ -39,95 +39,6 @@
 using namespace serenity::msg_details;
 namespace serenity {
 
-	// this struct will probably be moved someplace else, such as Common.h, to work on adding full utf-8 support project-wide
-	struct utf_helper
-	{
-		// Stick to using wchar_t here and deal with UTF-16/UTF-32 decoding to UTF-8 encoding. If the standard changes to
-		// require specializations for char16_t & char32_t for stringstreams with time formatting, then this SHOULD also change
-		using se_wchar        = wchar_t;
-		using se_wstring      = std::basic_string<se_wchar>;
-		using se_wstring_view = std::basic_string_view<se_wchar>;
-
-		// NOTE: Still need to add support for values that would require up to 6 bytes
-		static constexpr size_t CodeUnitLength(se_wstring_view sv) {
-			size_t reserveSize {};
-			int pos { -1 };
-			auto size { sv.size() };
-			for( ;; ) {
-					if( ++pos >= size ) return reserveSize;
-					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
-							++reserveSize;
-							continue;
-					} else if( ch <= 0x7FF ) {
-							reserveSize += 2;
-							continue;
-					} else if( ch <= 0xFFFF ) {
-							reserveSize += 3;
-							continue;
-					} else if( ch <= 0x10FFFF ) {
-							reserveSize += 4;
-							continue;
-					}
-				}
-		}
-
-		// NOTE: For the case of windows or any environment where wchar_t is 2 bytes, may need to check for surrogate pairs?
-		// Need to check if windows uses them in their wchar_t types. Since wchar_t is either 2 or 4 bytes long, the check itself
-		// isn't needed for the 4 bytes long case as it's large enough to encode an entire unicode codepoint as-is.
-		static constexpr void WidenTo32(se_wstring_view wstr, std::u32string& result) {
-			int pos { -1 };
-			auto size { wstr.size() };
-			for( ;; ) {
-					if( ++pos >= size ) return;
-					result += static_cast<char32_t>(wstr[ pos ]);
-				}
-		}
-
-		// NOTE: Still need to add support for values that would require up to 6 bytes
-		static constexpr void U32ToU8(std::u32string_view sv, std::vector<unsigned char>& localeBuff, size_t& startingPos) {
-			int pos = -1;
-			auto size { sv.size() };
-			for( ;; ) {
-					if( ++pos >= size ) return;
-					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
-							localeBuff[ startingPos++ ] = static_cast<unsigned char>(ch);
-							continue;
-					} else if( ch <= 0x7FF ) {
-							// handle encoding to 2 byte utf-8 sequence here
-							localeBuff[ startingPos++ ] = 0xC0 | (ch >> 6);
-							localeBuff[ startingPos++ ] = 0x80 | (ch & 0x3F);
-							continue;
-					} else if( ch <= 0xFFFF ) {
-							// handle encoding to 3 byte utf-8 sequence here
-							localeBuff[ startingPos++ ] = 0xE0 | (ch >> 12);
-							localeBuff[ startingPos++ ] = 0x80 | ((ch >> 6) & 0x3F);
-							localeBuff[ startingPos++ ] = 0x80 | (ch & 0x3F);
-							continue;
-					} else if( ch <= 0x10FFFF ) {
-							// handle encoding to 4 byte utf-8 sequence here
-							localeBuff[ startingPos++ ] = 0xF0 | (ch >> 18);
-							localeBuff[ startingPos++ ] = 0x80 | ((ch >> 12) & 0x3F);
-							localeBuff[ startingPos++ ] = 0x80 | ((ch >> 6) & 0x3F);
-							localeBuff[ startingPos++ ] = 0x80 | (ch & 0x3F);
-							continue;
-					}
-				}
-		}
-	};
-
-	// drop-in replacement for format_error for the ArgFormatter class
-	class format_error: public std::runtime_error
-	{
-	  public:
-		explicit format_error(const char* message): std::runtime_error(message) { }
-		explicit format_error(const std::string& message): std::runtime_error(message) { }
-		format_error(const format_error&)            = default;
-		format_error& operator=(const format_error&) = default;
-		format_error(format_error&&)                 = default;
-		format_error& operator=(format_error&&)      = default;
-		~format_error() noexcept override            = default;
-	};
-
 	enum class ErrorType
 	{
 		none = 0,
@@ -152,27 +63,202 @@ namespace serenity {
 		invalid_codepoint,
 	};
 
-	static constexpr std::array<const char*, 19> format_error_messages = {
-		"Unkown Formatting Error Occured.",
-		"Missing Closing '}' In Argument Spec Field.",
-		"Error In Position Field: No ':' Or '}' Found While In Automatic Indexing Mode.",
-		"Error In Postion Field: Cannot Mix Manual And Automatic Indexing For Arguments."
-		"Error In Position Field: Missing Positional Argument Before ':' In Manual Indexing Mode.",
-		"Formatting Error Detected: Missing ':' Before Next Specifier.",
-		"Error In Position Argument Field: Max Position (24) Exceeded.",
-		"Error In Fill/Align Field: Invalid Fill Character Provided.",
-		"Error In Alternate Field: Argument Type Has No Alternate Form.",
-		"Error In Precision Field: An Integral Type Is Not Allowed To Have A Precsision Field.",
-		"Error In Locale Field: Argument Type Cannot Be Localized.",
-		"Error In Format: Invalid Type Specifier For Int Type Argument.",
-		"Error In Format: Invalid Type Specifier For Float Type Argument.",
-		"Error In Format: Invalid Type Specifier For String Type Argument.",
-		"Error In Format: Invalid Type Specifier For Bool Type Argument.",
-		"Error In Format: Invalid Type Specifier For Char Type Argument.",
-		"Error In Format: Invalid Type Specifier For Pointer Type Argument.",
-		"Error In Format: Invalid Time Specifier For C-Time Type Argument.",
-		"Error In Format: Missing C-Time Specifier After '%'.",
-		"Error In Decoding Character Set: Illegal Code Point Present In Code Unit",
+	struct error_handler
+	{
+		// drop-in replacement for format_error for the ArgFormatter class
+		class format_error: public std::runtime_error
+		{
+		  public:
+			explicit format_error(const char* message): std::runtime_error(message) { }
+			explicit format_error(const std::string& message): std::runtime_error(message) { }
+			format_error(const format_error&) = default;
+			format_error& operator=(const format_error&) = default;
+			format_error(format_error&&)                 = default;
+			format_error& operator=(format_error&&) = default;
+			~format_error() noexcept override       = default;
+		};
+
+		static constexpr std::array<const char*, 19> format_error_messages = {
+			"Unkown Formatting Error Occured.",
+			"Missing Closing '}' In Argument Spec Field.",
+			"Error In Position Field: No ':' Or '}' Found While In Automatic Indexing Mode.",
+			"Error In Postion Field: Cannot Mix Manual And Automatic Indexing For Arguments."
+			"Error In Position Field: Missing Positional Argument Before ':' In Manual Indexing Mode.",
+			"Formatting Error Detected: Missing ':' Before Next Specifier.",
+			"Error In Position Argument Field: Max Position (24) Exceeded.",
+			"Error In Fill/Align Field: Invalid Fill Character Provided.",
+			"Error In Alternate Field: Argument Type Has No Alternate Form.",
+			"Error In Precision Field: An Integral Type Is Not Allowed To Have A Precsision Field.",
+			"Error In Locale Field: Argument Type Cannot Be Localized.",
+			"Error In Format: Invalid Type Specifier For Int Type Argument.",
+			"Error In Format: Invalid Type Specifier For Float Type Argument.",
+			"Error In Format: Invalid Type Specifier For String Type Argument.",
+			"Error In Format: Invalid Type Specifier For Bool Type Argument.",
+			"Error In Format: Invalid Type Specifier For Char Type Argument.",
+			"Error In Format: Invalid Type Specifier For Pointer Type Argument.",
+			"Error In Format: Invalid Time Specifier For C-Time Type Argument.",
+			"Error In Format: Missing C-Time Specifier After '%'.",
+			"Error In Decoding Character Set: Illegal Code Point Present In Code Unit",
+		};
+		[[noreturn]] constexpr void ReportError(ErrorType err);
+	};
+
+	template<typename T> struct is_char_type;
+	template<typename T>
+	struct is_char_type: std::bool_constant<std::is_same_v<T, char> || std::is_same_v<T, unsigned char> || std::is_same_v<T, wchar_t> ||
+	                                        std::is_same_v<T, char16_t> || std::is_same_v<T, char32_t>>
+	{
+	};
+	template<typename T> inline constexpr bool is_char_type_v = is_char_type<T>::value;
+
+	template<typename Char>
+	concept String_View_Type = requires {
+		is_char_type_v<Char>&& std::is_convertible_v<std::basic_string<Char>, std::basic_string_view<Char>>;
+	};
+
+	// this struct will probably be moved someplace else, such as Common.h, to work on adding full utf-8 support project-wide
+	struct utf_helper
+	{
+		// Stick to using wchar_t here and deal with UTF-16/UTF-32 decoding to UTF-8 encoding. If the standard changes to
+		// require specializations for char16_t & char32_t for stringstreams with time formatting, then this SHOULD also change
+		using se_wchar         = wchar_t;
+		using se_wstring       = std::basic_string<se_wchar>;
+		using se_wstring_view  = std::basic_string_view<se_wchar>;
+		using se_u8string_view = std::basic_string_view<unsigned char>;
+
+		constexpr bool IsLittleEndian() {
+			constexpr short int val = 0x0001;
+			return reinterpret_cast<const char*>(&val)[ 0 ] ? true : false;
+		}
+
+		template<typename Char> constexpr size_t CodeUnitLengthInU8(std::basic_string_view<Char> sv) requires String_View_Type<Char> {
+			size_t reserveSize {};
+			int pos { -1 };
+			auto size { sv.size() };
+			for( ;; ) {
+					if( ++pos >= size ) return reserveSize;
+					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
+							++reserveSize;
+							continue;
+					} else if( ch <= 0x7FF ) {
+							reserveSize += 2;
+							continue;
+					} else if( ch <= 0xFFFF ) {
+							reserveSize += 3;
+							continue;
+					} else if( ch <= 0x10FFFF ) {
+							reserveSize += 4;
+							continue;
+					} else {
+							reserveSize += 2;    // this will be used to add the replacement character bytes
+						}
+				}
+		}
+
+		// Possibly add an overload for std::u16string family for this as well
+		constexpr void U16ToU32(se_wstring_view wstr, std::u32string& result) {
+			int pos { -1 };
+			auto size { wstr.size() };
+			for( ;; ) {
+					if( ++pos >= size ) return;
+					if( wstr[ pos ] < 0xD800 ) {
+							result += static_cast<char32_t>(wstr[ pos ]);
+							continue;
+					} else {
+							// not entirely sure I need to copy-pasta the assert here as everything I've read so far seems to dictate that the pairing seems to
+							// always be high byte then low byte for surrogate pairs -> will need to do more research on that to ensure that is 100% true though.
+							SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+							                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB "
+							                            "instead.");
+							if( wstr[ pos ] <= 0xDBFF ) {    // check for valid high byte in pair, can skip checking for 0xD800, as that was already checked above
+									if( ++pos < size && (wstr[ pos ] >= 0xDC00 && wstr[ pos ] <= 0xDFFF) ) {    // check for valid low byte in pair
+											char32_t cp { 0x10000 };
+											cp += (wstr[ --pos ] & 0x03FF) << 10;
+											cp += (wstr[ ++pos ] & 0x03FF);
+											result += cp;
+											continue;
+									} else {
+											SE_ASSERT(false, "Illegal Surrogate Byte In Low Byte");
+										}
+							} else {
+									SE_ASSERT(false, "Illegal Surrogate Byte In High Byte");
+								}
+							result += 0xFFDD;    // if surrogate pair is invalid, replace with the question mark box codepoint
+						}
+				}
+		}
+
+		// Extremely basic and rudimentary validation
+		constexpr bool IsValidU8(se_u8string_view sv) {
+			auto size { sv.size() };
+			int pos { -1 };
+			auto CheckTrailingByte = [](unsigned char byte) {
+				// valid trailing byte lays between 1000 0000 and 1011 1111
+				return (byte >= 0x80 && byte <= 0xBF) ? true : false;
+			};
+			for( ;; ) {
+					if( ++pos >= size ) return true;
+					auto& byte { sv[ pos ] };
+					if( byte < 0x80 ) continue;    // no additional checks need to happen on a one byte sequence
+					/* For the rest, check the appropriate number of trailing bytes for proper trailing signatures */
+					int bytesToCheck { 0 };
+					if( byte >= 0xC0 && byte <= 0xDF ) {
+							bytesToCheck = 1;
+					} else if( byte >= 0xE0 && byte <= 0xEF ) {
+							bytesToCheck = 2;
+					} else if( byte >= 0xF0 && byte <= 0xF7 ) {
+							bytesToCheck = 3;
+					} else {
+							// As of Unicode Version 14.0 (2021Sep14), there are only 144,697 characters in use, including emojis, so while
+							// 5-byte and 6-byte sequences are technically supported, they are not defined so return false here. Only time
+							// this really would need to be updated is once the Unicode Version dictates more than 1,114,111 characters in
+							// use as that number is the max value a 4-byte sequence can map to.
+							return false;
+						}
+					for( ; bytesToCheck > 0; --bytesToCheck ) {
+							if( !CheckTrailingByte(sv[ ++pos ]) ) return false;
+						}
+				}
+		}
+
+		constexpr void U32ToU8(std::u32string_view sv, std::vector<unsigned char>& buff, size_t& startingPos) {
+			int pos = -1;
+			auto size { sv.size() };
+			for( ;; ) {
+					if( ++pos >= size ) {
+							SE_ASSERT(IsValidU8(se_u8string_view(buff.data(), buff.data() + startingPos)), "Invalid Code Point Detected In UTF-8 Byte Sequence");
+							return;
+					}
+					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
+							buff[ startingPos++ ] = static_cast<unsigned char>(ch);
+							continue;
+					} else if( ch <= 0x7FF ) {
+							// handle encoding to 2 byte utf-8 sequence here
+							buff[ startingPos++ ] = 0xC0 | (ch >> 6);
+							buff[ startingPos++ ] = 0x80 | (ch & 0x3F);
+							continue;
+					} else if( ch <= 0xFFFF ) {
+							// handle encoding to 3 byte utf-8 sequence here
+							buff[ startingPos++ ] = 0xE0 | (ch >> 12);
+							buff[ startingPos++ ] = 0x80 | ((ch >> 6) & 0x3F);
+							buff[ startingPos++ ] = 0x80 | (ch & 0x3F);
+							continue;
+					} else if( ch <= 0x10FFFF ) {
+							// handle encoding to 4 byte utf-8 sequence here
+							buff[ startingPos++ ] = 0xF0 | (ch >> 18);
+							buff[ startingPos++ ] = 0x80 | ((ch >> 12) & 0x3F);
+							buff[ startingPos++ ] = 0x80 | ((ch >> 6) & 0x3F);
+							buff[ startingPos++ ] = 0x80 | (ch & 0x3F);
+							continue;
+					} else {
+							// 5-byte and 6-byte sequences are apparently supported for the long-term but are not defined, therefore, instead of encoding these
+							// cases to utf-8, use the repacement character instead and in debug builds, raise an error when the 0xFF byte is detected in validation.
+							buff[ startingPos++ ] = 0xFF;
+							buff[ startingPos++ ] = 0xDD;
+							continue;
+						}
+				}
+		}
 	};
 
 	static constexpr bool IsDigit(const char& ch) {
@@ -239,12 +325,12 @@ namespace serenity::arg_formatter {
 
 	struct SpecFormatting
 	{
-		constexpr SpecFormatting()                                 = default;
-		constexpr SpecFormatting(const SpecFormatting&)            = default;
+		constexpr SpecFormatting()                      = default;
+		constexpr SpecFormatting(const SpecFormatting&) = default;
 		constexpr SpecFormatting& operator=(const SpecFormatting&) = default;
 		constexpr SpecFormatting(SpecFormatting&&)                 = default;
-		constexpr SpecFormatting& operator=(SpecFormatting&&)      = default;
-		constexpr ~SpecFormatting()                                = default;
+		constexpr SpecFormatting& operator=(SpecFormatting&&) = default;
+		constexpr ~SpecFormatting()                           = default;
 
 		constexpr void ResetSpecs();
 		unsigned char argPosition { 0 };
@@ -269,12 +355,12 @@ namespace serenity::arg_formatter {
 
 	struct BracketSearchResults
 	{
-		constexpr BracketSearchResults()                                       = default;
-		constexpr BracketSearchResults(const BracketSearchResults&)            = default;
+		constexpr BracketSearchResults()                            = default;
+		constexpr BracketSearchResults(const BracketSearchResults&) = default;
 		constexpr BracketSearchResults& operator=(const BracketSearchResults&) = default;
 		constexpr BracketSearchResults(BracketSearchResults&&)                 = default;
-		constexpr BracketSearchResults& operator=(BracketSearchResults&&)      = default;
-		constexpr ~BracketSearchResults()                                      = default;
+		constexpr BracketSearchResults& operator=(BracketSearchResults&&) = default;
+		constexpr ~BracketSearchResults()                                 = default;
 
 		constexpr void Reset();
 		size_t beginPos { 0 };
@@ -328,11 +414,11 @@ namespace serenity::arg_formatter {
 	{
 	  public:
 		constexpr ArgFormatter();
-		constexpr ArgFormatter(const ArgFormatter&)            = delete;
+		constexpr ArgFormatter(const ArgFormatter&) = delete;
 		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
 		constexpr ArgFormatter(ArgFormatter&&)                 = default;
-		constexpr ArgFormatter& operator=(ArgFormatter&&)      = default;
-		constexpr ~ArgFormatter()                              = default;
+		constexpr ArgFormatter& operator=(ArgFormatter&&) = default;
+		constexpr ~ArgFormatter()                         = default;
 
 		// clang-format off
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args);
@@ -350,7 +436,6 @@ namespace serenity::arg_formatter {
 		template<typename T> constexpr void Format(T&& container, const SpecType& argType);
 		template<typename T> constexpr void Format(T&& container, const std::locale& loc, const SpecType& argType);
 		/******************************************************* Parsing/Verification Related Functions *******************************************************/
-		[[noreturn]] constexpr void ReportError(ErrorType err);
 		constexpr bool FindBrackets(std::string_view sv);
 		constexpr void Parse(std::string_view sv, size_t& currentPosition, const SpecType& argType);
 		constexpr void VerifyTimeSpec(std::string_view sv, size_t& position);
@@ -512,6 +597,8 @@ namespace serenity::arg_formatter {
 		std::array<char, SERENITY_ARG_BUFFER_SIZE> buffer;
 		size_t valueSize;
 		std::vector<char> fillBuffer;
+		serenity::error_handler errHandle;
+		serenity::utf_helper utfHelper;
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
 }    // namespace serenity::arg_formatter
@@ -541,4 +628,33 @@ namespace serenity {
 		globals::staticFormatter->se_format_to(std::back_inserter(tmp), locale, sv, std::forward<Args>(args)...);
 		return tmp;
 	}
+
+	// Now that the runtime errors are organized in a neater fashion, would really love to figure out how libfmt does compile-time checking.
+	// A lot of what is being used to verify things are all runtime-access stuff so I'm assuming achieving this won't be easy at all =/
+	constexpr void serenity::error_handler::ReportError(ErrorType err) {
+		using enum ErrorType;
+		switch( err ) {
+				case missing_bracket: throw format_error(format_error_messages[ 1 ]); break;
+				case position_field_spec: throw format_error(format_error_messages[ 2 ]); break;
+				case position_field_mode: throw format_error(format_error_messages[ 3 ]); break;
+				case position_field_no_position: throw format_error(format_error_messages[ 4 ]); break;
+				case position_field_runon: throw format_error(format_error_messages[ 5 ]); break;
+				case max_args_exceeded: throw format_error(format_error_messages[ 6 ]); break;
+				case invalid_fill_character: throw format_error(format_error_messages[ 7 ]); break;
+				case invalid_alt_type: throw format_error(format_error_messages[ 8 ]); break;
+				case invalid_precision_type: throw format_error(format_error_messages[ 9 ]); break;
+				case invalid_locale_type: throw format_error(format_error_messages[ 10 ]); break;
+				case invalid_int_spec: throw format_error(format_error_messages[ 11 ]); break;
+				case invalid_float_spec: throw format_error(format_error_messages[ 12 ]); break;
+				case invalid_string_spec: throw format_error(format_error_messages[ 13 ]); break;
+				case invalid_bool_spec: throw format_error(format_error_messages[ 14 ]); break;
+				case invalid_char_spec: throw format_error(format_error_messages[ 15 ]); break;
+				case invalid_pointer_spec: throw format_error(format_error_messages[ 16 ]); break;
+				case invalid_ctime_spec: throw format_error(format_error_messages[ 17 ]); break;
+				case missing_ctime_spec: throw format_error(format_error_messages[ 18 ]); break;
+				case invalid_codepoint: throw format_error(format_error_messages[ 19 ]); break;
+				default: throw format_error(format_error_messages[ 0 ]); break;
+			}
+	}
+
 }    // namespace serenity

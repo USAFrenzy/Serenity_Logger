@@ -18,11 +18,6 @@ namespace serenity::arg_formatter {
 		return std::move(tmp);
 	}
 
-	constexpr static bool IsLittleEndian() {
-		constexpr short int val = 0x0001;
-		return reinterpret_cast<const char*>(&val)[ 0 ] ? true : false;
-	}
-
 	// NOTE: The use of std::put_time() incurs some massive overhead -> there may be a faster way to do this with the
 	//               locale's facets  instead but haven't looked into this quite yet, so currently unsure if that's a valid approach.
 	//              Other than that though, the recreation of the format string to use for std::put_time() also has some overhead;
@@ -39,8 +34,8 @@ namespace serenity::arg_formatter {
 				return FormatCTime(timeStruct, precision, 0, end);
 		}
 		// Due to major shifts over to little endian back in the early 2000's, this is making the assumption that the system is LE and NOT BE.
-		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		SE_ASSERT(utfHelper.IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+		                                      "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 
 		std::u32string locData;
 		static std::basic_ostringstream<serenity::utf_helper::se_wchar> localeStream;
@@ -65,9 +60,10 @@ namespace serenity::arg_formatter {
 		auto initialData { std::move(localeStream.str()) };    // moving the string value so as not to continuously have to call localeStream.str() later on
 		auto& localeBuff { specValues.localizationBuff };
 		// widen the wchar_t bytes to char32_t and then encode them as utf-8 bytes
-		localeBuff.resize(serenity::utf_helper::CodeUnitLength(initialData));
-		serenity::utf_helper::WidenTo32(initialData, locData);
-		serenity::utf_helper::U32ToU8(locData, localeBuff, valueSize);
+		utfHelper.U16ToU32(initialData, locData);    // se_whar size == 4, this only widens each byte instead
+		localeBuff.clear();
+		localeBuff.resize(utfHelper.CodeUnitLengthInU8<char32_t>(locData));
+		utfHelper.U32ToU8(locData, localeBuff, valueSize);
 		//*******************************************************************************************
 	}
 

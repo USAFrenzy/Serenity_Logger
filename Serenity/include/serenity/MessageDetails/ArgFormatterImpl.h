@@ -40,7 +40,7 @@ static constexpr std::array<const char*, 12> short_months  = { "Jan", "Feb", "Ma
 static constexpr std::array<const char*, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 static constexpr std::array<const char*, 7> long_weekdays  = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 static constexpr std::array<const char*, 12> long_months   = { "January", "February", "March",     "April",   "May",      "June",
-	                                                           "July",    "August",   "September", "October", "November", "December" };
+                                                             "July",    "August",   "September", "October", "November", "December" };
 // Only handles a max of two digits and foregoes any real safety checks but is faster than std::from_chars()
 // in regards to its usage in VerifyPositionField() by ~38% when compiled with -02. For reference,
 // std::from_chars() averaged ~2.1ns and se_from_chars() averages ~1.3ns for this specific use case.
@@ -294,6 +294,7 @@ template<typename T, typename U> static constexpr void FlushBuffer(T&& buff, siz
 		}
 }
 
+// I'll wait until I get back home, but may just go ahead and reduce the buffers down to one buffer and resize when needed
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
 	if( !specValues.localize ) {
 			using BuffRef = FwdRef<std::array<char, SERENITY_ARG_BUFFER_SIZE>>;
@@ -301,11 +302,6 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 	} else {
 			using BuffRef = FwdRef<std::vector<unsigned char>>;
 			auto& localeBuff { specValues.localizationBuff };
-			// This is some rudimentary utf-8 byte validation, need to actually validate in the conversion functions
-			for( auto& ch: localeBuff ) {
-					if( ch != 0xFF && ch != 0xFE ) continue;
-					ReportError(ErrorType::invalid_codepoint);
-				}
 			if constexpr( std::is_signed_v<char> ) {
 					// Since localeBuff is of unsigned char tyoe, need to convert to signed char for systems that use signed char as the basic char type
 					FlushBuffer(std::move(ConvBuffToSigned(localeBuff, valueSize)), valueSize, std::forward<T>(container));
@@ -442,7 +438,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 									specValues.timeSpecFormat[ specValues.timeSpecCounter ]      = LocaleFormat::localized;
 									specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
 									break;
-								default: ReportError(ErrorType::invalid_ctime_spec);
+								default: errHandle.ReportError(ErrorType::invalid_ctime_spec);
 							}
 						break;
 					case 'O':
@@ -463,7 +459,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 									specValues.timeSpecFormat[ specValues.timeSpecCounter ]      = LocaleFormat::localized;
 									specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
 									break;
-								default: ReportError(ErrorType::invalid_ctime_spec);
+								default: errHandle.ReportError(ErrorType::invalid_ctime_spec);
 							}
 						break;
 					case 'a': [[fallthrough]];
@@ -510,7 +506,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 				}
 			if( ++pos >= size ) return;
 			switch( sv[ pos ] ) {
-					case '%': ++pos >= size ? ReportError(ErrorType::missing_ctime_spec) : void(0); continue;
+					case '%': ++pos >= size ? errHandle.ReportError(ErrorType::missing_ctime_spec) : void(0); continue;
 					case '}': return;
 					default: continue;
 				}
@@ -541,7 +537,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimePrecisionField(s
 			switch( ch ) {
 					case '{': VerifyPositionalField(sv, ++currentPosition, specValues.nestedPrecArgPos); return;
 					case '}': VerifyPositionalField(sv, currentPosition, specValues.nestedPrecArgPos); return;
-					default: ReportError(ErrorType::missing_bracket); return;
+					default: errHandle.ReportError(ErrorType::missing_bracket); return;
 				}
 		}
 }
@@ -918,15 +914,15 @@ constexpr bool serenity::arg_formatter::ArgFormatter::FindBrackets(std::string_v
 		}
 	end = begin;
 	for( ;; ) {
-			if( ++end >= svSize ) ReportError(ErrorType::missing_bracket);
+			if( ++end >= svSize ) errHandle.ReportError(ErrorType::missing_bracket);
 			switch( sv[ end ] ) {
 					case '}': return true; break;
 					case '{':
 						for( ;; ) {
-								if( ++end >= svSize ) ReportError(ErrorType::missing_bracket);
+								if( ++end >= svSize ) errHandle.ReportError(ErrorType::missing_bracket);
 								if( sv[ end ] != '}' ) continue;
 								for( ;; ) {
-										if( ++end >= svSize ) ReportError(ErrorType::missing_bracket);
+										if( ++end >= svSize ) errHandle.ReportError(ErrorType::missing_bracket);
 										if( sv[ end ] != '}' ) continue;
 										return true;
 									}
@@ -964,7 +960,7 @@ constexpr bool serenity::arg_formatter::ArgFormatter::VerifyPositionalField(std:
 								++start;
 								return true;
 								break;
-							default: ReportError(ErrorType::position_field_spec); break;
+							default: errHandle.ReportError(ErrorType::position_field_spec); break;
 						}
 			}
 	} else {
@@ -979,11 +975,11 @@ constexpr bool serenity::arg_formatter::ArgFormatter::VerifyPositionalField(std:
 								++start;
 								return true;
 							case '}': ++start; return false;
-							default: ReportError(ErrorType::position_field_mode); break;
+							default: errHandle.ReportError(ErrorType::position_field_mode); break;
 						}
 			} else {
 					switch( sv[ start ] ) {
-							case '}': ReportError(ErrorType::position_field_mode); break;
+							case '}': errHandle.ReportError(ErrorType::position_field_mode); break;
 							case ' ':
 								{
 									auto size { sv.size() };
@@ -994,12 +990,12 @@ constexpr bool serenity::arg_formatter::ArgFormatter::VerifyPositionalField(std:
 									return VerifyPositionalField(sv, start, positionValue);
 									break;
 								}
-							case ':': ReportError(ErrorType::position_field_no_position); break;
-							default: ReportError(ErrorType::position_field_runon); break;
+							case ':': errHandle.ReportError(ErrorType::position_field_no_position); break;
+							default: errHandle.ReportError(ErrorType::position_field_runon); break;
 						}
 				}
 		}
-	ReportError(ErrorType::none);
+	errHandle.ReportError(ErrorType::none);
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::OnAlignLeft(const char& ch, size_t& pos) {
@@ -1010,7 +1006,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnAlignLeft(const char& ch
 	} else if( ch != '{' && ch != '}' ) {
 			specValues.fillCharacter = ch;
 	} else {
-			ReportError(ErrorType::invalid_fill_character);
+			errHandle.ReportError(ErrorType::invalid_fill_character);
 		}
 }
 constexpr void serenity::arg_formatter::ArgFormatter::OnAlignRight(const char& ch, size_t& pos) {
@@ -1021,7 +1017,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnAlignRight(const char& c
 	} else if( ch != '{' && ch != '}' ) {
 			specValues.fillCharacter = ch;
 	} else {
-			ReportError(ErrorType::invalid_fill_character);
+			errHandle.ReportError(ErrorType::invalid_fill_character);
 		}
 }
 constexpr void serenity::arg_formatter::ArgFormatter::OnAlignCenter(const char& ch, size_t& pos) {
@@ -1032,7 +1028,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnAlignCenter(const char& 
 	} else if( ch != '{' && ch != '}' ) {
 			specValues.fillCharacter = ch;
 	} else {
-			ReportError(ErrorType::invalid_fill_character);
+			errHandle.ReportError(ErrorType::invalid_fill_character);
 		}
 }
 constexpr void serenity::arg_formatter::ArgFormatter::OnAlignDefault(const SpecType& argType, size_t& pos) {
@@ -1090,7 +1086,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyAltField(std::string
 			case U_LongLongType: [[fallthrough]];
 			case CharType: [[fallthrough]];
 			case BoolType: specValues.hasAlt = true; return;
-			default: ReportError(ErrorType::invalid_alt_type); break;
+			default: errHandle.ReportError(ErrorType::invalid_alt_type); break;
 		}
 }
 
@@ -1103,7 +1099,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyWidthField(std::stri
 			switch( ch ) {
 					case '{': VerifyPositionalField(sv, ++currentPosition, specValues.nestedWidthArgPos); return;
 					case '}': VerifyPositionalField(sv, currentPosition, specValues.nestedWidthArgPos); return;
-					default: ReportError(ErrorType::missing_bracket); return;
+					default: errHandle.ReportError(ErrorType::missing_bracket); return;
 				}
 		}
 }
@@ -1117,7 +1113,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyPrecisionField(std::
 			case FloatType: [[fallthrough]];
 			case DoubleType: [[fallthrough]];
 			case LongDoubleType: break;
-			default: ReportError(ErrorType::invalid_precision_type); break;
+			default: errHandle.ReportError(ErrorType::invalid_precision_type); break;
 		}
 	if( const auto& ch { sv[ ++currentPosition ] }; IsDigit(ch) ) {
 			auto data { sv.data() };
@@ -1128,7 +1124,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyPrecisionField(std::
 			switch( ch ) {
 					case '{': VerifyPositionalField(sv, ++currentPosition, specValues.nestedPrecArgPos); return;
 					case '}': VerifyPositionalField(sv, currentPosition, specValues.nestedPrecArgPos); return;
-					default: ReportError(ErrorType::missing_bracket); return;
+					default: errHandle.ReportError(ErrorType::missing_bracket); return;
 				}
 		}
 }
@@ -1142,7 +1138,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyLocaleField(std::str
 			case SpecType::MonoType: [[fallthrough]];
 			case SpecType::StringType: [[fallthrough]];
 			case SpecType::StringViewType: [[fallthrough]];
-			case SpecType::VoidPtrType: ReportError(ErrorType::invalid_locale_type); break;
+			case SpecType::VoidPtrType: errHandle.ReportError(ErrorType::invalid_locale_type); break;
 			default: specValues.localize = true; return;
 		}
 }
@@ -1198,17 +1194,17 @@ constexpr void serenity::arg_formatter::ArgFormatter::OnInvalidTypeSpec(const Sp
 			case IntType: [[fallthrough]];
 			case U_IntType: [[fallthrough]];
 			case LongLongType: [[fallthrough]];
-			case U_LongLongType: ReportError(ErrorType::invalid_int_spec); break;
+			case U_LongLongType: errHandle.ReportError(ErrorType::invalid_int_spec); break;
 			case FloatType: [[fallthrough]];
 			case DoubleType: [[fallthrough]];
-			case LongDoubleType: ReportError(ErrorType::invalid_float_spec); break;
+			case LongDoubleType: errHandle.ReportError(ErrorType::invalid_float_spec); break;
 			case StringType: [[fallthrough]];
 			case CharPointerType: [[fallthrough]];
-			case StringViewType: ReportError(ErrorType::invalid_string_spec); break;
-			case BoolType: ReportError(ErrorType::invalid_bool_spec); break;
-			case CharType: ReportError(ErrorType::invalid_char_spec); break;
+			case StringViewType: errHandle.ReportError(ErrorType::invalid_string_spec); break;
+			case BoolType: errHandle.ReportError(ErrorType::invalid_bool_spec); break;
+			case CharType: errHandle.ReportError(ErrorType::invalid_char_spec); break;
 			case ConstVoidPtrType: [[fallthrough]];
-			case VoidPtrType: ReportError(ErrorType::invalid_pointer_spec); break;
+			case VoidPtrType: errHandle.ReportError(ErrorType::invalid_pointer_spec); break;
 			case MonoType: [[fallthrough]];
 			case CustomType: [[fallthrough]];
 			case CTimeType: return;    // possibly issue warning on a type spec being provided on no argument?
@@ -2104,34 +2100,5 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 			case StringType: return FormatStringType(std::forward<FwdRef<T>>(container), argStorage.string_state(specValues.argPosition), precision);
 			case CharPointerType: return FormatStringType(std::forward<FwdRef<T>>(container), argStorage.c_string_state(specValues.argPosition), precision);
 			default: return;
-		}
-}
-
-// Now that the runtime errors are organized in a neater fashion, would really love to figure out
-// how libfmt does compile-time checking.  A lot of what is being used to verify things are all
-// runtime-access stuff so I'm assuming achieving this won't be easy at all =/
-constexpr void serenity::arg_formatter::ArgFormatter::ReportError(ErrorType err) {
-	using enum ErrorType;
-	switch( err ) {
-			case missing_bracket: throw format_error(format_error_messages[ 1 ]); break;
-			case position_field_spec: throw format_error(format_error_messages[ 2 ]); break;
-			case position_field_mode: throw format_error(format_error_messages[ 3 ]); break;
-			case position_field_no_position: throw format_error(format_error_messages[ 4 ]); break;
-			case position_field_runon: throw format_error(format_error_messages[ 5 ]); break;
-			case max_args_exceeded: throw format_error(format_error_messages[ 6 ]); break;
-			case invalid_fill_character: throw format_error(format_error_messages[ 7 ]); break;
-			case invalid_alt_type: throw format_error(format_error_messages[ 8 ]); break;
-			case invalid_precision_type: throw format_error(format_error_messages[ 9 ]); break;
-			case invalid_locale_type: throw format_error(format_error_messages[ 10 ]); break;
-			case invalid_int_spec: throw format_error(format_error_messages[ 11 ]); break;
-			case invalid_float_spec: throw format_error(format_error_messages[ 12 ]); break;
-			case invalid_string_spec: throw format_error(format_error_messages[ 13 ]); break;
-			case invalid_bool_spec: throw format_error(format_error_messages[ 14 ]); break;
-			case invalid_char_spec: throw format_error(format_error_messages[ 15 ]); break;
-			case invalid_pointer_spec: throw format_error(format_error_messages[ 16 ]); break;
-			case invalid_ctime_spec: throw format_error(format_error_messages[ 17 ]); break;
-			case missing_ctime_spec: throw format_error(format_error_messages[ 18 ]); break;
-			case invalid_codepoint: throw format_error(format_error_messages[ 19 ]); break;
-			default: throw format_error(format_error_messages[ 0 ]); break;
 		}
 }
