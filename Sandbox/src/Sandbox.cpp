@@ -545,14 +545,15 @@ int main() {
 	// %X Same as %T unless localized (localization not implemented yet)
 	// %Y Long Year takes ~15ns
 	// %Z timezone abbreviated takes ~15ns
-	cTimeTimer.StopWatch_Reset();
-	for( size_t i { 0 }; i < timeIterations; ++i ) {
-			timeStr.clear();
-			timeStr.append(formatter.FormatUserPattern());
-		}
-	cTimeTimer.StopWatch_Stop();
-	std::cout << serenity::format("FormatterArgs Struct For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), formatter.FormatUserPattern());
+
+	// cTimeTimer.StopWatch_Reset();
+	// for( size_t i { 0 }; i < timeIterations; ++i ) {
+	//		timeStr.clear();
+	//		timeStr.append(formatter.FormatUserPattern());
+	//	}
+	// cTimeTimer.StopWatch_Stop();
+	// std::cout << serenity::format("FormatterArgs Struct For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), formatter.FormatUserPattern());
 
 	// standard
 	auto flooredTime { std::chrono::floor<std::chrono::seconds>(localTime) };    // taking this out of the loop (should've been outside the loop anyways)
@@ -566,21 +567,22 @@ int main() {
 	                         cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::format(loc, formatString, flooredTime));
 
 	// ctime standard
-	constexpr size_t buffSize { 66 };    // mirror size of buff used internally
 	// Note: internal buff used was for arithmetic formatting but since it makes sense to reuse it, doubling its usage case
 	// for time formatting as well - hence why the size is larger than it probably needs to be for time related formatting
-	char buff[ buffSize ] {};
-	cTimeTimer.StopWatch_Reset();
-	for( size_t i { 0 }; i < timeIterations; ++i ) {
-			std::memset(&buff, 0, buffSize);
-			std::strftime(buff, buffSize, strftimeString, &cTime);
-		}
-	cTimeTimer.StopWatch_Stop();
-	std::cout << serenity::format("Strftime Formatting For Format Specs Took: [{} ns] \nWith Result: {}\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::string_view(buff, buffSize));
 
-	localTime = tz->to_local(std::chrono::system_clock::now());
-	std::cout << std::format("{:*^85%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	//	constexpr size_t buffSize { 66 };    // mirror size of buff used internally
+	// char buff[ buffSize ] {};
+	// cTimeTimer.StopWatch_Reset();
+	// for( size_t i { 0 }; i < timeIterations; ++i ) {
+	//		std::memset(&buff, 0, buffSize);
+	//		std::strftime(buff, buffSize, strftimeString, &cTime);
+	//	}
+	// cTimeTimer.StopWatch_Stop();
+	// std::cout << serenity::format("Strftime Formatting For Format Specs Took: [{} ns] \nWith Result: {}\n",
+	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::string_view(buff, buffSize));
+
+	// localTime = tz->to_local(std::chrono::system_clock::now());
+	// std::cout << std::format("{:*^85%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
 
 	// *****************************************************************************************************************************
 	// In order of performance of time related formatting from the results of the above loops (fastest to slowest):

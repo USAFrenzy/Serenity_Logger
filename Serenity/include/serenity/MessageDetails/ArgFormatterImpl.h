@@ -40,7 +40,7 @@ static constexpr std::array<const char*, 12> short_months  = { "Jan", "Feb", "Ma
 static constexpr std::array<const char*, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 static constexpr std::array<const char*, 7> long_weekdays  = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 static constexpr std::array<const char*, 12> long_months   = { "January", "February", "March",     "April",   "May",      "June",
-                                                             "July",    "August",   "September", "October", "November", "December" };
+	                                                           "July",    "August",   "September", "October", "November", "December" };
 // Only handles a max of two digits and foregoes any real safety checks but is faster than std::from_chars()
 // in regards to its usage in VerifyPositionField() by ~38% when compiled with -02. For reference,
 // std::from_chars() averaged ~2.1ns and se_from_chars() averages ~1.3ns for this specific use case.
@@ -277,8 +277,8 @@ static constexpr std::vector<char> ConvBuffToSigned(std::vector<unsigned char>& 
 
 template<typename T> struct is_basic_char_buff;
 template<typename T>
-struct is_basic_char_buff: std::bool_constant<std::is_same_v<T, std::array<char, serenity::arg_formatter::SERENITY_ARG_BUFFER_SIZE>> ||
-                                              std::is_same_v<T, std::vector<unsigned char>> || std::is_same_v<T, std::vector<char>>>
+struct is_basic_char_buff: std::bool_constant<std::is_same_v<type<T>, std::array<char, serenity::arg_formatter::SERENITY_ARG_BUFFER_SIZE>> ||
+                                              std::is_same_v<type<T>, std::vector<unsigned char>> || std::is_same_v<type<T>, std::vector<char>>>
 {
 };
 template<typename T> inline constexpr bool is_basic_char_buff_v = is_basic_char_buff<T>::value;

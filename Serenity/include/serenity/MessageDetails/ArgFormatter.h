@@ -71,11 +71,11 @@ namespace serenity {
 		  public:
 			explicit format_error(const char* message): std::runtime_error(message) { }
 			explicit format_error(const std::string& message): std::runtime_error(message) { }
-			format_error(const format_error&) = default;
+			format_error(const format_error&)            = default;
 			format_error& operator=(const format_error&) = default;
 			format_error(format_error&&)                 = default;
-			format_error& operator=(format_error&&) = default;
-			~format_error() noexcept override       = default;
+			format_error& operator=(format_error&&)      = default;
+			~format_error() noexcept override            = default;
 		};
 
 		static constexpr std::array<const char*, 19> format_error_messages = {
@@ -103,6 +103,9 @@ namespace serenity {
 		[[noreturn]] constexpr void ReportError(ErrorType err);
 	};
 
+	/***************************************** convenience usage for template constraints for utf_helper *****************************************/
+
+	// support is given for all but char8_t until that's ironed out by the standard more
 	template<typename T> struct is_char_type;
 	template<typename T>
 	struct is_char_type: std::bool_constant<std::is_same_v<T, char> || std::is_same_v<T, unsigned char> || std::is_same_v<T, wchar_t> ||
@@ -111,85 +114,423 @@ namespace serenity {
 	};
 	template<typename T> inline constexpr bool is_char_type_v = is_char_type<T>::value;
 
-	template<typename Char>
-	concept String_View_Type = requires {
-		is_char_type_v<Char>&& std::is_convertible_v<std::basic_string<Char>, std::basic_string_view<Char>>;
+	// string view type constraints
+	template<typename T> using StringView                     = std::basic_string_view<type<T>>;
+
+	template<typename T> struct is_basic_string_view;
+	template<typename T>
+	struct is_basic_string_view: std::bool_constant<std::is_same_v<type<T>, StringView<char>> || std::is_same_v<type<T>, StringView<unsigned char>>>
+	{
+	};
+	template<typename T> inline constexpr bool is_basic_string_view_v = is_basic_string_view<T>::value;
+
+	template<typename T> struct is_u16_type_string_view;
+	template<typename T>
+	struct is_u16_type_string_view: std::bool_constant<std::is_same_v<type<T>, StringView<wchar_t>> || std::is_same_v<type<T>, StringView<char16_t>>>
+	{
+	};
+	template<typename T> inline constexpr bool is_u16_type_string_view_v = is_u16_type_string_view<T>::value;
+
+	template<typename T> struct is_string_view;
+	template<typename T>
+	struct is_string_view: std::bool_constant<is_basic_string_view_v<type<T>> || is_u16_type_string_view_v<type<T>> || std::is_same_v<type<T>, StringView<char32_t>>>
+	{
+	};
+	template<typename T> inline constexpr bool is_string_view_v = is_string_view<T>::value;
+
+	// string type constraints
+	template<typename T> using String                           = std::basic_string<type<T>>;
+
+	template<typename T> struct is_basic_string;
+	template<typename T> struct is_basic_string: std::bool_constant<std::is_same_v<type<T>, String<char>> || std::is_same_v<type<T>, String<unsigned char>>>
+	{
+	};
+	template<typename T> inline constexpr bool is_basic_string_v = is_basic_string<T>::value;
+
+	template<typename T> struct is_u16_type_string;
+	template<typename T> struct is_u16_type_string: std::bool_constant<std::is_same_v<type<T>, String<wchar_t>> || std::is_same_v<type<T>, String<char16_t>>>
+	{
+	};
+	template<typename T> inline constexpr bool is_u16_type_string_v = is_u16_type_string<T>::value;
+
+	template<typename T> struct is_string;
+	template<typename T> struct is_string: std::bool_constant<is_basic_string_v<T> || is_u16_type_string_v<T> || std::is_same_v<type<T>, String<char32_t>>>
+	{
+	};
+	template<typename T> inline constexpr bool is_string_v = is_string<T>::value;
+
+	// vector type constraints
+	template<typename T> struct is_basic_char_vector;
+	template<typename T>
+	struct is_basic_char_vector: std::bool_constant<std::is_same_v<type<T>, std::vector<unsigned char>> || std::is_same_v<type<T>, std::vector<char>>>
+	{
+	};
+	template<typename T> static inline constexpr bool is_basic_char_vector_v = is_basic_char_vector<T>::value;
+
+	template<typename T> struct is_char32_vector;
+	template<typename T> struct is_char32_vector: std::bool_constant<std::is_same_v<type<T>, std::vector<char32_t>>>
+	{
+	};
+	template<typename T> static inline constexpr bool is_char32_vector_v = is_char32_vector<T>::value;
+
+	template<typename T> struct is_wide_vector;
+	template<typename T> struct is_wide_vector: std::bool_constant<std::is_same_v<type<T>, std::vector<char16_t>> || std::is_same_v<type<T>, std::vector<wchar_t>>>
+	{
+	};
+	template<typename T> static inline constexpr bool is_wide_vector_v = is_wide_vector<T>::value;
+
+	// concept constraints that use the above individual constraints
+	template<typename StringishType>
+	concept ConvertibleToSuppSV = requires {
+		// I don't support char8_t here so I need to check that char type is supported instead and then make sure that a string_view is constructible
+		// in the case that a user passes a char-like type that aliases a supported char type but may or may not be constructible as a string view
+		is_char_type_v<typename type<StringishType>::value_type> &&
+		(is_string_view_v<StringishType> ||
+		 std::is_convertible_v<std::basic_string<typename type<StringishType>::value_type>, std::basic_string_view<typename type<StringishType>::value_type>>);
+	};
+
+	template<typename Source>
+	concept IsSupportedU16Source = requires {
+		is_u16_type_string_v<Source> || is_u16_type_string_view_v<Source>;
+	};
+
+	template<typename Buffer>
+	concept IsSupportedU16Container = requires {
+		is_wide_vector_v<Buffer> || std::is_same_v<type<Buffer>, std::wstring> || std::is_same_v<type<Buffer>, std::u16string>;
+	};
+
+	template<typename Source>
+	concept IsSupportedU32Source = requires {
+		std::is_same_v<type<Source>, std::u32string> || std::is_same_v<type<Source>, std::u32string_view>;
+	};
+
+	template<typename Buffer>
+	concept IsSupportedU32Container = requires {
+		is_char32_vector_v<Buffer> || std::is_same_v<type<Buffer>, std::u32string>;
+	};
+
+	template<typename Buffer>
+	concept IsSupportedU8Container = requires {
+		is_basic_char_vector_v<Buffer> || is_basic_string_v<Buffer>;
 	};
 
 	// this struct will probably be moved someplace else, such as Common.h, to work on adding full utf-8 support project-wide
 	struct utf_helper
 	{
+	  public:
 		// Stick to using wchar_t here and deal with UTF-16/UTF-32 decoding to UTF-8 encoding. If the standard changes to
 		// require specializations for char16_t & char32_t for stringstreams with time formatting, then this SHOULD also change
-		using se_wchar         = wchar_t;
-		using se_wstring       = std::basic_string<se_wchar>;
-		using se_wstring_view  = std::basic_string_view<se_wchar>;
-		using se_u8string_view = std::basic_string_view<unsigned char>;
+		using se_wchar   = wchar_t;
+		using se_wstring = std::basic_string<se_wchar>;
 
+	  private:
+		template<typename T> constexpr auto ConvertToSv(T&& v) requires ConvertibleToSuppSV<T> {
+			using type = std::basic_string_view<typename type<T>::value_type>;
+			return std::forward<type>(type(v));
+		}
+
+		// As more utility functions are created, need to update this to reflect varying codepoint sizes. Right now it works as-is due to the
+		// fact that the conversions currently happening are from a 32 bit value with a fixed width, but when utf-8 -> any other encoding,
+		// utf-16 -> utf-8 , utf-32 -> utf-16,  or any other conversions occur. this won't be the case.
+		template<typename SVType> constexpr size_t ReserveLengthForU8Impl(SVType sv) requires is_string_view_v<SVType> {
+			using Type = typename type<SVType>::value_type;
+			size_t reserveSize {};
+			int pos { -1 };
+			auto size { sv.size() };
+
+			if constexpr( std::is_same_v<Type, char32_t> ) {
+					for( ;; ) {
+							if( ++pos >= size ) return reserveSize;
+							if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
+									++reserveSize;
+									continue;
+							} else if( ch <= 0x7FF ) {
+									reserveSize += 2;
+									continue;
+							} else if( ch <= 0xFFFF ) {
+									reserveSize += 3;
+									continue;
+							} else if( ch <= 0x10FFFF ) {
+									reserveSize += 4;
+									continue;
+							} else {
+									reserveSize += 2;    // this will be used to add the replacement character bytes
+								}
+						}
+			} else {
+					SE_ASSERT(false, "Reserving Size For Any Other Encoding Besides UTF-32LE Is Currently Unsupported At The Moment");
+				}
+		}
+
+		template<typename StringView, typename Buffer = std::u32string, typename Pos = size_t>
+		requires is_u16_type_string_view_v<StringView>
+		constexpr void U16ToU32StrImpl(StringView wstr, Buffer&& result, Pos&& startingPos) {
+			int pos { startingPos == 0 ? -1 : static_cast<int>(--startingPos) };
+			auto size { wstr.size() };
+			if( result.capacity() < size ) result.reserve(result.size() + size);
+
+			if constexpr( sizeof(se_wchar) == 2 ) {
+					for( ;; ) {
+							if( ++pos >= size ) {
+									if constexpr( std::is_lvalue_reference_v<Pos> ) {
+											startingPos += result.size();
+									}
+									return;
+							}
+							if( wstr[ pos ] < 0xD800 ) {
+									result += static_cast<char32_t>(wstr[ pos ]);
+									continue;
+							} else {
+									// not entirely sure I need to copy-pasta the assert here as everything I've read so far seems to dictate that the pairing seems
+									// to always be high byte then low byte for surrogate pairs -> will need to do more research on that to ensure that is 100% true
+									// though.
+									SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+									                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or "
+									                            "USE_FMTLIB instead.");
+									// check for valid high byte in pair, can skip checking for 0xD800, as that was already checked above
+									if( wstr[ pos ] <= 0xDBFF ) {
+											if( ++pos < size && (wstr[ pos ] >= 0xDC00 && wstr[ pos ] <= 0xDFFF) ) {    // check for valid low byte in pair
+													char32_t cp { 0x10000 };
+													cp += (wstr[ --pos ] & 0x03FF) << 10;
+													cp += (wstr[ ++pos ] & 0x03FF);
+													result += std::move(cp);
+													continue;
+											} else {
+													SE_ASSERT(false, "Illegal Surrogate Byte In Low Byte");
+												}
+									} else {
+											SE_ASSERT(false, "Illegal Surrogate Byte In High Byte");
+										}
+									result += static_cast<char32_t>(0xFFDD);    // if surrogate pair is invalid, replace with the question mark box codepoint
+								}
+						}
+			} else {
+					// se_wchar/wchar_t is 4 bytes long so just cast to char32_t instead
+					for( ;; ) {
+							if( ++pos >= size ) {
+									if constexpr( std::is_lvalue_reference_v<Pos> ) {
+											startingPos += result.size();
+									}
+									return;
+							}
+							result += static_cast<char32_t>(wstr[ pos ]);
+						}
+				}
+		}
+
+		template<typename StringView, typename Buffer = std::vector<char32_t>, typename Pos = size_t>
+		requires is_u16_type_string_view_v<StringView>
+		constexpr void U16ToU32VecImpl(StringView wstr, Buffer&& result, Pos&& startingPos) {
+			int pos { startingPos == 0 ? -1 : static_cast<int>(--startingPos) };
+			auto size { wstr.size() };
+			if( result.capacity() < size ) result.reserve(result.size() + size);
+
+			if constexpr( sizeof(se_wchar) == 2 ) {
+					for( ;; ) {
+							if( ++pos >= size ) {
+									if constexpr( std::is_lvalue_reference_v<Pos> ) {
+											startingPos += result.size();
+									}
+									return;
+							}
+							if( wstr[ pos ] < 0xD800 ) {
+									result.emplace_back(static_cast<char32_t>(wstr[ pos ]));
+									continue;
+							} else {
+									// not entirely sure I need to copy-pasta the assert here as everything I've read so far seems to dictate that the pairing seems
+									// to always be high byte then low byte for surrogate pairs -> will need to do more research on that to ensure that is 100% true
+									// though.
+									SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+									                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or "
+									                            "USE_FMTLIB instead.");
+									// check for valid high byte in pair, can skip checking for 0xD800, as that was already checked above
+									if( wstr[ pos ] <= 0xDBFF ) {
+											if( ++pos < size && (wstr[ pos ] >= 0xDC00 && wstr[ pos ] <= 0xDFFF) ) {    // check for valid low byte in pair
+													char32_t cp { 0x10000 };
+													cp += (wstr[ --pos ] & 0x03FF) << 10;
+													cp += (wstr[ ++pos ] & 0x03FF);
+													result.emplace_back(std::move(cp));
+													continue;
+											} else {
+													SE_ASSERT(false, "Illegal Surrogate Byte In Low Byte");
+												}
+									} else {
+											SE_ASSERT(false, "Illegal Surrogate Byte In High Byte");
+										}
+									// if surrogate pair is invalid, replace with the question mark box codepoint
+									result.emplace_back(static_cast<char32_t>(0xFFDD));
+								}
+						}
+			} else {
+					// se_wchar/wchar_t is 4 bytes long so just cast to char32_t instead
+					for( ;; ) {
+							if( ++pos >= size ) {
+									if constexpr( std::is_lvalue_reference_v<Pos> ) {
+											startingPos += result.size();
+									}
+									return;
+							}
+							result.emplace_back(static_cast<char32_t>(wstr[ pos ]));
+						}
+				}
+		}
+
+		template<typename Buffer, typename Pos = size_t>
+		requires is_basic_string_v<Buffer>
+		constexpr void U32ToU8StrImpl(std::u32string_view sv, Buffer&& buff, Pos&& startingPos) {
+			int pos { startingPos == 0 ? -1 : static_cast<int>(--startingPos) };
+			auto size { sv.size() };
+			buff.reserve(buff.size() + ReserveLengthForU8(sv));
+			using valType = typename type<Buffer>::value_type;
+
+			for( ;; ) {
+					if( ++pos >= size ) {
+							SE_ASSERT(IsValidU8(std::basic_string_view<valType>(buff)), "Invalid Code Point Detected In UTF-8 Byte Sequence");
+							if constexpr( std::is_lvalue_reference_v<Pos> ) {
+									startingPos += buff.size();
+							}
+							return;
+					}
+					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
+							buff += static_cast<valType>(ch);
+							continue;
+					} else if( ch <= 0x7FF ) {
+							// handle encoding to 2 byte utf-8 sequence here
+							buff += static_cast<valType>(0xC0 | (ch >> 6));
+							buff += static_cast<valType>(0x80 | (ch & 0x3F));
+							continue;
+					} else if( ch <= 0xFFFF ) {
+							// handle encoding to 3 byte utf-8 sequence here
+							buff += static_cast<valType>(0xE0 | (ch >> 12));
+							buff += static_cast<valType>(0x80 | ((ch >> 6) & 0x3F));
+							buff += static_cast<valType>(0x80 | (ch & 0x3F));
+							continue;
+					} else if( ch <= 0x10FFFF ) {
+							// handle encoding to 4 byte utf-8 sequence here
+							buff += static_cast<valType>(0xF0 | (ch >> 18));
+							buff += static_cast<valType>(0x80 | ((ch >> 12) & 0x3F));
+							buff += static_cast<valType>(0x80 | ((ch >> 6) & 0x3F));
+							buff += static_cast<valType>(0x80 | (ch & 0x3F));
+							continue;
+					} else {
+							// 5-byte and 6-byte sequences are apparently supported for the long-term but are not defined, therefore, instead of encoding these
+							// cases to utf-8, use the repacement character instead and in debug builds, raise an error when the 0xFF byte is detected in validation.
+							buff += static_cast<valType>(0xFF);
+							buff += static_cast<valType>(0xDD);
+							continue;
+						}
+				}
+		}
+
+		template<typename Buffer, typename Pos = size_t>
+		requires is_basic_char_vector_v<Buffer>
+		constexpr void U32ToU8VecImpl(std::u32string_view sv, Buffer&& buff, Pos&& startingPos) {
+			int pos { startingPos == 0 ? -1 : static_cast<int>(--startingPos) };
+			auto size { sv.size() };
+			buff.reserve(buff.size() + ReserveLengthForU8(sv));
+			auto begin { buff.begin() };
+			using valType = typename type<Buffer>::value_type;
+
+			for( ;; ) {
+					if( ++pos >= size ) {
+							SE_ASSERT(IsValidU8(std::basic_string_view<valType>(buff.data(), buff.data() + startingPos)), "Invalid Code Point Detected In UTF-8 "
+							                                                                                              "Byte Sequence");
+							if constexpr( std::is_lvalue_reference_v<Pos> ) {
+									startingPos += buff.size();
+							}
+							return;
+					}
+					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
+							buff.emplace_back(static_cast<valType>(ch));
+							continue;
+					} else if( ch <= 0x7FF ) {
+							// handle encoding to 2 byte utf-8 sequence here
+							buff.emplace_back(static_cast<valType>(0xC0 | (ch >> 6)));
+							buff.emplace_back(static_cast<valType>(0x80 | (ch & 0x3F)));
+							startingPos += 2;
+							continue;
+					} else if( ch <= 0xFFFF ) {
+							// handle encoding to 3 byte utf-8 sequence here
+							buff.emplace_back(static_cast<valType>(0xE0 | (ch >> 12)));
+							buff.emplace_back(static_cast<valType>(0x80 | ((ch >> 6) & 0x3F)));
+							buff.emplace_back(static_cast<valType>(0x80 | (ch & 0x3F)));
+							continue;
+					} else if( ch <= 0x10FFFF ) {
+							// handle encoding to 4 byte utf-8 sequence here
+							buff.emplace_back(static_cast<valType>(0xF0 | (ch >> 18)));
+							buff.emplace_back(static_cast<valType>(0x80 | ((ch >> 12) & 0x3F)));
+							buff.emplace_back(static_cast<valType>(0x80 | ((ch >> 6) & 0x3F)));
+							buff.emplace_back(static_cast<valType>(0x80 | (ch & 0x3F)));
+							continue;
+					} else {
+							// 5-byte and 6-byte sequences are apparently supported for the long-term but are not defined, therefore, instead of encoding these
+							// cases to utf-8, use the repacement character instead and in debug builds, raise an error when the 0xFF byte is detected in validation.
+							buff.emplace_back(static_cast<valType>(0xFF));
+							buff.emplace_back(static_cast<valType>(0xDD));
+							continue;
+						}
+				}
+		}
+
+	  public:
 		constexpr bool IsLittleEndian() {
 			constexpr short int val = 0x0001;
 			return reinterpret_cast<const char*>(&val)[ 0 ] ? true : false;
 		}
 
-		template<typename Char> constexpr size_t CodeUnitLengthInU8(std::basic_string_view<Char> sv) requires String_View_Type<Char> {
-			size_t reserveSize {};
-			int pos { -1 };
-			auto size { sv.size() };
-			for( ;; ) {
-					if( ++pos >= size ) return reserveSize;
-					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
-							++reserveSize;
-							continue;
-					} else if( ch <= 0x7FF ) {
-							reserveSize += 2;
-							continue;
-					} else if( ch <= 0xFFFF ) {
-							reserveSize += 3;
-							continue;
-					} else if( ch <= 0x10FFFF ) {
-							reserveSize += 4;
-							continue;
+		template<typename StringishType>
+		requires ConvertibleToSuppSV<StringishType>
+		constexpr size_t ReserveLengthForU8(StringishType&& s) {
+			using valType = type<decltype(s)>;
+			if constexpr( is_string_view_v<StringishType> ) {
+					return ReserveLengthForU8Impl(std::forward<valType>(s));
+			} else {
+					return ReserveLengthForU8Impl(ConvertToSv(std::forward<FwdRef<valType>>(s)));
+				}
+		}
+
+		template<typename Source, typename Buffer, typename Pos = size_t>
+		requires IsSupportedU16Source<Source> && IsSupportedU32Container<Buffer>
+		constexpr void U16ToU32(Source wstr, Buffer&& result, Pos&& startingPos = 0) {
+			using ValType    = typename type<Source>::value_type;
+			using StringView = std::basic_string_view<ValType>;
+			if constexpr( is_wide_vector_v<type<Buffer>> ) {
+					if constexpr( is_u16_type_string_view_v<Source> ) {
+							U16ToU32VecImpl(std::forward<Source>(wstr), std::forward<Buffer>(result), startingPos);
 					} else {
-							reserveSize += 2;    // this will be used to add the replacement character bytes
+							U16ToU32VecImpl(StringView(wstr), std::forward<Buffer>(result), startingPos);
+						}
+			} else {
+					if constexpr( is_u16_type_string_view_v<Source> ) {
+							U16ToU32StrImpl(std::forward<Source>(wstr), std::forward<Buffer>(result), startingPos);
+					} else {
+							U16ToU32StrImpl(StringView(wstr), std::forward<Buffer>(result), startingPos);
 						}
 				}
 		}
 
-		// Possibly add an overload for std::u16string family for this as well
-		constexpr void U16ToU32(se_wstring_view wstr, std::u32string& result) {
-			int pos { -1 };
-			auto size { wstr.size() };
-			for( ;; ) {
-					if( ++pos >= size ) return;
-					if( wstr[ pos ] < 0xD800 ) {
-							result += static_cast<char32_t>(wstr[ pos ]);
-							continue;
+		template<typename Source, typename Buffer, typename Pos = size_t>
+		requires IsSupportedU32Source<Source> && IsSupportedU8Container<Buffer>
+		constexpr void U32ToU8(Source&& sv, Buffer&& buff, Pos&& startingPos = 0) {
+			if constexpr( is_basic_char_vector_v<type<Buffer>> ) {
+					if constexpr( is_string_view_v<Source> ) {
+							U32ToU8VecImpl(std::forward<Source>(sv), std::forward<Buffer>(buff), startingPos);
 					} else {
-							// not entirely sure I need to copy-pasta the assert here as everything I've read so far seems to dictate that the pairing seems to
-							// always be high byte then low byte for surrogate pairs -> will need to do more research on that to ensure that is 100% true though.
-							SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-							                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB "
-							                            "instead.");
-							if( wstr[ pos ] <= 0xDBFF ) {    // check for valid high byte in pair, can skip checking for 0xD800, as that was already checked above
-									if( ++pos < size && (wstr[ pos ] >= 0xDC00 && wstr[ pos ] <= 0xDFFF) ) {    // check for valid low byte in pair
-											char32_t cp { 0x10000 };
-											cp += (wstr[ --pos ] & 0x03FF) << 10;
-											cp += (wstr[ ++pos ] & 0x03FF);
-											result += cp;
-											continue;
-									} else {
-											SE_ASSERT(false, "Illegal Surrogate Byte In Low Byte");
-										}
-							} else {
-									SE_ASSERT(false, "Illegal Surrogate Byte In High Byte");
-								}
-							result += 0xFFDD;    // if surrogate pair is invalid, replace with the question mark box codepoint
+							U32ToU8VecImpl(std::u32string_view(sv), std::forward<Buffer>(buff), startingPos);
+						}
+			} else {
+					if constexpr( is_string_view_v<Source> ) {
+							U32ToU8StrImpl(std::forward<Source>(sv), std::forward<Buffer>(buff), startingPos);
+					} else {
+							U32ToU8StrImpl(std::u32string_view(sv), std::forward<Buffer>(buff), startingPos);
 						}
 				}
 		}
 
 		// Extremely basic and rudimentary validation
-		constexpr bool IsValidU8(se_u8string_view sv) {
+		template<typename StringView>
+		requires is_basic_string_view_v<StringView>
+		constexpr bool IsValidU8(StringView sv) {
 			auto size { sv.size() };
 			int pos { -1 };
 			auto CheckTrailingByte = [](unsigned char byte) {
@@ -197,7 +538,7 @@ namespace serenity {
 				return (byte >= 0x80 && byte <= 0xBF) ? true : false;
 			};
 			for( ;; ) {
-					if( ++pos >= size ) return true;
+					if( ++pos >= size ) return true;    // validated all bytes in string sequence
 					auto& byte { sv[ pos ] };
 					if( byte < 0x80 ) continue;    // no additional checks need to happen on a one byte sequence
 					/* For the rest, check the appropriate number of trailing bytes for proper trailing signatures */
@@ -220,46 +561,7 @@ namespace serenity {
 						}
 				}
 		}
-
-		constexpr void U32ToU8(std::u32string_view sv, std::vector<unsigned char>& buff, size_t& startingPos) {
-			int pos = -1;
-			auto size { sv.size() };
-			for( ;; ) {
-					if( ++pos >= size ) {
-							SE_ASSERT(IsValidU8(se_u8string_view(buff.data(), buff.data() + startingPos)), "Invalid Code Point Detected In UTF-8 Byte Sequence");
-							return;
-					}
-					if( auto& ch { sv[ pos ] }; ch < 0x80 ) {
-							buff[ startingPos++ ] = static_cast<unsigned char>(ch);
-							continue;
-					} else if( ch <= 0x7FF ) {
-							// handle encoding to 2 byte utf-8 sequence here
-							buff[ startingPos++ ] = 0xC0 | (ch >> 6);
-							buff[ startingPos++ ] = 0x80 | (ch & 0x3F);
-							continue;
-					} else if( ch <= 0xFFFF ) {
-							// handle encoding to 3 byte utf-8 sequence here
-							buff[ startingPos++ ] = 0xE0 | (ch >> 12);
-							buff[ startingPos++ ] = 0x80 | ((ch >> 6) & 0x3F);
-							buff[ startingPos++ ] = 0x80 | (ch & 0x3F);
-							continue;
-					} else if( ch <= 0x10FFFF ) {
-							// handle encoding to 4 byte utf-8 sequence here
-							buff[ startingPos++ ] = 0xF0 | (ch >> 18);
-							buff[ startingPos++ ] = 0x80 | ((ch >> 12) & 0x3F);
-							buff[ startingPos++ ] = 0x80 | ((ch >> 6) & 0x3F);
-							buff[ startingPos++ ] = 0x80 | (ch & 0x3F);
-							continue;
-					} else {
-							// 5-byte and 6-byte sequences are apparently supported for the long-term but are not defined, therefore, instead of encoding these
-							// cases to utf-8, use the repacement character instead and in debug builds, raise an error when the 0xFF byte is detected in validation.
-							buff[ startingPos++ ] = 0xFF;
-							buff[ startingPos++ ] = 0xDD;
-							continue;
-						}
-				}
-		}
-	};
+	};    // struct utf_helper
 
 	static constexpr bool IsDigit(const char& ch) {
 		return ((ch >= '0') && (ch <= '9'));
@@ -325,12 +627,12 @@ namespace serenity::arg_formatter {
 
 	struct SpecFormatting
 	{
-		constexpr SpecFormatting()                      = default;
-		constexpr SpecFormatting(const SpecFormatting&) = default;
+		constexpr SpecFormatting()                                 = default;
+		constexpr SpecFormatting(const SpecFormatting&)            = default;
 		constexpr SpecFormatting& operator=(const SpecFormatting&) = default;
 		constexpr SpecFormatting(SpecFormatting&&)                 = default;
-		constexpr SpecFormatting& operator=(SpecFormatting&&) = default;
-		constexpr ~SpecFormatting()                           = default;
+		constexpr SpecFormatting& operator=(SpecFormatting&&)      = default;
+		constexpr ~SpecFormatting()                                = default;
 
 		constexpr void ResetSpecs();
 		unsigned char argPosition { 0 };
@@ -355,12 +657,12 @@ namespace serenity::arg_formatter {
 
 	struct BracketSearchResults
 	{
-		constexpr BracketSearchResults()                            = default;
-		constexpr BracketSearchResults(const BracketSearchResults&) = default;
+		constexpr BracketSearchResults()                                       = default;
+		constexpr BracketSearchResults(const BracketSearchResults&)            = default;
 		constexpr BracketSearchResults& operator=(const BracketSearchResults&) = default;
 		constexpr BracketSearchResults(BracketSearchResults&&)                 = default;
-		constexpr BracketSearchResults& operator=(BracketSearchResults&&) = default;
-		constexpr ~BracketSearchResults()                                 = default;
+		constexpr BracketSearchResults& operator=(BracketSearchResults&&)      = default;
+		constexpr ~BracketSearchResults()                                      = default;
 
 		constexpr void Reset();
 		size_t beginPos { 0 };
@@ -398,8 +700,8 @@ namespace serenity::arg_formatter {
 	    Compatible class that provides some of the same functionality that mirrors <format> and libfmt for basic formatting needs for pre  C++20 and MSVC's
 	    pre-backported fixes (which required C ++23) for some build versions of Visual Studio as well as for performance needs. Everything in this class either
 	    matches (in the case of simple double substitution) or greatly exceeds the performance of MSVC's implementation -  with the caveat no utf-8 support and
-	    no type-erasure as of right now. I believe libfmt is faster than this basic implementation  (and unarguably way more comprehensive as well) but I have yet
-	    to bench timings against it.
+	    no type-erasure as of right now. I believe libfmt is faster than this basic implementation  (and unarguably way more comprehensive as well) but I have
+	yet to bench timings against it.
 	***********************************************************************************************************************************************************/
 	/*************************************************************************  NOTE *************************************************************************/
 	/************************************************** Building this project on Ubuntu emitted the following **************************************************
@@ -414,11 +716,11 @@ namespace serenity::arg_formatter {
 	{
 	  public:
 		constexpr ArgFormatter();
-		constexpr ArgFormatter(const ArgFormatter&) = delete;
+		constexpr ArgFormatter(const ArgFormatter&)            = delete;
 		constexpr ArgFormatter& operator=(const ArgFormatter&) = delete;
 		constexpr ArgFormatter(ArgFormatter&&)                 = default;
-		constexpr ArgFormatter& operator=(ArgFormatter&&) = default;
-		constexpr ~ArgFormatter()                         = default;
+		constexpr ArgFormatter& operator=(ArgFormatter&&)      = default;
+		constexpr ~ArgFormatter()                              = default;
 
 		// clang-format off
 		template<typename T, typename... Args> constexpr void se_format_to(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv, Args&&... args);

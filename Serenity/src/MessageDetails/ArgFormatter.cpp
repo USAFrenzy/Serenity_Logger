@@ -18,14 +18,15 @@ namespace serenity::arg_formatter {
 		return std::move(tmp);
 	}
 
-	// NOTE: The use of std::put_time() incurs some massive overhead -> there may be a faster way to do this with the
-	//               locale's facets  instead but haven't looked into this quite yet, so currently unsure if that's a valid approach.
-	//              Other than that though, the recreation of the format string to use for std::put_time() also has some overhead;
-	//              only a small fraction of the overhead of std::put_time() itself, but it's the next line of code that hogs cycles in
-	//              this funtion. For reference, in 100,000,000 iterations, std::put_time() took ~60% of cpu cycles while the
-	//              reconstruction of the format string took ~13% of cpu cycles. So this can definitely be optimized more I think.
-	//              Still results (in a char based container) in timings that are ~2.5x faster than MSVC though -> though I'm not
-	//              encoding/decoding which may be why they have some more overhead.
+	// clang-format off
+	// NOTE: The use of std::put_time() incurs some massive overhead -> there may be a faster way to do this with the locale's facets  instead but haven't looked
+	//              into this quite yet, so currently unsure if that's a valid approach. Other than that though, the recreation of the format string to use for std::put_time() 
+	//              also has some overhead; only a small fraction of the overhead of std::put_time() itself, but it's the next line of code that hogs cycles in this funtion. 
+	//              For reference, in 100,000,000 iterations, std::put_time() took ~60% of cpu cycles while the reconstruction of the format string took ~13% of cpu 
+	//              cycles. So this can definitely be optimized more I think. Still results (in a char based container) in timings that are ~2.5x faster than MSVC though 
+	//              -> though I'm not encoding/decoding which may be why they have some more overhead.
+	// clang-format on
+
 	void ArgFormatter::LocalizeCTime(const std::locale& loc, std::tm& timeStruct, const int& precision) {
 		auto end { specValues.timeSpecCounter };
 		// If the locale matches any of the below, they're taken care of by standard formatting via FormatCTime()
@@ -59,10 +60,9 @@ namespace serenity::arg_formatter {
 		localeStream << std::put_time<serenity::utf_helper::se_wchar>(&timeStruct, localeFmt.data());
 		auto initialData { std::move(localeStream.str()) };    // moving the string value so as not to continuously have to call localeStream.str() later on
 		auto& localeBuff { specValues.localizationBuff };
-		// widen the wchar_t bytes to char32_t and then encode them as utf-8 bytes
-		utfHelper.U16ToU32(initialData, locData);    // se_whar size == 4, this only widens each byte instead
 		localeBuff.clear();
-		localeBuff.resize(utfHelper.CodeUnitLengthInU8<char32_t>(locData));
+		// widen the se_wchar bytes to char32_t  or convert from UCS-2/UTF-16 to UTF-32 and then encode them as utf-8 bytes (dependant on size of se_wchar)
+		utfHelper.U16ToU32(initialData, locData);
 		utfHelper.U32ToU8(locData, localeBuff, valueSize);
 		//*******************************************************************************************
 	}
