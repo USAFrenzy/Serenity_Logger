@@ -111,6 +111,8 @@
 	#endif
 #endif
 
+#include <serenity/Utilities/UtfHelper.h>
+
 namespace serenity {
 	namespace globals {
 		static std::locale default_locale { std::locale("en_US.UTF-8") };
@@ -132,9 +134,10 @@ namespace serenity {
 			"%I", "%L", "%M", "%N", "%R", "%S", "%T", "%X","%Y", "%Z", "%+"
 		};
 
-		// TODO: Look at using C++20's new date related functions and update the formatting arguments 
-		// TODO: appropriately based on ease and performance. Already using chrono's time_zone type for %Z.
-		// TODO: Also, using %w's FormatUserPattern() as an example, possibly eliminate the numberStr LUT
+		// NOTE: If the Argformatter version takes over for the FormatterArgs version, then the arrays below can be removed, 
+		//              as well as the entirety of FormatterArgs.h and FormatterArgs.cpp. Would just need to update Message_Time's
+		//              CalculateCurrentYear() to reflect this -> can probably either bit shift away the top 3 nibbles or just offset it like
+		//              in se_from_chars()
 		static constexpr std::array<std::string_view, 7> short_weekdays = {
 			"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 		};
@@ -275,4 +278,11 @@ namespace serenity {
 		MsgWithLoc(const std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
 	};
 
+	static constexpr bool IsDigit(const char& ch) {
+		return ((ch >= '0') && (ch <= '9'));
+	}
+
+	static constexpr bool IsAlpha(const char& ch) {
+		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+	}
 }    // namespace serenity

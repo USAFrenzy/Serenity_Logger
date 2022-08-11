@@ -1,3 +1,4 @@
+#include <serenity/Common.h>
 #include <serenity/MessageDetails/ArgFormatter.h>
 
 namespace serenity::arg_formatter {
@@ -5,8 +6,8 @@ namespace serenity::arg_formatter {
 	using u_char_string = std::basic_string<unsigned char>;
 
 	// Note: there's no distinction made here for the overlapping case of 'Ey' and 'Oy' yet
-	static constexpr serenity::utf_helper::se_wstring LocalizedFormat(const unsigned char& ch) {
-		serenity::utf_helper::se_wstring tmp;
+	static constexpr utf_helper::se_wstring LocalizedFormat(const unsigned char& ch) {
+		utf_helper::se_wstring tmp;
 		switch( ch ) {
 				case 'c': [[fallthrough]];
 				case 'x': [[fallthrough]];
@@ -28,6 +29,7 @@ namespace serenity::arg_formatter {
 	// clang-format on
 
 	void ArgFormatter::LocalizeCTime(const std::locale& loc, std::tm& timeStruct, const int& precision) {
+		using namespace utf_helper;
 		auto end { specValues.timeSpecCounter };
 		// If the locale matches any of the below, they're taken care of by standard formatting via FormatCTime()
 		if( auto name { loc.name() }; name == "" || name == "C" || name == "en_US" || name == "en_US.UTF8" ) {
@@ -35,12 +37,12 @@ namespace serenity::arg_formatter {
 				return FormatCTime(timeStruct, precision, 0, end);
 		}
 		// Due to major shifts over to little endian back in the early 2000's, this is making the assumption that the system is LE and NOT BE.
-		SE_ASSERT(utfHelper.IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                                      "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 
 		std::u32string locData;
-		static std::basic_ostringstream<serenity::utf_helper::se_wchar> localeStream;
-		serenity::utf_helper::se_wstring localeFmt;
+		static std::basic_ostringstream<se_wchar> localeStream;
+		se_wstring localeFmt;
 
 		auto pos { -1 };
 		auto format { specValues.timeSpecFormat };
@@ -54,16 +56,17 @@ namespace serenity::arg_formatter {
 						localeFmt.append(1, ' ');
 					}
 			}
-		localeStream.str(serenity::utf_helper::se_wstring {});
+		localeStream.str(se_wstring {});
 		localeStream.clear();
 		localeStream.imbue(loc);
-		localeStream << std::put_time<serenity::utf_helper::se_wchar>(&timeStruct, localeFmt.data());
+		localeStream << std::put_time<se_wchar>(&timeStruct, localeFmt.data());
 		auto initialData { std::move(localeStream.str()) };    // moving the string value so as not to continuously have to call localeStream.str() later on
 		auto& localeBuff { specValues.localizationBuff };
 		localeBuff.clear();
 		// widen the se_wchar bytes to char32_t  or convert from UCS-2/UTF-16 to UTF-32 and then encode them as utf-8 bytes (dependant on size of se_wchar)
-		utfHelper.U16ToU32(initialData, locData);
-		utfHelper.U32ToU8(locData, localeBuff, valueSize);
+		// NOTE: Look into directly converting the wide character type here to utf-8 encoding. If size == 2 then something like U16ToU8(), otherwise, U32ToU8()
+		U16ToU32(initialData, locData);
+		U32ToU8(locData, localeBuff, valueSize);
 		//*******************************************************************************************
 	}
 

@@ -49,6 +49,7 @@ set(UTILITIES_HEADER_FILES
     "include/serenity/Utilities/Utilities.h"
     "include/serenity/Utilities/FileHelper.h"
     "include/serenity/Utilities/TargetHelper.h"
+    "include/serenity/Utilities/UtfHelper.h"
 )
 
 set(COLOR_HEADER_FILES "include/serenity/Color/Color.h")

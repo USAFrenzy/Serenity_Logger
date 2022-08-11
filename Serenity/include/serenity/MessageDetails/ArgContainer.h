@@ -6,8 +6,7 @@
 #include <variant>
 #include <vector>
 
-// For whatever reason, the SE_ASSERT statement wasn't being seen in ArgFormatterImpl.h
-// when including Common.h, so added an #ifndef for the macro define and placed a copy here
+// Reimplement SE_ASSERT here to avoid cyclic dependancy on includes from Common.h
 #ifdef _DEBUG
 	#ifndef SE_ASSERT
 		#define SE_ASSERT(condition, message)                                                                                                                       \
@@ -197,7 +196,7 @@ namespace serenity::msg_details {
 		std::array<SpecType, MAX_ARG_COUNT> specContainer {};
 		size_t counter {};
 	};
-	// putting the definition here since clang was warning on extra qualifiers for some reason
+	// putting the definition here since clang was warning on extra qualifiers
 	template<typename T> static constexpr SpecType GetArgType(T&& val) {
 		using enum SpecType;
 		if constexpr( std::is_same_v<type<T>, std::monostate> ) {

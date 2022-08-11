@@ -32,6 +32,14 @@
 #include <serenity/MessageDetails/ArgContainer.h>
 #include <serenity/MessageDetails/ArgFormatter.h>
 
+// Copy-pasta from Common.h -> avoids the cyclic include from Common.h when USE_STD_FORMAT and USE_FMTLIB aren't defined
+static constexpr bool IsDigit(const char& ch) {
+	return ((ch >= '0') && (ch <= '9'));
+}
+
+static constexpr bool IsAlpha(const char& ch) {
+	return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+}
 // TODO: Address the notes scattered throughout and any other todo statements -> Other than possibly reworking Format for alignment cases, I believe
 //              I'm done with the the current cases. All that's left here is to add std::tm inclusion and the custom formatters for the custom flags from the logger
 //              side. After which, I can go ahead and format everything into the file buffer being used directly and hopefully streamline the entire logging pipeline.
@@ -49,11 +57,11 @@ template<typename IntergralType>
 requires std::is_integral_v<std::remove_cvref_t<IntergralType>>
 static constexpr size_t se_from_chars(const char* begin, const char* end, IntergralType&& value) {
 	for( ;; ) {
-			if( !serenity::IsDigit(*begin) ) {
+			if( !IsDigit(*begin) ) {
 					if( ++begin == end ) return 0;
 			}
 			value = *begin - offset;
-			if( !serenity::IsDigit(*(++begin)) ) return 1;
+			if( !IsDigit(*(++begin)) ) return 1;
 			(value *= 10) += (*begin - offset);
 			return 2;
 		}
