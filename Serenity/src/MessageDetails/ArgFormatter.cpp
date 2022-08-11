@@ -40,13 +40,12 @@ namespace serenity::arg_formatter {
 		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
 		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 
-		std::u32string locData;
 		static std::basic_ostringstream<se_wchar> localeStream;
-		se_wstring localeFmt;
-
 		auto pos { -1 };
 		auto format { specValues.timeSpecFormat };
 		auto& cont { specValues.timeSpecContainer };
+		se_wstring localeFmt;
+		localeFmt.reserve(cont.size() * 2);
 		for( ;; ) {
 				if( ++pos >= end ) break;
 				if( cont[ pos ] != ' ' ) {
@@ -65,7 +64,12 @@ namespace serenity::arg_formatter {
 		localeBuff.clear();
 		// widen the se_wchar bytes to char32_t  or convert from UCS-2/UTF-16 to UTF-32 and then encode them as utf-8 bytes (dependant on size of se_wchar)
 		// NOTE: Look into directly converting the wide character type here to utf-8 encoding. If size == 2 then something like U16ToU8(), otherwise, U32ToU8()
+		// NOTE: Would like to call the reserve functions inside of the conversion functions, but would have to handle the fact that references are invalidated when
+		//              actually called..
+		std::u32string locData;
+		locData.reserve(initialData.size());
 		U16ToU32(initialData, locData);
+		localeBuff.reserve(ReserveLengthForU8(locData));
 		U32ToU8(locData, localeBuff, valueSize);
 		//*******************************************************************************************
 	}

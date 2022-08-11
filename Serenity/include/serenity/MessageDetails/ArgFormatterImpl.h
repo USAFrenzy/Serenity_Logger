@@ -70,7 +70,7 @@ static constexpr size_t se_from_chars(const char* begin, const char* end, Interg
 constexpr auto fillBuffDefaultCapacity { 256 };
 constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
 	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}), argStorage(ArgContainer {}),
-	  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(size_t {}), fillBuffer(std::vector<char> {}) {
+	  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(size_t {}), fillBuffer(std::vector<char> {}), errHandle(serenity::error_handler {}) {
 	// Initialize now to lower the initial cost when formatting (brings initial cost from ~33us down to ~11us). The Call To UtcOffset() will initialize
 	// TimeZoneInstance() via TimeZone() via TZInfo() -> thereby initializing  all function statics.
 	// NOTE: would still love a constexpr friendly version of this but I'm not finding anything online that says that might be remotely possible using the standard
@@ -90,13 +90,16 @@ constexpr void serenity::arg_formatter::SpecFormatting::ResetSpecs() {
 	if( !std::is_constant_evaluated() ) {
 			std::memset(this, 0, sizeof(SpecFormatting));
 	} else {
-			argPosition = nestedWidthArgPos = nestedPrecArgPos = 0;
+			argPosition = nestedWidthArgPos = nestedPrecArgPos = timeSpecCounter = 0;
 			localize = hasAlt = hasClosingBrace = false;
 			alignmentPadding = precision = 0;
 			fillCharacter = typeSpec = '\0';
 			align                    = Alignment::Empty;
 			signType                 = Sign::Empty;
 			preAltForm               = "";
+			std::fill(timeSpecContainer.data(), timeSpecContainer.data() + 25, static_cast<unsigned char>('\0'));
+			std::fill(timeSpecFormat.data(), timeSpecFormat.data() + 25, LocaleFormat::standard);
+			localizationBuff.clear();
 		}
 }
 
