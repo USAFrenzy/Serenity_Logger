@@ -356,7 +356,7 @@ namespace utf_helper {
 		using BuffRef = Ref<Buffer>;
 		for( ;; ) {
 				if( ++pos >= size ) {
-						IsValidU8(std::forward<BuffRef>(BuffRef(buff)));    // This might be a target for optimization; Validation takes ~1100 ns here
+						IsValidU8(std::forward<BuffRef>(BuffRef(buff)));
 						if constexpr( std::is_lvalue_reference_v<Pos> ) {
 								startingPos += buff.size();
 						}
