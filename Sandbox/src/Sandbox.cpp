@@ -516,6 +516,8 @@ int main() {
 	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(loc, formatString, cTime));
 
 	// Just seeing how fast these conversions are
+	// NOTE: Until conversion functions from utf-8 to other encodings are done, this source file will have to be toggled between
+	//              utf-8 for uploading to git and utf-16 for the below string_views to see the correct glyphs when running this project
 	std::string result;
 	constexpr std::u32string_view u32Str { U"一個簡單的中文字符串。" };
 	constexpr std::u16string_view u16Str { u"一個簡單的中文字符串。" };
