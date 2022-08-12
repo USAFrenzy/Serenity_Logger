@@ -545,8 +545,7 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U16ToU8(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
-		using ValType    = typename type<Source>::value_type;
-		using StringView = std::basic_string_view<ValType>;
+		using StringView = std::basic_string_view<typename type<Source>::value_type>;
 		auto rSize { ReserveLengthForU8(wstr) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
 		if constexpr( utf_constraints::is_u16_type_string_view_v<Source> ) {
@@ -559,8 +558,7 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU32Container<Buffer>
 	constexpr void U16ToU32(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
-		using ValType    = typename type<Source>::value_type;
-		using StringView = std::basic_string_view<ValType>;
+		using StringView = std::basic_string_view<typename type<Source>::value_type>;
 		auto rSize { ReserveLengthForU8(wstr) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
 		if constexpr( utf_constraints::is_u16_type_string_view_v<Source> ) {
@@ -573,12 +571,13 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU32Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U32ToU8(Source&& sv, Buffer& buff, Pos&& startingPos = 0) {
+		using StringView = std::basic_string_view<typename type<Source>::value_type>;
 		auto rSize { ReserveLengthForU8(sv) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
 		if constexpr( utf_constraints::is_string_view_v<Source> ) {
 				U32ToU8Impl(std::forward<Source>(sv), buff, startingPos);
 		} else {
-				U32ToU8Impl(std::u32string_view(sv.data(), sv.data() + sv.size()), buff, startingPos);
+				U32ToU8Impl(StringView(sv.data(), sv.data() + sv.size()), buff, startingPos);
 			}
 	}
 }    // namespace utf_helper
