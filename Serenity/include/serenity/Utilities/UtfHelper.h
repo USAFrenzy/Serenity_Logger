@@ -81,10 +81,17 @@ namespace utf_helper {
 		};
 		template<typename T> inline constexpr bool is_u16_type_string_view_v = is_u16_type_string_view<T>::value;
 
+		template<typename T> struct is_u32_type_string_view;
+		template<typename T>
+		struct is_u32_type_string_view
+			: std::bool_constant<(std::is_same_v<type<T>, StringView<wchar_t>> && sizeof(wchar_t) == 4) || std::is_same_v<type<T>, StringView<char32_t>>>
+		{
+		};
+		template<typename T> inline constexpr bool is_u32_type_string_view_v = is_u32_type_string_view<T>::value;
+
 		template<typename T> struct is_string_view;
 		template<typename T>
-		struct is_string_view
-			: std::bool_constant<is_basic_string_view_v<type<T>> || is_u16_type_string_view_v<type<T>> || std::is_same_v<type<T>, StringView<char32_t>>>
+		struct is_string_view: std::bool_constant<is_basic_string_view_v<type<T>> || is_u16_type_string_view_v<type<T>> || is_u32_type_string_view_v<type<T>>>
 		{
 		};
 		template<typename T> inline constexpr bool is_string_view_v = is_string_view<T>::value;
@@ -105,8 +112,15 @@ namespace utf_helper {
 		};
 		template<typename T> inline constexpr bool is_u16_type_string_v = is_u16_type_string<T>::value;
 
+		template<typename T> struct is_u32_type_string;
+		template<typename T>
+		struct is_u32_type_string: std::bool_constant<(std::is_same_v<type<T>, String<wchar_t>> && sizeof(wchar_t) == 4) || std::is_same_v<type<T>, String<char32_t>>>
+		{
+		};
+		template<typename T> inline constexpr bool is_u32_type_string_v = is_u32_type_string<T>::value;
+
 		template<typename T> struct is_string;
-		template<typename T> struct is_string: std::bool_constant<is_basic_string_v<T> || is_u16_type_string_v<T> || std::is_same_v<type<T>, String<char32_t>>>
+		template<typename T> struct is_string: std::bool_constant<is_basic_string_v<T> || is_u16_type_string_v<T> || is_u32_type_string_v<T>>
 		{
 		};
 		template<typename T> inline constexpr bool is_string_v = is_string<T>::value;
@@ -119,24 +133,32 @@ namespace utf_helper {
 		};
 		template<typename T> static inline constexpr bool is_basic_char_vector_v = is_basic_char_vector<T>::value;
 
-		template<typename T> struct is_char32_vector;
-		template<typename T> struct is_char32_vector: std::bool_constant<std::is_same_v<type<T>, std::vector<char32_t>>>
-		{
-		};
-		template<typename T> static inline constexpr bool is_char32_vector_v = is_char32_vector<T>::value;
-
-		template<typename T> struct is_wide_vector;
+		template<typename T> struct is_u32_type_vector;
 		template<typename T>
-		struct is_wide_vector: std::bool_constant<std::is_same_v<type<T>, std::vector<char16_t>> || std::is_same_v<type<T>, std::vector<wchar_t>>>
+		struct is_u32_type_vector
+			: std::bool_constant<std::is_same_v<type<T>, std::vector<char32_t>> || (std::is_same_v<type<T>, std::vector<wchar_t>> && sizeof(wchar_t) == 4)>
 		{
 		};
-		template<typename T> static inline constexpr bool is_wide_vector_v = is_wide_vector<T>::value;
+		template<typename T> static inline constexpr bool is_u32_type_vector_v = is_u32_type_vector<T>::value;
+
+		template<typename T> struct is_u16_type_vector;
+		template<typename T>
+		struct is_u16_type_vector
+			: std::bool_constant<std::is_same_v<type<T>, std::vector<char16_t>> || (std::is_same_v<type<T>, std::vector<wchar_t>> && sizeof(wchar_t) == 2)>
+		{
+		};
+		template<typename T> static inline constexpr bool is_u16_type_vector_v = is_u16_type_vector<T>::value;
 
 		template<typename T> struct is_vector;
-		template<typename T> struct is_vector: std::bool_constant<is_basic_char_vector_v<T> || is_wide_vector_v<T> || is_char32_vector_v<T>>
+		template<typename T> struct is_vector: std::bool_constant<is_basic_char_vector_v<T> || is_u16_type_vector_v<T> || is_u32_type_vector_v<T>>
 		{
 		};
 		template<typename T> static inline constexpr bool is_vector_v = is_vector<T>::value;
+
+		template<typename StringishType>
+		concept IsStringType = requires {
+			is_string_v<StringishType> || is_string_view_v<StringishType>;
+		};
 
 		// concept constraints that use the above individual constraints
 		template<typename StringishType>
@@ -150,24 +172,22 @@ namespace utf_helper {
 
 		template<typename Source>
 		concept IsSupportedU16Source = requires {
-			is_u16_type_string_v<Source> || is_u16_type_string_view_v<Source> || is_wide_vector_v<Source>;
+			is_u16_type_string_v<Source> || is_u16_type_string_view_v<Source> || is_u16_type_vector_v<Source>;
 		};
 
 		template<typename Buffer>
 		concept IsSupportedU16Container = requires {
-			is_wide_vector_v<Buffer> || std::is_same_v<type<Buffer>, std::wstring> || std::is_same_v<type<Buffer>, std::u16string>;
+			is_u16_type_vector_v<Buffer> || is_u16_type_string_v<Buffer>;
 		};
 
 		template<typename Source>
 		concept IsSupportedU32Source = requires {
-			std::is_same_v<type<Source>, std::u32string> || std::is_same_v<type<Source>, std::u32string_view> ||
-			std::is_same_v<type<Source>, std::vector<char32_t>> || (std::is_same_v<type<Source>, std::vector<wchar_t>> && sizeof(wchar_t) == 4) ||
-			(std::is_same_v<type<Source>, std::wstring> && sizeof(wchar_t) == 4) || (std::is_same_v<type<Source>, std::wstring_view> && sizeof(wchar_t) == 4);
+			is_u32_type_string_v<Source> || is_u32_type_string_v<Source> || is_u32_type_vector_v<Source>;
 		};
 
 		template<typename Buffer>
 		concept IsSupportedU32Container = requires {
-			is_char32_vector_v<Buffer> || std::is_same_v<type<Buffer>, std::u32string>;
+			is_u32_type_vector_v<Buffer> || is_u32_type_string_v<Buffer>;
 		};
 
 		template<typename Buffer>
@@ -191,21 +211,23 @@ namespace utf_helper {
 		return std::forward<type>(type(v));
 	}
 
-	template<typename SVType> constexpr size_t ReserveLengthForU8Impl(SVType sv) requires utf_constraints::is_string_view_v<SVType> {
+	template<typename StringishType>
+	requires utf_constraints::IsStringType<StringishType>
+	static constexpr size_t ReserveLengthForU8(StringishType&& s) {
 		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
 		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 		using namespace utf_masks;
 		using namespace utf_bounds;
-		using CharType = typename type<SVType>::value_type;
+		using CharType = typename type<StringishType>::value_type;
 
 		size_t reserveSize {};
 		int pos { -1 };
-		auto size { sv.size() };
+		auto size { s.size() };
 
 		if constexpr( std::is_same_v<CharType, char16_t> || (std::is_same_v<CharType, wchar_t> && sizeof(se_wchar) == 2) ) {
 				for( ;; ) {
 						if( ++pos >= size ) return reserveSize;
-						if( auto& ch { sv[ pos ] }; ch <= UTF8_MAX_1 ) {
+						if( auto& ch { s[ pos ] }; ch <= UTF8_MAX_1 ) {
 								++reserveSize;
 								continue;
 						} else if( ch <= WIDE_ENCODING_TO_UTF8_2 ) {
@@ -216,7 +238,7 @@ namespace utf_helper {
 										SE_ASSERT(false, "Error In Measuring UTF-16 Length: High Surrogate Byte Present Without A Low Surrogate Byte");
 										return reserveSize += 2;    // reserve for replacement character that will inevitably be written
 								}
-								if( auto& next { sv[ pos ] }; next >= UTF16_LOW_SURROGATE_MIN && next <= UTF16_HIGH_SURROGATE_MAX ) {
+								if( auto& next { s[ pos ] }; next >= UTF16_LOW_SURROGATE_MIN && next <= UTF16_HIGH_SURROGATE_MAX ) {
 										char32_t cp { UTF16_SURROGATE_CLAMP };
 										cp += (ch & UTF16_NIBBLE_10) << 10;
 										cp += (next & UTF16_NIBBLE_10) << 10;
@@ -238,7 +260,7 @@ namespace utf_helper {
 		} else if constexpr( std::is_same_v<CharType, char32_t> || (std::is_same_v<CharType, wchar_t> && sizeof(se_wchar) == 4) ) {
 				for( ;; ) {
 						if( ++pos >= size ) return reserveSize;
-						if( auto& ch { sv[ pos ] }; ch <= UTF8_MAX_1 ) {
+						if( auto& ch { s[ pos ] }; ch <= UTF8_MAX_1 ) {
 								++reserveSize;
 								continue;
 						} else if( ch <= WIDE_ENCODING_TO_UTF8_2 ) {
@@ -257,17 +279,6 @@ namespace utf_helper {
 		} else {
 				SE_ASSERT(false, "Reserving Size From Any Other Encoding Besides UTF-32LE Or UTF-16LE Is Currently Unsupported At The Moment");
 				return 0;
-			}
-	}
-
-	template<typename StringishType>
-	requires utf_constraints::ConvertibleToSuppSV<StringishType>
-	static constexpr size_t ReserveLengthForU8(StringishType&& s) {
-		using ValRef = Ref<type<StringishType>>;
-		if constexpr( utf_constraints::is_string_view_v<StringishType> ) {
-				return ReserveLengthForU8Impl(std::forward<StringishType>(s));
-		} else {
-				return ReserveLengthForU8Impl(ConvertToSv(std::forward<ValRef>(s)));
 			}
 	}
 
@@ -488,9 +499,9 @@ namespace utf_helper {
 			}
 	}
 
-	template<typename Buffer, typename Pos = size_t>
-	requires utf_constraints::IsSupportedU8Container<Buffer>
-	constexpr void U32ToU8Impl(std::u32string_view sv, Buffer& buff, Pos&& startingPos) {
+	template<typename StringView, typename Buffer, typename Pos = size_t>
+	requires utf_constraints::is_u32_type_string_view_v<StringView> && utf_constraints::IsSupportedU8Container<Buffer>
+	constexpr void U32ToU8Impl(StringView sv, Buffer& buff, Pos&& startingPos) {
 		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
 		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 
@@ -545,10 +556,13 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U16ToU8(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
-		using StringView = std::basic_string_view<typename type<Source>::value_type>;
+		using ValueType  = typename type<Source>::value_type;
+		using StringView = std::basic_string_view<ValueType>;
 		auto rSize { ReserveLengthForU8(wstr) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
-		if constexpr( utf_constraints::is_u16_type_string_view_v<Source> ) {
+		if constexpr( std::is_same_v<ValueType, wchar_t> && sizeof(wchar_t) != 2 ) {
+				U32ToU8(std::forward<Source>(wstr), std::forward<Buffer>(buff), std::forward<Pos>(startingPos));
+		} else if constexpr( utf_constraints::is_u16_type_string_view_v<Source> ) {
 				U16ToU8Impl(std::forward<Source>(wstr), buff, startingPos);
 		} else {
 				U16ToU8Impl(StringView(wstr.data(), wstr.data() + wstr.size()), buff, startingPos);
@@ -558,10 +572,13 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU32Container<Buffer>
 	constexpr void U16ToU32(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
-		using StringView = std::basic_string_view<typename type<Source>::value_type>;
+		using ValueType  = typename type<Source>::value_type;
+		using StringView = std::basic_string_view<ValueType>;
 		auto rSize { ReserveLengthForU8(wstr) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
-		if constexpr( utf_constraints::is_u16_type_string_view_v<Source> ) {
+		if constexpr( std::is_same_v<ValueType, wchar_t> && sizeof(wchar_t) != 2 ) {
+				for( auto& ch: wstr ) WriteChToUContainer(buff, static_cast<char32_t>(ch));
+		} else if constexpr( utf_constraints::is_u16_type_string_view_v<Source> ) {
 				U16ToU32Impl(std::forward<Source>(wstr), buff, startingPos);
 		} else {
 				U16ToU32Impl(StringView(wstr.data(), wstr.data() + wstr.size()), buff, startingPos);
@@ -571,10 +588,13 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU32Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U32ToU8(Source&& sv, Buffer& buff, Pos&& startingPos = 0) {
-		using StringView = std::basic_string_view<typename type<Source>::value_type>;
+		using ValueType  = typename type<Source>::value_type;
+		using StringView = std::basic_string_view<ValueType>;
 		auto rSize { ReserveLengthForU8(sv) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
-		if constexpr( utf_constraints::is_string_view_v<Source> ) {
+		if constexpr( std::is_same_v<ValueType, wchar_t> && sizeof(wchar_t) != 4 ) {
+				U16ToU8(std::forward<Source>(sv), buff, std::forward<Pos>(startingPos));
+		} else if constexpr( utf_constraints::is_string_view_v<Source> ) {
 				U32ToU8Impl(std::forward<Source>(sv), buff, startingPos);
 		} else {
 				U32ToU8Impl(StringView(sv.data(), sv.data() + sv.size()), buff, startingPos);
