@@ -80,8 +80,8 @@ namespace serenity {
 		constexpr CustomValue()                              = delete;
 		constexpr CustomValue(const CustomValue&)            = delete;
 		constexpr CustomValue& operator=(const CustomValue&) = delete;
-		constexpr CustomValue(CustomValue&& o): data(o.data), container(o.container), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
-		constexpr CustomValue& operator=(CustomValue&& o) {
+		constexpr CustomValue(CustomValue&& o) noexcept: data(o.data), container(o.container), CustomFormatCallBack(std::move(o.CustomFormatCallBack)) { }
+		constexpr CustomValue& operator=(CustomValue&& o) noexcept {
 			data                 = o.data;
 			container            = o.container;
 			CustomFormatCallBack = std::move(o.CustomFormatCallBack);

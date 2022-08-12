@@ -78,7 +78,7 @@ namespace serenity {
 			~format_error() noexcept override            = default;
 		};
 
-		static constexpr std::array<const char*, 19> format_error_messages = {
+		static constexpr std::array<const char*, 20> format_error_messages = {
 			"Unkown Formatting Error Occured.",
 			"Missing Closing '}' In Argument Spec Field.",
 			"Error In Position Field: No ':' Or '}' Found While In Automatic Indexing Mode.",

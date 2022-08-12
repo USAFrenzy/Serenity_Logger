@@ -287,7 +287,7 @@ static constexpr std::vector<char> ConvBuffToSigned(std::vector<unsigned char>& 
 			if( ++pos >= endPos ) break;
 			signedTemp[ pos ] = static_cast<signed char>(buff[ pos ]);
 		}
-	return std::move(signedTemp);
+	return signedTemp;
 }
 
 template<typename T> struct is_basic_char_buff;
@@ -404,38 +404,38 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		}
 }
 
-static constexpr void ParseChronoSpec(const char& ch, const char& next) {
-	// this will be for chrono types
-	switch( ch ) {
-			case '%': break;
-			case 'n': break;
-			case 'p': break;
-			case 'q': break;
-			case 'r': break;
-			case 't': break;
-			case 'E':
-				if( next == 'X' ) /*do something*/
-					break;
-			case 'H': break;
-			case 'I': break;
-			case 'M': break;
-			case '0':
-				switch( next ) {
-						case 'H': break;
-						case 'I': break;
-						case 'M': break;
-						case 'S': break;
-						default: break;
-					}
-				break;
-			case 'Q': break;
-			case 'R': break;
-			case 'S': break;
-			case 'T': break;
-			case 'X': break;
-			default: /*ReportError(ErrorType::invalid_ctime_spec);*/ break;
-		}
-}
+// static constexpr void ParseChronoSpec(const char& ch, const char& next) {
+//	// this will be for chrono types
+//	switch( ch ) {
+//			case '%': break;
+//			case 'n': break;
+//			case 'p': break;
+//			case 'q': break;
+//			case 'r': break;
+//			case 't': break;
+//			case 'E':
+//				if( next == 'X' ) /*do something*/
+//					break;
+//			case 'H': break;
+//			case 'I': break;
+//			case 'M': break;
+//			case '0':
+//				switch( next ) {
+//						case 'H': break;
+//						case 'I': break;
+//						case 'M': break;
+//						case 'S': break;
+//						default: break;
+//					}
+//				break;
+//			case 'Q': break;
+//			case 'R': break;
+//			case 'S': break;
+//			case 'T': break;
+//			case 'X': break;
+//			default: /*ReportError(ErrorType::invalid_ctime_spec);*/ break;
+//		}
+// }
 
 constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string_view sv, size_t& pos) {
 	// this is for c-time formatting
