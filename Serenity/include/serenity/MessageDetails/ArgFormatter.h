@@ -156,6 +156,15 @@ namespace serenity::arg_formatter {
 		localized,
 	};
 
+	struct TimeSpecs
+	{
+		constexpr void Reset();
+		std::array<LocaleFormat, 25> timeSpecFormat {};
+		std::array<unsigned char, 25> timeSpecContainer {};
+		std::vector<unsigned char> localizationBuff {};
+		int timeSpecCounter { 0 };
+	};
+
 	struct SpecFormatting
 	{
 		constexpr SpecFormatting()                                 = default;
@@ -179,11 +188,6 @@ namespace serenity::arg_formatter {
 		bool localize { false };
 		bool hasAlt { false };
 		bool hasClosingBrace { false };
-
-		std::array<LocaleFormat, 25> timeSpecFormat {};
-		std::array<unsigned char, 25> timeSpecContainer {};
-		std::vector<unsigned char> localizationBuff {};
-		int timeSpecCounter { 0 };
 	};
 
 	struct BracketSearchResults
@@ -431,6 +435,7 @@ namespace serenity::arg_formatter {
 		size_t valueSize;
 		std::vector<char> fillBuffer;
 		serenity::error_handler errHandle;
+		TimeSpecs timeSpec {};
 	};
 #include <serenity/MessageDetails/ArgFormatterImpl.h>
 }    // namespace serenity::arg_formatter

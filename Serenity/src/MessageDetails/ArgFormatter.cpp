@@ -30,7 +30,8 @@ namespace serenity::arg_formatter {
 
 	void ArgFormatter::LocalizeCTime(const std::locale& loc, std::tm& timeStruct, const int& precision) {
 		using namespace utf_helper;
-		auto end { specValues.timeSpecCounter };
+
+		auto end { timeSpec.timeSpecCounter };
 		// If the locale matches any of the below, they're taken care of by standard formatting via FormatCTime()
 		if( auto name { loc.name() }; name == "" || name == "C" || name == "en_US" || name == "en_US.UTF8" ) {
 				specValues.localize = false;    // set to false so that when writing to the container, it doesn't call the localization buffer
@@ -39,11 +40,10 @@ namespace serenity::arg_formatter {
 		// Due to major shifts over to little endian back in the early 2000's, this is making the assumption that the system is LE and NOT BE.
 		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
 		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
-
 		static std::basic_ostringstream<se_wchar> localeStream;
 		auto pos { -1 };
-		auto format { specValues.timeSpecFormat };
-		auto& cont { specValues.timeSpecContainer };
+		auto format { timeSpec.timeSpecFormat };
+		auto& cont { timeSpec.timeSpecContainer };
 		se_wstring localeFmt;
 		localeFmt.reserve(cont.size() * 2);
 		for( ;; ) {
@@ -59,18 +59,11 @@ namespace serenity::arg_formatter {
 		localeStream.clear();
 		localeStream.imbue(loc);
 		localeStream << std::put_time<se_wchar>(&timeStruct, localeFmt.data());
-		auto initialData { std::move(localeStream.str()) };    // moving the string value so as not to continuously have to call localeStream.str() later on
-		auto& localeBuff { specValues.localizationBuff };
-		localeBuff.clear();
-		// widen the se_wchar bytes to char32_t  or convert from UCS-2/UTF-16 to UTF-32 and then encode them as utf-8 bytes (dependant on size of se_wchar)
-		// NOTE: Look into directly converting the wide character type here to utf-8 encoding. If size == 2 then something like U16ToU8(), otherwise, U32ToU8()
-		// NOTE: Would like to call the reserve functions inside of the conversion functions, but would have to handle the fact that references are invalidated when
-		//              actually called..
-		std::u32string locData;
-		locData.reserve(initialData.size());
-		U16ToU32(initialData, locData);
-		localeBuff.reserve(ReserveLengthForU8(locData));
-		U32ToU8(locData, localeBuff, valueSize);
+		if constexpr( sizeof(se_wchar) == 2 ) {
+				U16ToU8(std::move(localeStream.str()), timeSpec.localizationBuff, valueSize);
+		} else {
+				U32ToU8(std::move(localeStream.str()), timeSpec.localizationBuff, valueSize);
+			}
 		//*******************************************************************************************
 	}
 

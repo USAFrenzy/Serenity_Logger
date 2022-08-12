@@ -70,7 +70,8 @@ static constexpr size_t se_from_chars(const char* begin, const char* end, Interg
 constexpr auto fillBuffDefaultCapacity { 256 };
 constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
 	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}), argStorage(ArgContainer {}),
-	  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(size_t {}), fillBuffer(std::vector<char> {}), errHandle(serenity::error_handler {}) {
+	  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(size_t {}), fillBuffer(std::vector<char> {}), errHandle(serenity::error_handler {}),
+	  timeSpec(TimeSpecs {}) {
 	// Initialize now to lower the initial cost when formatting (brings initial cost from ~33us down to ~11us). The Call To UtcOffset() will initialize
 	// TimeZoneInstance() via TimeZone() via TZInfo() -> thereby initializing  all function statics.
 	// NOTE: would still love a constexpr friendly version of this but I'm not finding anything online that says that might be remotely possible using the standard
@@ -86,20 +87,23 @@ constexpr void serenity::arg_formatter::BracketSearchResults::Reset() {
 		}
 }
 
+constexpr void serenity::arg_formatter::TimeSpecs::Reset() {
+	// the arrays don't need anything special considering values get overriden by index assignment with the counter
+	timeSpecCounter = 0;
+	localizationBuff.clear();
+}
+
 constexpr void serenity::arg_formatter::SpecFormatting::ResetSpecs() {
 	if( !std::is_constant_evaluated() ) {
 			std::memset(this, 0, sizeof(SpecFormatting));
 	} else {
-			argPosition = nestedWidthArgPos = nestedPrecArgPos = timeSpecCounter = 0;
+			argPosition = nestedWidthArgPos = nestedPrecArgPos = 0;
 			localize = hasAlt = hasClosingBrace = false;
 			alignmentPadding = precision = 0;
 			fillCharacter = typeSpec = '\0';
 			align                    = Alignment::Empty;
 			signType                 = Sign::Empty;
 			preAltForm               = "";
-			std::fill(timeSpecContainer.data(), timeSpecContainer.data() + 25, static_cast<unsigned char>('\0'));
-			std::fill(timeSpecFormat.data(), timeSpecFormat.data() + 25, LocaleFormat::standard);
-			localizationBuff.clear();
 		}
 }
 
@@ -312,7 +316,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 			FlushBuffer(std::forward<BuffRef>(buffer), valueSize, std::forward<T>(container));
 	} else {
 			using BuffRef = FwdRef<std::vector<unsigned char>>;
-			auto& localeBuff { specValues.localizationBuff };
+			auto& localeBuff { timeSpec.localizationBuff };
 			if constexpr( std::is_signed_v<char> ) {
 					// Since localeBuff is of unsigned char tyoe, need to convert to signed char for systems that use signed char as the basic char type
 					FlushBuffer(std::move(ConvBuffToSigned(localeBuff, valueSize)), valueSize, std::forward<T>(container));
@@ -446,8 +450,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 								case 'C': [[fallthrough]];
 								case 'X': [[fallthrough]];
 								case 'Y':
-									specValues.timeSpecFormat[ specValues.timeSpecCounter ]      = LocaleFormat::localized;
-									specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
+									timeSpec.timeSpecFormat[ timeSpec.timeSpecCounter ]      = LocaleFormat::localized;
+									timeSpec.timeSpecContainer[ timeSpec.timeSpecCounter++ ] = sv[ pos ];
 									break;
 								default: errHandle.ReportError(ErrorType::invalid_ctime_spec);
 							}
@@ -467,8 +471,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 								case 'U': [[fallthrough]];
 								case 'V': [[fallthrough]];
 								case 'W':
-									specValues.timeSpecFormat[ specValues.timeSpecCounter ]      = LocaleFormat::localized;
-									specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
+									timeSpec.timeSpecFormat[ timeSpec.timeSpecCounter ]      = LocaleFormat::localized;
+									timeSpec.timeSpecContainer[ timeSpec.timeSpecCounter++ ] = sv[ pos ];
 									break;
 								default: errHandle.ReportError(ErrorType::invalid_ctime_spec);
 							}
@@ -511,8 +515,8 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimeSpec(std::string
 					case 'Z': [[fallthrough]];
 					case '%': [[fallthrough]];
 					default:
-						specValues.timeSpecFormat[ specValues.timeSpecCounter ]      = LocaleFormat::standard;
-						specValues.timeSpecContainer[ specValues.timeSpecCounter++ ] = sv[ pos ];
+						timeSpec.timeSpecFormat[ timeSpec.timeSpecCounter ]      = LocaleFormat::standard;
+						timeSpec.timeSpecContainer[ timeSpec.timeSpecCounter++ ] = sv[ pos ];
 						break;
 				}
 			if( ++pos >= size ) return;
@@ -554,6 +558,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::VerifyTimePrecisionField(s
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::ParseTimeField(std::string_view sv, size_t& start) {
+	timeSpec.Reset();
 	auto svSize { sv.size() };
 	if( sv[ start ] != '%' ) {
 			VerifyFillAlignTimeField(sv, start);
@@ -580,14 +585,15 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
-	if( totalWidth == 0 && precision == 0 && specValues.timeSpecCounter < 2 ) {
+	const auto& counter { timeSpec.timeSpecCounter };
+	if( totalWidth == 0 && precision == 0 && counter < 2 ) {
 			return WriteSimpleCTime(std::forward<FwdRef<T>>(container));
 	} else if( totalWidth == 0 ) {
-			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, specValues.timeSpecCounter)
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, counter)
 								 : LocalizeCTime(default_locale, argStorage.c_time_state(specValues.argPosition), precision);
 			return WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 	} else {
-			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, specValues.timeSpecCounter)
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, counter)
 								 : LocalizeCTime(default_locale, argStorage.c_time_state(specValues.argPosition), precision);
 			FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
 		}
@@ -598,14 +604,15 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 	auto totalWidth { specValues.nestedWidthArgPos != 0  ? argStorage.int_state(specValues.nestedWidthArgPos)
 		              : specValues.alignmentPadding != 0 ? specValues.alignmentPadding
 		                                                 : 0 };
-	if( totalWidth == 0 && precision == 0 && specValues.timeSpecCounter < 2 ) {
+	const auto& counter { timeSpec.timeSpecCounter };
+	if( totalWidth == 0 && precision == 0 && counter < 2 ) {
 			return WriteSimpleCTime(std::forward<FwdRef<T>>(container));
 	} else if( totalWidth == 0 ) {
-			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, specValues.timeSpecCounter)
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, counter)
 								 : LocalizeCTime(loc, argStorage.c_time_state(specValues.argPosition), precision);
 			return WriteBufferToContainer(std::forward<FwdRef<T>>(container));
 	} else {
-			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, specValues.timeSpecCounter)
+			!specValues.localize ? FormatCTime(argStorage.c_time_state(specValues.argPosition), precision, 0, counter)
 								 : LocalizeCTime(loc, argStorage.c_time_state(specValues.argPosition), precision);
 			FormatAlignment(std::forward<FwdRef<T>>(container), totalWidth);
 		}
@@ -1784,7 +1791,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIsoWeekNumber(int ye
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCTime(T&& container) {
 	const auto& tm { argStorage.c_time_state(specValues.argPosition) };
-	switch( specValues.timeSpecContainer[ 0 ] ) {
+	switch( timeSpec.timeSpecContainer[ 0 ] ) {
 			case 'a': WriteShortWeekday(std::forward<FwdRef<T>>(container), tm.tm_wday); return;
 			case 'h': [[fallthrough]];
 			case 'b': WriteShortMonth(std::forward<FwdRef<T>>(container), tm.tm_mon); return;
@@ -1822,13 +1829,13 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 			case 'n': [[fallthrough]];
 			case 't': [[fallthrough]];
 			case '%': [[fallthrough]];
-			default: WriteLiteral(std::forward<FwdRef<T>>(container), specValues.timeSpecContainer[ 0 ]); return;
+			default: WriteLiteral(std::forward<FwdRef<T>>(container), timeSpec.timeSpecContainer[ 0 ]); return;
 		}
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm& time, const int& precision, int startPos, int endPos) {
 	for( ;; ) {
-			switch( specValues.timeSpecContainer[ startPos ] ) {
+			switch( timeSpec.timeSpecContainer[ startPos ] ) {
 					case 'a': FormatShortWeekday(time.tm_wday); break;
 					case 'h': [[fallthrough]];
 					case 'b': FormatShortMonth(time.tm_mon); break;
@@ -1866,7 +1873,7 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatCTime(const std::tm&
 					case 'n': [[fallthrough]];
 					case 't': [[fallthrough]];
 					case '%': [[fallthrough]];
-					default: FormatLiteral(specValues.timeSpecContainer[ startPos ]); break;
+					default: FormatLiteral(timeSpec.timeSpecContainer[ startPos ]); break;
 				}
 			if( ++startPos >= endPos ) return;
 		}
