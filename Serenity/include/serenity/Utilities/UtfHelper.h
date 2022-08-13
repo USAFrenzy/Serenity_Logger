@@ -340,14 +340,12 @@ namespace utf_helper {
 							return true;
 					} else {
 							SE_ASSERT(false, "Error Validating UTF-8 Sequence: Invalid Byte In Sequence Detected. A Byte Of Value 255 Is Illegal");
-							byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with
-							                // UTF8_LEAD_MASK_SEQUENCE_3 '?'
+							byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with a '?'
 							return false;
 						}
 			} else if( byte1 == static_cast<CharType>(BOM_LOW_BYTE) ) {
 					SE_ASSERT(false, "Error Validating UTF-8 Sequence: Invalid Byte In Sequence Detected. A Byte Of Value 254 Is Illegal");
-					byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with
-					                // UTF8_LEAD_MASK_SEQUENCE_3 '?'
+					byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with a'?'
 					return false;
 			} else {
 					// Skip checking the second byte as any byte failing the CheckTrailingByte() validation will call this lambda with the next byte to check
@@ -373,8 +371,7 @@ namespace utf_helper {
 				} else {
 						// As of Unicode Version 14.0 (2021Sep14), there are only 144,697 characters in use, including emojis, so while 5-byte and 6-byte
 						// sequences are technically supported, they are not defined so return false here. Only time this really would need to be updated is once
-						// the Unicode Version dictates more than 1,114,111 characters in use as that number is the max value UTF8_LEAD_MASK_SEQUENCE_3 4-byte
-						// sequence can map to.
+						// the Unicode Version dictates more than 1,114,111 characters in use as that number is the max value a 4-byte sequence can map to.
 						return false;
 					}
 				for( ; bytesToCheck > 0; --bytesToCheck ) {
@@ -492,7 +489,7 @@ namespace utf_helper {
 								if( ++pos >= size ) {
 										SE_ASSERT(false, "Error In Decoding UTF-16 To UTF-32: Incomplete Surrogate Pairing When Decoding UTF-16 Codepoint");
 										WriteChToUContainer(std::forward<BRef>(buff), static_cast<char32_t>(REPLACEMENT_CHARACTER));
-										continue;    // continue instead of return here in case Pos type is UTF8_LEAD_MASK_SEQUENCE_3 lvalue ref
+										continue;    // continue instead of return here in case Pos type is a lvalue ref
 								}
 								// check for valid low byte in pair
 								if( wstr[ pos ] < UTF16_LOW_SURROGATE_MIN || wstr[ pos ] > UTF16_LOW_SURROGATE_MAX ) {
@@ -676,7 +673,7 @@ namespace utf_helper {
 
 						// encode the code point value
 						if( cp > UTF16_SURROGATE_CLAMP ) {
-								// make UTF8_LEAD_MASK_SEQUENCE_3 surrogate pair and append them to the buffer
+								// make a surrogate pair and append them to the buffer
 								cp -= static_cast<char16_t>(UTF16_SURROGATE_CLAMP);
 								WriteChToUContainer(buff, static_cast<RvRef>((cp >> 10) + UTF16_HIGH_SURROGATE_MIN));
 								WriteChToUContainer(buff, static_cast<RvRef>((cp & UTF_NIBBLE_10) + UTF16_LOW_SURROGATE_MIN));
