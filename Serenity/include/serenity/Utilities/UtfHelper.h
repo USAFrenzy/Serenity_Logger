@@ -43,12 +43,17 @@ namespace utf_helper {
 	}    // namespace utf_bounds
 
 	namespace utf_masks {
-		constexpr int UTF8_LEAD_MASK_SEQUENCE_2 { 0xC0 };
-		constexpr int UTF8_LEAD_MASK_SEQUENCE_3 { 0xE0 };
-		constexpr int UTF8_LEAD_MASK_SEQUENCE_4 { 0xF0 };
+		constexpr int UTF8_LEAD_MASK_SEQUENCE_1 { 0xC0 };
+		constexpr int UTF8_LEAD_MASK_SEQUENCE_2 { 0xE0 };
+		constexpr int UTF8_LEAD_MASK_SEQUENCE_3 { 0xF0 };
+		constexpr int UTF8_LEAD_MASK_SEQUENCE_4 { 0xF8 };
 		constexpr int UTF8_TRAIL_BASE { 0x80 };
-		constexpr int UTF8_TRAIL_NIBBLE_6 { 0x3F };
-		constexpr int UTF16_NIBBLE_10 { 0x03FF };
+		constexpr int UTF_NIBBLE_3 { 0x07 };
+		constexpr int UTF_NIBBLE_4 { 0x0F };
+		constexpr int UTF_NIBBLE_5 { 0x1F };
+		constexpr int UTF_NIBBLE_6 { 0x3F };
+		constexpr int UTF_NIBBLE_7 { 0x7F };
+		constexpr int UTF_NIBBLE_10 { 0x03FF };
 	}    // namespace utf_masks
 
 	namespace utf_constraints {
@@ -163,8 +168,9 @@ namespace utf_helper {
 		// concept constraints that use the above individual constraints
 		template<typename StringishType>
 		concept ConvertibleToSuppSV = requires {
-			// I don't support char8_t here so I need to check that char type is supported instead and then make sure that a string_view is constructible
-			// in the case that a user passes a char-like type that aliases a supported char type but may or may not be constructible as a string view
+			// I don't support char8_t here so I need to check that char type is supported instead and then make sure that UTF8_LEAD_MASK_SEQUENCE_3 string_view is
+			// constructible in the case that UTF8_LEAD_MASK_SEQUENCE_3 user passes UTF8_LEAD_MASK_SEQUENCE_3 char-like type that aliases UTF8_LEAD_MASK_SEQUENCE_3
+			// supported char type but may or may not be constructible as UTF8_LEAD_MASK_SEQUENCE_3 string view
 			is_char_type_v<typename type<StringishType>::value_type> &&
 			(is_string_view_v<StringishType> ||
 			 std::is_convertible_v<std::basic_string<typename type<StringishType>::value_type>, std::basic_string_view<typename type<StringishType>::value_type>>);
@@ -188,6 +194,11 @@ namespace utf_helper {
 		template<typename Buffer>
 		concept IsSupportedU32Container = requires {
 			is_u32_type_vector_v<Buffer> || is_u32_type_string_v<Buffer>;
+		};
+
+		template<typename Source>
+		concept IsSupportedU8Source = requires {
+			is_basic_string_v<Source> || is_basic_string_view_v<Source> || is_basic_char_vector_v<Source>;
 		};
 
 		template<typename Buffer>
@@ -240,8 +251,8 @@ namespace utf_helper {
 								}
 								if( auto& next { s[ pos ] }; next >= UTF16_LOW_SURROGATE_MIN && next <= UTF16_HIGH_SURROGATE_MAX ) {
 										char32_t cp { UTF16_SURROGATE_CLAMP };
-										cp += (ch & UTF16_NIBBLE_10) << 10;
-										cp += (next & UTF16_NIBBLE_10) << 10;
+										cp += (ch & UTF_NIBBLE_10) << 10;
+										cp += (next & UTF_NIBBLE_10) << 10;
 										// If  cp > WIDE_ENCODING_TO_UTF8_4 , reserve 2 for replacement character, otherwise reserve the correct amount
 										reserveSize += (cp <= WIDE_ENCODING_TO_UTF8_3 ? 3 : cp <= WIDE_ENCODING_TO_UTF8_4 ? 4 : 2);
 										continue;
@@ -284,20 +295,27 @@ namespace utf_helper {
 
 	template<typename Buffer, typename Char>
 	requires utf_constraints::IsSupportedUContainer<Buffer> && utf_constraints::is_char_type_v<Char>
-	static constexpr void WriteChToUContainer(Buffer&& buff, Char&& ch) {
-		if constexpr( utf_constraints::is_string_v<Buffer> ) {
-				if constexpr( std::is_rvalue_reference_v<Char> ) {
-						buff += std::move(ch);
-				} else {
-						buff += ch;
-					}
+	static constexpr void WriteChToUContainerImpl(Buffer& buff, Char&& ch) {
+		if constexpr( utf_constraints::is_string_v<Buffer> && std::is_rvalue_reference_v<decltype(ch)> ) {
+				buff += std::move(ch);
+		} else if constexpr( utf_constraints::is_string_v<Buffer> ) {
+				buff += ch;
+		} else if constexpr( utf_constraints::is_vector_v<Buffer> && std::is_rvalue_reference_v<decltype(ch)> ) {
+				buff.emplace_back(std::move(ch));
 		} else if constexpr( utf_constraints::is_vector_v<Buffer> ) {
-				if constexpr( std::is_rvalue_reference_v<Char> ) {
-						buff.emplace_back(std::move(ch));
-				} else {
-						buff.emplace_back(ch);
-					}
+				buff.emplace_back(ch);
 		}
+	}
+
+	template<typename Buffer, typename Char>
+	requires utf_constraints::IsSupportedUContainer<Buffer> && utf_constraints::is_char_type_v<Char>
+	static constexpr void WriteChToUContainer(Buffer& buff, Char&& ch) {
+		using BuffCharType = typename type<Buffer>::value_type;
+		if constexpr( std::is_same_v<BuffCharType, char> && std::is_same_v<type<Char>, unsigned char> && std::is_signed_v<char> ) {
+				WriteChToUContainerImpl(buff, static_cast<char>(ch));
+		} else {
+				WriteChToUContainerImpl(buff, ch);
+			}
 	}
 
 	template<typename Buffer>
@@ -322,12 +340,14 @@ namespace utf_helper {
 							return true;
 					} else {
 							SE_ASSERT(false, "Error Validating UTF-8 Sequence: Invalid Byte In Sequence Detected. A Byte Of Value 255 Is Illegal");
-							byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with a '?'
+							byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with
+							                // UTF8_LEAD_MASK_SEQUENCE_3 '?'
 							return false;
 						}
 			} else if( byte1 == static_cast<CharType>(BOM_LOW_BYTE) ) {
 					SE_ASSERT(false, "Error Validating UTF-8 Sequence: Invalid Byte In Sequence Detected. A Byte Of Value 254 Is Illegal");
-					byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with a '?'
+					byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with
+					                // UTF8_LEAD_MASK_SEQUENCE_3 '?'
 					return false;
 			} else {
 					// Skip checking the second byte as any byte failing the CheckTrailingByte() validation will call this lambda with the next byte to check
@@ -353,7 +373,8 @@ namespace utf_helper {
 				} else {
 						// As of Unicode Version 14.0 (2021Sep14), there are only 144,697 characters in use, including emojis, so while 5-byte and 6-byte
 						// sequences are technically supported, they are not defined so return false here. Only time this really would need to be updated is once
-						// the Unicode Version dictates more than 1,114,111 characters in use as that number is the max value a 4-byte sequence can map to.
+						// the Unicode Version dictates more than 1,114,111 characters in use as that number is the max value UTF8_LEAD_MASK_SEQUENCE_3 4-byte
+						// sequence can map to.
 						return false;
 					}
 				for( ; bytesToCheck > 0; --bytesToCheck ) {
@@ -397,13 +418,13 @@ namespace utf_helper {
 						WriteChToUContainer(std::forward<BRef>(buff), static_cast<CharType>(wstr[ pos ]));
 						continue;
 				} else if( ch <= WIDE_ENCODING_TO_UTF8_2 ) {
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_2 | (ch >> 6)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF8_TRAIL_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_1 | (ch >> 6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF_NIBBLE_6)));
 						continue;
 				} else if( ch < UTF16_HIGH_SURROGATE_MIN ) {
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_3 | (ch >> 12)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((ch >> 6) & UTF8_TRAIL_NIBBLE_6)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF8_TRAIL_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_2 | (ch >> 12)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((ch >> 6) & UTF_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF_NIBBLE_6)));
 						continue;
 				} else {
 						if( ch > UTF16_HIGH_SURROGATE_MAX ) {
@@ -426,12 +447,12 @@ namespace utf_helper {
 										continue;
 								}
 								char32_t cp { UTF16_SURROGATE_CLAMP };
-								cp += (ch & UTF16_NIBBLE_10) << 10;
-								cp += (next & UTF16_NIBBLE_10);
-								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_4 | (cp >> 18)));
-								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((cp >> 12) & UTF8_TRAIL_NIBBLE_6)));
-								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((cp >> 6) & UTF8_TRAIL_NIBBLE_6)));
-								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (cp & UTF8_TRAIL_NIBBLE_6)));
+								cp += (ch & UTF_NIBBLE_10) << 10;
+								cp += (next & UTF_NIBBLE_10);
+								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_3 | (cp >> 18)));
+								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((cp >> 12) & UTF_NIBBLE_6)));
+								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((cp >> 6) & UTF_NIBBLE_6)));
+								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (cp & UTF_NIBBLE_6)));
 								continue;
 						}
 					}
@@ -471,7 +492,7 @@ namespace utf_helper {
 								if( ++pos >= size ) {
 										SE_ASSERT(false, "Error In Decoding UTF-16 To UTF-32: Incomplete Surrogate Pairing When Decoding UTF-16 Codepoint");
 										WriteChToUContainer(std::forward<BRef>(buff), static_cast<char32_t>(REPLACEMENT_CHARACTER));
-										continue;    // continue instead of return here in case Pos type is a lvalue ref
+										continue;    // continue instead of return here in case Pos type is UTF8_LEAD_MASK_SEQUENCE_3 lvalue ref
 								}
 								// check for valid low byte in pair
 								if( wstr[ pos ] < UTF16_LOW_SURROGATE_MIN || wstr[ pos ] > UTF16_LOW_SURROGATE_MAX ) {
@@ -480,8 +501,8 @@ namespace utf_helper {
 										continue;
 								}
 								char32_t cp { UTF16_SURROGATE_CLAMP };
-								cp += (wstr[ --pos ] & UTF16_NIBBLE_10) << 10;
-								cp += (wstr[ ++pos ] & UTF16_NIBBLE_10);
+								cp += (wstr[ --pos ] & UTF_NIBBLE_10) << 10;
+								cp += (wstr[ ++pos ] & UTF_NIBBLE_10);
 								WriteChToUContainer(std::forward<BRef>(buff), std::move(cp));
 								continue;
 							}
@@ -526,21 +547,21 @@ namespace utf_helper {
 						continue;
 				} else if( ch <= WIDE_ENCODING_TO_UTF8_2 ) {
 						// handle encoding to 2 byte utf-8 sequence here
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_2 | (ch >> 6)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF8_TRAIL_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_1 | (ch >> 6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF_NIBBLE_6)));
 						continue;
 				} else if( ch <= WIDE_ENCODING_TO_UTF8_3 ) {
 						// handle encoding to 3 byte utf-8 sequence here
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_3 | (ch >> 12)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((ch >> 6) & UTF8_TRAIL_NIBBLE_6)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF8_TRAIL_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_2 | (ch >> 12)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((ch >> 6) & UTF_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF_NIBBLE_6)));
 						continue;
 				} else if( ch <= WIDE_ENCODING_TO_UTF8_4 ) {
 						// handle encoding to 4 byte utf-8 sequence here
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_4 | (ch >> 18)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((ch >> 12) & UTF8_TRAIL_NIBBLE_6)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((ch >> 6) & UTF8_TRAIL_NIBBLE_6)));
-						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF8_TRAIL_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_LEAD_MASK_SEQUENCE_3 | (ch >> 18)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((ch >> 12) & UTF_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((ch >> 6) & UTF_NIBBLE_6)));
+						WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (ch & UTF_NIBBLE_6)));
 						continue;
 				} else {
 						// 5-byte and 6-byte sequences are apparently supported for the long-term but are not defined, therefore, instead of encoding these
@@ -553,14 +574,17 @@ namespace utf_helper {
 			}
 	}
 
+	// NOTE:  Decided to handle wchar_t in these functions so that it's more convenient to call these functions without dealing with the non-standard wchar_t sizes
+	// NOTE: When everything is done and works as intended, may move the *Impl versions directly into the functions to avoid the unneccessary string_view conversions
+
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U16ToU8(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
-		using ValueType  = typename type<Source>::value_type;
-		using StringView = std::basic_string_view<ValueType>;
+		using CharType   = typename type<Source>::value_type;
+		using StringView = std::basic_string_view<CharType>;
 		auto rSize { ReserveLengthForU8(wstr) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
-		if constexpr( std::is_same_v<ValueType, wchar_t> && sizeof(wchar_t) != 2 ) {
+		if constexpr( std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) != 2 ) {
 				U32ToU8(std::forward<Source>(wstr), std::forward<Buffer>(buff), std::forward<Pos>(startingPos));
 		} else if constexpr( utf_constraints::is_u16_type_string_view_v<Source> ) {
 				U16ToU8Impl(std::forward<Source>(wstr), buff, startingPos);
@@ -572,11 +596,11 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU32Container<Buffer>
 	constexpr void U16ToU32(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
-		using ValueType  = typename type<Source>::value_type;
-		using StringView = std::basic_string_view<ValueType>;
+		using CharType   = typename type<Source>::value_type;
+		using StringView = std::basic_string_view<CharType>;
 		auto rSize { ReserveLengthForU8(wstr) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
-		if constexpr( std::is_same_v<ValueType, wchar_t> && sizeof(wchar_t) != 2 ) {
+		if constexpr( std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) != 2 ) {
 				for( auto& ch: wstr ) WriteChToUContainer(buff, static_cast<char32_t>(ch));
 		} else if constexpr( utf_constraints::is_u16_type_string_view_v<Source> ) {
 				U16ToU32Impl(std::forward<Source>(wstr), buff, startingPos);
@@ -588,11 +612,11 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU32Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U32ToU8(Source&& sv, Buffer& buff, Pos&& startingPos = 0) {
-		using ValueType  = typename type<Source>::value_type;
-		using StringView = std::basic_string_view<ValueType>;
+		using CharType   = typename type<Source>::value_type;
+		using StringView = std::basic_string_view<CharType>;
 		auto rSize { ReserveLengthForU8(sv) };
 		if( buff.capacity() < rSize ) buff.reserve(rSize);
-		if constexpr( std::is_same_v<ValueType, wchar_t> && sizeof(wchar_t) != 4 ) {
+		if constexpr( std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) != 4 ) {
 				U16ToU8(std::forward<Source>(sv), buff, std::forward<Pos>(startingPos));
 		} else if constexpr( utf_constraints::is_string_view_v<Source> ) {
 				U32ToU8Impl(std::forward<Source>(sv), buff, startingPos);
@@ -600,4 +624,120 @@ namespace utf_helper {
 				U32ToU8Impl(StringView(sv.data(), sv.data() + sv.size()), buff, startingPos);
 			}
 	}
+
+	template<typename Source, typename Buffer, typename Pos = size_t>
+	requires utf_constraints::IsSupportedU8Source<Source> && utf_constraints::IsSupportedU16Container<Buffer>
+	constexpr void U8ToU16(Source&& sv, Buffer& buff, Pos&& startingPos = 0) {
+		using SourceChar = typename type<Source>::value_type;
+		using CharType   = typename type<Buffer>::value_type;
+		using RvRef      = std::add_rvalue_reference_t<CharType>;
+		using namespace utf_bounds;
+		using namespace utf_masks;
+
+		if constexpr( std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) == 4 ) {
+				U8ToU32(std::forward<Source>(sv), buff, std::forward<Pos>(startingPos));
+		} else {
+				int pos { startingPos == 0 ? -1 : static_cast<int>(--startingPos) };
+				auto size { sv.size() };
+				char16_t cp {};
+				short int cpLength {};
+				for( ;; ) {
+						if( ++pos >= size ) return;
+						// retrieve the codepoint value by first looking at the leading byte to see how many bytes need to be observed
+						// for the codepoint value and then accumulate the appropriate bits to the appropriate codepoint value
+						if( auto& ch { sv[ pos ] }; (ch & UTF8_TRAIL_BASE) == 0 ) {
+								cp = static_cast<char16_t>(ch & UTF_NIBBLE_7);
+						} else if( (ch & UTF8_LEAD_MASK_SEQUENCE_2) == UTF8_LEAD_MASK_SEQUENCE_1 ) {
+								cp = ch & UTF_NIBBLE_5;
+								++cpLength;
+						} else if( (ch & UTF8_LEAD_MASK_SEQUENCE_3) == UTF8_LEAD_MASK_SEQUENCE_2 ) {
+								cp = ch & UTF_NIBBLE_4;
+								cpLength += 2;
+						} else if( (ch & UTF8_LEAD_MASK_SEQUENCE_4) == UTF8_LEAD_MASK_SEQUENCE_3 ) {
+								cp = ch & UTF_NIBBLE_3;
+								cpLength += 3;
+						} else {
+								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-16: Illegal Leading Byte Value Detected In Sequence");
+								WriteChToUContainer(buff, static_cast<const CharType&>(REPLACEMENT_CHARACTER));
+								continue;
+							}
+
+						// validate that the size indicated from the leading byte doesn't exceed past the source size
+						if( pos + cpLength >= size ) {
+								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-16: Incomplete UTF-8 Sequence Detected");
+								WriteChToUContainer(buff, static_cast<const CharType&>(REPLACEMENT_CHARACTER));
+								continue;
+						}
+						// get the actual code point value free from leading/trailing nibbles
+						for( ; cpLength > 0; --cpLength ) {
+								// should probably validate each trailing byte first
+								cp = (cp << 6) | (sv[ ++pos ] & UTF_NIBBLE_6);
+							}
+
+						// encode the code point value
+						if( cp > UTF16_SURROGATE_CLAMP ) {
+								// make UTF8_LEAD_MASK_SEQUENCE_3 surrogate pair and append them to the buffer
+								cp -= static_cast<char16_t>(UTF16_SURROGATE_CLAMP);
+								WriteChToUContainer(buff, static_cast<RvRef>((cp >> 10) + UTF16_HIGH_SURROGATE_MIN));
+								WriteChToUContainer(buff, static_cast<RvRef>((cp & UTF_NIBBLE_10) + UTF16_LOW_SURROGATE_MIN));
+						} else {
+								WriteChToUContainer(buff, static_cast<const CharType&>(cp));
+							}
+					}    // end for loop
+			}
+	}
+
+	template<typename Source, typename Buffer, typename Pos = size_t>
+	requires utf_constraints::IsSupportedU8Source<Source> && utf_constraints::IsSupportedU32Container<Buffer>
+	constexpr void U8ToU32(Source&& sv, Buffer& buff, Pos&& startingPos = 0) {
+		using SourceChar = typename type<Source>::value_type;
+		using CharType   = typename type<Buffer>::value_type;
+		using namespace utf_bounds;
+		using namespace utf_masks;
+
+		if constexpr( std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) == 2 ) {
+				U8ToU16(std::forward<Source>(sv), buff, std::forward<Pos>(startingPos));
+		} else {
+				int pos { startingPos == 0 ? -1 : static_cast<int>(--startingPos) };
+				auto size { sv.size() };
+				char32_t cp {};
+				short int cpLength {};
+				for( ;; ) {
+						if( ++pos >= size ) return;
+						// retrieve the codepoint value by first looking at the leading byte to see how many bytes need to be observed
+						// for the codepoint value and then accumulate the appropriate bits to the appropriate codepoint value
+						if( auto& ch { sv[ pos ] }; (ch & UTF8_TRAIL_BASE) == 0 ) {
+								cp = static_cast<char16_t>(ch & UTF_NIBBLE_7);
+						} else if( (ch & UTF8_LEAD_MASK_SEQUENCE_2) == UTF8_LEAD_MASK_SEQUENCE_1 ) {
+								cp = ch & UTF_NIBBLE_5;
+								++cpLength;
+						} else if( (ch & UTF8_LEAD_MASK_SEQUENCE_3) == UTF8_LEAD_MASK_SEQUENCE_2 ) {
+								cp = ch & UTF_NIBBLE_4;
+								cpLength += 2;
+						} else if( (ch & UTF8_LEAD_MASK_SEQUENCE_4) == UTF8_LEAD_MASK_SEQUENCE_3 ) {
+								cp = ch & UTF_NIBBLE_3;
+								cpLength += 3;
+						} else {
+								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-32: Illegal Leading Byte Value Detected In Sequence");
+								WriteChToUContainer(buff, static_cast<const CharType&>(REPLACEMENT_CHARACTER));
+								continue;
+							}
+
+						// validate that the size indicated from the leading byte doesn't exceed past the source size
+						if( pos + cpLength >= size ) {
+								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-32: Incomplete UTF-8 Sequence Detected");
+								WriteChToUContainer(buff, static_cast<const CharType&>(REPLACEMENT_CHARACTER));
+								continue;
+						}
+
+						// get the actual code point value free from leading/trailing nibbles
+						for( ; cpLength > 0; --cpLength ) {
+								// should probably validate each trailing byte first
+								cp = (cp << 6) | (sv[ ++pos ] & UTF_NIBBLE_6);
+							}
+						WriteChToUContainer(buff, static_cast<CharType>(cp));
+					}
+			}
+	}
+
 }    // namespace utf_helper

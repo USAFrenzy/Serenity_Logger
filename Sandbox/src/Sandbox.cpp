@@ -476,7 +476,7 @@ int main() {
 	// %a Short Day takes ~25ns
 	// %b Short Month takes ~26ns
 	// %c Time-Date takes ~36ns
-	// %d Padded Day takes ~28ns -> %e being the more or less the same had same result
+	// %d Padded Day takes ~28ns -> %e being the more or less the same had same u8result
 	// %y Short year takes ~29ns -> %g takes ~30-31ns
 	// %j Day Of Year takes ~29ns
 	// %m Padded Month takes~27ns
@@ -515,32 +515,80 @@ int main() {
 	std::cout << serenity::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
 	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(loc, formatString, cTime));
 
-	// Just seeing how fast these conversions are
-	// NOTE: Until conversion functions from utf-8 to other encodings are done, this source file will have to be toggled between
-	//              utf-8 for uploading to git and utf-16 for the below string_views to see the correct glyphs when running this project
-	std::string result;
-	constexpr std::u32string_view u32Str { U"一個簡單的中文字符串。" };
-	constexpr std::u16string_view u16Str { u"一個簡單的中文字符串。" };
+	/*************************************************  Just seeing how fast these conversions are *************************************************/
 
-	result.reserve(utf_helper::ReserveLengthForU8(u32Str));
+	// This is to keep the encoding of the source file in utf-8, however, convert them into unicode strings to use in benches
+	// NOTE: Needs to be compiled with /utf-8 switch for the compiler to understand it though...
+	std::string u8Str;
+	std::u16string u16Str;
+	std::u32string u32Str;
+	constexpr std::u8string_view u8view { u8"一個簡單的中文字符串。" };
+	for( auto& ch: u8view ) u8Str += static_cast<char>(ch);    // need this as iIdon't currently support char8_t
+	utf_helper::U8ToU16(u8Str, u16Str);
+	utf_helper::U8ToU32(u8Str, u32Str);
+
+	std::string u8result;
+	std::u16string u16Result;
+	std::u32string u32Result;
+
+	// Validating Conversions are working correctly before testing timings
+	utf_helper::U16ToU8(u16Str, u8result);
+	utf_helper::U8ToU16(u8result, u16Result);
+	std::cout << ((u16Str == u16Result) ? "Lossless Conversion From UTF-16 -> UTF-8 -> To UTF-16  Complete\n"
+	                                    : "Data Corruption In Conversion From UTF-16 -> UTF-8 -> To UTF-16 Detected\n");
+	u8result.clear();
+	utf_helper::U32ToU8(u32Str, u8result);
+	utf_helper::U8ToU32(u8result, u32Result);
+	std::cout << ((u32Str == u32Result) ? "Lossless Conversion  From  UTF-32 -> UTF-8 -> To UTF-32 Complete\n\n"
+	                                    : "Data Corruption In Conversion From UTF-32 -> UTF-8 -> To UTF-32 Detected\n\n");
+	u8result.clear();
+	/******************************************************************************************************
+	    Still need a U32ToU16() to test UTF-32 -> UTF-16 -> UTF-32 round trip AND for shits and giggles,
+	    might as well add in a UTF-32 -> UTF-16 -> UTF-8 -> UTF-16 ->UTF-32 round trip
+	 ******************************************************************************************************/
+	u8result.reserve(utf_helper::ReserveLengthForU8(u32Str));
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
-			result.clear();
-			utf_helper::U32ToU8(u32Str, result);
+			u8result.clear();
+			utf_helper::U32ToU8(u32Str, u8result);
 		}
 	cTimeTimer.StopWatch_Stop();
 	std::cout << serenity::format("Serenity Formatter Encoding UTF-32 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), result);
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
-	result.reserve(utf_helper::ReserveLengthForU8(u16Str));
+	u8result.reserve(utf_helper::ReserveLengthForU8(u16Str));
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
-			result.clear();
-			utf_helper::U16ToU8(u16Str, result);
+			u8result.clear();
+			utf_helper::U16ToU8(u16Str, u8result);
 		}
 	cTimeTimer.StopWatch_Stop();
 	std::cout << serenity::format("Serenity Formatter Encoding UTF-16 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), result);
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+
+	// with the usage of  SetConsoleOutputCP(CP_UTF8) and the fact that conversions before
+	// timings should be successful, just output the utf-8 u8result for consistency's sake
+	u16Result.clear();
+	u16Result.reserve(u8Str.size() * 2);
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			u16Result.clear();
+			utf_helper::U8ToU16(u8Str, u16Result);
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << serenity::format("Serenity Formatter Encoding UTF-8 To UTF-16 Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+
+	u32Result.clear();
+	u32Result.reserve(u8Str.size() * 4);
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			u32Result.clear();
+			utf_helper::U8ToU32(u8Str, u32Result);
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << serenity::format("Serenity Formatter Encoding UTF-8 To UTF-32 Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
 	// %a Short Day takes ~15ns
 	// %b Short Month takes ~18ns
