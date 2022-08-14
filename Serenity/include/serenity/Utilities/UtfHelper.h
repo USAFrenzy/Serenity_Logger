@@ -40,6 +40,8 @@ namespace utf_helper {
 		constexpr int UTF8_MAX_TRAILING { 0xBF };
 		constexpr int UTF8_REPLACEMENT_CHARACTER_BYTE_1 { 0xFF };
 		constexpr int UTF8_REPLACEMENT_CHARACTER_BYTE_2 { 0xDD };
+
+		constexpr int UTF_MAX_CODEPOINT { 0x10FFFF };
 	}    // namespace utf_bounds
 
 	namespace utf_masks {
@@ -733,6 +735,31 @@ namespace utf_helper {
 								cp = (cp << 6) | (sv[ ++pos ] & UTF_NIBBLE_6);
 							}
 						WriteChToUContainer(buff, static_cast<CharType>(cp));
+					}
+			}
+	}
+
+	template<typename Source, typename Buffer, typename Pos = size_t>
+	requires utf_constraints::IsSupportedU32Source<Source> && utf_constraints::IsSupportedU16Container<Buffer>
+	constexpr void U32ToU16(Source&& sv, Buffer& buff, Pos&& startingPos = 0) {
+		using SourceChar = typename type<Source>::value_type;
+		using CharType   = typename type<Buffer>::value_type;
+		using namespace utf_bounds;
+		using namespace utf_masks;
+		for( auto& ch: sv ) {
+				if( ch <= UTF_MAX_CODEPOINT ) {
+						// encode the code point value
+						if( ch > UTF16_SURROGATE_CLAMP ) {
+								// make a surrogate pair and append them to the buffer
+								ch -= static_cast<char16_t>(UTF16_SURROGATE_CLAMP);
+								WriteChToUContainer(buff, static_cast<CharType>((ch >> 10) + UTF16_HIGH_SURROGATE_MIN));
+								WriteChToUContainer(buff, static_cast<CharType>((ch & UTF_NIBBLE_10) + UTF16_LOW_SURROGATE_MIN));
+						} else {
+								WriteChToUContainer(buff, static_cast<const CharType&>(ch));
+							}
+				} else {
+						SE_ASSERT(false, "Error In Encoding UTF-32 To UTF-16: Illegal Codepoint Detected");
+						WriteChToUContainer(buff, static_cast<CharType>(REPLACEMENT_CHARACTER));
 					}
 			}
 	}
