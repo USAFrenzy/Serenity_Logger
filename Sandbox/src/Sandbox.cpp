@@ -1,4 +1,4 @@
-
+﻿
 
 #define ENABLE_MEMORY_LEAK_DETECTION 0
 #define GENERAL_SANDBOX              0
@@ -520,12 +520,12 @@ int main() {
 
 	/*************************************************  Just seeing how fast these conversions are *************************************************/
 
-	// This is to keep the encoding of the source file in utf-8, however, convert them into unicode strings to use in benches
-	// NOTE: Needs to be compiled with /utf-8 switch for the compiler to understand it though...
+	// Below conversions for u16Str and u32Str from u8view is in order to keep the encoding of the source
+	// file in utf-8 (to avoid the /utf-8 compiler switch, this source page is encoded in utf-8 with BOM)
+	constexpr std::u8string_view u8view { u8"一個簡單的中文字符串。" };
 	std::string u8Str;
 	std::u16string u16Str;
 	std::u32string u32Str;
-	constexpr std::u8string_view u8view { u8"一個簡單的中文字符串。" };
 	for( auto& ch: u8view ) u8Str += static_cast<char>(ch);    // need this as iIdon't currently support char8_t
 	utf_helper::U8ToU16(u8Str, u16Str);
 	utf_helper::U8ToU32(u8Str, u32Str);
