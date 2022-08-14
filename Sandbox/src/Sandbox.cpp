@@ -431,8 +431,11 @@ int main() {
 
 #if ENABLE_CTIME_SANDBOX
 
-	std::locale loc("zh_CN.UTF-8");
+	#ifdef WINDOWS_PLATFORM
 	SetConsoleOutputCP(CP_UTF8);
+	#endif    // WINDOWS_PLATFORM
+
+	std::locale loc("zh_CN.UTF-8");
 
 	std::string timeStr;
 	Instrumentator cTimeTimer;
@@ -566,27 +569,29 @@ int main() {
 	std::cout << serenity::format("Serenity Formatter Encoding UTF-16 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
 	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
-	// with the usage of  SetConsoleOutputCP(CP_UTF8) and the fact that conversions before
-	// timings should be successful, just output the utf-8 u8result for consistency's sake
+	u8result.clear();
 	u16Result.clear();
-	u16Result.reserve(u8Str.size() * 2);
+	u8result.reserve(utf_helper::ReserveLengthForU8(u16Str));
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			u16Result.clear();
 			utf_helper::U8ToU16(u8Str, u16Result);
 		}
 	cTimeTimer.StopWatch_Stop();
+	utf_helper::U16ToU8(u16Result, u8result);
 	std::cout << serenity::format("Serenity Formatter Encoding UTF-8 To UTF-16 Took: [{} ns] \nWith Result: {}\n\n",
 	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
+	u8result.clear();
 	u32Result.clear();
-	u32Result.reserve(u8Str.size() * 4);
+	u8result.reserve(utf_helper::ReserveLengthForU8(u32Str));
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			u32Result.clear();
 			utf_helper::U8ToU32(u8Str, u32Result);
 		}
 	cTimeTimer.StopWatch_Stop();
+	utf_helper::U32ToU8(u32Result, u8result);
 	std::cout << serenity::format("Serenity Formatter Encoding UTF-8 To UTF-32 Took: [{} ns] \nWith Result: {}\n\n",
 	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
