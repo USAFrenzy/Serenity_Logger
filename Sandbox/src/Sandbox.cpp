@@ -5,7 +5,7 @@
 #define ROTATING_TESTING             0
 #define PARSE_TESTING                1
 #define ENABLE_PARSE_BENCHING        0
-#define ENABLE_PARSE_SANDBOX         0
+#define ENABLE_PARSE_SANDBOX         1
 #define ENABLE_CTIME_SANDBOX         1
 
 #if ENABLE_MEMORY_LEAK_DETECTION
@@ -91,6 +91,10 @@ int main() {
 	using namespace se_utils;
 	using namespace se_colors;
 	using namespace experimental;
+
+#ifdef WINDOWS_PLATFORM
+	SetConsoleOutputCP(CP_UTF8);
+#endif    // WINDOWS_PLATFORM
 
 #if GENERAL_SANDBOX
 
@@ -424,16 +428,12 @@ int main() {
 	std::cout << serenity::format("Serenity Total Average Among Loops [{} ns]\n", seAvg);
 	std::cout << serenity::format("Standard Total Average Among Loops [{} ns]\n", stdAvg);
 	std::cout << serenity::format("Serenity Is {}% Faster Than The Standard\n", SetPrecision((std::abs(stdAvg - seAvg) / stdAvg) * 100));
-	std::cout << serenity::format("{:*55}\n");
+	std::cout << serenity::format("{:*55}\n\n");
 
 	#endif
 #endif    // ENABLE_PARSE_SECTION
 
 #if ENABLE_CTIME_SANDBOX
-
-	#ifdef WINDOWS_PLATFORM
-	SetConsoleOutputCP(CP_UTF8);
-	#endif    // WINDOWS_PLATFORM
 
 	std::locale loc("zh_CN.UTF-8");
 
@@ -445,14 +445,14 @@ int main() {
 	std::tm cTime {};
 	auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
 	LOCAL_TIME(cTime, now);
-	serenity::msg_details::Message_Formatter::Formatters formatter {};
+	serenity::msg_details::Message_Formatter::Formatters structFormatter {};
 	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
 	info.TimeDetails().UpdateCache(std::chrono::system_clock::now());
-	formatter.Emplace_Back(std::make_unique<Format_Arg_d>(info));
-	formatter.Emplace_Back(std::make_unique<Format_Arg_b>(info));
-	formatter.Emplace_Back(std::make_unique<Format_Arg_y>(info));
-	formatter.Emplace_Back(std::make_unique<Format_Arg_Char>(std::string_view(" ")));
-	formatter.Emplace_Back(std::make_unique<Format_Arg_T>(info));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_d>(info));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_b>(info));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_y>(info));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_Char>(std::string_view(" ")));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_T>(info));
 
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
@@ -670,11 +670,11 @@ int main() {
 	// cTimeTimer.StopWatch_Reset();
 	// for( size_t i { 0 }; i < timeIterations; ++i ) {
 	//		timeStr.clear();
-	//		timeStr.append(formatter.FormatUserPattern());
+	//		timeStr.append(structFormatter.FormatUserPattern());
 	//	}
 	// cTimeTimer.StopWatch_Stop();
 	// std::cout << serenity::format("FormatterArgs Struct For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), formatter.FormatUserPattern());
+	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), structFormatter.FormatUserPattern());
 
 	// standard
 	auto flooredTime { std::chrono::floor<std::chrono::seconds>(localTime) };    // taking this out of the loop (should've been outside the loop anyways)

@@ -1,4 +1,7 @@
+#pragma once
+
 #include <serenity/MessageDetails/ArgContainer.h>
+#include <serenity/Utilities/UtfHelper.h>
 
 namespace details = serenity::msg_details;
 
@@ -31,14 +34,83 @@ template<typename T> constexpr void details::ArgContainer::StoreNativeArg(T&& va
 template<typename Iter, typename... Args> constexpr auto details::ArgContainer::StoreArgs(Iter&& iter, Args&&... args) -> decltype(iter) {
 	(
 	[ this ](auto&& arg, auto&& iter) {
-		specContainer[ counter ] = GetArgType(std::forward<FwdRef<decltype(arg)>>(FwdRef<decltype(arg)>(arg)));
-		if constexpr( is_supported_v<type<decltype(arg)>> ) {
-				StoreNativeArg(std::forward<FwdRef<decltype(arg)>>(FwdRef<decltype(arg)>(arg)));
+		using ArgType = decltype(arg);
+		using namespace utf_helper;
+		using enum bom_type;
+
+		// handle string types as a special case
+		if constexpr( utf_constraints::is_string_v<ArgType> || utf_constraints::is_string_view_v<ArgType> ) {
+				switch( DetectBom(std::forward<ArgType>(arg)) ) {
+						case utf8_bom: [[fallthrough]];
+						case utf8_no_bom:
+							{
+								if constexpr( std::is_same_v<typename type<ArgType>::value_type, unsigned char> && std::is_signed_v<char> ) {
+										std::string tmp;
+										tmp.reserve(arg.size());
+										for( auto& ch: arg ) {
+												tmp += static_cast<char>(ch);
+											}
+										if constexpr( utf_constraints::is_string_v<ArgType> ) {
+												argContainer[ counter ]  = std::move(tmp);
+												specContainer[ counter ] = SpecType::StringType;
+										} else {
+												argContainer[ counter ]  = std::string_view(std::move(tmp));
+												specContainer[ counter ] = SpecType::StringViewType;
+											}
+								} else {
+										argContainer[ counter ] = arg;
+										if constexpr( utf_constraints::is_string_v<ArgType> ) {
+												specContainer[ counter ] = SpecType::StringType;
+										} else {
+												specContainer[ counter ] = SpecType::StringViewType;
+											}
+									}
+								break;
+							}
+						case utf16LE_bom: [[fallthrough]];
+						case utf16BE_bom: [[fallthrough]];
+						case utf16_no_bom:
+							{
+								std::string tmp;
+								tmp.reserve(ReserveLengthForU8(std::forward<ArgType>(arg)));
+								U16ToU8(std::forward<ArgType>(arg), tmp);
+								if constexpr( utf_constraints::is_string_v<ArgType> ) {
+										argContainer[ counter ]  = std::move(tmp);
+										specContainer[ counter ] = SpecType::StringType;
+								} else {
+										argContainer[ counter ]  = std::string_view(std::move(tmp));
+										specContainer[ counter ] = SpecType::StringViewType;
+									}
+								break;
+							}
+						case utf32LE_bom: [[fallthrough]];
+						case utf32BE_bom: [[fallthrough]];
+						case utf32_no_bom:
+							{
+								std::string tmp;
+								tmp.reserve(ReserveLengthForU8(std::forward<ArgType>(arg)));
+								U32ToU8(std::forward<ArgType>(arg), tmp);
+								if constexpr( utf_constraints::is_string_v<ArgType> ) {
+										argContainer[ counter ]  = std::move(tmp);
+										specContainer[ counter ] = SpecType::StringType;
+								} else {
+										argContainer[ counter ]  = std::string_view(std::move(tmp));
+										specContainer[ counter ] = SpecType::StringViewType;
+									}
+								break;
+							}
+						default: SE_ASSERT(false, "Unknown Encoding Detected"); break;
+					}
 		} else {
-				iter = std::move(StoreCustomArg(std::move(iter), std::forward<FwdRef<decltype(arg)>>(FwdRef<decltype(arg)>(arg))));
+				specContainer[ counter ] = GetArgType(std::forward<FwdRef<ArgType>>(FwdRef<ArgType>(arg)));
+				if constexpr( is_supported_v<type<ArgType>> ) {
+						StoreNativeArg(std::forward<FwdRef<ArgType>>(FwdRef<ArgType>(arg)));
+				} else {
+						iter = std::move(StoreCustomArg(std::move(iter), std::forward<FwdRef<ArgType>>(FwdRef<ArgType>(arg))));
+					}
+				++counter;
+				SE_ASSERT(counter < MAX_ARG_COUNT, "Too Many Arguments Supplied To Formatting Function");
 			}
-		++counter;
-		SE_ASSERT(counter < MAX_ARG_COUNT, "Too Many Arguments Supplied To Formatting Function");
 	}(std::forward<FwdRef<Args>>(FwdRef<Args>(args)), std::move(iter)),
 	...);
 	return std::move(iter);
