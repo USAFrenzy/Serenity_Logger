@@ -15,7 +15,7 @@ constexpr std::array<details::SpecType, details::MAX_ARG_COUNT>& details::ArgCon
 
 template<typename Iter, typename T> constexpr auto details::ArgContainer::StoreCustomArg(Iter&& iter, T&& value) -> decltype(iter) {
 	argContainer[ counter ] =
-	std::move(CustomValue(IteratorAccessHelper(std::remove_reference_t<decltype(iter)>(iter)).Container(), std::forward<FwdConstRef<T>>(FwdConstRef<T>(value))));
+	CustomValue(IteratorAccessHelper(std::remove_reference_t<decltype(iter)>(iter)).Container(), std::forward<FwdConstRef<T>>(FwdConstRef<T>(value)));
 	return std::move(std::add_rvalue_reference_t<decltype(iter)>(iter));
 }
 

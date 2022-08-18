@@ -1,5 +1,7 @@
 #pragma once
 
+#include <serenity/Utilities/UtfHelper.h>
+
 #include <source_location>
 #include <string_view>
 #include <unordered_map>
@@ -111,9 +113,23 @@
 	#endif
 #endif
 
-#include <serenity/Utilities/UtfHelper.h>
-
 namespace serenity {
+
+	// This lovely and amazing end to my headaches for getting the correct call site was provided by ivank at :
+	//   https://stackoverflow.com/a/66402319/11410972
+	// TODO: Probably In the top level formatting call, but just like how string types are converted to utf-8 in the formatting section,
+	//                I should handle encoding to utf-8 in the message itself as well in case other encodings are present and so that I can
+	//               appropriately encode back to the appropriate  encoding for the char type present in the container provided.
+	struct MsgWithLoc
+	{
+		std::string_view msg;
+		std::source_location source;
+		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(const std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+	};
+
 	namespace globals {
 		static std::locale default_locale { std::locale("en_US.UTF-8") };
 	}
@@ -264,21 +280,6 @@ namespace serenity {
 	{
 		local,
 		utc
-	};
-
-	// This lovely and amazing end to my headaches for getting the correct call site was provided by ivank at :
-	//   https://stackoverflow.com/a/66402319/11410972
-	// TODO: Probably In the top level formatting call, but just like how string types are converted to utf-8 in the formatting section,
-	//                I should handle encoding to utf-8 in the message itself as well in case other encodings are present and so that I can
-	//               appropriately encode back to the appropriate  encoding for the char type present in the container provided.
-	struct MsgWithLoc
-	{
-		std::string_view msg;
-		std::source_location source;
-		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(const std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
 	};
 
 	static constexpr bool IsDigit(const char& ch) {

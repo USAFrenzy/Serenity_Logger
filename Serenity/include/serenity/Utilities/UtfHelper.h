@@ -6,6 +6,20 @@
 
 namespace utf_helper {
 
+#ifdef _DEBUG
+	#ifndef UTF_ASSERT
+		#define UTF_ASSERT(condition, message)                                                                                                                      \
+			if( !(condition) ) {                                                                                                                                    \
+					fprintf(stderr, "Assertion Failed: (%s) |File: %s | Line: %i\nMessage:%s\n", #condition, __FILE__, __LINE__, message);                          \
+					abort();                                                                                                                                        \
+			}
+	#endif
+#else
+	#ifndef UTF_ASSERT
+		#define UTF_ASSERT(condition, message) void(0)
+	#endif
+#endif
+
 	// Stick to using wchar_t here and deal with UTF-16/UTF-32 decoding to UTF-8 encoding. If the standard changes to
 	// require specializations for char16_t & char32_t for stringstreams with time formatting, then this SHOULD also change
 	using se_wchar                  = wchar_t;
@@ -227,7 +241,7 @@ namespace utf_helper {
 
 	}    // namespace utf_constraints
 
-	constexpr bool IsLittleEndian() {
+	static bool IsLittleEndian() {
 		constexpr short int val = 0x0001;
 		return reinterpret_cast<const char*>(&val)[ 0 ] ? true : false;
 	}
@@ -240,8 +254,8 @@ namespace utf_helper {
 	template<typename StringishType>
 	requires utf_constraints::IsStringType<StringishType>
 	static constexpr size_t ReserveLengthForU8(StringishType&& s) {
-		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 		using namespace utf_masks;
 		using namespace utf_bounds;
 		using CharType = typename Type<StringishType>::value_type;
@@ -261,7 +275,7 @@ namespace utf_helper {
 								continue;
 						} else if( ch >= UTF16_HIGH_SURROGATE_MIN && ch <= UTF16_HIGH_SURROGATE_MAX ) {
 								if( ++pos >= size ) {
-										SE_ASSERT(false, "Error In Measuring UTF-16 Length: High Surrogate Byte Present Without A Low Surrogate Byte");
+										UTF_ASSERT(false, "Error In Measuring UTF-16 Length: High Surrogate Byte Present Without A Low Surrogate Byte");
 										return reserveSize += 2;    // reserve for replacement character that will inevitably be written
 								}
 								if( auto& next { s[ pos ] }; next >= UTF16_LOW_SURROGATE_MIN && next <= UTF16_HIGH_SURROGATE_MAX ) {
@@ -303,7 +317,7 @@ namespace utf_helper {
 							}
 					}
 		} else {
-				SE_ASSERT(false, "Reserving Size From Any Other Encoding Besides UTF-32LE Or UTF-16LE Is Currently Unsupported At The Moment");
+				UTF_ASSERT(false, "Reserving Size From Any Other Encoding Besides UTF-32LE Or UTF-16LE Is Currently Unsupported At The Moment");
 				return 0;
 			}
 	}
@@ -349,7 +363,7 @@ namespace utf_helper {
 		using namespace utf_boms;
 		if( byte1 == static_cast<CharType>(UTF8_INVALID_BYTE_2) ) {
 				if( byte2 == static_cast<CharType>(UTF8_INVALID_BYTE_1) ) {
-						SE_ASSERT(false, "Error Validating UTF-8 Sequence: A Non UTF-8 Byte Order Mark Sequence Was Detected");
+						UTF_ASSERT(false, "Error Validating UTF-8 Sequence: A Non UTF-8 Byte Order Mark Sequence Was Detected");
 						byte1 = static_cast<CharType>(UTF8_REPLACEMENT_CHARACTER_BYTE_1);
 						byte2 = static_cast<CharType>(UTF8_REPLACEMENT_CHARACTER_BYTE_2);
 						return false;
@@ -357,12 +371,12 @@ namespace utf_helper {
 						// the byte sequence of the replacement character for utf-8 is 0xFF and 0xDD, so false flag here
 						return true;
 				} else {
-						SE_ASSERT(false, "Error Validating UTF-8 Sequence: Invalid Byte In Sequence Detected. A Byte Of Value 255 Is Illegal");
+						UTF_ASSERT(false, "Error Validating UTF-8 Sequence: Invalid Byte In Sequence Detected. A Byte Of Value 255 Is Illegal");
 						byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with a '?'
 						return false;
 					}
 		} else if( byte1 == static_cast<CharType>(UTF8_INVALID_BYTE_1) ) {
-				SE_ASSERT(false, "Error Validating UTF-8 Sequence: Invalid Byte In Sequence Detected. A Byte Of Value 254 Is Illegal");
+				UTF_ASSERT(false, "Error Validating UTF-8 Sequence: Invalid Byte In Sequence Detected. A Byte Of Value 254 Is Illegal");
 				byte1 = '?';    // Don't want to shift bytes around for the replacement box character, so just replace the single byte with a'?'
 				return false;
 		} else {
@@ -401,7 +415,7 @@ namespace utf_helper {
 					}
 				for( ; bytesToCheck > 0; --bytesToCheck ) {
 						if( ++pos >= size ) {
-								SE_ASSERT(false, "Error In Validating UTF-8 Sequence: Incomplete UTF-8 Sequence Detected");
+								UTF_ASSERT(false, "Error In Validating UTF-8 Sequence: Incomplete UTF-8 Sequence Detected");
 								return false;
 						}
 						if( auto& byte1 { buff[ pos ] }; !CheckTrailingByte(byte1) ) {
@@ -428,14 +442,13 @@ namespace utf_helper {
 	template<typename Source>
 	requires utf_constraints::IsSupportedUSource<Source>
 	constexpr bom_type DetectBom(Source&& src) {
-		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 		using namespace utf_constraints;
 		using namespace utf_boms;
 		using enum bom_type;
 
 		auto size { src.size() };
-		int pos { -1 };
 		if constexpr( IsSupportedU8Source<Source> ) {
 				if( size > 3 && src[ 0 ] == UTF8_BOM_1 && src[ 1 ] == UTF8_BOM_2 && src[ 2 ] == UTF8_BOM_3 ) return utf8_bom;
 				return utf8_no_bom;
@@ -456,8 +469,8 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U16ToU8(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
-		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 		using CharType = typename Type<Buffer>::value_type;
 		using RvRef    = std::add_rvalue_reference_t<CharType>;
 		using BRef     = Ref<Buffer>;
@@ -495,20 +508,20 @@ namespace utf_helper {
 								continue;
 						} else {
 								if( ch > UTF16_HIGH_SURROGATE_MAX ) {
-										SE_ASSERT(false, "Error In Decoding UTF-16 To UTF-8: Illegal Surrogate Byte In High Byte");
+										UTF_ASSERT(false, "Error In Decoding UTF-16 To UTF-8: Illegal Surrogate Byte In High Byte");
 										WriteChToUContainer(std::forward<BRef>(buff), static_cast<CharType>(UTF8_REPLACEMENT_CHARACTER_BYTE_1));
 										WriteChToUContainer(std::forward<BRef>(buff), static_cast<CharType>(UTF8_REPLACEMENT_CHARACTER_BYTE_2));
 										continue;
 								}
 								if( ++pos >= size ) {
-										SE_ASSERT(false, "Error In Decoding UTF-16 To UTF-8: High Surrogate Byte Present Without A Low Surrogate Byte");
+										UTF_ASSERT(false, "Error In Decoding UTF-16 To UTF-8: High Surrogate Byte Present Without A Low Surrogate Byte");
 										WriteChToUContainer(std::forward<BRef>(buff), static_cast<CharType>(UTF8_REPLACEMENT_CHARACTER_BYTE_1));
 										WriteChToUContainer(std::forward<BRef>(buff), static_cast<CharType>(UTF8_REPLACEMENT_CHARACTER_BYTE_2));
 										continue;
 								}
 								if( auto& next { wstr[ pos ] }; next >= UTF16_LOW_SURROGATE_MIN ) {
 										if( next > UTF16_HIGH_SURROGATE_MAX ) {
-												SE_ASSERT(false, "Error In Decoding UTF-16 To UTF-8: Illegal Surrogate Byte In Low Byte");
+												UTF_ASSERT(false, "Error In Decoding UTF-16 To UTF-8: Illegal Surrogate Byte In Low Byte");
 												WriteChToUContainer(std::forward<BRef>(buff), static_cast<CharType>(UTF8_REPLACEMENT_CHARACTER_BYTE_1));
 												WriteChToUContainer(std::forward<BRef>(buff), static_cast<CharType>(UTF8_REPLACEMENT_CHARACTER_BYTE_2));
 												continue;
@@ -522,7 +535,7 @@ namespace utf_helper {
 												WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | ((cp >> 6) & UTF_NIBBLE_6)));
 												WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<RvRef>(UTF8_TRAIL_BASE | (cp & UTF_NIBBLE_6)));
 										} else {
-												SE_ASSERT(false, "Error In Encoding UTF-16 To UTF-8: Illegal Codepoint Detected");
+												UTF_ASSERT(false, "Error In Encoding UTF-16 To UTF-8: Illegal Codepoint Detected");
 												WriteChToUContainer(buff, static_cast<CharType>(REPLACEMENT_CHARACTER));
 											}
 										continue;
@@ -535,8 +548,8 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU32Container<Buffer>
 	constexpr void U16ToU32(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
-		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 		using CharType = typename Type<Buffer>::value_type;
 		using BRef     = Ref<Buffer>;
 		using namespace utf_bounds;
@@ -562,19 +575,19 @@ namespace utf_helper {
 								} else {
 										// check for valid high byte in pair, can skip checking for 0xD800, as that was already checked above
 										if( wstr[ pos ] > UTF16_HIGH_SURROGATE_MAX ) {
-												SE_ASSERT(false, "Error In Decoding UTF-16 To UTF-32: Illegal Surrogate Byte In High Byte");
+												UTF_ASSERT(false, "Error In Decoding UTF-16 To UTF-32: Illegal Surrogate Byte In High Byte");
 												WriteChToUContainer(std::forward<BRef>(buff), static_cast<char32_t>(REPLACEMENT_CHARACTER));
 												continue;
 										}
 										if( ++pos >= size ) {
-												SE_ASSERT(false, "Error In Decoding UTF-16 To UTF-32: Incomplete Surrogate Pairing When Decoding UTF-16 "
-												                 "Codepoint");
+												UTF_ASSERT(false, "Error In Decoding UTF-16 To UTF-32: Incomplete Surrogate Pairing When Decoding UTF-16 "
+												                  "Codepoint");
 												WriteChToUContainer(std::forward<BRef>(buff), static_cast<char32_t>(REPLACEMENT_CHARACTER));
 												continue;    // continue instead of return here in case Pos Type is a lvalue ref
 										}
 										// check for valid low byte in pair
 										if( wstr[ pos ] < UTF16_LOW_SURROGATE_MIN || wstr[ pos ] > UTF16_LOW_SURROGATE_MAX ) {
-												SE_ASSERT(false, "Error In Decoding UTF-16 To UTF-32: Illegal Surrogate Byte In Low Byte");
+												UTF_ASSERT(false, "Error In Decoding UTF-16 To UTF-32: Illegal Surrogate Byte In Low Byte");
 												WriteChToUContainer(std::forward<BRef>(buff), static_cast<char32_t>(REPLACEMENT_CHARACTER));
 												continue;
 										}
@@ -584,7 +597,7 @@ namespace utf_helper {
 										if( cp <= UTF_MAX_CODEPOINT ) {
 												WriteChToUContainer(buff, static_cast<CharType>(cp));
 										} else {
-												SE_ASSERT(false, "Error In Encoding UTF-16 To UTF-32: Illegal Codepoint Detected");
+												UTF_ASSERT(false, "Error In Encoding UTF-16 To UTF-32: Illegal Codepoint Detected");
 												WriteChToUContainer(buff, static_cast<CharType>(REPLACEMENT_CHARACTER));
 											}
 										continue;
@@ -607,8 +620,8 @@ namespace utf_helper {
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU32Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U32ToU8(Source&& sv, Buffer& buff, Pos&& startingPos = 0) {
-		SE_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                            "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
 		using CharType = typename Type<Buffer>::value_type;
 		using RvRef    = std::add_rvalue_reference_t<CharType>;
 		using BRef     = Ref<Buffer>;
@@ -630,7 +643,7 @@ namespace utf_helper {
 								}
 								return;
 						}
-						if( auto& ch { sv[ pos ] }; ch <= UTF8_MAX_1 ) {
+						if( auto ch { static_cast<char32_t>(sv[ pos ]) }; ch <= UTF8_MAX_1 ) {
 								WriteChToUContainer(std::forward<BRef>(BRef(buff)), static_cast<const CharType&>(ch));
 								continue;
 						} else if( ch <= WIDE_ENCODING_TO_UTF8_2 ) {
@@ -655,7 +668,7 @@ namespace utf_helper {
 								// 5-byte and 6-byte sequences are apparently supported for the long-term but are not defined, therefore, instead of encoding
 								// these cases to utf-8, use the repacement character instead and in debug builds, raise an error when the 0xFF byte is detected
 								// in validation.
-								SE_ASSERT(false, "Error In Decoding UTF-32 To UTF-8: Illegal Codepoint Detected");
+								UTF_ASSERT(false, "Error In Decoding UTF-32 To UTF-8: Illegal Codepoint Detected");
 								WriteChToUContainer(std::forward<BRef>(buff), static_cast<RvRef>(UTF8_REPLACEMENT_CHARACTER_BYTE_1));
 								WriteChToUContainer(std::forward<BRef>(buff), static_cast<RvRef>(UTF8_REPLACEMENT_CHARACTER_BYTE_2));
 								continue;
@@ -677,7 +690,7 @@ namespace utf_helper {
 				U8ToU32(std::forward<Source>(sv), buff, std::forward<Pos>(startingPos));
 		} else {
 				int pos { startingPos == 0 ? -1 : static_cast<int>(--startingPos) };
-				char16_t cp {};
+				char32_t cp {};
 				short int cpLength {};
 				auto size { sv.size() };
 				if( buff.capacity() < size ) buff.reserve(size);
@@ -697,14 +710,14 @@ namespace utf_helper {
 								cp = ch & UTF_NIBBLE_3;
 								cpLength += 3;
 						} else {
-								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-16: Illegal Leading Byte Value Detected In Sequence");
+								UTF_ASSERT(false, "Error In Encoding UTF-8 To UTF-16: Illegal Leading Byte Value Detected In Sequence");
 								WriteChToUContainer(buff, static_cast<const CharType&>(REPLACEMENT_CHARACTER));
 								continue;
 							}
 
 						// validate that the size indicated from the leading byte doesn't exceed past the source size
 						if( pos + cpLength >= size ) {
-								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-16: Incomplete UTF-8 Sequence Detected");
+								UTF_ASSERT(false, "Error In Encoding UTF-8 To UTF-16: Incomplete UTF-8 Sequence Detected");
 								WriteChToUContainer(buff, static_cast<const CharType&>(REPLACEMENT_CHARACTER));
 								continue;
 						}
@@ -730,7 +743,7 @@ namespace utf_helper {
 										WriteChToUContainer(buff, static_cast<const CharType&>(cp));
 									}
 						} else {
-								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-16: Illegal Codepoint Detected");
+								UTF_ASSERT(false, "Error In Encoding UTF-8 To UTF-16: Illegal Codepoint Detected");
 								WriteChToUContainer(buff, static_cast<CharType>(REPLACEMENT_CHARACTER));
 							}
 					}    // end for loop
@@ -769,14 +782,14 @@ namespace utf_helper {
 								cp = ch & UTF_NIBBLE_3;
 								cpLength += 3;
 						} else {
-								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-32: Illegal Leading Byte Value Detected In Sequence");
+								UTF_ASSERT(false, "Error In Encoding UTF-8 To UTF-32: Illegal Leading Byte Value Detected In Sequence");
 								WriteChToUContainer(buff, static_cast<const CharType&>(REPLACEMENT_CHARACTER));
 								continue;
 							}
 
 						// validate that the size indicated from the leading byte doesn't exceed past the source size
 						if( pos + cpLength >= size ) {
-								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-32: Incomplete UTF-8 Sequence Detected");
+								UTF_ASSERT(false, "Error In Encoding UTF-8 To UTF-32: Incomplete UTF-8 Sequence Detected");
 								WriteChToUContainer(buff, static_cast<const CharType&>(REPLACEMENT_CHARACTER));
 								continue;
 						}
@@ -795,7 +808,7 @@ namespace utf_helper {
 						if( cp <= UTF_MAX_CODEPOINT ) {
 								WriteChToUContainer(buff, static_cast<CharType>(cp));
 						} else {
-								SE_ASSERT(false, "Error In Encoding UTF-8 To UTF-32: Illegal Codepoint Detected");
+								UTF_ASSERT(false, "Error In Encoding UTF-8 To UTF-32: Illegal Codepoint Detected");
 								WriteChToUContainer(buff, static_cast<CharType>(REPLACEMENT_CHARACTER));
 							}
 					}
@@ -823,7 +836,7 @@ namespace utf_helper {
 								WriteChToUContainer(buff, static_cast<const CharType&>(ch));
 							}
 				} else {
-						SE_ASSERT(false, "Error In Encoding UTF-32 To UTF-16: Illegal Codepoint Detected");
+						UTF_ASSERT(false, "Error In Encoding UTF-32 To UTF-16: Illegal Codepoint Detected");
 						WriteChToUContainer(buff, static_cast<CharType>(REPLACEMENT_CHARACTER));
 					}
 			}
