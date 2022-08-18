@@ -32,7 +32,7 @@
 #include <serenity/MessageDetails/ArgContainer.h>
 #include <serenity/MessageDetails/ArgFormatter.h>
 
-// Copy-pasta from Common.h -> avoids the cyclic include from Common.h when USE_STD_FORMAT and USE_FMTLIB aren't defined
+// Copied from Common.h -> avoids the cyclic include from Common.h when USE_STD_FORMAT and USE_FMTLIB aren't defined
 static constexpr bool IsDigit(const char& ch) {
 	return ((ch >= '0') && (ch <= '9'));
 }
@@ -40,18 +40,26 @@ static constexpr bool IsDigit(const char& ch) {
 static constexpr bool IsAlpha(const char& ch) {
 	return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 }
-// TODO: Address the notes scattered throughout and any other todo statements -> Other than possibly reworking Format for alignment cases, I believe
-//              I'm done with the the current cases. All that's left here is to add std::tm inclusion and the custom formatters for the custom flags from the logger
-//              side. After which, I can go ahead and format everything into the file buffer being used directly and hopefully streamline the entire logging pipeline.
 
-static constexpr std::array<const char*, 12> short_months  = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-static constexpr std::array<const char*, 7> short_weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-static constexpr std::array<const char*, 7> long_weekdays  = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-static constexpr std::array<const char*, 12> long_months   = { "January", "February", "March",     "April",   "May",      "June",
-	                                                           "July",    "August",   "September", "October", "November", "December" };
-// Only handles a max of two digits and foregoes any real safety checks but is faster than std::from_chars()
-// in regards to its usage in VerifyPositionField() by ~38% when compiled with -02. For reference,
-// std::from_chars() averaged ~2.1ns and se_from_chars() averages ~1.3ns for this specific use case.
+// TODO: Address the notes scattered throughout and any other todo statements -> add the custom formatters for the custom flags from the logger
+//              side. Then go ahead and format everything into the file buffer being used directly and hopefully streamline the entire logging pipeline.
+
+static constexpr std::array<const char*, 12> short_months = {
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+};
+static constexpr std::array<const char*, 7> short_weekdays = {
+	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
+};
+static constexpr std::array<const char*, 7> long_weekdays = {
+	"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+};
+static constexpr std::array<const char*, 12> long_months = {
+	"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December",
+};
+
+// Only handles a max of two digits and foregoes any real safety checks but is faster than std::from_chars in regards to its usage in VerifyPositionField()
+// by ~38% when compiled with -02. For reference std::from_chars() averaged ~2.1ns and se_from_chars() averages ~1.3ns for this specific use case.
+// TODO: Maybe simplify this a bit to a one or two liner by bit masking to just comparing the lower 4 bits since 0-9 is just dictated by a nibble
 static constexpr int offset { 48 };    // offset used to get the actual value represented in this use case
 template<typename IntergralType>
 requires std::is_integral_v<std::remove_cvref_t<IntergralType>>
@@ -72,9 +80,10 @@ constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
 	: argCounter(0), m_indexMode(IndexMode::automatic), bracketResults(BracketSearchResults {}), specValues(SpecFormatting {}), argStorage(ArgContainer {}),
 	  buffer(std::array<char, SERENITY_ARG_BUFFER_SIZE> {}), valueSize(size_t {}), fillBuffer(std::vector<char> {}), errHandle(serenity::error_handler {}),
 	  timeSpec(TimeSpecs {}) {
-	// Initialize now to lower the initial cost when formatting (brings initial cost from ~33us down to ~11us). The Call To UtcOffset() will initialize
-	// TimeZoneInstance() via TimeZone() via TZInfo() -> thereby initializing  all function statics.
-	// NOTE: would still love a constexpr friendly version of this but I'm not finding anything online that says that might be remotely possible using the standard
+	// Initialize now to lower the initial cost when formatting (brings initial cost from ~33us down to ~11us). The Call To
+	// UtcOffset() will initialize TimeZoneInstance() via TimeZone() via TZInfo() -> thereby initializing  all function statics.
+	// NOTE: Would still love a constexpr friendly version of this but I'm not finding anything online that says that might be remotely possible
+	//               using the standard and I'd rather not have the cost of initialization fall on a logging call and rather on the construction call instead.
 	if( !std::is_constant_evaluated() ) serenity::globals::UtcOffset();
 	fillBuffer.reserve(fillBuffDefaultCapacity);
 }
@@ -88,7 +97,8 @@ constexpr void serenity::arg_formatter::BracketSearchResults::Reset() {
 }
 
 constexpr void serenity::arg_formatter::TimeSpecs::Reset() {
-	// the arrays don't need anything special considering values get overriden by index assignment with the counter
+	// the arrays don't need anything special considering values
+	// get overriden by index assignment with the counter
 	timeSpecCounter = 0;
 	localizationBuff.clear();
 }
@@ -135,6 +145,8 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 	return tmp;
 }
 
+// TODO: To simplify utf-8 conversion to  appropriate encoding based on container's char width, should replace the copy-pasta container
+//               writing to use the FlushBuffer() function with the correct offsets used.
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(T&& container, const int& totalWidth) {
 	auto fillData { fillBuffer.data() };
 	std::memcpy(fillData, buffer.data(), valueSize);
@@ -262,6 +274,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		}
 }
 
+// TODO: Add in conversion from utf-8 to appropriate type based on container char width -> same for the string overloads of alignment functions
 template<typename T>    // string type overload for alignment
 constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& container, std::string_view val, const int& totalWidth, int precision) {
 	auto size { static_cast<int>(val.size()) };
@@ -309,7 +322,6 @@ template<typename T, typename U> static constexpr void FlushBuffer(T&& buff, siz
 		}
 }
 
-// I'll wait until I get back home, but may just go ahead and reduce the buffers down to one buffer and resize when needed
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
 	if( !specValues.localize ) {
 			using BuffRef = FwdRef<std::array<char, SERENITY_ARG_BUFFER_SIZE>>;
@@ -2111,6 +2123,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		}
 }
 
+// TODO: Similar to the FlushBuffer() and AlignOn*() functions, convert to appropriate encoding based on the char's width here with the FormatStringType() overloads
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteFormattedString(T&& container, const SpecType& type, const int& precision) {
 	using enum msg_details::SpecType;
 	switch( type ) {

@@ -136,8 +136,8 @@ namespace serenity {
 
 		// NOTE: If the Argformatter version takes over for the FormatterArgs version, then the arrays below can be removed, 
 		//              as well as the entirety of FormatterArgs.h and FormatterArgs.cpp. Would just need to update Message_Time's
-		//              CalculateCurrentYear() to reflect this -> can probably either bit shift away the top 3 nibbles or just offset it like
-		//              in se_from_chars()
+		//              CalculateCurrentYear(), StoreFormatPattern(), and anything invoking a struct instatiation of FormatterArgs' 
+		//              structs to reflect this  change.
 		static constexpr std::array<std::string_view, 7> short_weekdays = {
 			"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 		};
@@ -268,6 +268,9 @@ namespace serenity {
 
 	// This lovely and amazing end to my headaches for getting the correct call site was provided by ivank at :
 	//   https://stackoverflow.com/a/66402319/11410972
+	// TODO: Probably In the top level formatting call, but just like how string types are converted to utf-8 in the formatting section,
+	//                I should handle encoding to utf-8 in the message itself as well in case other encodings are present and so that I can
+	//               appropriately encode back to the appropriate  encoding for the char type present in the container provided.
 	struct MsgWithLoc
 	{
 		std::string_view msg;

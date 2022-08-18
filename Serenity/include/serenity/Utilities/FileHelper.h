@@ -16,6 +16,7 @@ namespace serenity {
 		std::atomic<bool> pauseThread { false };
 	};
 
+	// TODO: Add utf-8 encoding support to file paths and file naming
 	class FileCache
 	{
 	  public:
@@ -46,6 +47,7 @@ namespace serenity {
 
 }    // namespace serenity
 
+// TODO: Add utf-8 encoding support to file paths and file naming
 namespace serenity::targets::helpers {
 
 	constexpr size_t max_size_size_t { (size_t)-1 };

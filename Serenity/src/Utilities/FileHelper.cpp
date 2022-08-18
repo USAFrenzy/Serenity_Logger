@@ -11,6 +11,8 @@
 	#define CLOSE(file)                 close(file)
 #endif    // WINDOWS_PLATFORM
 
+// TODO: Add utf-8 encoding support to file paths and file naming
+
 namespace serenity {
 
 	FileCache::FileCache(std::string_view path)

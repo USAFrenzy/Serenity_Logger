@@ -16,6 +16,11 @@ template<typename... Args> void serenity::targets::TargetBase::LogMessage(std::s
 	PolicyFlushOn();
 }
 
+// TODO: Given these are the top level functions called for logging, take care of encoding the string type message to utf-8 here and track it down the call stack.
+//                Since the container used internally here is just a simple std::string, I can streamline these calls specifically by keeping the utf-8 encoding for
+//                the
+//                 message itself, and if string types are present in the argument, encoding those to utf-8 into the buffer used for the target type.
+
 template<typename... Args> void serenity::targets::TargetBase::Trace(serenity::MsgWithLoc s, Args&&... args) {
 	if( logLevel <= LoggerLevel::trace ) {
 			msgDetails->SetMsgLevel(LoggerLevel::trace);
