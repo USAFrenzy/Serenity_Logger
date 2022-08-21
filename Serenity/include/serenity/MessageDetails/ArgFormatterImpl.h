@@ -141,7 +141,7 @@ static constexpr void FlushBuffer(T&& buff, size_t endPos, U&& container) {
 	namespace se_con = utf_helper::utf_constraints;
 	using CharType   = typename type<U>::value_type;
 	if constexpr( std::is_same_v<CharType, char> ) {
-			// Assume utf-8 encoding as it should have been stored as such internally
+			// Assume utf-8 encoding and just handle as byte strings (as it should have been stored as such internally)
 			if constexpr( std::is_same_v<typename type<T>::value_type, unsigned char> && std::is_signed_v<char> ) {
 					// unsigned  char -> char
 					auto tmp { std::move(ConvBuffToSigned(buff, endPos)) };
@@ -239,17 +239,23 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(T&& container, const int& totalWidth) {
+	if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
+	FillBuffWithChar(totalWidth);
 	std::memcpy(fillBuffer.data(), buffer.data(), valueSize);
 	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(T&& container, std::string_view val, const int& precision, const int& totalWidth) {
+	if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
+	FillBuffWithChar(totalWidth);
 	std::memcpy(fillBuffer.data(), val.data(), precision);
 	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(T&& container, const int& totalWidth, const size_t& fillAmount) {
+	if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
+	FillBuffWithChar(totalWidth);
 	std::memcpy(fillBuffer.data() + fillAmount, buffer.data(), valueSize);
 	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
@@ -257,11 +263,15 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(T&& container, std::string_view val, const int& precision, const int& totalWidth,
                                                                         const size_t& fillAmount) {
+	if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
+	FillBuffWithChar(totalWidth);
 	std::memcpy(fillBuffer.data() + fillAmount, val.data(), precision);
 	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(T&& container, const int& totalWidth, const size_t& fillAmount) {
+	if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
+	FillBuffWithChar(totalWidth);
 	std::memcpy(fillBuffer.data() + fillAmount, buffer.data(), valueSize);
 	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
@@ -269,6 +279,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(T&& container, std::string_view val, const int& precision, const int& totalWidth,
                                                                          const size_t& fillAmount) {
+	if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
+	FillBuffWithChar(totalWidth);
 	std::memcpy(fillBuffer.data() + fillAmount, val.data(), precision);
 	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
@@ -292,8 +304,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::FillBuffWithChar(const int
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& container, const int& totalWidth) {
 	if( auto fill { (totalWidth > valueSize) ? totalWidth - valueSize : 0 }; fill != 0 ) {
-			if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
-			FillBuffWithChar(totalWidth);
 			switch( specValues.align ) {
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<FwdRef<T>>(container), totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<FwdRef<T>>(container), totalWidth, fill);
@@ -310,8 +320,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& contai
 	auto size { static_cast<int>(val.size()) };
 	precision = precision != 0 ? precision > size ? size : precision : size;
 	if( auto fill { totalWidth > size ? totalWidth - size : 0 }; fill != 0 ) {
-			if( totalWidth > fillBuffDefaultCapacity ) fillBuffer.reserve(totalWidth);
-			FillBuffWithChar(totalWidth);
 			switch( specValues.align ) {
 					case Alignment::AlignLeft: return WriteAlignedLeft(std::forward<FwdRef<T>>(container), val, precision, totalWidth);
 					case Alignment::AlignRight: return WriteAlignedRight(std::forward<FwdRef<T>>(container), val, precision, totalWidth, fill);
@@ -1261,186 +1269,92 @@ constexpr void serenity::arg_formatter::ArgFormatter::HandlePotentialTypeField(c
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleString(T&& container) {
 	std::string_view sv { std::move(argStorage.string_state(specValues.argPosition)) };
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(sv.data(), sv.size());
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), sv.begin(), sv.end());
-			if( sv.back() != '\0' ) {
-					container.push_back('\0');
-			}
-	} else {
-			std::copy(sv.begin(), sv.end(), std::back_inserter(container));
-		}
+	FlushBuffer(sv, sv.size(), std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleCString(T&& container) {
 	std::string_view sv { std::move(argStorage.c_string_state(specValues.argPosition)) };
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(sv.data(), sv.size());
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), sv.begin(), sv.end());
-			if( sv.back() != '\0' ) {
-					container.push_back('\0');
-			}
-	} else {
-			std::copy(sv.begin(), sv.end(), std::back_inserter(container));
-		}
+	FlushBuffer(sv, sv.size(), std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleStringView(T&& container) {
 	std::string_view sv { std::move(argStorage.string_view_state(specValues.argPosition)) };
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(sv.data(), sv.size());
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), sv.begin(), sv.end());
-			if( sv.back() != '\0' ) {
-					container.push_back('\0');
-			}
-	} else {
-			std::copy(sv.begin(), sv.end(), std::back_inserter(container));
-		}
+	FlushBuffer(sv, sv.size(), std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleInt(T&& container) {
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr);
-	} else {
-			std::move(data, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr, std::back_inserter(container));
-		}
+	FlushBuffer(buffer, std::to_chars(data, data + size, argStorage.int_state(specValues.argPosition)).ptr - data, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleUInt(T&& container) {
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr);
-	} else {
-			std::move(data, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr, std::back_inserter(container));
-		}
+	FlushBuffer(buffer, std::to_chars(data, data + size, argStorage.uint_state(specValues.argPosition)).ptr - data, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleLongLong(T&& container) {
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr);
-	} else {
-			std::move(data, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr, std::back_inserter(container));
-		}
+	FlushBuffer(buffer, std::to_chars(data, data + size, argStorage.long_long_state(specValues.argPosition)).ptr - data, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleULongLong(T&& container) {
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr);
-	} else {
-			std::move(data, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr, std::back_inserter(container));
-		}
+	FlushBuffer(buffer, std::to_chars(data, data + size, argStorage.u_long_long_state(specValues.argPosition)).ptr - data, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleBool(T&& container) {
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(argStorage.bool_state(specValues.argPosition) ? "true" : "false");
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			std::string_view sv { argStorage.bool_state(specValues.argPosition) ? "true" : "false" };
-			container.insert(container.end(), sv.begin(), sv.end());
-	} else {
-			std::string_view sv { argStorage.bool_state(specValues.argPosition) ? "true" : "false" };
-			std::copy(sv.begin(), sv.end(), std::back_inserter(container));
-		}
+	std::string_view sv { argStorage.bool_state(specValues.argPosition) ? "true" : "false" };
+	FlushBuffer(sv, sv.size(), std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleFloat(T&& container) {
 	auto data { buffer.data() };
-	std::memset(data, 0, buffer.size());
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr);
-	} else {
-			std::move(data, std::to_chars(data, data + buffer.size(), argStorage.float_state(specValues.argPosition)).ptr, std::back_inserter(container));
-		}
+	auto size { buffer.size() };
+	std::memset(data, 0, size);
+	FlushBuffer(buffer, std::to_chars(data, data + size, argStorage.float_state(specValues.argPosition)).ptr - data, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleDouble(T&& container) {
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr);
-	} else {
-			std::move(data, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr, std::back_inserter(container));
-		}
+	FlushBuffer(buffer, std::to_chars(data, data + size, argStorage.double_state(specValues.argPosition)).ptr - data, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleLongDouble(T&& container) {
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr);
-	} else {
-			std::move(data, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr, std::back_inserter(container));
-		}
+	FlushBuffer(buffer, std::to_chars(data, data + size, argStorage.long_double_state(specValues.argPosition)).ptr - data, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleConstVoidPtr(T&& container) {
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append("0x").append(
-			data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			constexpr std::string_view sv { "0x" };
-			container.insert(container.end(), sv.begin(), sv.end());
-			container.insert(container.end(), data,
-			                 std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr);
-	} else {
-			constexpr std::string_view sv { "0x" };
-			auto& iter { std::back_inserter(container) };
-			std::copy(sv.data(), sv.data() + sv.size(), iter);
-			std::move(data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr, iter);
-		}
+	buffer[ 0 ] = '0';
+	buffer[ 1 ] = 'x';
+	FlushBuffer(buffer,
+	            std::to_chars(data + 2, data + buffer.size() - 2, reinterpret_cast<size_t>(argStorage.const_void_ptr_state(specValues.argPosition)), 16).ptr - data,
+	            std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimpleVoidPtr(T&& container) {
 	auto data { buffer.data() };
 	auto size { buffer.size() };
 	std::memset(data, 0, size);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append("0x").append(
-			data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr - data);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			constexpr std::string_view sv { "0x" };
-			container.insert(container.end(), sv.begin(), sv.end());
-			container.insert(container.end(), data,
-			                 std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr);
-	} else {
-			constexpr std::string_view sv { "0x" };
-			auto& iter { std::back_inserter(container) };
-			std::copy(sv.data(), sv.data() + sv.size(), iter);
-			std::move(data, std::to_chars(data, data + buffer.size(), reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr, iter);
-		}
+	buffer[ 0 ] = '0';
+	buffer[ 1 ] = 'x';
+	FlushBuffer(buffer, std::to_chars(data + 2, data + buffer.size() - 2, reinterpret_cast<size_t>(argStorage.void_ptr_state(specValues.argPosition)), 16).ptr - data,
+	            std::forward<T>(container));
 }
 
 template<typename T>
@@ -2106,19 +2020,25 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatIntegerType(T&& valu
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::FormatStringType(T&& container, std::string_view val, const int& precision) {
 	int size { static_cast<int>(val.size()) };
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(val.data(), (precision != 0 ? precision > size ? size : precision : size));
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), val.data(), val.data() + (precision != 0 ? precision > size ? size : precision : size));
-			if( val.back() != '\0' ) {
-					container.push_back('\0');
-			}
+	using CharType = typename type<T>::value_type;
+	if constexpr( std::is_same_v<CharType, char> ) {
+			FlushBuffer(val, precision, std::forward<T>(container));
+	} else if constexpr( std::is_same_v<CharType, char16_t> || (std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) == 2) ) {
+			std::u16string tmp;
+			tmp.reserve(precision);
+			utf_helper::U8ToU16(val, tmp);
+			FlushBuffer(std::move(tmp), precision, std::forward<T>(container));
+	} else if constexpr( std::is_same_v<CharType, char32_t> || (std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) == 4) ) {
+			std::u32string tmp;
+			tmp.reserve(precision);
+			utf_helper::U8ToU32(val, tmp);
+			FlushBuffer(std::move(tmp), precision, std::forward<T>(container));
 	} else {
-			std::copy(val.data(), val.data() + (precision != 0 ? precision > size ? size : precision : size), std::back_inserter(container));
+			auto iter { std::back_inserter(container) };
+			std::copy(val.data(), val.data() + (precision != 0 ? precision > size ? size : precision : size), iter);
 		}
 }
 
-// TODO: Similar to the FlushBuffer() and AlignOn*() functions, convert to appropriate encoding based on the char's width here with the FormatStringType() overloads
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteFormattedString(T&& container, const SpecType& type, const int& precision) {
 	using enum msg_details::SpecType;
 	switch( type ) {

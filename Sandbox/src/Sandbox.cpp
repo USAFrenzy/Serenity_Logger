@@ -416,12 +416,13 @@ int main() {
 			std::cout << serenity::format("{:*55}\n\n");
 		}
 
-	/*************************** Current Stats Ran As Of  08Jul22 ***************************/
+	/*************************** Current Stats Ran As Of  21Aug22 ***************************/
 	// ********************************** [Loop Averages] **********************************
-	// Serenity Total Average Among Loops [48.059757 ns]
-	// Standard Total Average Among Loops [83.25582 ns]
-	// Serenity Is 42.275 % Faster Than The Standard
+	// Serenity Total Average Among Loops [51.91447 ns]
+	// Standard Total Average Among Loops [83.83898 ns]
+	// Serenity Is 38.078 % Faster Than The Standard
 	// *************************************************************************************
+
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };
 	std::cout << serenity::format("{:*^55}\n", sv);
@@ -456,7 +457,7 @@ int main() {
 
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
-	std::cout << std::format(" {:*^95%d%b%y %T} \n", std::chrono::floor<std::chrono::seconds>(localTime));
+	std::cout << std::format("{:*^95%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
 	std::cout << std::format(std::locale("en_US"), "Note:\tBench Times Are Based On {:L} Iterations For Each Case Being Benched\n", timeIterations);
 	std::cout << std::format("\tTime Updates Are Ignored In These Loops And Use The Initial Time.\n\n");
 	/*************************************** NOTES ABOUT ABOVE ***************************************/
@@ -717,6 +718,15 @@ int main() {
 	// complains about an unknown type and that it can't deduce the type of the tm struct. Same thing  happens when taking a pointer
 	// or a reference to the tm struct -> obviously meaning that the tm struct isn't natively supported here.
 	// *****************************************************************************************************************************
+
+	/**************************  From The Benching Using Localized Time Formats (21Aug22) **************************/
+	// Serenity Formatter For Time Specs Took : [1247.8507 ns]
+	// With Result : 218月22 14:04:54
+	// Standard Formatter For Time Specs Took : [3020.7104 ns]
+	// With Result : 218?22 14:04:54
+	/*  The above timings note the huge disparity between std::format in regards to specifically time related formatting */
+	// Note that even taking into account the utf-8 encoding done on serenity's side instead of the glyph replacement the
+	//  standard uses, serenity is still well above 50% faster than the standard in this case.
 
 #endif    // ENABLE_CTIME_SANDBOX
 
