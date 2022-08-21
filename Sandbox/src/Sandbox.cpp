@@ -456,7 +456,7 @@ int main() {
 
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
-	std::cout << std::format("{:*^85%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	std::cout << std::format(" {:*^95%d%b%y %T} \n", std::chrono::floor<std::chrono::seconds>(localTime));
 	std::cout << std::format(std::locale("en_US"), "Note:\tBench Times Are Based On {:L} Iterations For Each Case Being Benched\n", timeIterations);
 	std::cout << std::format("\tTime Updates Are Ignored In These Loops And Use The Initial Time.\n\n");
 	/*************************************** NOTES ABOUT ABOVE ***************************************/
@@ -517,7 +517,7 @@ int main() {
 	u32Result.clear();
 	std::cout << "All UTF Conversion Function Verifications Have Finished\n\n";
 	/**********************************************************************************************************************************************/
-	std::cout << std::format("{:*^85}\n\n", "Benching UTF Conversion Functions");
+	std::cout << std::format("{:*^95}\n\n", " Benching UTF Conversion Functions ");
 
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
@@ -592,7 +592,7 @@ int main() {
 	// EDIT 2: Given the changes made to allow the complex formatting to occur, the below times have
 	//                 been hit by ~5ns performance penalty which is basically nothing, but is worth noting.
 	/***********************************************************************************************/
-	std::cout << std::format("{:*^85}\n\n", "Benching Time Formatting With Specifiers");
+	std::cout << std::format("{:*^95}\n\n", " Benching Time Formatting With Specifiers ");
 
 	// %a Short Day takes ~25ns
 	// %b Short Month takes ~26ns

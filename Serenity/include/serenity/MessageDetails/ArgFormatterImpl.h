@@ -57,10 +57,18 @@ static constexpr std::array<const char*, 12> long_months = {
 	"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December",
 };
 
+template<typename T> struct is_basic_char_buff;
+template<typename T>
+struct is_basic_char_buff: std::bool_constant<std::is_same_v<type<T>, std::array<char, serenity::arg_formatter::SERENITY_ARG_BUFFER_SIZE>> ||
+                                              std::is_same_v<type<T>, std::vector<unsigned char>> || std::is_same_v<type<T>, std::vector<char>>>
+{
+};
+template<typename T> inline constexpr bool is_basic_char_buff_v = is_basic_char_buff<T>::value;
+
+//  offset used to get the decimal value represented in this use case (same as '0' but faster by a few nanoseconds for direct operations involving this)
+static constexpr int NumericalAsciiOffset { 48 };
 // Only handles a max of two digits and foregoes any real safety checks but is faster than std::from_chars in regards to its usage in VerifyPositionField()
 // by ~38% when compiled with -02. For reference std::from_chars() averaged ~2.1ns and se_from_chars() averages ~1.3ns for this specific use case.
-// TODO: Maybe simplify this a bit to a one or two liner by bit masking to just comparing the lower 4 bits since 0-9 is just dictated by a nibble
-static constexpr int offset { 48 };    // offset used to get the actual value represented in this use case
 template<typename IntergralType>
 requires std::is_integral_v<std::remove_cvref_t<IntergralType>>
 static constexpr size_t se_from_chars(const char* begin, const char* end, IntergralType&& value) {
@@ -68,9 +76,9 @@ static constexpr size_t se_from_chars(const char* begin, const char* end, Interg
 			if( !IsDigit(*begin) ) {
 					if( ++begin == end ) return 0;
 			}
-			value = *begin - offset;
+			value = *begin - NumericalAsciiOffset;
 			if( !IsDigit(*(++begin)) ) return 1;
-			(value *= 10) += (*begin - offset);
+			(value *= 10) += (*begin - NumericalAsciiOffset);
 			return 2;
 		}
 }
@@ -83,7 +91,7 @@ constexpr serenity::arg_formatter::ArgFormatter::ArgFormatter()
 	// Initialize now to lower the initial cost when formatting (brings initial cost from ~33us down to ~11us). The Call To
 	// UtcOffset() will initialize TimeZoneInstance() via TimeZone() via TZInfo() -> thereby initializing  all function statics.
 	// NOTE: Would still love a constexpr friendly version of this but I'm not finding anything online that says that might be remotely possible
-	//               using the standard and I'd rather not have the cost of initialization fall on a logging call and rather on the construction call instead.
+	//               using the standard and I'd rather not have the cost of initialization fall on a logging call and rather fall on the construction call instead.
 	if( !std::is_constant_evaluated() ) serenity::globals::UtcOffset();
 	fillBuffer.reserve(fillBuffDefaultCapacity);
 }
@@ -117,6 +125,91 @@ constexpr void serenity::arg_formatter::SpecFormatting::ResetSpecs() {
 		}
 }
 
+static constexpr std::vector<char> ConvBuffToSigned(std::vector<unsigned char>& buff, size_t endPos) {
+	std::vector<char> signedTemp(endPos);
+	auto pos { -1 };
+	for( ;; ) {
+			if( ++pos >= endPos ) break;
+			signedTemp[ pos ] = static_cast<signed char>(buff[ pos ]);
+		}
+	return signedTemp;
+}
+
+template<typename T, typename U>
+requires utf_helper::utf_constraints::IsSupportedUSource<T> && utf_helper::utf_constraints::IsSupportedUContainer<U>
+static constexpr void FlushBuffer(T&& buff, size_t endPos, U&& container) {
+	namespace se_con = utf_helper::utf_constraints;
+	using CharType   = typename type<U>::value_type;
+	if constexpr( std::is_same_v<CharType, char> ) {
+			// Assume utf-8 encoding as it should have been stored as such internally
+			if constexpr( std::is_same_v<typename type<T>::value_type, unsigned char> && std::is_signed_v<char> ) {
+					// unsigned  char -> char
+					auto tmp { std::move(ConvBuffToSigned(buff, endPos)) };
+					if constexpr( se_con::is_string_v<U> ) {
+							container.append(tmp.data(), endPos);
+					} else if constexpr( se_con::is_vector_v<U> ) {
+							container.insert(container.end(), tmp.data(), tmp.data() + endPos);
+					} else {
+							auto iter { std::back_inserter(container) };
+							std::copy(tmp.data(), tmp.data() + endPos, iter);
+						}
+			} else {
+					// char -> char
+					if constexpr( std::is_same_v<type<U>, std::string> ) {
+							container.append(buff.data(), endPos);
+					} else if constexpr( std::is_same_v<type<U>, std::vector<typename type<U>::value_type>> ) {
+							container.insert(container.end(), buff.data(), buff.data() + endPos);
+					} else {
+							auto iter { std::back_inserter(container) };
+							std::copy(buff.data(), buff.data() + endPos, iter);
+						}
+				}
+	} else if constexpr( std::is_same_v<CharType, char16_t> || (std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) == 2) ) {
+			SE_ASSERT(utf_helper::IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+			                                        "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB "
+			                                        "instead.");
+			// Assume utf-16 encoding and convert from utf-8
+			if constexpr( se_con::is_string_v<U> || se_con::is_vector_v<U> ) {
+					utf_helper::U8ToU16(buff, container);
+			} else {
+					std::u16string tmp;
+					tmp.reserve(endPos);
+					utf_helper::U8ToU16(buff, tmp);
+					auto iter { std::back_inserter(container) };
+					std::copy(tmp.data(), tmp.data() + endPos, iter);
+				}
+	} else if constexpr( std::is_same_v<CharType, char32_t> || (std::is_same_v<CharType, wchar_t> && sizeof(wchar_t) == 4) ) {
+			SE_ASSERT(utf_helper::IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
+			                                        "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB "
+			                                        "instead.");
+			// Assume utf-32 encoding and convert from utf-8
+			if constexpr( se_con::is_string_v<U> || se_con::is_vector_v<U> ) {
+					utf_helper::U8ToU32(buff, container);
+			} else {
+					std::u32string tmp;
+					tmp.reserve(endPos);
+					utf_helper::U8ToU32(buff, tmp);
+					auto iter { std::back_inserter(container) };
+					std::copy(tmp.data(), tmp.data() + endPos, iter);
+				}
+	}
+}
+
+template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
+	if( !specValues.localize ) {
+			using BuffRef = FwdRef<std::array<char, SERENITY_ARG_BUFFER_SIZE>>;
+			FlushBuffer(std::forward<BuffRef>(buffer), valueSize, std::forward<T>(container));
+	} else {
+			using BuffRef = FwdRef<std::vector<unsigned char>>;
+			auto& localeBuff { timeSpec.localizationBuff };
+			if constexpr( std::is_signed_v<char> ) {
+					FlushBuffer(std::move(ConvBuffToSigned(localeBuff, valueSize)), valueSize, std::forward<T>(container));
+			} else {
+					FlushBuffer(std::forward<BuffRef>(localeBuff), valueSize, std::forward<T>(container));
+				}
+		}
+}
+
 template<typename Iter, typename... Args> constexpr auto serenity::arg_formatter::ArgFormatter::CaptureArgs(Iter&& iter, Args&&... args) -> decltype(iter) {
 	return std::move(argStorage.CaptureArgs(std::move(iter), std::forward<Args>(args)...));
 }
@@ -145,113 +238,51 @@ template<typename... Args> std::string serenity::arg_formatter::ArgFormatter::se
 	return tmp;
 }
 
-// TODO: To simplify utf-8 conversion to  appropriate encoding based on container's char width, should replace the copy-pasta container
-//               writing to use the FlushBuffer() function with the correct offsets used.
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(T&& container, const int& totalWidth) {
-	auto fillData { fillBuffer.data() };
-	std::memcpy(fillData, buffer.data(), valueSize);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(fillData, totalWidth);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), fillData, fillData + totalWidth);
-	} else {
-			std::copy(fillData, fillData + totalWidth, std::back_inserter(container));
-		}
+	std::memcpy(fillBuffer.data(), buffer.data(), valueSize);
+	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedLeft(T&& container, std::string_view val, const int& precision, const int& totalWidth) {
-	auto fillData { fillBuffer.data() };
-	std::memcpy(fillData, val.data(), precision);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(fillData, totalWidth);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), fillData, fillData + totalWidth);
-	} else {
-			std::copy(fillData, fillData + totalWidth, std::back_inserter(container));
-		}
+	std::memcpy(fillBuffer.data(), val.data(), precision);
+	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(T&& container, const int& totalWidth, const size_t& fillAmount) {
-	auto fillData { fillBuffer.data() };
-	std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(fillData, totalWidth);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), fillData, fillData + totalWidth);
-	} else {
-			std::copy(fillData, fillData + totalWidth, std::back_inserter(container));
-		}
+	std::memcpy(fillBuffer.data() + fillAmount, buffer.data(), valueSize);
+	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedRight(T&& container, std::string_view val, const int& precision, const int& totalWidth,
                                                                         const size_t& fillAmount) {
-	auto fillData { fillBuffer.data() };
-	std::memcpy(fillData + fillAmount, val.data(), precision);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(fillData, totalWidth);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), fillData, fillData + totalWidth);
-	} else {
-			std::copy(fillData, fillData + totalWidth, std::back_inserter(container));
-		}
+	std::memcpy(fillBuffer.data() + fillAmount, val.data(), precision);
+	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(T&& container, const int& totalWidth, const size_t& fillAmount) {
-	auto fillData { fillBuffer.data() };
-	std::memcpy(fillData + fillAmount, buffer.data(), valueSize);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(fillData, totalWidth);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), fillData, fillData + totalWidth);
-	} else {
-			std::copy(fillData, fillData + totalWidth, std::back_inserter(container));
-		}
+	std::memcpy(fillBuffer.data() + fillAmount, buffer.data(), valueSize);
+	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::WriteAlignedCenter(T&& container, std::string_view val, const int& precision, const int& totalWidth,
                                                                          const size_t& fillAmount) {
-	auto fillData { fillBuffer.data() };
-	std::memcpy(fillData + fillAmount, val.data(), precision);
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(fillData, totalWidth);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), fillData, fillData + totalWidth);
-	} else {
-			std::copy(fillData, fillData + totalWidth, std::back_inserter(container));
-		}
+	std::memcpy(fillBuffer.data() + fillAmount, val.data(), precision);
+	FlushBuffer(fillBuffer, totalWidth, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(T&& container) {
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(buffer.data(), valueSize);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), buffer.data(), buffer.data() + valueSize);
-	} else {
-			std::copy(buffer.data(), buffer.data() + valueSize, std::back_inserter(container));
-		}
+	FlushBuffer(buffer, valueSize, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteNonAligned(T&& container, std::string_view val, const int& precision) {
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(val.data(), precision);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), val.data(), val.data() + precision);
-	} else {
-			std::copy(val.data(), val.data() + precision, std::back_inserter(container));
-		}
+	FlushBuffer(val, precision, std::forward<T>(container));
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteSimplePadding(T&& container, const size_t& fillAmount) {
-	if constexpr( std::is_same_v<type<T>, std::string> ) {
-			container.append(fillBuffer.data(), fillAmount);
-	} else if constexpr( std::is_same_v<type<T>, std::vector<typename type<T>::value_type>> ) {
-			container.insert(container.end(), fillBuffer.data(), fillBuffer.data() + fillAmount);
-	} else {
-			std::copy(fillBuffer.data(), fillBuffer.data() + fillAmount, std::back_inserter(container));
-		}
+	FlushBuffer(buffer, fillAmount, std::forward<T>(container));
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FillBuffWithChar(const int& totalWidth) {
@@ -274,8 +305,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Forma
 		}
 }
 
-// TODO: Add in conversion from utf-8 to appropriate type based on container char width -> same for the string overloads of alignment functions
-template<typename T>    // string type overload for alignment
+template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& container, std::string_view val, const int& totalWidth, int precision) {
 	auto size { static_cast<int>(val.size()) };
 	precision = precision != 0 ? precision > size ? size : precision : size;
@@ -290,51 +320,6 @@ constexpr void serenity::arg_formatter::ArgFormatter::FormatAlignment(T&& contai
 				}
 	} else {
 			WriteNonAligned(std::forward<FwdRef<T>>(container), val, precision);
-		}
-}
-
-static constexpr std::vector<char> ConvBuffToSigned(std::vector<unsigned char>& buff, size_t endPos) {
-	std::vector<char> signedTemp(endPos);
-	auto pos { -1 };
-	for( ;; ) {
-			if( ++pos >= endPos ) break;
-			signedTemp[ pos ] = static_cast<signed char>(buff[ pos ]);
-		}
-	return signedTemp;
-}
-
-template<typename T> struct is_basic_char_buff;
-template<typename T>
-struct is_basic_char_buff: std::bool_constant<std::is_same_v<type<T>, std::array<char, serenity::arg_formatter::SERENITY_ARG_BUFFER_SIZE>> ||
-                                              std::is_same_v<type<T>, std::vector<unsigned char>> || std::is_same_v<type<T>, std::vector<char>>>
-{
-};
-template<typename T> inline constexpr bool is_basic_char_buff_v = is_basic_char_buff<T>::value;
-
-template<typename T, typename U> static constexpr void FlushBuffer(T&& buff, size_t endPos, U&& container) requires is_basic_char_buff_v<serenity::type<T>> {
-	if constexpr( std::is_same_v<type<U>, std::string> ) {
-			container.append(buff.data(), endPos);
-	} else if constexpr( std::is_same_v<type<U>, std::vector<typename type<U>::value_type>> ) {
-			container.insert(container.end(), buff.data(), buff.data() + endPos);
-	} else {
-			auto iter { std::back_inserter(container) };
-			std::copy(buff.data(), buff.data() + endPos, iter);
-		}
-}
-
-template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteBufferToContainer(T&& container) {
-	if( !specValues.localize ) {
-			using BuffRef = FwdRef<std::array<char, SERENITY_ARG_BUFFER_SIZE>>;
-			FlushBuffer(std::forward<BuffRef>(buffer), valueSize, std::forward<T>(container));
-	} else {
-			using BuffRef = FwdRef<std::vector<unsigned char>>;
-			auto& localeBuff { timeSpec.localizationBuff };
-			if constexpr( std::is_signed_v<char> ) {
-					// Since localeBuff is of unsigned char tyoe, need to convert to signed char for systems that use signed char as the basic char type
-					FlushBuffer(std::move(ConvBuffToSigned(localeBuff, valueSize)), valueSize, std::forward<T>(container));
-			} else {
-					FlushBuffer(std::forward<BuffRef>(localeBuff), valueSize, std::forward<T>(container));
-				}
 		}
 }
 
@@ -679,6 +664,11 @@ constexpr void serenity::arg_formatter::ArgFormatter::Parse(std::string_view sv,
 // As cluttered as this is, I kind of have to leave it like it is at the moment. When decluttering and abstracting some
 // of the common calls into functions, the call site ended up actually making this whole process ~4-5% slower
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, std::string_view sv) {
+	if( !std::is_constant_evaluated() ) {
+			std::memset(buffer.data(), 0, SERENITY_ARG_BUFFER_SIZE);
+	} else {
+			std::fill(buffer.begin(), buffer.begin() + valueSize, '\0');
+		}
 	valueSize   = 0;
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
@@ -808,6 +798,11 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Parse
 // of the common calls into functions, the call site ended up actually making this whole process ~4-5% slower
 template<typename T>
 constexpr void serenity::arg_formatter::ArgFormatter::ParseFormatString(std::back_insert_iterator<T>&& Iter, const std::locale& loc, std::string_view sv) {
+	if( !std::is_constant_evaluated() ) {
+			std::memset(buffer.data(), 0, SERENITY_ARG_BUFFER_SIZE);
+	} else {
+			std::fill(buffer.begin(), buffer.begin() + valueSize, '\0');
+		}
 	valueSize   = 0;
 	argCounter  = 0;
 	m_indexMode = IndexMode::automatic;
@@ -1451,8 +1446,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 template<typename T>
 requires std::is_integral_v<std::remove_cvref_t<T>>
 constexpr void serenity::arg_formatter::ArgFormatter::TwoDigitToBuff(T val) {
-	buffer[ valueSize++ ] = val > 9 ? static_cast<char>((val / 10) + offset) : '0';
-	buffer[ valueSize++ ] = static_cast<char>((val % 10) + offset);
+	buffer[ valueSize++ ] = val > 9 ? static_cast<char>((val / 10) + NumericalAsciiOffset) : '0';
+	buffer[ valueSize++ ] = static_cast<char>((val % 10) + NumericalAsciiOffset);
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::Format24HourTime(int hour, int min, int sec, int precision) {
@@ -1519,8 +1514,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatShortYear(int year) {
 	year %= 100;
-	buffer[ valueSize++ ] = static_cast<char>((year / 10) + offset);
-	buffer[ valueSize++ ] = static_cast<char>((year % 10) + offset);
+	buffer[ valueSize++ ] = static_cast<char>((year / 10) + NumericalAsciiOffset);
+	buffer[ valueSize++ ] = static_cast<char>((year % 10) + NumericalAsciiOffset);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WritePaddedDay(T&& container, const int& day) {
@@ -1534,8 +1529,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatSpacePaddedDay(int day) {
-	buffer[ valueSize++ ] = day > 9 ? static_cast<char>((day / 10) + offset) : ' ';
-	buffer[ valueSize++ ] = static_cast<char>((day % 10) + offset);
+	buffer[ valueSize++ ] = day > 9 ? static_cast<char>((day / 10) + NumericalAsciiOffset) : ' ';
+	buffer[ valueSize++ ] = static_cast<char>((day % 10) + NumericalAsciiOffset);
 }
 
 template<typename T>
@@ -1561,9 +1556,9 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatDayOfYear(int day) {
 	++day;    // increment due to the inclusion of 0 -> day  0 is day 1 of year
-	buffer[ valueSize++ ] = day > 99 ? static_cast<char>((day / 100) + offset) : '0';
-	buffer[ valueSize++ ] = day > 9 ? static_cast<char>(day > 99 ? ((day / 10) % 10) + offset : ((day / 10) + offset)) : '0';
-	buffer[ valueSize++ ] = static_cast<char>((day % 10) + offset);
+	buffer[ valueSize++ ] = day > 99 ? static_cast<char>((day / 100) + NumericalAsciiOffset) : '0';
+	buffer[ valueSize++ ] = day > 9 ? static_cast<char>(day > 99 ? ((day / 10) % 10) + NumericalAsciiOffset : ((day / 10) + NumericalAsciiOffset)) : '0';
+	buffer[ valueSize++ ] = static_cast<char>((day % 10) + NumericalAsciiOffset);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WritePaddedMonth(T&& container, const int& month) {
@@ -1611,7 +1606,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatWeekdayDec(int wkday) {
-	buffer[ valueSize++ ] = static_cast<char>(wkday += offset);
+	buffer[ valueSize++ ] = static_cast<char>(wkday += NumericalAsciiOffset);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteMMDDYY(T&& container, const int& month, const int& day, const int& year) {
@@ -1635,7 +1630,7 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 }
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatIsoWeekDec(int wkday) {
-	buffer[ valueSize++ ] = static_cast<char>((wkday != 0 ? wkday : 7) + offset);
+	buffer[ valueSize++ ] = static_cast<char>((wkday != 0 ? wkday : 7) + NumericalAsciiOffset);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteUtcOffset(T&& container) {
@@ -1694,10 +1689,10 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatLongYear(int year) {
 	year += 1900;
-	buffer[ valueSize++ ] = static_cast<char>(year / 1000 + offset);
-	buffer[ valueSize++ ] = static_cast<char>((year / 100) % 10 + offset);
-	buffer[ valueSize++ ] = static_cast<char>((year % 100) / 10 + offset);
-	buffer[ valueSize++ ] = static_cast<char>((year % 100) % 10 + offset);
+	buffer[ valueSize++ ] = static_cast<char>(year / 1000 + NumericalAsciiOffset);
+	buffer[ valueSize++ ] = static_cast<char>((year / 100) % 10 + NumericalAsciiOffset);
+	buffer[ valueSize++ ] = static_cast<char>((year % 100) / 10 + NumericalAsciiOffset);
+	buffer[ valueSize++ ] = static_cast<char>((year % 100) % 10 + NumericalAsciiOffset);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::WriteLongIsoWeekYear(T&& container, const int& year, const int& yrday, const int& wkday) {
@@ -1722,8 +1717,8 @@ template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write
 
 constexpr void serenity::arg_formatter::ArgFormatter::FormatTruncatedYear(int year) {
 	(year += 1900) /= 100;
-	buffer[ valueSize++ ] = static_cast<char>((year / 10) + offset);
-	buffer[ valueSize++ ] = static_cast<char>((year % 10) + offset);
+	buffer[ valueSize++ ] = static_cast<char>((year / 10) + NumericalAsciiOffset);
+	buffer[ valueSize++ ] = static_cast<char>((year % 10) + NumericalAsciiOffset);
 }
 
 template<typename T> constexpr void serenity::arg_formatter::ArgFormatter::Write24Hour(T&& container, const int& hour) {
