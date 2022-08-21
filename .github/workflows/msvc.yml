@@ -47,7 +47,7 @@ jobs:
         run: cmake --build ${{ env.build }} --config Release
 
       - name: Microsoft C++ Code Analysis Action
-        uses: microsoft/msvc-code-analysis-action@v0.1.0
+        uses: microsoft/msvc-code-analysis-action@v0.1.1
 
         # Provide a unique ID to access the sarif output path
         id: run-analysis
