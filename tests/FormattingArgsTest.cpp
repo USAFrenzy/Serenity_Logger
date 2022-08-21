@@ -27,7 +27,7 @@ void* n       = static_cast<void*>(&b);
 
 TEST_CASE("Base Auto Index Formatting") {
 	ArgFormatter formatter;
-
+	
 	static constexpr std::string_view parseString { "{}" };
 	REQUIRE(std::format(parseString, a) == formatter.se_format(parseString, a));
 	REQUIRE(std::format(parseString, b) == formatter.se_format(parseString, b));

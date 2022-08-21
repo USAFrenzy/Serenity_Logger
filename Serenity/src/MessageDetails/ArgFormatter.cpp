@@ -111,6 +111,15 @@ namespace serenity::arg_formatter {
 				case U_LongLongType: LocalizeFloatingPoint(loc, precision, totalWidth, type); break;
 				case BoolType: LocalizeBool(loc); break;
 			}
+		// should re-work this a little so using the unsigned buffer isn't totally neccessary if not needed, however, WriteBufferToContainer() & FlushBuffer()
+		// use the unsigned buffer at the moment when localization is set , so the contents of the original buffer need to be copied over to the unsigned buffer
+		auto pos { -1 };
+		auto& locBuff { timeSpec.localizationBuff };
+		locBuff.resize(valueSize);
+		for( ;; ) {
+				if( ++pos >= valueSize ) return;
+				locBuff[ pos ] = static_cast<unsigned char>(buffer[ pos ]);
+			}
 	}
 
 	void ArgFormatter::LocalizeIntegral(const std::locale& loc, const int& precision, const int& totalWidth, const msg_details::SpecType& type) {

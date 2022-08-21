@@ -58,7 +58,8 @@ template<typename Iter, typename... Args> constexpr auto details::ArgContainer::
 												specContainer[ counter ] = SpecType::StringViewType;
 											}
 								} else {
-										argContainer[ counter ] = arg;
+										using remove_ref        = type<decltype(arg)>;
+										argContainer[ counter ] = remove_ref(arg);
 										if constexpr( utf_constraints::is_string_v<ArgType> ) {
 												specContainer[ counter ] = SpecType::StringType;
 										} else {
@@ -101,6 +102,8 @@ template<typename Iter, typename... Args> constexpr auto details::ArgContainer::
 							}
 						default: SE_ASSERT(false, "Unknown Encoding Detected"); break;
 					}
+				++counter;
+				SE_ASSERT(counter < MAX_ARG_COUNT, "Too Many Arguments Supplied To Formatting Function");
 		} else {
 				specContainer[ counter ] = GetArgType(std::forward<FwdRef<ArgType>>(FwdRef<ArgType>(arg)));
 				if constexpr( is_supported_v<type<ArgType>> ) {
