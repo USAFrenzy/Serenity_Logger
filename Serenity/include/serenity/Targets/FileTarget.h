@@ -16,6 +16,8 @@ namespace serenity::targets {
 		FileTarget(const FileTarget&)            = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();
+
+		void InitializeLogs(const std::string_view filePath, bool replaceIfExists);
 		void SetLocale(const std::locale& loc) override;
 
 	  protected:

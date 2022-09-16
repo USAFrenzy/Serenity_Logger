@@ -175,6 +175,10 @@ namespace serenity::experimental::targets {
 				lock.lock();
 		}
 		// make copy for old file conversion and cache new values
+		if( !utf_helper::IsValidU8(newFileName) ) {
+				throw std::runtime_error("Error In File Name For Rotating Target Function Rename(): Invalid UTF-8 Sequence Detected - A Proper File Name Cannot Be "
+				                         "Constructed");
+		}
 		std::filesystem::path newFile { FileCacheHelper()->FilePath() };
 		newFile.replace_filename(newFileName);
 		FileCacheHelper()->CacheFile(newFile.string(), true);

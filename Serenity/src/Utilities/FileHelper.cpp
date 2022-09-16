@@ -23,19 +23,38 @@ namespace serenity {
 
 	void FileCache::CacheFile(std::string_view path, bool ignoreExtInFileName) {
 		if( path.empty() ) return;
-		std::filesystem::path fPath = path;
-		auto directory { fPath };
-		filePath = fPath.make_preferred().string();
-		directory._Remove_filename_and_separator();
-		fileDir   = directory.stem().string();
-		dirPath   = directory;
-		extension = fPath.extension().string();
-		if( ignoreExtInFileName ) {
-				auto temp { filePath };
-				temp.replace_extension();
-				fileName = temp.filename().string();
+		if( !utf_helper::IsValidU8(path) ) {
+				throw std::runtime_error("Error In File Path Or File Name: Invalid UTF-8 Sequence Detected - A Proper File Path Cannot Be Constructed");
+		}
+		std::filesystem::path fPath { path };
+		if( !fPath.has_relative_path() ) {
+				auto directory { std::filesystem::current_path() /= "Logs" };
+				filePath = directory.string().append(fPath.make_preferred().string());
+				directory._Remove_filename_and_separator();
+				fileDir   = directory.stem().string();
+				dirPath   = directory;
+				extension = fPath.extension().string();
+				if( ignoreExtInFileName ) {
+						auto temp { filePath };
+						temp.replace_extension();
+						fileName = temp.filename().string();
+				} else {
+						fileName = filePath.filename().string();
+					}
 		} else {
-				fileName = filePath.filename().string();
+				auto directory { fPath };
+				filePath = fPath.make_preferred().string();
+				directory._Remove_filename_and_separator();
+				fileDir   = directory.stem().string();
+				dirPath   = directory;
+				extension = fPath.extension().string();
+				if( ignoreExtInFileName ) {
+						auto temp { filePath };
+						temp.replace_extension();
+						fileName = temp.filename().string();
+				} else {
+						fileName = filePath.filename().string();
+					}
 			}
 	}
 

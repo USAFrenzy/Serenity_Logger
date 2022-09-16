@@ -358,7 +358,7 @@ namespace utf_helper {
 	// If BOM, replaces byte(s) and returns false, otherwise, returns true
 	template<typename CharType>
 	requires utf_constraints::is_char_type_v<CharType>
-	constexpr bool Utf8BomOrRepCh(CharType& byte1, CharType& byte2) {
+	constexpr bool Utf8BomOrRepCh(CharType byte1, CharType byte2) {
 		using namespace utf_bounds;
 		using namespace utf_boms;
 		if( byte1 == static_cast<CharType>(UTF8_INVALID_BYTE_2) ) {
