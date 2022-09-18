@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#define EXPERIMENTAL_STREAMLINE 0
+
 namespace serenity::msg_details {
 
 	void Message_Formatter::SetLocaleReference(const std::locale& loc) {
@@ -165,79 +167,114 @@ namespace serenity::msg_details {
 				default: break;
 			}
 
-		// TODO: Come back to this if there's enough time to flesh this out. Need to just continue wrapping this project up instead of adding more work right now.
-		/**************************************************************  TESTING **************************************************************/
-		// NOTE: I do get the appropriate string when all is settled -> now to figure out how to structure the formatting aspect and simplify the
-		//              FormatterArgs functions. I could probably just add some logic to the current ArgFormatter class for when it encounters a '%'
-		//              sign and call a separate function alltogether since verification of args in this case may not be needed? Either that or call a
-		//              different validator function that would have to be implemented for these cases and the arguments supplied to the format func.
-		//              One idea is just to update the std::tm cache and supply the cache to the formatter since all but logger level, logger name, and
-		//              message use this. I could then just hard-code the order that the logger levels, name, and message appear in the formatter call.
-		//              I could even supply overloads for combinations of what is needed.
-		//              ************************************************************ EX ************************************************************
-		//               - Where the call may be something like FormatUserPattern(...) -> with the overloads being a buffer, a string_view,  and then
-		//                  any combo of std::tm, LoggerLevel, string_view (AND be able to reserve an appropriate size as well with these calls) such as:
-		//              ****************************************************************************************************************************
-		//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Level(), MsgInfo()->Name());
-		//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Level());
-		//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Name());
-		//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache());
-		//              - se_format_to(buffer, internalFmt, MsgInfo()->Level());
-		//              - se_format_to(buffer, internalFmt, MsgInfo()->Name());
-		//              ****************************************************************************************************************************
-		// NOTE 2: With the above idea, I could then focus on getting std::vector<> cases of formatting optimized and just format to the file
-		//                  buffer directly with this; with the '%+' specifier in place, I could  then just straight-up format the message as-is  as well so
-		//                  this would essentially go from formatting the time-stamp into a string by repeated calls of append and no real way of
-		//                  reserving capacity before-hand, copying said string to the buffer, formatting the message into another string, copying that
-		//                  string to the buffer, and then writing to the file when either the file size limit or page size has been matched to just simply
-		//                  formatting everything in one go into the buffer and essentially only incurring the cost of writing to the file buffer itself.
-		// NOTE 3: Now that I've fixed some of the speed problems associated with using a std::vector<char> with the se_format_to(), this idea
-		//                   is much more realistic in the sense of writing directly to the file buffer if the target is a file type target given there's basically
-		//                   no trade-off in formatting performance now.
-		// NOTE 4: First thing to do here is implement Time Spec Formatting, but that still leaves the custom flags of  'L', 'l', 'n', 'N', 's', 'e', 't' and '+'...
-		//                  So for now, this will be left as-is since I still have no idea how to go about adding a callback for custom types. Adding time spec
-		//                  formatting won't be hard at all - I just need to add a time spec char field in FormatterSpecs and the relevant formatter function
-		//                  calls for the spec provided, it's just the damn custom formatting I need to figure out here... (which would be nice since the whole
-		//                  ArgFormatter class would finally be considered a light-weight drop-in replacement for libfmt and <format> at that point)
+				// TODO: Come back to this if there's enough time to flesh this out. Need to just continue wrapping this project up instead of adding more work right
+				// now.
+				/**************************************************************  TESTING **************************************************************/
+				// NOTE: I do get the appropriate string when all is settled -> now to figure out how to structure the formatting aspect and simplify the
+				//              FormatterArgs functions. I could probably just add some logic to the current ArgFormatter class for when it encounters a '%'
+				//              sign and call a separate function alltogether since verification of args in this case may not be needed? Either that or call a
+				//              different validator function that would have to be implemented for these cases and the arguments supplied to the format func.
+				//              One idea is just to update the std::tm cache and supply the cache to the formatter since all but logger level, logger name, and
+				//              message use this. I could then just hard-code the order that the logger levels, name, and message appear in the formatter call.
+				//              I could even supply overloads for combinations of what is needed.
+				//              ************************************************************ EX ************************************************************
+				//               - Where the call may be something like FormatUserPattern(...) -> with the overloads being a buffer, a string_view,  and then
+				//                  any combo of std::tm, LoggerLevel, string_view (AND be able to reserve an appropriate size as well with these calls) such as:
+				//              ****************************************************************************************************************************
+				//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Level(), MsgInfo()->Name());
+				//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Level());
+				//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache(), MsgInfo()->Name());
+				//              - se_format_to(buffer, internalFmt, TimeDetails()->Cache());
+				//              - se_format_to(buffer, internalFmt, MsgInfo()->Level());
+				//              - se_format_to(buffer, internalFmt, MsgInfo()->Name());
+				//              ****************************************************************************************************************************
+				// NOTE 2: With the above idea, I could then focus on getting std::vector<> cases of formatting optimized and just format to the file
+				//                  buffer directly with this; with the '%+' specifier in place, I could  then just straight-up format the message as-is  as well so
+				//                  this would essentially go from formatting the time-stamp into a string by repeated calls of append and no real way of
+				//                  reserving capacity before-hand, copying said string to the buffer, formatting the message into another string, copying that
+				//                  string to the buffer, and then writing to the file when either the file size limit or page size has been matched to just simply
+				//                  formatting everything in one go into the buffer and essentially only incurring the cost of writing to the file buffer itself.
+				// NOTE 3: Now that I've fixed some of the speed problems associated with using a std::vector<char> with the se_format_to(), this idea
+				//                   is much more realistic in the sense of writing directly to the file buffer if the target is a file type target given there's
+				//                   basically no trade-off in formatting performance now.
+				// NOTE 4: First thing to do here is implement Time Spec Formatting, but that still leaves the custom flags of  'L', 'l', 'n', 'N', 's', 'e', 't' and
+				// '+'...
+				//                  So for now, this will be left as-is since I still have no idea how to go about adding a callback for custom types. Adding time
+				//                  spec formatting won't be hard at all - I just need to add a time spec char field in FormatterSpecs and the relevant formatter
+				//                  function calls for the spec provided, it's just the damn custom formatting I need to figure out here... (which would be nice
+				//                  since the whole ArgFormatter class would finally be considered a light-weight drop-in replacement for libfmt and <format> at that
+				//                  point)
 
-		// switch( index ) {
-		//		case 0: internalFmt.append("{:%a}"); break;
-		//		case 1: internalFmt.append("{:%b}"); break;
-		//		case 2: internalFmt.append("{:%c}"); break;
-		//		case 3: internalFmt.append("{:%d}"); break;
-		//		case 4: internalFmt.append("{:%e}"); break;		/*  Custom Flag */
-		//		case 5: internalFmt.append("{:%b}"); break;
-		//		case 6: internalFmt.append("{:%l}"); break;		/*  Custom Flag */
-		//		case 7: internalFmt.append("{:%m}"); break;
-		//		case 8: internalFmt.append("{:%n}"); break;		/*  Custom Flag */
-		//		case 9: internalFmt.append("{:%p}"); break;
-		//		case 10: internalFmt.append("{:%r}"); break;
-		//		case 11: internalFmt.append("{:%s}"); break;	/*  Custom Flag */
-		//		case 12: internalFmt.append("{:%t}"); break;		/*  Custom Flag */
-		//		case 13: internalFmt.append("{:%w}"); break;
-		//		case 14: internalFmt.append("{:%D}"); break;
-		//		case 15: internalFmt.append("{:%y}"); break;
-		//		case 16: internalFmt.append("{:%z}"); break;
-		//		case 17: internalFmt.append("{:%A}"); break;
-		//		case 18: internalFmt.append("{:%B}"); break;
-		//		case 19: internalFmt.append("{:%C}"); break;
-		//		case 20: internalFmt.append("{:%D}"); break;
-		//		case 21: internalFmt.append("{:%F}"); break;
-		//		case 22: internalFmt.append("{:%H}"); break;
-		//		case 23: internalFmt.append("{:%I}"); break;
-		//		case 24: internalFmt.append("{:%L}"); break;	/*  Custom Flag */
-		//		case 25: internalFmt.append("{:%M}"); break;
-		//		case 26: internalFmt.append("{:%N}"); break;	/*  Custom Flag */
-		//		case 27: internalFmt.append("{:%R}"); break;
-		//		case 28: internalFmt.append("{:%S}"); break;
-		//		case 29: internalFmt.append("{:%T}"); break;
-		//		case 30: internalFmt.append("{:%Y}"); break;
-		//		case 31: internalFmt.append("{:%T}"); break;
-		//		case 32: internalFmt.append("{:%Z}"); break;
-		//		case 33: internalFmt.append("{:%+}"); break;	/*  Custom Flag */
-		//		default: break;
-		//	}
+#if EXPERIMENTAL_STREAMLINE
+		/*  AS OF  18SEP22, THIS IS A W.I.P FOR STREAMLINING USING THE NEW ADDITIONS TO ARGFORMATTER FOR CUSTOM FORMATTING AND TIME FORMATTING  */
 
+		// Placement  of the internal representation is temporarily function local until the contents below are fleshed out and working
+		std::string internalFmt;
+		/*
+		    Initial thoughts here is to append all time-related flags into one substitution bracket ONLY if there are no spaces, other text, or custom flags
+		    separating the flags in order to make the formatting call more efficient than several formatting calls of individual time flags.
+		    -1-   If there is ANYTHING separating the time flags, then for ANY flag, a new substitution bracket will need to be created.
+		    -2a- For each flag that is added to the internal representation, the bracket the flag corresponds to will use a positional index of where the formatting
+		            content is stored in the args vector (the vector hasn't been implemented yet and may not even be implemented -> See note at 5a & 5b ).
+		    -2b- If the content for the flag to reference isn't already in the args vector, then a pointer will be stored in the vector so the flag can reference the
+		             appropriate material from the target that was created.
+		    -3-   I.E.  the internal representation might look like: " [{0:%l}] {1:%T} {1:%d%M%y} {2:%+}"
+		             - where '0' here is a pointer to the logger level itself, '2'  is a pointer to the message contents, and '1' references the cache as a whole.
+		    -4-    This should allow the unfolding of  args content with the formatting pattern in one call vs several individual calls.
+		    -5a-  An alternative to this is to simply create the substituion string and have differing similar functions for the combinations that could be
+		             present, similar to the old note above with the "se_format_to()" variations.
+		    -5b-	 In this manner, the functions would have hard-coded placements of where the arguments are placed and the only thing that needs to be
+		             tracked is if we are upgrading the function call to something more complex or not and what positional index is being referenced in each
+		             argument bracket in the format string itself.
+		*/
+
+		// The below switch statement still needs more modifying for the additions of all c-time flags since they are now all supported.
+		// The opening bracket is omitted due to the need to now check if it is a c-time field and handle it as a special case by either creating a new bracket
+		// or replacing the closing bracket of an already present time bracket and appending the new time flag to the end of that bracket if  and ONLY if the
+		// conditions above have been met OR if it is any other flag and handle the creation of the new bracket adding in the positional field where appropriate.
+		/*
+		    - Dont need 'e' as that is now taken care of by the precision field in ArgFormatter. (however, i do need to take into account the precision passed in and
+		      'stringify' it to the substitution bracket in regards to the clock time field - this may need to be reworked a little from how this was being
+		      implemented beforehand as a separate entity entirely).
+		    - Don't need 'n' as this can be combined more efficiently with the separate flags that made this custom flag ( "{%d%M%y}" is the same as %n here and will
+		      reference the same cache regardless)
+		*/
+		switch( index ) {
+				case 0: internalFmt.append("%a}"); break;
+				case 1: internalFmt.append("%b}"); break;
+				case 2: internalFmt.append("%c}"); break;
+				case 3: internalFmt.append("%d}"); break;
+				case 5: internalFmt.append("%b}"); break;
+				case 6: internalFmt.append("%l}"); break; /*  Custom Flag */
+				case 7: internalFmt.append("%m}"); break;
+				case 8: internalFmt.append("%p}"); break;
+				case 9: internalFmt.append("%r}"); break;
+				case 10: internalFmt.append("%s}"); break; /*  Custom Flag */
+				case 11: internalFmt.append("%t}"); break; /*  Custom Flag */
+				case 12: internalFmt.append("%w}"); break;
+				case 13: internalFmt.append("%D}"); break;
+				case 14: internalFmt.append("%y}"); break;
+				case 15: internalFmt.append("%z}"); break;
+				case 16: internalFmt.append("%A}"); break;
+				case 17: internalFmt.append("%B}"); break;
+				case 18: internalFmt.append("%C}"); break;
+				case 19: internalFmt.append("%D}"); break;
+				case 20: internalFmt.append("%F}"); break;
+				case 21: internalFmt.append("%H}"); break;
+				case 22: internalFmt.append("%I}"); break;
+				case 23: internalFmt.append("%L}"); break; /*  Custom Flag */
+				case 24: internalFmt.append("%M}"); break;
+				case 25: internalFmt.append("%N}"); break; /*  Custom Flag */
+				case 26: internalFmt.append("%R}"); break;
+				case 27: internalFmt.append("%S}"); break;
+				case 28: internalFmt.append("%T}"); break;
+				case 29: internalFmt.append("%Y}"); break;
+				case 30: internalFmt.append("%T}"); break;
+				case 31: internalFmt.append("%Z}"); break;
+				case 32: internalFmt.append("%+}"); break; /*  Custom Flag */
+				default: break;
+			}
+#endif
 		/**************************************************************************************************************************************/
 	}
 
