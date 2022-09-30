@@ -1,27 +1,3 @@
-<<<<<<< HEAD
-set (PROJECT_NAME Serenity)
-
-set (
-    SERENITY_SOURCE_FILES
-    "src/Logger.cpp"
-    "src/LogFileHelper.cpp"
-    "src/Utilities.cpp"
-    "src/Sinks.cpp"
-    "src/LibLogger.cpp"
-)
-
-set (
-    SERENITY_HEADER_FILES
-    "include/serenity/Logger.h"
-    "include/serenity/Logger-impl.h"
-    "include/serenity/Defines.h"
-    "include/serenity/Common.h"
-    "include/serenity/Helpers/LogFileHelper.h"
-    "include/serenity/Interfaces/IObserver.h"
-    "include/serenity/Utilities/Utilities.h"
-    "include/serenity/Sinks/Sinks.h"
-    "include/serenity/Helpers/LibLogger.h"
-=======
 set(PROJECT_NAME Serenity)
 
 set(MESSAGE_DETAILS_SOURCE_FILES
@@ -74,7 +50,6 @@ set(UTILITIES_HEADER_FILES
     "include/serenity/Utilities/FileHelper.h"
     "include/serenity/Utilities/TargetHelper.h"
     "include/serenity/Utilities/UtfHelper.h"
->>>>>>> 68d911f3a760ad7a04cca67aa270eea26ed1e3c3
 )
 
 set(COLOR_HEADER_FILES "include/serenity/Color/Color.h")
