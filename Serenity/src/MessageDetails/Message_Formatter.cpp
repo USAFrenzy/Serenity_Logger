@@ -26,6 +26,61 @@ namespace serenity::msg_details {
 #endif    // WINDOWS_PLATFORM
 	}
 
+	constexpr static bool IsCustomFlag(const char& ch) {
+		switch( ch ) {
+				case 'l': [[fallthrough]];
+				case 's': [[fallthrough]];
+				case 't': [[fallthrough]];
+				case 'L': [[fallthrough]];
+				case 'N': [[fallthrough]];
+				case '+': return true;
+				default: return false;
+			}
+	}
+
+	constexpr static bool IsTimeFlag(const char& ch) {
+		switch( ch ) {
+				case 'a': [[fallthrough]];
+				case 'h': [[fallthrough]];
+				case 'b': [[fallthrough]];
+				case 'c': [[fallthrough]];
+				case 'd': [[fallthrough]];
+				case 'e': [[fallthrough]];
+				case 'g': [[fallthrough]];
+				case 'j': [[fallthrough]];
+				case 'm': [[fallthrough]];
+				case 'p': [[fallthrough]];
+				case 'r': [[fallthrough]];
+				case 'u': [[fallthrough]];
+				case 'w': [[fallthrough]];
+				case 'D': [[fallthrough]];
+				case 'x': [[fallthrough]];
+				case 'y': [[fallthrough]];
+				case 'z': [[fallthrough]];
+				case 'A': [[fallthrough]];
+				case 'B': [[fallthrough]];
+				case 'C': [[fallthrough]];
+				case 'F': [[fallthrough]];
+				case 'G': [[fallthrough]];
+				case 'H': [[fallthrough]];
+				case 'I': [[fallthrough]];
+				case 'M': [[fallthrough]];
+				case 'R': [[fallthrough]];
+				case 'S': [[fallthrough]];
+				case 'T': [[fallthrough]];
+				case 'U': [[fallthrough]];
+				case 'V': [[fallthrough]];
+				case 'W': [[fallthrough]];
+				case 'X': [[fallthrough]];
+				case 'Y': [[fallthrough]];
+				case 'Z': [[fallthrough]];
+				case 'n': [[fallthrough]];
+				case 't': [[fallthrough]];
+				case '%': return true; break;
+				default: return false; break;
+			}
+	}
+
 	void Message_Formatter::FlagFormatter(size_t index, size_t precision) {
 		switch( index ) {
 				case 0:
@@ -208,6 +263,9 @@ namespace serenity::msg_details {
 #if EXPERIMENTAL_STREAMLINE
 		/*  AS OF  18SEP22, THIS IS A W.I.P FOR STREAMLINING USING THE NEW ADDITIONS TO ARGFORMATTER FOR CUSTOM FORMATTING AND TIME FORMATTING  */
 
+		//! NOTE: The logic below is being implemented here, however, this logic, if found to work properly and more
+		//! efficiently, will replace the logic in the call of StoreFormat() instead and eliminate this function entirely.
+
 		// Placement  of the internal representation is temporarily function local until the contents below are fleshed out and working
 		std::string internalFmt;
 		/*
@@ -228,52 +286,69 @@ namespace serenity::msg_details {
 		             argument bracket in the format string itself.
 		*/
 
-		// The below switch statement still needs more modifying for the additions of all c-time flags since they are now all supported.
-		// The opening bracket is omitted due to the need to now check if it is a c-time field and handle it as a special case by either creating a new bracket
-		// or replacing the closing bracket of an already present time bracket and appending the new time flag to the end of that bracket if  and ONLY if the
-		// conditions above have been met OR if it is any other flag and handle the creation of the new bracket adding in the positional field where appropriate.
-		/*
-		    - Dont need 'e' as that is now taken care of by the precision field in ArgFormatter. (however, i do need to take into account the precision passed in and
-		      'stringify' it to the substitution bracket in regards to the clock time field - this may need to be reworked a little from how this was being
-		      implemented beforehand as a separate entity entirely).
-		    - Don't need 'n' as this can be combined more efficiently with the separate flags that made this custom flag ( "{%d%M%y}" is the same as %n here and will
-		      reference the same cache regardless)
-		*/
-		switch( index ) {
-				case 0: internalFmt.append("%a}"); break;
-				case 1: internalFmt.append("%b}"); break;
-				case 2: internalFmt.append("%c}"); break;
-				case 3: internalFmt.append("%d}"); break;
-				case 5: internalFmt.append("%b}"); break;
-				case 6: internalFmt.append("%l}"); break; /*  Custom Flag */
-				case 7: internalFmt.append("%m}"); break;
-				case 8: internalFmt.append("%p}"); break;
-				case 9: internalFmt.append("%r}"); break;
-				case 10: internalFmt.append("%s}"); break; /*  Custom Flag */
-				case 11: internalFmt.append("%t}"); break; /*  Custom Flag */
-				case 12: internalFmt.append("%w}"); break;
-				case 13: internalFmt.append("%D}"); break;
-				case 14: internalFmt.append("%y}"); break;
-				case 15: internalFmt.append("%z}"); break;
-				case 16: internalFmt.append("%A}"); break;
-				case 17: internalFmt.append("%B}"); break;
-				case 18: internalFmt.append("%C}"); break;
-				case 19: internalFmt.append("%D}"); break;
-				case 20: internalFmt.append("%F}"); break;
-				case 21: internalFmt.append("%H}"); break;
-				case 22: internalFmt.append("%I}"); break;
-				case 23: internalFmt.append("%L}"); break; /*  Custom Flag */
-				case 24: internalFmt.append("%M}"); break;
-				case 25: internalFmt.append("%N}"); break; /*  Custom Flag */
-				case 26: internalFmt.append("%R}"); break;
-				case 27: internalFmt.append("%S}"); break;
-				case 28: internalFmt.append("%T}"); break;
-				case 29: internalFmt.append("%Y}"); break;
-				case 30: internalFmt.append("%T}"); break;
-				case 31: internalFmt.append("%Z}"); break;
-				case 32: internalFmt.append("%+}"); break; /*  Custom Flag */
-				default: break;
+		/*************************************************************************************************************
+		 * This is working as-is for creating the substitution brackets for a call to a yet-to-be-implemented formatting
+		 * function call using both the cache and logger elements -> Still needs to be thoroughly tested though.
+		 *************************************************************************************************************/
+		auto size { fmtPattern.size() };
+		auto pos { -1 };
+		bool isTimeFlagProcessing { false };
+		for( ;; ) {
+				if( ++pos >= size ) break;
+				if( fmtPattern[ pos ] == '%' ) {
+						if( internalFmt.size() > 0 && internalFmt.back() == '%' ) {
+								internalFmt += '%';
+								continue;
+						} else {
+								const auto& ch { fmtPattern[ ++pos ] };
+								if( IsCustomFlag(ch) ) {
+										// Handle the custom flags here -> most likely by just instatiating the
+										// structs or hard-coding the values in place that won't change
+										if( internalFmt.size() > 0 && internalFmt.back() != '}' ) {
+												isTimeFlagProcessing ? internalFmt.append("}{1:%").append(1, ch).append(1, '}')
+																	 : internalFmt.append("{1:%").append(1, ch).append(1, '}');
+												isTimeFlagProcessing = false;
+										}
+
+								} else if( IsTimeFlag(ch) ) {
+										// check if current working set bracket is a time-related bracket and if the
+										// conditions have been met, otherwise, create a new bracket for this flag
+										if( isTimeFlagProcessing ) {
+												internalFmt += ch;
+										} else {
+												internalFmt.append("{0:%").append(1, ch);
+												isTimeFlagProcessing = true;
+											}
+								}
+							}
+				} else {
+						//  if it's not a possible flag, just copy over any literals that didn't fall into the above two cases
+						if( isTimeFlagProcessing ) {
+								if( fmtPattern[ pos ] == ' ' ) {
+										internalFmt += fmtPattern[ pos ];
+										continue;
+								}
+								internalFmt += '}';
+								isTimeFlagProcessing = false;
+						}
+						internalFmt += fmtPattern[ pos ];
+					}
 			}
+
+		// This is just here to test the process out a little -> the %n isn't formatted specifically because that was originally a custom flag, but it DOES seem like
+		// this is working as intended (loosely) for everything else? Don't have access to logger info and have yet to make a custom formatter template
+		// specialization for the logger details/info to test that portion out, but I assume it should work as intended as well. Obviously will need to test that
+		// once I can implement some more small changes further down the pipeline here.
+		//! NOTE: AS OF RIGHT NOW - THE RESULT DUPLICATES THE TIME FLAG RESULTS DUE TO NOT HANDLING AND CATCHING AN INDEX THAT DOESN'T EXIST.
+		//!               THE INTENDED BEHAVIOR IS TO WARN THE USER OF THIS AT THE TIME OF FORMATTING, HOWEVER, THE FORMATTER RE-USES THE LAST
+		//!              ARGUMENT PROVIDED INSTEAD. WHILE THIS DOES INDEED PREVENT CRASHES, THIS IS A BUG IN THE DESIGN AND A WARNING NEEDS TO
+		//!             BE ISSUED AND ANY FURTHER FORMATTING NEEDS TO BE HALTED AT THAT TIME -> ORIGINAL INTENT WAS TO THROW AN ERROR, BUT IT
+		//!            MAY BE BETTER TO AT LEAST LET THE USER HANDLE THE ERROR (STILL PREVENT FURTHER FORMATTING EITHER WAY THOUGH).
+		std::string tmp;
+		std::tm tmpTime {};
+		auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
+		LOCAL_TIME(tmpTime, now);
+		VFORMAT_TO(tmp, localeRef, internalFmt, tmpTime /*  , loggerDetails */);
 #endif
 		/**************************************************************************************************************************************/
 	}
