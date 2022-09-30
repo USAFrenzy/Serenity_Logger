@@ -349,7 +349,7 @@ BreakInheritanceList: BeforeColon
 #                 "ryVeryVeryVeryVeryVery"
 #                 "VeryLongString";
 BreakStringLiterals: true
-ColumnLimit: 145
+ColumnLimit: 165
 ########## A regular expression that describes comments with special meaning ##########
 CommentPragmas: '^///'
 ########## If false, each namespace is declared on a new line ##########
@@ -362,7 +362,7 @@ CommentPragmas: '^///'
 CompactNamespaces: false
 ##########     The number of characters to use for indentation of     ##########
 ########## constructor initializer lists as well as inheritance lists ##########
-ConstructorInitializerIndentWidth: 8
+ConstructorInitializerIndentWidth: 4
 ########## Indent width for line continuations ##########
 ContinuationIndentWidth: 0
 ########## If true, format braced lists as best suited for C++11 braced lists ##########
@@ -538,7 +538,7 @@ IndentPPDirectives: BeforeHash
 # IndentRequiresClause: true
 
 ########## The number of columns to use for indentation ##########
-IndentWidth: 8
+IndentWidth: 4
 ########## Indent if a function definition or declaration is wrapped after the type ##########
 # true:
 # LoooooooooooooooooooooooooooooooooooooooongReturnType
@@ -605,14 +605,14 @@ NamespaceIndentation: All
 #       cccccccccccccccccccc()
 # PackConstructorInitializers: NextLine # clang-format v14
 
-PenaltyBreakAssignment: 30
-PenaltyBreakBeforeFirstCallParameter: 35
+PenaltyBreakAssignment: 15
+PenaltyBreakBeforeFirstCallParameter: 25
 PenaltyBreakComment: 10
 PenaltyBreakFirstLessLess: 15
 PenaltyBreakString: 5
-PenaltyBreakTemplateDeclaration: 20
-PenaltyExcessCharacter: 20
-PenaltyReturnTypeOnItsOwnLine: 100
+PenaltyBreakTemplateDeclaration: 10
+PenaltyExcessCharacter: 5
+PenaltyReturnTypeOnItsOwnLine: 50
 
 # Align pointer to the left.
 # int* a;
@@ -821,6 +821,6 @@ Standard: Latest
 # StatementMacros: ["DEPRACATED", "TODO", "NOTE"]
 
 # The number of columns used for tab stops.
-TabWidth: 8
+TabWidth: 4
 # The way to use tab characters in the resulting file.
 UseTab: AlignWithSpaces

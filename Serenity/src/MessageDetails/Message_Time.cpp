@@ -2,27 +2,110 @@
 
 #include <charconv>
 
-#define C20_CHRONO_TEST 1
-
 namespace serenity::msg_details {
-	Message_Time::Message_Time(message_time_mode mode): m_mode(mode), m_timeZone(*std::chrono::current_zone()) {
+
+	ZoneThread::ZoneThread(const std::chrono::tzdb& db)
+		: timezoneDB(db), timeMutex(std::mutex {}), sysCache(std::chrono::sys_info {}), isThreadActive(false), isDaylightSavings(false) {
+		sysCache          = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
+		isDaylightSavings = (sysCache.save != std::chrono::minutes(0));
+	}
+
+	void ZoneThread::UpdateTimeZoneInfoThread() {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		auto stopToken = tzUpdateThread.get_stop_token();
+		const int maxAttempt { 2 };
+
+		auto tryUpdating = [ &, this ]() {
+			try {
+					std::chrono::reload_tzdb();
+					return std::make_tuple<bool, std::string>(true, std::string());
+				}
+			catch( const std::runtime_error& re ) {
+					return std::make_tuple<bool, std::string>(false, re.what());
+				}
+		};
+
+		while( !stopToken.stop_requested() ) {
+				cv.wait_until(lock, sysCache.end, [ &, this ]() { return stopToken.stop_requested(); });
+				for( int tries { 0 }; tries <= maxAttempt; ++tries ) {
+						// Check on each attempt if the thread is supposed to be wrapping up before trying to update
+						if( stopToken.stop_requested() ) return;
+						auto [ result, errStr ] = tryUpdating();
+						if( result ) break;
+						if( tries == maxAttempt ) {
+								printf("%s\n", errStr.c_str());
+								printf("Max Attempts Reached. Zone Update Thread Will Now Terminate Itself.\n");
+								return;
+						}
+						printf("%s\nRetrying...\n", errStr.c_str());
+					}
+				sysCache          = timezoneDB.current_zone()->get_info(std::chrono::system_clock::now());
+				isDaylightSavings = (sysCache.save != std::chrono::minutes(0));
+			}
+	}
+
+	void ZoneThread::StartZoneThread() {
+		if( !isThreadActive.load() ) {
+				tzUpdateThread = std::jthread { &ZoneThread::UpdateTimeZoneInfoThread, this };
+				isThreadActive.store(true);
+		}
+	}
+
+	void ZoneThread::StopZoneThread() {
+		if( isThreadActive.load() && tzUpdateThread.joinable() ) {
+				tzUpdateThread.request_stop();
+				cv.notify_one();
+				isThreadActive.store(false);
+		}
+	}
+
+	bool ZoneThread::IsDayLightSavings() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return isDaylightSavings;
+	}
+
+	std::chrono::minutes ZoneThread::DaylightSavingsOffsetMin() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return sysCache.save;
+	}
+
+	std::chrono::seconds ZoneThread::UtcOffset() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return sysCache.offset;
+	}
+
+	const std::string& ZoneThread::TimeZoneAbbrev() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return sysCache.abbrev;
+	}
+
+	void ZoneThread::EnableZoneThread(bool enabled) {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		enabled ? StartZoneThread() : StopZoneThread();
+	}
+
+	bool ZoneThread::IsZoneThreadActive() const {
+		return isThreadActive.load();
+	}
+
+	const std::chrono::time_zone* ZoneThread::TimeZone() const {
+		std::unique_lock<std::mutex> lock(timeMutex);
+		return timezoneDB.current_zone();
+	}
+
+	Message_Time::Message_Time(message_time_mode mode): m_mode(mode), zoneHelper(std::make_unique<ZoneThread>(std::chrono::get_tzdb())) {
 		auto currentTimePoint { std::chrono::system_clock::now() };
 		UpdateTimeDate(currentTimePoint);
 		auto yr { m_cache.tm_year + 1900 };
 		(yr % 4 == 0 && (yr % 100 != 0 || yr % 400 == 0)) ? leapYear = true : leapYear = false;
-
-#if C20_CHRONO_TEST
-		auto timeInfo { m_timeZone.get_info(currentTimePoint) };
-		utcOffset = static_cast<int>(timeInfo.offset.count());
-		if( timeInfo.save != std::chrono::minutes(0) ) {
-				isDaylightSavings        = true;
-				daylightSavingsOffsetMin = static_cast<int>(timeInfo.save.count());
-		}
-#endif
 	}
 
-	const std::chrono::time_zone* Message_Time::GetTimeZone() {
-		return &m_timeZone;
+	Message_Time::~Message_Time() {
+		zoneHelper->EnableZoneThread(false);
+	}
+
+	const std::chrono::time_zone* Message_Time::GetTimeZone() const {
+		return zoneHelper->TimeZone();
 	}
 
 	void serenity::msg_details::Message_Time::CalculateCurrentYear(int yearOffset) {
@@ -52,11 +135,11 @@ namespace serenity::msg_details {
 		UpdateTimeDate(timePoint);
 	}
 
-	std::tm& Message_Time::Cache() {
+	const std::tm& Message_Time::Cache() const {
 		return m_cache;
 	}
 
-	message_time_mode& Message_Time::Mode() {
+	const message_time_mode& Message_Time::Mode() const {
 		return m_mode;
 	}
 
@@ -64,15 +147,8 @@ namespace serenity::msg_details {
 		m_mode = mode;
 	}
 
-	std::chrono::seconds& Message_Time::LastLogPoint() {
+	const std::chrono::seconds& Message_Time::LastLogPoint() const {
 		return secsSinceLastLog;
-	}
-
-	// This much faster implementation than iterating naively in a loop was found at the following:
-	// Ultra-fast-Algorithms-for-Working-with-Leap-Years blog by Ted Nguyen
-	// https://stackoverflow.com/questions/4587513/how-to-calculate-number-of-leap-years-between-two-years-in-c-sharp Victor Haydin's answer
-	int Message_Time::LeapYearsSinceEpoch(int yearIndex) {
-		return (yearIndex / 4) - (yearIndex / 100) + (yearIndex / 400);
 	}
 
 	bool Message_Time::isLeapYear() const {
@@ -80,14 +156,24 @@ namespace serenity::msg_details {
 	}
 
 	bool Message_Time::IsDaylightSavings() const {
-		return isDaylightSavings;
+		return zoneHelper->IsDayLightSavings();
 	}
 
-	int Message_Time::DaylightSavingsOffsetMin() const {
-		return daylightSavingsOffsetMin;
+	std::chrono::minutes Message_Time::DaylightSavingsOffsetMin() const {
+		return zoneHelper->DaylightSavingsOffsetMin();
 	}
 
-	int Message_Time::UtcOffset() const {
-		return utcOffset;
+	std::chrono::seconds Message_Time::UtcOffset() const {
+		return zoneHelper->UtcOffset();
+	}
+
+	const std::string& serenity::msg_details::Message_Time::TimeZoneAbbrev() const {
+		return zoneHelper->TimeZoneAbbrev();
+	}
+	void Message_Time::EnableZoneThread(bool enabled) {
+		zoneHelper->EnableZoneThread(enabled);
+	}
+	bool Message_Time::IsZoneThreadActive() const {
+		return zoneHelper->IsZoneThreadActive();
 	}
 }    // namespace serenity::msg_details

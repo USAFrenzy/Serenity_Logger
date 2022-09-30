@@ -1,12 +1,44 @@
 #include <serenity/Targets/RotatingTarget.h>
 
-#include <iostream>
-
 namespace serenity::experimental {
 
-	RotateSettings::RotateSettings(const std::string& path)
-		: FileHelper(path), maxNumberOfFiles(5), fileSizeLimit(512 * KB), dayModeSettingHour(0), dayModeSettingMinute(0),
-		  weekModeSetting(0), monthModeSetting(1), currentFileSize(0), initalRotationEnabled(true) {
+	RotateSettings::RotateSettings(const std::string& path): FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(RotateLimits {}) {
+		if( !path.empty() ) {
+				std::filesystem::path pathToCache = path;
+				std::filesystem::directory_entry dirCheck { pathToCache };
+				if( dirCheck.is_directory() ) {
+						pathToCache /= "Rotating_Log.txt";
+				}
+				FileCacheHelper()->CacheFile(pathToCache.string(), true);
+		} else {
+				std::string fileName { "Rotating_Log.txt" };
+				std::string logDir { "Logs" };
+				std::filesystem::path defaultPath { std::filesystem::current_path() };
+				defaultPath /= logDir;
+				if( !std::filesystem::exists(defaultPath) ) {
+						std::filesystem::create_directories(defaultPath);
+				}
+				defaultPath /= fileName;
+				FileCacheHelper()->CacheFile(defaultPath.string(), true);
+			}
+	}
+
+	RotateSettings::RotateSettings(const RotateLimits& limits)
+		: FileHelper(std::filesystem::current_path().string()), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
+		FileCacheHelper()->CacheFile(std::filesystem::current_path().string(), true);
+		std::string fileName { "Rotating_Log.txt" };
+		std::string logDir { "Logs" };
+		std::filesystem::path defaultPath { std::filesystem::current_path() };
+		defaultPath /= logDir;
+		if( !std::filesystem::exists(defaultPath) ) {
+				std::filesystem::create_directories(defaultPath);
+		}
+		defaultPath /= fileName;
+		FileCacheHelper()->CacheFile(defaultPath.string(), true);
+	}
+
+	RotateSettings::RotateSettings(const std::string& path, const RotateLimits& limits)
+		: FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(limits) {
 		if( !path.empty() ) {
 				std::filesystem::path pathToCache = path;
 				FileCacheHelper()->CacheFile(pathToCache.string(), true);
@@ -27,7 +59,11 @@ namespace serenity::experimental {
 		return FileCacheHelper()->FilePath();
 	}
 
-	std::filesystem::path RotateSettings::OriginalDirectory() const {
+	std::filesystem::path RotateSettings::OriginalDirectoryPath() const {
+		return FileCacheHelper()->DirPath();
+	}
+
+	std::string RotateSettings::OriginalDirName() const {
 		return FileCacheHelper()->DirName();
 	}
 
@@ -47,31 +83,29 @@ namespace serenity::experimental {
 		return currentFileSize;
 	}
 
-	void RotateSettings::EnableFirstRotation(bool enabled) {
-		initalRotationEnabled = enabled;
+	void RotateSettings::SetRotationLimits(const RotateLimits& limits) {
+		settingLimits = limits;
 	}
 
-	bool RotateSettings::IsIntervalRotationEnabled() const {
-		return initalRotationEnabled;
+	RotateLimits RotateSettings::RotationLimits() const {
+		return settingLimits;
 	}
+
 }    // namespace serenity::experimental
 
 namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
-		: TargetBase("Rotating_Log.txt"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size) {
+		: TargetBase("Rotating_Logger"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
+		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
-		auto& cache { MsgInfo()->TimeDetails().Cache() };
-		currentHour    = cache.tm_hour;
-		currentDay     = cache.tm_mday;
-		currentWeekday = cache.tm_wday;
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
 		rotationReadyFile.make_preferred();
 		std::string rotateFile { OriginalName() };
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
 		if( !std::filesystem::exists(rotationReadyFile) ) {
-				std::filesystem::rename(FileCacheHelper()->FilePath(), rotationReadyFile);
 				FileCacheHelper()->SetFilePath(rotationReadyFile);
 				OpenFile(true);
 		} else {
@@ -82,12 +116,11 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size) {
+		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
+		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
+
 		SyncTargetHelpers(TargetHelper());
-		auto& cache { MsgInfo()->TimeDetails().Cache() };
-		currentHour    = cache.tm_hour;
-		currentDay     = cache.tm_mday;
-		currentWeekday = cache.tm_wday;
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
 		rotationReadyFile.make_preferred();
 		std::string rotateFile { OriginalName() };
@@ -104,19 +137,16 @@ namespace serenity::experimental::targets {
 	}
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size) {
+		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
-		auto& cache { MsgInfo()->TimeDetails().Cache() };
-		currentHour    = cache.tm_hour;
-		currentDay     = cache.tm_mday;
-		currentWeekday = cache.tm_wday;
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
 		rotationReadyFile.make_preferred();
 		std::string rotateFile { OriginalName() };
 		rotateFile.append("_01").append(OriginalExtension());
 		rotationReadyFile.replace_filename(rotateFile);
 		if( !std::filesystem::exists(rotationReadyFile) ) {
-				std::filesystem::rename(FileCacheHelper()->FilePath(), rotationReadyFile);
 				FileCacheHelper()->SetFilePath(rotationReadyFile);
 				OpenFile(replaceIfExists);
 		} else {
@@ -128,6 +158,14 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::~RotatingTarget() {
 		StopBackgroundThread();
+		/*********************  Kind of a work-around for the new version of file IO introduced *********************/
+		// Since we're explicitly controlling the buffer now, we need to see if  the buffer is empty or not.
+		// If it's not empty, then we need to check if we need to rotate within the file size limit  and then
+		// write out what's left of the buffer.
+		SetMessageSize(FileBufferSize());
+		if( ShouldRotate() ) {
+				RotateFile();
+		}
 		CloseFile();
 	}
 
@@ -137,6 +175,10 @@ namespace serenity::experimental::targets {
 				lock.lock();
 		}
 		// make copy for old file conversion and cache new values
+		if( !utf_helper::IsValidU8(newFileName) ) {
+				throw std::runtime_error("Error In File Name For Rotating Target Function Rename(): Invalid UTF-8 Sequence Detected - A Proper File Name Cannot Be "
+				                         "Constructed");
+		}
 		std::filesystem::path newFile { FileCacheHelper()->FilePath() };
 		newFile.replace_filename(newFileName);
 		FileCacheHelper()->CacheFile(newFile.string(), true);
@@ -145,8 +187,7 @@ namespace serenity::experimental::targets {
 				return true;
 			}
 		catch( const std::exception& e ) {
-				std::cerr << "Error In Renaming File:\n";
-				std::cerr << e.what();
+				std::printf("Error In Renaming File:%s\n", e.what());
 				return false;
 			}
 	}
@@ -158,26 +199,24 @@ namespace serenity::experimental::targets {
 		}
 		this->rotationEnabled = rotationEnabled;
 		SetCurrentFileSize(std::filesystem::file_size(FileCacheHelper()->FilePath()));
-		EnableFirstRotation(rotationEnabled);
 	}
 
-	void RotatingTarget::SetRotateSettings(RotateSettings settings) {
+	RotateLimits RotatingTarget::RotationLimits() const {
+		return RotateSettings::RotationLimits();
+	}
+
+	void RotatingTarget::SetRotationLimits(const RotateLimits& limits) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		fileSizeLimit        = settings.fileSizeLimit;
-		maxNumberOfFiles     = settings.maxNumberOfFiles;
-		dayModeSettingHour   = settings.dayModeSettingHour;
-		dayModeSettingMinute = settings.dayModeSettingMinute;
-		monthModeSetting     = settings.monthModeSetting;
-		weekModeSetting      = settings.weekModeSetting;
+		RotateSettings::SetRotationLimits(limits);
 	}
 
 	bool RotatingTarget::RenameFileInRotation(std::filesystem::path originalPath) {
 		bool rotationRenameSuccessful { false };
 		auto newFilePath { originalPath };
-		for( size_t fileNumber { 1 }; fileNumber <= maxNumberOfFiles; ++fileNumber ) {
+		for( size_t fileNumber { 1 }; fileNumber <= RotationLimits().maxNumberOfFiles; ++fileNumber ) {
 				std::string newFile { OriginalName() };    // effectively reset each loop iteration
 				newFile.append("_").append(SERENITY_LUTS::numberStr[ fileNumber ]).append(OriginalExtension());
 				newFilePath.replace_filename(newFile);
@@ -194,7 +233,7 @@ namespace serenity::experimental::targets {
 
 	bool RotatingTarget::ReplaceOldFileInRotation() {
 		bool success { true };
-		auto logDirectory { std::filesystem::directory_iterator(OriginalDirectory()) };
+		auto logDirectory { std::filesystem::directory_iterator(OriginalDirectoryPath()) };
 		std::filesystem::file_time_type oldestWriteTime { std::chrono::file_clock::now() };
 		std::string fileNameToFind { OriginalName() };
 		std::filesystem::path fileToReplace;
@@ -213,20 +252,15 @@ namespace serenity::experimental::targets {
 		if( !fileToReplace.empty() ) {
 				FileCacheHelper()->SetFilePath(fileToReplace);
 		} else {
-				std::cerr << std::vformat("Warning: Unable To Locate Oldest File With Base Name \"{}\". "
-				                          "Opening And Truncating "
-				                          "Previous File, \"{}\"\n",
-				                          std::make_format_args(OriginalName(), previousFile));
+				std::printf("Warning: Unable To Locate Oldest File With Base Name \"%s\". Opening And Truncating Previous File, \"%s\"\n", OriginalName().c_str(),
+				            previousFile.c_str());
 				success = false;
 			}
 		if( !OpenFile(true) ) {
 				if( FileCacheHelper()->FilePath() != previousFile ) {
-						std::cerr << std::vformat("Error: Unable To Finish Rotating From File \"{}\" To File "
-						                          "\"{}\"\n",
-						                          std::make_format_args(previousFile, FileCacheHelper()->FileName()));
+						std::printf("Error: Unable To Finish Rotating From File \"%s\" To File \"%s\"\n", previousFile.c_str(), FileCacheHelper()->FileName().c_str());
 				} else {
-						std::cerr << std::vformat("Error: Unable To Open And Truncate File \"{}\"\n",
-						                          std::make_format_args(previousFile));
+						std::printf("Error: Unable To Open And Truncate File \"%s\"\n", previousFile.c_str());
 					}
 				success = false;
 		}
@@ -234,10 +268,6 @@ namespace serenity::experimental::targets {
 	}
 
 	void RotatingTarget::RotateFile() {
-		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( TargetHelper()->isMTSupportEnabled() ) {
-				lock.lock();
-		}
 		if( !rotationEnabled ) return;
 		static FlushSetting originalPrimaryMode { FlushSetting::periodically };
 		auto wasFlushThreadActive { BackgoundThreadInfo()->flushThreadEnabled.load() };
@@ -245,7 +275,7 @@ namespace serenity::experimental::targets {
 				originalPrimaryMode = TargetHelper()->Policy()->PrimarySetting();
 				PauseBackgroundThread();
 		}
-		CloseFile();
+		CloseFile(true);
 		if( !RenameFileInRotation(OriginalPath()) ) {
 				if( !ReplaceOldFileInRotation() ) {
 						// If we can't rotate to a new file or replace the oldest file,
@@ -253,20 +283,21 @@ namespace serenity::experimental::targets {
 						throw std::runtime_error("Unable To Rotate File Or Replace Oldest File\n");
 				}
 		}
-		SetCurrentFileSize(0);
+		SetCurrentFileSize(std::filesystem::file_size(FileCacheHelper()->FilePath()));
 		if( wasFlushThreadActive ) {
 				ResumeBackgroundThread();
 				TargetHelper()->Policy()->SetPrimaryMode(originalPrimaryMode);
 		}
 	}
 
+	void RotatingTarget::TruncLogOnFileSize(bool truncate) {
+		truncateMessage = truncate;
+	}
+
 	void RotatingTarget::PrintMessage(std::string_view formatted) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( ShouldRotate() ) {
-				RotateFile();
-		}
 		auto& backgroundThread { BackgoundThreadInfo() };
-		auto flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
+		const auto& flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( !backgroundThread->flushComplete.load() ) {
 						backgroundThread->flushComplete.wait(false);
@@ -276,9 +307,27 @@ namespace serenity::experimental::targets {
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		auto formattedSize { formatted.size() };
-		FileHandle().rdbuf()->sputn(formatted.data(), formattedSize);
-		SetCurrentFileSize(FileSize() + formattedSize);
+
+		size_t formattedSize { formatted.size() };
+		SetMessageSize(formattedSize);
+		auto fileSizeLimit { RotationLimits().fileSizeLimit };
+		if( !ShouldRotate() ) {
+				WriteToFile(formatted, fileSizeLimit, truncateMessage);
+				SetCurrentFileSize(FileSize() + formattedSize);
+		} else if( (m_mode == IntervalMode::file_size) && isAboveMsgLimit ) {
+				formattedSize = RotationLimits().fileSizeLimit - FileSize();
+				auto remainder { formatted.substr(formattedSize, formatted.size()) };
+				WriteToFile(formatted, fileSizeLimit, truncateMessage);
+				RotateFile();
+				if( !truncateMessage ) {
+						WriteToFile(remainder, fileSizeLimit, truncateMessage);
+						SetCurrentFileSize(FileSize() + remainder.size());
+				}
+		} else {
+				RotateFile();
+				WriteToFile(formatted, fileSizeLimit, truncateMessage);
+				SetCurrentFileSize(FileSize() + formattedSize);
+			}
 		if( lock.owns_lock() ) {
 				lock.unlock();
 		}
@@ -288,219 +337,311 @@ namespace serenity::experimental::targets {
 		}
 	}
 
+	// TODO: Test That The Daylight Savings Logic Actually Works As Intended
 	bool RotatingTarget::ShouldRotate() {
-		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if( !rotationEnabled ) return false;
-		if( FileSize() == 0 ) return false;
+		auto limits { RotationLimits() };
 
-		if( TargetHelper()->isMTSupportEnabled() ) {
-				lock.lock();
-		}
+		if( !rotationEnabled ) return false;
 		auto& cache = MsgInfo()->TimeDetails().Cache();
 
 		switch( RotationMode() ) {
-				using mode = RotateSettings::IntervalMode;
-				case mode::file_size:
+				case IntervalMode::file_size:
 					{
-						if( IsIntervalRotationEnabled() ) {
-								return ((FileSize() + MsgInfo()->MessageSize()) >= fileSizeLimit);
+						return isAboveMsgLimit = ((FileSize() + MessageSize()) >= limits.fileSizeLimit);
+					}
+					break;
+				case IntervalMode::hourly:
+					{
+						auto& details { MsgInfo()->TimeDetails() };
+						bool dsChanged { dsCache.initialDSValue != details.IsDaylightSavings() };
+						if( MsgInfo()->TimeMode() == message_time_mode::local && dsChanged ) {
+								namespace ch           = std::chrono;
+								// clang-format off
+								auto hours {ch::duration_cast<ch::hours>(details.DaylightSavingsOffsetMin()).count()/60};
+							   dsCache.initialDSValue ? dsCache.dsHour = (cache.tm_hour - hours) : dsCache.dsHour = cache.tm_hour;
+								// clang-format on
+								dsCache.initialDSValue = !dsCache.initialDSValue;
+						}
+						if( (currentCache.tm_hour != cache.tm_hour) || (cache.tm_hour == dsCache.dsHour) ) {
+								currentCache.tm_hour = cache.tm_hour;
+								return true;
 						}
 					}
 					break;
-				case mode::hourly:
+				case IntervalMode::daily:
 					{
-						if( currentHour != cache.tm_hour ) {
-								currentHour = cache.tm_hour;
-								EnableFirstRotation(true);
-						} else {
-								EnableFirstRotation(false);
-							}
-						return IsIntervalRotationEnabled();
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
+								dsCache.initialDSValue = !dsCache.initialDSValue;
+								auto offset { std::abs(MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								int tempHr {}, tempMin {};
+								if( dsCache.initialDSValue ) {
+										tempHr                 = cache.tm_hour - (offset / 60);
+										tempMin                = cache.tm_min - (offset % 60);
+										dsCache.dsHour         = tempHr >= 0 ? tempHr : 0;
+										dsCache.dsMinute       = tempMin >= 0 ? tempMin : 0;
+										dsCache.dsShouldRotate = !(dsCache.dsHour == limits.dayModeSettingHour);
+								} else {
+										tempHr           = cache.tm_hour + (offset / 60);
+										tempMin          = cache.tm_min + (offset % 60);
+										dsCache.dsHour   = tempHr <= 23 ? tempHr : 0;
+										dsCache.dsMinute = tempMin <= 59 ? tempMin : 0;
+										// clang-format off
+										dsCache.dsShouldRotate = (dsCache.dsHour == limits.dayModeSettingHour);
+									}
+						}
+						if( (currentCache.tm_mday != cache.tm_mday) || (dsCache.dsShouldRotate) ) {
+								currentCache.tm_mday = cache.tm_mday;
+								bool isSameHour { false }, meetsThreshold { false };
+								if( !dsCache.dsShouldRotate ) {
+									isSameHour = (limits.dayModeSettingHour == cache.tm_hour) && (limits.dayModeSettingHour != dsCache.dsHour);
+									meetsThreshold = (limits.dayModeSettingMinute != dsCache.dsMinute) && (cache.tm_min >= limits.dayModeSettingMinute);
+										// clang-format on
+								} else {
+										isSameHour             = dsCache.dsHour == limits.dayModeSettingHour;
+										meetsThreshold         = dsCache.dsMinute >= limits.dayModeSettingMinute;
+										dsCache.dsShouldRotate = !(isSameHour && meetsThreshold);
+									}
+								return (isSameHour && meetsThreshold);
+						}
 					}
 					break;
-				case mode::daily:
+				case IntervalMode::weekly:
 					{
-						if( currentDay != cache.tm_mday ) {
-								currentDay = cache.tm_mday;
-								EnableFirstRotation(true);
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
+								dsCache.initialDSValue = !dsCache.initialDSValue;
+								auto offset { std::abs(MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								int wkDay {}, tempHr {}, tempMin {};
+								if( dsCache.initialDSValue ) {
+										tempHr           = cache.tm_hour - (offset / 60);
+										tempMin          = cache.tm_min - (offset % 60);
+										dsCache.dsHour   = tempHr >= 0 ? tempHr : 0;
+										dsCache.dsMinute = tempMin >= 0 ? tempMin : 0;
+										cache.tm_wday < 6 ? wkDay = (cache.tm_wday + 1) : wkDay = 0;
+										// clang-format off
+										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay : dsCache.dsWkDay = cache.tm_wday;
+										dsCache.dsShouldRotate = ((dsCache.dsHour != limits.dayModeSettingHour) || (dsCache.dsWkDay != cache.tm_wday));
+										// clang-format on
+								} else {
+										tempHr           = cache.tm_hour + (offset / 60);
+										tempMin          = cache.tm_min + (offset % 60);
+										dsCache.dsHour   = tempHr <= 23 ? tempHr : 0;
+										dsCache.dsMinute = tempMin <= 59 ? tempMin : 0;
+										cache.tm_wday > 0 ? wkDay = (cache.tm_wday - 1) : wkDay = 6;
+										// clang-format off
+										cache.tm_hour == 0 ? dsCache.dsWkDay = wkDay : dsCache.dsWkDay = cache.tm_wday;
+										dsCache.dsShouldRotate = ((dsCache.dsHour == limits.dayModeSettingHour) || (dsCache.dsWkDay == cache.tm_wday));
+										// clang-format on
+									}
 						}
-
-						if( IsIntervalRotationEnabled() ) {
-								if( dayModeSettingHour == cache.tm_hour ) {
-										if( (cache.tm_min >= dayModeSettingMinute) ) {
-												EnableFirstRotation(false);
-												return true;
-										}
+						if( currentCache.tm_wday != cache.tm_wday ) {
+								currentCache.tm_wday = cache.tm_wday;
+								bool isSameWkday { false }, isSameHour { false }, meetsThreshold { false };
+								if( !dsCache.dsShouldRotate ) {
+										// clang-format off
+										isSameWkday = (currentCache.tm_wday == limits.weekModeSetting) && (dsCache.dsWkDay != limits.weekModeSetting);
+										isSameHour = (limits.dayModeSettingHour == cache.tm_hour) && (limits.dayModeSettingHour != dsCache.dsHour);
+										meetsThreshold = (limits.dayModeSettingMinute != dsCache.dsMinute) && (cache.tm_min >= limits.dayModeSettingMinute);
+								} else {
+										isSameWkday    = dsCache.dsWkDay == limits.weekModeSetting;
+										isSameHour     = dsCache.dsHour == limits.dayModeSettingHour;
+										meetsThreshold = dsCache.dsMinute >= limits.dayModeSettingMinute;
+										dsCache.dsShouldRotate = !(isSameWkday && isSameHour && meetsThreshold);
+										// clang-format on
+									}
+								return (isSameWkday && isSameHour && meetsThreshold);
+						}
+					}
+					break;
+				case IntervalMode::monthly:
+					{
+						int numberOfDays { SERENITY_LUTS::daysPerMonth.at(cache.tm_mon) };
+						int rotationDay { limits.monthModeSetting };
+						// This tidbit is here to make sure a month isn't accidentally skipped
+						if( numberOfDays < rotationDay ) {
+								rotationDay = numberOfDays;
+								if( (cache.tm_mon == serenity::SERENITY_LUTS::FEBRUARY) && (MsgInfo()->TimeDetails().isLeapYear()) ) {
+										rotationDay = 29;
 								}
 						}
-					}
-					break;
-				case mode::weekly:
-					if( currentWeekday != cache.tm_wday ) {
-							currentWeekday = cache.tm_wday;
-							EnableFirstRotation(true);
-					}
-
-					if( IsIntervalRotationEnabled() ) {
-							if( (currentWeekday == weekModeSetting) && (cache.tm_hour == dayModeSettingHour) ) {
-									if( (cache.tm_min >= dayModeSettingMinute) ) {
-											EnableFirstRotation(false);
-											return true;
+						if( (MsgInfo()->TimeMode() == message_time_mode::local) && (dsCache.initialDSValue != MsgInfo()->TimeDetails().IsDaylightSavings()) ) {
+								dsCache.initialDSValue = !dsCache.initialDSValue;
+								auto offset { std::abs(MsgInfo()->TimeDetails().DaylightSavingsOffsetMin().count()) };
+								dsCache.dsDayOfMonth = cache.tm_mday;
+								int tempHr {}, tempMin {};
+								if( dsCache.initialDSValue ) {
+										tempHr           = cache.tm_hour - (offset / 60);
+										tempMin          = cache.tm_min - (offset % 60);
+										dsCache.dsHour   = tempHr >= 0 ? tempHr : 0;
+										dsCache.dsMinute = tempMin >= 0 ? tempMin : 0;
+										if( dsCache.dsHour == 0 ) {
+												--dsCache.dsDayOfMonth;
+										}
+										if( dsCache.dsDayOfMonth < 1 ) {
+												// clang-format off
+											dsCache.dsDayOfMonth = SERENITY_LUTS::daysPerMonth.at((cache.tm_mon > 0 ? cache.tm_mon - 1 : 0));
+										}
+										dsCache.dsShouldRotate = (dsCache.dsHour != limits.dayModeSettingHour) && (dsCache.dsDayOfMonth != rotationDay);
+										// clang-format on
+								} else {
+										tempHr           = cache.tm_hour + (offset / 60);
+										tempMin          = cache.tm_min + (offset % 60);
+										dsCache.dsHour   = tempHr <= 23 ? tempHr : 0;
+										dsCache.dsMinute = tempMin <= 59 ? tempMin : 0;
+										if( dsCache.dsHour == 0 ) {
+												++dsCache.dsDayOfMonth;
+										}
+										if( dsCache.dsDayOfMonth > numberOfDays ) dsCache.dsDayOfMonth = 1;
+										// clang-format off
+									dsCache.dsShouldRotate = (dsCache.dsHour == limits.dayModeSettingHour) && (dsCache.dsDayOfMonth == rotationDay);
+										// clang-format on
 									}
-							}
+						}
+						if( currentCache.tm_mday != cache.tm_mday ) {
+								currentCache.tm_mday = cache.tm_mday;
+								bool isRotationDay { false }, isRotationHour { false }, meetsThreshold { false };
+								if( !dsCache.dsShouldRotate ) {
+										isRotationDay = currentCache.tm_mday == rotationDay;
+										// clang-format off
+								isRotationHour = (limits.dayModeSettingHour == cache.tm_hour) && (limits.dayModeSettingHour != dsCache.dsHour);
+								meetsThreshold = (limits.dayModeSettingMinute != dsCache.dsMinute) && (cache.tm_min >= limits.dayModeSettingMinute);
+								} else {
+										isRotationDay  = dsCache.dsDayOfMonth == rotationDay;
+										isRotationHour = dsCache.dsHour == limits.dayModeSettingHour;
+										meetsThreshold = dsCache.dsMinute >= limits.dayModeSettingMinute;
+										dsCache.dsShouldRotate = !(isRotationDay && isRotationHour && meetsThreshold);
+										// clang-format on
+									}
+								return (isRotationDay && isRotationHour && meetsThreshold);
+						}
 					}
 					break;
-				case mode::monthly:
-					{
-						if( currentDay != cache.tm_mday ) {
-								currentDay = cache.tm_mday;
-								EnableFirstRotation(true);
-						}
-
-						int numberOfDays { SERENITY_LUTS::daysPerMonth.at(cache.tm_mon) };
-						int rotationDay { monthModeSetting };
-						// clang-format off
-			/********************************************** Simple Summary *****************************************************************
-			* - If the number of days per month is less than the setting ( for example, if the setting is 31 but the month has 30 days):
-			*   - The rotation day will be the 30th instead (so as not to skip a month by accident)
-			*	 - If the current month is February, checks to see if the current year is a leap year.
-			*     - If the year is a leap year, then sets the rotation day to 29 instead of 28
-			* - Otherwise, this snippet uses the monthModeSetting value
-			*******************************************************************************************************************************/
-			// clang-format off
-			if (numberOfDays < monthModeSetting) {
-				rotationDay = numberOfDays;
-				if (cache.tm_mon == serenity::SERENITY_LUTS::FEBRUARY) {
-					if (MsgInfo()->TimeDetails().isLeapYear()) {
-						rotationDay = 29;
-					}
-				}
+				default: break;
 			}
-			if (IsIntervalRotationEnabled()) {
-				if ((currentDay == rotationDay) && (cache.tm_hour == dayModeSettingHour)) {
-					if (cache.tm_min >= dayModeSettingMinute) {
-						EnableFirstRotation(false);
-						return true;
-					}
-				}
-			}
-		} break;
-		}
-		// In case interval rotation isn't enabled, then we just return false here
 		return false;
 	}
 
-	void RotatingTarget::SetLocale(const std::locale& loc)
-	{
+	void RotatingTarget::SetLocale(const std::locale& loc) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (TargetHelper()->isMTSupportEnabled()) {
-			lock.lock();
-		}
-		if (FileHandle().getloc() != loc) {
-			FileHandle().imbue(loc);
+		if( TargetHelper()->isMTSupportEnabled() ) {
+				lock.lock();
 		}
 		TargetBase::SetLocale(loc);
 	}
 
-	void RotatingTarget::SetRotationSetting(IntervalMode mode, int  setting, int secondSetting)
-	{
+	void RotatingTarget::SetRotationSetting(IntervalMode mode, int setting, int secondSetting) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (TargetHelper()->isMTSupportEnabled()) {
-			lock.lock();
+		if( TargetHelper()->isMTSupportEnabled() ) {
+				lock.lock();
 		}
-		using mType = RotateSettings::IntervalMode;
-		switch (m_mode) {
-		case mType::file_size: fileSizeLimit = setting; break;
-			// Including hourly just to avoid compiler whining. Since we check current hour value with internal cached
-			// hour value, there's no need to set anything or check anything here.
-		case mType::hourly:  break;
-		case mType::daily:
-		{
-			if ((setting > 23) || (setting < 0)) {
-				setting = 0;
-				std::cerr << "Hour setting passed in for IntervalMode::daily is out of bounds. \nValue expected is "
-					"between 0-23 where 0 is 12AM and 23 is 11PM. \nValue passed in: "
-					<< setting << " \n";
+		auto limits { RotationLimits() };
+		switch( m_mode ) {
+				case IntervalMode::file_size:
+					limits.fileSizeLimit = setting;
+					break;
+					// Including hourly just to avoid compiler whining. Since we check current hour value with
+					// internal cached hour value, there's no need to set anything or check anything here.
+				case IntervalMode::hourly: break;
+				case IntervalMode::daily:
+					{
+						if( (setting > 23) || (setting < 0) ) {
+								// clang-format off
+								std::printf("Hour setting passed in for IntervalMode::daily is out of bounds.\n"
+									                 "Value expected is between 0-23 where 0 is 12AM and 23 is 11PM.\n"
+									                 "Value passed in: %d\n", setting);
+								// clang-format on
+								setting = 0;
+						}
+						if( (secondSetting > 59) || (secondSetting < 0) ) {
+								// clang-format off
+								std::printf("Minute setting passed in for IntervalMode::daily is out of bounds.\n"
+									                 "Value expected is between 0-59.\n"
+									                 "Value passed in: %d\n", secondSetting);
+								// clang-format on
+								secondSetting = 0;
+						}
+						limits.dayModeSettingHour   = setting;
+						limits.dayModeSettingMinute = secondSetting;
+					}
+					break;
+				case IntervalMode::weekly:
+					{
+						if( (setting > 6) || (setting < 0) ) {
+								// clang-format off
+								std::printf("Weekday setting passed in for IntervalMode::weekly is out of bounds.\n"
+									                  "Value expected is between 0-6 where 0 is Sunday and 6 is Saturday.\n"
+									                  "Value passed in: %d\n", setting);
+								// clang-format on
+								setting = 0;
+						}
+						limits.weekModeSetting = setting;
+					}
+					break;
+				case IntervalMode::monthly:
+					{
+						if( (setting > 31) || (setting < 1) ) {
+								// clang-format off
+								std::printf("Day setting passed in for IntervalMode::monthly is out of bounds.\n"
+									                  "Value expected is between 1-31 where 1 is the first day of the month and 31 is the max value of possible days in a month.\n"
+									                   "Value passed in: %d\n", setting);
+								// clang-format on
+								setting = 1;
+						}
+						limits.monthModeSetting = setting;
+					}
+					break;
 			}
-			if ((secondSetting > 59) || (secondSetting < 0)) {
-				secondSetting = 0;
-				std::cerr << "Minute setting passed in for IntervalMode::daily is out of bounds. \nValue expected is "
-					"between 0-59. \nValue passed in: "
-					<< secondSetting << " \n";
-			}
-			dayModeSettingHour = setting;
-			dayModeSettingMinute = secondSetting;
-
-		} break;
-		case mType::weekly:
-		{
-			if ((setting > 6) || (setting < 0)) {
-				setting = 0;
-				std::cerr << "Weekday setting passed in for IntervalMode::weekly is out of bounds. \nValue expected is "
-					"between 0-6 where 0 is Sunday and 6 is Saturday. \nValue passed in: "
-					<< setting << " \n";
-			}
-			weekModeSetting = setting;
-		} break;
-		case mType::monthly:
-		{
-			if ((setting > 31) || (setting < 1)) {
-				setting = 1;
-				std::cerr << "Day setting passed in for IntervalMode::monthly is out of bounds. \nValue expected is "
-					"between 1-31 where 1 is the first day of the month and 31 is the max value of possible "
-					"days in a month. \nValue passed in: "
-					<< setting << " \n";
-			}
-			monthModeSetting = setting;
-		} break;
-		}
 	}
 
-	void RotatingTarget::SetRotationMode(IntervalMode mode)
-	{
+	void RotatingTarget::SetRotationMode(IntervalMode mode) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (TargetHelper()->isMTSupportEnabled()) {
-			lock.lock();
+		if( TargetHelper()->isMTSupportEnabled() ) {
+				lock.lock();
 		}
 		m_mode = mode;
 	}
 
-	RotateSettings::IntervalMode RotatingTarget::RotationMode() const
-	{
+	IntervalMode RotatingTarget::RotationMode() const {
 		return m_mode;
 	}
 
 	// This is just copy-pasted from the File Target.
 	// Inheritance prevented this copy pasta but still wanted it fully de-coupled
-	void RotatingTarget::PolicyFlushOn()
-	{
+	void RotatingTarget::PolicyFlushOn() {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
-		if (TargetHelper()->isMTSupportEnabled()) {
-			lock.lock();
+		if( TargetHelper()->isMTSupportEnabled() ) {
+				lock.lock();
 		}
-		auto& policy{ TargetHelper()->Policy() };
-		if (policy->PrimarySetting() == serenity::experimental::FlushSetting::never) {
-			// If the flush thread was active, no need to hog a thread if never flushing
-			StopBackgroundThread();
+		auto& policy { TargetHelper()->Policy() };
+		if( policy->PrimarySetting() == serenity::experimental::FlushSetting::never ) {
+				// If the flush thread was active, no need to hog a thread if never flushing
+				StopBackgroundThread();
 		};
-		if (policy->PrimarySetting() == serenity::experimental::FlushSetting::always) {
-			// Similar reasoning as Never setting except for the fact of ALWAYS flushing
-			StopBackgroundThread();
-			Flush();
+		if( policy->PrimarySetting() == serenity::experimental::FlushSetting::always ) {
+				// Similar reasoning as Never setting except for the fact of ALWAYS flushing
+				StopBackgroundThread();
+				Flush();
 		}
-		switch (policy->SubSetting()) {
-		case serenity::experimental::PeriodicOptions::timeBased:
-		{
-			StartBackgroundThread();
-		}
-		break;    // time based bounds
-		case serenity::experimental::PeriodicOptions::logLevelBased:
-		{
-			if (MsgInfo()->MsgLevel() < policy->SecondarySettings().flushOn) return;
-			Flush();
-		}
-		break;
-		}    // Sub Option Check
-	}                    // PolicyFlushOn( ) Function
+		switch( policy->SubSetting() ) {
+				case serenity::experimental::PeriodicOptions::timeBased:
+					{
+						StartBackgroundThread();
+					}
+					break;    // time based bounds
+				case serenity::experimental::PeriodicOptions::logLevelBased:
+					{
+						if( MsgInfo()->MsgLevel() < policy->SecondarySettings().flushOn ) return;
+						Flush();
+					}
+					break;
+			}    // Sub Option Check
+	}            // PolicyFlushOn( ) Function
 
-}  // namespace serenity::experimental::targets
+	void RotatingTarget::SetMessageSize(size_t size) {
+		messageSize = size;
+	}
+
+	size_t RotatingTarget::MessageSize() const {
+		return messageSize;
+	}
+
+}    // namespace serenity::experimental::targets

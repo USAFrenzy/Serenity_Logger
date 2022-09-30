@@ -4,91 +4,49 @@
 
 namespace serenity::targets {
 
+	void FileTarget::InitializeLogs(const std::string_view fileName, bool replaceIfExists) {
+		std::filesystem::path filePath { fileName };
+		if( filePath.has_relative_path() ) {
+				InitializeFilePath(filePath.string());
+				try {
+						if( !std::filesystem::exists(FileCacheHelper()->DirPath()) ) {
+								std::filesystem::create_directories(FileCacheHelper()->DirPath());
+								OpenFile(replaceIfExists);
+						} else {
+								OpenFile(replaceIfExists);
+							}
+					}
+				catch( const std::exception& e ) {
+						std::cerr << e.what() << "\n";
+						CloseFile();
+					}
+		}
+	}
+
 	FileTarget::FileTarget(): TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path logDirPath { std::filesystem::current_path() /= "Logs" };
-		InitializeFilePath();
-		try {
-				if( !std::filesystem::exists(logDirPath) ) {
-						std::filesystem::create_directories(logDirPath);
-						OpenFile(true);
-				} else {
-						OpenFile(true);
-					}
-			}
-		catch( const std::exception& e ) {
-				std::cerr << e.what() << "\n";
-				CloseFile();
-			}
-		if( FileHandle().getloc() != MsgInfo()->GetLocale() ) {
-				FileHandle().imbue(MsgInfo()->GetLocale());
-		}
+		InitializeLogs(((std::filesystem::current_path() /= "Logs") /= "Generic_Log.txt").string(), true);
 	}
 
-	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists)
-		: TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
+	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists): TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
-		std::filesystem::path logDirPath { std::filesystem::current_path() /= "Logs" };
-		InitializeFilePath(fileName);
-		try {
-				if( !std::filesystem::exists(logDirPath) ) {
-						std::filesystem::create_directories(logDirPath);
-						OpenFile(replaceIfExists);
-				} else {
-						OpenFile(replaceIfExists);
-					}
-			}
-		catch( const std::exception& e ) {
-				std::cerr << e.what() << "\n";
-				CloseFile();
-			}
-		if( FileHandle().getloc() != MsgInfo()->GetLocale() ) {
-				FileHandle().imbue(MsgInfo()->GetLocale());
-		}
+		std::filesystem::path filePath { fileName };
+		filePath.has_relative_path() ? InitializeLogs(filePath.string(), replaceIfExists)
+									 : InitializeLogs(((std::filesystem::current_path() /= "Logs") /= fileName).string(), replaceIfExists);
 	}
 
-	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists)
-		: TargetBase(name), FileHelper(fPath), fileMutex(std::mutex {}) {
+	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists): TargetBase(name), FileHelper(fPath), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
-		try {
-				if( !std::filesystem::exists(FileCacheHelper()->FilePath()) ) {
-						auto dir { FileCacheHelper()->FilePath() };
-						dir.remove_filename();
-						std::filesystem::create_directories(dir);
-						OpenFile(replaceIfExists);
-				} else {
-						OpenFile(replaceIfExists);
-					}
-			}
-		catch( const std::exception& e ) {
-				std::cerr << e.what() << "\n";
-				CloseFile();
-			}
-		if( FileHandle().getloc() != MsgInfo()->GetLocale() ) {
-				FileHandle().imbue(MsgInfo()->GetLocale());
-		}
+		std::filesystem::path filePath { fPath };
+		filePath.has_relative_path() ? InitializeLogs(filePath.string(), replaceIfExists) : InitializeLogs(FileCacheHelper()->FilePath().string(), replaceIfExists);
 	}
 
 	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
 		: TargetBase(name, formatPattern), FileHelper(fPath), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
-		try {
-				if( !std::filesystem::exists(FileCacheHelper()->FilePath()) ) {
-						auto dir { FileCacheHelper()->FilePath() };
-						dir.remove_filename();
-						std::filesystem::create_directories(dir);
-						OpenFile(replaceIfExists);
-				} else {
-						OpenFile(replaceIfExists);
-					}
-			}
-		catch( const std::exception& e ) {
-				std::cerr << e.what() << "\n";
-				CloseFile();
-			}
-		if( FileHandle().getloc() != MsgInfo()->GetLocale() ) {
-				FileHandle().imbue(MsgInfo()->GetLocale());
-		}
+		std::filesystem::path filePath { fPath };
+		filePath.has_relative_path() ? InitializeLogs(filePath.string(), replaceIfExists) : InitializeLogs(FileCacheHelper()->FilePath().string(), replaceIfExists);
 	}
 
 	FileTarget::~FileTarget() {
@@ -99,7 +57,7 @@ namespace serenity::targets {
 	void FileTarget::PrintMessage(std::string_view formatted) {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
 		auto& backgroundThread { BackgoundThreadInfo() };
-		auto flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
+		const auto& flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( !backgroundThread->flushComplete.load() ) {
 						backgroundThread->flushComplete.wait(false);
@@ -109,7 +67,7 @@ namespace serenity::targets {
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		FileHandle().rdbuf()->sputn(formatted.data(), formatted.size());
+		WriteToFile(formatted);
 		if( lock.owns_lock() ) {
 				lock.unlock();
 		}
@@ -123,9 +81,6 @@ namespace serenity::targets {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
-		}
-		if( FileHandle().getloc() != loc ) {
-				FileHandle().imbue(loc);
 		}
 		TargetBase::SetLocale(loc);
 	}
@@ -158,6 +113,6 @@ namespace serenity::targets {
 					}
 					break;
 			}    // Sub Option Check
-	}                    // PolicyFlushOn( ) Function
+	}            // PolicyFlushOn( ) Function
 
 }    // namespace serenity::targets

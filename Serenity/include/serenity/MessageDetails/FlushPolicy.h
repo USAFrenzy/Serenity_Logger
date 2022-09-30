@@ -27,7 +27,7 @@ namespace serenity::experimental {
 
 	class Flush_Policy
 	{
-	      public:
+	  public:
 		Flush_Policy() = delete;
 		explicit Flush_Policy(FlushSetting primaryOpt);
 		explicit Flush_Policy(FlushSetting primaryOpt, PeriodicOptions secondaryOpt, PeriodicSettings settings);
@@ -45,7 +45,7 @@ namespace serenity::experimental {
 		Flush_Policy Policy() const;
 		PeriodicSettings SecondarySettings() const;
 
-	      private:
+	  private:
 		FlushSetting mainOpt;
 		PeriodicOptions subOpt;
 		PeriodicSettings subSettings;

@@ -13,7 +13,7 @@ namespace serenity::targets {
 
 	class TargetBase
 	{
-	      public:
+	  public:
 		TargetBase();
 		TargetBase(std::string_view name);
 		TargetBase(std::string_view name, std::string_view msgPattern);
@@ -35,14 +35,14 @@ namespace serenity::targets {
 		virtual void SetLocale(const std::locale& loc);
 		std::locale GetLocale() const;
 
-	      protected:
+	  protected:
 		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();
 		const std::unique_ptr<msg_details::Message_Formatter>& MsgFmt() const;
 		const std::unique_ptr<msg_details::Message_Info>& MsgInfo() const;
 		virtual void PrintMessage(std::string_view formatted);
 		virtual void PolicyFlushOn();
 
-	      private:
+	  private:
 		LoggerLevel logLevel;
 		LoggerLevel msgLevel;
 		std::string pattern;
@@ -50,6 +50,7 @@ namespace serenity::targets {
 		std::unique_ptr<msg_details::Message_Info> msgDetails;
 		std::unique_ptr<msg_details::Message_Formatter> msgPattern;
 		std::shared_ptr<helpers::BaseTargetHelper> baseHelper;
+		template<typename... Args> void LogMessage(std::string_view msg, Args&&... args);
 	};
 
 #include "Target-impl.h"

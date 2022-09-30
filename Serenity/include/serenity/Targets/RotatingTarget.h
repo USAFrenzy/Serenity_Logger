@@ -5,41 +5,50 @@
 
 namespace serenity::experimental {
 
+	struct RotateLimits
+	{
+		size_t maxNumberOfFiles { 5 };
+		size_t fileSizeLimit { 512 * KB };
+		int dayModeSettingHour { 0 };
+		int dayModeSettingMinute { 0 };
+		int weekModeSetting { 0 };
+		int monthModeSetting { 1 };
+	};
+
+	enum class IntervalMode
+	{
+		file_size = 0,
+		hourly    = 1,
+		daily     = 2,
+		weekly    = 3,
+		monthly   = 4,
+	};
+
 	class RotateSettings: public serenity::targets::helpers::FileHelper
 	{
-	      public:
+	  public:
 		explicit RotateSettings(const std::string& path);
+		explicit RotateSettings(const RotateLimits& limits);
+		explicit RotateSettings(const std::string& path, const RotateLimits& limits);
 		RotateSettings(RotateSettings&)            = delete;
 		RotateSettings& operator=(RotateSettings&) = delete;
 		~RotateSettings()                          = default;
+
 		std::filesystem::path OriginalPath() const;
-		std::filesystem::path OriginalDirectory() const;
+		std::filesystem::path OriginalDirectoryPath() const;
+		std::string OriginalDirName() const;
+
 		std::string OriginalName() const;
 		std::string OriginalExtension() const;
 		size_t FileSize() const;
-		bool IsIntervalRotationEnabled() const;
+		void SetRotationLimits(const RotateLimits& limits);
+		RotateLimits RotationLimits() const;
 
-		enum class IntervalMode
-		{
-			file_size = 0,
-			hourly    = 1,
-			daily     = 2,
-			weekly    = 3,
-			monthly   = 4,
-		};
-
-		size_t maxNumberOfFiles;
-		size_t fileSizeLimit;
-		int dayModeSettingHour;
-		int dayModeSettingMinute;
-		int weekModeSetting;
-		int monthModeSetting;
-
-	      protected:
+	  protected:
 		void SetCurrentFileSize(size_t currentSize);
-		void EnableFirstRotation(bool enabled = true);
 
-	      private:
+	  private:
+		RotateLimits settingLimits;
 		size_t currentFileSize;
 		bool initalRotationEnabled;
 	};
@@ -47,23 +56,39 @@ namespace serenity::experimental {
 
 namespace serenity::experimental::targets {
 
+	// Initialize to negative values so condition checks pass if isn't DS and these haven't been
+	// updated rather than zero-initializing them and causing a potential false positive conditional check
+
+	struct RotatingDaylightCache
+	{
+		bool initialDSValue { false };
+		bool dsShouldRotate { false };
+		int dsHour { -1 };
+		int dsMinute { -1 };
+		int dsWkDay { -1 };
+		int dsDayOfMonth { -1 };
+	};
+
 	class RotatingTarget: public serenity::targets::TargetBase, public serenity::experimental::RotateSettings
 	{
-	      public:
-		RotatingTarget();
+	  public:
+		explicit RotatingTarget();
 		explicit RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
-		explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath,
-		                        bool replaceIfExists = false);
+		explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists = false);
 		RotatingTarget(const RotatingTarget&)            = delete;
 		RotatingTarget& operator=(const RotatingTarget&) = delete;
 		~RotatingTarget();
 
 		void EnableRotation(bool shouldRotate = true);
-		void SetRotateSettings(RotateSettings settings);
+		void SetRotationLimits(const RotateLimits& limits);
+		RotateLimits RotationLimits() const;
+
 		void RotateFile();
 		bool RenameFile(std::string_view newFileName) override;
 		bool ShouldRotate();
 		void SetLocale(const std::locale& loc) override;
+		void TruncLogOnFileSize(bool truncate);
+
 		// clang-format off
 		// ################################# WIP #################################
 
@@ -80,7 +105,7 @@ namespace serenity::experimental::targets {
 		// clang-format on	
 	
 		void SetRotationMode(IntervalMode mode);
-		RotateSettings::IntervalMode RotationMode() const;
+		IntervalMode RotationMode() const;
 
 	protected:
 		void PrintMessage(std::string_view formatted) override;
@@ -89,12 +114,20 @@ namespace serenity::experimental::targets {
 		bool ReplaceOldFileInRotation();
 
 	private:
+		// added these to account for premessage stamp size when checking in ShouldRotate(),
+		// which was unaccounted for with original usage of MsgInfo()->MessageSize()
+		void SetMessageSize(size_t size); 
+		size_t MessageSize() const; 
+
+	private:
 		bool rotationEnabled;
 		IntervalMode m_mode;
-		int currentDay;
-		int currentWeekday;
-		int currentHour;
+		std::tm currentCache;
 		mutable std::mutex rotatingMutex;
+		size_t messageSize;
+		RotatingDaylightCache dsCache;
+		bool isAboveMsgLimit;
+		bool truncateMessage;
 	};
 
 }    // namespace serenity::experimental::targets

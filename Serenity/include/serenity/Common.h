@@ -1,60 +1,66 @@
 #pragma once
 
+#include <serenity/Utilities/UtfHelper.h>
+
 #include <source_location>
 #include <string_view>
 #include <unordered_map>
 #include <array>
 #include <atomic>
 #include <filesystem>
-#include <format>
 #include <mutex>
 #include <thread>
 
 #ifdef DOXYGEN_DOCUMENTATION
 	/// @brief If _WIN32 is defined, then this is also defined.
-        /// @details If this macro is defined, includes the Windows.h and io.h headers
-        /// as well as defines ISATTY to _isatty and FILENO to _fileno. If
-        /// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
+    /// @details If this macro is defined, includes the Windows.h and io.h headers
+    /// as well as defines ISATTY to _isatty and FILENO to _fileno. If
+    /// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
 	#define WINDOWS_PLATFORM
 	/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also
-        /// defined.
-        /// @details If this macro is defined, includes the unistd.h header and defines
-        /// ISATTY to isatty and FILENO to fileno
+    /// defined.
+    /// @details If this macro is defined, includes the unistd.h header and defines
+    /// ISATTY to isatty and FILENO to fileno
 	#define MAC_PLATFORM
 #endif
 
 #ifdef _WIN32
 	#define WINDOWS_PLATFORM
-	// I believe the below macro defines *should* cover some basic corner cases.
-        // Mostly noticed this issue when I built this for VS 2022 to try out.
-	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)
-		#define CONTEXT std::back_insert_iterator<std::basic_string<char>>
-		#define VFORMAT_TO(container, locale, message, ...)                                                                             \
-			std::vformat_to<CONTEXT>(std::back_inserter(container), locale, message, std::make_format_args(__VA_ARGS__))
-		#define VFORMAT(locale, message, ...) std::vformat<CONTEXT>(locale, message, std::make_format_args(__VA_ARGS__))
-
-	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
-		#define CONTEXT std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
-		#define VFORMAT_TO(container, locale, message, ...)                                                                             \
-			std::vformat_to(std::back_inserter(container), locale, message, std::make_format_args<CONTEXT>(__VA_ARGS__))
-	#else
-		#if( _MSC_VER < 1929 )
-			#error                                                                                                                  \
-			"MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"
-		#elif(_MSVC_LANG < 202002L)
-			#error                                                                                                                  \
-			"MSVC's Implementation Of <format> Not Fully Implemented Prior To C++20. Please Use The  C++ Latest Compiler Flag'"
-		#else    // This one is probably uneccessary, but it's here for completeness I guess
-			#error                                                                                                                  \
-			"Unkown Error: Compiler And Language Standard Being Used Should Include <format> Header, But No <format> Header Was Detected"
-		#endif
-
-	#endif
-
 #elif defined(__APPLE__) || defined(__MACH__)
 	#define MAC_PLATFORM
 #else
 	#define LINUX_PLATFORM
+#endif
+
+#if defined USE_STD_FORMAT && defined WINDOWS_PLATFORM
+	#if __cpp_lib_format
+		#include <format>
+	#elif(_MSC_VER < 1929)
+		#error "MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"
+	#elif(_MSVC_LANG < 202002L)
+		#error "MSVC's Implementation Of <format> Not Fully Implemented Prior To C++20. Please Use The  C++ Latest Compiler Flag'"
+	#endif
+	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)
+		#define CONTEXT                         std::back_insert_iterator<std::basic_string<char>>
+		#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to<CONTEXT>(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
+		#if _MSC_FULL_VER >= 192930145    // MSVC build that backported fixes for <format> under C++20 switch instead of C++ latest
+			#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+		#else
+			#define CONTEXT                         std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
+			#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args<CONTEXT>(__VA_ARGS__))
+		#endif
+	#else
+		#error "Unkown Error: Compiler And Language Standard Being Used Should Include <format> Header, But No <format> Header Was Detected"
+	#endif
+#elif defined USE_FMTLIB
+	#include <fmt/format.h>
+	#define VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+#else
+	#include <serenity/MessageDetails/ArgFormatter.h>
+	#define VFORMAT_TO(cont, loc, msg, ...) serenity::format_to(std::back_inserter(cont), loc, msg, __VA_ARGS__)
+	// Only used at the moment to issue a warning about custom formatting support and how to disable that message
+	#define BUILT_IN_FORMATTING_ENABLED
 #endif
 
 #ifdef WINDOWS_PLATFORM
@@ -68,6 +74,9 @@
 
 	#define ISATTY _isatty
 	#define FILENO _fileno
+[[noreturn]] __forceinline void unreachable() {
+	__assume(false);
+}
 	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 	#endif
@@ -77,23 +86,52 @@
 	#include <unistd.h>
 	#define ISATTY                      isatty
 	#define FILENO                      fileno
+[[noreturn]] inline __attribute__((always_inline)) void unreachable() {
+	__builtin_unreachable();
+}
 	#define LOCAL_TIME(tmStruct, timeT) localtime_r(&tmStruct, &timeT)
 	#define GM_TIME(tmStruct, timeT)    gmtime_r(&tmStruct, &timeT)
 #endif
 
-#define KB                       (1024)
-#define MB                       (1024 * KB)
-#define GB                       (1024 * MB)
-#define DEFAULT_BUFFER_SIZE      (64 * KB)                  // used for file buffers
-#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)    // used for lazy parsing
+#define KB                  (1024)
+#define MB                  (1024 * KB)
+#define GB                  (1024 * MB)
+#define DEFAULT_BUFFER_SIZE (64 * KB)    // used for file buffers
+//#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)    // used for lazy parsing
 
-// declaring for use later and for doc purposes
-namespace serenity::experimental { }
+#ifdef _DEBUG
+	#ifndef SE_ASSERT
+		#define SE_ASSERT(condition, message)                                                                                                                       \
+			if( !(condition) ) {                                                                                                                                    \
+					fprintf(stderr, "Assertion Failed: (%s) |File: %s | Line: %i\nMessage:%s\n", #condition, __FILE__, __LINE__, message);                          \
+					abort();                                                                                                                                        \
+			}
+	#endif
+#else
+	#ifndef SE_ASSERT
+		#define SE_ASSERT(condition, message) void(0)
+	#endif
+#endif
 
 namespace serenity {
 
+	// This lovely and amazing end to my headaches for getting the correct call site was provided by ivank at :
+	//   https://stackoverflow.com/a/66402319/11410972
+	// TODO: Probably In the top level formatting call, but just like how string types are converted to utf-8 in the formatting section,
+	//                I should handle encoding to utf-8 in the message itself as well in case other encodings are present and so that I can
+	//               appropriately encode back to the appropriate  encoding for the char type present in the container provided.
+	struct MsgWithLoc
+	{
+		std::string_view msg;
+		std::source_location source;
+		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		MsgWithLoc(const std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+	};
+
 	namespace globals {
-		static const std::locale default_locale { std::locale(".UTF-8") };
+		static std::locale default_locale { std::locale("en_US.UTF-8") };
 	}
 
 	enum class LineEnd
@@ -112,9 +150,10 @@ namespace serenity {
 			"%I", "%L", "%M", "%N", "%R", "%S", "%T", "%X","%Y", "%Z", "%+"
 		};
 
-		// TODO: Look at using C++20's new date related functions and update the formatting arguments 
-		// TODO: appropriately based on ease and performance. Already using chrono's time_zone type for %Z.
-		// TODO: Also, using %w's FormatUserPattern() as an example, possibly eliminate the numberStr LUT
+		// NOTE: If the Argformatter version takes over for the FormatterArgs version, then the arrays below can be removed, 
+		//              as well as the entirety of FormatterArgs.h and FormatterArgs.cpp. Would just need to update Message_Time's
+		//              CalculateCurrentYear(), StoreFormatPattern(), and anything invoking a struct instatiation of FormatterArgs' 
+		//              structs to reflect this  change.
 		static constexpr std::array<std::string_view, 7> short_weekdays = {
 			"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 		};
@@ -221,8 +260,7 @@ namespace serenity {
 		all      = 16,
 	};
 	constexpr source_flag operator|(source_flag lhs, source_flag rhs) {
-		return static_cast<source_flag>(static_cast<std::underlying_type<source_flag>::type>(lhs) |
-		                                static_cast<std::underlying_type<source_flag>::type>(rhs));
+		return static_cast<source_flag>(static_cast<std::underlying_type<source_flag>::type>(lhs) | static_cast<std::underlying_type<source_flag>::type>(rhs));
 	}
 	constexpr source_flag operator|=(source_flag& lhs, source_flag rhs) {
 		return static_cast<source_flag>(lhs = lhs | rhs);
@@ -236,32 +274,7 @@ namespace serenity {
 		"Warning: Format string token \"%e\" contains an invalid precision specifier.",
 		"Warning: Format string token \"%t\" contains an invalid precision specifier.",
 	};
-
 	// clang-format on
-
-	// Currently only using in parsing user format pattern, but would like to extend these to the lazy substitution
-	static void ParsePrecisionSpec(std::string& specStr, size_t& value) {
-		std::string precision;
-		for( ;; ) {
-				if( !std::isdigit(specStr.front()) ) break;
-				precision += specStr.front();
-				specStr.erase(0, 1);
-			}
-		std::from_chars(precision.data(), precision.data() + precision.size(), value);
-	}
-
-	static constexpr std::array<char, 4> validCharSpecs = { 'l', 'c', 'f', 'F' };
-	static void ParseCharSpec(std::string& specStr, std::vector<char>& specs) {
-		if( specStr.size() == 0 ) return;
-		for( ;; ) {
-				auto ch { specStr.front() };
-				auto end { validCharSpecs.end() };
-				if( !std::isalpha(ch) ) break;
-				if( std::find(validCharSpecs.begin(), end, ch) == end ) break;
-				specs.emplace_back(ch);
-				specStr.erase(0, 1);
-			}
-	}
 
 	enum class message_time_mode
 	{
@@ -269,16 +282,11 @@ namespace serenity {
 		utc
 	};
 
-	// This lovely and amazing end to my headaches for getting the correct call site
-	// was provided by ivank at https://stackoverflow.com/a/66402319/11410972
-	struct MsgWithLoc
-	{
-		std::string msg;
-		std::source_location source;
-		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current())
-			: msg(sv.data(), sv.size()), source(src) { }
-		MsgWithLoc(std::string sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-	};
+	static constexpr bool IsDigit(const char& ch) {
+		return ((ch >= '0') && (ch <= '9'));
+	}
 
+	static constexpr bool IsAlpha(const char& ch) {
+		return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+	}
 }    // namespace serenity

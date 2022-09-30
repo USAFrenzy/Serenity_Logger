@@ -2,8 +2,7 @@
 
 namespace serenity::msg_details {
 	Message_Info::Message_Info(std::string_view name, LoggerLevel level, message_time_mode mode)
-		: m_name(name), m_msgLevel(level), m_msgTime(mode), m_locale(globals::default_locale),
-		  m_msgTimePoint(std::chrono::system_clock::now()) { }
+		: m_name(name), m_msgLevel(level), m_msgTime(mode), m_msgTimePoint(std::chrono::system_clock::now()) { }
 
 	LoggerLevel& Message_Info::MsgLevel() {
 		return m_msgLevel;
@@ -41,7 +40,7 @@ namespace serenity::msg_details {
 		return m_msgTime.Mode();
 	}
 
-	std::tm& Message_Info::TimeInfo() {
+	const std::tm& Message_Info::TimeInfo() const {
 		return m_msgTime.Cache();
 	}
 
@@ -53,25 +52,8 @@ namespace serenity::msg_details {
 		return m_message.size();
 	}
 
-	void Message_Info::SetLocale(const std::locale& loc) {
-		m_locale = loc;
-	}
-
-	std::locale Message_Info::GetLocale() const {
-		return m_locale;
-	}
-
-	std::locale& Message_Info::GetLocale() {
-		return m_locale;
-	}
-
-	const std::source_location& Message_Info::SourceLocation() const {
+	std::source_location& Message_Info::SourceLocation() {
 		return source;
 	}
 
-	void Message_Info::SetMessage(std::string_view msg, const std::source_location& src) {
-		source = src;
-		m_message.clear();
-		m_message.append(msg.data(), msg.size());
-	}
 }    // namespace serenity::msg_details

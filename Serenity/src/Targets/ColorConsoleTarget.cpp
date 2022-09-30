@@ -1,10 +1,7 @@
 #include <serenity/Targets/ColorConsoleTarget.h>
 
-#include <iostream>
-
 namespace serenity::targets {
 	ColorConsole::ColorConsole(): TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false) {
-		TargetHelper()->WriteToBaseBuffer(false);
 		TargetHelper()->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::always);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -14,7 +11,6 @@ namespace serenity::targets {
 	}
 
 	ColorConsole::ColorConsole(std::string_view name): TargetBase(name), consoleMode(console_interface::std_out), coloredOutput(false) {
-		TargetHelper()->WriteToBaseBuffer(false);
 		TargetHelper()->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::always);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -25,7 +21,6 @@ namespace serenity::targets {
 
 	ColorConsole::ColorConsole(std::string_view name, std::string_view msgPattern)
 		: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false) {
-		TargetHelper()->WriteToBaseBuffer(false);
 		TargetHelper()->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::always);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -51,8 +46,8 @@ namespace serenity::targets {
 		if( !IsTerminalType() ) {
 				fflush(outputHandle);
 		}
-#endif       // WINDOWS_PLATFORM
-	}    // ~ColorConsole
+#endif    // WINDOWS_PLATFORM
+	}     // ~ColorConsole
 
 	bool ColorConsole::IsValidHandle() {
 #ifdef WINDOWS_PLATFORM
@@ -156,39 +151,15 @@ namespace serenity::targets {
 #else
 				fwrite(message.data(), 1, message.size(), outputHandle);
 				return;
-#endif               // WINDOWS_PLATFORM
+#endif       // WINDOWS_PLATFORM
 		}    // IsValidHandle() Check
-	}            // PrintMessage()
+	}        // PrintMessage()
 
-	// TODO: Add a function that checks if locale needs to be swapped as well
-	// TODO: as reset the old mode to its default if mode is changed in SetConsoleMode()
 	void ColorConsole::SetLocale(const std::locale& loc) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		using enum console_interface;
-		switch( consoleMode ) {
-				case std_out:
-					if( std::cout.getloc() != loc ) {
-							std::cout.imbue(loc);
-							std::wcout.imbue(loc);
-					}
-					break;
-				case std_err:
-					if( std::cerr.getloc() != loc ) {
-							std::cerr.imbue(loc);
-							std::wcerr.imbue(loc);
-					}
-					break;
-				case std_log:
-					if( std::clog.getloc() != loc ) {
-							std::clog.imbue(loc);
-							std::wclog.imbue(loc);
-					}
-					break;
-			}
-
 		TargetBase::SetLocale(loc);
 	}
 

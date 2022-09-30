@@ -1,88 +1,49 @@
-[![](https://tokei.rs/b1/github/USAFrenzy/Serenity_Logger?category=code)](https://github.com/USAFrenzy/Serenity_Logger/tree/dev)
 [![Build status](https://ci.appveyor.com/api/projects/status/3yywxhc5bc4gq6hr/branch/dev?svg=true)](https://ci.appveyor.com/project/USAFrenzy/serenity-logger/branch/dev)
 
+
 ### For all current details about the library, check out the documentation [HERE](https://usafrenzy.github.io/Serenity_Logger/) ###
+- NOTE: THE DOCUMENTATION IS NOT UP-TO-DATE WITH THE CURRENT PROGRESS OF SERENITY AT THE MOMENT <br>
+- The READ-ME is slightly more up-to-date and can still be used as a quick reference.
+<br><br>
+
 
 --------------------------------------
 <h1 align="center"> Requirements And Features Explicitly Used</h1>
+
 
 ## For Out Of The Box Usage ##
 - C++20 
   - C++20 features used
     - the new method of lambda ```this``` capture
-    - using enum (in the WIP ```template<> std::formatter``` specializations)
-    - ```<format>``` library header 
+    - using enum 
+    - template constraints with ```requires``` and ```concept``` usage
+    - ```<source_location>``` and, if ```USE_STD_FORMAT``` is enabled, ```<format>```
+    - large use of ```std::remove_cvref_t```
+    - jthread and stop_tokens 
 - CMake
-- MSVC toolchain (Currently only MSVC has an implementation of libfmt).
+- MSVC toolchain if using the option ```USE_STD_FORMAT``` (Currently only MSVC has an implementation of libfmt).
   - This library will be updated to support clang and g++ once libfmt is <br>
   implemented on those compilers.
-## More Involved Alternative ##
-- For C++17 (No Built-In Support As Of Yet)
-  - C++17 features used
-    - automatic template argument deduction
-    - keyword ```auto``` deductions 
-    - nested namespaces resolution operator
-    - filesystem header
-    - string_view
-    - std::data
-    - std::empty
-    - std::size
-- CMake
-- If you have access to ```fmtlib``` by Viktor Zverovich:
-  - Remove the ```#include <format>``` and drop in fmt library headers as libfmt <br>
-  is the standard's implementation of his work.
-  - Replace any instances of std::format related functions with fmt equivalents 
-- Will be adding the libfmt wrapper soon to encapsulate functions that are required by this library <br> 
-   in order to add C++17 support for this library by default. <br>
-  - This mostly boils down to the usage of:
-    - ```std::vformat()```
-    - ```std::vformat_to()```
-    - ```std::make_format_args()```
-    - ```std::basic_format_context<iter, char>```
-    - ```template<> std::formatter``` specializations 
-    - The template specializations may be abandoned and aren't currently used - manual formatting is<br> 
-      currently still faster than the specializations
-## C++14 And Earlier ##
-- No C++14 Support As Of Yet
-  - C++11 will most likely NOT be supported due to the amount of C++14 and above features used
-    - C++14 features used
-      - Generic lambdas
-      - Lambda capture initializers
-      - Return type deductions used internally in some functions
-      - std::make_unique
-      - Usage of move semantics and rvalue references
-      - Usage of member functions with move semantics
-      - Forwarding references
-      - Variadic templates
-      - keyword ```auto``` specifier
-      - strongly typed enums
-      - Explicit virtual overrides
-      - Default and Deleted functions 
-      - Range-based for loops
-      - Some files use inline namespaces instead of C++17's namespace resolution operator
-      - The whole right angle bracket clarity on whitespace
-      - reference qualified member functions
-    - C++11 features used
-      - std::move
-      - std::forward
-      - std::thread
-      - std::to_string
-      - smart pointers
-      - std::chrono
-      - std::array
-      - std::make_shared
-<br><br>
+- ```fmtlib``` by Viktor Zverovich if using the option ```UST_FMTLIB```
+- If not using the above two options, you're all set! This logging framework includes a stripped down but fully<br>functional
+  version of the formatting interface via the ```ArgFormatter.h``` header file and is enabled by default<br>if the other options
+  aren't defined.
+  - The only caveats to the built-in version is that there's no type erasure of arguments captured<br>and no utf-8 support as of yet. 
+- With the addition of the ```ArgFormatter.h``` header, the goal in the future is to fully drop the requirements<br>down to C++17
+  and only require C++20 when ```USE_STD_FORMAT``` has been defined, however, for now anyways, <br>C++20 is the default requirement.
 
 --------------------------------------
 <h1 align="center"> Motivation </h1>
 
-<p align="center">One often doesn't think of logging as a fun endeavor, but my goal here is to have just that - a logger that's highly 
+<p align="center">Starting from commit 037a0d2, which was relatively early on, this project shifted from being solely a wrapper to one of being a home-brewed logging framework.
+As for the motivation, one often doesn't think of logging as a fun endeavor, but my goal here is to have just that - a logger that's highly 
 efficient, fast, customizable, fun, and easy to use. I wanted to make a logger that had several color choices to pick from 
 (More than a user may ever need, while still modularizing components for choices a user may not want). I plan on extending 
 this to cover some basic RGB color combos as well and add user defined formatting call backs and a way to add user defined flags. </p> 
 
 <p align="center">This project is honestly more of a learning project meant for practicing. This is for a multitude of different reasons - the major 
- one being that my main aim is to have a project that was completed from start to finish. </p>
+ one being that my main aim is to have a project that was completed from start to finish while learning more on performance oriented designs and and some
+minor stepping stones into the world of templates (before this project, I had never written anything templated). </p>
 
 <p align="center">For now, my goal is simply to achieve a multi-threaded and single-threaded version of a console target, color console target, 
 file target, rotating file target, some form of an XML target capable of shredding, and lastly the possibility of a very basic 
@@ -145,7 +106,6 @@ and settings used by all the derived targets. </p>
 **File logging occurs via the FileTarget class found in the ```<serenity/Targets/FileTarget.h>``` header.**
 - Creating a log file if it doesn't exist
   - This also applies to the log directory
-- Being able to erase contents of the file via ```EraseContents()``` call
 - Able to rename the file being logged to (this does block logs until rename completes)
 - Ability to explicitly open, close, and flush the logging file.
 - The ability to inherit from this target to specialize the ```PolicyFlushOn()```, ```PrintMessage()```, and ```RenameFile()``` functions.
@@ -153,9 +113,7 @@ and settings used by all the derived targets. </p>
 - ```RenameFile()``` is also a virtual function so that the user can define if they want a specific routine for<br>
 this purpose or if they don't want this function to do anything when called.
 - Change the default buffer size held by the file handle by altering the DEFAULT_BUFFER_SIZE macro.
-  - Default value is 64KB
-  - NOTE: this is different from the buffer used by the TargetBase class and is used to minimize system <br>
-  OS calls for flushing contents to disk, which can be very expensive.
+  - Default value is the system's pagefile size or 64KB, depending on the case
 - Inherits the utility of the TargetBase class functions as well.
 </p>
 
@@ -163,8 +121,6 @@ this purpose or if they don't want this function to do anything when called.
 <p align="left"> The RotatingTarget class is capable of the following: 
 
 **Rotational logging occurs via the RotatingTarget class found in the ```<serenity/Targets/RotatingTarget.h>``` header.** 
-- The RotatingTarget class is currently still in the experimental namespace due to work still being <br>
-done on interval (day/hour based) rotation. File size based rotation is functional however.
 - Enable/Disble rotation if desired
   - If disabled, this class effectively mirrors FileTarget class functionality. 
 - Set specific rotation settings
@@ -184,16 +140,6 @@ done on interval (day/hour based) rotation. File size based rotation is function
     - Previous logs are unaffected until the next time they are selected in the rotation queue. 
 - Inherits from FileTarget functions, TargetBase functions and both of their utilities.
 </p>
-
-
-
------------------------------------------------------------------------------------------------------
-<p align="center"> NOTE: If using both FileTarget and RotatingTarget classes, the DEFAULT_BUFFER_SIZE macro will affect both of these classes' file handle buffer. </p>
-
------------------------------------------------------------------------------------------------------
- <p align="center">TODO: Make the file handle buffer sizing a function call instead of a macro to separate common classes. </p>
-
-
 
 ---------------------------------------------------------
 <p align="left"> The ColorConsoleTarget class is capable of the following: </p>
@@ -221,6 +167,8 @@ done on interval (day/hour based) rotation. File size based rotation is function
   - Output will be flushed when output handle's internal buffer is full or when ```Flush()``` <br>
     is explicitly called. Will also call ```Flush()``` in the destructor to ensure contents are <br>
     present in the pipe.
+    - Note: there is currently no built-in piping method, however, logging with this class will detect <br>
+            if it has been piped and behave accordingly
 - If Windows platform, utilizes the windows macro ENABLE_VIRTUAL_TERMINAL_PROCESSING <br>
   for ansi color codes.
   - If not defined for the windows platform, will automatically define this macro
@@ -258,26 +206,24 @@ TODO: Document examples here
 
 ---------------------------
 <h1 align="center"> Statistics </h1>
-<p align="center">
-**The Sandbox Environment was compiled with /utf-8 /O2 for the below results.**
-</p>
 
+### For A Very Crude And Simple Benchmark Test Of A 400 byte C-style string over 1,000,000 iterations (Single Threaded) ###
+- [Note]: Current Benchmark timings are accurate as of 05Jul22
+- [Note]: For the console targets, message outputting was disabled, so the timings for Serenity ColorConsole<br>
+        and Spdlog's Console Sink reflect that difference compared to the rest of the benched targets.
+    ___________________________________________________________________________________________
+    |      Logging Sink/Target      |      Logging Speed       |      Logging Throughput      |             
+    |-------------------------------|--------------------------|------------------------------|
+    | Serenity Console Target       |        5.656 ns          |         67437.398 MB/s       |
+    | Spdlog Console Sink           |       10.837 ns          |         35197.914 MB/s       |
+    | Serenity File Target          |      215.981 ns          |          1766.213 MB/s       |
+    | Spdlog Basic File Sink        |     1125.735 ns          |           365.318 MB/s       |
+    | Serenity Rotating Target      |      627.968 ns          |           607.467 MB/s       |
+    | Spdlog Rotating Sink          |     2919.572 ns          |           130.659 MB/s       |
+    -------------------------------------------------------------------------------------------
 - Serenity's console target is ~40%-42% faster than spdlog's current counterpart.
-- Serenity's file target is ~30% -35% faster than spdlog's current counterpart. 
-- The newly added Rotating Target is ~45%-50% faster than spdlog's current counterpart.
-
-#### For A Very Crude And Simple Benchmark Test Of A 400 byte C-style string over 1,000,000 iterations (Single Threaded) ####
-
- ___________________________________________________________________________________________
- |      Logging Sink/Target      |      Logging Speed       |      Logging Throughput      |             
- |-------------------------------|--------------------------|------------------------------|
- | Serenity Console Target       |        49.105 us         |         7.749 MB/s           |
- | Spdlog Console Sink           |        80.523 us         |         4.726 MB/s           |
- | Serenity File Target          |        0.705 us          |         539.359 MB/s         |
- | Spdlog Basic File Sink        |        1.042 us          |         365.318 MB/s         |
- | Serenity Rotating Target      |        1.089 us          |         349.351 MB/s         |
- |  Spdlog Rotating Sink         |        2.128 us          |         178.838 MB/s         |
- -------------------------------------------------------------------------------------------
+- Serenity's file target is ~79%-81% faster than spdlog's current counterpart. 
+- Serenity's rotating Target is ~78%-79% faster than spdlog's current counterpart.
 
 
 

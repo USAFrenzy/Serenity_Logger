@@ -1,56 +1,47 @@
-#include <iostream>
+﻿
+
+#define ENABLE_MEMORY_LEAK_DETECTION 0
+#define GENERAL_SANDBOX              0
+#define ROTATING_TESTING             0
+#define PARSE_TESTING                1
+#define ENABLE_PARSE_BENCHING        0
+#define ENABLE_PARSE_SANDBOX         1
+#define ENABLE_CTIME_SANDBOX         1
+
+#if ENABLE_MEMORY_LEAK_DETECTION
+	#define _CRTDBG_MAP_ALLOC
+	#include <crtdbg.h>
+	#include <stdlib.h>
+#endif
 
 #include <serenity/Targets/ColorConsoleTarget.h>
 #include <serenity/Targets/FileTarget.h>
 #include <serenity/Targets/RotatingTarget.h>
 
-// clang-format off
-// TODO: ####################################################################################################################################
-// TODO: Remove Internal Dependancy On Utilities File - I'll work on that as a separate project from this (as it honestly should have been)
-// TODO: ####################################################################################################################################
-// clang-format on
-
-#define INSTRUMENT 1
-
-#if INSTRUMENT
-	#define INSTRUMENTATION_ENABLED
-#endif
-
-// clang-format off
-// TODO: Finish adding strftime equivalent flags and the last two original flags
-// TODO: and then figure a way to add user defined flags and formatting callbacks
-/************************************** Custom flags **************************************
- - %N (Name)                  - %L (Full Message Level)       - %x (Short Weekday String)
- - %l (Short Message Level)   - %n (DD/MMM/YY Date)           - %X (Long Weekday String)
-**************************** The rest are strftime equivalents ****************************
- - %d (Day Of Month)          - %T (HH:MM:SS Time format)     - %S (Seconds)
- - %D (MM/DD/YY Date)         - %w (weekday as decimal 0-6)   - %Y (Year XXXX)
- - %b (Abbrev Month Name)     - %F (YYYY-MM-DD Date)          - %M (Minute)
- - %B (Full Month Name)       - %H (24hr Hour format)         - %y (year XX Format)
-******************************************************************************************/
-// clang-format on
-
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-// Want to keep this utility file separate from actual project as it is itself a
-// WIP project anyways
 #include <serenity/Utilities/Utilities.h>
 
-// This is just used to write all logs in the same directory as the serenity
-// targets
-std::string SpdlogPath(bool rotate = false) {
-	if( !rotate ) {
-			auto filePath { std::filesystem::current_path() };
-			filePath /= "Logs/Spdlog_File.txt";
-			return filePath.make_preferred().string();
-	} else {
-			auto filePath { std::filesystem::current_path() };
-			filePath /= "Logs/Spdlog_Rotating.txt";
-			return filePath.make_preferred().string();
-		}
-}
+#include <iostream>
+
+#if PARSE_TESTING
+	#include <serenity/MessageDetails/ArgFormatter.h>
+	#include <format>
+	#define ENABLE_PARSE_SECTION
+	// Since the inclusion of USE_STD_FORMAT and USE_FMTLIB , need to force this to be MSVC for testing purposes atm
+	#ifdef VFORMAT_TO
+		#undef VFORMAT_TO
+		#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)
+			#define CONTEXT                         std::back_insert_iterator<std::basic_string<char>>
+			#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to<CONTEXT>(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+		#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
+			#if _MSC_FULL_VER >= 192930145    // MSVC build that backported fixes for <format> under C++20 switch instead of C++ latest
+				#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+			#else
+				#define CONTEXT                         std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
+				#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args<CONTEXT>(__VA_ARGS__))
+			#endif
+		#endif
+	#endif    // VFORMAT_TO
+#endif        // PARSE_TESTING
 
 std::filesystem::path LogDirPath() {
 	return (std::filesystem::current_path() /= "Logs");
@@ -66,85 +57,66 @@ template<typename T> std::string SetPrecision(const T value, const int precision
 	return temp.str();
 }
 
-// clang-format off
-static constexpr std::string_view testView { 
-	"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
-    "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
-    "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
-    " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
-   " mi non odio." 
+struct TestPoint
+{
+	int x, y;
 };
-// clang-format on
+
+// Test for specialization
+// The requirement mine has is that both parse and format must be at least defined
+template<> struct serenity::CustomFormatter<TestPoint>
+{
+	constexpr void Parse(std::string_view parse) {
+		return;
+	}
+
+	template<typename ContainerCtx> constexpr auto Format(const TestPoint& p, ContainerCtx& ctx) const {
+		serenity::format_to(std::back_inserter(ctx), "({},{})", p.x, p.y);
+	}
+};
+
+template<> struct std::formatter<TestPoint>
+{
+	auto parse(std::format_parse_context& pc) {
+		return pc.end();
+	}
+	auto format(TestPoint const& p, std::format_context& ctx) {
+		std::format_to(ctx.out(), "({},{})", p.x, p.y);
+		return ctx.out();
+	}
+};
 
 int main() {
-	std::vector<spdlog::sink_ptr> sinks;
-	std::string spdlogPattern { "%^|%L| %a %d%b%C %T [%n]: %v%$" };
-
-	auto stdoutSink { std::make_shared<spdlog::sinks::stdout_color_sink_st>() };
-	sinks.emplace_back(stdoutSink);
-	auto spdlogConsoleLogger = std::make_shared<spdlog::logger>("Console Logger", begin(sinks), end(sinks));
-	spdlog::register_logger(spdlogConsoleLogger);
-	spdlogConsoleLogger->set_pattern(spdlogPattern);    // equivalent to Target's Default
-	                                                    // Pattern
-
-	bool truncate = true;
-	auto fileSink { std::make_shared<spdlog::sinks::basic_file_sink_st>(SpdlogPath(), truncate) };
-	sinks.clear();
-	sinks.emplace_back(fileSink);
-	auto spdlogFileLogger = std::make_shared<spdlog::logger>("File Logger", begin(sinks), end(sinks));
-	spdlog::register_logger(spdlogFileLogger);
-	spdlogFileLogger->set_pattern(spdlogPattern);    // equivalent to Target's Default
-	                                                 // Pattern
-
-	auto fileSize { 512 * KB };
-	auto numberOfFiles { 5 };
-	auto rotateOnOpen { false };
-	// above settings equivalent to default RotatingTarget Settings
-	bool isRotateFilePath { true };
-	auto rotatingSink { std::make_shared<spdlog::sinks::rotating_file_sink_st>(SpdlogPath(isRotateFilePath), fileSize, numberOfFiles,
-		                                                                   rotateOnOpen) };
-	sinks.clear();
-	sinks.emplace_back(rotatingSink);
-	auto spdlogRotatingLogger { std::make_shared<spdlog::logger>("Rotating_Logger", begin(sinks), end(sinks)) };
-	spdlog::register_logger(spdlogRotatingLogger);
-	spdlogRotatingLogger->set_pattern(spdlogPattern);    // equivalent to Target's Default Pattern
-
 	using namespace serenity;
 	using namespace se_utils;
 	using namespace se_colors;
 	using namespace experimental;
 
+#ifdef WINDOWS_PLATFORM
+	SetConsoleOutputCP(CP_UTF8);
+#endif    // WINDOWS_PLATFORM
+
+#if GENERAL_SANDBOX
+
 	serenity::targets::ColorConsole C;
 	serenity::targets::FileTarget testFile;
-#ifndef INSTRUMENTATION_ENABLED
+
+	#ifdef ENABLE_ROTATION_SECTION
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Daily/DailyLog.txt";
-#else
+	#else
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Rotating_Log.txt";
-#endif    // !INSTRUMENTATION_ENABLED
+	#endif    // ENABLE_ROTATION_SECTION
+	serenity::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", dailyFilePath.string(), true);
 
-	serenity::experimental::targets::RotatingTarget rotatingFile("Basic_Rotating_Logger", dailyFilePath.string(), true);
+#endif    //  GENERAL_SANDBOX
 
-	// ****************************** TEMPORARY TESTING ********************************************
-	/* PeriodicSettings testFileFlushSettings = {};
-	 testFileFlushSettings.flushEvery       = std::chrono::seconds(1);
-	 Flush_Policy testFIleFlushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, testFileFlushSettings);
-	 testFile.SetFlushPolicy(testFIleFlushPolicy);
-	 rotatingFile.SetFlushPolicy(testFIleFlushPolicy);
-	 C.SetFlushPolicy(testFIleFlushPolicy);*/
-	// testFile.EnableMultiThreadingSupport();
-	// rotatingFile.EnableMultiThreadingSupport();
-	// C.EnableMultiThreadingSupport();
-	//    *********************************************************************************************
-	/*	spdlog::flush_every(std::chrono::seconds(1));*/
-	// ****************************** TEMPORARY TESTING ********************************************
-
-#ifndef INSTRUMENTATION_ENABLED
+#ifdef ENABLE_ROTATION_SECTION
 	std::cout << "###############################################################"
-		     "#####\n";
+				 "#####\n";
 	std::cout << "# This Will Be The Default Pattern Format And Message Level "
-		     "Colors #\n";
+				 "Colors #\n";
 	std::cout << "###############################################################"
-		     "#####\n";
+				 "#####\n";
 	// Trace Is Default Color
 	C.Trace("Trace");
 	// Info Is Light Green
@@ -158,13 +130,13 @@ int main() {
 	// Fatal Is Light Yellow On Dark Red
 	C.Fatal("Fatal");
 	std::cout << "###############################################################"
-		     "#####\n\n";
+				 "#####\n\n";
 	std::cout << "###############################################################"
-		     "#########\n";
+				 "#########\n";
 	std::cout << "# Testing Some Basic Functions To Make Sure All Is Working As "
-		     "I Expect #\n";
+				 "I Expect #\n";
 	std::cout << "###############################################################"
-		     "#########\n";
+				 "#########\n";
 	C.SetPattern("%T [%N]: %+");
 	C.Info("Pattern String Has Been Changed To \"%T [%N]: %+\"");
 	C.ColorizeOutput(false);
@@ -242,7 +214,7 @@ int main() {
 	};
 
 	std::cout << "\n\nLogging messages to test rotation on hour mark, daily "
-		     "mark, and file size\n\n";
+				 "mark, and file size\n\n";
 	auto LogHourly = [ & ]() {
 		std::mutex hourlyMutex;
 		for( int i = 1; i <= rotationIterations; ++i ) {
@@ -289,240 +261,476 @@ int main() {
 	t2.join();
 	t3.join();
 
-#endif    // !INSTRUMENTATION_ENABLED
+#endif    // !ENABLE_ROTATION_SECTION
 
-#ifdef INSTRUMENTATION_ENABLED
-	// Really don't need this many instrumentators but just being lazy with reuse
-	// and adding more for clarity anyways
-	Instrumentator macroTester;
-	Instrumentator macroTesterFile;
-	Instrumentator spdlogConsoleTester;
-	Instrumentator spdlogFileTester;
-	Instrumentator spdlogRotateTester;
-	Instrumentator rotateTester;
+#ifdef ENABLE_PARSE_SECTION
+	using namespace serenity::arg_formatter;
 
-	const char* test = nullptr;
-	// test string
-	static_assert(testView.size() == 400);
-	std::string temp { testView.data(), testView.size() };
-	test = temp.c_str();
+	#if ENABLE_PARSE_BENCHING
+	constexpr std::string_view ParseFormatStringString { "\n{0:*^#{5}X}\n{1:*^#{5}x}\n{2:*^#{5}a}\n{3:*^#{5}E}\n{4:*^#{5}b}\n{5:*^#{5}B}\n{6:s}" };
+	constexpr int a { 123456789 };
+	constexpr int b { 5 };
+	constexpr float c { 32.5f };
+	constexpr double d { 54453765675.65675 };
+	constexpr int e { 6 };
+	constexpr int f { 50 };
+	constexpr std::string_view tmp { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
+		                             "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
+		                             "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
+		                             " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
+		                             " mi non odio." };
 
-	unsigned long int i { 0 };
-	const unsigned long int iterations { 1'000'000 };
-	macroTester.StopWatch_Reset();
-	std::cout << "Benching Color Console Target...\n\n";
+	ArgFormatter parseString;
+	Instrumentator timer;
+	std::string result;
 
-	for( i; i < iterations; i++ ) {
-			C.Info("{}", test);
+		// Now std::vector<char> and string containers are more or less on par with one another, with strings being only ~20ns faster
+		#define TEST_STRING_CASE 1
+
+		#if TEST_STRING_CASE
+	std::string finalStr;
+		#else
+	std::vector<char> finalStr {};
+		#endif
+
+	serenity::targets::ColorConsole console("", "%+");
+	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
+
+	for( int i { 0 }; i < 3; ++i ) {
+			// serenity's format loop using back_insert_iterator
+			timer.StopWatch_Reset();
+			for( size_t i { 0 }; i < 10'000'000; ++i ) {
+					parseString.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
+					finalStr.clear();
+				}
+			timer.StopWatch_Stop();
+			finalStr.clear();
+
+			auto serenityTime1 { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
+			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime1));
+			parseString.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
+			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
+			finalStr.clear();
+
+			// serenity's format loop by returning a string
+			timer.StopWatch_Reset();
+			for( size_t i { 0 }; i < 10'000'000; ++i ) {
+		#if TEST_STRING_CASE
+					finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
+		#endif
+				}
+			timer.StopWatch_Stop();
+			finalStr.clear();
+
+			auto serenityTime2 { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
+			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime2));
+		#if TEST_STRING_CASE
+			finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
+		#endif
+			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
+			finalStr.clear();
+
+			// Standard's std::vformat_to() loop
+			timer.StopWatch_Reset();
+			auto locale { std::locale("") };
+			for( size_t i { 0 }; i < 10'000'000; ++i ) {
+					VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
+					finalStr.clear();
+				}
+			timer.StopWatch_Stop();
+			finalStr.clear();
+
+			auto standardTime { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
+			VFORMAT_TO(finalStr, locale, ParseFormatStringString, a, b, c, d, e, f, tmp);
+			console.Debug("std::vformat_to() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(standardTime));
+			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
+
+			// Just realized why the percentages were so freaking out there - I had broken the formula (WOOPS!)
+			auto percentValue { ((serenityTime1 - standardTime) / standardTime) * 100 };
+			auto percentValue2 { ((serenityTime2 - standardTime) / standardTime) * 100 };
+			auto percentValue3 { ((serenityTime1 - serenityTime2) / serenityTime2) * 100 };
+
+			if( percentValue > 0 ) {
+					std::string percentStr { "[" };
+					percentStr.append(SetPrecision(percentValue, 2)).append("%]");
+					console.Trace("Serenity's se_format_to() is {} Slower Than The Standard's Formatting Function std::vformat_to()", Tag::Red(percentStr));
+			} else {
+					std::string percentStr { "[" };
+					percentStr.append(SetPrecision(std::abs(percentValue), 2)).append("%]");
+					console.Trace("Serenity's se_format_to() is {} Faster Than The Standard's Formatting Function std::vformat_to()", Tag::Green(percentStr));
+				}
+
+			if( percentValue2 > 0 ) {
+					std::string percentStr { "[" };
+					percentStr.append(SetPrecision(percentValue2, 2)).append("%]");
+					console.Trace("Serenity's se_format() is {} Slower Than The Standard's Formatting Function std::vformat_to()", Tag::Red(percentStr));
+			} else {
+					std::string percentStr { "[" };
+					percentStr.append(SetPrecision(std::abs(percentValue2), 2)).append("%]");
+					console.Trace("Serenity's se_format() is {} Faster Than The Standard's Formatting Function std::vformat_to()", Tag::Green(percentStr));
+				}
+
+			if( percentValue3 > 0 ) {
+					std::string percentStr { "[" };
+					percentStr.append(SetPrecision(percentValue3, 2)).append("%]");
+					console.Trace("Serenity's se_format_to() Is {} Slower Than Serenity's  se_format()\n", Tag::Red(percentStr));
+			} else {
+					std::string percentStr { "[" };
+					percentStr.append(SetPrecision(std::abs(percentValue3), 2)).append("%]");
+					console.Trace("Serenity's se_format_to() Is {} Faster Than Serenity's  se_format()\n", Tag::Green(percentStr));
+				}
+			printf("\n");
 		}
-	macroTester.StopWatch_Stop();
-	auto totalColorTime = macroTester.Elapsed_In(time_mode::ms);
-	std::cout << "\nColor Console Target Bench Finished. Benching Spdlog Color "
-		     "Console Sink...\n\n";
+	#endif
 
-	spdlogConsoleTester.StopWatch_Reset();
-	i = 0;    // reset
-	for( i; i < iterations; i++ ) {
-			spdlogConsoleLogger->info("{}", test);
-		}
-	spdlogConsoleTester.StopWatch_Stop();
-	auto totalspdColorTime = spdlogConsoleTester.Elapsed_In(time_mode::ms);
-	std::cout << "\nSpdlog Color Console Sink Bench Finished.  Benching File "
-		     "Target...\n";
+	#if ENABLE_PARSE_SANDBOX
 
-	i = 0;    // reset
-	macroTesterFile.StopWatch_Reset();
-	for( i; i < iterations; i++ ) {
-			testFile.Info("{}", test);
-		}
-	macroTesterFile.StopWatch_Stop();
-	testFile.Flush();
-	auto totalFileTime = macroTesterFile.Elapsed_In(time_mode::ms);
-	std::cout << "\nFile Target Bench Finished. Benching Spdlog Basic File Sink...\n";
+	ArgFormatter formatter {};
+	Instrumentator cTimer;
+	constexpr TestPoint test { .x { 5 }, .y { 8 } };
 
-	i = 0;    // reset
-	spdlogFileTester.StopWatch_Reset();
-	for( i; i < iterations; i++ ) {
-			spdlogFileLogger->info("{}", test);
-		}
-	spdlogFileTester.StopWatch_Stop();
-	spdlogFileLogger->flush();
-	auto totalSpdFileTime = spdlogFileTester.Elapsed_In(time_mode::ms);
-	std::cout << "\nSpdlog Basic File Sink Bench Finished. Benching Rotating "
-		     "Target...\n";
+	constexpr std::string_view sv { "[Loop Averages]" };
+	std::string loopStr { "[Loop " };
+	constexpr int repeatTest = 5;
+	constexpr size_t iterations { 100'000'000 };
+	float seTotal {}, stdTotal {};
 
-	i = 0;    // reset
-	rotateTester.StopWatch_Reset();
-	for( i; i < iterations; i++ ) {
-			rotatingFile.Info("{}", test);
-		}
-	rotateTester.StopWatch_Stop();
-	rotatingFile.Flush();
-	auto totalRotateTime = rotateTester.Elapsed_In(time_mode::ms);
-	std::cout << "\nRotating Target Bench Finished. Benching Spdlog Rotating Sink...\n";
-
-	i = 0;    // reset
-	spdlogRotateTester.StopWatch_Reset();
-	for( i; i < iterations; i++ ) {
-			spdlogRotatingLogger->info("{}", test);
-		}
-	spdlogRotateTester.StopWatch_Stop();
-	spdlogRotatingLogger->flush();
-	auto totalSpdRotateTime = spdlogRotateTester.Elapsed_In(time_mode::ms);
-	std::cout << "\nSpdlog Rotating File Sink Bench Finished.\n";
-
-	// #################### Below is just the instrumentation print out section ####################
-	auto percentConsole = ((totalColorTime - totalspdColorTime) / totalspdColorTime) * 100;
-	std::string consolePercent;
-	if( percentConsole > 0 ) {
-			consolePercent = "- " + std::to_string(std::abs(percentConsole));
-	} else {
-			consolePercent = "+ " + std::to_string(std::abs(percentConsole));
+	for( int i { 0 }; i < repeatTest; ++i ) {
+			std::cout << serenity::format("{:*^55}\n", (loopStr + std::to_string(i + 1) + "]"));
+			cTimer.StopWatch_Reset();
+			for( size_t i { 0 }; i < iterations; ++i ) {
+					auto _ { formatter.se_format("{}", test) };
+				}
+			cTimer.StopWatch_Stop();
+			auto serenityElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
+			seTotal += serenityElapsed;
+			std::cout << serenity::format("Serenity Took An Average Of [{} ns]\nWith Result: {}\n", serenityElapsed, test);
+			cTimer.StopWatch_Reset();
+			for( size_t i { 0 }; i < iterations; ++i ) {
+					auto _ { std::format("{}", test) };
+				}
+			cTimer.StopWatch_Stop();
+			auto standardElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
+			stdTotal += standardElapsed;
+			std::cout << std::format("Standard Took An Average Of [{} ns]\nWith Result: {}\n", standardElapsed, test);
+			std::cout << serenity::format("{:*55}\n\n");
 		}
 
-	auto percentFile = ((totalFileTime - totalSpdFileTime) / totalSpdFileTime) * 100;
-	std::string filePercent;
-	if( percentFile > 0 ) {
-			filePercent = "-" + std::to_string(std::abs(percentFile));
-	} else {
-			filePercent = "+" + std::to_string(std::abs(percentFile));
+	/*************************** Current Stats Ran As Of  21Aug22 ***************************/
+	// ********************************** [Loop Averages] **********************************
+	// Serenity Total Average Among Loops [51.91447 ns]
+	// Standard Total Average Among Loops [83.83898 ns]
+	// Serenity Is 38.078 % Faster Than The Standard
+	// *************************************************************************************
+
+	auto seAvg { seTotal / repeatTest };
+	auto stdAvg { stdTotal / repeatTest };
+	std::cout << serenity::format("{:*^55}\n", sv);
+	std::cout << serenity::format("Serenity Total Average Among Loops [{} ns]\n", seAvg);
+	std::cout << serenity::format("Standard Total Average Among Loops [{} ns]\n", stdAvg);
+	std::cout << serenity::format("Serenity Is {}% Faster Than The Standard\n", SetPrecision((std::abs(stdAvg - seAvg) / stdAvg) * 100));
+	std::cout << serenity::format("{:*55}\n\n");
+
+	#endif
+#endif    // ENABLE_PARSE_SECTION
+
+#if ENABLE_CTIME_SANDBOX
+
+	std::locale loc("zh_CN.UTF-8");
+
+	std::string timeStr;
+	Instrumentator cTimeTimer;
+	constexpr size_t timeIterations { 10'000'000 };
+	constexpr std::string_view formatString { "{:L%Od%b%Oy %T}" };
+	constexpr const char* strftimeString { "%d%b%y %T" };
+	std::tm cTime {};
+	auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
+	LOCAL_TIME(cTime, now);
+	serenity::msg_details::Message_Formatter::Formatters structFormatter {};
+	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
+	info.TimeDetails().UpdateCache(std::chrono::system_clock::now());
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_d>(info));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_b>(info));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_y>(info));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_Char>(std::string_view(" ")));
+	structFormatter.Emplace_Back(std::make_unique<Format_Arg_T>(info));
+
+	auto tz { std::chrono::current_zone() };
+	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
+	std::cout << std::format("{:*^95%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
+	std::cout << std::format(std::locale("en_US"), "Note:\tBench Times Are Based On {:L} Iterations For Each Case Being Benched\n", timeIterations);
+	std::cout << std::format("\tTime Updates Are Ignored In These Loops And Use The Initial Time.\n\n");
+	/*************************************** NOTES ABOUT ABOVE ***************************************/
+	// The spec states: [fill-align] [width] [precision] [locale] [chrono spec]
+	// Need to test how locale affects this. For the time being anyways, I think I'll imlement c-time's tm struct
+	// instead as that's what I'm currently using in the logger right now.
+	/*****************************************************************************************************/
+
+	/*************************************************  Just seeing how fast these conversions are *************************************************/
+
+	// Below conversions for u16Str and u32Str from u8view is in order to keep the encoding of the source
+	// file in utf-8 (to avoid the /utf-8 compiler switch, this source page is encoded in utf-8 with BOM)
+	constexpr std::u8string_view u8view { u8"一個簡單的中文字符串。" };
+	std::string u8Str;
+	std::u16string u16Str;
+	std::u32string u32Str;
+	for( auto& ch: u8view ) u8Str += static_cast<char>(ch);    // need this as iIdon't currently support char8_t
+	utf_helper::U8ToU16(u8Str, u16Str);
+	utf_helper::U8ToU32(u8Str, u32Str);
+
+	std::string u8result;
+	std::u16string u16Result;
+	std::u32string u32Result;
+
+	/************************************  Validating Conversions are working correctly before testing timings ************************************/
+	std::cout << "Verifying Conversion Functions Are All Working As Intended...\n";
+	utf_helper::U16ToU8(u16Str, u8result);
+	utf_helper::U8ToU16(u8result, u16Result);
+	std::cout << ((u16Str == u16Result) ? "\tLossless Conversion From UTF-16 -> UTF-8 -> UTF-16  Complete\n"
+	                                    : "\tData Corruption In Conversion From UTF-16 -> UTF-8 -> UTF-16 Detected\n");
+	u8result.clear();
+	utf_helper::U32ToU8(u32Str, u8result);
+	utf_helper::U8ToU32(u8result, u32Result);
+	std::cout << ((u32Str == u32Result) ? "\tLossless Conversion  From  UTF-32 -> UTF-8 -> UTF-32 Complete\n"
+	                                    : "\tData Corruption In Conversion From UTF-32 -> UTF-8 -> UTF-32 Detected\n");
+	u8result.clear();
+
+	u16Result.clear();
+	u32Result.clear();
+	utf_helper::U32ToU16(u32Str, u16Result);
+	utf_helper::U16ToU32(u16Result, u32Result);
+	std::cout << ((u32Str == u32Result) ? "\tLossless Conversion  From  UTF-32 -> UTF-16 -> UTF-32 Complete\n"
+	                                    : "\tData Corruption In Conversion From UTF-32 -> UTF-16 -> UTF-32 Detected\n");
+
+	u8result.clear();
+	u16Result.clear();
+	u32Result.clear();
+	utf_helper::U32ToU16(u32Str, u16Result);
+	utf_helper::U16ToU8(u16Result, u8result);
+	u16Result.clear();
+	utf_helper::U8ToU16(u8result, u16Result);
+	u32Result.clear();
+	utf_helper::U16ToU32(u16Result, u32Result);
+	std::cout << ((u32Str == u32Result) ? "\tLossless Conversion  From  UTF-32 -> UTF-16 -> UTF-8 -> UTF-16 -> UTF-32 Complete\n"
+	                                    : "\tData Corruption In Conversion From UTF-32 -> UTF-16 -> UTF-8 -> UTF-16 -> UTF-32 Detected\n");
+	u8result.clear();
+	u16Result.clear();
+	u32Result.clear();
+	std::cout << "All UTF Conversion Function Verifications Have Finished\n\n";
+	/**********************************************************************************************************************************************/
+	std::cout << std::format("{:*^95}\n\n", " Benching UTF Conversion Functions ");
+
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			u8result.clear();
+			utf_helper::U32ToU8(u32Str, u8result);
 		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << serenity::format("Serenity Formatter Encoding UTF-32 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
-	auto percentRotating = ((totalRotateTime - totalSpdRotateTime) / totalSpdRotateTime) * 100;
-	std::string rotatePercent;
-	if( percentRotating > 0 ) {
-			rotatePercent = "-" + std::to_string(std::abs(percentRotating));
-	} else {
-			rotatePercent = "+" + std::to_string(std::abs(percentRotating));
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			u16Result.clear();
+			utf_helper::U32ToU16(u32Str, u16Result);
 		}
+	cTimeTimer.StopWatch_Stop();
+	u8result.clear();
+	utf_helper::U16ToU8(u16Result, u8result);
+	std::cout << serenity::format("Serenity Formatter Encoding UTF-32 To UTF-16 Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
-	auto testStrInMB { (temp.length()) / static_cast<float>(MB) };
-	auto FileThroughput { (testStrInMB * iterations) / macroTesterFile.Elapsed_In(time_mode::sec) };
-	auto SpdlogFileThroughput { (testStrInMB * iterations) / spdlogFileTester.Elapsed_In(time_mode::sec) };
-	auto ConsoleThroughput { (testStrInMB * iterations) / macroTester.Elapsed_In(time_mode::sec) };
-	auto SpdlogConsoleThroughput { (testStrInMB * iterations) / spdlogConsoleTester.Elapsed_In(time_mode::sec) };
-	auto rotatingThroughput { (testStrInMB * iterations) / rotateTester.Elapsed_In(time_mode::sec) };
-	auto SpdlogRotatingThrouput { (testStrInMB * iterations) / spdlogRotateTester.Elapsed_In(time_mode::sec) };
-	// clang-format off
-	std::cout << Tag::Yellow("\n\n***************************************************************************************\n"
-		              "*************** Instrumentation Data (Averaged Over ") << Tag::Yellow(std::to_string(iterations) + " Iterations: ")
-		             << Tag::Yellow("***************\n***************************************************************************************\n");
-	// clang-format on
-	std::cout << Tag::Bright_Yellow("Color Console Target (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
-		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-		  << Tag::Bright_Green(std::to_string(macroTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			u8result.clear();
+			utf_helper::U16ToU8(u16Str, u8result);
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << serenity::format("Serenity Formatter Encoding UTF-16 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
-	std::cout << Tag::Bright_Yellow("Spdlog Color Console Sink (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::us) / iterations) + " us"
-	                                                                                                            "\n")
-		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::ms) / iterations) + " ms"
-	                                                                                                            "\n")
-		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogConsoleTester.Elapsed_In(time_mode::sec) / iterations) + " s"
-	                                                                                                             "\n");
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			u32Result.clear();
+			utf_helper::U16ToU32(u16Str, u32Result);
+		}
+	cTimeTimer.StopWatch_Stop();
+	u8result.clear();
+	utf_helper::U32ToU8(u32Result, u8result);
+	std::cout << serenity::format("Serenity Formatter Encoding UTF-16 To UTF-32 Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
-	std::cout << Tag::Bright_Magenta("Color Console Target Is " + consolePercent + " Percent Of Spdlog's Color Console Sink Speed\n");
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			u16Result.clear();
+			utf_helper::U8ToU16(u8Str, u16Result);
+		}
+	cTimeTimer.StopWatch_Stop();
+	u8result.clear();
+	utf_helper::U16ToU8(u16Result, u8result);
+	std::cout << serenity::format("Serenity Formatter Encoding UTF-8 To UTF-16 Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
-	std::cout << Tag::Bright_Yellow("File Target (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::us) / iterations) + " us\n")
-		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-		  << Tag::Bright_Green(std::to_string(macroTesterFile.Elapsed_In(time_mode::sec) / iterations) + " s\n");
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			u32Result.clear();
+			utf_helper::U8ToU32(u8Str, u32Result);
+		}
+	cTimeTimer.StopWatch_Stop();
+	u8result.clear();
+	utf_helper::U32ToU8(u32Result, u8result);
+	std::cout << serenity::format("Serenity Formatter Encoding UTF-8 To UTF-32 Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+	/**********************************************************************************************************************************************/
 
-	std::cout << Tag::Bright_Yellow("Spdlog Basic File Sink (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
-		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogFileTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
+	/********************************************  NOTE ********************************************/
+	// It may just have to do with the fact that ArgFormatter has to parse the validity of arguments,
+	// but I should definitely look into what can be done to speed these up a bit.
+	// EDIT: Complex Time Formatting isn't too off the mark though:
+	//             * For the format string of "{:%d%b%y %T}"  :
+	//                - ArgFormattter took ~53ns
+	//                - FormatterArgs struct version took ~32ns
+	// EDIT 2: Given the changes made to allow the complex formatting to occur, the below times have
+	//                 been hit by ~5ns performance penalty which is basically nothing, but is worth noting.
+	/***********************************************************************************************/
+	std::cout << std::format("{:*^95}\n\n", " Benching Time Formatting With Specifiers ");
 
-	std::cout << Tag::Bright_Magenta("File Target Is " + filePercent + " Percent Of Spdlog's File Sink Speed\n");
+	// %a Short Day takes ~25ns
+	// %b Short Month takes ~26ns
+	// %c Time-Date takes ~36ns
+	// %d Padded Day takes ~28ns -> %e being the more or less the same had same u8result
+	// %y Short year takes ~29ns -> %g takes ~30-31ns
+	// %j Day Of Year takes ~29ns
+	// %m Padded Month takes~27ns
+	// %n newline takes ~27ns
+	// %p AMPM takes ~26ns
+	// %r 12hour time takes ~34ns (on laptop) and ~31ns on desktop
+	// %t tab character takes ~26ns(on laptop)
+	// %u ISO day of the week number takes ~25ns
+	// %w decimal weekday takes ~28ns (on laptop) and ~26ns on desktop
+	// %x MM/DD/YY takes ~32ns (on laptop) and ~29ns on desktop
+	// %z UtcOffset takes ~32ns -> first time usage latency somewhat addressed with runtime initialization before formatting occurs
+	// %A Long Weekday takes ~28ns
+	// %B Long Month takes~29ns
+	// %C Truncated Year takes ~30ns
+	// %D is using %z
+	// %F YYYY-MM-DD takes ~35ns
+	// %H 24 Hour takes ~30ns
+	// %I 12 Hour takes ~31ns
+	// %M minute takes ~30ns
+	// %R 24HourMin takes ~33ns
+	// %S Seconds takes ~31ns
+	// %T 24 hour full time takes ~28ns -> adding subsecond precision to the mix drops this to ~72ns
+	// %U Week takes ~29ns
+	// %V Iso Week Number takes ~28ns
+	// %W Iso Week takes ~31ns
+	// %X Same as %T unless localized (localization not implemented yet)
+	// %Y Long Year takes ~32ns
+	// %Z timezone abbreviated takes ~32ns -> first time usage latency somewhat addressed with runtime initialization before formatting occurs
 
-	std::cout << Tag::Bright_Yellow("Roating Target (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
-		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-		  << Tag::Bright_Green(std::to_string(rotateTester.Elapsed_In(time_mode::sec) / iterations) + " s\n");
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			timeStr.clear();
+			serenity::format_to(std::back_inserter(timeStr), loc, formatString, cTime);
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << serenity::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(loc, formatString, cTime));
 
-	std::cout << Tag::Bright_Yellow("Spdlog Rotating File Sink (ST)\n") << Tag::Bright_Cyan("\t- In Microseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::us) / iterations) + " us\n")
-		  << Tag::Bright_Cyan("\t- In Milliseconds:\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::ms) / iterations) + " ms\n")
-		  << Tag::Bright_Cyan("\t- In Seconds:\t\t\t")
-		  << Tag::Bright_Green(std::to_string(spdlogRotateTester.Elapsed_In(time_mode::sec) / iterations) + " s"
-	                                                                                                            "\n");
+	// %a Short Day takes ~15ns
+	// %b Short Month takes ~18ns
+	// %c Time-Date takes ~45ns
+	// %d PaddedDay takes ~14ns
+	//  Formatter structs don't have %g, %j, or %e(as space-padded day) so times are absent here
+	// %m Padded Month takes~18ns
+	// %y Short year takes ~14ns
+	// %n here is custom typing and not newline therefore no valid comparison can be made
+	// %p AMPM takes ~15ns
+	// %r 12hour time takes ~28ns (on laptop)
+	// %t is used as thread id here so no comparison can be made
+	// %u was never imlemented hera
+	// %w decimal weekday takes ~16ns (on laptop)
+	// %z UtcOffset takes ~14ns
+	// Apparently I never implemented %x here, so there's no comparison to be made...
+	// %A Long Weekday takes ~13ns
+	// %B Long Month takes ~15ns
+	// %F YYYY-MM-DD takes ~13ns
+	// %H 24 Hour takes ~15ns
+	// %I 12 Hour takes ~15ns
+	// %M minute takes ~14ns
+	// %R 24HourMin takes ~18ns
+	// %S Seconds takes ~15ns
+	// %T 24 hour full time takes ~14ns -> adding subsecond precision to the mix drops this to ~68ns
+	// %U was never implemented here
+	// %V was never implemented here
+	// %W was never implemented here
+	// %X Same as %T unless localized (localization not implemented yet)
+	// %Y Long Year takes ~15ns
+	// %Z timezone abbreviated takes ~15ns
 
-	std::cout << Tag::Bright_Magenta("Rotating Target Is " + rotatePercent + " Percent Of Spdlog's Rotating File Sink Speed\n");
+	// cTimeTimer.StopWatch_Reset();
+	// for( size_t i { 0 }; i < timeIterations; ++i ) {
+	//		timeStr.clear();
+	//		timeStr.append(structFormatter.FormatUserPattern());
+	//	}
+	// cTimeTimer.StopWatch_Stop();
+	// std::cout << serenity::format("FormatterArgs Struct For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), structFormatter.FormatUserPattern());
 
-	std::cout << "\n";
-	std::cout << Tag::Bright_Yellow("Program Throughput :\n");
-	std::cout << Tag::Bright_Cyan("Color Console Target Throughput:") << "\n  "
-		  << Tag::Bright_Green(SetPrecision(ConsoleThroughput) + " MB/s\n");
-	std::cout << Tag::Bright_Cyan("spdlog Color Sink Throughput:") << "\n  "
-		  << Tag::Bright_Green(SetPrecision(SpdlogConsoleThroughput) + " MB/s\n");
-	std::cout << Tag::Bright_Cyan("File Target Throughput:") << "\n  " << Tag::Bright_Green(SetPrecision(FileThroughput) + " MB/s\n");
-	std::cout << Tag::Bright_Cyan("spdlog File Sink Throughput:") << "\n  "
-		  << Tag::Bright_Green(SetPrecision(SpdlogFileThroughput) + " MB/s\n");
-	std::cout << Tag::Bright_Cyan("Rotating Target Throughput:") << "\n  " << Tag::Bright_Green(SetPrecision(rotatingThroughput) + " MB/s\n");
-	std::cout << Tag::Bright_Cyan("spdlog Rotating File Sink Throughput:") << "\n  "
-		  << Tag::Bright_Green(SetPrecision(SpdlogRotatingThrouput) + " MB/s\n");
-	std::cout << "\n";
+	// standard
+	auto flooredTime { std::chrono::floor<std::chrono::seconds>(localTime) };    // taking this out of the loop (should've been outside the loop anyways)
+	cTimeTimer.StopWatch_Reset();
+	for( size_t i { 0 }; i < timeIterations; ++i ) {
+			timeStr.clear();
+			std::format_to(std::back_inserter(timeStr), loc, formatString, flooredTime);
+		}
+	cTimeTimer.StopWatch_Stop();
+	std::cout << std::format("Standard Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	                         cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::format(loc, formatString, flooredTime));
 
-	// Size of various structs and classes. Not really neccessary, but adds some insight for where I might want to minimize footprints
-	std::cout << Tag::Bright_Yellow("Size of Base Target Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::TargetBase)) + "\tbytes ]\n");
+	// ctime standard
+	// Note: internal buff used was for arithmetic formatting but since it makes sense to reuse it, doubling its usage case
+	// for time formatting as well - hence why the size is larger than it probably needs to be for time related formatting
 
-	std::cout << Tag::Bright_Yellow("Size of ColorConsole Target Class:\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::ColorConsole)) + "\tbytes ]\n");
+	//	constexpr size_t buffSize { 66 };    // mirror size of buff used internally
+	// char buff[ buffSize ] {};
+	// cTimeTimer.StopWatch_Reset();
+	// for( size_t i { 0 }; i < timeIterations; ++i ) {
+	//		std::memset(&buff, 0, buffSize);
+	//		std::strftime(buff, buffSize, strftimeString, &cTime);
+	//	}
+	// cTimeTimer.StopWatch_Stop();
+	// std::cout << serenity::format("Strftime Formatting For Format Specs Took: [{} ns] \nWith Result: {}\n",
+	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::string_view(buff, buffSize));
 
-	std::cout << Tag::Bright_Yellow("Size of File Target Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::FileTarget)) + "\tbytes ]\n");
+	// localTime = tz->to_local(std::chrono::system_clock::now());
+	// std::cout << std::format("{:*^85%d%b%y %T}\n", std::chrono::floor<std::chrono::seconds>(localTime));
 
-	std::cout << Tag::Bright_Yellow("Size of Rotating Target Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::experimental::targets::RotatingTarget)) + "\tbytes ]\n");
+	// *****************************************************************************************************************************
+	// In order of performance of time related formatting from the results of the above loops (fastest to slowest):
+	// FormatterArgs -> ArgFormatter -> strftime -> std::format
+	// *****************************************************************************************************************************
+	// Honestly unsure why std::format is relatively fast with other types of formatting but horrendously slow with time formatting.
+	// To put it in perspective, FormatterArgs is ~1.5x to ~2x faster than ArgFormatter which is ~6x times faster than strftime
+	// which is ~8x faster than std::format... I am going to assume it absolutely has to do with the chrono type checking std::format
+	// does when given a time point as I couldn't get std::format to format a std::tm struct -> I assume if they allowed tm struct
+	// formatting, the times wouldn't be so heavily skewed as they are. When trying "std::format(formatString, cTime);", the compiler
+	// complains about an unknown type and that it can't deduce the type of the tm struct. Same thing  happens when taking a pointer
+	// or a reference to the tm struct -> obviously meaning that the tm struct isn't natively supported here.
+	// *****************************************************************************************************************************
 
-	std::cout << Tag::Bright_Yellow("Size of Message_Info Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Info)) + "\tbytes ]\n");
+	/**************************  From The Benching Using Localized Time Formats (21Aug22) **************************/
+	// Serenity Formatter For Time Specs Took : [1247.8507 ns]
+	// With Result : 218月22 14:04:54
+	// Standard Formatter For Time Specs Took : [3020.7104 ns]
+	// With Result : 218?22 14:04:54
+	/*  The above timings note the huge disparity between std::format in regards to specifically time related formatting */
+	// Note that even taking into account the utf-8 encoding done on serenity's side instead of the glyph replacement the
+	//  standard uses, serenity is still well above 50% faster than the standard in this case.
 
-	std::cout << Tag::Bright_Yellow("Size of Message_Formatter Class:\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Formatter)) + "\tbytes ]\n");
+#endif    // ENABLE_CTIME_SANDBOX
 
-	std::cout << Tag::Bright_Yellow("Size of Message_Time Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::msg_details::Message_Time)) + "\tbytes ]\n");
-
-	std::cout << Tag::Bright_Yellow("Size of BackgroundThread struct:\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::BackgroundThread)) + "\tbytes ]\n");
-
-	std::cout << Tag::Bright_Yellow("Size of FileCache Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::FileCache)) + "\tbytes ]\n");
-
-	std::cout << Tag::Bright_Yellow("Size of Flush_Policy Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::experimental::Flush_Policy)) + "\tbytes ]\n");
-
-	std::cout << Tag::Bright_Yellow("Size of RotateSettings Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::experimental::RotateSettings)) + "\tbytes ]\n");
-
-	std::cout << Tag::Bright_Yellow("Size of BaseTargetHelper Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::helpers::BaseTargetHelper)) + "\tbytes ]\n");
-
-	std::cout << Tag::Bright_Yellow("Size of FileHelper Class:\t\t")
-		  << Tag::Bright_Green("[ " + std::to_string(sizeof(serenity::targets::helpers::FileHelper)) + "\tbytes ]\n");
-
-	std::cout << Tag::Yellow("***************************************************"
-	                         "************************************"
-	                         "\n");
-	std::cout << Tag::Yellow("***************************************************"
-	                         "************************************"
-	                         "\n");
-	std::cout << Tag::Yellow("***************************************************"
-	                         "************************************"
-	                         "\n\n");
-
-#endif    // INSTRUMENTATION_ENABLED
+#if ENABLE_MEMORY_LEAK_DETECTION
+	_CrtDumpMemoryLeaks();
+#endif    //
 }
