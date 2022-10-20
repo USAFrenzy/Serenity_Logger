@@ -35,7 +35,7 @@ option(
 option(
     BUILD_ALL
     "Build Benchmarking, Testing, Demo, and Sandbox Projects Alongside The Library"
-    ON
+    OFF
 )
 
 add_subdirectory(Serenity)
