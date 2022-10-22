@@ -4,7 +4,8 @@ set(MESSAGE_DETAILS_SOURCE_FILES
     "src/MessageDetails/Message_Info.cpp"
     "src/MessageDetails/Message_Time.cpp"
     "src/MessageDetails/Message_Formatter.cpp"
-    "src/MessageDetails/FormatterArgs.cpp" # Remove When ArgFormatter Project Is Added And Custom Formatter is Setup For Other Flags
+    "src/MessageDetails/FormatterArgs.cpp" # Remove When ArgFormatter Project Is Added And Custom
+                                           # Formatter is Setup For Other Flags
     "src/MessageDetails/FlushPolicy.cpp"
     "src/MessageDetails/ArgFormatter.cpp" # Remove When ArgFormatter Project Is Added
 )
@@ -29,12 +30,16 @@ set(MESSAGE_DETAILS_HEADER_FILES
     "include/serenity/MessageDetails/Message_Time.h"
     "include/serenity/MessageDetails/Message_Formatter.h"
     "include/serenity/MessageDetails/Message_Formatter_Impl.h"
-    "include/serenity/MessageDetails/FormatterArgs.h" # Remove When ArgFormatter Project Is Added And Custom Formatter is Setup For Other Flags
+    "include/serenity/MessageDetails/FormatterArgs.h" # Remove When ArgFormatter Project Is Added
+                                                      # And Custom Formatter is Setup For Other
+                                                      # Flags
     "include/serenity/MessageDetails/FlushPolicy.h"
     "include/serenity//MessageDetails/ArgFormatter.h" # Remove When ArgFormatter Project Is Added
-    "include/serenity//MessageDetails/ArgFormatterImpl.h" # Remove When ArgFormatter Project Is Added
+    "include/serenity//MessageDetails/ArgFormatterImpl.h" # Remove When ArgFormatter Project Is
+                                                          # Added
     "include/serenity//MessageDetails/ArgContainer.h" # Remove When ArgFormatter Project Is Added
-    "include/serenity//MessageDetails/ArgContainerImpl.h" # Remove When ArgFormatter Project Is Added
+    "include/serenity//MessageDetails/ArgContainerImpl.h" # Remove When ArgFormatter Project Is
+                                                          # Added
 )
 
 set(TARGETS_HEADER_FILES
@@ -55,7 +60,11 @@ set(UTILITIES_HEADER_FILES
 
 set(COLOR_HEADER_FILES "include/serenity/Color/Color.h")
 
-set(MISC_HEADER_FILES "include/serenity/Version.h" "include/serenity/Common.h" "include/serenity/Defines.h")
+set(MISC_HEADER_FILES
+    "include/serenity/Version.h"
+    "include/serenity/Common.h"
+    "include/serenity/Defines.h"
+)
 
 set(SERENITY_SOURCE_FILES
     ${MESSAGE_DETAILS_SOURCE_FILES}
@@ -115,4 +124,9 @@ set_target_properties(
                DEBUG_POSTFIX "_d"
 )
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC ${FORMATTER_BACKEND} ${SILENCE_NATIVE_WARNING})
+target_compile_definitions(
+    ${PROJECT_NAME}
+    PUBLIC ${FORMATTER_BACKEND}
+           ${SILENCE_NATIVE_WARNING}
+           ${UTF_UTILS}
+)

@@ -27,9 +27,9 @@
 	#include <fmt/format.h>
 	#define VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
 #elif defined USE_BUILT_IN_FMT
-	// #include <ArgFormatter/ArgFormatter.h>
-#include <serenity/MessageDetails/ArgFormatter.h>
-	#define VFORMAT_TO(cont, loc, msg, ...) /*formatter*/serenity::format_to(std::back_inserter(cont), loc, msg, __VA_ARGS__)
+// #include <ArgFormatter/ArgFormatter.h>
+	#include <serenity/MessageDetails/ArgFormatter.h>
+	#define VFORMAT_TO(cont, loc, msg, ...) /*formatter*/ serenity::format_to(std::back_inserter(cont), loc, msg, __VA_ARGS__)
 #else
 	#define VFORMAT_TO(cont, loc, msg, ...) void(0)
 	#ifdef WINDOWS_PLATFORM

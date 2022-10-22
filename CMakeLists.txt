@@ -3,8 +3,9 @@ cmake_minimum_required(VERSION 3.14)
 project(Serenity_Sandbox)
 
 include(cmake/PreventInSrcBuilds.cmake)
-
+include(cmake/CPM.cmake)
 include(cmake/Incremental_Build.cmake)
+
 get_and_increment_version()
 message("-- ${PROJECT_NAME} Building Version: ${SERENITY_FULL_VERSION}")
 
@@ -72,30 +73,33 @@ elseif (
     AND NOT USE_STDFMT
     AND NOT USE_NATIVEFMT
 )
-    # cpmaddpackage(
-    #     NAME
-    #     fmtlib
-    #     GITHUB_REPOSITORY
-    #     fmtlib/fmt
-    #     VERSION
-    #     9.1.0
-    # )
+    # cpmaddpackage( NAME fmtlib GITHUB_REPOSITORY fmtlib/fmt VERSION 9.1.0 )
     set(FORMATTER_BACKEND USE_FMT_LIB)
 elseif (
     USE_NATIVEFMT
     AND NOT USE_STDFMT
     AND NOT USEFMTLIB
 )
-    # cpmaddpackage(
-    #     NAME
-    #     argfmt
-    #     GITHUB_REPOSITORY
-    #     USAFrenzy/ArgFormatter
-    #     VERSION
-    #     1.0.0
-    #     OPTIONS
-    #     "BUILD_COMPILED_LIB On"
-    # )
+    # cpmaddpackage( NAME argfmt GITHUB_REPOSITORY USAFrenzy/ArgFormatter VERSION 1.0.0 OPTIONS
+    # "BUILD_COMPILED_LIB On" )
+    set(VENDOR_LOCATION ${CMAKE_BINARY_DIR}/_deps/)
+
+    if (NOT
+        EXISTS
+        ${VENDOR_FILE_LOCATION}/argfmt-src
+    )
+        cpmaddpackage(
+            NAME
+            argfmt
+            GITHUB_REPOSITORY
+            USAFrenzy/ArgFormatter
+            VERSION
+            1.0.0
+            OPTIONS
+            "BUILD_COMPILED_LIB OFF"
+        )
+        include_directories(${VENDOR_LOCATION}/argfmt-src/include)
+    endif ()
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
 elseif (
     NOT USE_NATIVEFMT
@@ -111,6 +115,24 @@ else ()
         FATAL_ERROR
             "Multiple Formatting Options Are Enabled - Please Only Enable One Formatting Option And Re-run The Build Command. CMAKE Will Now Exit The Build Process."
     )
+endif ()
+
+if (NOT USE_NATIVEFMT)
+    set(UTF_UTILS USE_INDEPENDANT_UTF_UTILS)
+    if (NOT
+        EXISTS
+        ${VENDOR_FILE_LOCATION}/utfutils-src
+    )
+        cpmaddpackage(
+            NAME
+            utfutils
+            GITHUB_REPOSITORY
+            USAFrenzy/UTF-Utils
+            VERSION
+            1.0.0
+        )
+        include_directories(${VENDOR_FILE_LOCATION}/utfutils-src/include)
+    endif ()
 endif ()
 
 if (DISABLE_NATIVE_WARNING)
