@@ -38,6 +38,85 @@ option(
     OFF
 )
 
+option(
+    USE_STDFMT
+    "Build The Library With The C++20 <format> Header Instead Of The Native Formatter Provided By ArgFormatter"
+    OFF
+)
+
+option(
+    USE_FMTLIB
+    "Build The Library With The fmtlib Library By Victor Zverovich Instead Of The Native Formatter Provided By ArgFormatter"
+    OFF
+)
+
+option(
+    USE_NATIVEFMT
+    "Build The Library With The Built-In ArgFormatter Library"
+    ON
+)
+
+option(
+    DISABLE_NATIVE_WARNING
+    "Disable The Info Message On Compilation Stating That The Built-In Formatter Is Currently Enabled"
+    OFF
+)
+
+if (USE_STDFMT
+    AND NOT USE_FMTLIB
+    AND NOT USE_NATIVEFMT
+)
+    set(FORMATTER_BACKEND USE_STD_FMT)
+elseif (
+    USE_FMTLIB
+    AND NOT USE_STDFMT
+    AND NOT USE_NATIVEFMT
+)
+    # cpmaddpackage(
+    #     NAME
+    #     fmtlib
+    #     GITHUB_REPOSITORY
+    #     fmtlib/fmt
+    #     VERSION
+    #     9.1.0
+    # )
+    set(FORMATTER_BACKEND USE_FMT_LIB)
+elseif (
+    USE_NATIVEFMT
+    AND NOT USE_STDFMT
+    AND NOT USEFMTLIB
+)
+    # cpmaddpackage(
+    #     NAME
+    #     argfmt
+    #     GITHUB_REPOSITORY
+    #     USAFrenzy/ArgFormatter
+    #     VERSION
+    #     1.0.0
+    #     OPTIONS
+    #     "BUILD_COMPILED_LIB On"
+    # )
+    set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
+elseif (
+    NOT USE_NATIVEFMT
+    AND NOT USE_STDFMT
+    AND NOT USEFMTLIB
+)
+    message(
+        FATAL_ERROR
+            "No Formatting Options Are Enabled - Please Enable One Formatting Option And Re-run The Build Command. CMAKE Will Now Exit The Build Process."
+    )
+else ()
+    message(
+        FATAL_ERROR
+            "Multiple Formatting Options Are Enabled - Please Only Enable One Formatting Option And Re-run The Build Command. CMAKE Will Now Exit The Build Process."
+    )
+endif ()
+
+if (DISABLE_NATIVE_WARNING)
+    set(SILENCE_NATIVE_WARNING DISABLE_CFMT_WARN)
+endif ()
+
 add_subdirectory(Serenity)
 
 if (BUILD_DEMOS)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <serenity/Utilities/UtfHelper.h>
+#include <serenity/Defines.h>
 
 #include <source_location>
 #include <string_view>
@@ -11,107 +11,7 @@
 #include <mutex>
 #include <thread>
 
-#ifdef DOXYGEN_DOCUMENTATION
-	/// @brief If _WIN32 is defined, then this is also defined.
-    /// @details If this macro is defined, includes the Windows.h and io.h headers
-    /// as well as defines ISATTY to _isatty and FILENO to _fileno. If
-    /// ENABLE_VIRTUAL_TERMINAL_PROCESSING is not defined, also defines this macro.
-	#define WINDOWS_PLATFORM
-	/// @brief If __APPLE__ or __MACH__ are defined, then this macro is also
-    /// defined.
-    /// @details If this macro is defined, includes the unistd.h header and defines
-    /// ISATTY to isatty and FILENO to fileno
-	#define MAC_PLATFORM
-#endif
-
-#ifdef _WIN32
-	#define WINDOWS_PLATFORM
-#elif defined(__APPLE__) || defined(__MACH__)
-	#define MAC_PLATFORM
-#else
-	#define LINUX_PLATFORM
-#endif
-
-#if defined USE_STD_FORMAT && defined WINDOWS_PLATFORM
-	#if __cpp_lib_format
-		#include <format>
-	#elif(_MSC_VER < 1929)
-		#error "MSVC's Implementation Of <format> Not Supported On This Compiler Version. Please Use A Newer MSVC Compiler Version (VS 2019 v16.10/ VS 2022 v17.0 Or Later)'"
-	#elif(_MSVC_LANG < 202002L)
-		#error "MSVC's Implementation Of <format> Not Fully Implemented Prior To C++20. Please Use The  C++ Latest Compiler Flag'"
-	#endif
-	#if _MSC_VER >= 1930 && (_MSVC_LANG >= 202002L)
-		#define CONTEXT                         std::back_insert_iterator<std::basic_string<char>>
-		#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to<CONTEXT>(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
-	#elif(_MSC_VER >= 1929) && (_MSVC_LANG >= 202002L)
-		#if _MSC_FULL_VER >= 192930145    // MSVC build that backported fixes for <format> under C++20 switch instead of C++ latest
-			#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
-		#else
-			#define CONTEXT                         std::basic_format_context<std::back_insert_iterator<std::basic_string<char>>, char>
-			#define VFORMAT_TO(cont, loc, msg, ...) std::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args<CONTEXT>(__VA_ARGS__))
-		#endif
-	#else
-		#error "Unkown Error: Compiler And Language Standard Being Used Should Include <format> Header, But No <format> Header Was Detected"
-	#endif
-#elif defined USE_FMTLIB
-	#include <fmt/format.h>
-	#define VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
-#else
-	#include <serenity/MessageDetails/ArgFormatter.h>
-	#define VFORMAT_TO(cont, loc, msg, ...) serenity::format_to(std::back_inserter(cont), loc, msg, __VA_ARGS__)
-	// Only used at the moment to issue a warning about custom formatting support and how to disable that message
-	#define BUILT_IN_FORMATTING_ENABLED
-#endif
-
-#ifdef WINDOWS_PLATFORM
-	#ifndef DOXYGEN_DOCUMENTATION
-		#define WIN32_LEAN_AND_MEAN
-		#define VC_EXTRALEAN
-	#endif    // !DOXYGEN_DOCUMENTATION
-
-	#include <Windows.h>
-	#include <io.h>
-
-	#define ISATTY _isatty
-	#define FILENO _fileno
-[[noreturn]] __forceinline void unreachable() {
-	__assume(false);
-}
-	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
-		#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
-	#endif
-	#define LOCAL_TIME(tmStruct, timeT) localtime_s(&tmStruct, &timeT)
-	#define GM_TIME(tmStruct, timeT)    gmtime_s(&tmStruct, &timeT)
-#else
-	#include <unistd.h>
-	#define ISATTY                      isatty
-	#define FILENO                      fileno
-[[noreturn]] inline __attribute__((always_inline)) void unreachable() {
-	__builtin_unreachable();
-}
-	#define LOCAL_TIME(tmStruct, timeT) localtime_r(&tmStruct, &timeT)
-	#define GM_TIME(tmStruct, timeT)    gmtime_r(&tmStruct, &timeT)
-#endif
-
-#define KB                  (1024)
-#define MB                  (1024 * KB)
-#define GB                  (1024 * MB)
-#define DEFAULT_BUFFER_SIZE (64 * KB)    // used for file buffers
-//#define SERENITY_ARG_BUFFER_SIZE static_cast<size_t>(24)    // used for lazy parsing
-
-#ifdef _DEBUG
-	#ifndef SE_ASSERT
-		#define SE_ASSERT(condition, message)                                                                                                                       \
-			if( !(condition) ) {                                                                                                                                    \
-					fprintf(stderr, "Assertion Failed: (%s) |File: %s | Line: %i\nMessage:%s\n", #condition, __FILE__, __LINE__, message);                          \
-					abort();                                                                                                                                        \
-			}
-	#endif
-#else
-	#ifndef SE_ASSERT
-		#define SE_ASSERT(condition, message) void(0)
-	#endif
-#endif
+#include <serenity/Utilities/FormatBackend.h>
 
 namespace serenity {
 
