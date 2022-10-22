@@ -82,7 +82,7 @@ elseif (
 )
     # cpmaddpackage( NAME argfmt GITHUB_REPOSITORY USAFrenzy/ArgFormatter VERSION 1.0.0 OPTIONS
     # "BUILD_COMPILED_LIB On" )
-    set(VENDOR_LOCATION ${CMAKE_BINARY_DIR}/_deps/)
+    set(VENDOR_LOCATION ${CMAKE_BINARY_DIR}/_deps)
 
     if (NOT
         EXISTS
