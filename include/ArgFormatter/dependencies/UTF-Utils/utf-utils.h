@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace utf_helper {
+namespace utf_utils {
 
 #ifdef _DEBUG
 	#ifndef UTF_ASSERT
@@ -20,10 +20,9 @@ namespace utf_helper {
 	#endif
 #endif
 
-	// Stick to using wchar_t here and deal with UTF-16/UTF-32 decoding to UTF-8 encoding. If the standard changes to
-	// require specializations for char16_t & char32_t for stringstreams with time formatting, then this SHOULD also change
-	using se_wchar                  = wchar_t;
-	using se_wstring                = std::basic_string<se_wchar>;
+	using u_wchar                   = wchar_t;
+	using u_wstring                 = std::basic_string<u_wchar>;
+
 	template<typename T> using Type = std::remove_cvref_t<T>;
 	template<typename T> using Ref  = std::add_lvalue_reference_t<Type<T>>;
 
@@ -80,7 +79,7 @@ namespace utf_helper {
 	}    // namespace utf_masks
 
 	namespace utf_constraints {
-		/***************************************** convenience usage for template constraints for utf_helper *****************************************/
+		/***************************************** convenience usage for template constraints for utf_utils *****************************************/
 
 		// support is given for all but char8_t until that's ironed out by the standard more
 		template<typename T> struct is_char_type;
@@ -191,9 +190,8 @@ namespace utf_helper {
 		// concept constraints that use the above individual constraints
 		template<typename StringishType>
 		concept ConvertibleToSuppSV = requires {
-			// I don't support char8_t here so I need to check that char Type is supported instead and then make sure that UTF8_LEAD_MASK_SEQUENCE_3 string_view is
-			// constructible in the case that UTF8_LEAD_MASK_SEQUENCE_3 user passes UTF8_LEAD_MASK_SEQUENCE_3 char-like Type that aliases UTF8_LEAD_MASK_SEQUENCE_3
-			// supported char Type but may or may not be constructible as UTF8_LEAD_MASK_SEQUENCE_3 string view
+			// I don't support char8_t here so I need to check that char type is supported instead and then make sure that
+			// the string_view is constructible in the case that the user passes a char-like type that aliases char8_t
 			is_char_type_v<typename Type<StringishType>::value_type> &&
 			(is_string_view_v<StringishType> ||
 			 std::is_convertible_v<std::basic_string<typename Type<StringishType>::value_type>, std::basic_string_view<typename Type<StringishType>::value_type>>);
@@ -255,7 +253,7 @@ namespace utf_helper {
 	requires utf_constraints::IsStringType<StringishType>
 	static constexpr size_t ReserveLengthForU8(StringishType&& s) {
 		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		                             "'https://github.com/USAFrenzy/UTF-Utils/issues'");
 		using namespace utf_masks;
 		using namespace utf_bounds;
 		using CharType = typename Type<StringishType>::value_type;
@@ -264,7 +262,7 @@ namespace utf_helper {
 		int pos { -1 };
 		auto size { s.size() };
 
-		if constexpr( std::is_same_v<CharType, char16_t> || (std::is_same_v<CharType, wchar_t> && sizeof(se_wchar) == 2) ) {
+		if constexpr( std::is_same_v<CharType, char16_t> || (std::is_same_v<CharType, wchar_t> && sizeof(u_wchar) == 2) ) {
 				for( ;; ) {
 						if( ++pos >= size ) return reserveSize;
 						if( auto& ch { s[ pos ] }; ch <= UTF8_MAX_1 ) {
@@ -297,7 +295,7 @@ namespace utf_helper {
 								continue;
 							}
 					}
-		} else if constexpr( std::is_same_v<CharType, char32_t> || (std::is_same_v<CharType, wchar_t> && sizeof(se_wchar) == 4) ) {
+		} else if constexpr( std::is_same_v<CharType, char32_t> || (std::is_same_v<CharType, wchar_t> && sizeof(u_wchar) == 4) ) {
 				for( ;; ) {
 						if( ++pos >= size ) return reserveSize;
 						if( auto& ch { s[ pos ] }; ch <= UTF8_MAX_1 ) {
@@ -443,7 +441,7 @@ namespace utf_helper {
 	requires utf_constraints::IsSupportedUSource<Source>
 	constexpr bom_type DetectBom(Source&& src) {
 		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		                             "'https://github.com/USAFrenzy/UTF-Utils/issues'");
 		using namespace utf_constraints;
 		using namespace utf_boms;
 		using enum bom_type;
@@ -462,15 +460,13 @@ namespace utf_helper {
 			}
 	}
 
-	// NOTE:  Decided to handle wchar_t in these functions so that it's more convenient to call these functions without dealing with the non-standard wchar_t
-	// sizes NOTE: When everything is done and works as intended, may move the *Impl versions directly into the functions to avoid the unneccessary string_view
-	// conversions
-
+	// NOTE: Decided to handle wchar_t in these functions so that it's more convenient to call these functions
+	//       without dealing with the non-standard wchar_t sizes if wchar_t happens to be used as a paramater base.
 	template<typename Source, typename Buffer, typename Pos = size_t>
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U16ToU8(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
 		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		                             "'https://github.com/USAFrenzy/UTF-Utils/issues'");
 		using CharType = typename Type<Buffer>::value_type;
 		using RvRef    = std::add_rvalue_reference_t<CharType>;
 		using BRef     = Ref<Buffer>;
@@ -484,8 +480,8 @@ namespace utf_helper {
 				auto size { wstr.size() };
 				auto rSize { ReserveLengthForU8(wstr) };
 				if( buff.capacity() < rSize ) buff.reserve(rSize);
-				// This is really close to U32ToU8()'s implementation -> only difference being how the 3-byte and 4-byte sequence is encoded due to surrogate
-				// pairs
+				// This is really close to U32ToU8()'s implementation -> only difference being
+				// how the 3-byte and 4-byte sequence is encoded due to surrogate pairs
 				for( ;; ) {
 						if( ++pos >= size ) {
 								IsValidU8(std::forward<BRef>(BRef(buff)));
@@ -549,7 +545,7 @@ namespace utf_helper {
 	requires utf_constraints::IsSupportedU16Source<Source> && utf_constraints::IsSupportedU32Container<Buffer>
 	constexpr void U16ToU32(Source&& wstr, Buffer& buff, Pos&& startingPos = 0) {
 		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		                             "'https://github.com/USAFrenzy/UTF-Utils/issues'");
 		using CharType = typename Type<Buffer>::value_type;
 		using BRef     = Ref<Buffer>;
 		using namespace utf_bounds;
@@ -561,7 +557,7 @@ namespace utf_helper {
 				int pos { startingPos == 0 ? -1 : static_cast<int>(startingPos) - 1 };
 				auto size { wstr.size() };
 				if( buff.capacity() < size ) buff.reserve(size);
-				if constexpr( sizeof(se_wchar) == 2 ) {
+				if constexpr( sizeof(u_wchar) == 2 ) {
 						for( ;; ) {
 								if( ++pos >= size ) {
 										if constexpr( std::is_lvalue_reference_v<Pos> ) {
@@ -603,7 +599,7 @@ namespace utf_helper {
 										continue;
 									}
 							}
-				} else {    // se_wchar/wchar_t is 4 bytes long so just cast to char32_t instead
+				} else {    // u_wchar/wchar_t is 4 bytes long so just cast to char32_t instead
 						for( ;; ) {
 								if( ++pos >= size ) {
 										if constexpr( std::is_lvalue_reference_v<Pos> ) {
@@ -621,7 +617,7 @@ namespace utf_helper {
 	requires utf_constraints::IsSupportedU32Source<Source> && utf_constraints::IsSupportedU8Container<Buffer>
 	constexpr void U32ToU8(Source&& sv, Buffer& buff, Pos&& startingPos = 0) {
 		UTF_ASSERT(IsLittleEndian(), "Big Endian Format Is Currently Unsupported. If Support Is Neccessary, Please Open A New Issue At "
-		                             "'https://github.com/USAFrenzy/Serenity_Logger/issues' And/Or Define either USE_STD_FORMAT Or USE_FMTLIB instead.");
+		                             "'https://github.com/USAFrenzy/UTF-Utils/issues'");
 		using CharType = typename Type<Buffer>::value_type;
 		using RvRef    = std::add_rvalue_reference_t<CharType>;
 		using BRef     = Ref<Buffer>;
@@ -842,4 +838,4 @@ namespace utf_helper {
 			}
 	}
 
-}    // namespace utf_helper
+}    // namespace utf_utils

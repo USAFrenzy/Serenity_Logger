@@ -175,7 +175,7 @@ namespace serenity::experimental::targets {
 				lock.lock();
 		}
 		// make copy for old file conversion and cache new values
-		if( !utf_helper::IsValidU8(newFileName) ) {
+		if( !utf_utils::IsValidU8(newFileName) ) {
 				throw std::runtime_error("Error In File Name For Rotating Target Function Rename(): Invalid UTF-8 Sequence Detected - A Proper File Name Cannot Be "
 				                         "Constructed");
 		}
@@ -459,7 +459,7 @@ namespace serenity::experimental::targets {
 						// This tidbit is here to make sure a month isn't accidentally skipped
 						if( numberOfDays < rotationDay ) {
 								rotationDay = numberOfDays;
-								if( (cache.tm_mon == serenity::SERENITY_LUTS::FEBRUARY) && (MsgInfo()->TimeDetails().isLeapYear()) ) {
+								if( (cache.tm_mon == SERENITY_LUTS::FEBRUARY) && (MsgInfo()->TimeDetails().isLeapYear()) ) {
 										rotationDay = 29;
 								}
 						}

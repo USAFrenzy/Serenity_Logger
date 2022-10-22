@@ -4,10 +4,9 @@ set(MESSAGE_DETAILS_SOURCE_FILES
     "src/MessageDetails/Message_Info.cpp"
     "src/MessageDetails/Message_Time.cpp"
     "src/MessageDetails/Message_Formatter.cpp"
-    "src/MessageDetails/FormatterArgs.cpp" # Remove When ArgFormatter Project Is Added And Custom
-                                           # Formatter is Setup For Other Flags
     "src/MessageDetails/FlushPolicy.cpp"
-    "src/MessageDetails/ArgFormatter.cpp" # Remove When ArgFormatter Project Is Added
+    # Remove When ArgFormatter Project Is Added And Custom Formatter is Setup For Other Flags
+    "src/MessageDetails/FormatterArgs.cpp"
 )
 
 set(TARGETS_SOURCE_FILES
@@ -30,16 +29,9 @@ set(MESSAGE_DETAILS_HEADER_FILES
     "include/serenity/MessageDetails/Message_Time.h"
     "include/serenity/MessageDetails/Message_Formatter.h"
     "include/serenity/MessageDetails/Message_Formatter_Impl.h"
-    "include/serenity/MessageDetails/FormatterArgs.h" # Remove When ArgFormatter Project Is Added
-                                                      # And Custom Formatter is Setup For Other
-                                                      # Flags
     "include/serenity/MessageDetails/FlushPolicy.h"
-    "include/serenity//MessageDetails/ArgFormatter.h" # Remove When ArgFormatter Project Is Added
-    "include/serenity//MessageDetails/ArgFormatterImpl.h" # Remove When ArgFormatter Project Is
-                                                          # Added
-    "include/serenity//MessageDetails/ArgContainer.h" # Remove When ArgFormatter Project Is Added
-    "include/serenity//MessageDetails/ArgContainerImpl.h" # Remove When ArgFormatter Project Is
-                                                          # Added
+    # Remove When ArgFormatter Project Is Added And Custom Formatter is Setup For Other Flags
+    "include/serenity/MessageDetails/FormatterArgs.h"
 )
 
 set(TARGETS_HEADER_FILES
@@ -54,7 +46,6 @@ set(UTILITIES_HEADER_FILES
     "include/serenity/Utilities/Utilities.h"
     "include/serenity/Utilities/FileHelper.h"
     "include/serenity/Utilities/TargetHelper.h"
-    "include/serenity/Utilities/UtfHelper.h" # Remove When UTF-Utils Project Is Added
     "include/serenity/Utilities/FormatBackend.h"
 )
 

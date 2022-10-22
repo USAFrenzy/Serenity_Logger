@@ -23,7 +23,7 @@
 #include <iostream>
 
 #if PARSE_TESTING
-	#include <serenity/MessageDetails/ArgFormatter.h>
+	#include <ArgFormatter/ArgFormatter.h>
 	#include <format>
 	#define ENABLE_PARSE_SECTION
 	// Since the inclusion of USE_STD_FORMAT and USE_FMTLIB , need to force this to be MSVC for testing purposes atm
@@ -64,14 +64,14 @@ struct TestPoint
 
 // Test for specialization
 // The requirement mine has is that both parse and format must be at least defined
-template<> struct serenity::CustomFormatter<TestPoint>
+template<> struct formatter::CustomFormatter<TestPoint>
 {
 	constexpr void Parse(std::string_view parse) {
 		return;
 	}
 
 	template<typename ContainerCtx> constexpr auto Format(const TestPoint& p, ContainerCtx& ctx) const {
-		serenity::format_to(std::back_inserter(ctx), "({},{})", p.x, p.y);
+		formatter::format_to(std::back_inserter(ctx), "({},{})", p.x, p.y);
 	}
 };
 
@@ -98,15 +98,15 @@ int main() {
 
 #if GENERAL_SANDBOX
 
-	serenity::targets::ColorConsole C;
-	serenity::targets::FileTarget testFile;
+	formatter::targets::ColorConsole C;
+	formatter::targets::FileTarget testFile;
 
 	#ifdef ENABLE_ROTATION_SECTION
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Daily/DailyLog.txt";
 	#else
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Rotating_Log.txt";
 	#endif    // ENABLE_ROTATION_SECTION
-	serenity::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", dailyFilePath.string(), true);
+	formatter::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", dailyFilePath.string(), true);
 
 #endif    //  GENERAL_SANDBOX
 
@@ -264,7 +264,7 @@ int main() {
 #endif    // !ENABLE_ROTATION_SECTION
 
 #ifdef ENABLE_PARSE_SECTION
-	using namespace serenity::arg_formatter;
+	using namespace formatter::arg_formatter;
 
 	#if ENABLE_PARSE_BENCHING
 	constexpr std::string_view ParseFormatStringString { "\n{0:*^#{5}X}\n{1:*^#{5}x}\n{2:*^#{5}a}\n{3:*^#{5}E}\n{4:*^#{5}b}\n{5:*^#{5}B}\n{6:s}" };
@@ -293,7 +293,7 @@ int main() {
 	std::vector<char> finalStr {};
 		#endif
 
-	serenity::targets::ColorConsole console("", "%+");
+	formatter::targets::ColorConsole console("", "%+");
 	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
 
 	for( int i { 0 }; i < 3; ++i ) {
@@ -396,15 +396,15 @@ int main() {
 	float seTotal {}, stdTotal {};
 
 	for( int i { 0 }; i < repeatTest; ++i ) {
-			std::cout << serenity::format("{:*^55}\n", (loopStr + std::to_string(i + 1) + "]"));
+			std::cout << formatter::format("{:*^55}\n", (loopStr + std::to_string(i + 1) + "]"));
 			cTimer.StopWatch_Reset();
 			for( size_t i { 0 }; i < iterations; ++i ) {
-					auto _ { formatter.se_format("{}", test) };
+					auto _ { formatter.format("{}", test) };
 				}
 			cTimer.StopWatch_Stop();
 			auto serenityElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
 			seTotal += serenityElapsed;
-			std::cout << serenity::format("Serenity Took An Average Of [{} ns]\nWith Result: {}\n", serenityElapsed, test);
+			std::cout << formatter::format("Serenity Took An Average Of [{} ns]\nWith Result: {}\n", serenityElapsed, test);
 			cTimer.StopWatch_Reset();
 			for( size_t i { 0 }; i < iterations; ++i ) {
 					auto _ { std::format("{}", test) };
@@ -413,7 +413,7 @@ int main() {
 			auto standardElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
 			stdTotal += standardElapsed;
 			std::cout << std::format("Standard Took An Average Of [{} ns]\nWith Result: {}\n", standardElapsed, test);
-			std::cout << serenity::format("{:*55}\n\n");
+			std::cout << formatter::format("{:*55}\n\n");
 		}
 
 	/*************************** Current Stats Ran As Of  21Aug22 ***************************/
@@ -425,11 +425,11 @@ int main() {
 
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };
-	std::cout << serenity::format("{:*^55}\n", sv);
-	std::cout << serenity::format("Serenity Total Average Among Loops [{} ns]\n", seAvg);
-	std::cout << serenity::format("Standard Total Average Among Loops [{} ns]\n", stdAvg);
-	std::cout << serenity::format("Serenity Is {}% Faster Than The Standard\n", SetPrecision((std::abs(stdAvg - seAvg) / stdAvg) * 100));
-	std::cout << serenity::format("{:*55}\n\n");
+	std::cout << formatter::format("{:*^55}\n", sv);
+	std::cout << formatter::format("Serenity Total Average Among Loops [{} ns]\n", seAvg);
+	std::cout << formatter::format("Standard Total Average Among Loops [{} ns]\n", stdAvg);
+	std::cout << formatter::format("Serenity Is {}% Faster Than The Standard\n", SetPrecision((std::abs(stdAvg - seAvg) / stdAvg) * 100));
+	std::cout << formatter::format("{:*55}\n\n");
 
 	#endif
 #endif    // ENABLE_PARSE_SECTION
@@ -449,11 +449,11 @@ int main() {
 	serenity::msg_details::Message_Formatter::Formatters structFormatter {};
 	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
 	info.TimeDetails().UpdateCache(std::chrono::system_clock::now());
-	structFormatter.Emplace_Back(std::make_unique<Format_Arg_d>(info));
-	structFormatter.Emplace_Back(std::make_unique<Format_Arg_b>(info));
-	structFormatter.Emplace_Back(std::make_unique<Format_Arg_y>(info));
-	structFormatter.Emplace_Back(std::make_unique<Format_Arg_Char>(std::string_view(" ")));
-	structFormatter.Emplace_Back(std::make_unique<Format_Arg_T>(info));
+	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_d>(info));
+	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_b>(info));
+	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_y>(info));
+	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_Char>(std::string_view(" ")));
+	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_T>(info));
 
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
@@ -475,8 +475,8 @@ int main() {
 	std::u16string u16Str;
 	std::u32string u32Str;
 	for( auto& ch: u8view ) u8Str += static_cast<char>(ch);    // need this as iIdon't currently support char8_t
-	utf_helper::U8ToU16(u8Str, u16Str);
-	utf_helper::U8ToU32(u8Str, u32Str);
+	utf_utils::U8ToU16(u8Str, u16Str);
+	utf_utils::U8ToU32(u8Str, u32Str);
 
 	std::string u8result;
 	std::u16string u16Result;
@@ -484,33 +484,33 @@ int main() {
 
 	/************************************  Validating Conversions are working correctly before testing timings ************************************/
 	std::cout << "Verifying Conversion Functions Are All Working As Intended...\n";
-	utf_helper::U16ToU8(u16Str, u8result);
-	utf_helper::U8ToU16(u8result, u16Result);
+	utf_utils::U16ToU8(u16Str, u8result);
+	utf_utils::U8ToU16(u8result, u16Result);
 	std::cout << ((u16Str == u16Result) ? "\tLossless Conversion From UTF-16 -> UTF-8 -> UTF-16  Complete\n"
 	                                    : "\tData Corruption In Conversion From UTF-16 -> UTF-8 -> UTF-16 Detected\n");
 	u8result.clear();
-	utf_helper::U32ToU8(u32Str, u8result);
-	utf_helper::U8ToU32(u8result, u32Result);
+	utf_utils::U32ToU8(u32Str, u8result);
+	utf_utils::U8ToU32(u8result, u32Result);
 	std::cout << ((u32Str == u32Result) ? "\tLossless Conversion  From  UTF-32 -> UTF-8 -> UTF-32 Complete\n"
 	                                    : "\tData Corruption In Conversion From UTF-32 -> UTF-8 -> UTF-32 Detected\n");
 	u8result.clear();
 
 	u16Result.clear();
 	u32Result.clear();
-	utf_helper::U32ToU16(u32Str, u16Result);
-	utf_helper::U16ToU32(u16Result, u32Result);
+	utf_utils::U32ToU16(u32Str, u16Result);
+	utf_utils::U16ToU32(u16Result, u32Result);
 	std::cout << ((u32Str == u32Result) ? "\tLossless Conversion  From  UTF-32 -> UTF-16 -> UTF-32 Complete\n"
 	                                    : "\tData Corruption In Conversion From UTF-32 -> UTF-16 -> UTF-32 Detected\n");
 
 	u8result.clear();
 	u16Result.clear();
 	u32Result.clear();
-	utf_helper::U32ToU16(u32Str, u16Result);
-	utf_helper::U16ToU8(u16Result, u8result);
+	utf_utils::U32ToU16(u32Str, u16Result);
+	utf_utils::U16ToU8(u16Result, u8result);
 	u16Result.clear();
-	utf_helper::U8ToU16(u8result, u16Result);
+	utf_utils::U8ToU16(u8result, u16Result);
 	u32Result.clear();
-	utf_helper::U16ToU32(u16Result, u32Result);
+	utf_utils::U16ToU32(u16Result, u32Result);
 	std::cout << ((u32Str == u32Result) ? "\tLossless Conversion  From  UTF-32 -> UTF-16 -> UTF-8 -> UTF-16 -> UTF-32 Complete\n"
 	                                    : "\tData Corruption In Conversion From UTF-32 -> UTF-16 -> UTF-8 -> UTF-16 -> UTF-32 Detected\n");
 	u8result.clear();
@@ -523,64 +523,64 @@ int main() {
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			u8result.clear();
-			utf_helper::U32ToU8(u32Str, u8result);
+			utf_utils::U32ToU8(u32Str, u8result);
 		}
 	cTimeTimer.StopWatch_Stop();
-	std::cout << serenity::format("Serenity Formatter Encoding UTF-32 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+	std::cout << formatter::format("Serenity Formatter Encoding UTF-32 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
+	                               cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			u16Result.clear();
-			utf_helper::U32ToU16(u32Str, u16Result);
+			utf_utils::U32ToU16(u32Str, u16Result);
 		}
 	cTimeTimer.StopWatch_Stop();
 	u8result.clear();
-	utf_helper::U16ToU8(u16Result, u8result);
-	std::cout << serenity::format("Serenity Formatter Encoding UTF-32 To UTF-16 Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+	utf_utils::U16ToU8(u16Result, u8result);
+	std::cout << formatter::format("Serenity Formatter Encoding UTF-32 To UTF-16 Took: [{} ns] \nWith Result: {}\n\n",
+	                               cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			u8result.clear();
-			utf_helper::U16ToU8(u16Str, u8result);
+			utf_utils::U16ToU8(u16Str, u8result);
 		}
 	cTimeTimer.StopWatch_Stop();
-	std::cout << serenity::format("Serenity Formatter Encoding UTF-16 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+	std::cout << formatter::format("Serenity Formatter Encoding UTF-16 To UTF-8 Took: [{} ns] \nWith Result: {}\n\n",
+	                               cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			u32Result.clear();
-			utf_helper::U16ToU32(u16Str, u32Result);
+			utf_utils::U16ToU32(u16Str, u32Result);
 		}
 	cTimeTimer.StopWatch_Stop();
 	u8result.clear();
-	utf_helper::U32ToU8(u32Result, u8result);
-	std::cout << serenity::format("Serenity Formatter Encoding UTF-16 To UTF-32 Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+	utf_utils::U32ToU8(u32Result, u8result);
+	std::cout << formatter::format("Serenity Formatter Encoding UTF-16 To UTF-32 Took: [{} ns] \nWith Result: {}\n\n",
+	                               cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			u16Result.clear();
-			utf_helper::U8ToU16(u8Str, u16Result);
+			utf_utils::U8ToU16(u8Str, u16Result);
 		}
 	cTimeTimer.StopWatch_Stop();
 	u8result.clear();
-	utf_helper::U16ToU8(u16Result, u8result);
-	std::cout << serenity::format("Serenity Formatter Encoding UTF-8 To UTF-16 Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+	utf_utils::U16ToU8(u16Result, u8result);
+	std::cout << formatter::format("Serenity Formatter Encoding UTF-8 To UTF-16 Took: [{} ns] \nWith Result: {}\n\n",
+	                               cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			u32Result.clear();
-			utf_helper::U8ToU32(u8Str, u32Result);
+			utf_utils::U8ToU32(u8Str, u32Result);
 		}
 	cTimeTimer.StopWatch_Stop();
 	u8result.clear();
-	utf_helper::U32ToU8(u32Result, u8result);
-	std::cout << serenity::format("Serenity Formatter Encoding UTF-8 To UTF-32 Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
+	utf_utils::U32ToU8(u32Result, u8result);
+	std::cout << formatter::format("Serenity Formatter Encoding UTF-8 To UTF-32 Took: [{} ns] \nWith Result: {}\n\n",
+	                               cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), u8result);
 	/**********************************************************************************************************************************************/
 
 	/********************************************  NOTE ********************************************/
@@ -631,11 +631,11 @@ int main() {
 	cTimeTimer.StopWatch_Reset();
 	for( size_t i { 0 }; i < timeIterations; ++i ) {
 			timeStr.clear();
-			serenity::format_to(std::back_inserter(timeStr), loc, formatString, cTime);
+			formatter::format_to(std::back_inserter(timeStr), loc, formatString, cTime);
 		}
 	cTimeTimer.StopWatch_Stop();
-	std::cout << serenity::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), serenity::format(loc, formatString, cTime));
+	std::cout << formatter::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	                               cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), formatter::format(loc, formatString, cTime));
 
 	// %a Short Day takes ~15ns
 	// %b Short Month takes ~18ns
@@ -674,7 +674,7 @@ int main() {
 	//		timeStr.append(structFormatter.FormatUserPattern());
 	//	}
 	// cTimeTimer.StopWatch_Stop();
-	// std::cout << serenity::format("FormatterArgs Struct For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
+	// std::cout << formatter::format("FormatterArgs Struct For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
 	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), structFormatter.FormatUserPattern());
 
 	// standard
@@ -700,7 +700,7 @@ int main() {
 	//		std::strftime(buff, buffSize, strftimeString, &cTime);
 	//	}
 	// cTimeTimer.StopWatch_Stop();
-	// std::cout << serenity::format("Strftime Formatting For Format Specs Took: [{} ns] \nWith Result: {}\n",
+	// std::cout << formatter::format("Strftime Formatting For Format Specs Took: [{} ns] \nWith Result: {}\n",
 	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), std::string_view(buff, buffSize));
 
 	// localTime = tz->to_local(std::chrono::system_clock::now());

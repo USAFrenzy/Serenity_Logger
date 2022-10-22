@@ -23,7 +23,7 @@ namespace serenity {
 
 	void FileCache::CacheFile(std::string_view path, bool ignoreExtInFileName) {
 		if( path.empty() ) return;
-		if( !utf_helper::IsValidU8(path) ) {
+		if( !utf_utils::IsValidU8(path) ) {
 				throw std::runtime_error("Error In File Path Or File Name: Invalid UTF-8 Sequence Detected - A Proper File Path Cannot Be Constructed");
 		}
 		std::filesystem::path fPath { path };
