@@ -3,9 +3,9 @@
 // Clang format messes with the automated version update
 // clang-format off
 
-#define SERENITY_VERSION_MAJOR 0
-#define SERENITY_VERSION_MINOR 2
-#define SERENITY_VERSION_REVISION 3
+#define SERENITY_VERSION_MAJOR 1
+#define SERENITY_VERSION_MINOR 0
+#define SERENITY_VERSION_REVISION 4
 
 // clang-format on
 

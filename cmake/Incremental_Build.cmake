@@ -52,8 +52,8 @@ update_version_info(
 )
 set(SERENITY_FULL_VERSION "${version_major}.${version_minor}.${version_revision}" PARENT_SCOPE)
     else()
-        set(version_major "0")
-        set(version_minor "2")
+        set(version_major "1")
+        set(version_minor "0")
         set(version_revision "0")
         update_version_info(
             "${version_major}" 
