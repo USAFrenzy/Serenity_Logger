@@ -119,5 +119,5 @@ target_compile_definitions(
     ${PROJECT_NAME}
     PUBLIC ${FORMATTER_BACKEND}
            ${SILENCE_NATIVE_WARNING}
-           ${UTF_UTILS}
+           ${INDEPENDANT_UTF_UTILS}
 )

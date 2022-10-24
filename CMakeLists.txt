@@ -63,6 +63,7 @@ option(
     OFF
 )
 
+set(VENDOR_FILE_LOCATION ${CMAKE_BINARY_DIR}/_deps)
 if (USE_STDFMT
     AND NOT USE_FMTLIB
     AND NOT USE_NATIVEFMT
@@ -73,17 +74,32 @@ elseif (
     AND NOT USE_STDFMT
     AND NOT USE_NATIVEFMT
 )
-    # cpmaddpackage( NAME fmtlib GITHUB_REPOSITORY fmtlib/fmt VERSION 9.1.0 )
+    cpmaddpackage(
+        NAME
+        fmt
+        GITHUB_REPOSITORY
+        fmtlib/fmt
+        GIT_TAG
+        9.1.0
+        OPTIONS
+        "FMT_PEDANTIC OFF"
+        "FMT_WERROR OFF"
+        "FMT_DOC OFF"
+        "FMT_INSTALL OFF"
+        "FMT_TEST OFF"
+        "FMT_FUZZ OFF"
+        "FMT_CUDA_TEST OFF"
+        "FMT_OS ON"
+        "FMT_MODULE OFF"
+        "FMT_SYSTEM_HEADERS OFF"
+    )
+    include_directories(${VENDOR_FILE_LOCATION}/fmt-src/include)
     set(FORMATTER_BACKEND USE_FMT_LIB)
 elseif (
     USE_NATIVEFMT
     AND NOT USE_STDFMT
-    AND NOT USEFMTLIB
+    AND NOT USE_FMTLIB
 )
-    # cpmaddpackage( NAME argfmt GITHUB_REPOSITORY USAFrenzy/ArgFormatter VERSION 1.0.0 OPTIONS
-    # "BUILD_COMPILED_LIB On" )
-    set(VENDOR_LOCATION ${CMAKE_BINARY_DIR}/_deps)
-
     if (NOT
         EXISTS
         ${VENDOR_FILE_LOCATION}/argfmt-src
@@ -97,8 +113,11 @@ elseif (
             1.0.0
             OPTIONS
             "BUILD_COMPILED_LIB OFF"
+            "BUILD_SANDBOX OFF"
+            "BUILD_TESTS OFF"
+            "BUILD_ALL OFF"
         )
-        include_directories(${VENDOR_LOCATION}/argfmt-src/include)
+        include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include)
     endif ()
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
 elseif (
@@ -117,8 +136,9 @@ else ()
     )
 endif ()
 
-if (NOT USE_NATIVEFMT)
-    set(UTF_UTILS USE_INDEPENDANT_UTF_UTILS)
+# Doesn't seem to want to find the utf header for some reason
+if (USE_FMTLIB OR USE_STDFMT)
+    set(INDEPENDANT_UTF_UTILS USE_INDEPENDANT_UTF_UTILS)
     if (NOT
         EXISTS
         ${VENDOR_FILE_LOCATION}/utfutils-src
@@ -130,9 +150,10 @@ if (NOT USE_NATIVEFMT)
             USAFrenzy/UTF-Utils
             VERSION
             1.0.0
+            "BUILD_COMPILED_LIBRARY OFF"
         )
-        include_directories(${VENDOR_FILE_LOCATION}/utfutils-src/include)
     endif ()
+    include_directories(${VENDOR_FILE_LOCATION}/utfutils-src/include)
 endif ()
 
 if (DISABLE_NATIVE_WARNING)
