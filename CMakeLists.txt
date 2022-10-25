@@ -142,7 +142,6 @@ if (DISABLE_NATIVE_WARNING)
     set(SILENCE_NATIVE_WARNING DISABLE_CFMT_WARN)
 endif ()
 
-# Doesn't seem to want to find the utf header for some reason
 if (USE_FMTLIB OR USE_STDFMT)
     if (NOT
         EXISTS
