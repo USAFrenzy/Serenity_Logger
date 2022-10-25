@@ -42,7 +42,10 @@
 		#endif
 	#endif    // VFORMAT_TO
 #endif        // PARSE_TESTING
-#define FMT_VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to(std::back_inserter(cont), loc, msg, fmt::make_format_args(__VA_ARGS__))
+
+#ifdef USE_FMT_LIB
+	#define FMT_VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to(std::back_inserter(cont), loc, msg, fmt::make_format_args(__VA_ARGS__))
+#endif
 
 std::filesystem::path LogDirPath() {
 	return (std::filesystem::current_path() /= "Logs");
