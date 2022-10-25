@@ -42,6 +42,7 @@
 		#endif
 	#endif    // VFORMAT_TO
 #endif        // PARSE_TESTING
+#define FMT_VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to(std::back_inserter(cont), loc, msg, fmt::make_format_args(__VA_ARGS__))
 
 std::filesystem::path LogDirPath() {
 	return (std::filesystem::current_path() /= "Logs");
@@ -85,6 +86,19 @@ template<> struct std::formatter<TestPoint>
 		return ctx.out();
 	}
 };
+
+#ifdef USE_FMT_LIB
+template<> struct fmt::formatter<TestPoint>
+{
+	auto parse(fmt::format_parse_context& pc) {
+		return pc.end();
+	}
+	auto format(TestPoint const& p, fmt::format_context& ctx) {
+		fmt::format_to(ctx.out(), "({},{})", p.x, p.y);
+		return ctx.out();
+	}
+};
+#endif
 
 int main() {
 	using namespace serenity;
@@ -389,11 +403,15 @@ int main() {
 	Instrumentator cTimer;
 	constexpr TestPoint test { .x { 5 }, .y { 8 } };
 
-	constexpr std::string_view sv { "[Loop Averages]" };
 	std::string loopStr { "[Loop " };
 	constexpr int repeatTest = 5;
 	constexpr size_t iterations { 100'000'000 };
+	std::string_view sv { std::move(formatter::format("[Loop Averages Among {} Iterations]", iterations)) };
 	float seTotal {}, stdTotal {};
+
+		#ifdef USE_FMT_LIB
+	float fmtTotal {};
+		#endif
 
 	for( int i { 0 }; i < repeatTest; ++i ) {
 			std::cout << formatter::format("{:*^55}\n", (loopStr + std::to_string(i + 1) + "]"));
@@ -404,7 +422,20 @@ int main() {
 			cTimer.StopWatch_Stop();
 			auto serenityElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
 			seTotal += serenityElapsed;
+
 			std::cout << formatter::format("Serenity Took An Average Of [{} ns]\nWith Result: {}\n", serenityElapsed, test);
+
+		#ifdef USE_FMT_LIB
+			cTimer.StopWatch_Reset();
+			for( size_t i { 0 }; i < iterations; ++i ) {
+					auto _ { fmt::format("{}", test) };
+				}
+			cTimer.StopWatch_Stop();
+			auto fmtElapsed { cTimer.Elapsed_In(time_mode::ns) / static_cast<float>(iterations) };
+			fmtTotal += fmtElapsed;
+			std::cout << std::format("fmtlib Took An Average Of [{} ns]\nWith Result: {}\n", fmtElapsed, test);
+		#endif
+
 			cTimer.StopWatch_Reset();
 			for( size_t i { 0 }; i < iterations; ++i ) {
 					auto _ { std::format("{}", test) };
@@ -425,9 +456,17 @@ int main() {
 
 	auto seAvg { seTotal / repeatTest };
 	auto stdAvg { stdTotal / repeatTest };
+
 	std::cout << formatter::format("{:*^55}\n", sv);
 	std::cout << formatter::format("Serenity Total Average Among Loops [{} ns]\n", seAvg);
 	std::cout << formatter::format("Standard Total Average Among Loops [{} ns]\n", stdAvg);
+
+		#ifdef USE_FMT_LIB
+	auto fmtAvg { fmtTotal / repeatTest };
+	std::cout << formatter::format("fmtlib Total Average Among Loops [{} ns]\n", fmtAvg);
+	std::cout << formatter::format("Serenity Is {}% Faster Than fmtlib\n", SetPrecision((std::abs(fmtAvg - seAvg) / fmtAvg) * 100));
+		#endif
+
 	std::cout << formatter::format("Serenity Is {}% Faster Than The Standard\n", SetPrecision((std::abs(stdAvg - seAvg) / stdAvg) * 100));
 	std::cout << formatter::format("{:*55}\n\n");
 

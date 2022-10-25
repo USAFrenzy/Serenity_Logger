@@ -93,7 +93,8 @@ elseif (
         "FMT_MODULE OFF"
         "FMT_SYSTEM_HEADERS OFF"
     )
-    include_directories(${VENDOR_FILE_LOCATION}/fmt-src/include)
+    set(GH_FMT_INCLUDE_DIR ${VENDOR_FILE_LOCATION}/fmt-src/include)
+    set(FMT fmt::fmt)
     set(FORMATTER_BACKEND USE_FMT_LIB)
 elseif (
     USE_NATIVEFMT
@@ -118,6 +119,7 @@ elseif (
             "BUILD_ALL OFF"
         )
         include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include)
+        include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include/ArgFormatter/dependencies)
     endif ()
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
 elseif (
@@ -136,13 +138,23 @@ else ()
     )
 endif ()
 
+if (DISABLE_NATIVE_WARNING)
+    set(SILENCE_NATIVE_WARNING DISABLE_CFMT_WARN)
+endif ()
+
 # Doesn't seem to want to find the utf header for some reason
 if (USE_FMTLIB OR USE_STDFMT)
-    set(INDEPENDANT_UTF_UTILS USE_INDEPENDANT_UTF_UTILS)
     if (NOT
         EXISTS
         ${VENDOR_FILE_LOCATION}/utfutils-src
     )
+        if (NOT BUILD_ALL
+            AND NOT BUILD_SANDBOX
+            AND NOT BUILD_TESTS
+            AND NOT BUILD_BENCHMARKS
+        )
+            set(INDEPENDANT_UTF_UTILS USE_INDEPENDANT_UTF_UTILS)
+        endif ()
         cpmaddpackage(
             NAME
             utfutils
@@ -153,11 +165,17 @@ if (USE_FMTLIB OR USE_STDFMT)
             "BUILD_COMPILED_LIBRARY OFF"
         )
     endif ()
-    include_directories(${VENDOR_FILE_LOCATION}/utfutils-src/include)
-endif ()
 
-if (DISABLE_NATIVE_WARNING)
-    set(SILENCE_NATIVE_WARNING DISABLE_CFMT_WARN)
+    if (NOT BUILD_ALL
+        AND NOT BUILD_SANDBOX
+        AND NOT BUILD_TESTS
+        AND NOT BUILD_BENCHMARKS
+    )
+        include_directories(${VENDOR_FILE_LOCATION}/utfutils-src/include)
+    else ()
+        include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include/ArgFormatter/dependencies)
+    endif ()
+
 endif ()
 
 add_subdirectory(Serenity)
@@ -166,12 +184,40 @@ if (BUILD_DEMOS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Demos ${CMAKE_CURRENT_BINARY_DIR}/Demos)
 endif ()
 
+# setup for allowing Serenity and spdlog to be used in benchmark and sandbox with the same format
+# backend
 if (BUILD_BENCHMARKS
     OR BUILD_SANDBOX
     OR BUILD_ALL
 )
-    include(cmake/CPM.cmake)
-    cpmaddpackage("gh:gabime/spdlog@1.10.0")
+    if (USE_FMTLIB)
+        cpmaddpackage(
+            NAME
+            spdlog
+            GITHUB_REPOSITORY
+            gabime/spdlog
+            GIT_TAG
+            v1.10.0
+            OPTIONS
+            "SPDLOG_USE_STD_FORMAT OFF"
+            "SPDLOG_FMT_EXTERNAL ON"
+        )
+        target_include_directories(spdlog PUBLIC ${GH_FMT_INCLUDE_DIR})
+        target_link_libraries(spdlog PUBLIC ${FMT})
+    else ()
+        cpmaddpackage(
+            NAME
+            spdlog
+            GITHUB_REPOSITORY
+            gabime/spdlog
+            GIT_TAG
+            v1.10.0
+            OPTIONS
+            "SPDLOG_USE_STD_FORMAT OFF"
+            "SPDLOG_FMT_EXTERNAL OFF"
+        )
+    endif ()
+    include_directories(${VENDOR_FILE_LOCATION}/spdlog-src/include)
 endif ()
 
 if (BUILD_BENCHMARKS)

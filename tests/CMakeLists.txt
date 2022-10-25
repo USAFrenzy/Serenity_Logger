@@ -12,6 +12,23 @@ enable_testing()
 
 add_executable(${PROJECT_NAME} ${TEST_SOURCE_FILES})
 
+if( NOT USE_NATIVEFMT)
+cpmaddpackage(
+    NAME
+    argfmt
+    GITHUB_REPOSITORY
+    USAFrenzy/ArgFormatter
+    VERSION
+    1.0.0
+    OPTIONS
+    "BUILD_COMPILED_LIB OFF"
+    "BUILD_SANDBOX OFF"
+    "BUILD_TESTS OFF"
+    "BUILD_ALL OFF"
+)
+target_include_directories(${PROJECT_NAME} PUBLIC ${VENDOR_FILE_LOCATION}/argfmt-src/include ${GH_FMT_INCLUDE_DIR})
+endif()
+
 if (CMAKE_CXX_COMPILER_ID
     STREQUAL
     "MSVC"
@@ -30,6 +47,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD ${STANDARD})
 target_link_libraries(
     ${PROJECT_NAME}
     LINK_PUBLIC
+    ${FMT}
     Serenity
 )
 

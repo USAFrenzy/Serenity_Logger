@@ -1,13 +1,8 @@
 #pragma once
 
+#include <UTF-Utils/utf-utils.h>
 #include <serenity/Common.h>
 #include <serenity/Utilities/TargetHelper.h>
-
-#ifndef USE_INDEPENDANT_UTF_UTILS
-	#include <ArgFormatter/dependencies/UTF-Utils/utf-utils.h>
-#else
-	#include <UTF-Utils/utf-utils.h>
-#endif
 
 namespace serenity {
 

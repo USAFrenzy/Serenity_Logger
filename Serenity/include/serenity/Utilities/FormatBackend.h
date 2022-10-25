@@ -25,7 +25,8 @@
 	#endif
 #elif defined USE_FMT_LIB
 	#include <fmt/format.h>
-	#define VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to(std::back_inserter(cont), loc, msg, std::make_format_args(__VA_ARGS__))
+	#define CONTEXT                         std::back_insert_iterator<std::basic_string<char>>
+	#define VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to<CONTEXT>(std::back_inserter(cont), loc, msg, fmt::make_format_args(__VA_ARGS__))
 #elif defined USE_BUILT_IN_FMT
 	#include <ArgFormatter/ArgFormatter.h>
 //	#include <formatter/MessageDetails/ArgFormatter.h>
