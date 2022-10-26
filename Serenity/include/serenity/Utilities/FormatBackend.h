@@ -29,8 +29,7 @@
 	#define VFORMAT_TO(cont, loc, msg, ...) fmt::vformat_to<CONTEXT>(std::back_inserter(cont), loc, msg, fmt::make_format_args(__VA_ARGS__))
 #elif defined USE_BUILT_IN_FMT
 	#include <ArgFormatter/ArgFormatter.h>
-//	#include <formatter/MessageDetails/ArgFormatter.h>
-	#define VFORMAT_TO(cont, loc, msg, ...) formatter /*formatter*/ ::format_to(std::back_inserter(cont), loc, msg, __VA_ARGS__)
+	#define VFORMAT_TO(cont, loc, msg, ...) formatter::format_to(std::back_inserter(cont), loc, msg, __VA_ARGS__)
 #else
 	#define VFORMAT_TO(cont, loc, msg, ...) void(0)
 	#ifdef WINDOWS_PLATFORM
@@ -39,5 +38,4 @@
 	#else
 		#warning("No Formatting Backend Was Defined - You Must Enable The Option Of Using Either <format> Via 'USE_STD_FORMAT', fmtlib Via 'USE_FMT_LIB', Or The Built-in Formatter Via 'USE_BUILT_IN_FMT'")
 	#endif    // WINDOWS_PLATFORM
-
 #endif
