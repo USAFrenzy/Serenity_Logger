@@ -118,8 +118,6 @@ elseif (
             "BUILD_TESTS OFF"
             "BUILD_ALL OFF"
         )
-        include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include)
-        include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include/ArgFormatter/dependencies)
     endif ()
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
 elseif (
@@ -164,17 +162,25 @@ if (USE_FMTLIB OR USE_STDFMT)
             "BUILD_COMPILED_LIBRARY OFF"
         )
     endif ()
+endif ()
 
-    if (NOT BUILD_ALL
-        AND NOT BUILD_SANDBOX
-        AND NOT BUILD_TESTS
-        AND NOT BUILD_BENCHMARKS
-    )
+# Specifically set up the include paths for UTF-Utils based on if the dependency is grabbed from the
+# native backend or whether it's grabbed separately due to fmtlib or <format> being the backend. If
+# it's from the native backend, also set up the include paths for ArgFormatter.
+if (NOT BUILD_ALL
+    AND NOT BUILD_SANDBOX
+    AND NOT BUILD_TESTS
+    AND NOT BUILD_BENCHMARKS
+)
+    if (USE_FMTLIB OR USE_STDFMT)
         include_directories(${VENDOR_FILE_LOCATION}/utfutils-src/include)
     else ()
+        include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include)
         include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include/ArgFormatter/dependencies)
     endif ()
-
+else ()
+    include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include)
+    include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include/ArgFormatter/dependencies)
 endif ()
 
 add_subdirectory(Serenity)
