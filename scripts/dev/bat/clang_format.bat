@@ -2,7 +2,7 @@
 
 echo -- Formatting Files...
 
-pushd ..
+cd ../../../
 		clang-format -i -style=file Serenity/src/Color/*.cpp
 		clang-format -i -style=file Serenity/src/MessageDetails/*.cpp
 		clang-format -i -style=file Serenity/src/Targets/*.cpp
@@ -13,6 +13,6 @@ pushd ..
 		clang-format -i -style=file Serenity/include/serenity/Targets/*.h
 		clang-format -i -style=file Serenity/include/serenity/Utilities/*.h
 		clang-format -i -style=file Sandbox/src/*.cpp
-popd
+cd scripts/dev/bat
 
 echo -- Formatting Finished

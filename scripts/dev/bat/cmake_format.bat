@@ -3,7 +3,7 @@
 REM #####################################################################
 REM #        Requires cmakelang to be installed and added to PATH       #
 REM #####################################################################
-pushd ..
+cd ../../../
 cmake-format -i "CMakeLists.txt" -c "cmake-format.yaml"
 	pushd Serenity
 		cmake-format -i "CMakeLists.txt" -c "../cmake-format.yaml"
@@ -11,5 +11,5 @@ cmake-format -i "CMakeLists.txt" -c "cmake-format.yaml"
 	pushd Sandbox
 		cmake-format -i "CMakeLists.txt" -c "../cmake-format.yaml"
 	popd
-popd
+cd scripts/dev/bat
 @echo -- Finished running cmake_format script

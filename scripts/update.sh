@@ -1,11 +1,9 @@
 #!/bin/bash
-
-bash clean.sh 
-popd > /dev/null
-  git pull
-pushd > /dev/null
-bash clang_format.sh
-bash cmake_format.sh
-bash build.sh
-
-cd ../ > /dev/null
+cd .. > /dev/null
+	git pull
+cd scripts/dev/bat
+	bash clang_format.sh
+	bash cmake_format.sh
+echo -- Removing all build folders
+	bash clean.sh
+cd ../../ > /dev/null
