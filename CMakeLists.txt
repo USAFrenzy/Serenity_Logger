@@ -4,64 +4,11 @@ project(Serenity_Sandbox)
 
 include(cmake/PreventInSrcBuilds.cmake)
 include(cmake/CPM.cmake)
+include(cmake/Options.cmake)
 include(cmake/Incremental_Build.cmake)
 
 get_and_increment_version()
 message("-- ${PROJECT_NAME} Building Version: ${SERENITY_FULL_VERSION}")
-
-option(
-    BUILD_SANDBOX
-    "Build The Sandbox Project Alongside The Library"
-    OFF
-)
-
-option(
-    BUILD_BENCHMARKS
-    "Build The Benchmarking Project Alongside The Library"
-    OFF
-)
-
-option(
-    BUILD_TESTS
-    "Build Test Suite Alongside The Library"
-    OFF
-)
-
-option(
-    BUILD_DEMOS
-    "Build The Demo Projects Alongside The Library"
-    OFF
-)
-
-option(
-    BUILD_ALL
-    "Build Benchmarking, Testing, Demo, and Sandbox Projects Alongside The Library"
-    OFF
-)
-
-option(
-    USE_STDFMT
-    "Build The Library With The C++20 <format> Header Instead Of The Native Formatter Provided By ArgFormatter"
-    OFF
-)
-
-option(
-    USE_FMTLIB
-    "Build The Library With The fmtlib Library By Victor Zverovich Instead Of The Native Formatter Provided By ArgFormatter"
-    OFF
-)
-
-option(
-    USE_NATIVEFMT
-    "Build The Library With The Built-In ArgFormatter Library"
-    ON
-)
-
-option(
-    DISABLE_NATIVE_WARNING
-    "Disable The Info Message On Compilation Stating That The Built-In Formatter Is Currently Enabled"
-    OFF
-)
 
 set(VENDOR_FILE_LOCATION ${CMAKE_BINARY_DIR}/_deps)
 if (USE_STDFMT
@@ -111,7 +58,7 @@ elseif (
             GITHUB_REPOSITORY
             USAFrenzy/ArgFormatter
             VERSION
-            1.0.0
+            1.0.1
             OPTIONS
             "BUILD_COMPILED_LIB OFF"
             "BUILD_SANDBOX OFF"
@@ -158,7 +105,7 @@ if (USE_FMTLIB OR USE_STDFMT)
             GITHUB_REPOSITORY
             USAFrenzy/UTF-Utils
             VERSION
-            1.0.0
+            1.0.1
             "BUILD_COMPILED_LIBRARY OFF"
         )
     endif ()
