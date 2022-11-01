@@ -88,7 +88,11 @@ set(SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})
 add_library(${PROJECT_NAME} ${SERENITY_ALL_FILES})
 
 target_include_directories(
-    ${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${GH_FMT_INCLUDE_DIR}
+    ${PROJECT_NAME}
+    PUBLIC ${UFT_UTILS_INCLUDE_DIRS}
+           ${ARGFMT_INCLUDE_DIRS}
+           ${GH_FMT_INCLUDE_DIR}
+           ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 if (CMAKE_CXX_COMPILER_ID
@@ -125,5 +129,7 @@ target_compile_definitions(
 )
 
 if (USE_FMTLIB)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${FMT} ${ARGFMT})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${FMT} ${UFT_UTILS})
+elseif (USE_STDFMT)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${UFT_UTILS})
 endif ()

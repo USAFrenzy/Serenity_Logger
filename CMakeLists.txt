@@ -58,14 +58,17 @@ elseif (
             GITHUB_REPOSITORY
             USAFrenzy/ArgFormatter
             VERSION
-            1.0.1
+            1.0.2
             OPTIONS
             "BUILD_COMPILED_LIB ON"
             "BUILD_SANDBOX OFF"
             "BUILD_TESTS OFF"
             "BUILD_ALL OFF"
         )
-        set(ARGFMT argfmt)
+        # specific definition that needs to be applied for ArgFormatter to see the correct include
+        # path
+        add_compile_definitions(COMPILED_LIBRARY)
+        set(ARG_FMT ArgFormatter_Lib)
     endif ()
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
     set(ARGFMT_INCLUDE_DIRS ${VENDOR_FILE_LOCATION}/argfmt-src/include)
@@ -108,29 +111,13 @@ if (USE_FMTLIB OR USE_STDFMT)
             USAFrenzy/UTF-Utils
             VERSION
             1.0.1
-            "BUILD_COMPILED_LIBRARY OFF"
+            "BUILD_COMPILED_LIBRARY ON"
         )
     endif ()
 endif ()
 
-# Specifically set up the include paths for UTF-Utils based on if the dependency is grabbed from the
-# native backend or whether it's grabbed separately due to fmtlib or <format> being the backend. If
-# it's from the native backend, also set up the include paths for ArgFormatter.
-if (NOT BUILD_ALL
-    AND NOT BUILD_SANDBOX
-    AND NOT BUILD_TESTS
-    AND NOT BUILD_BENCHMARKS
-)
-    if (USE_FMTLIB OR USE_STDFMT)
-        include_directories(${VENDOR_FILE_LOCATION}/utfutils-src/include)
-    else ()
-        include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include)
-        include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include/ArgFormatter/dependencies)
-    endif ()
-else ()
-    include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include)
-    include_directories(${VENDOR_FILE_LOCATION}/argfmt-src/include/ArgFormatter/dependencies)
-endif ()
+set(UFT_UTILS_INCLUDE_DIRS ${VENDOR_FILE_LOCATION}/utfutils-src/include)
+set(UFT_UTILS UTF-Utils_Compiled)
 
 add_subdirectory(Serenity)
 
