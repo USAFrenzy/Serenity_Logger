@@ -60,13 +60,15 @@ elseif (
             VERSION
             1.0.1
             OPTIONS
-            "BUILD_COMPILED_LIB OFF"
+            "BUILD_COMPILED_LIB ON"
             "BUILD_SANDBOX OFF"
             "BUILD_TESTS OFF"
             "BUILD_ALL OFF"
         )
+        set(ARGFMT argfmt)
     endif ()
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
+    set(ARGFMT_INCLUDE_DIRS ${VENDOR_FILE_LOCATION}/argfmt-src/include)
 elseif (
     NOT USE_NATIVEFMT
     AND NOT USE_STDFMT

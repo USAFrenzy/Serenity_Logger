@@ -125,5 +125,5 @@ target_compile_definitions(
 )
 
 if (USE_FMTLIB)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${FMT})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${FMT} ${ARGFMT})
 endif ()
