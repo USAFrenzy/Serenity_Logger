@@ -48,29 +48,23 @@ elseif (
     AND NOT USE_STDFMT
     AND NOT USE_FMTLIB
 )
-    if (NOT
-        EXISTS
-        ${VENDOR_FILE_LOCATION}/argfmt-src
+    cpmaddpackage(
+        NAME
+        argfmt
+        GITHUB_REPOSITORY
+        USAFrenzy/ArgFormatter
+        VERSION
+        1.0.2
+        OPTIONS
+        "BUILD_COMPILED_LIB ON"
+        "BUILD_SANDBOX OFF"
+        "BUILD_TESTS OFF"
+        "BUILD_ALL OFF"
     )
-        cpmaddpackage(
-            NAME
-            argfmt
-            GITHUB_REPOSITORY
-            USAFrenzy/ArgFormatter
-            VERSION
-            1.0.2
-            OPTIONS
-            "BUILD_COMPILED_LIB ON"
-            "BUILD_SANDBOX OFF"
-            "BUILD_TESTS OFF"
-            "BUILD_ALL OFF"
-        )
-        # specific definition that needs to be applied for ArgFormatter to see the correct include
-        # path
-        add_compile_definitions(COMPILED_LIBRARY)
-        set(ARG_FMT ArgFormatter_Lib)
-    endif ()
+    # specific definition that needs to be applied for ArgFormatter to see the correct include path
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
+    set(ARG_FMT ArgFormatter_Lib)
+    set(ARG_FMT_COMPILE_DEF COMPILED_LIBRARY)
     set(ARGFMT_INCLUDE_DIRS ${VENDOR_FILE_LOCATION}/argfmt-src/include)
 elseif (
     NOT USE_NATIVEFMT
@@ -93,27 +87,22 @@ if (DISABLE_NATIVE_WARNING)
 endif ()
 
 if (USE_FMTLIB OR USE_STDFMT)
-    if (NOT
-        EXISTS
-        ${VENDOR_FILE_LOCATION}/utfutils-src
+    if (NOT BUILD_ALL
+        AND NOT BUILD_SANDBOX
+        AND NOT BUILD_TESTS
+        AND NOT BUILD_BENCHMARKS
     )
-        if (NOT BUILD_ALL
-            AND NOT BUILD_SANDBOX
-            AND NOT BUILD_TESTS
-            AND NOT BUILD_BENCHMARKS
-        )
-            set(INDEPENDANT_UTF_UTILS USE_INDEPENDANT_UTF_UTILS)
-        endif ()
-        cpmaddpackage(
-            NAME
-            utfutils
-            GITHUB_REPOSITORY
-            USAFrenzy/UTF-Utils
-            VERSION
-            1.0.1
-            "BUILD_COMPILED_LIBRARY ON"
-        )
+        set(INDEPENDANT_UTF_UTILS USE_INDEPENDANT_UTF_UTILS)
     endif ()
+    cpmaddpackage(
+        NAME
+        utfutils
+        GITHUB_REPOSITORY
+        USAFrenzy/UTF-Utils
+        VERSION
+        1.0.1
+        "BUILD_COMPILED_LIBRARY ON"
+    )
 endif ()
 
 set(UFT_UTILS_INCLUDE_DIRS ${VENDOR_FILE_LOCATION}/utfutils-src/include)

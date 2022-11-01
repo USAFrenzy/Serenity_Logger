@@ -126,10 +126,13 @@ target_compile_definitions(
     PUBLIC ${FORMATTER_BACKEND}
            ${SILENCE_NATIVE_WARNING}
            ${INDEPENDANT_UTF_UTILS}
+           ${ARG_FMT_COMPILE_DEF}
 )
 
 if (USE_FMTLIB)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${FMT} ${UFT_UTILS})
-elseif (USE_STDFMT)
+elseif (USE_NATIVEFMT)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${ARG_FMT} ${UFT_UTILS})
+else ()
     target_link_libraries(${PROJECT_NAME} PRIVATE ${UFT_UTILS})
 endif ()
