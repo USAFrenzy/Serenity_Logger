@@ -30,17 +30,21 @@ cmake --build build_std --config=Release
 cmake --build build_std --config=RelWithDebInfo
 echo -- <format> Version Has Been Built
 
-
 echo -- Checking For Folder Layout For File Moves
 cd ../../../
 if not exist Release_Stage/ (
   mkdir Release_Stage
 )
 pushd Release_Stage  
+
   if not exist Serenity_Windows_native_x86-64/ (
     mkdir Serenity_Windows_native_x86-64
   )
   pushd Serenity_Windows_native_x86-64
+  if not exist lib/ (
+    mkdir lib
+  )
+  pushd lib  
   if not exist Debug/ (
     mkdir Debug
   )
@@ -53,12 +57,18 @@ pushd Release_Stage
   if not exist RelWithDebInfo/ (
     mkdir RelWithDebInfo
   )
+  popd
+    xcopy /e /i "../../Serenity/include" "include"
   popd
   
   if not exist Serenity_Windows_fmtlib_x86-64/ (
     mkdir Serenity_Windows_fmtlib_x86-64
   )
   pushd Serenity_Windows_fmtlib_x86-64
+    if not exist lib/ (
+    mkdir lib
+  )
+  pushd lib
   if not exist Debug/ (
     mkdir Debug
   )
@@ -72,11 +82,17 @@ pushd Release_Stage
     mkdir RelWithDebInfo
   )
   popd
-  
+   xcopy /e /i "../../Serenity/include" "include"
+  popd
+
   if not exist Serenity_Windows_stdfmt_x86-64/ (
     mkdir Serenity_Windows_stdfmt_x86-64
   )
   pushd Serenity_Windows_stdfmt_x86-64
+      if not exist lib/ (
+    mkdir lib
+  )
+  pushd lib
   if not exist Debug/ (
     mkdir Debug
   )
@@ -89,8 +105,11 @@ pushd Release_Stage
   if not exist RelWithDebInfo/ (
     mkdir RelWithDebInfo
   )
-popd
-popd
+  popd
+  xcopy /e /i "../../Serenity/include" "include"
+popd 
+popd  
+
 echo -- Folder Layout Check Finished
 
 echo -- Moving Native Version Configured Builds

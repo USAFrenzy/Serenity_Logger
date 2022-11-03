@@ -10,7 +10,28 @@ include(cmake/Incremental_Build.cmake)
 get_and_increment_version()
 message("-- ${PROJECT_NAME} Building Version: ${SERENITY_FULL_VERSION}")
 
+# Versions of sub projects to build
+set(ARG_FMT_VERSION 1.0.2)
+set(UTF_UTILS_VERSION 1.0.1)
+set(FMT_LIB_VERSION 9.1.0)
+set(SPDLOG_VERSION v1.10.0)
+
+# include directory paths from the sub projects
 set(VENDOR_FILE_LOCATION ${CMAKE_BINARY_DIR}/_deps)
+set(FMTLIB_INCLUDE_DIR ${VENDOR_FILE_LOCATION}/fmt-src/include)
+set(ARGFMT_INCLUDE_DIR ${VENDOR_FILE_LOCATION}/argfmt-src/include)
+set(UTF_UTILS_INCLUDE_DIR ${VENDOR_FILE_LOCATION}/utfutils-src/include)
+set(SPDLOG_INCLUDE_DIR ${VENDOR_FILE_LOCATION}/spdlog-src/include)
+set(SERENITY_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Serenity/include)
+
+# specific definition that needs to be applied for ArgFormatter to see the correct include path
+set(ARG_FMT_COMPILE_DEF COMPILED_LIBRARY)
+
+# The compiled object file names for the sub projects
+set(ARG_FMT ArgFormatter_Lib)
+set(UTF_UTILS UTF-Utils_Compiled)
+set(FMT fmt::fmt)
+
 if (USE_STDFMT
     AND NOT USE_FMTLIB
     AND NOT USE_NATIVEFMT
@@ -27,7 +48,7 @@ elseif (
         GITHUB_REPOSITORY
         fmtlib/fmt
         GIT_TAG
-        9.1.0
+        ${FMT_LIB_VERSION}
         OPTIONS
         "FMT_PEDANTIC OFF"
         "FMT_WERROR OFF"
@@ -40,8 +61,6 @@ elseif (
         "FMT_MODULE OFF"
         "FMT_SYSTEM_HEADERS OFF"
     )
-    set(GH_FMT_INCLUDE_DIR ${VENDOR_FILE_LOCATION}/fmt-src/include)
-    set(FMT fmt::fmt)
     set(FORMATTER_BACKEND USE_FMT_LIB)
 elseif (
     USE_NATIVEFMT
@@ -54,18 +73,15 @@ elseif (
         GITHUB_REPOSITORY
         USAFrenzy/ArgFormatter
         VERSION
-        1.0.2
+        ${ARG_FMT_VERSION}
         OPTIONS
         "BUILD_COMPILED_LIB ON"
         "BUILD_SANDBOX OFF"
         "BUILD_TESTS OFF"
         "BUILD_ALL OFF"
     )
-    # specific definition that needs to be applied for ArgFormatter to see the correct include path
+    target_compile_definitions(${ARG_FMT} PUBLIC ${ARG_FMT_COMPILE_DEF})
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
-    set(ARG_FMT ArgFormatter_Lib)
-    set(ARG_FMT_COMPILE_DEF COMPILED_LIBRARY)
-    set(ARGFMT_INCLUDE_DIRS ${VENDOR_FILE_LOCATION}/argfmt-src/include)
 elseif (
     NOT USE_NATIVEFMT
     AND NOT USE_STDFMT
@@ -86,27 +102,8 @@ if (DISABLE_NATIVE_WARNING)
     set(SILENCE_NATIVE_WARNING DISABLE_CFMT_WARN)
 endif ()
 
-if (USE_FMTLIB OR USE_STDFMT)
-    if (NOT BUILD_ALL
-        AND NOT BUILD_SANDBOX
-        AND NOT BUILD_TESTS
-        AND NOT BUILD_BENCHMARKS
-    )
-        set(INDEPENDANT_UTF_UTILS USE_INDEPENDANT_UTF_UTILS)
-    endif ()
-    cpmaddpackage(
-        NAME
-        utfutils
-        GITHUB_REPOSITORY
-        USAFrenzy/UTF-Utils
-        VERSION
-        1.0.1
-        "BUILD_COMPILED_LIBRARY ON"
-    )
-endif ()
-
-set(UFT_UTILS_INCLUDE_DIRS ${VENDOR_FILE_LOCATION}/utfutils-src/include)
-set(UFT_UTILS UTF-Utils_Compiled)
+# if (USE_FMTLIB OR USE_STDFMT) cpmaddpackage( NAME utfutils GITHUB_REPOSITORY USAFrenzy/UTF-Utils
+# VERSION ${UTF_UTILS_VERSION} "BUILD_COMPILED_LIBRARY ON" ) endif ()
 
 add_subdirectory(Serenity)
 
@@ -127,12 +124,12 @@ if (BUILD_BENCHMARKS
             GITHUB_REPOSITORY
             gabime/spdlog
             GIT_TAG
-            v1.10.0
+            ${SPDLOG_VERSION}
             OPTIONS
             "SPDLOG_USE_STD_FORMAT OFF"
             "SPDLOG_FMT_EXTERNAL ON"
         )
-        target_include_directories(spdlog PUBLIC ${GH_FMT_INCLUDE_DIR})
+        target_include_directories(spdlog PUBLIC ${FMTLIB_INCLUDE_DIR})
         target_link_libraries(spdlog PUBLIC ${FMT})
     else ()
         cpmaddpackage(
@@ -141,13 +138,12 @@ if (BUILD_BENCHMARKS
             GITHUB_REPOSITORY
             gabime/spdlog
             GIT_TAG
-            v1.10.0
+            ${SPDLOG_VERSION}
             OPTIONS
             "SPDLOG_USE_STD_FORMAT OFF"
             "SPDLOG_FMT_EXTERNAL OFF"
         )
     endif ()
-    include_directories(${VENDOR_FILE_LOCATION}/spdlog-src/include)
 endif ()
 
 if (BUILD_BENCHMARKS)

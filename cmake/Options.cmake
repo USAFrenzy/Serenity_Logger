@@ -52,8 +52,3 @@ option(
     "Disable The Info Message On Compilation Stating That The Built-In Formatter Is Currently Enabled"
     OFF
 )
-
-option(BUILD_COMPILED_UTF_UTILS
-    "Build Serenity Using The Compiled Version Of UTF-Utils Library"
-    OFF
-)

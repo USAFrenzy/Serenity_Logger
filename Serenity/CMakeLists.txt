@@ -87,14 +87,6 @@ set(SERENITY_ALL_FILES ${SERENITY_SOURCE_FILES} ${SERENITY_HEADER_FILES})
 
 add_library(${PROJECT_NAME} ${SERENITY_ALL_FILES})
 
-target_include_directories(
-    ${PROJECT_NAME}
-    PUBLIC ${UFT_UTILS_INCLUDE_DIRS}
-           ${ARGFMT_INCLUDE_DIRS}
-           ${GH_FMT_INCLUDE_DIR}
-           ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
 if (CMAKE_CXX_COMPILER_ID
     STREQUAL
     "MSVC"
@@ -121,18 +113,36 @@ set_target_properties(
                DEBUG_POSTFIX "_d"
 )
 
-target_compile_definitions(
-    ${PROJECT_NAME}
-    PUBLIC ${FORMATTER_BACKEND}
-           ${SILENCE_NATIVE_WARNING}
-           ${INDEPENDANT_UTF_UTILS}
-           ${ARG_FMT_COMPILE_DEF}
-)
+if (USE_NATIVEFMT)
+    target_compile_definitions(
+        ${PROJECT_NAME}
+        PUBLIC ${FORMATTER_BACKEND}
+               ${SILENCE_NATIVE_WARNING}
+               ${ARG_FMT_COMPILE_DEF}
+    )
+else ()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC ${FORMATTER_BACKEND})
+endif ()
 
 if (USE_FMTLIB)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${FMT} ${UFT_UTILS})
+    target_include_directories(
+        ${PROJECT_NAME}
+        PUBLIC ${SERENITY_INCLUDE_DIR}
+               ${FMTLIB_INCLUDE_DIR}
+               ${UTF_UTILS_INCLUDE_DIR}
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${FMT} ${UTF_UTILS})
 elseif (USE_NATIVEFMT)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${ARG_FMT} ${UFT_UTILS})
+    target_include_directories(
+        ${PROJECT_NAME}
+        PUBLIC ${SERENITY_INCLUDE_DIR}
+               ${ARGFMT_INCLUDE_DIR}
+               ${UTF_UTILS_INCLUDE_DIR}
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${ARG_FMT} ${UTF_UTILS})
 else ()
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${UFT_UTILS})
+    target_include_directories(
+        ${PROJECT_NAME} PUBLIC ${SERENITY_INCLUDE_DIR} ${UTF_UTILS_INCLUDE_DIR}
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${UTF_UTILS})
 endif ()
