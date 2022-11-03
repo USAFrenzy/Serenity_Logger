@@ -282,11 +282,17 @@ namespace serenity::targets::helpers {
 	}
 
 	void FileHelper::OpenImpl(bool truncate) {
-		if( !std::filesystem::exists(fileCache->FilePath()) ) {
+		std::filesystem::path filePath { fileCache->FilePath() };
+		if( auto dirPath { filePath }; !std::filesystem::exists(dirPath.make_preferred().remove_filename()) ) {
+				std::filesystem::create_directories(dirPath);
 				OPEN(file, fileCache->FilePath().string().c_str(), O_CREAT | _O_WRONLY | _O_BINARY);
 		} else {
-				truncate ? OPEN(file, fileCache->FilePath().string().c_str(), O_TRUNC | _O_WRONLY | _O_BINARY)
-						 : OPEN(file, fileCache->FilePath().string().c_str(), O_APPEND | _O_WRONLY | _O_BINARY);
+				if( !std::filesystem::exists(filePath) ) {
+						OPEN(file, fileCache->FilePath().string().c_str(), O_CREAT | _O_WRONLY | _O_BINARY);
+				} else {
+						truncate ? OPEN(file, fileCache->FilePath().string().c_str(), O_TRUNC | _O_WRONLY | _O_BINARY)
+								 : OPEN(file, fileCache->FilePath().string().c_str(), O_APPEND | _O_WRONLY | _O_BINARY);
+					}
 			}
 		if( file != -1 ) {
 				fileOpen = true;
