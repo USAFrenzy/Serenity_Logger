@@ -81,18 +81,10 @@ namespace serenity::targets {
 	void TargetBase::PolicyFlushOn() { }
 
 	const std::unique_ptr<msg_details::Message_Formatter>& TargetBase::MsgFmt() const {
-		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( baseHelper->isMTSupportEnabled() ) {
-				lock.lock();
-		}
 		return msgPattern;
 	}
 
 	const std::unique_ptr<msg_details::Message_Info>& TargetBase::MsgInfo() const {
-		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
-		if( baseHelper->isMTSupportEnabled() ) {
-				lock.lock();
-		}
 		return msgDetails;
 	}
 
