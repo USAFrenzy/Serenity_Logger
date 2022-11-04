@@ -8,7 +8,7 @@
  echo - For this script to be successful, 7zip cli needs to be downloaded
  echo   and the 7za.exe executable needs to be present on the environment
  echo   path variable 
-echo #####################################################################
+ echo #####################################################################
 
  call gitprep
  
@@ -280,8 +280,9 @@ cd ../../
 echo -- All Configured Builds Have Been Moved To The Root Folder 'Release_Stage'
 
 echo -- Now Archiving Configured Builds
-pushd release_prep
+
+cd scripts/dev/bat/release_prep
 call archive_releases
-popd
+cd ..
 echo -- All Configured Builds Have Been Archived
 
