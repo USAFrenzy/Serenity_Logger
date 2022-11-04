@@ -1,13 +1,13 @@
-@echo off
+ @echo off
 
- REM This Will Now Remove Old Builds, Format Files, Re-build All Vesions, 
- REM Move Finished Build Configurations To The Release_Stage Folder And 
- REM Then Archive Them.
- REM ------------------------------- NOTE -------------------------------
- REM - For this script to be successful, 7zip cli needs to be downloaded
- REM   and the 7za.exe executable needs to be present on the environment
- REM   path variable
- 
+ :: This Will Now Remove Old Builds, Format Files, Re-build All Vesions, 
+ :: Move Finished Build Configurations To The Release_Stage Folder And 
+ :: Then Archive Them.
+ :: ------------------------------- NOTE -------------------------------
+ :: - For this script to be successful, 7zip cli needs to be downloaded
+ ::   and the 7za.exe executable needs to be present on the environment
+ ::   path variable 
+
  call gitprep
  
  pushd release_prep
@@ -278,8 +278,8 @@ cd ../../
 echo -- All Configured Builds Have Been Moved To The Root Folder 'Release_Stage'
 
 echo -- Now Archiving Configured Builds
-cd scripts/dev/bat/release_prep
+pushd release_prep
 call archive_releases
-cd ../../../../
-echo -- All COnfigured Builds Have Been Archived
+popd
+echo -- All Configured Builds Have Been Archived
 
