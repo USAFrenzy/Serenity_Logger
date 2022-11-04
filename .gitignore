@@ -2,4 +2,10 @@
 /build_std
 /build_fmt
 /Release_Stage
+/build_fmt_release_16
+/build_fmt_release_17
+/build_native_release_16
+/build_native_release_17
+/build_std_release_16
+/build_std_release_17
 /Docs

@@ -14,21 +14,21 @@ if (USE_NATIVEFMT)
     target_compile_definitions(${PROJECT_NAME} PUBLIC ${ARG_FMT_COMPILE_DEF})
     target_link_libraries(
         ${PROJECT_NAME}
-        PUBLIC spdlog
+        PUBLIC
                Serenity
                ${ARG_FMT}
     )
 elseif (USE_FMTLIB)
     target_link_libraries(
         ${PROJECT_NAME}
-        PUBLIC spdlog
+        PUBLIC
                Serenity
                ${FMT}
     )
 else ()
     target_link_libraries(
         ${PROJECT_NAME}
-        PUBLIC spdlog
+        PUBLIC
                Serenity
     )
 endif ()

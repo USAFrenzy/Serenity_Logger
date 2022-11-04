@@ -1,143 +1,273 @@
 @echo off
 
-echo -- This Will Now Remove Old Builds, Format Files, Re-build All Vesions, And Move Finished Build Configurations To The Release_Stage Folder
-call clean
-call gitprep
-call build
-call build_fmt
-call build_std
-
-cd ../../../
-
-echo -- Building Native Version
-cmake --build build --config=Debug
-cmake --build build --config=MinSizeRel
-cmake --build build --config=Release
-cmake --build build --config=RelWithDebInfo
-echo -- Native Version Has Been Built
-
-echo -- Building fmtlib Version
-cmake --build build_fmt --config=Debug
-cmake --build build_fmt --config=MinSizeRel
-cmake --build build_fmt --config=Release
-cmake --build build_fmt --config=RelWithDebInfo
-echo -- fmtlib Version Has Been Built
-
-echo -- Building <format> Version
-cmake --build build_std --config=Debug
-cmake --build build_std --config=MinSizeRel
-cmake --build build_std --config=Release
-cmake --build build_std --config=RelWithDebInfo
-echo -- <format> Version Has Been Built
-
-echo -- Checking For Folder Layout For File Moves
-cd ../../../
-if not exist Release_Stage/ (
-  mkdir Release_Stage
-)
-pushd Release_Stage  
-
-  if not exist Serenity_Windows_native_x86-64/ (
-    mkdir Serenity_Windows_native_x86-64
-  )
-  pushd Serenity_Windows_native_x86-64
-  if not exist lib/ (
-    mkdir lib
-  )
-  pushd lib  
-  if not exist Debug/ (
-    mkdir Debug
-  )
-  if not exist MinSizeRel/ (
-    mkdir MinSizeRel
-  )
-  if not exist Release/ (
-    mkdir Release
-  )
-  if not exist RelWithDebInfo/ (
-    mkdir RelWithDebInfo
-  )
-  popd
-    xcopy /e /i "../../Serenity/include" "include"
-  popd
-  
-  if not exist Serenity_Windows_fmtlib_x86-64/ (
-    mkdir Serenity_Windows_fmtlib_x86-64
-  )
-  pushd Serenity_Windows_fmtlib_x86-64
-    if not exist lib/ (
-    mkdir lib
-  )
-  pushd lib
-  if not exist Debug/ (
-    mkdir Debug
-  )
-  if not exist MinSizeRel/ (
-    mkdir MinSizeRel
-  )
-  if not exist Release/ (
-    mkdir Release
-  )
-  if not exist RelWithDebInfo/ (
-    mkdir RelWithDebInfo
-  )
-  popd
-   xcopy /e /i "../../Serenity/include" "include"
-  popd
-
-  if not exist Serenity_Windows_stdfmt_x86-64/ (
-    mkdir Serenity_Windows_stdfmt_x86-64
-  )
-  pushd Serenity_Windows_stdfmt_x86-64
-      if not exist lib/ (
-    mkdir lib
-  )
-  pushd lib
-  if not exist Debug/ (
-    mkdir Debug
-  )
-  if not exist MinSizeRel/ (
-    mkdir MinSizeRel
-  )
-  if not exist Release/ (
-    mkdir Release
-  )
-  if not exist RelWithDebInfo/ (
-    mkdir RelWithDebInfo
-  )
-  popd
-  xcopy /e /i "../../Serenity/include" "include"
-popd 
-popd  
-
-echo -- Folder Layout Check Finished
-
+ echo -- This Will Now Remove Old Builds, Format Files, Re-build All Vesions, And Move Finished Build Configurations To The Release_Stage Folder
+ 
+ call gitprep
+ 
+ pushd release_prep
+ 
+ call remove_old_releases
+ call build_native_release_VS16
+ call build_native_release_VS17
+ 
+ call build_fmt_release_VS16
+ call build_fmt_release_VS17
+ 
+ call build_std_release_VS16
+ call build_std_release_VS17
+ popd
+ 
+ 
+ cd ../../../
+ 
+ 
+ :: ---------------------------------------------------------------
+ echo -- Building Native Versions
+ cmake --build build_native_release_16 --config=Debug
+ cmake --build build_native_release_16 --config=MinSizeRel
+ cmake --build build_native_release_16 --config=Release
+ cmake --build build_native_release_16 --config=RelWithDebInfo
+ 
+ cmake --build build_native_release_17 --config=Debug
+ cmake --build build_native_release_17 --config=MinSizeRel
+ cmake --build build_native_release_17 --config=Release
+ cmake --build build_native_release_17 --config=RelWithDebInfo
+ echo -- Native Versions Has Been Built
+ :: ---------------------------------------------------------------
+ echo -- Building fmtlib Versions
+ cmake --build build_fmt_release_16 --config=Debug
+ cmake --build build_fmt_release_16 --config=MinSizeRel
+ cmake --build build_fmt_release_16 --config=Release
+ cmake --build build_fmt_release_16 --config=RelWithDebInfo
+ 
+ cmake --build build_fmt_release_17 --config=Debug
+ cmake --build build_fmt_release_17 --config=MinSizeRel
+ cmake --build build_fmt_release_17 --config=Release
+ cmake --build build_fmt_release_17 --config=RelWithDebInfo
+ echo -- fmtlib Versions Has Been Built
+ :: ---------------------------------------------------------------
+ echo -- Building <format> Versions
+ cmake --build build_std_release_16 --config=Debug
+ cmake --build build_std_release_16 --config=MinSizeRel
+ cmake --build build_std_release_16 --config=Release
+ cmake --build build_std_release_16 --config=RelWithDebInfo
+ 
+ cmake --build build_std_release_17 --config=Debug
+ cmake --build build_std_release_17 --config=MinSizeRel
+ cmake --build build_std_release_17 --config=Release
+ cmake --build build_std_release_17 --config=RelWithDebInfo
+ echo -- <format> Versions Has Been Built
+ :: ---------------------------------------------------------------
+ 
+ echo -- Checking For Folder Layout For File Moves
+ if not exist Release_Stage/ (
+   mkdir Release_Stage
+ )
+ pushd Release_Stage  
+ :: -------------------- NATIVE VERSIONS --------------------
+   if not exist Serenity_Windows_native_x86-64_VS16/ (
+     mkdir Serenity_Windows_native_x86-64_VS16
+   )
+   pushd Serenity_Windows_native_x86-64_VS16
+   if not exist lib/ (
+     mkdir lib
+   )
+   pushd lib  
+   if not exist Debug/ (
+     mkdir Debug
+   )
+   if not exist MinSizeRel/ (
+     mkdir MinSizeRel
+   )
+   if not exist Release/ (
+     mkdir Release
+   )
+   if not exist RelWithDebInfo/ (
+     mkdir RelWithDebInfo
+   )
+   popd
+     xcopy /e /i /y "../../Serenity/include" "include"
+   popd
+   :: -----------------------------------------------------
+   if not exist Serenity_Windows_native_x86-64_VS17/ (
+     mkdir Serenity_Windows_native_x86-64_VS17
+   )
+   pushd Serenity_Windows_native_x86-64_VS17
+   if not exist lib/ (
+     mkdir lib
+   )
+   pushd lib  
+   if not exist Debug/ (
+     mkdir Debug
+   )
+   if not exist MinSizeRel/ (
+     mkdir MinSizeRel
+   )
+   if not exist Release/ (
+     mkdir Release
+   )
+   if not exist RelWithDebInfo/ (
+     mkdir RelWithDebInfo
+   )
+   popd
+     xcopy /e /i /y "../../Serenity/include" "include"
+   popd
+ 
+ :: -------------------- FMTLIB VERSIONS --------------------
+   if not exist Serenity_Windows_fmtlib_x86-64_VS16/ (
+     mkdir Serenity_Windows_fmtlib_x86-64_VS16
+   )
+   pushd Serenity_Windows_fmtlib_x86-64_VS16
+     if not exist lib/ (
+     mkdir lib
+   )
+   pushd lib
+   if not exist Debug/ (
+     mkdir Debug
+   )
+   if not exist MinSizeRel/ (
+     mkdir MinSizeRel
+   )
+   if not exist Release/ (
+     mkdir Release
+   )
+   if not exist RelWithDebInfo/ (
+     mkdir RelWithDebInfo
+   )
+   popd
+    xcopy /e /i /y "../../Serenity/include" "include"
+   popd
+   :: -----------------------------------------------------
+ if not exist Serenity_Windows_fmtlib_x86-64_VS17/ (
+     mkdir Serenity_Windows_fmtlib_x86-64_VS17
+   )
+   pushd Serenity_Windows_fmtlib_x86-64_VS17
+     if not exist lib/ (
+     mkdir lib
+   )
+   pushd lib
+   if not exist Debug/ (
+     mkdir Debug
+   )
+   if not exist MinSizeRel/ (
+     mkdir MinSizeRel
+   )
+   if not exist Release/ (
+     mkdir Release
+   )
+   if not exist RelWithDebInfo/ (
+     mkdir RelWithDebInfo
+   )
+   popd
+    xcopy /e /i /y "../../Serenity/include" "include"
+   popd
+ 
+ :: -------------------- STDFMT VERSIONS --------------------
+   if not exist Serenity_Windows_stdfmt_x86-64_VS16/ (
+     mkdir Serenity_Windows_stdfmt_x86-64_VS16
+   )
+   pushd Serenity_Windows_stdfmt_x86-64_VS16
+       if not exist lib/ (
+     mkdir lib
+   )
+   pushd lib
+   if not exist Debug/ (
+     mkdir Debug
+   )
+   if not exist MinSizeRel/ (
+     mkdir MinSizeRel
+   )
+   if not exist Release/ (
+     mkdir Release
+   )
+   if not exist RelWithDebInfo/ (
+     mkdir RelWithDebInfo
+   )
+ popd
+   xcopy /e /i /y "../../Serenity/include" "include"
+ popd 
+   :: -----------------------------------------------------
+   if not exist Serenity_Windows_stdfmt_x86-64_VS17/ (
+     mkdir Serenity_Windows_stdfmt_x86-64_VS17
+   )
+   pushd Serenity_Windows_stdfmt_x86-64_VS17
+       if not exist lib/ (
+     mkdir lib
+   )
+   pushd lib
+   if not exist Debug/ (
+     mkdir Debug
+   )
+   if not exist MinSizeRel/ (
+     mkdir MinSizeRel
+   )
+   if not exist Release/ (
+     mkdir Release
+   )
+   if not exist RelWithDebInfo/ (
+     mkdir RelWithDebInfo
+   )
+   popd
+     xcopy /e /i /y "../../Serenity/include" "include"
+   popd 
+ popd  
+ 
+ echo -- Folder Layout Check Finished
+:: -----------------------------------------------------
+:: -----------------------------------------------------
+:: -----------------------------------------------------
 echo -- Moving Native Version Configured Builds
+:: -----------------------------------------------------
 
-cd build/Serenity
-move Debug ../../Release_Stage/Serenity_Windows_native_x86-64/
-move MinSizeRel ../../Release_Stage/Serenity_Windows_native_x86-64/
-move Release ../../Release_Stage/Serenity_Windows_native_x86-64/
-move RelWithDebInfo ../../Release_Stage/Serenity_Windows_native_x86-64/
+cd build_native_release_16/Serenity
+xcopy /e /i /y "Debug" "../../Release_Stage/Serenity_Windows_native_x86-64_VS16/lib/Debug"
+xcopy /e /i /y "MinSizeRel" "../../Release_Stage/Serenity_Windows_native_x86-64_VS16/lib/MinSizeRel"
+xcopy /e /i /y "Release" "../../Release_Stage/Serenity_Windows_native_x86-64_VS16/lib/Release"
+xcopy /e /i /y "RelWithDebInfo" "../../Release_Stage/Serenity_Windows_native_x86-64_VS16/lib/RelWithDebInfo"
 cd ../../
+
+cd build_native_release_17/Serenity
+xcopy /e /i /y "Debug" "../../Release_Stage/Serenity_Windows_native_x86-64_VS17/lib/Debug"
+xcopy /e /i /y "MinSizeRel" "../../Release_Stage/Serenity_Windows_native_x86-64_VS17/lib/MinSizeRel"
+xcopy /e /i /y "Release" "../../Release_Stage/Serenity_Windows_native_x86-64_VS17/lib/Release"
+xcopy /e /i /y "RelWithDebInfo" "../../Release_Stage/Serenity_Windows_native_x86-64_VS17/lib/RelWithDebInfo"
+cd ../../
+:: -----------------------------------------------------
+
 
 echo -- Moving fmtlib Version Configured Builds
-
-cd build_fmt/Serenity
-move Debug ../../Release_Stage/Serenity_Windows_fmtlib_x86-64/
-move MinSizeRel ../../Release_Stage/Serenity_Windows_fmtlib_x86-64/
-move Release ../../Release_Stage/Serenity_Windows_fmtlib_x86-64/
-move RelWithDebInfo ../../Release_Stage/Serenity_Windows_fmtlib_x86-64/
+:: -----------------------------------------------------
+cd build_fmt_release_16/Serenity
+xcopy /e /i /y "Debug" "../../Release_Stage/Serenity_Windows_fmtlib_x86-64_VS16/lib/Debug"
+xcopy /e /i /y "MinSizeRel" "../../Release_Stage/Serenity_Windows_fmtlib_x86-64_VS16/lib/MinSizeRel"
+xcopy /e /i /y "Release" "../../Release_Stage/Serenity_Windows_fmtlib_x86-64_VS16/lib/Release"
+xcopy /e /i /y "RelWithDebInfo" "../../Release_Stage/Serenity_Windows_fmtlib_x86-64_VS16/lib/RelWithDebInfo"
 cd ../../
+
+cd build_fmt_release_17/Serenity
+xcopy /e /i /y "Debug" "../../Release_Stage/Serenity_Windows_fmtlib_x86-64_VS17/lib/Debug"
+xcopy /e /i /y "MinSizeRel" "../../Release_Stage/Serenity_Windows_fmtlib_x86-64_VS17/lib/MinSizeRel"
+xcopy /e /i /y "Release" "../../Release_Stage/Serenity_Windows_fmtlib_x86-64_VS17/lib/Release"
+xcopy /e /i /y "RelWithDebInfo" "../../Release_Stage/Serenity_Windows_fmtlib_x86-64_VS17/lib/RelWithDebInfo"
+cd ../../
+:: -----------------------------------------------------
 
 echo -- Moving <format> Version Configured Builds
-
-cd build_std/Serenity
-move Debug ../../Release_Stage/Serenity_Windows_stdfmt_x86-64/
-move MinSizeRel ../../Release_Stage/Serenity_Windows_stdfmt_x86-64/
-move Release ../../Release_Stage/Serenity_Windows_stdfmt_x86-64/
-move RelWithDebInfo ../../Release_Stage/Serenity_Windows_stdfmt_x86-64/
+:: -----------------------------------------------------
+cd build_std_release_16/Serenity
+xcopy /e /i /y "Debug" "../../Release_Stage/Serenity_Windows_stdfmt_x86-64_VS16/lib/Debug"
+xcopy /e /i /y "MinSizeRel" "../../Release_Stage/Serenity_Windows_stdfmt_x86-64_VS16/lib/MinSizeRel"
+xcopy /e /i /y "Release" "../../Release_Stage/Serenity_Windows_stdfmt_x86-64_VS16/lib/Release"
+xcopy /e /i /y "RelWithDebInfo" "../../Release_Stage/Serenity_Windows_stdfmt_x86-64_VS16/lib/RelWithDebInfo"
 cd ../../
+
+cd build_std_release_17/Serenity
+xcopy /e /i /y "Debug" "../../Release_Stage/Serenity_Windows_stdfmt_x86-64_VS17/lib/Debug"
+xcopy /e /i /y "MinSizeRel" "../../Release_Stage/Serenity_Windows_stdfmt_x86-64_VS17/lib/MinSizeRel"
+xcopy /e /i /y "Release" "../../Release_Stage/Serenity_Windows_stdfmt_x86-64_VS17/lib/Release"
+xcopy /e /i /y "RelWithDebInfo" "../../Release_Stage/Serenity_Windows_stdfmt_x86-64_VS17/lib/RelWithDebInfo"
+cd ../../
+:: -----------------------------------------------------
 
 echo -- All Configured Builds Have Been Moved To The Root Folder 'Release_Stage'
 

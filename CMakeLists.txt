@@ -102,8 +102,17 @@ if (DISABLE_NATIVE_WARNING)
     set(SILENCE_NATIVE_WARNING DISABLE_CFMT_WARN)
 endif ()
 
-# if (USE_FMTLIB OR USE_STDFMT) cpmaddpackage( NAME utfutils GITHUB_REPOSITORY USAFrenzy/UTF-Utils
-# VERSION ${UTF_UTILS_VERSION} "BUILD_COMPILED_LIBRARY ON" ) endif ()
+if (NOT USE_NATIVEFMT)
+    cpmaddpackage(
+        NAME
+        utfutils
+        GITHUB_REPOSITORY
+        USAFrenzy/UTF-Utils
+        VERSION
+        ${UTF_UTILS_VERSION}
+        "BUILD_COMPILED_LIBRARY ON"
+    )
+endif ()
 
 add_subdirectory(Serenity)
 
