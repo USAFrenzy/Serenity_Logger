@@ -1,12 +1,14 @@
  @echo off
 
- :: This Will Now Remove Old Builds, Format Files, Re-build All Vesions, 
- :: Move Finished Build Configurations To The Release_Stage Folder And 
- :: Then Archive Them.
- :: ------------------------------- NOTE -------------------------------
- :: - For this script to be successful, 7zip cli needs to be downloaded
- ::   and the 7za.exe executable needs to be present on the environment
- ::   path variable 
+ echo #####################################################################
+ echo This Will Now Remove Old Builds, Format Files, Re-build All Vesions, 
+ echo Move Finished Build Configurations To The Release_Stage Folder And 
+ echo Then Archive Them.
+ echo ------------------------------- NOTE -------------------------------
+ echo - For this script to be successful, 7zip cli needs to be downloaded
+ echo   and the 7za.exe executable needs to be present on the environment
+ echo   path variable 
+echo #####################################################################
 
  call gitprep
  
