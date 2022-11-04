@@ -113,36 +113,45 @@ set_target_properties(
                DEBUG_POSTFIX "_d"
 )
 
+# Compile Definitions
 if (USE_NATIVEFMT)
     target_compile_definitions(
         ${PROJECT_NAME}
         PUBLIC ${FORMATTER_BACKEND}
                ${SILENCE_NATIVE_WARNING}
                ${ARG_FMT_COMPILE_DEF}
+               ${UTF_UTILS_COMPILE_DEF}
     )
 else ()
-    target_compile_definitions(${PROJECT_NAME} PUBLIC ${FORMATTER_BACKEND})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC ${FORMATTER_BACKEND} ${UTF_UTILS_COMPILE_DEF})
 endif ()
 
-if (USE_FMTLIB)
-    target_include_directories(
-        ${PROJECT_NAME}
-        PUBLIC ${SERENITY_INCLUDE_DIR}
-               ${FMTLIB_INCLUDE_DIR}
-               ${UTF_UTILS_INCLUDE_DIR}
-    )
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${FMT} ${UTF_UTILS})
-elseif (USE_NATIVEFMT)
+# Include Directories
+if (USE_NATIVEFMT)
     target_include_directories(
         ${PROJECT_NAME}
         PUBLIC ${SERENITY_INCLUDE_DIR}
                ${ARGFMT_INCLUDE_DIR}
                ${UTF_UTILS_INCLUDE_DIR}
     )
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${ARG_FMT} ${UTF_UTILS})
+elseif (USE_FMTLIB)
+    target_include_directories(
+        ${PROJECT_NAME}
+        PUBLIC ${SERENITY_INCLUDE_DIR}
+               ${FMTLIB_INCLUDE_DIR}
+               ${UTF_UTILS_INCLUDE_DIR}
+    )
 else ()
     target_include_directories(
         ${PROJECT_NAME} PUBLIC ${SERENITY_INCLUDE_DIR} ${UTF_UTILS_INCLUDE_DIR}
     )
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${UTF_UTILS})
+endif ()
+
+# Library Linkage
+if (USE_NATIVEFMT)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${ARG_FMT} ${UTF_UTILS})
+elseif (USE_FMTLIB)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${FMT} ${UTF_UTILS})
+else ()
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${UTF_UTILS})
 endif ()

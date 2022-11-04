@@ -26,11 +26,14 @@ set(SERENITY_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Serenity/include)
 
 # specific definition that needs to be applied for ArgFormatter to see the correct include path
 set(ARG_FMT_COMPILE_DEF COMPILED_LIBRARY)
+set(UTF_UTILS_COMPILE_DEF BUILD_COMPILED_LIB)
 
 # The compiled object file names for the sub projects
 set(ARG_FMT ArgFormatter_Lib)
 set(UTF_UTILS UTF-Utils_Compiled)
 set(FMT fmt::fmt)
+set(SERENITY Serenity)
+set(SPDLOG spdlog)
 
 if (USE_STDFMT
     AND NOT USE_FMTLIB
@@ -80,7 +83,7 @@ elseif (
         "BUILD_TESTS OFF"
         "BUILD_ALL OFF"
     )
-    target_compile_definitions(${ARG_FMT} PUBLIC ${ARG_FMT_COMPILE_DEF})
+    target_compile_definitions(${ARG_FMT} PUBLIC ${ARG_FMT_COMPILE_DEF} ${UTF_UTILS_COMPILE_DEF})
     set(FORMATTER_BACKEND USE_BUILT_IN_FMT)
 elseif (
     NOT USE_NATIVEFMT
@@ -102,7 +105,7 @@ if (DISABLE_NATIVE_WARNING)
     set(SILENCE_NATIVE_WARNING DISABLE_CFMT_WARN)
 endif ()
 
-if (NOT USE_NATIVEFMT)
+if (USE_STDFMT OR USE_FMTLIB)
     cpmaddpackage(
         NAME
         utfutils
@@ -110,6 +113,7 @@ if (NOT USE_NATIVEFMT)
         USAFrenzy/UTF-Utils
         VERSION
         ${UTF_UTILS_VERSION}
+        OPTIONS
         "BUILD_COMPILED_LIBRARY ON"
     )
 endif ()

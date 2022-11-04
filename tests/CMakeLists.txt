@@ -87,7 +87,7 @@ target_link_libraries(
     PUBLIC ${UTF_UTILS}
            ${ARG_FMT}
            ${FMT}
-           Serenity
+           ${SERENITY}
 )
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})

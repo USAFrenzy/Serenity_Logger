@@ -31,19 +31,19 @@ if (USE_NATIVEFMT)
     target_compile_definitions(${PROJECT_NAME} PUBLIC ${ARG_FMT_COMPILE_DEF} ${FORMATTER_BACKEND})
     target_link_libraries(
         ${PROJECT_NAME}
-        PUBLIC spdlog
-               Serenity
+        PUBLIC ${SPDLOG}
+               ${SERENITY}
                ${ARG_FMT}
     )
 elseif (USE_FMTLIB)
     target_compile_definitions(${PROJECT_NAME} PUBLIC ${FORMATTER_BACKEND})
     target_link_libraries(
         ${PROJECT_NAME}
-        PUBLIC spdlog
-               Serenity
+        PUBLIC ${SPDLOG}
+               ${SERENITY}
                ${FMT}
     )
 else ()
     target_compile_definitions(${PROJECT_NAME} PUBLIC ${FORMATTER_BACKEND})
-    target_link_libraries(${PROJECT_NAME} PUBLIC spdlog Serenity)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${SPDLOG} ${SERENITY})
 endif ()

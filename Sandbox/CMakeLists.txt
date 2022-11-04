@@ -24,6 +24,7 @@ endif ()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD ${STANDARD})
 
+# so that sandbox can use fmt::format
 if (NOT USE_FMT_LIB)
     cpmaddpackage(
         NAME
@@ -46,6 +47,7 @@ if (NOT USE_FMT_LIB)
     )
 endif ()
 
+# so that sandbox can use ArgFormatter
 if (NOT USE_NATIVEFMT)
     cpmaddpackage(
         NAME
@@ -60,48 +62,59 @@ if (NOT USE_NATIVEFMT)
         "BUILD_TESTS OFF"
         "BUILD_ALL OFF"
     )
-    target_compile_definitions(${ARG_FMT} PUBLIC ${ARG_FMT_COMPILE_DEF})
+    target_compile_definitions(${ARG_FMT} PUBLIC ${ARG_FMT_COMPILE_DEF} ${UTF_UTILS_COMPILE_DEF})
 endif ()
 
+# Since this is a sandbox, it should be allowed to access all the subprojects' include files
 target_include_directories(
     ${PROJECT_NAME}
     PUBLIC ${SERENITY_INCLUDE_DIR}
            ${ARGFMT_INCLUDE_DIR}
            ${FMTLIB_INCLUDE_DIR}
+           ${UTF_UTILS_INCLUDE_DIR}
 )
 
+# Compile Time Definitions
 if (USE_NATIVEFMT)
     target_compile_definitions(
         ${PROJECT_NAME}
         PUBLIC ${FORMATTER_BACKEND}
                ${SILENCE_NATIVE_WARNING}
                ${ARG_FMT_COMPILE_DEF}
+               ${UTF_UTILS_COMPILE_DEF}
     )
 else ()
-    target_compile_definitions(${PROJECT_NAME} PUBLIC ${FORMATTER_BACKEND} ${ARG_FMT_COMPILE_DEF})
+    target_compile_definitions(
+        ${PROJECT_NAME}
+        PUBLIC ${FORMATTER_BACKEND}
+               ${ARG_FMT_COMPILE_DEF}
+               ${UTF_UTILS_COMPILE_DEF}
+    )
 endif ()
 
+# Library Linkage
 if (USE_FMTLIB)
     target_link_libraries(
         ${PROJECT_NAME}
-        PRIVATE Serenity
-                spdlog
+        PRIVATE ${SERENITY}
+                ${SPDLOG}
                 ${FMT}
                 ${ARG_FMT}
+                ${UTF_UTILS}
     )
 elseif (USE_NATIVEFMT)
     target_link_libraries(
         ${PROJECT_NAME}
-        PRIVATE Serenity
-                spdlog
+        PRIVATE ${SERENITY}
+                ${SPDLOG}
                 ${ARG_FMT}
                 ${UTF_UTILS}
     )
 else ()
     target_link_libraries(
         ${PROJECT_NAME}
-        PRIVATE Serenity
-                spdlog
+        PRIVATE ${SERENITY}
+                ${SPDLOG}
                 ${UTF_UTILS}
     )
 endif ()
