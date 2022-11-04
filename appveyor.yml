@@ -1,11 +1,22 @@
-version: 1.0.{build}
+#####################################################################################################################
+# Removed Sandbox and Build All CI builds as the Sandbox is really only used by me to experiment testing with 
+# features and implementations while the Build All case is redundant since we test each option separately.
+# - In total this removed 12 tests bringing the current build tests to 24 (added 3 missing for VS16 Demos).
+# - The reason for so many builds is:
+#   * Three tests for each sub project to test the formatting backend support (ArgFormatter, fmtlib, and <format>)
+#   * The sub projects being Serenity only, Serenity W/ Demos, Serenity W/ Tests, and Serenity W/ Benchmarks
+#   * Two variations of the above: one for Visual Studio 16 and one for Visual Studio 17
+#####################################################################################################################
+version: 1.0.0.{build}
 branches:
   only:
   - main
   - dev
 environment:
   matrix:
-####################################################################
+################################################################################
+#  Library only Builds for native, fmtlib, and <format> for VS16
+################################################################################
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     GENERATOR: '"Visual Studio 16 2019" -A x64'
     BUILD_SANDBOX: 'OFF'
@@ -16,7 +27,7 @@ environment:
     USE_NATIVEFMT: 'ON'
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'ON'
+    DISABLE_NATIVE_WARNING: 'OFF'
 
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     GENERATOR: '"Visual Studio 16 2019" -A x64'
@@ -41,50 +52,14 @@ environment:
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'ON'
     DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
+################################################################################
 
-####################################################################
+################################################################################
+#  Library W/ Tests builds for native, fmtlib, and <format> for VS16
+################################################################################
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'ON'
-    BUILD_DEMOS: 'ON'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'OFF'
-    USE_NATIVEFMT: 'ON'
-    USE_STDFMT: 'OFF'
-    USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'ON'
-
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'ON'
-    BUILD_DEMOS: 'ON'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'OFF'
-    USE_NATIVEFMT: 'OFF'
-    USE_STDFMT: 'ON'
-    USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'OFF'
-
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'ON'
-    BUILD_DEMOS: 'ON'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'OFF'
-    USE_NATIVEFMT: 'OFF'
-    USE_STDFMT: 'OFF'
-    USE_FMTLIB: 'ON'
-    DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
-
-####################################################################
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'ON'
+    BUILD_SANDBOX: 'OFF'
     BUILD_DEMOS: 'OFF'
     BUILD_TESTS: 'ON'
     BUILD_BENCHMARKS: 'OFF'
@@ -96,7 +71,7 @@ environment:
 
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'ON'
+    BUILD_SANDBOX: 'OFF'
     BUILD_DEMOS: 'OFF'
     BUILD_TESTS: 'ON'
     BUILD_BENCHMARKS: 'OFF'
@@ -108,7 +83,7 @@ environment:
 
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'ON'
+    BUILD_SANDBOX: 'OFF'
     BUILD_DEMOS: 'OFF'
     BUILD_TESTS: 'ON'
     BUILD_BENCHMARKS: 'OFF'
@@ -117,9 +92,51 @@ environment:
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'ON'
     DISABLE_NATIVE_WARNING: 'OFF'  
-####################################################################
+################################################################################
 
-####################################################################
+################################################################################
+#  Library W/Demos Builds for native, fmtlib, and <format> for VS16
+################################################################################
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    GENERATOR: '"Visual Studio 16 2019" -A x64'
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'ON'
+    BUILD_TESTS: 'OFF'
+    BUILD_BENCHMARKS: 'OFF'
+    BUILD_ALL : 'OFF'
+    USE_NATIVEFMT: 'ON'
+    USE_STDFMT: 'OFF'
+    USE_FMTLIB: 'OFF'
+    DISABLE_NATIVE_WARNING: 'ON'
+    
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    GENERATOR: '"Visual Studio 16 2019" -A x64'
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'ON'
+    BUILD_TESTS: 'OFF'
+    BUILD_BENCHMARKS: 'OFF'
+    BUILD_ALL : 'OFF'
+    USE_NATIVEFMT: 'OFF'
+    USE_STDFMT: 'ON'
+    USE_FMTLIB: 'OFF'
+    DISABLE_NATIVE_WARNING: 'OFF'
+
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    GENERATOR: '"Visual Studio 16 2019" -A x64'
+    BUILD_SANDBOX: 'OFF'
+    BUILD_DEMOS: 'ON'
+    BUILD_TESTS: 'OFF'
+    BUILD_BENCHMARKS: 'OFF'
+    BUILD_ALL : 'OFF'
+    USE_NATIVEFMT: 'OFF'
+    USE_STDFMT: 'OFF'
+    USE_FMTLIB: 'ON'
+    DISABLE_NATIVE_WARNING: 'OFF'
+################################################################################
+
+################################################################################
+#  Library W/ Benchmark Builds for native, fmtlib, and <format> for VS16
+################################################################################
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     GENERATOR: '"Visual Studio 16 2019" -A x64'
     BUILD_SANDBOX: 'OFF'
@@ -155,47 +172,11 @@ environment:
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'ON'
     DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
+################################################################################
 
-####################################################################
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'OFF'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'ON'
-    USE_NATIVEFMT: 'ON'
-    USE_STDFMT: 'OFF'
-    USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'ON'
-
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'OFF'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'ON'
-    USE_NATIVEFMT: 'OFF'
-    USE_STDFMT: 'ON'
-    USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'OFF'
-
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    GENERATOR: '"Visual Studio 16 2019" -A x64'
-    BUILD_SANDBOX: 'OFF'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'ON'
-    USE_NATIVEFMT: 'OFF'
-    USE_STDFMT: 'OFF'
-    USE_FMTLIB: 'ON'
-    DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
-
-####################################################################
+################################################################################
+#  Library only builds for native, fmtlib, and <format> For VS 17
+################################################################################
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     GENERATOR: '"Visual Studio 17 2022" -A x64'
     BUILD_SANDBOX: 'OFF'
@@ -206,7 +187,7 @@ environment:
     USE_NATIVEFMT: 'ON'
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'ON'
+    DISABLE_NATIVE_WARNING: 'OFF'
     
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     GENERATOR: '"Visual Studio 17 2022" -A x64'
@@ -231,47 +212,11 @@ environment:
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'ON'
     DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
+################################################################################
 
-####################################################################
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    GENERATOR: '"Visual Studio 17 2022" -A x64'
-    BUILD_SANDBOX: 'ON'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'OFF'
-    USE_NATIVEFMT: 'ON'
-    USE_STDFMT: 'OFF'
-    USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'ON'
-
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    GENERATOR: '"Visual Studio 17 2022" -A x64'
-    BUILD_SANDBOX: 'ON'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'OFF'
-    USE_NATIVEFMT: 'OFF'
-    USE_STDFMT: 'ON'
-    USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'OFF'
-
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    GENERATOR: '"Visual Studio 17 2022" -A x64'
-    BUILD_SANDBOX: 'ON'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'OFF'
-    USE_NATIVEFMT: 'OFF'
-    USE_STDFMT: 'OFF'
-    USE_FMTLIB: 'ON'
-    DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
-
-####################################################################
+################################################################################
+#  Library W/Demos Builds for native, fmtlib, and <format> for VS17
+################################################################################
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     GENERATOR: '"Visual Studio 17 2022" -A x64'
     BUILD_SANDBOX: 'OFF'
@@ -307,9 +252,11 @@ environment:
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'ON'
     DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
+################################################################################
 
-####################################################################
+################################################################################
+#  Library W/Tests Builds for native, fmtlib, and <format>
+################################################################################
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     GENERATOR: '"Visual Studio 17 2022" -A x64'
     BUILD_SANDBOX: 'OFF'
@@ -345,9 +292,11 @@ environment:
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'ON'
     DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
+################################################################################
 
-####################################################################
+################################################################################
+#  Library W/Benchmark Builds for native, fmtlib, and <format>
+################################################################################
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     GENERATOR: '"Visual Studio 17 2022" -A x64'
     BUILD_SANDBOX: 'OFF'
@@ -383,45 +332,7 @@ environment:
     USE_STDFMT: 'OFF'
     USE_FMTLIB: 'ON'
     DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
-
-####################################################################
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    GENERATOR: '"Visual Studio 17 2022" -A x64'
-    BUILD_SANDBOX: 'OFF'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'ON'
-    USE_NATIVEFMT: 'ON'
-    USE_STDFMT: 'OFF'
-    USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'ON'
-
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    GENERATOR: '"Visual Studio 17 2022" -A x64'
-    BUILD_SANDBOX: 'OFF'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'ON'
-    USE_NATIVEFMT: 'OFF'
-    USE_STDFMT: 'ON'
-    USE_FMTLIB: 'OFF'
-    DISABLE_NATIVE_WARNING: 'OFF'
-
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    GENERATOR: '"Visual Studio 17 2022" -A x64'
-    BUILD_SANDBOX: 'OFF'
-    BUILD_DEMOS: 'OFF'
-    BUILD_TESTS: 'OFF'
-    BUILD_BENCHMARKS: 'OFF'
-    BUILD_ALL : 'ON'
-    USE_NATIVEFMT: 'OFF'
-    USE_STDFMT: 'OFF'
-    USE_FMTLIB: 'ON'
-    DISABLE_NATIVE_WARNING: 'OFF'
-####################################################################
+################################################################################
 
 build_script:
 - cmd: >-
