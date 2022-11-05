@@ -57,6 +57,17 @@ set(MISC_HEADER_FILES
     "include/serenity/Defines.h"
 )
 
+# Once the custom formatting flags have been specialized, I may end up moving the FormatBackend.h
+# logic into these separate files and just rename the 'CustomFormat' folder to 'FormatBackend'
+# instead; this way, it's absolutely clear what's being included for each variation
+if (USE_NATIVEFMT)
+    set(CUSTOM_FMT_SPECIALIAZATIONS "include/serenity/CustomFormat/argfmt_backend.h")
+elseif (USE_FMTLIB)
+    set(CUSTOM_FMT_SPECIALIAZATIONS "include/serenity/CustomFormat/fmtlib_backend.h")
+elseif (USE_STDFMT)
+    set(CUSTOM_FMT_SPECIALIAZATIONS "include/serenity/CustomFormat/stdfmt_backend.h")
+endif ()
+
 set(SERENITY_SOURCE_FILES
     ${MESSAGE_DETAILS_SOURCE_FILES}
     ${TARGETS_SOURCE_FILES}
@@ -70,6 +81,7 @@ set(SERENITY_HEADER_FILES
     ${UTILITIES_HEADER_FILES}
     ${COLOR_HEADER_FILES}
     ${MISC_HEADER_FILES}
+    ${CUSTOM_FMT_SPECIALIAZATIONS}
 )
 
 source_group(

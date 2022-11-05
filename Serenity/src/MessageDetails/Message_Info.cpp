@@ -8,7 +8,15 @@ namespace serenity::msg_details {
 		return m_msgLevel;
 	}
 
+	const LoggerLevel& Message_Info::MsgLevel() const {
+		return m_msgLevel;
+	}
+
 	std::string& Message_Info::Name() {
+		return m_name;
+	}
+
+	const std::string& Message_Info::Name() const {
 		return m_name;
 	}
 
@@ -48,11 +56,19 @@ namespace serenity::msg_details {
 		return m_message;
 	}
 
+	const std::string& Message_Info::Message() const {
+		return m_message;
+	}
+
 	size_t Message_Info::MessageSize() const {
 		return m_message.size();
 	}
 
 	std::source_location& Message_Info::SourceLocation() {
+		return source;
+	}
+
+	const std::source_location& Message_Info::SourceLocation() const {
 		return source;
 	}
 

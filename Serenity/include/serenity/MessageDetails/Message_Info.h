@@ -15,7 +15,9 @@ namespace serenity::msg_details {
 		~Message_Info()                                = default;
 
 		LoggerLevel& MsgLevel();
+		const LoggerLevel& MsgLevel() const;
 		std::string& Name();
+		const std::string& Name() const;
 		Message_Time& TimeDetails();
 		void SetName(const std::string_view name);
 		void SetMsgLevel(const LoggerLevel level);
@@ -23,9 +25,12 @@ namespace serenity::msg_details {
 		void SetTimePoint(std::chrono::system_clock::time_point tp = std::chrono::system_clock::now());
 		std::chrono::system_clock::time_point MessageTimePoint() const;
 		std::source_location& SourceLocation();
+		const std::source_location& SourceLocation() const;
 		message_time_mode TimeMode();
 		const std::tm& TimeInfo() const;
 		std::string& Message();
+		const std::string& Message() const;
+
 		size_t MessageSize() const;
 
 	  private:

@@ -5,8 +5,9 @@
 #define ROTATING_TESTING             0
 #define PARSE_TESTING                1
 #define ENABLE_PARSE_BENCHING        0
-#define ENABLE_PARSE_SANDBOX         1
-#define ENABLE_CTIME_SANDBOX         1
+#define ENABLE_PARSE_SANDBOX         0
+#define ENABLE_CTIME_SANDBOX         0
+#define ENABLE_CUSTOMFMT_SANDBOX     1
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	#define _CRTDBG_MAP_ALLOC
@@ -21,6 +22,16 @@
 #include <serenity/Utilities/Utilities.h>
 
 #include <iostream>
+
+#if ENABLE_CUSTOMFMT_SANDBOX
+	#ifdef USE_BUILT_IN_FMT
+		#include <serenity/CustomFormat/argfmt_backend.h>
+	#elif defined USE_FMT_LIB
+		#include <serenity/CustomFormat/stdfmt_backend.h>
+	#elif defined USE_STD_FMT
+		#include <serenity/CustomFormat/fmtlib_backend.h>
+	#endif    // USE_BUILT_IN_FMT
+#endif
 
 #if PARSE_TESTING
 	#include <ArgFormatter/ArgFormatter.h>
@@ -771,6 +782,26 @@ int main() {
 	//  standard uses, serenity is still well above 50% faster than the standard in this case.
 
 #endif    // ENABLE_CTIME_SANDBOX
+
+#ifdef ENABLE_CUSTOMFMT_SANDBOX
+
+	#ifdef USE_BUILT_IN_FMT    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	serenity::msg_details::Message_Info testInfo { "TestFormatting", LoggerLevel::trace, message_time_mode::local };
+	// The only thing I'm noticing is that because I don't have a way to pass the custom type into the nested formatting of CustomFormatter::Format() at this moment
+	// in time, I end up having to this whole clunky concatenation deal below, otherwise, it ends up bypassing the custom parsing and errors on the '%' found,
+	// thinking it's parsing a native type. It works as intended, but I %100 know that to get the performance I want and need, I'll have to be able to format things
+	// like this in one go.
+	//! NOTE: Also noticing  a potential bug (honestly though, it *IS* a bug); formatter::format()'s arg storage may need to be looked at since the padding that's
+	//! now using std::format() below was erroring on incorrect type -> should have been 'c_string' type but was returning 'CustomValue' type -> therefore, it
+	//! doesn't format it correctly.
+	//! ADDED INFO FOR NOTE:  There's actually a REALLY HIGH chance that the above observed behavior and the observed bug are related to one another. I should
+	//! probably reset the storage/value type arrays on each format call and create an intermediatary link for nested formatting between Custom types and Native
+	//! types (similar to a handshake of sorts)
+	std::cout << std::format("{:*^95}\n", "This Is A Test For Custom Formatting") << formatter::format("- Long Level:\t{0:%L}\n", testInfo)
+			  << formatter::format("- Short Level:\t{0:%l}\n", testInfo) << formatter::format("- Logger Name:\t{0:%N}\n", testInfo);
+	#endif    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////USE_BUILT_IN_FMT
+
+#endif
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	_CrtDumpMemoryLeaks();
