@@ -786,19 +786,73 @@ int main() {
 #ifdef ENABLE_CUSTOMFMT_SANDBOX
 
 	#ifdef USE_BUILT_IN_FMT    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	serenity::msg_details::Message_Info testInfo { "TestFormatting", LoggerLevel::trace, message_time_mode::local };
-	// The only thing I'm noticing is that because I don't have a way to pass the custom type into the nested formatting of CustomFormatter::Format() at this moment
-	// in time, I end up having to this whole clunky concatenation deal below, otherwise, it ends up bypassing the custom parsing and errors on the '%' found,
-	// thinking it's parsing a native type. It works as intended, but I %100 know that to get the performance I want and need, I'll have to be able to format things
-	// like this in one go.
-	//! NOTE: Also noticing  a potential bug (honestly though, it *IS* a bug); formatter::format()'s arg storage may need to be looked at since the padding that's
-	//! now using std::format() below was erroring on incorrect type -> should have been 'c_string' type but was returning 'CustomValue' type -> therefore, it
-	//! doesn't format it correctly.
-	//! ADDED INFO FOR NOTE:  There's actually a REALLY HIGH chance that the above observed behavior and the observed bug are related to one another. I should
-	//! probably reset the storage/value type arrays on each format call and create an intermediatary link for nested formatting between Custom types and Native
-	//! types (similar to a handshake of sorts)
-	std::cout << std::format("{:*^95}\n", "This Is A Test For Custom Formatting") << formatter::format("- Long Level:\t{0:%L}\n", testInfo)
-			  << formatter::format("- Short Level:\t{0:%l}\n", testInfo) << formatter::format("- Logger Name:\t{0:%N}\n", testInfo);
+
+	std::cout << "\n\n";
+
+	auto iterations { 1'000'000 };
+	Instrumentator customTimer {};
+
+	customTimer.StopWatch_Reset();
+	for( auto i { 0 }; i < iterations; ++i ) {
+			auto _ { formatter::format("{0:*^95}\n- Long Level:\t{1:%L}\n- Short Level:\t{1:%l}\n- Logger Name:\t{1:%N}\n- Log Message:\t{1:%+}\n- Log "
+				                       "Source:\t{1:%s}\n- Thread ID:\t{1:%t}\n",
+				                       "This Is A Test For Custom Formatting", testInfo) };
+		}
+	customTimer.StopWatch_Stop();
+	auto value { formatter::format("{0:*^95}\n- Logger Name:\t{1:%N}\n- Long Level:\t{1:%L}\n- Short Level:\t{1:%l}\n- Log Message:\t{1:%+}\n- Log "
+		                           "Source:\t{1:%s}\n- Thread ID:\t{1:%t}\n",
+		                           "This Is A Test For Custom Formatting", testInfo) };
+	std::cout << formatter::format("Separated Calls To Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
+	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+
+	std::cout << "\n\n\n";
+
+	customTimer.StopWatch_Reset();
+	for( auto i { 0 }; i < iterations; ++i ) {
+			auto _ { formatter::format("{0:*^95}\n{1}", "This Is A Test For Default Custom Formatting", testInfo) };
+		}
+	customTimer.StopWatch_Stop();
+	value = formatter::format("{0:*^95}\n{1}", "This Is A Test For Default Custom Formatting", testInfo);
+	std::cout << formatter::format("Default Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
+	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+
+	std::cout << "\n\n\n";
+
+	customTimer.StopWatch_Reset();
+	for( auto i { 0 }; i < iterations; ++i ) {
+			auto _ { formatter::format("{:%L}", testInfo) };
+		}
+	customTimer.StopWatch_Stop();
+	value = formatter::format("{:%L}", testInfo);
+	std::cout << formatter::format("Single Flag Custom Formatting For Long Log Level Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
+	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+
+	std::cout << "\n\n\n";
+
+	customTimer.StopWatch_Reset();
+	for( auto i { 0 }; i < iterations; ++i ) {
+			auto _ { formatter::format("{:%l}", testInfo) };
+		}
+	customTimer.StopWatch_Stop();
+	value = formatter::format("{:%l}", testInfo);
+	std::cout << formatter::format("Single Flag Custom Formatting For Short Log Level Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
+	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+
+	std::cout << "\n\n\n";
+
+	customTimer.StopWatch_Reset();
+	for( auto i { 0 }; i < iterations; ++i ) {
+			auto _ { formatter::format("|{1:%L}| xxx xx:xx:xx xxXXXxx [{1:%N}]:", "", testInfo) };
+		}
+	customTimer.StopWatch_Stop();
+	value = formatter::format("|{1:%L}| xxx xx:xx:xx xxXXXxx [{1:%N}]:", "", testInfo);
+	std::cout << formatter::format("Mock Log Structure Format Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
+	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+
+	std::cout << "\n\n\n";
+
 	#endif    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////USE_BUILT_IN_FMT
 
 #endif
