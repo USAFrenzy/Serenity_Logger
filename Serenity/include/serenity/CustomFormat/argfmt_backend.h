@@ -3,6 +3,8 @@
 #include <ArgFormatter/ArgContainer.h>
 #include <serenity/MessageDetails/Message_Info.h>
 
+#include <source_location>
+
 // This bit will most likely be abstracted into a core file that the backends will all use
 namespace serenity::CustomFlagError {
 	enum class CustomErrors
@@ -64,6 +66,104 @@ enum class flag_type
 	Default,
 };
 
+class Format_Source_Loc
+{
+  public:
+	explicit Format_Source_Loc(const serenity::msg_details::Message_Info& info, const serenity::source_flag& flag)
+		: srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag) { }
+	Format_Source_Loc(const Format_Source_Loc&) = delete;
+	Format_Source_Loc& operator=(const Format_Source_Loc&) = delete;
+	~Format_Source_Loc()                                   = default;
+
+	void FormatAll() {
+		result.append("[ ").append(srcLocation.file_name()).append("(");
+		std::memset(buff.data(), 0, buff.size());
+		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
+		result.append(buff.data(), end - buff.data()).append(":");
+		std::memset(buff.data(), 0, buff.size());
+		end = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column()).ptr;
+		result.append(buff.data(), end - buff.data()).append(") ");
+		result.append(srcLocation.function_name()).append(" ]");
+	}
+
+	void FormatLine() {
+		std::memset(buff.data(), 0, buff.size());
+		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
+		result.append(buff.data(), end - buff.data());
+	}
+
+	void FormatColumn() {
+		std::memset(buff.data(), 0, buff.size());
+		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
+		result.append(buff.data(), end - buff.data());
+	}
+
+	void FormatFile() {
+		result.append(srcLocation.file_name());
+	}
+
+	void FormatFunction() {
+		result.append(srcLocation.function_name());
+	}
+
+	std::string_view FormatUserPattern() {
+		using enum serenity::source_flag;
+		result.clear();
+		switch( static_cast<int>(spec) ) {
+				case 1: FormatLine(); break;
+				case 2: FormatColumn(); break;
+				case 3:
+					FormatLine();
+					result.append(":");
+					FormatColumn();
+					break;
+				case 4: FormatFile(); break;
+				case 5:
+					FormatFile();
+					result.append(" ");
+					FormatLine();
+					break;
+				case 7:
+					FormatFile();
+					result.append("(");
+					FormatLine();
+					result.append(":");
+					FormatColumn();
+					result.append(")");
+					break;
+				case 8: FormatFunction(); break;
+				case 9:
+					FormatFunction();
+					result.append(" ");
+					FormatLine();
+					break;
+				case 11:
+					FormatFunction();
+					FormatLine();
+					result.append(":");
+					FormatColumn();
+					result.append(")");
+					break;
+				case 12:
+					FormatFile();
+					result.append(" ");
+					FormatFunction();
+					break;
+				default: FormatAll(); break;
+			}
+		return std::string_view(result.data(), result.size());
+	}
+
+public:
+	bool isInitialized{false};
+
+  private:
+	const std::source_location& srcLocation;
+	std::array<char, 6> buff;
+	serenity::source_flag spec;
+	std::string result;
+};
+
 // just here as a placeholder for now
 enum class SrcLocMod
 {
@@ -74,6 +174,11 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 {
 	serenity::CustomFlagError::custom_error_handler errHandler {};
 	flag_type flag { flag_type::Invalid };
+	serenity::source_flag srcFlags;
+	// clang-format off
+	static constexpr std::string_view defaultFmt { "- Logger Name:\t{0}\n- Long Level:\t{1}\n- Short Level:\t{2}\n"
+		                                                                                    "- Log Message:\t{4}\n- Log Source:\t{5}\n- Thread ID:\t{3}\n" };
+	// clang-format on
 
 	inline constexpr void Parse(std::string_view parse) {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
@@ -105,6 +210,7 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 				if( ++pos >= size ) {
 						errHandler.ReportCustomError(CustomErrors::token_with_no_flag);
 				}
+
 				// the flag specifier token was detected, now try matching the flag
 				switch( parse[ pos ] ) {
 						case 'L': flag = flag_type::LongLogLvl; return;
@@ -112,8 +218,30 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						case 'N': flag = flag_type::LoggerName; return;
 						// LogSource is a little bit special given the modifiers that are attached to it
 						case 's':
-							flag = flag_type::LogSource;
-							break;
+							{
+								flag = flag_type::LogSource;
+								srcFlags = serenity::source_flag::empty;
+								if( auto nxtPos { ++pos }; (nxtPos >= size) || (parse[ nxtPos ] != ':') ) {
+										if( nxtPos < size ) {
+												--pos;
+												srcFlags = serenity::source_flag::all;
+												return;
+										}
+										errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+								}
+								for( ;; ) {
+										if( ++pos >= size ) {
+												errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+										}
+										switch( parse[ pos ] ) {
+												case 'l': srcFlags |= serenity::source_flag::line; continue;
+												case 'c': srcFlags |= serenity::source_flag::column; continue;
+												case 'f': srcFlags |= serenity::source_flag::file; continue;
+												case 'F': srcFlags |= serenity::source_flag::function; continue;
+												case '}':   return;
+											}
+									}
+							}
 							// LoggerThreadID is also a little bit special due to it's length modifier
 						case 't': flag = flag_type::LoggerThreadID; return;
 						case '+': flag = flag_type::LogMessage; return;
@@ -125,22 +253,41 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 			}
 	}
 
-	template<typename ContainerCtx> constexpr auto Format(const serenity::msg_details::Message_Info& p, ContainerCtx& ctx) const {
+	template<typename resultCtx> constexpr auto Format(const serenity::msg_details::Message_Info& p, resultCtx& ctx) const {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
+		static Format_Source_Loc srcFormatter(p, srcFlags);
 		switch( flag ) {
-					// invalid flag should have been caught from the parsing, but include here and just don't format it
-				case flag_type::LongLogLvl: return formatter::format_to(std::back_inserter(ctx), "{}", LevelToLongView(p.MsgLevel()));
-				case flag_type::ShortLogLvl: return formatter::format_to(std::back_inserter(ctx), "{}", LevelToShortView(p.MsgLevel()));
-				case flag_type::LoggerName: return formatter::format_to(std::back_inserter(ctx), "{}", p.Name());
-				case flag_type::LogSource: return formatter::format_to(std::back_inserter(ctx), "{}", "[PlaceHolder]");
-				case flag_type::LoggerThreadID: return formatter::format_to(std::back_inserter(ctx), "{}", "[PlaceHolder]");
-				case flag_type::LogMessage: return formatter::format_to(std::back_inserter(ctx), "{}", "[PlaceHolder]");
+				case flag_type::LongLogLvl:
+					{
+						return formatter::format_to(std::back_inserter(ctx), "{}", LevelToLongView(p.MsgLevel()));
+					}
+				case flag_type::ShortLogLvl:
+					{
+						return formatter::format_to(std::back_inserter(ctx), "{}", LevelToShortView(p.MsgLevel()));
+					}
+				case flag_type::LoggerName:
+					{
+						return formatter::format_to(std::back_inserter(ctx), "{}", p.Name());
+					}
+				case flag_type::LogSource:
+					{
+						return formatter::format_to(std::back_inserter(ctx), "{}", srcFormatter.FormatUserPattern());
+					}
+				case flag_type::LoggerThreadID:
+					{
+						return formatter::format_to(std::back_inserter(ctx), "{}", "[PlaceHolder]");
+					}
+				case flag_type::LogMessage:
+					{
+						return formatter::format_to(std::back_inserter(ctx), "{}", p.Message());
+					}
 				case flag_type::Default:
-					return formatter::format_to(std::back_inserter(ctx),
-					                            "- Logger Name:\t{0}\n- Long Level:\t{1}\n- Short Level:\t{2}\n- Log Message:\t{3}\n- Log Source:\t{3}\n- Thread "
-					                            "ID:\t{3}\n",
-					                            p.Name(), LevelToLongView(p.MsgLevel()), LevelToShortView(p.MsgLevel()), "[PlaceHolder]");
-
+					{
+						// clang-format off
+						return formatter::format_to(std::back_inserter(ctx), defaultFmt, p.Name(), LevelToLongView(p.MsgLevel()), LevelToShortView(p.MsgLevel()), "[PlaceHolder]", p.Message(), srcFormatter.FormatUserPattern());
+						// clang-format on	
+				}
+					// invalid flag should have been caught from the parsing, but include here and just don't format it
 				case flag_type::Invalid: [[fallthrough]];
 				default: break;
 			}

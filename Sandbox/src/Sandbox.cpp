@@ -787,7 +787,10 @@ int main() {
 
 	#ifdef USE_BUILT_IN_FMT    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	serenity::msg_details::Message_Info testInfo { "TestFormatting", LoggerLevel::trace, message_time_mode::local };
+	serenity::MsgWithLoc message { "This is a test message for custom formatting of Message_Info" };
+	const serenity::msg_details::Message_Info testInfo { "TestFormatting", LoggerLevel::trace, message_time_mode::local };
+	testInfo.Message() = message.msg;
+	testInfo.SetSrcLoc(message.source);
 
 	std::cout << "\n\n";
 
@@ -842,12 +845,15 @@ int main() {
 
 	std::cout << "\n\n\n";
 
+	//! NOTE: there seems to be yet another bug, possibly of the same nature yet still different from issues #1 & #2, where if the custom type is the *ONLY* argument
+	//! type provided, and there are multiple substitution brackets that reference that custom type argument, it doesn't format the values into the bracket -> will
+	//! need to open up another issue when I get the chance
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iterations; ++i ) {
-			auto _ { formatter::format("|{1:%L}| xxx xx:xx:xx xxXXXxx [{1:%N}]:", "", testInfo) };
+			auto _ { formatter::format("|{1:%l}| DDD HH:MM:SS ddMMMyy [{1:%N}]: {1:%+}", "", testInfo) };
 		}
 	customTimer.StopWatch_Stop();
-	value = formatter::format("|{1:%L}| xxx xx:xx:xx xxXXXxx [{1:%N}]:", "", testInfo);
+	value = formatter::format("|{1:%l}| DDD HH:MM:SS ddMMMyy [{1:%N}]: {1:%+}", "", testInfo);
 	std::cout << formatter::format("Mock Log Structure Format Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
 

@@ -56,12 +56,16 @@ namespace serenity::msg_details {
 		return m_message;
 	}
 
-	const std::string& Message_Info::Message() const {
+	std::string& Message_Info::Message() const {
 		return m_message;
 	}
 
 	size_t Message_Info::MessageSize() const {
 		return m_message.size();
+	}
+
+	void Message_Info::SetSrcLoc(const std::source_location& src) const {
+		source = src;
 	}
 
 	std::source_location& Message_Info::SourceLocation() {
