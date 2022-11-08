@@ -3,7 +3,7 @@
 #ifdef USE_BUILT_IN_FMT
 	#include <serenity/CustomFormat/argfmt_backend.h>
 #else
-	// #include <ArgFormatter/ArgFormatter.h>
+	#include <ArgFormatter/ArgFormatter.h>
 #endif
 
 #include "catch.hpp"
