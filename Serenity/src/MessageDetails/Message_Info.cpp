@@ -28,7 +28,7 @@ namespace serenity::msg_details {
 		m_name = name;
 	}
 
-	void Message_Info::SetMsgLevel(const LoggerLevel level) {
+	void Message_Info::SetMsgLevel(const LoggerLevel level) const {
 		m_msgLevel = level;
 	}
 

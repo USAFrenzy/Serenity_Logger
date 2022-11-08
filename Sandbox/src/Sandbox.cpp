@@ -791,7 +791,6 @@ int main() {
 	const serenity::msg_details::Message_Info testInfo { "TestFormatting", LoggerLevel::trace, message_time_mode::local };
 	testInfo.Message() = message.msg;
 	testInfo.SetSrcLoc(message.source);
-
 	std::cout << "\n\n";
 
 	auto iterations { 1'000'000 };
@@ -799,14 +798,14 @@ int main() {
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iterations; ++i ) {
-			auto _ { formatter::format("{0:*^95}\n- Long Level:\t{1:%L}\n- Short Level:\t{1:%l}\n- Logger Name:\t{1:%N}\n- Log Message:\t{1:%+}\n- Log "
-				                       "Source:\t{1:%s}\n- Thread ID:\t{1:%t}\n",
-				                       "This Is A Test For Custom Formatting", testInfo) };
+			auto _ { formatter::format("- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Logger Name:\t{:%N}\n- Log Message:\t{:%+}\n- Log "
+				                       "Source:\t{:%s}\n- Thread ID:\t{:%t}\n",
+				                       testInfo) };
 		}
 	customTimer.StopWatch_Stop();
-	auto value { formatter::format("{0:*^95}\n- Logger Name:\t{1:%N}\n- Long Level:\t{1:%L}\n- Short Level:\t{1:%l}\n- Log Message:\t{1:%+}\n- Log "
-		                           "Source:\t{1:%s}\n- Thread ID:\t{1:%t}\n",
-		                           "This Is A Test For Custom Formatting", testInfo) };
+	auto value { formatter::format("- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Logger Name:\t{:%N}\n- Log Message:\t{:%+}\n- Log "
+		                           "Source:\t{:%s}\n- Thread ID:\t{:%t}\n",
+		                           testInfo) };
 	std::cout << formatter::format("Separated Calls To Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
 
@@ -814,10 +813,10 @@ int main() {
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iterations; ++i ) {
-			auto _ { formatter::format("{0:*^95}\n{1}", "This Is A Test For Default Custom Formatting", testInfo) };
+			auto _ { formatter::format("{0}", testInfo) };
 		}
 	customTimer.StopWatch_Stop();
-	value = formatter::format("{0:*^95}\n{1}", "This Is A Test For Default Custom Formatting", testInfo);
+	value = formatter::format("{0}", testInfo);
 	std::cout << formatter::format("Default Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
 
@@ -845,15 +844,12 @@ int main() {
 
 	std::cout << "\n\n\n";
 
-	//! NOTE: there seems to be yet another bug, possibly of the same nature yet still different from issues #1 & #2, where if the custom type is the *ONLY* argument
-	//! type provided, and there are multiple substitution brackets that reference that custom type argument, it doesn't format the values into the bracket -> will
-	//! need to open up another issue when I get the chance
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iterations; ++i ) {
-			auto _ { formatter::format("|{1:%l}| DDD HH:MM:SS ddMMMyy [{1:%N}]: {1:%+}", "", testInfo) };
+			auto _ { formatter::format("|{:%l}| DDD HH:MM:SS ddMMMyy [{:%N}]: {:%+}", testInfo) };
 		}
 	customTimer.StopWatch_Stop();
-	value = formatter::format("|{1:%l}| DDD HH:MM:SS ddMMMyy [{1:%N}]: {1:%+}", "", testInfo);
+	value = formatter::format("|{:%l}| DDD HH:MM:SS ddMMMyy [{:%N}]: {:%+}", testInfo);
 	std::cout << formatter::format("Mock Log Structure Format Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
 

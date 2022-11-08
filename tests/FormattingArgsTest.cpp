@@ -1,10 +1,15 @@
 #pragma once
 
-#include "catch.hpp"
+#ifdef USE_BUILT_IN_FMT
+	#include <serenity/CustomFormat/argfmt_backend.h>
+#else
+	// #include <ArgFormatter/ArgFormatter.h>
+#endif
 
-#include <ArgFormatter/ArgFormatter.h>
+#include "catch.hpp"
 #include <format>
 #include <iostream>
+
 using namespace formatter::arg_formatter;
 
 // common testing variables
@@ -428,3 +433,42 @@ TEST_CASE("Format Function Test") {
 	REQUIRE(std::format(fmt, a, width) == formatter.format(fmt, a, width));
 	REQUIRE(stdStr == argFmtStr);
 }
+
+#ifdef USE_BUILT_IN_FMT
+TEST_CASE("Custom Formatting Test For Message_Info") {
+
+	serenity::MsgWithLoc message { "This is a test message for custom formatting of Message_Info" };
+	const serenity::msg_details::Message_Info testInfo { "TestFormatting", serenity::LoggerLevel::trace, serenity::message_time_mode::local };
+	testInfo.Message() = message.msg;
+	testInfo.SetSrcLoc(message.source);
+
+	serenity::source_flag srcFlag { serenity::source_flag::empty };
+	Format_Source_Loc testSrc(testInfo, srcFlag);
+
+	REQUIRE(formatter::format("{:%L}", testInfo) == "Trace");
+	REQUIRE(formatter::format("{:%l}", testInfo) == "T");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::info);
+	REQUIRE(formatter::format("{:%L}", testInfo) == "Info");
+	REQUIRE(formatter::format("{:%l}", testInfo) == "I");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::debug);
+	REQUIRE(formatter::format("{:%L}", testInfo) == "Debug");
+	REQUIRE(formatter::format("{:%l}", testInfo) == "D");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::warning);
+	REQUIRE(formatter::format("{:%L}", testInfo) == "Warn");
+	REQUIRE(formatter::format("{:%l}", testInfo) == "W");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::error);
+	REQUIRE(formatter::format("{:%L}", testInfo) == "Error");
+	REQUIRE(formatter::format("{:%l}", testInfo) == "E");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::fatal);
+	REQUIRE(formatter::format("{:%L}", testInfo) == "Fatal");
+	REQUIRE(formatter::format("{:%l}", testInfo) == "F");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::off);
+	REQUIRE(formatter::format("{:%L}", testInfo) == "");
+	REQUIRE(formatter::format("{:%l}", testInfo) == "");
+
+	REQUIRE(formatter::format("{:%s}", testInfo) == testSrc.FormatUserPattern());
+	REQUIRE(formatter::format("{:%t}", testInfo) == "[PlaceHolder]");
+	REQUIRE(formatter::format("{:%+}", testInfo) == testInfo.Message());
+}
+
+#endif    //  USE_BUILT_IN_FMT
