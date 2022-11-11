@@ -154,8 +154,8 @@ class Format_Source_Loc
 		return std::string_view(result.data(), result.size());
 	}
 
-public:
-	bool isInitialized{false};
+  public:
+	bool isInitialized { false };
 
   private:
 	const std::source_location& srcLocation;
@@ -164,9 +164,25 @@ public:
 	std::string result;
 };
 
-// just here as a placeholder for now
-enum class SrcLocMod
+struct Format_Thread_ID
 {
+	// Precision argument dictates the length of the hashed id returned (0-10)
+	static constexpr size_t defaultThreadIdLength = 10;
+	Format_Thread_ID(): thread(std::hash<std::thread::id>()(std::this_thread::get_id())) { }
+
+	std::string_view FormatUserPattern(size_t precision) {
+		result.clear();
+		std::array<char, 64> buf {};
+		std::to_chars(buf.data(), buf.data() + buf.size(), thread);
+		std::string_view sv { buf.data(), buf.size() };
+		(precision != 0) ? sv.remove_suffix(sv.size() - precision) : sv.remove_suffix(sv.size() - defaultThreadIdLength);
+		result.append(sv.data(), sv.size());
+		return std::string_view(result.data(), result.size());
+	}
+
+  private:
+	std::string result;
+	size_t thread;
 };
 
 // This is going to need to be sped up an immense amount.. this is taking too long right now
@@ -174,10 +190,11 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 {
 	serenity::CustomFlagError::custom_error_handler errHandler {};
 	flag_type flag { flag_type::Invalid };
-	serenity::source_flag srcFlags;
+	serenity::source_flag srcFlags { serenity::source_flag::empty };
+	size_t threadLength { 0 };
 	// clang-format off
 	static constexpr std::string_view defaultFmt { "- Logger Name:\t{0}\n- Long Level:\t{1}\n- Short Level:\t{2}\n"
-		                                                                                    "- Log Message:\t{4}\n- Log Source:\t{5}\n- Thread ID:\t{3}\n" };
+		                                                                                    "- Log Message:\t{3}\n- Log Source:\t{4}\n- Thread ID:\t{5}\n" };
 	// clang-format on
 
 	inline constexpr void Parse(std::string_view parse) {
@@ -219,7 +236,7 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						// LogSource is a little bit special given the modifiers that are attached to it
 						case 's':
 							{
-								flag = flag_type::LogSource;
+								flag     = flag_type::LogSource;
 								srcFlags = serenity::source_flag::empty;
 								if( auto nxtPos { ++pos }; (nxtPos >= size) || (parse[ nxtPos ] != ':') ) {
 										if( nxtPos < size ) {
@@ -238,12 +255,37 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 												case 'c': srcFlags |= serenity::source_flag::column; continue;
 												case 'f': srcFlags |= serenity::source_flag::file; continue;
 												case 'F': srcFlags |= serenity::source_flag::function; continue;
-												case '}':   return;
+												case '}': return;
 											}
 									}
 							}
 							// LoggerThreadID is also a little bit special due to it's length modifier
-						case 't': flag = flag_type::LoggerThreadID; return;
+						case 't':
+							flag = flag_type::LoggerThreadID;
+							if( ++pos >= size ) {
+									errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+							}
+							if( parse[ pos ] != ':' ) {
+									threadLength = 0;
+									continue;
+							}
+							if (++pos >= size) {
+								errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+							}
+							switch( parse[ pos ] ) {
+									case '0': threadLength = 0; continue;
+									case '1': threadLength = 1; continue;
+									case '2': threadLength = 2; continue;
+									case '3': threadLength = 3; continue;
+									case '4': threadLength = 4; continue;
+									case '5': threadLength = 5; continue;
+									case '6': threadLength = 6; continue;
+									case '8': threadLength = 8; continue;
+									case '7': threadLength = 7; continue;
+									case '9': threadLength = 9; continue;
+									default: continue;
+								}
+							return;
 						case '+': flag = flag_type::LogMessage; return;
 						default:
 							flag = flag_type::Invalid;
@@ -256,6 +298,7 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 	template<typename resultCtx> constexpr auto Format(const serenity::msg_details::Message_Info& p, resultCtx& ctx) const {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
 		static Format_Source_Loc srcFormatter(p, srcFlags);
+
 		switch( flag ) {
 				case flag_type::LongLogLvl:
 					{
@@ -275,7 +318,8 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 					}
 				case flag_type::LoggerThreadID:
 					{
-						return formatter::format_to(std::back_inserter(ctx), "{}", "[PlaceHolder]");
+						Format_Thread_ID threadID {};
+						return formatter::format_to(std::back_inserter(ctx), "{}", threadID.FormatUserPattern(threadLength));
 					}
 				case flag_type::LogMessage:
 					{
@@ -283,8 +327,9 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 					}
 				case flag_type::Default:
 					{
+						Format_Thread_ID threadID {};
 						// clang-format off
-						return formatter::format_to(std::back_inserter(ctx), defaultFmt, p.Name(), LevelToLongView(p.MsgLevel()), LevelToShortView(p.MsgLevel()), "[PlaceHolder]", p.Message(), srcFormatter.FormatUserPattern());
+						return formatter::format_to(std::back_inserter(ctx), defaultFmt, p.Name(), LevelToLongView(p.MsgLevel()), LevelToShortView(p.MsgLevel()), p.Message(), srcFormatter.FormatUserPattern(), threadID.FormatUserPattern(threadLength));
 						// clang-format on	
 				}
 					// invalid flag should have been caught from the parsing, but include here and just don't format it

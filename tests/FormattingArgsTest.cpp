@@ -436,7 +436,6 @@ TEST_CASE("Format Function Test") {
 
 #ifdef USE_BUILT_IN_FMT
 TEST_CASE("Custom Formatting Test For Message_Info") {
-
 	serenity::MsgWithLoc message { "This is a test message for custom formatting of Message_Info" };
 	const serenity::msg_details::Message_Info testInfo { "TestFormatting", serenity::LoggerLevel::trace, serenity::message_time_mode::local };
 	testInfo.Message() = message.msg;
@@ -444,6 +443,7 @@ TEST_CASE("Custom Formatting Test For Message_Info") {
 
 	serenity::source_flag srcFlag { serenity::source_flag::empty };
 	Format_Source_Loc testSrc(testInfo, srcFlag);
+	Format_Thread_ID threadID {};
 
 	REQUIRE(formatter::format("{:%L}", testInfo) == "Trace");
 	REQUIRE(formatter::format("{:%l}", testInfo) == "T");
@@ -467,7 +467,18 @@ TEST_CASE("Custom Formatting Test For Message_Info") {
 	REQUIRE(formatter::format("{:%l}", testInfo) == "");
 
 	REQUIRE(formatter::format("{:%s}", testInfo) == testSrc.FormatUserPattern());
-	REQUIRE(formatter::format("{:%t}", testInfo) == "[PlaceHolder]");
+
+	REQUIRE(formatter::format("{:%t}", testInfo) == threadID.FormatUserPattern(0));
+	REQUIRE(formatter::format("{:%t:1}", testInfo) == threadID.FormatUserPattern(1));
+	REQUIRE(formatter::format("{:%t:2}", testInfo) == threadID.FormatUserPattern(2));
+	REQUIRE(formatter::format("{:%t:3}", testInfo) == threadID.FormatUserPattern(3));
+	REQUIRE(formatter::format("{:%t:4}", testInfo) == threadID.FormatUserPattern(4));
+	REQUIRE(formatter::format("{:%t:5}", testInfo) == threadID.FormatUserPattern(5));
+	REQUIRE(formatter::format("{:%t:6}", testInfo) == threadID.FormatUserPattern(6));
+	REQUIRE(formatter::format("{:%t:7}", testInfo) == threadID.FormatUserPattern(7));
+	REQUIRE(formatter::format("{:%t:8}", testInfo) == threadID.FormatUserPattern(8));
+	REQUIRE(formatter::format("{:%t:9}", testInfo) == threadID.FormatUserPattern(9));
+
 	REQUIRE(formatter::format("{:%+}", testInfo) == testInfo.Message());
 }
 

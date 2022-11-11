@@ -798,12 +798,12 @@ int main() {
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iterations; ++i ) {
-			auto _ { formatter::format("- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Logger Name:\t{:%N}\n- Log Message:\t{:%+}\n- Log "
+			auto _ { formatter::format("- Logger Name:\t{:%N}\n- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Log Message:\t{:%+}\n- Log "
 				                       "Source:\t{:%s}\n- Thread ID:\t{:%t}\n",
 				                       testInfo) };
 		}
 	customTimer.StopWatch_Stop();
-	auto value { formatter::format("- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Logger Name:\t{:%N}\n- Log Message:\t{:%+}\n- Log "
+	auto value { formatter::format("- Logger Name:\t{:%N}\n- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Log Message:\t{:%+}\n- Log "
 		                           "Source:\t{:%s}\n- Thread ID:\t{:%t}\n",
 		                           testInfo) };
 	std::cout << formatter::format("Separated Calls To Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
