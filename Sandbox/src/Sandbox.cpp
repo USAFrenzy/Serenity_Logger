@@ -846,10 +846,10 @@ int main() {
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iterations; ++i ) {
-			auto _ { formatter::format("|{:%l}| DDD HH:MM:SS ddMMMyy [{:%N}]: {:%+}", testInfo) };
+			auto _ { formatter::format("|{0:%l}| {1:%a %T %d%b%y} [{0:%N}]: {0:%+}", testInfo, testInfo.TimeInfo()) };
 		}
 	customTimer.StopWatch_Stop();
-	value = formatter::format("|{:%l}| DDD HH:MM:SS ddMMMyy [{:%N}]: {:%+}", testInfo);
+	value = formatter::format("|{0:%l}| {1:%a %T %d%b%y} [{0:%N}]: {0:%+}", testInfo, testInfo.TimeInfo());
 	std::cout << formatter::format("Mock Log Structure Format Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
 

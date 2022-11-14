@@ -154,9 +154,6 @@ class Format_Source_Loc
 		return std::string_view(result.data(), result.size());
 	}
 
-  public:
-	bool isInitialized { false };
-
   private:
 	const std::source_location& srcLocation;
 	std::array<char, 6> buff;
@@ -269,8 +266,8 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 									threadLength = 0;
 									continue;
 							}
-							if (++pos >= size) {
-								errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+							if( ++pos >= size ) {
+									errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
 							}
 							switch( parse[ pos ] ) {
 									case '0': threadLength = 0; continue;
@@ -298,43 +295,67 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 	template<typename resultCtx> constexpr auto Format(const serenity::msg_details::Message_Info& p, resultCtx& ctx) const {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
 		static Format_Source_Loc srcFormatter(p, srcFlags);
-
-		switch( flag ) {
-				case flag_type::LongLogLvl:
-					{
-						return formatter::format_to(std::back_inserter(ctx), "{}", LevelToLongView(p.MsgLevel()));
-					}
-				case flag_type::ShortLogLvl:
-					{
-						return formatter::format_to(std::back_inserter(ctx), "{}", LevelToShortView(p.MsgLevel()));
-					}
-				case flag_type::LoggerName:
-					{
-						return formatter::format_to(std::back_inserter(ctx), "{}", p.Name());
-					}
-				case flag_type::LogSource:
-					{
-						return formatter::format_to(std::back_inserter(ctx), "{}", srcFormatter.FormatUserPattern());
-					}
-				case flag_type::LoggerThreadID:
-					{
-						Format_Thread_ID threadID {};
-						return formatter::format_to(std::back_inserter(ctx), "{}", threadID.FormatUserPattern(threadLength));
-					}
-				case flag_type::LogMessage:
-					{
-						return formatter::format_to(std::back_inserter(ctx), "{}", p.Message());
-					}
-				case flag_type::Default:
-					{
-						Format_Thread_ID threadID {};
-						// clang-format off
-						return formatter::format_to(std::back_inserter(ctx), defaultFmt, p.Name(), LevelToLongView(p.MsgLevel()), LevelToShortView(p.MsgLevel()), p.Message(), srcFormatter.FormatUserPattern(), threadID.FormatUserPattern(threadLength));
-						// clang-format on	
-				}
+		auto value = [ & ]() {
+			switch( flag ) {
+					case flag_type::LongLogLvl:
+						{
+							return LevelToLongView(p.MsgLevel());
+						}
+					case flag_type::ShortLogLvl:
+						{
+							return LevelToShortView(p.MsgLevel());
+						}
+					case flag_type::LoggerName:
+						{
+							return std::string_view(p.Name());
+						}
+					case flag_type::LogSource:
+						{
+							return srcFormatter.FormatUserPattern();
+						}
+					case flag_type::LoggerThreadID:
+						{
+							Format_Thread_ID threadID {};
+							return threadID.FormatUserPattern(threadLength);
+						}
+					case flag_type::LogMessage:
+						{
+							return std::string_view(p.Message());
+						}
+					case flag_type::Default:
+						{
+							Format_Thread_ID threadID {};
+							static std::string tmp;
+							tmp.clear();
+							tmp.reserve(ctx.size() + 255);
+							return std::string_view(std::move(tmp.append("- Logger Name:\t")
+							                                  .append(p.Name())
+							                                  .append("\n- Long Level:\t")
+							                                  .append(LevelToLongView(p.MsgLevel()))
+							                                  .append("\n- Short Level:\t")
+							                                  .append(LevelToShortView(p.MsgLevel()))
+							                                  .append("\n- Log Message:\t")
+							                                  .append(p.Message())
+							                                  .append("\n- Log Source:\t")
+							                                  .append(srcFormatter.FormatUserPattern())
+							                                  .append("\n- Thread ID:\t")
+							                                  .append(threadID.FormatUserPattern(threadLength))
+							                                  .append("\n")));
+						}
 					// invalid flag should have been caught from the parsing, but include here and just don't format it
-				case flag_type::Invalid: [[fallthrough]];
-				default: break;
-			}
+					case flag_type::Invalid: [[fallthrough]];
+					default: break;
+				}
+			return std::string_view("");
+		};
+		auto tmp { std::move(value()) };
+		namespace fg = formatter::globals;
+		//! NOTE: The below functions should probably be made static for the class just so that it's clear that users can use them ON TOP OF making it less clunky to
+		//! use by having to pass through the globals namespace (Given that I'm authoring ArgFormatter as a separate project, I just need to make a note elsewhere to
+		//! update this in that repo)
+		fg::staticFormatter->WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
+		if( fg::staticFormatter->IsCustomFmtProcActive() ) {
+				fg::staticFormatter->EnableCustomFmtProc(false);
+		}
 	}
 };
