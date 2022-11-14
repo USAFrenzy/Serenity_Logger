@@ -14,6 +14,8 @@ namespace serenity::CustomFlagError {
 		unknown_flag,
 		token_with_no_flag,
 		no_flag_mods,
+		missing_src_modifiers,
+		missing_thread_id_mod,
 	};
 
 	struct custom_error_handler
@@ -30,14 +32,15 @@ namespace serenity::CustomFlagError {
 			inline ~format_error() noexcept override       = default;
 		};
 
-		static constexpr std::array<const char*, 6> custom_error_messages = {
+		static constexpr std::array<const char*, 8> custom_error_messages = {
 			"Unkown Formatting Error Occured In Internal Serenity CustomFlag Formatting.",
 			"Error In Internal CustomFlag Formatting For Serenity: Missing '%' before flag.",
 			"Error In Internal CustomFlag Formatting For Serenity:  An Escaped Opening Bracket Was Detected - Missing Escaped Closing Bracket.",
 			"Error In Internal CustomFlag Formatting For Serenity:  An Unsupported Flag Was Encountered.",
 			"Error In Internal CustomFlag Formatting For Serenity:  Flag Specifier Token Found, But With No Flag Present.",
 			"Error In Internal CustomFlag Formatting For Serenity:  ':' Present With No Flag Modifiers.",
-
+			"Error In Internal CustomFlag Formatting For Serenity:  ':' Present For Source Flag With No Flag Modifiers Or Unkown Character.",
+			"Error In Internal CustomFlag Formatting For Serenity:  ':' Present For Thread ID Flag With No Flag Modifiers Or Unkown Character.",
 		};
 
 		[[noreturn]] constexpr void ReportCustomError(CustomErrors err) {
@@ -48,6 +51,8 @@ namespace serenity::CustomFlagError {
 					case unknown_flag: throw format_error(custom_error_messages[ 3 ]); break;
 					case token_with_no_flag: throw format_error(custom_error_messages[ 4 ]); break;
 					case no_flag_mods: throw format_error(custom_error_messages[ 5 ]); break;
+					case missing_src_modifiers: throw format_error(custom_error_messages[ 6 ]); break;
+					case missing_thread_id_mod: throw format_error(custom_error_messages[ 7 ]); break;
 					default: throw format_error(custom_error_messages[ 0 ]); break;
 				}
 		}
@@ -182,67 +187,108 @@ struct Format_Thread_ID
 	size_t thread;
 };
 
+// estimated size: assume logger name, long level, short level, and thread ID are all SSO, so max 16 for each, assume full legnth source and
+// reserve 80, and reserve an extra 255 for a message and then 93 for the pattern string minus the substitution brackets involved
+static constexpr size_t defaultSizeEstimate { 492 };    // used for full default formatting
 // This is going to need to be sped up an immense amount.. this is taking too long right now
 template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info>
 {
 	serenity::CustomFlagError::custom_error_handler errHandler {};
-	flag_type flag { flag_type::Invalid };
-	serenity::source_flag srcFlags { serenity::source_flag::empty };
-	size_t threadLength { 0 };
-	// clang-format off
-	static constexpr std::string_view defaultFmt { "- Logger Name:\t{0}\n- Long Level:\t{1}\n- Short Level:\t{2}\n"
-		                                                                                    "- Log Message:\t{3}\n- Log Source:\t{4}\n- Thread ID:\t{5}\n" };
-	// clang-format on
+	flag_type flag {};
+	serenity::source_flag srcFlags {};
+	size_t threadLength {};
+	mutable std::string resultBuff {};
 
 	inline constexpr void Parse(std::string_view parse) {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
+		flag               = flag_type::Invalid;
+
 		auto size { parse.size() };
 		auto pos { -1 };
 
 		for( ;; ) {
 				if( ++pos >= size ) {
-						if( parse[ --pos ] == '}' ) {
-								if( flag != flag_type::Invalid ) return;
-								// If we reach this point, the flag is still flag_type::Invalid, and the error hasn't been reported as an 'Invalid Flag', then we can
-								// assume that there were no flags present to begin with and set the flag to default formatting
-								flag = flag_type::Default;
-								break;
-						}
-						// otherwise, we're missing a closing bracket
 						errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
 				}
-
-				// if we don't hit ':' then assume that the flag hasn't been seen yet or doesn't
-				// exist and continue until we reach it or hit the end of the parse string
-				if( parse[ pos ] != ':' ) continue;
-				if( ++pos >= size ) {
-						errHandler.ReportCustomError(CustomErrors::no_flag_mods);
-				}
-				if( parse[ pos ] != '%' ) {
-						errHandler.ReportCustomError(CustomErrors::missing_flag_specifier);
-				}
-				if( ++pos >= size ) {
-						errHandler.ReportCustomError(CustomErrors::token_with_no_flag);
-				}
-
-				// the flag specifier token was detected, now try matching the flag
 				switch( parse[ pos ] ) {
-						case 'L': flag = flag_type::LongLogLvl; return;
-						case 'l': flag = flag_type::ShortLogLvl; return;
-						case 'N': flag = flag_type::LoggerName; return;
+						case '}':
+							{
+								if( flag != flag_type::Invalid ) return;
+								// If we reach this point, the flag is still flag_type::Invalid, and the error hasn't been reported as an 'Invalid Flag', then we can
+								// assume that there were no flags present to begin with and set the flag to default formatting and exit this function
+								flag = flag_type::Default;
+								return;
+							}
+						case ':':
+							{
+								if( ++pos >= size ) {
+										errHandler.ReportCustomError(CustomErrors::no_flag_mods);
+								}
+								if( parse[ pos ] != '%' ) {
+										errHandler.ReportCustomError(CustomErrors::missing_flag_specifier);
+								}
+								if( ++pos >= size ) {
+										errHandler.ReportCustomError(CustomErrors::token_with_no_flag);
+								}
+								break;
+							}
+							// if we don't hit ':' then assume that the flag hasn't been seen yet or doesn't
+							// exist and continue until we reach it or hit the end of the parse string
+						default: continue;
+					}
+				/*********************** This point is only reached once the flag specifier token is detected, so now try matching the flag ***********************/
+				// for 'L', 'l', 'N' and '+', if the flag is found up to that point, nothing special needs to be done afterwards, so just straight up exit the
+				// function from this point since we already have determined that the bracket itself is valid from the root level formatting call before custom
+				// formatting is reached. For the other flags, it's a little bit different though just due to some default behavior that's set up for source
+				// location and thread ID formatting
+				switch( parse[ pos ] ) {
+						case 'L':
+							{
+								flag = flag_type::LongLogLvl;
+								return;
+							}
+						case 'l':
+							{
+								flag = flag_type::ShortLogLvl;
+								return;
+							}
+						case 'N':
+							{
+								flag = flag_type::LoggerName;
+								return;
+							}
+						case '+':
+							{
+								flag = flag_type::LogMessage;
+								return;
+							}
 						// LogSource is a little bit special given the modifiers that are attached to it
 						case 's':
 							{
 								flag     = flag_type::LogSource;
 								srcFlags = serenity::source_flag::empty;
-								if( auto nxtPos { ++pos }; (nxtPos >= size) || (parse[ nxtPos ] != ':') ) {
-										if( nxtPos < size ) {
-												--pos;
-												srcFlags = serenity::source_flag::all;
-												return;
-										}
-										errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
-								}
+
+								for( ;; ) {
+										if( ++pos >= size ) errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+										switch( parse[ pos ] ) {
+												case ' ': continue;    // ignore whitespace when determining valid bracket for source location
+												case ':': break;       // continue on to parsing modifiers
+												case '}':
+													{
+														if( srcFlags == serenity::source_flag::empty ) {
+																srcFlags = serenity::source_flag::all;
+														}
+														return;
+													}
+												default:
+													{
+														// if it's anything else, then assume it's not a valid bracket for source location formatting
+														errHandler.ReportCustomError(CustomErrors::unknown_flag);
+														break;
+													}
+											}
+									}
+								// this now assumes we've hit ':', therefore now we parse the source modifiers here
 								for( ;; ) {
 										if( ++pos >= size ) {
 												errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
@@ -252,110 +298,154 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 												case 'c': srcFlags |= serenity::source_flag::column; continue;
 												case 'f': srcFlags |= serenity::source_flag::file; continue;
 												case 'F': srcFlags |= serenity::source_flag::function; continue;
-												case '}': return;
+												case '}':
+													{
+														if( srcFlags != serenity::source_flag::empty ) return;
+														// we already noted a ':' present, therefore if there are no modifiers present, this isn't a valid source loc
+														// bracket
+														errHandler.ReportCustomError(CustomErrors::missing_src_modifiers);
+													}
+												default:
+													{
+														// if it's anything else, then assume it's not a valid bracket for source location formatting
+														errHandler.ReportCustomError(CustomErrors::unknown_flag);
+														break;
+													}
 											}
 									}
 							}
 							// LoggerThreadID is also a little bit special due to it's length modifier
 						case 't':
-							flag = flag_type::LoggerThreadID;
-							if( ++pos >= size ) {
-									errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+							{
+								flag         = flag_type::LoggerThreadID;
+								threadLength = 0;
+								for( ;; ) {
+										switch( parse[ pos ] ) {
+												case '}': return;
+												case ' ': [[fallthrough]];    // ignore whitespace when determining if valid thread id bracket
+												default:
+													{
+														// so long as the bracket is still valid and in bounds continue parsing
+														if( ++pos >= size ) {
+																errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+														}
+														continue;
+													}
+												case ':':
+													{
+														if( ++pos >= size ) {
+																errHandler.ReportCustomError(CustomErrors::missing_thread_id_mod);
+														}
+														switch( parse[ pos ] ) {
+																case '0': threadLength = 0; return;
+																case '1': threadLength = 1; return;
+																case '2': threadLength = 2; return;
+																case '3': threadLength = 3; return;
+																case '4': threadLength = 4; return;
+																case '5': threadLength = 5; return;
+																case '6': threadLength = 6; return;
+																case '8': threadLength = 8; return;
+																case '7': threadLength = 7; return;
+																case '9': threadLength = 9; return;
+																case '10': threadLength = 10; return;
+																default: errHandler.ReportCustomError(CustomErrors::unknown_flag);
+															}
+													}
+											}
+									}
 							}
-							if( parse[ pos ] != ':' ) {
-									threadLength = 0;
-									continue;
-							}
-							if( ++pos >= size ) {
-									errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
-							}
-							switch( parse[ pos ] ) {
-									case '0': threadLength = 0; continue;
-									case '1': threadLength = 1; continue;
-									case '2': threadLength = 2; continue;
-									case '3': threadLength = 3; continue;
-									case '4': threadLength = 4; continue;
-									case '5': threadLength = 5; continue;
-									case '6': threadLength = 6; continue;
-									case '8': threadLength = 8; continue;
-									case '7': threadLength = 7; continue;
-									case '9': threadLength = 9; continue;
-									default: continue;
-								}
-							return;
-						case '+': flag = flag_type::LogMessage; return;
 						default:
-							flag = flag_type::Invalid;
-							errHandler.ReportCustomError(CustomErrors::unknown_flag);
-							return;
+							{
+								flag = flag_type::Invalid;
+								errHandler.ReportCustomError(CustomErrors::unknown_flag);
+								return;
+							}
 					}
 			}
 	}
 
 	template<typename resultCtx> constexpr auto Format(const serenity::msg_details::Message_Info& p, resultCtx& ctx) const {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
-		static Format_Source_Loc srcFormatter(p, srcFlags);
-		auto value = [ & ]() {
-			switch( flag ) {
-					case flag_type::LongLogLvl:
-						{
-							return LevelToLongView(p.MsgLevel());
-						}
-					case flag_type::ShortLogLvl:
-						{
-							return LevelToShortView(p.MsgLevel());
-						}
-					case flag_type::LoggerName:
-						{
-							return std::string_view(p.Name());
-						}
-					case flag_type::LogSource:
-						{
-							return srcFormatter.FormatUserPattern();
-						}
-					case flag_type::LoggerThreadID:
-						{
-							Format_Thread_ID threadID {};
-							return threadID.FormatUserPattern(threadLength);
-						}
-					case flag_type::LogMessage:
-						{
-							return std::string_view(p.Message());
-						}
-					case flag_type::Default:
-						{
-							Format_Thread_ID threadID {};
-							static std::string tmp;
-							tmp.clear();
-							tmp.reserve(ctx.size() + 255);
-							return std::string_view(std::move(tmp.append("- Logger Name:\t")
-							                                  .append(p.Name())
-							                                  .append("\n- Long Level:\t")
-							                                  .append(LevelToLongView(p.MsgLevel()))
-							                                  .append("\n- Short Level:\t")
-							                                  .append(LevelToShortView(p.MsgLevel()))
-							                                  .append("\n- Log Message:\t")
-							                                  .append(p.Message())
-							                                  .append("\n- Log Source:\t")
-							                                  .append(srcFormatter.FormatUserPattern())
-							                                  .append("\n- Thread ID:\t")
-							                                  .append(threadID.FormatUserPattern(threadLength))
-							                                  .append("\n")));
-						}
-					// invalid flag should have been caught from the parsing, but include here and just don't format it
-					case flag_type::Invalid: [[fallthrough]];
-					default: break;
-				}
-			return std::string_view("");
-		};
-		auto tmp { std::move(value()) };
-		namespace fg = formatter::globals;
-		//! NOTE: The below functions should probably be made static for the class just so that it's clear that users can use them ON TOP OF making it less clunky to
-		//! use by having to pass through the globals namespace (Given that I'm authoring ArgFormatter as a separate project, I just need to make a note elsewhere to
-		//! update this in that repo)
-		fg::staticFormatter->WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
-		if( fg::staticFormatter->IsCustomFmtProcActive() ) {
-				fg::staticFormatter->EnableCustomFmtProc(false);
-		}
+		static Format_Source_Loc srcFormatter(p, srcFlags);    // having this as a function local static object saw a decrease in time by ~50ns
+		namespace fch = formatter::custom_helper;
+
+		auto contSize { ctx.size() };
+
+		switch( flag ) {
+				case flag_type::LongLogLvl:
+					{
+						auto tmp { LevelToLongView(p.MsgLevel()) };
+						auto size { tmp.size() };
+						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
+						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						break;
+					}
+				case flag_type::ShortLogLvl:
+					{
+						auto tmp { LevelToShortView(p.MsgLevel()) };
+						auto size { tmp.size() };
+						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
+						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						break;
+					}
+				case flag_type::LoggerName:
+					{
+						std::string_view tmp { p.Name() };
+						auto size { tmp.size() };
+						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
+						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						break;
+					}
+				case flag_type::LogSource:
+					{
+						auto tmp { srcFormatter.FormatUserPattern() };
+						auto size { tmp.size() };
+						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
+						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						break;
+					}
+				case flag_type::LoggerThreadID:
+					{
+						auto tmp { Format_Thread_ID {}.FormatUserPattern(threadLength) };
+						auto size { tmp.size() };
+						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
+						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						break;
+					}
+				case flag_type::LogMessage:
+					{
+						std::string_view tmp { p.Message() };
+						auto size { tmp.size() };
+						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
+						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						break;
+					}
+				case flag_type::Default:
+					{
+						resultBuff.clear();
+						auto size { contSize + defaultSizeEstimate };
+						if( resultBuff.capacity() < size ) resultBuff.reserve(size);
+						resultBuff.append("- Logger Name:\t")
+						.append(p.Name())
+						.append("\n- Long Level:\t")
+						.append(LevelToLongView(p.MsgLevel()))
+						.append("\n- Short Level:\t")
+						.append(LevelToShortView(p.MsgLevel()))
+						.append("\n- Log Message:\t")
+						.append(p.Message())
+						.append("\n- Log Source:\t")
+						.append(srcFormatter.FormatUserPattern())
+						.append("\n- Thread ID:\t")
+						.append(Format_Thread_ID {}.FormatUserPattern(threadLength))
+						.append("\n");
+						if( ctx.capacity() < resultBuff.size() ) ctx.reserve(contSize + resultBuff.size());
+						fch::WriteToContainer(std::string_view(resultBuff), resultBuff.size(), std::forward<resultCtx>(ctx));
+						break;
+					}
+				// invalid flag should have been caught from the parsing, but include here and just don't format it
+				case flag_type::Invalid: [[fallthrough]];
+				default: break;
+			}
+		fch::EnableCustomFmtProc(false);
 	}
 };

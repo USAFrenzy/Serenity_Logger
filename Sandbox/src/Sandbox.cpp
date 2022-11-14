@@ -793,11 +793,11 @@ int main() {
 	testInfo.SetSrcLoc(message.source);
 	std::cout << "\n\n";
 
-	auto iterations { 1'000'000 };
+	auto iters { 1'000'000 };
 	Instrumentator customTimer {};
 
 	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iterations; ++i ) {
+	for( auto i { 0 }; i < iters; ++i ) {
 			auto _ { formatter::format("- Logger Name:\t{:%N}\n- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Log Message:\t{:%+}\n- Log "
 				                       "Source:\t{:%s}\n- Thread ID:\t{:%t}\n",
 				                       testInfo) };
@@ -807,51 +807,57 @@ int main() {
 		                           "Source:\t{:%s}\n- Thread ID:\t{:%t}\n",
 		                           testInfo) };
 	std::cout << formatter::format("Separated Calls To Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
 	std::cout << "\n\n\n";
 
 	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iterations; ++i ) {
+	for( auto i { 0 }; i < iters; ++i ) {
 			auto _ { formatter::format("{0}", testInfo) };
 		}
 	customTimer.StopWatch_Stop();
 	value = formatter::format("{0}", testInfo);
-	std::cout << formatter::format("Default Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+	std::cout
+	<< formatter::format("Default Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}", (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
 	std::cout << "\n\n\n";
 
 	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iterations; ++i ) {
+	for( auto i { 0 }; i < iters; ++i ) {
 			auto _ { formatter::format("{:%L}", testInfo) };
 		}
 	customTimer.StopWatch_Stop();
 	value = formatter::format("{:%L}", testInfo);
 	std::cout << formatter::format("Single Flag Custom Formatting For Long Log Level Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
 	std::cout << "\n\n\n";
 
 	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iterations; ++i ) {
+	for( auto i { 0 }; i < iters; ++i ) {
 			auto _ { formatter::format("{:%l}", testInfo) };
 		}
 	customTimer.StopWatch_Stop();
 	value = formatter::format("{:%l}", testInfo);
 	std::cout << formatter::format("Single Flag Custom Formatting For Short Log Level Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
 	std::cout << "\n\n\n";
 
+	// File Target with current implementation lands around 253.882751 ns.
+	// This mock file structure using a message of 61 chars instead of 400 is landing around  257.79352 ns.
+	// ! NOTE: 14Nov22 - some small changes brought this time down to 242.1503 ns which is definitely an improvement, but still need to be much faster to swap out
+	//
+	// Given the whole logging to a file process that is involved with the first one, I need to drop the second version
+	// down by about 60ns to 75ns to be attractive compared to the FormatterArgs structs usage in the first version
 	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iterations; ++i ) {
+	for( auto i { 0 }; i < iters; ++i ) {
 			auto _ { formatter::format("|{0:%l}| {1:%a %T %d%b%y} [{0:%N}]: {0:%+}", testInfo, testInfo.TimeInfo()) };
 		}
 	customTimer.StopWatch_Stop();
 	value = formatter::format("|{0:%l}| {1:%a %T %d%b%y} [{0:%N}]: {0:%+}", testInfo, testInfo.TimeInfo());
-	std::cout << formatter::format("Mock Log Structure Format Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iterations), value);
+	std::cout
+	<< formatter::format("Mock Log Structure Format Elapsed In An Average Of: [ {} ns]\nWith Result: {}", (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
 	std::cout << "\n\n\n";
 
