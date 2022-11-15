@@ -58,150 +58,153 @@ namespace serenity::CustomFlagError {
 		}
 	};
 };    // namespace serenity::CustomFlagError
+namespace serenity::msg_details::custom_flags {
 
-enum class flag_type
-{
-	Invalid,
-	LongLogLvl,
-	ShortLogLvl,
-	LoggerName,
-	LogSource,
-	LoggerThreadID,
-	LogMessage,
-	Default,
-};
+	// estimated size: assume logger name, long level, short level, and thread ID are all SSO, so max 16 for each, assume full legnth source and
+	// reserve 80, and reserve an extra 255 for a message and then 93 for the pattern string minus the substitution brackets involved (=492)
+	static constexpr size_t defaultSizeEstimate { 492 };          // used for full default status formatting
+	inline static constexpr size_t defaultThreadIdLength = 10;    // Precision argument dictates the length of the hashed id returned (0-10)
 
-class Format_Source_Loc
-{
-  public:
-	explicit Format_Source_Loc(const serenity::msg_details::Message_Info& info, const serenity::source_flag& flag)
-		: srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag) { }
-	Format_Source_Loc(const Format_Source_Loc&) = delete;
-	Format_Source_Loc& operator=(const Format_Source_Loc&) = delete;
-	~Format_Source_Loc()                                   = default;
+	enum class flag_type
+	{
+		Invalid,
+		LongLogLvl,
+		ShortLogLvl,
+		LoggerName,
+		LogSource,
+		LoggerThreadID,
+		LogMessage,
+		Default,
+	};
 
-	void FormatAll() {
-		result.append("[ ").append(srcLocation.file_name()).append("(");
-		std::memset(buff.data(), 0, buff.size());
-		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-		result.append(buff.data(), end - buff.data()).append(":");
-		std::memset(buff.data(), 0, buff.size());
-		end = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column()).ptr;
-		result.append(buff.data(), end - buff.data()).append(") ");
-		result.append(srcLocation.function_name()).append(" ]");
-	}
+	class Format_Source_Loc
+	{
+	  public:
+		explicit Format_Source_Loc(const serenity::msg_details::Message_Info& info, const serenity::source_flag& flag)
+			: srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag), result(std::string {}) { }
+		Format_Source_Loc(const Format_Source_Loc&) = delete;
+		Format_Source_Loc& operator=(const Format_Source_Loc&) = delete;
+		~Format_Source_Loc()                                   = default;
 
-	void FormatLine() {
-		std::memset(buff.data(), 0, buff.size());
-		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-		result.append(buff.data(), end - buff.data());
-	}
+		void FormatAll() {
+			result.append("[ ").append(srcLocation.file_name()).append("(");
+			std::memset(buff.data(), 0, buff.size());
+			auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
+			result.append(buff.data(), end - buff.data()).append(":");
+			std::memset(buff.data(), 0, buff.size());
+			end = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column()).ptr;
+			result.append(buff.data(), end - buff.data()).append(") ");
+			result.append(srcLocation.function_name()).append(" ]");
+		}
 
-	void FormatColumn() {
-		std::memset(buff.data(), 0, buff.size());
-		auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
-		result.append(buff.data(), end - buff.data());
-	}
+		void FormatLine() {
+			std::memset(buff.data(), 0, buff.size());
+			auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
+			result.append(buff.data(), end - buff.data());
+		}
 
-	void FormatFile() {
-		result.append(srcLocation.file_name());
-	}
+		void FormatColumn() {
+			std::memset(buff.data(), 0, buff.size());
+			auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
+			result.append(buff.data(), end - buff.data());
+		}
 
-	void FormatFunction() {
-		result.append(srcLocation.function_name());
-	}
+		void FormatFile() {
+			result.append(srcLocation.file_name());
+		}
 
-	std::string_view FormatUserPattern() {
-		using enum serenity::source_flag;
-		result.clear();
-		switch( static_cast<int>(spec) ) {
-				case 1: FormatLine(); break;
-				case 2: FormatColumn(); break;
-				case 3:
-					FormatLine();
-					result.append(":");
-					FormatColumn();
-					break;
-				case 4: FormatFile(); break;
-				case 5:
-					FormatFile();
-					result.append(" ");
-					FormatLine();
-					break;
-				case 7:
-					FormatFile();
-					result.append("(");
-					FormatLine();
-					result.append(":");
-					FormatColumn();
-					result.append(")");
-					break;
-				case 8: FormatFunction(); break;
-				case 9:
-					FormatFunction();
-					result.append(" ");
-					FormatLine();
-					break;
-				case 11:
-					FormatFunction();
-					FormatLine();
-					result.append(":");
-					FormatColumn();
-					result.append(")");
-					break;
-				case 12:
-					FormatFile();
-					result.append(" ");
-					FormatFunction();
-					break;
-				default: FormatAll(); break;
-			}
-		return std::string_view(result.data(), result.size());
-	}
+		void FormatFunction() {
+			result.append(srcLocation.function_name());
+		}
 
-  private:
-	const std::source_location& srcLocation;
-	std::array<char, 6> buff;
-	serenity::source_flag spec;
-	std::string result;
-};
+		std::string_view FormatUserPattern() {
+			using enum serenity::source_flag;
+			result.clear();
+			switch( static_cast<int>(spec) ) {
+					case 1: FormatLine(); break;
+					case 2: FormatColumn(); break;
+					case 3:
+						FormatLine();
+						result.append(":");
+						FormatColumn();
+						break;
+					case 4: FormatFile(); break;
+					case 5:
+						FormatFile();
+						result.append(" ");
+						FormatLine();
+						break;
+					case 7:
+						FormatFile();
+						result.append("(");
+						FormatLine();
+						result.append(":");
+						FormatColumn();
+						result.append(")");
+						break;
+					case 8: FormatFunction(); break;
+					case 9:
+						FormatFunction();
+						result.append(" ");
+						FormatLine();
+						break;
+					case 11:
+						FormatFunction();
+						FormatLine();
+						result.append(":");
+						FormatColumn();
+						result.append(")");
+						break;
+					case 12:
+						FormatFile();
+						result.append(" ");
+						FormatFunction();
+						break;
+					default: FormatAll(); break;
+				}
+			return std::string_view(result.data(), result.size());
+		}
 
-struct Format_Thread_ID
-{
-	// Precision argument dictates the length of the hashed id returned (0-10)
-	static constexpr size_t defaultThreadIdLength = 10;
-	Format_Thread_ID(): thread(std::hash<std::thread::id>()(std::this_thread::get_id())) { }
+	  private:
+		const std::source_location& srcLocation;
+		std::array<char, 6> buff;
+		serenity::source_flag spec;
+		std::string result;
+	};
 
-	std::string_view FormatUserPattern(size_t precision) {
-		result.clear();
-		std::array<char, 64> buf {};
-		std::to_chars(buf.data(), buf.data() + buf.size(), thread);
-		std::string_view sv { buf.data(), buf.size() };
-		(precision != 0) ? sv.remove_suffix(sv.size() - precision) : sv.remove_suffix(sv.size() - defaultThreadIdLength);
-		result.append(sv.data(), sv.size());
-		return std::string_view(result.data(), result.size());
-	}
+	struct Format_Thread_ID
+	{
+		Format_Thread_ID(): thread(std::hash<std::thread::id>()(std::this_thread::get_id())) { }
 
-  private:
-	std::string result;
-	size_t thread;
-};
+		std::string_view FormatUserPattern(size_t precision) {
+			result.clear();
+			std::array<char, 64> buf {};
+			std::to_chars(buf.data(), buf.data() + buf.size(), thread);
+			std::string_view sv { buf.data(), buf.size() };
+			(precision != 0) ? sv.remove_suffix(sv.size() - precision) : sv.remove_suffix(sv.size() - defaultThreadIdLength);
+			result.append(sv.data(), sv.size());
+			return std::string_view(result.data(), result.size());
+		}
 
-// estimated size: assume logger name, long level, short level, and thread ID are all SSO, so max 16 for each, assume full legnth source and
-// reserve 80, and reserve an extra 255 for a message and then 93 for the pattern string minus the substitution brackets involved
-static constexpr size_t defaultSizeEstimate { 492 };    // used for full default formatting
+	  private:
+		std::string result;
+		size_t thread;
+	};
+}    // namespace serenity::msg_details::custom_flags
+
 // This is going to need to be sped up an immense amount.. this is taking too long right now
 template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info>
 {
 	serenity::CustomFlagError::custom_error_handler errHandler {};
-	flag_type flag {};
+	serenity::msg_details::custom_flags::flag_type flag {};
 	serenity::source_flag srcFlags {};
 	size_t threadLength {};
 	mutable std::string resultBuff {};
 
 	inline constexpr void Parse(std::string_view parse) {
+		namespace cf       = serenity::msg_details::custom_flags;
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
-		flag               = flag_type::Invalid;
+		flag               = cf ::flag_type::Invalid;
 
 		auto size { parse.size() };
 		auto pos { -1 };
@@ -213,10 +216,10 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 				switch( parse[ pos ] ) {
 						case '}':
 							{
-								if( flag != flag_type::Invalid ) return;
+								if( flag != cf::flag_type::Invalid ) return;
 								// If we reach this point, the flag is still flag_type::Invalid, and the error hasn't been reported as an 'Invalid Flag', then we can
 								// assume that there were no flags present to begin with and set the flag to default formatting and exit this function
-								flag = flag_type::Default;
+								flag = cf::flag_type::Default;
 								return;
 							}
 						case ':':
@@ -244,28 +247,28 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 				switch( parse[ pos ] ) {
 						case 'L':
 							{
-								flag = flag_type::LongLogLvl;
+								flag = cf::flag_type::LongLogLvl;
 								return;
 							}
 						case 'l':
 							{
-								flag = flag_type::ShortLogLvl;
+								flag = cf::flag_type::ShortLogLvl;
 								return;
 							}
 						case 'N':
 							{
-								flag = flag_type::LoggerName;
+								flag = cf::flag_type::LoggerName;
 								return;
 							}
 						case '+':
 							{
-								flag = flag_type::LogMessage;
+								flag = cf::flag_type::LogMessage;
 								return;
 							}
 						// LogSource is a little bit special given the modifiers that are attached to it
 						case 's':
 							{
-								flag     = flag_type::LogSource;
+								flag     = cf::flag_type::LogSource;
 								srcFlags = serenity::source_flag::empty;
 
 								for( ;; ) {
@@ -317,7 +320,7 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 							// LoggerThreadID is also a little bit special due to it's length modifier
 						case 't':
 							{
-								flag         = flag_type::LoggerThreadID;
+								flag         = cf::flag_type::LoggerThreadID;
 								threadLength = 0;
 								for( ;; ) {
 										switch( parse[ pos ] ) {
@@ -356,7 +359,7 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 							}
 						default:
 							{
-								flag = flag_type::Invalid;
+								flag = cf::flag_type::Invalid;
 								errHandler.ReportCustomError(CustomErrors::unknown_flag);
 								return;
 							}
@@ -364,15 +367,27 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 			}
 	}
 
+	/*!*********************************************************************** NOTE TO SELF ************************************************************************/
+	//!  Removed static Format_Source_Loc object as it hadn't occured to me until now that that method would break with multi-threading given the fact that any
+	//! thread after the first would just be using the first's source location instead due to static storage -> therefore, just have to live with the insane cost of
+	//! formatting source location details if present (it's not terrible in general, just *MUCH* slower than the rest of the formatting flags).
+	//!
+	//!  I may revisit this if I can think of a better way to approach this -> the initial mindset of having a static initializer with a pseudo singleton like
+	//!  pattern using locks is definitely not the way to go since I would still need a way to update at least the Message_Info parameter to swap over the usage of
+	//!  where the source location is being collected from as well as a way to basically redundantly check the thread ID (redundant in the sense that if a thread ID
+	//!  flag is present, as it stands right now, this method would have to perfrom two hashes on the thread -> could be optimized to work in tandem though I think).
+	//!  The idea with the singleton approach was that if the thread hash doesn't match the previous thread's hashed value, then update the std::source_location
+	//!  parameter based on the new thread's Message_Info's std::source_location data and if it *DOES* match, use the current setup as the source location is likely
+	//!  different but is being called with the same Message_Info class data. So, in lieu of this, I'm just leaving the static instance out for now.
+	//! **************************************************************************************************************************************************************
 	template<typename resultCtx> constexpr auto Format(const serenity::msg_details::Message_Info& p, resultCtx& ctx) const {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
-		static Format_Source_Loc srcFormatter(p, srcFlags);    // having this as a function local static object saw a decrease in time by ~50ns
-		namespace fch = formatter::custom_helper;
-
+		namespace fch      = formatter::custom_helper;
+		namespace cf       = serenity::msg_details::custom_flags;
 		auto contSize { ctx.size() };
 
 		switch( flag ) {
-				case flag_type::LongLogLvl:
+				case cf::flag_type::LongLogLvl:
 					{
 						auto tmp { LevelToLongView(p.MsgLevel()) };
 						auto size { tmp.size() };
@@ -380,7 +395,7 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
 						break;
 					}
-				case flag_type::ShortLogLvl:
+				case cf::flag_type::ShortLogLvl:
 					{
 						auto tmp { LevelToShortView(p.MsgLevel()) };
 						auto size { tmp.size() };
@@ -388,7 +403,7 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
 						break;
 					}
-				case flag_type::LoggerName:
+				case cf::flag_type::LoggerName:
 					{
 						std::string_view tmp { p.Name() };
 						auto size { tmp.size() };
@@ -396,23 +411,23 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
 						break;
 					}
-				case flag_type::LogSource:
+				case cf::flag_type::LogSource:
 					{
-						auto tmp { srcFormatter.FormatUserPattern() };
+						auto tmp { cf::Format_Source_Loc { p, srcFlags }.FormatUserPattern() };
 						auto size { tmp.size() };
 						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
 						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
 						break;
 					}
-				case flag_type::LoggerThreadID:
+				case cf::flag_type::LoggerThreadID:
 					{
-						auto tmp { Format_Thread_ID {}.FormatUserPattern(threadLength) };
+						auto tmp { cf::Format_Thread_ID {}.FormatUserPattern(threadLength) };
 						auto size { tmp.size() };
 						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
 						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
 						break;
 					}
-				case flag_type::LogMessage:
+				case cf::flag_type::LogMessage:
 					{
 						std::string_view tmp { p.Message() };
 						auto size { tmp.size() };
@@ -420,10 +435,10 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
 						break;
 					}
-				case flag_type::Default:
+				case cf::flag_type::Default:
 					{
 						resultBuff.clear();
-						auto size { contSize + defaultSizeEstimate };
+						auto size { contSize + cf::defaultSizeEstimate };
 						if( resultBuff.capacity() < size ) resultBuff.reserve(size);
 						resultBuff.append("- Logger Name:\t")
 						.append(p.Name())
@@ -434,16 +449,16 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						.append("\n- Log Message:\t")
 						.append(p.Message())
 						.append("\n- Log Source:\t")
-						.append(srcFormatter.FormatUserPattern())
+						.append(cf::Format_Source_Loc { p, srcFlags }.FormatUserPattern())
 						.append("\n- Thread ID:\t")
-						.append(Format_Thread_ID {}.FormatUserPattern(threadLength))
+						.append(cf::Format_Thread_ID {}.FormatUserPattern(threadLength))
 						.append("\n");
 						if( ctx.capacity() < resultBuff.size() ) ctx.reserve(contSize + resultBuff.size());
 						fch::WriteToContainer(std::string_view(resultBuff), resultBuff.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				// invalid flag should have been caught from the parsing, but include here and just don't format it
-				case flag_type::Invalid: [[fallthrough]];
+				case cf::flag_type::Invalid: [[fallthrough]];
 				default: break;
 			}
 		fch::EnableCustomFmtProc(false);

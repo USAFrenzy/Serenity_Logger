@@ -436,14 +436,15 @@ TEST_CASE("Format Function Test") {
 
 #ifdef USE_BUILT_IN_FMT
 TEST_CASE("Custom Formatting Test For Message_Info") {
+	namespace cf = serenity::msg_details::custom_flags;
 	serenity::MsgWithLoc message { "This is a test message for custom formatting of Message_Info" };
 	const serenity::msg_details::Message_Info testInfo { "TestFormatting", serenity::LoggerLevel::trace, serenity::message_time_mode::local };
 	testInfo.Message() = message.msg;
 	testInfo.SetSrcLoc(message.source);
 
 	serenity::source_flag srcFlag { serenity::source_flag::empty };
-	Format_Source_Loc testSrc(testInfo, srcFlag);
-	Format_Thread_ID threadID {};
+	cf::Format_Source_Loc testSrc(testInfo, srcFlag);
+	cf::Format_Thread_ID threadID {};
 
 	REQUIRE(formatter::format("{:%L}", testInfo) == "Trace");
 	REQUIRE(formatter::format("{:%l}", testInfo) == "T");

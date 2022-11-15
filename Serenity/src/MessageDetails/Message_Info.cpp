@@ -72,7 +72,7 @@ namespace serenity::msg_details {
 		return source;
 	}
 
-	const std::source_location& Message_Info::SourceLocation() const {
+	std::source_location& Message_Info::SourceLocation() const {
 		return source;
 	}
 
