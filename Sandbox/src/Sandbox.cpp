@@ -802,9 +802,10 @@ int main() {
 	auto iters { 1'000'000 };
 	Instrumentator customTimer {};
 
-		#ifndef ONLY_MOCK_LOG_MESSAGE_ENABLED
+	std::cout << formatter::format(
+	"{0:*^120}\n\n", formatter::format(std::locale("en_US.UTF8"), " Simple Benchmarks For Each Flag And A Mock Log Call Each Averaged Over {:L} Iterations ", iters));
 
-	std::cout << formatter::format("{0:*^120}\n\n", formatter::format(" Simple Benchmarks For Each Flag And A Mock Log Call Each Averaged Over {} Iterations ", iters));
+		#ifndef ONLY_MOCK_LOG_MESSAGE_ENABLED
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iters; ++i ) {
@@ -819,7 +820,7 @@ int main() {
 	std::cout << formatter::format("Separated Calls To Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
-	std::cout << "\n\n\n";
+	std::cout << "\n\n";
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iters; ++i ) {
@@ -830,7 +831,7 @@ int main() {
 	std::cout
 	<< formatter::format("Default Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}", (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
-	std::cout << "\n\n\n";
+	std::cout << "\n\n";
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iters; ++i ) {
@@ -841,7 +842,7 @@ int main() {
 	std::cout << formatter::format("Single Flag Custom Formatting For Logger Name Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
-	std::cout << "\n\n\n";
+	std::cout << "\n\n";
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iters; ++i ) {
@@ -852,7 +853,7 @@ int main() {
 	std::cout << formatter::format("Single Flag Custom Formatting For Long Log Level Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
-	std::cout << "\n\n\n";
+	std::cout << "\n\n";
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iters; ++i ) {
@@ -863,7 +864,7 @@ int main() {
 	std::cout << formatter::format("Single Flag Custom Formatting For Short Log Level Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
-	std::cout << "\n\n\n";
+	std::cout << "\n\n";
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iters; ++i ) {
@@ -874,7 +875,7 @@ int main() {
 	std::cout << formatter::format("Single Flag Custom Formatting For Message Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
-	std::cout << "\n\n\n";
+	std::cout << "\n\n";
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iters; ++i ) {
@@ -885,7 +886,7 @@ int main() {
 	std::cout << formatter::format("Single Flag Custom Formatting For Log Source Location Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
-	std::cout << "\n\n\n";
+	std::cout << "\n\n";
 
 	customTimer.StopWatch_Reset();
 	for( auto i { 0 }; i < iters; ++i ) {
@@ -896,7 +897,7 @@ int main() {
 	std::cout << formatter::format("Single Flag Custom Formatting For Logger Thread ID Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
 	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
 
-	std::cout << "\n\n\n";
+	std::cout << "\n\n";
 		#endif    // !ONLY_MOCK_LOG_MESSAGE_ENABLED
 
 	// File Target with current implementation lands around 253.882751 ns.

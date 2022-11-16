@@ -442,9 +442,6 @@ TEST_CASE("Custom Formatting Test For Message_Info") {
 	testInfo.Message() = message.msg;
 	testInfo.SetSrcLoc(message.source);
 
-	serenity::source_flag srcFlag { serenity::source_flag::empty };
-	cf::Format_Source_Loc testSrc(testInfo, srcFlag);
-	cf::Format_Thread_ID threadID {};
 
 	REQUIRE(formatter::format("{:%L}", testInfo) == "Trace");
 	REQUIRE(formatter::format("{:%l}", testInfo) == "T");
@@ -467,8 +464,13 @@ TEST_CASE("Custom Formatting Test For Message_Info") {
 	REQUIRE(formatter::format("{:%L}", testInfo) == "");
 	REQUIRE(formatter::format("{:%l}", testInfo) == "");
 
+	serenity::source_flag srcFlag{ serenity::source_flag::all};
+	cf::Format_Source_Loc testSrc(testInfo, srcFlag);
+
 	REQUIRE(formatter::format("{:%s}", testInfo) == testSrc.FormatUserPattern());
 
+
+	cf::Format_Thread_ID threadID{};
 	REQUIRE(formatter::format("{:%t}", testInfo) == threadID.FormatUserPattern(0));
 	REQUIRE(formatter::format("{:%t:1}", testInfo) == threadID.FormatUserPattern(1));
 	REQUIRE(formatter::format("{:%t:2}", testInfo) == threadID.FormatUserPattern(2));

@@ -54,7 +54,7 @@ namespace serenity::targets {
 		CloseFile();
 	}
 
-	void FileTarget::PrintMessage(std::string_view formatted) {
+	void FileTarget::PrintMessage() {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
 		auto& backgroundThread { BackgoundThreadInfo() };
 		const auto& flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
@@ -67,7 +67,8 @@ namespace serenity::targets {
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		WriteToFile(formatted);
+		VFORMAT_TO(FileBuffer(), MsgFmt()->Locale(), MsgFmt()->Pattern(), *(MsgInfo().get()), MsgInfo()->TimeInfo());
+		WriteToFile();
 		if( lock.owns_lock() ) {
 				lock.unlock();
 		}

@@ -5,8 +5,6 @@ set(MESSAGE_DETAILS_SOURCE_FILES
     "src/MessageDetails/Message_Time.cpp"
     "src/MessageDetails/Message_Formatter.cpp"
     "src/MessageDetails/FlushPolicy.cpp"
-    # Remove When ArgFormatter Project Is Added And Custom Formatter is Setup For Other Flags
-    "src/MessageDetails/FormatterArgs.cpp"
 )
 
 set(TARGETS_SOURCE_FILES
@@ -28,10 +26,7 @@ set(MESSAGE_DETAILS_HEADER_FILES
     "include/serenity/MessageDetails/Message_Info.h"
     "include/serenity/MessageDetails/Message_Time.h"
     "include/serenity/MessageDetails/Message_Formatter.h"
-    "include/serenity/MessageDetails/Message_Formatter_Impl.h"
     "include/serenity/MessageDetails/FlushPolicy.h"
-    # Remove When ArgFormatter Project Is Added And Custom Formatter is Setup For Other Flags
-    "include/serenity/MessageDetails/FormatterArgs.h"
 )
 
 set(TARGETS_HEADER_FILES

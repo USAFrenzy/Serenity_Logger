@@ -33,7 +33,7 @@ namespace serenity::targets {
 		void SetLocale(const std::locale& loc) override;
 
 	  protected:
-		void PrintMessage(std::string_view formatted) override;
+		void PrintMessage() override;
 
 	  private:
 		bool coloredOutput;

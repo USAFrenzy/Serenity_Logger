@@ -5,6 +5,7 @@
 #include <serenity/MessageDetails/Message_Formatter.h>
 #include <serenity/MessageDetails/Message_Info.h>
 #include <serenity/MessageDetails/Message_Time.h>
+#include <serenity/Utilities/FormatBackend.h>
 #include <serenity/Utilities/TargetHelper.h>
 
 #include <chrono>
@@ -39,7 +40,7 @@ namespace serenity::targets {
 		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();
 		const std::unique_ptr<msg_details::Message_Formatter>& MsgFmt() const;
 		const std::unique_ptr<msg_details::Message_Info>& MsgInfo() const;
-		virtual void PrintMessage(std::string_view formatted);
+		virtual void PrintMessage();
 		virtual void PolicyFlushOn();
 
 	  private:

@@ -126,7 +126,7 @@ namespace serenity::targets {
 		return (ISATTY(FILENO(consoleType))) ? true : false;
 	}
 
-	void ColorConsole::PrintMessage(std::string_view formatted) {
+	void ColorConsole::PrintMessage() {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
@@ -139,7 +139,9 @@ namespace serenity::targets {
 						reset    = se_colors::formats::reset;
 				}
 				// message.reserve(formatted.size() + msgColor.size() + reset.size());
-				message.append(msgColor).append(formatted).append(reset);
+				message.append(msgColor);
+				VFORMAT_TO(message, MsgFmt()->Locale(), MsgFmt()->Pattern(), *(MsgInfo().get()), MsgInfo()->TimeInfo());
+				message.append(reset);
 #ifdef WINDOWS_PLATFORM
 				if( IsTerminalType() ) {
 						WriteConsole(outputHandle, message.data(), static_cast<DWORD>(message.size()), NULL, NULL);

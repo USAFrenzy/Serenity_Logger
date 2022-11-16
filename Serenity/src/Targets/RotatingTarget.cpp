@@ -97,7 +97,7 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget()
 		: TargetBase("Rotating_Logger"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
-		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true), numBuff(std::array<char, 6> {}) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
@@ -117,7 +117,7 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
 		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
-		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true), numBuff(std::array<char, 6> {}) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 
 		SyncTargetHelpers(TargetHelper());
@@ -138,7 +138,8 @@ namespace serenity::experimental::targets {
 
 	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
 		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
-		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true) {
+		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true),
+		  numBuff(std::array<char, 6> {}) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
@@ -218,7 +219,11 @@ namespace serenity::experimental::targets {
 		auto newFilePath { originalPath };
 		for( size_t fileNumber { 1 }; fileNumber <= RotationLimits().maxNumberOfFiles; ++fileNumber ) {
 				std::string newFile { OriginalName() };    // effectively reset each loop iteration
-				newFile.append("_").append(SERENITY_LUTS::numberStr[ fileNumber ]).append(OriginalExtension());
+				auto data { numBuff.data() };
+				std::memset(data, 0, 6);
+				auto digitLength { std::to_chars(data, data + 6, fileNumber).ptr - data };
+				digitLength < 2 ? newFile.append("_").append("0").append(data, data + 1).append(OriginalExtension())
+								: newFile.append("_").append(data, data + digitLength).append(OriginalExtension());
 				newFilePath.replace_filename(newFile);
 				if( !std::filesystem::exists(newFilePath) ) {
 						FileCacheHelper()->SetFilePath(newFilePath);
@@ -294,7 +299,7 @@ namespace serenity::experimental::targets {
 		truncateMessage = truncate;
 	}
 
-	void RotatingTarget::PrintMessage(std::string_view formatted) {
+	void RotatingTarget::PrintMessage() {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
 		auto& backgroundThread { BackgoundThreadInfo() };
 		const auto& flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
@@ -307,25 +312,25 @@ namespace serenity::experimental::targets {
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-
-		size_t formattedSize { formatted.size() };
+		VFORMAT_TO(FileBuffer(), MsgFmt()->Locale(), MsgFmt()->Pattern(), *(MsgInfo().get()), MsgInfo()->TimeInfo());
+		size_t formattedSize { FileBuffer().size() };
 		SetMessageSize(formattedSize);
 		auto fileSizeLimit { RotationLimits().fileSizeLimit };
 		if( !ShouldRotate() ) {
-				WriteToFile(formatted, fileSizeLimit, truncateMessage);
+				WriteToFile(fileSizeLimit, truncateMessage);
 				SetCurrentFileSize(FileSize() + formattedSize);
 		} else if( (m_mode == IntervalMode::file_size) && isAboveMsgLimit ) {
 				formattedSize = RotationLimits().fileSizeLimit - FileSize();
-				auto remainder { formatted.substr(formattedSize, formatted.size()) };
-				WriteToFile(formatted, fileSizeLimit, truncateMessage);
+				WriteToFile(fileSizeLimit, truncateMessage);
 				RotateFile();
 				if( !truncateMessage ) {
-						WriteToFile(remainder, fileSizeLimit, truncateMessage);
-						SetCurrentFileSize(FileSize() + remainder.size());
+						auto trailingMessageSize { FileBuffer().size() };
+						WriteToFile(trailingMessageSize, truncateMessage);
+						SetCurrentFileSize(FileSize() + trailingMessageSize);
 				}
 		} else {
 				RotateFile();
-				WriteToFile(formatted, fileSizeLimit, truncateMessage);
+				WriteToFile(fileSizeLimit, truncateMessage);
 				SetCurrentFileSize(FileSize() + formattedSize);
 			}
 		if( lock.owns_lock() ) {

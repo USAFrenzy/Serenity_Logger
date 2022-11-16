@@ -62,7 +62,7 @@ namespace serenity::targets::helpers {
 		~FileHelper()                      = default;
 
 		bool OpenFile(bool truncate = false);
-		void WriteToFile(std::string_view msg, size_t writeLimit = max_size_size_t, bool truncateRest = false);
+		void WriteToFile(size_t writeLimit = max_size_size_t, bool truncateRest = false);
 		void Flush();
 		bool CloseFile(bool onRotation = false);
 		std::vector<char>& FileBuffer();
@@ -81,8 +81,8 @@ namespace serenity::targets::helpers {
 
 	  private:
 		void OpenImpl(bool truncate);
-		void WriteImpl(std::string_view msg);
-		void WriteImpl(std::string_view msg, size_t writeLimit, bool truncateRest = false);
+		void WriteImpl();
+		void WriteImpl(size_t writeLimit, bool truncateRest = false);
 		void FlushImpl();
 		void CloseImpl();
 

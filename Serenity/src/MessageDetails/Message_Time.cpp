@@ -110,13 +110,13 @@ namespace serenity::msg_details {
 
 	void serenity::msg_details::Message_Time::CalculateCurrentYear(int yearOffset) {
 		auto longYear { 1900 + yearOffset };
-		std::array<char, 4> buff {};
-		std::to_chars(buff.data(), buff.data() + buff.size(), longYear);
+		std::array<char, 6> buff {};
 		cachedLongYear.clear();
-		cachedLongYear.append(buff.data(), buff.size());
+		cachedLongYear.append(buff.data(), std::to_chars(buff.data(), buff.data() + 6, longYear).ptr);
+		std::memset(buff.data(), 0, 4);
 		auto shortYear { yearOffset - 100 };
 		cachedShortYear.clear();
-		cachedShortYear.append(SERENITY_LUTS::numberStr[ shortYear ]);
+		cachedShortYear.append(buff.data(), std::to_chars(buff.data(), buff.data() + 6, shortYear).ptr);
 	}
 
 	std::string_view Message_Time::GetCurrentYearSV(bool shortened) const {

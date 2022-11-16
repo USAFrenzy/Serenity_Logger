@@ -22,7 +22,7 @@ namespace serenity::targets {
 
 	  protected:
 		void PolicyFlushOn() override;
-		void PrintMessage(std::string_view formatted) override;
+		void PrintMessage() override;
 
 	  private:
 		mutable std::mutex fileMutex;

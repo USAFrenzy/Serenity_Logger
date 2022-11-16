@@ -10,7 +10,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-#define INCLUDE_SPDLOG 1
+#define INCLUDE_SPDLOG 0
 
 // This is just used to write all logs in the same directory as the serenity
 // targets

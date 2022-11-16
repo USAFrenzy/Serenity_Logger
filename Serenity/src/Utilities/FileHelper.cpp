@@ -309,19 +309,23 @@ namespace serenity::targets::helpers {
 
 	// This seems to be ~35ns- to ~45ns faster than the fileHandle.rdbuf()->sputn(formatted.data(), formatted.size())
 	//  method and brings the throughput from ~1450 MB/s up to ~1715 MB/s
-	void FileHelper::WriteImpl(std::string_view msg) {
-		buffer.insert(buffer.end(), msg.begin(), msg.end());
+	void FileHelper::WriteImpl() {
 		if( buffer.size() >= pageSize ) {
-				WRITE(file, buffer.data(), pageSize);
-				buffer.erase(buffer.begin(), buffer.begin() + pageSize);
+				for( ;; ) {
+						WRITE(file, buffer.data(), pageSize);
+						buffer.erase(buffer.begin(), buffer.begin() + pageSize);
+						if( buffer.size() < pageSize ) break;
+					}
 		}
 	}
 
-	void FileHelper::WriteImpl(std::string_view msg, size_t writeLimit, bool truncateRest) {
-		buffer.insert(buffer.end(), msg.begin(), msg.end());
+	void FileHelper::WriteImpl(size_t writeLimit, bool truncateRest) {
 		if( buffer.size() >= writeLimit ) {
-				WRITE(file, buffer.data(), writeLimit);
-				truncateRest ? buffer.erase(buffer.begin(), buffer.end()) : buffer.erase(buffer.begin(), buffer.begin() + writeLimit);
+				for( ;; ) {
+						WRITE(file, buffer.data(), writeLimit);
+						truncateRest ? buffer.erase(buffer.begin(), buffer.end()) : buffer.erase(buffer.begin(), buffer.begin() + writeLimit);
+						if( buffer.size() < writeLimit ) break;
+					}
 		}
 	}
 
@@ -347,8 +351,8 @@ namespace serenity::targets::helpers {
 		buffer.clear();
 	}
 
-	void FileHelper::WriteToFile(std::string_view msg, size_t writeLimit, bool truncateRest) {
-		writeLimit == max_size_size_t ? WriteImpl(msg) : WriteImpl(msg, writeLimit, truncateRest);
+	void FileHelper::WriteToFile(size_t writeLimit, bool truncateRest) {
+		writeLimit == max_size_size_t ? WriteImpl() : WriteImpl(writeLimit, truncateRest);
 	}
 
 }    // namespace serenity::targets::helpers

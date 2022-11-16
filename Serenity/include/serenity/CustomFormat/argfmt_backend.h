@@ -117,7 +117,7 @@ namespace serenity::msg_details::custom_flags {
 			result.append(srcLocation.function_name());
 		}
 
-		std::string_view FormatUserPattern() {
+		std::string& FormatUserPattern() {
 			using enum serenity::source_flag;
 			result.clear();
 			switch( static_cast<int>(spec) ) {
@@ -162,7 +162,7 @@ namespace serenity::msg_details::custom_flags {
 						break;
 					default: FormatAll(); break;
 				}
-			return std::string_view(result.data(), result.size());
+			return result;
 		}
 
 	  private:
@@ -176,14 +176,14 @@ namespace serenity::msg_details::custom_flags {
 	{
 		Format_Thread_ID(): thread(std::hash<std::thread::id>()(std::this_thread::get_id())) { }
 
-		std::string_view FormatUserPattern(size_t precision) {
+		std::string& FormatUserPattern(size_t precision) {
 			result.clear();
 			std::array<char, 64> buf {};
 			std::to_chars(buf.data(), buf.data() + buf.size(), thread);
 			std::string_view sv { buf.data(), buf.size() };
 			(precision != 0) ? sv.remove_suffix(sv.size() - precision) : sv.remove_suffix(sv.size() - defaultThreadIdLength);
 			result.append(sv.data(), sv.size());
-			return std::string_view(result.data(), result.size());
+			return result;
 		}
 
 	  private:
@@ -297,6 +297,7 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 												errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
 										}
 										switch( parse[ pos ] ) {
+												case 'a':  srcFlags = serenity::source_flag::all; return; // ignore everything else if this is present and default to all
 												case 'l': srcFlags |= serenity::source_flag::line; continue;
 												case 'c': srcFlags |= serenity::source_flag::column; continue;
 												case 'f': srcFlags |= serenity::source_flag::file; continue;

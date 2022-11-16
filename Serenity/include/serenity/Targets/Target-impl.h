@@ -6,13 +6,16 @@
 
 template<typename... Args> void serenity::targets::TargetBase::LogMessage(std::string_view msg, Args&&... args) {
 	using namespace std::chrono;
+
 	msgDetails->SetTimePoint();
 	auto now = msgDetails->MessageTimePoint();
 	if( duration_cast<seconds>(now.time_since_epoch()) != msgDetails->TimeDetails().LastLogPoint() ) {
 			msgDetails->TimeDetails().UpdateCache(now);
 	}
-	msgPattern->FormatMessageArgs(msg, std::forward<Args>(args)...);
-	PrintMessage(msgPattern->GetFormatters().FormatUserPattern());
+	auto& msgHandle { msgDetails->Message() };
+	msgHandle.clear();
+	VFORMAT_TO(msgHandle, msgPattern->Locale(), msg, std::forward<Args>(args)...);
+	PrintMessage();
 	PolicyFlushOn();
 }
 
@@ -20,7 +23,6 @@ template<typename... Args> void serenity::targets::TargetBase::LogMessage(std::s
 //                Since the container used internally here is just a simple std::string, I can streamline these calls specifically by keeping the utf-8 encoding for
 //                the
 //                 message itself, and if string types are present in the argument, encoding those to utf-8 into the buffer used for the target type.
-
 template<typename... Args> void serenity::targets::TargetBase::Trace(serenity::MsgWithLoc s, Args&&... args) {
 	if( logLevel <= LoggerLevel::trace ) {
 			msgDetails->SetMsgLevel(LoggerLevel::trace);

@@ -108,7 +108,7 @@ namespace serenity::experimental::targets {
 		IntervalMode RotationMode() const;
 
 	protected:
-		void PrintMessage(std::string_view formatted) override;
+		void PrintMessage() override;
 		void PolicyFlushOn() override;
 		bool RenameFileInRotation(std::filesystem::path newFilePath);
 		bool ReplaceOldFileInRotation();
@@ -128,6 +128,7 @@ namespace serenity::experimental::targets {
 		RotatingDaylightCache dsCache;
 		bool isAboveMsgLimit;
 		bool truncateMessage;
+		std::array<char, 6> numBuff;
 	};
 
 }    // namespace serenity::experimental::targets

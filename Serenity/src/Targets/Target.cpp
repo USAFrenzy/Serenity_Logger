@@ -11,7 +11,7 @@
 #endif        // BUILT_IN_FORMATTING_ENABLED
 
 namespace serenity::targets {
-	constexpr const char* DEFAULT_PATTERN = "|%l| %a %n %T [%N]: %+";
+	constexpr const char* DEFAULT_PATTERN = "|%l| %a %d%b%y %T [%N]: %+";
 
 	TargetBase::TargetBase()
 		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
@@ -75,7 +75,7 @@ namespace serenity::targets {
 		return baseHelper;
 	}
 
-	void TargetBase::PrintMessage(std::string_view formatted) { }
+	void TargetBase::PrintMessage() { }
 
 	// Leaving empty for derived classes to implement
 	void TargetBase::PolicyFlushOn() { }
