@@ -34,7 +34,7 @@ namespace serenity::targets {
 		template<typename... Args> void Fatal(MsgWithLoc msg, Args&&... args);
 		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 		virtual void SetLocale(const std::locale& loc);
-		std::locale GetLocale() const;
+		const std::locale& GetLocale() const;
 
 	  protected:
 		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();

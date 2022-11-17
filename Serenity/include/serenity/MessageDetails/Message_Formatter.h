@@ -22,7 +22,7 @@ namespace serenity::msg_details {
 		void SetPattern(std::string_view pattern);
 		const Message_Info* MessageDetails();
 		void SetLocaleReference(const std::locale& loc);
-		std::locale Locale();
+		const std::locale& Locale();
 		std::string_view LineEnding() const;
 		const std::string& Pattern();
 

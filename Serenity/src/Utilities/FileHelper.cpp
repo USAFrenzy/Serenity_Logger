@@ -311,21 +311,15 @@ namespace serenity::targets::helpers {
 	//  method and brings the throughput from ~1450 MB/s up to ~1715 MB/s
 	void FileHelper::WriteImpl() {
 		if( buffer.size() >= pageSize ) {
-				for( ;; ) {
-						WRITE(file, buffer.data(), pageSize);
-						buffer.erase(buffer.begin(), buffer.begin() + pageSize);
-						if( buffer.size() < pageSize ) break;
-					}
+				WRITE(file, buffer.data(), pageSize);
+				buffer.erase(buffer.begin(), buffer.begin() + pageSize);
 		}
 	}
 
 	void FileHelper::WriteImpl(size_t writeLimit, bool truncateRest) {
 		if( buffer.size() >= writeLimit ) {
-				for( ;; ) {
-						WRITE(file, buffer.data(), writeLimit);
-						truncateRest ? buffer.erase(buffer.begin(), buffer.end()) : buffer.erase(buffer.begin(), buffer.begin() + writeLimit);
-						if( buffer.size() < writeLimit ) break;
-					}
+				WRITE(file, buffer.data(), writeLimit);
+				truncateRest ? buffer.erase(buffer.begin(), buffer.end()) : buffer.erase(buffer.begin(), buffer.begin() + writeLimit);
 		}
 	}
 

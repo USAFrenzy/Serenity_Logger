@@ -297,7 +297,9 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 												errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
 										}
 										switch( parse[ pos ] ) {
-												case 'a':  srcFlags = serenity::source_flag::all; return; // ignore everything else if this is present and default to all
+												case 'a':
+													srcFlags = serenity::source_flag::all;
+													return;    // ignore everything else if this is present and default to all
 												case 'l': srcFlags |= serenity::source_flag::line; continue;
 												case 'c': srcFlags |= serenity::source_flag::column; continue;
 												case 'f': srcFlags |= serenity::source_flag::file; continue;
@@ -390,50 +392,38 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 		switch( flag ) {
 				case cf::flag_type::LongLogLvl:
 					{
-						auto tmp { LevelToLongView(p.MsgLevel()) };
-						auto size { tmp.size() };
-						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
-						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						const auto& tmp { std::move(LevelToLongView(p.MsgLevel())) };
+						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::ShortLogLvl:
 					{
-						auto tmp { LevelToShortView(p.MsgLevel()) };
-						auto size { tmp.size() };
-						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
-						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						const auto& tmp { std::move(LevelToShortView(p.MsgLevel())) };
+						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::LoggerName:
 					{
-						std::string_view tmp { p.Name() };
-						auto size { tmp.size() };
-						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
-						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						const auto& tmp { p.Name() };
+						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::LogSource:
 					{
-						auto tmp { cf::Format_Source_Loc { p, srcFlags }.FormatUserPattern() };
-						auto size { tmp.size() };
-						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
-						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						auto tmp { std::move(cf::Format_Source_Loc { p, srcFlags }.FormatUserPattern()) };
+						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::LoggerThreadID:
 					{
-						auto tmp { cf::Format_Thread_ID {}.FormatUserPattern(threadLength) };
-						auto size { tmp.size() };
-						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
-						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						auto tmp { std::move(cf::Format_Thread_ID {}.FormatUserPattern(threadLength)) };
+						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::LogMessage:
 					{
-						std::string_view tmp { p.Message() };
-						auto size { tmp.size() };
-						if( ctx.capacity() < (contSize += size) ) ctx.reserve(contSize);
-						fch::WriteToContainer(tmp, size, std::forward<resultCtx>(ctx));
+						const auto& tmp { p.Message() };
+						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::Default:
@@ -454,7 +444,6 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						.append("\n- Thread ID:\t")
 						.append(cf::Format_Thread_ID {}.FormatUserPattern(threadLength))
 						.append("\n");
-						if( ctx.capacity() < resultBuff.size() ) ctx.reserve(contSize + resultBuff.size());
 						fch::WriteToContainer(std::string_view(resultBuff), resultBuff.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
@@ -462,6 +451,5 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 				case cf::flag_type::Invalid: [[fallthrough]];
 				default: break;
 			}
-		fch::EnableCustomFmtProc(false);
 	}
 };

@@ -2,7 +2,8 @@
 
 namespace serenity::msg_details {
 	Message_Info::Message_Info(std::string_view name, LoggerLevel level, message_time_mode mode)
-		: m_name(name), m_msgLevel(level), m_msgTime(mode), m_msgTimePoint(std::chrono::system_clock::now()) { }
+		: m_name(name), m_msgLevel(level), m_msgTime(mode), m_msgTimePoint(std::chrono::system_clock::now()),
+		  threadHash(std::hash<std::thread::id>()(std::this_thread::get_id())) { }
 
 	LoggerLevel& Message_Info::MsgLevel() {
 		return m_msgLevel;
@@ -58,6 +59,10 @@ namespace serenity::msg_details {
 
 	std::string& Message_Info::Message() const {
 		return m_message;
+	}
+
+	size_t Message_Info::CurrentThreadHash() const {
+		return threadHash;
 	}
 
 	size_t Message_Info::MessageSize() const {

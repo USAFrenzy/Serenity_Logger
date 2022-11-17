@@ -313,25 +313,21 @@ namespace serenity::experimental::targets {
 				lock.lock();
 		}
 		VFORMAT_TO(FileBuffer(), MsgFmt()->Locale(), MsgFmt()->Pattern(), *(MsgInfo().get()), MsgInfo()->TimeInfo());
-		size_t formattedSize { FileBuffer().size() };
-		SetMessageSize(formattedSize);
-		auto fileSizeLimit { RotationLimits().fileSizeLimit };
 		if( !ShouldRotate() ) {
-				WriteToFile(fileSizeLimit, truncateMessage);
-				SetCurrentFileSize(FileSize() + formattedSize);
-		} else if( (m_mode == IntervalMode::file_size) && isAboveMsgLimit ) {
-				formattedSize = RotationLimits().fileSizeLimit - FileSize();
+				// Haven't written anything to the actual file yet, as the buffer is still smaller than the limit - just keep track of  and update the "file" size
+				SetCurrentFileSize(FileSize() + FileBufferSize());
+		} else if( auto fileSizeLimit { RotationLimits().fileSizeLimit }; (m_mode == IntervalMode::file_size) && isAboveMsgLimit ) {
 				WriteToFile(fileSizeLimit, truncateMessage);
 				RotateFile();
 				if( !truncateMessage ) {
-						auto trailingMessageSize { FileBuffer().size() };
-						WriteToFile(trailingMessageSize, truncateMessage);
-						SetCurrentFileSize(FileSize() + trailingMessageSize);
+						// RotateFile() will set the current size to the file size (which should be 0); if
+						// we're not truncating the buffer after the write, need to account for its size)
+						SetCurrentFileSize(FileSize() + FileBufferSize());
 				}
 		} else {
 				RotateFile();
 				WriteToFile(fileSizeLimit, truncateMessage);
-				SetCurrentFileSize(FileSize() + formattedSize);
+				SetCurrentFileSize(FileSize() + FileBufferSize());
 			}
 		if( lock.owns_lock() ) {
 				lock.unlock();
@@ -342,7 +338,6 @@ namespace serenity::experimental::targets {
 		}
 	}
 
-	// TODO: Test That The Daylight Savings Logic Actually Works As Intended
 	bool RotatingTarget::ShouldRotate() {
 		auto limits { RotationLimits() };
 
@@ -352,7 +347,7 @@ namespace serenity::experimental::targets {
 		switch( RotationMode() ) {
 				case IntervalMode::file_size:
 					{
-						return isAboveMsgLimit = ((FileSize() + MessageSize()) >= limits.fileSizeLimit);
+						return isAboveMsgLimit = (FileBufferSize() >= limits.fileSizeLimit);
 					}
 					break;
 				case IntervalMode::hourly:

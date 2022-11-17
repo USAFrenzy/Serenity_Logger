@@ -7,7 +7,7 @@ namespace serenity::msg_details {
 		localeRef = loc;
 	}
 
-	std::locale Message_Formatter::Locale() {
+	const std::locale& Message_Formatter::Locale() {
 		return localeRef;
 	}
 
@@ -85,8 +85,8 @@ namespace serenity::msg_details {
 				auto size { pattern.size() };
 				for( ;; ) {
 						if( ++pos >= size ) {
-								return;
 								fmtPattern.append(LineEnding());
+								return;
 						}
 						if( pattern[ pos ] != '%' ) continue;
 						break;
@@ -94,87 +94,113 @@ namespace serenity::msg_details {
 				fmtPattern.append(pattern.substr(0, pos));
 				++pos;    // advance past the '%' and on to the next character
 				if( IsCustomFlag(pattern[ pos ]) ) {
-						if( pattern[ pos ] == 's' ) {
-								fmtPattern.append("{0:%s");
-								if( ++pos >= size ) {
-										fmtPattern.append(":a}");
-										return;
-								}
-								if( pattern[ pos ] != ':' ) {
-										// decrement due to the increment that occurs after `continue` is hit
-										--pos;
-										fmtPattern.append(":a}");
+						switch( pattern[ pos ] ) {
+								case 'L':
+									{
+										fmtPattern.append("{0:%L}");
 										pattern.remove_prefix(++pos);
 										continue;
-								}
-								fmtPattern += ':';
-								// we've now hit ':' so deal with any modifiers here
-								for( ;; ) {
+									}
+								case 'l':
+									{
+										fmtPattern.append("{0:%l}");
+										pattern.remove_prefix(++pos);
+										continue;
+									}
+								case 'N':
+									{
+										fmtPattern.append("{0:%N}");
+										pattern.remove_prefix(++pos);
+										continue;
+									}
+								case '+':
+									{
+										fmtPattern.append("{0:%+}");
+										pattern.remove_prefix(++pos);
+										continue;
+									}
+								case 's':
+									{
+										fmtPattern.append("{0:%s");
 										if( ++pos >= size ) {
-												fmtPattern += '}';
+												fmtPattern.append(":a}");
 												return;
 										}
-										switch( pattern[ pos ] ) {
-												case 'a': fmtPattern += 'a'; continue;
-												case 'c': fmtPattern += 'c'; continue;
-												case 'f': fmtPattern += 'f'; continue;
-												case 'l': fmtPattern += 'l'; continue;
-												case 'F': fmtPattern += 'F'; continue;
-												default: break;
+										if( pattern[ pos ] != ':' ) {
+												// decrement due to the increment that occurs after `continue` is hit
+												--pos;
+												fmtPattern.append(":a}");
+												pattern.remove_prefix(++pos);
+												continue;
+										}
+										fmtPattern += ':';
+										// we've now hit ':' so deal with any modifiers here
+										for( ;; ) {
+												if( ++pos >= size ) {
+														fmtPattern += '}';
+														return;
+												}
+												switch( pattern[ pos ] ) {
+														case 'a': fmtPattern += 'a'; continue;
+														case 'c': fmtPattern += 'c'; continue;
+														case 'f': fmtPattern += 'f'; continue;
+														case 'l': fmtPattern += 'l'; continue;
+														case 'F': fmtPattern += 'F'; continue;
+														default: break;
+													}
+												pattern.remove_prefix(++pos);
+												continue;
+											}
+									}
+								case 't':
+									{
+										fmtPattern.append("{0:%t");
+										if( ++pos >= size ) {
+												fmtPattern.append(":0}");
+												return;
+										}
+										if( pattern[ pos ] != ':' ) {
+												// decrement due to the increment that occurs after `continue` is hit
+												--pos;
+												fmtPattern.append(":0 }");
+												pattern.remove_prefix(++pos);
+												continue;
+										}
+										fmtPattern += ':';
+										// we've now hit ':' so deal with any modifiers here
+										for( ;; ) {
+												if( ++pos >= size ) {
+														fmtPattern += '}';
+														return;
+												}
+												if( IsDigit(pattern[ pos ]) ) {
+														if( pattern[ pos ] == '1' ) {
+																// check that the next pos is either a 0 in the case of modifier "10" or not a digit in the case the
+																// modifier is "1"
+																if( ++pos > size ) {
+																		fmtPattern.append("1}");
+																		return;
+																}
+																if( !IsDigit(pattern[ pos ]) ) {
+																		fmtPattern.append("1}");
+																		break;
+																}
+																if( pattern[ pos ] != '0' ) {
+																		// warn that the modifier is using a larger number than allowed and that it will be set to
+																		// the default value
+																		fmtPattern.append("10}");
+																		break;
+																}
+														}
+														fmtPattern += pattern[ pos ];
+														fmtPattern += "}";
+														break;
+												}
 											}
 										pattern.remove_prefix(++pos);
 										continue;
 									}
-						} else if( pattern[ pos ] == 't' ) {
-								fmtPattern.append("{0:%t");
-								if( ++pos >= size ) {
-										fmtPattern.append(":0}");
-										return;
-								}
-								if( pattern[ pos ] != ':' ) {
-										// decrement due to the increment that occurs after `continue` is hit
-										--pos;
-										fmtPattern.append(":0 }");
-										pattern.remove_prefix(++pos);
-										continue;
-								}
-								fmtPattern += ':';
-								// we've now hit ':' so deal with any modifiers here
-								for( ;; ) {
-										if( ++pos >= size ) {
-												fmtPattern += '}';
-												return;
-										}
-										if( IsDigit(pattern[ pos ]) ) {
-												if( pattern[ pos ] == '1' ) {
-														// check that the next pos is either a 0 in the case of modifier "10" or not a digit in the case the modifier
-														// is "1"
-														if( ++pos > size ) {
-																fmtPattern.append("1}");
-																return;
-														}
-														if( !IsDigit(pattern[ pos ]) ) {
-																fmtPattern.append("1}");
-																break;
-														}
-														if( pattern[ pos ] != '0' ) {
-																// warn that the modifier is using a larger number than allowed and that it will be set to the
-																// default value
-																fmtPattern.append("10}");
-																break;
-														}
-												}
-												fmtPattern += pattern[ pos ];
-												fmtPattern += "}";
-												break;
-										}
-									}
-								pattern.remove_prefix(++pos);
-								continue;
-						} else {
-								fmtPattern.append("{0:%").append(1, pattern[ pos ]).append("}");
-								pattern.remove_prefix(++pos);
-								continue;
+								default: throw std::runtime_error("Unhandled Serenity Flag Detected In Message_Formatter.cpp SetPattern()");
 							}
 				} else if( IsTimeFlag(pattern[ pos ]) ) {
 						--pos;    // decrement to take into account the increment that happens in the loop below

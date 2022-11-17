@@ -31,7 +31,7 @@ namespace serenity::msg_details {
 		const std::tm& TimeInfo() const;
 		std::string& Message();
 		std::string& Message() const;
-
+		size_t CurrentThreadHash() const;
 		size_t MessageSize() const;
 
 	  private:
@@ -41,5 +41,6 @@ namespace serenity::msg_details {
 		std::chrono::system_clock::time_point m_msgTimePoint;
 		mutable std::source_location source;
 		mutable std::string m_message;
+		size_t threadHash;
 	};
 }    // namespace serenity::msg_details
