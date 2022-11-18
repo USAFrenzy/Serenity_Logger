@@ -16,17 +16,20 @@ namespace serenity::targets {
 	TargetBase::TargetBase()
 		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
 		  msgDetails(std::make_unique<msg_details::Message_Info>("Base Logger", msgLevel, message_time_mode::local)),
-		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())), baseHelper(std::make_unique<helpers::BaseTargetHelper>()) { }
+		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())), baseHelper(std::make_unique<helpers::BaseTargetHelper>()),
+		  fmtRefs(*msgDetails) { }
 
 	TargetBase::TargetBase(std::string_view name)
 		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
 		  msgDetails(std::make_unique<msg_details::Message_Info>(name, msgLevel, message_time_mode::local)),
-		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())), baseHelper(std::make_unique<helpers::BaseTargetHelper>()) { }
+		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())), baseHelper(std::make_unique<helpers::BaseTargetHelper>()),
+		  fmtRefs(*msgDetails) { }
 
 	TargetBase::TargetBase(std::string_view name, std::string_view fmtPattern)
 		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(fmtPattern),
 		  msgDetails(std::make_unique<msg_details::Message_Info>(name, msgLevel, message_time_mode::local)),
-		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())), baseHelper(std::make_unique<helpers::BaseTargetHelper>()) { }
+		  msgPattern(std::make_unique<msg_details::Message_Formatter>(pattern, msgDetails.get())), baseHelper(std::make_unique<helpers::BaseTargetHelper>()),
+		  fmtRefs(*msgDetails) { }
 
 	void TargetBase::SetPattern(std::string_view pattern) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
@@ -69,6 +72,14 @@ namespace serenity::targets {
 				lock.lock();
 		}
 		return msgPattern->Locale();
+	}
+
+	const std::string& TargetBase::FmtStr() const {
+		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
+		if( baseHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
+		return msgPattern->Pattern();
 	}
 
 	std::shared_ptr<helpers::BaseTargetHelper>& TargetBase::TargetHelper() {
@@ -122,6 +133,10 @@ namespace serenity::targets {
 
 	void TargetBase::EnableMultiThreadingSupport(bool enable) {
 		baseHelper->EnableMultiThreadingSupport(enable);
+	}
+
+	const serenity::targets::SeFmtArgRefs& serenity::targets::TargetBase::FmtRefs() {
+		return fmtRefs;
 	}
 
 }    // namespace serenity::targets

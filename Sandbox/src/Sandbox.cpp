@@ -797,6 +797,10 @@ int main() {
 	const serenity::msg_details::Message_Info testInfo { "TestFormatting", LoggerLevel::trace, message_time_mode::local };
 	testInfo.Message() = message.msg;
 	testInfo.SetSrcLoc(message.source);
+	std::cout << "Size Of Message_Info: " << sizeof(serenity::msg_details::Message_Info) << "\n\n";
+	std::cout << "Size Of SeFmtArgRefs: " << sizeof(serenity::targets::SeFmtArgRefs) << "\n\n";
+
+	std::getchar();
 	std::cout << "\n\n";
 
 	auto iters { 1'000'000 };

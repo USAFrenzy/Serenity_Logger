@@ -5,6 +5,27 @@
 
 #include <source_location>
 
+namespace serenity::targets {
+	struct SeFmtArgRefs
+	{
+		explicit SeFmtArgRefs(const serenity::msg_details::Message_Info& i)
+			: m_lvl(i.MsgLevel()), m_name(i.Name()), m_msg(i.Message()), m_src(i.SourceLocation()), m_thread(i.ThisThreadID()), m_time(i.TimeInfo()) { }
+		SeFmtArgRefs()                    = delete;
+		~SeFmtArgRefs()                   = default;
+		SeFmtArgRefs(const SeFmtArgRefs&) = delete;
+		SeFmtArgRefs& operator=(const SeFmtArgRefs&) = delete;
+		SeFmtArgRefs(const SeFmtArgRefs&&)           = delete;
+		SeFmtArgRefs& operator=(const SeFmtArgRefs&&) = delete;
+
+		const serenity::LoggerLevel& m_lvl;
+		const std::string& m_name;
+		const std::string& m_msg;
+		const std::source_location& m_src;
+		const std::thread::id& m_thread;
+		const std::tm& m_time;
+	};
+}    // namespace serenity::targets
+
 // This bit will most likely be abstracted into a core file that the backends will all use
 namespace serenity::CustomFlagError {
 	enum class CustomErrors
@@ -80,8 +101,8 @@ namespace serenity::msg_details::custom_flags {
 	class Format_Source_Loc
 	{
 	  public:
-		explicit Format_Source_Loc(const serenity::msg_details::Message_Info& info, const serenity::source_flag& flag)
-			: srcLocation(info.SourceLocation()), buff(std::array<char, 6> {}), spec(flag), result(std::string {}) { }
+		explicit Format_Source_Loc(const std::source_location& src, const serenity::source_flag& flag)
+			: srcLocation(src), buff(std::array<char, 6> {}), spec(flag), result(std::string {}) { }
 		Format_Source_Loc(const Format_Source_Loc&) = delete;
 		Format_Source_Loc& operator=(const Format_Source_Loc&) = delete;
 		~Format_Source_Loc()                                   = default;
@@ -117,7 +138,7 @@ namespace serenity::msg_details::custom_flags {
 			result.append(srcLocation.function_name());
 		}
 
-		std::string& FormatUserPattern() {
+		std::string&& FormatUserPattern() {
 			using enum serenity::source_flag;
 			result.clear();
 			switch( static_cast<int>(spec) ) {
@@ -162,38 +183,276 @@ namespace serenity::msg_details::custom_flags {
 						break;
 					default: FormatAll(); break;
 				}
-			return result;
+			return std::move(result);
 		}
 
 	  private:
 		const std::source_location& srcLocation;
 		std::array<char, 6> buff;
-		serenity::source_flag spec;
+		const serenity::source_flag& spec;
 		std::string result;
 	};
 
 	struct Format_Thread_ID
 	{
-		Format_Thread_ID(): thread(std::hash<std::thread::id>()(std::this_thread::get_id())) { }
+		Format_Thread_ID(const std::thread::id& id): thread(id) { }
 
-		std::string& FormatUserPattern(size_t precision) {
-			result.clear();
+		std::string FormatUserPattern(size_t precision) {
 			std::array<char, 64> buf {};
-			std::to_chars(buf.data(), buf.data() + buf.size(), thread);
-			std::string_view sv { buf.data(), buf.size() };
-			(precision != 0) ? sv.remove_suffix(sv.size() - precision) : sv.remove_suffix(sv.size() - defaultThreadIdLength);
-			result.append(sv.data(), sv.size());
-			return result;
+			std::to_chars(buf.data(), buf.data() + buf.size(), std::hash<std::thread::id>()(thread));
+			return std::string(buf.data(), buf.data() + ((precision != 0) ? precision : defaultThreadIdLength));
 		}
 
 	  private:
-		std::string result;
-		size_t thread;
+		const std::thread::id& thread;
 	};
 }    // namespace serenity::msg_details::custom_flags
 
-// This is going to need to be sped up an immense amount.. this is taking too long right now
-template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info>
+template<> struct formatter::CustomFormatter<std::source_location>
+{
+	serenity::CustomFlagError::custom_error_handler errHandler {};
+	serenity::source_flag srcFlags {};
+
+	inline constexpr void Parse(std::string_view parse) {
+		namespace cf       = serenity::msg_details::custom_flags;
+		using CustomErrors = serenity::CustomFlagError::CustomErrors;
+		auto size { parse.size() };
+		auto pos { -1 };
+		srcFlags = serenity::source_flag::empty;
+
+		for( ;; ) {
+				if( ++pos >= size ) errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+				switch( parse[ pos ] ) {
+						case ' ': continue;    // ignore whitespace when determining valid bracket for source location
+						case ':':
+							{
+								if( ++pos >= size ) {
+										errHandler.ReportCustomError(CustomErrors::no_flag_mods);
+								}
+								if( parse[ pos ] != '%' ) {
+										errHandler.ReportCustomError(CustomErrors::missing_flag_specifier);
+								}
+								break;    // continue on to parsing modifiers
+							}
+						default: continue;
+					}
+				for( ;; ) {
+						switch( parse[ pos ] ) {
+								case ':':
+									{
+										if( ++pos >= size ) {
+												errHandler.ReportCustomError(CustomErrors::no_flag_mods);
+										}
+										break;
+									}
+								case '}':
+									{
+										if( srcFlags == serenity::source_flag::empty ) {
+												srcFlags = serenity::source_flag::all;
+										}
+										return;
+									}
+								default:
+									{
+										if( ++pos >= size ) {
+												errHandler.ReportCustomError(CustomErrors::no_flag_mods);
+										}
+										continue;
+									}
+							}
+						// this now assumes we've hit ':', therefore now we parse the source modifiers here
+						for( ;; ) {
+								switch( parse[ pos ] ) {
+										case 'a': srcFlags = serenity::source_flag::all; break;
+										case 'l': srcFlags |= serenity::source_flag::line; break;
+										case 'c': srcFlags |= serenity::source_flag::column; break;
+										case 'f': srcFlags |= serenity::source_flag::file; break;
+										case 'F': srcFlags |= serenity::source_flag::function; break;
+										case '}':
+											{
+												if( srcFlags != serenity::source_flag::empty ) return;
+												// Since we noted a ':' present above , if there are no modifiers present, this isn't a valid source bracket
+												errHandler.ReportCustomError(CustomErrors::missing_src_modifiers);
+											}
+										default:
+											{
+												// if it's anything else, then assume it's not a valid bracket for source location formatting
+												errHandler.ReportCustomError(CustomErrors::unknown_flag);
+												break;
+											}
+									}
+								if( ++pos >= size ) {
+										errHandler.ReportCustomError(CustomErrors::no_flag_mods);
+								}
+							}
+					}
+			}
+	}
+
+	template<typename resultCtx> constexpr auto Format(const std::source_location& src, resultCtx& ctx) const {
+		namespace cf  = serenity::msg_details::custom_flags;
+		namespace fch = formatter::custom_helper;
+		const auto tmp { std::move(cf::Format_Source_Loc { src, srcFlags }.FormatUserPattern()) };
+		fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
+	}
+};
+
+template<> struct formatter::CustomFormatter<serenity::LoggerLevel>
+{
+	enum class LevelView
+	{
+		Invalid = 0,
+		Long,
+		Short
+	};
+	serenity::CustomFlagError::custom_error_handler errHandler {};
+	LevelView view { LevelView::Invalid };
+
+	inline constexpr void Parse(std::string_view parse) {
+		using CustomErrors = serenity::CustomFlagError::CustomErrors;
+		auto size { parse.size() };
+		auto pos { -1 };
+
+		for( ;; ) {
+				if( ++pos >= size ) {
+						errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+				}
+				switch( parse[ pos ] ) {
+						case '}': return;
+						case ':':
+							{
+								if( ++pos >= size ) {
+										errHandler.ReportCustomError(CustomErrors::no_flag_mods);
+								}
+								if( parse[ pos ] != '%' ) {
+										errHandler.ReportCustomError(CustomErrors::missing_flag_specifier);
+								}
+								break;
+							}
+						// if we don't hit ':' then assume that the flag hasn't been seen yet or doesn't
+						// exist and continue until we reach it or hit the end of the parse string
+						default: continue;
+					}
+				for( ;; ) {
+						if( ++pos >= size ) {
+								errHandler.ReportCustomError(CustomErrors::token_with_no_flag);
+						}
+						switch( parse[ pos ] ) {
+								case 'L': view = LevelView::Long; continue;
+								case 'l': view = LevelView::Short; continue;
+								case '}':
+									{
+										if( view == LevelView::Invalid ) errHandler.ReportCustomError(CustomErrors::token_with_no_flag);
+										return;
+									}
+								case ' ': [[fallthrough]];    // ignore whitespace when determining if valid thread id bracket
+								default: continue;
+							}
+					}
+			}
+	}
+	template<typename resultCtx> constexpr auto Format(const serenity::LoggerLevel& lvl, resultCtx& ctx) const {
+		namespace fch = formatter::custom_helper;
+		switch( view ) {
+				case LevelView::Short:
+					{
+						const auto& tmp { std::move(serenity::LevelToShortView(lvl)) };
+						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
+						break;
+					}
+				case LevelView::Long:
+					{
+						const auto& tmp { std::move(serenity::LevelToLongView(lvl)) };
+						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
+						break;
+					}
+				case LevelView::Invalid: [[fallthrough]];
+				default:
+					constexpr std::string_view invalidMessage { "INVALID_LEVEL" };
+					fch::WriteToContainer(invalidMessage, 14, std::forward<resultCtx>(ctx));
+					break;
+			}
+	}
+};
+
+template<> struct formatter::CustomFormatter<std::thread::id>
+{
+	serenity::CustomFlagError::custom_error_handler errHandler {};
+	size_t threadLength {};
+
+	inline constexpr void Parse(std::string_view parse) {
+		using CustomErrors = serenity::CustomFlagError::CustomErrors;
+		auto size { parse.size() };
+		auto pos { -1 };
+		threadLength = 0;
+
+		for( ;; ) {
+				if( ++pos >= size ) {
+						errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+				}
+				switch( parse[ pos ] ) {
+						case '}': return;
+						case ':':
+							{
+								if( ++pos >= size ) {
+										errHandler.ReportCustomError(CustomErrors::no_flag_mods);
+								}
+								if( parse[ pos ] != '%' ) {
+										errHandler.ReportCustomError(CustomErrors::missing_flag_specifier);
+								}
+								break;
+							}
+						// if we don't hit ':' then assume that the flag hasn't been seen yet or doesn't
+						// exist and continue until we reach it or hit the end of the parse string
+						default: continue;
+					}
+
+				for( ;; ) {
+						switch( parse[ pos ] ) {
+								case '}': return;
+								case ' ': [[fallthrough]];    // ignore whitespace when determining if valid thread id bracket
+								default:
+									{
+										// so long as the bracket is still valid and in bounds continue parsing
+										if( ++pos >= size ) {
+												errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+										}
+										continue;
+									}
+								case ':':
+									{
+										if( ++pos >= size ) {
+												errHandler.ReportCustomError(CustomErrors::missing_thread_id_mod);
+										}
+										switch( parse[ pos ] ) {
+												case '0': threadLength = 0; return;
+												case '1': threadLength = 1; return;
+												case '2': threadLength = 2; return;
+												case '3': threadLength = 3; return;
+												case '4': threadLength = 4; return;
+												case '5': threadLength = 5; return;
+												case '6': threadLength = 6; return;
+												case '8': threadLength = 8; return;
+												case '7': threadLength = 7; return;
+												case '9': threadLength = 9; return;
+												case '10': threadLength = 10; return;
+												default: errHandler.ReportCustomError(CustomErrors::unknown_flag);
+											}
+									}
+							}
+					}
+			}
+	}
+
+	template<typename resultCtx> constexpr auto Format(const std::thread::id& threadID, resultCtx& ctx) const {
+		namespace fch = formatter::custom_helper;
+		namespace cf  = serenity::msg_details::custom_flags;
+		const auto tmp { std::move(cf::Format_Thread_ID { threadID }.FormatUserPattern(threadLength)) };
+		fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
+	}
+};
+
+template<> struct formatter::CustomFormatter<serenity::targets::SeFmtArgRefs>
 {
 	serenity::CustomFlagError::custom_error_handler errHandler {};
 	serenity::msg_details::custom_flags::flag_type flag {};
@@ -217,8 +476,8 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 						case '}':
 							{
 								if( flag != cf::flag_type::Invalid ) return;
-								// If we reach this point, the flag is still flag_type::Invalid, and the error hasn't been reported as an 'Invalid Flag', then we can
-								// assume that there were no flags present to begin with and set the flag to default formatting and exit this function
+								// If we reach this point, the flag is still flag_type::Invalid, and the error hasn't been reported as an 'Invalid Flag', then we
+								// can assume that there were no flags present to begin with and set the flag to default formatting and exit this function
 								flag = cf::flag_type::Default;
 								return;
 							}
@@ -239,7 +498,8 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 							// exist and continue until we reach it or hit the end of the parse string
 						default: continue;
 					}
-				/*********************** This point is only reached once the flag specifier token is detected, so now try matching the flag ***********************/
+				/*********************** This point is only reached once the flag specifier token is detected, so now try matching the flag
+				 * ***********************/
 				// for 'L', 'l', 'N' and '+', if the flag is found up to that point, nothing special needs to be done afterwards, so just straight up exit the
 				// function from this point since we already have determined that the bracket itself is valid from the root level formatting call before custom
 				// formatting is reached. For the other flags, it's a little bit different though just due to some default behavior that's set up for source
@@ -290,32 +550,32 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 														break;
 													}
 											}
-									}
-								// this now assumes we've hit ':', therefore now we parse the source modifiers here
-								for( ;; ) {
-										if( ++pos >= size ) {
-												errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
-										}
-										switch( parse[ pos ] ) {
-												case 'a':
-													srcFlags = serenity::source_flag::all;
-													return;    // ignore everything else if this is present and default to all
-												case 'l': srcFlags |= serenity::source_flag::line; continue;
-												case 'c': srcFlags |= serenity::source_flag::column; continue;
-												case 'f': srcFlags |= serenity::source_flag::file; continue;
-												case 'F': srcFlags |= serenity::source_flag::function; continue;
-												case '}':
-													{
-														if( srcFlags != serenity::source_flag::empty ) return;
-														// we already noted a ':' present, therefore if there are no modifiers present, this isn't a valid source loc
-														// bracket
-														errHandler.ReportCustomError(CustomErrors::missing_src_modifiers);
-													}
-												default:
-													{
-														// if it's anything else, then assume it's not a valid bracket for source location formatting
-														errHandler.ReportCustomError(CustomErrors::unknown_flag);
-														break;
+										// this now assumes we've hit ':', therefore now we parse the source modifiers here
+										for( ;; ) {
+												if( ++pos >= size ) {
+														errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+												}
+												switch( parse[ pos ] ) {
+														case 'a':
+															srcFlags = serenity::source_flag::all;
+															return;    // ignore everything else if this is present and default to all
+														case 'l': srcFlags |= serenity::source_flag::line; continue;
+														case 'c': srcFlags |= serenity::source_flag::column; continue;
+														case 'f': srcFlags |= serenity::source_flag::file; continue;
+														case 'F': srcFlags |= serenity::source_flag::function; continue;
+														case '}':
+															{
+																if( srcFlags != serenity::source_flag::empty ) return;
+																// we already noted a ':' present, therefore if there are no modifiers present, this isn't a valid
+																// source loc bracket
+																errHandler.ReportCustomError(CustomErrors::missing_src_modifiers);
+															}
+														default:
+															{
+																// if it's anything else, then assume it's not a valid bracket for source location formatting
+																errHandler.ReportCustomError(CustomErrors::unknown_flag);
+																break;
+															}
 													}
 											}
 									}
@@ -370,79 +630,79 @@ template<> struct formatter::CustomFormatter<serenity::msg_details::Message_Info
 			}
 	}
 
-	/*!*********************************************************************** NOTE TO SELF ************************************************************************/
+	/*!*********************************************************************** NOTE TO SELF
+	 * ************************************************************************/
 	//!  Removed static Format_Source_Loc object as it hadn't occured to me until now that that method would break with multi-threading given the fact that any
-	//! thread after the first would just be using the first's source location instead due to static storage -> therefore, just have to live with the insane cost of
-	//! formatting source location details if present (it's not terrible in general, just *MUCH* slower than the rest of the formatting flags).
+	//! thread after the first would just be using the first's source location instead due to static storage -> therefore, just have to live with the insane cost
+	//! of formatting source location details if present (it's not terrible in general, just *MUCH* slower than the rest of the formatting flags).
 	//!
 	//!  I may revisit this if I can think of a better way to approach this -> the initial mindset of having a static initializer with a pseudo singleton like
-	//!  pattern using locks is definitely not the way to go since I would still need a way to update at least the Message_Info parameter to swap over the usage of
-	//!  where the source location is being collected from as well as a way to basically redundantly check the thread ID (redundant in the sense that if a thread ID
-	//!  flag is present, as it stands right now, this method would have to perfrom two hashes on the thread -> could be optimized to work in tandem though I think).
-	//!  The idea with the singleton approach was that if the thread hash doesn't match the previous thread's hashed value, then update the std::source_location
-	//!  parameter based on the new thread's Message_Info's std::source_location data and if it *DOES* match, use the current setup as the source location is likely
-	//!  different but is being called with the same Message_Info class data. So, in lieu of this, I'm just leaving the static instance out for now.
+	//!  pattern using locks is definitely not the way to go since I would still need a way to update at least the Message_Info parameter to swap over the usage
+	//!  of where the source location is being collected from as well as a way to basically redundantly check the thread ID (redundant in the sense that if a
+	//!  thread ID flag is present, as it stands right now, this method would have to perfrom two hashes on the thread -> could be optimized to work in tandem
+	//!  though I think). The idea with the singleton approach was that if the thread hash doesn't match the previous thread's hashed value, then update the
+	//!  std::source_location parameter based on the new thread's Message_Info's std::source_location data and if it *DOES* match, use the current setup as the
+	//!  source location is likely different but is being called with the same Message_Info class data. So, in lieu of this, I'm just leaving the static instance
+	//!  out for now.
 	//! **************************************************************************************************************************************************************
-	template<typename resultCtx> constexpr auto Format(const serenity::msg_details::Message_Info& p, resultCtx& ctx) const {
+	template<typename resultCtx> constexpr auto Format(const serenity::targets::SeFmtArgRefs& p, resultCtx& ctx) const {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
 		namespace fch      = formatter::custom_helper;
 		namespace cf       = serenity::msg_details::custom_flags;
-		auto contSize { ctx.size() };
-
 		switch( flag ) {
 				case cf::flag_type::LongLogLvl:
 					{
-						const auto& tmp { std::move(LevelToLongView(p.MsgLevel())) };
+						const auto& tmp { std::move(LevelToLongView(p.m_lvl)) };
 						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::ShortLogLvl:
 					{
-						const auto& tmp { std::move(LevelToShortView(p.MsgLevel())) };
+						const auto& tmp { std::move(LevelToShortView(p.m_lvl)) };
 						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::LoggerName:
 					{
-						const auto& tmp { p.Name() };
+						const auto& tmp { p.m_name };
 						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::LogSource:
 					{
-						auto tmp { std::move(cf::Format_Source_Loc { p, srcFlags }.FormatUserPattern()) };
+						auto tmp { std::move(cf::Format_Source_Loc { p.m_src, srcFlags }.FormatUserPattern()) };
 						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::LoggerThreadID:
 					{
-						auto tmp { std::move(cf::Format_Thread_ID {}.FormatUserPattern(threadLength)) };
+						auto tmp { std::move(cf::Format_Thread_ID { p.m_thread }.FormatUserPattern(threadLength)) };
 						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::LogMessage:
 					{
-						const auto& tmp { p.Message() };
+						const auto& tmp { p.m_msg };
 						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}
 				case cf::flag_type::Default:
 					{
 						resultBuff.clear();
-						auto size { contSize + cf::defaultSizeEstimate };
+						auto size { ctx.size() + cf::defaultSizeEstimate };
 						if( resultBuff.capacity() < size ) resultBuff.reserve(size);
 						resultBuff.append("- Logger Name:\t")
-						.append(p.Name())
+						.append(p.m_name)
 						.append("\n- Long Level:\t")
-						.append(LevelToLongView(p.MsgLevel()))
+						.append(LevelToLongView(p.m_lvl))
 						.append("\n- Short Level:\t")
-						.append(LevelToShortView(p.MsgLevel()))
+						.append(LevelToShortView(p.m_lvl))
 						.append("\n- Log Message:\t")
-						.append(p.Message())
+						.append(p.m_msg)
 						.append("\n- Log Source:\t")
-						.append(cf::Format_Source_Loc { p, srcFlags }.FormatUserPattern())
+						.append(cf::Format_Source_Loc { p.m_src, srcFlags }.FormatUserPattern())
 						.append("\n- Thread ID:\t")
-						.append(cf::Format_Thread_ID {}.FormatUserPattern(threadLength))
+						.append(cf::Format_Thread_ID { p.m_thread }.FormatUserPattern(threadLength))
 						.append("\n");
 						fch::WriteToContainer(std::string_view(resultBuff), resultBuff.size(), std::forward<resultCtx>(ctx));
 						break;

@@ -7,12 +7,13 @@ namespace serenity::msg_details {
 		localeRef = loc;
 	}
 
-	const std::locale& Message_Formatter::Locale() {
+	const std::locale& Message_Formatter::Locale() const {
 		return localeRef;
 	}
 
 	Message_Formatter::Message_Formatter(std::string_view pattern, Message_Info* details)
-		: msgInfo(*&details), localeRef(globals::default_locale), sourceFlag(source_flag::empty) {
+		: msgInfo(*&details), localeRef(globals::default_locale), sourceFlag(source_flag::empty), isLocalizedTime(false), hasTimeField(false), hasSourceField(false),
+		  hasThreadField(false) {
 #ifdef WINDOWS_PLATFORM
 		platformEOL = LineEnd::windows;
 #elif defined MAC_PLATFORM
@@ -78,6 +79,92 @@ namespace serenity::msg_details {
 			}
 	}
 
+	void serenity::msg_details::Message_Formatter::ModifyInternalFormatStringIfNeeded() {
+		// no modifications to internal format string needed due to positions of arguments in the TargetBase's "FormatLogMessage()" function
+		if( hasSourceField && hasThreadField && hasTimeField ) return;       // first branch - first nested branch
+		if( hasSourceField && hasThreadField ) return;                       // second branch - first ternary condition
+		if( hasSourceField && !hasTimeField ) return;                        // second branch - second ternary condition
+		if( !hasSourceField && hasThreadField ) return;                      // third branch
+		if( !hasSourceField && !hasThreadField && !hasTimeField ) return;    // fourth branch
+		// due to above checks, the remaining checks are (time & src) OR (time & thread) OR (time & no src & no thread) combos
+		if( hasTimeField ) {
+				if( hasSourceField ) { /* first branch - second nested branch * /
+						  /* alter the position of any time bracket(s) from '5' to '4'; no changes needed for src field */
+						auto fmtPos { -1 };
+						std::string tmp;
+						auto fmtSize { fmtPattern.size() };
+						tmp.reserve(fmtSize);
+						for( ;; ) {
+								if( ++fmtPos >= fmtSize ) {
+										if( fmtSize != 0 ) {
+												tmp.append(fmtPattern);
+										}
+										fmtPattern.clear();
+										fmtPattern.append(std::move(tmp));
+										return;
+								}
+								if( fmtPattern[ fmtPos ] != '5' ) continue;
+								tmp.append(fmtPattern.substr(0, fmtPos)).append("4");
+								fmtPattern.erase(0, ++fmtPos);
+								fmtSize = fmtPattern.size();
+								fmtPos  = -1;
+							}
+				} else if( hasThreadField ) { /* first branch - third nested branch */
+											  /* alter the position of any thread bracket(s) from '4' to '3'  & any time bracket(s) from '5' to '4'*/
+						auto fmtPos { -1 };
+						std::string tmp;
+						auto fmtSize { fmtPattern.size() };
+						tmp.reserve(fmtSize);
+						for( ;; ) {
+								if( ++fmtPos >= fmtSize ) {
+										if( fmtSize != 0 ) {
+												tmp.append(fmtPattern);
+										}
+										fmtPattern.clear();
+										fmtPattern.append(std::move(tmp));
+										return;
+								}
+								switch( fmtPattern[ fmtPos ] ) {
+										case '4':
+											tmp.append(fmtPattern.substr(0, fmtPos)).append("3");
+											fmtPattern.erase(0, ++fmtPos);
+											fmtSize = fmtPattern.size();
+											fmtPos  = -1;
+											continue;
+										case '5':
+											tmp.append(fmtPattern.substr(0, fmtPos)).append("4");
+											fmtPattern.erase(0, ++fmtPos);
+											fmtSize = fmtPattern.size();
+											fmtPos  = -1;
+											continue;
+										default: continue;
+									}
+							}
+				} else {    // first branch - fourth nested branch
+							/* alter the position of time field from '5' to '3' for any time field bracket(s) */
+						auto fmtPos { -1 };
+						std::string tmp;
+						auto fmtSize { fmtPattern.size() };
+						tmp.reserve(fmtSize);
+						for( ;; ) {
+								if( ++fmtPos >= fmtSize ) {
+										if( fmtSize != 0 ) {
+												tmp.append(fmtPattern);
+										}
+										fmtPattern.clear();
+										fmtPattern.append(std::move(tmp));
+										return;
+								}
+								if( fmtPattern[ fmtPos ] != '5' ) continue;
+								tmp.append(fmtPattern.substr(0, fmtPos)).append("3");
+								fmtPattern.erase(0, ++fmtPos);
+								fmtSize = fmtPattern.size();
+								fmtPos  = -1;
+							}
+					}
+		}
+	}
+
 	void Message_Formatter::SetPattern(std::string_view pattern) {
 		fmtPattern.clear();
 		for( ;; ) {
@@ -86,6 +173,7 @@ namespace serenity::msg_details {
 				for( ;; ) {
 						if( ++pos >= size ) {
 								fmtPattern.append(LineEnding());
+								ModifyInternalFormatStringIfNeeded();
 								return;
 						}
 						if( pattern[ pos ] != '%' ) continue;
@@ -109,19 +197,20 @@ namespace serenity::msg_details {
 									}
 								case 'N':
 									{
-										fmtPattern.append("{0:%N}");
+										fmtPattern.append("{1}");
 										pattern.remove_prefix(++pos);
 										continue;
 									}
 								case '+':
 									{
-										fmtPattern.append("{0:%+}");
+										fmtPattern.append("{2}");
 										pattern.remove_prefix(++pos);
 										continue;
 									}
 								case 's':
 									{
-										fmtPattern.append("{0:%s");
+										hasSourceField = true;
+										fmtPattern.append("{3:");
 										if( ++pos >= size ) {
 												fmtPattern.append(":a}");
 												return;
@@ -154,7 +243,8 @@ namespace serenity::msg_details {
 									}
 								case 't':
 									{
-										fmtPattern.append("{0:%t");
+										hasThreadField = true;
+										fmtPattern.append("{4:%t");
 										if( ++pos >= size ) {
 												fmtPattern.append(":0}");
 												return;
@@ -203,8 +293,9 @@ namespace serenity::msg_details {
 								default: throw std::runtime_error("Unhandled Serenity Flag Detected In Message_Formatter.cpp SetPattern()");
 							}
 				} else if( IsTimeFlag(pattern[ pos ]) ) {
+						hasTimeField = true;
 						--pos;    // decrement to take into account the increment that happens in the loop below
-						fmtPattern.append("{1:");
+						fmtPattern.append("{5:");
 						for( ;; ) {
 								if( ++pos >= size ) {
 										fmtPattern += '}';
@@ -231,6 +322,47 @@ namespace serenity::msg_details {
 										case 'A': fmtPattern.append("%A"); continue;
 										case 'B': fmtPattern.append("%B"); continue;
 										case 'C': fmtPattern.append("%C"); continue;
+										case 'E':
+											{
+												isLocalizedTime = true;
+												if( ++pos >= size ) {
+														throw std::runtime_error("Localized Time Modifier Detected With No Flag To Modify");
+												}
+												switch( pattern[ pos ] ) {
+														case 'c': fmtPattern.append("%Ec"); continue;
+														case 'C': fmtPattern.append("%EC"); continue;
+														case 'x': fmtPattern.append("%Ex"); continue;
+														case 'X': fmtPattern.append("%EX"); continue;
+														case 'y': fmtPattern.append("%Ey"); continue;
+														case 'Y': fmtPattern.append("%EY"); continue;
+														default:
+															throw std::runtime_error("Localized Time Modifier Detected But Next Character Is Not A Modifiable Flag");
+													}
+											}
+										case 'O':
+											{
+												isLocalizedTime = true;
+												if( ++pos >= size ) {
+														throw std::runtime_error("Localized Time Modifier Detected With No Flag To Modify");
+												}
+												switch( pattern[ pos ] ) {
+														case 'd': fmtPattern.append("%Od"); continue;
+														case 'e': fmtPattern.append("%Oe"); continue;
+														case 'H': fmtPattern.append("%OH"); continue;
+														case 'I': fmtPattern.append("%OI"); continue;
+														case 'm': fmtPattern.append("%Om"); continue;
+														case 'M': fmtPattern.append("%OM"); continue;
+														case 'S': fmtPattern.append("%OS"); continue;
+														case 'u': fmtPattern.append("%Ou"); continue;
+														case 'U': fmtPattern.append("%OU"); continue;
+														case 'V': fmtPattern.append("%OV"); continue;
+														case 'w': fmtPattern.append("%Ow"); continue;
+														case 'W': fmtPattern.append("%OW"); continue;
+														case 'y': fmtPattern.append("%Oy"); continue;
+														default:
+															throw std::runtime_error("Localized Time Modifier Detected But Next Character Is Not A Modifiable Flag");
+													}
+											}
 										case 'F': fmtPattern.append("%F"); continue;
 										case 'G': fmtPattern.append("%G"); continue;
 										case 'H': fmtPattern.append("%H"); continue;
@@ -279,7 +411,23 @@ namespace serenity::msg_details {
 	std::string_view serenity::msg_details::Message_Formatter::LineEnding() const {
 		return SERENITY_LUTS::line_ending[ platformEOL ];
 	}
-	const std::string& Message_Formatter::Pattern() {
+	const std::string& Message_Formatter::Pattern() const {
 		return fmtPattern;
+	}
+
+	bool serenity::msg_details::Message_Formatter::HasLocalizedTime() const {
+		return isLocalizedTime;
+	}
+
+	bool serenity::msg_details::Message_Formatter::HasTimeField() const {
+		return hasTimeField;
+	}
+
+	bool serenity::msg_details::Message_Formatter::HasSourceField() const {
+		return hasSourceField;
+	}
+
+	bool serenity::msg_details::Message_Formatter::HasThreadField() const {
+		return hasThreadField;
 	}
 }    // namespace serenity::msg_details

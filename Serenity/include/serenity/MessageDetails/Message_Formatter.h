@@ -22,9 +22,14 @@ namespace serenity::msg_details {
 		void SetPattern(std::string_view pattern);
 		const Message_Info* MessageDetails();
 		void SetLocaleReference(const std::locale& loc);
-		const std::locale& Locale();
+		const std::locale& Locale() const;
 		std::string_view LineEnding() const;
-		const std::string& Pattern();
+		const std::string& Pattern() const;
+		bool HasLocalizedTime() const;
+		bool HasTimeField() const;
+		bool HasSourceField() const;
+		bool HasThreadField() const;
+		void ModifyInternalFormatStringIfNeeded();
 
 	  private:
 		Message_Info* msgInfo;
@@ -33,5 +38,9 @@ namespace serenity::msg_details {
 		LineEnd platformEOL;
 		std::string temp;
 		source_flag sourceFlag;
+		bool isLocalizedTime;
+		bool hasTimeField;
+		bool hasSourceField;
+		bool hasThreadField;
 	};
 }    // namespace serenity::msg_details

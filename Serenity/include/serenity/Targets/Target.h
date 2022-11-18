@@ -35,6 +35,12 @@ namespace serenity::targets {
 		void EnableMultiThreadingSupport(bool enableMultiThreading = true);
 		virtual void SetLocale(const std::locale& loc);
 		const std::locale& GetLocale() const;
+		const std::string& FmtStr() const;
+		const serenity::targets::SeFmtArgRefs& FmtRefs();
+
+		template<typename T>
+		requires utf_utils::utf_constraints::IsSupportedUContainer<std::remove_cvref_t<T>>
+		constexpr void FormatLogMessage(T& cont);
 
 	  protected:
 		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();
@@ -52,6 +58,7 @@ namespace serenity::targets {
 		std::unique_ptr<msg_details::Message_Formatter> msgPattern;
 		std::shared_ptr<helpers::BaseTargetHelper> baseHelper;
 		template<typename... Args> void LogMessage(std::string_view msg, Args&&... args);
+		serenity::targets::SeFmtArgRefs fmtRefs;
 	};
 
 #include "Target-impl.h"

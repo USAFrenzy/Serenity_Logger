@@ -138,9 +138,8 @@ namespace serenity::targets {
 						msgColor = msgLevelColors.at(MsgInfo()->MsgLevel());
 						reset    = se_colors::formats::reset;
 				}
-				// message.reserve(formatted.size() + msgColor.size() + reset.size());
 				message.append(msgColor);
-				VFORMAT_TO(message, MsgFmt()->Locale(), MsgFmt()->Pattern(), *(MsgInfo().get()), MsgInfo()->TimeInfo());
+				FormatLogMessage(message);
 				message.append(reset);
 #ifdef WINDOWS_PLATFORM
 				if( IsTerminalType() ) {

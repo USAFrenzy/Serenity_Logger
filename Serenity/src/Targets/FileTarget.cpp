@@ -67,10 +67,7 @@ namespace serenity::targets {
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		// TODO------------------------------------------------------------------------------------------------------------------------
-		// This is where the major time descrepency for both the File Target and Rotating Target lies
-		//	const auto& msgDetailsRef { *(MsgInfo().get()) };
-		VFORMAT_TO(FileBuffer(), MsgFmt()->Locale(), MsgFmt()->Pattern(), *(MsgInfo().get()), MsgInfo()->TimeInfo());
+		FormatLogMessage(FileBuffer());
 		WriteToFile();
 		if( lock.owns_lock() ) {
 				lock.unlock();

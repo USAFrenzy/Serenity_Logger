@@ -441,48 +441,112 @@ TEST_CASE("Custom Formatting Test For Message_Info") {
 	const serenity::msg_details::Message_Info testInfo { "TestFormatting", serenity::LoggerLevel::trace, serenity::message_time_mode::local };
 	testInfo.Message() = message.msg;
 	testInfo.SetSrcLoc(message.source);
+	serenity::targets::SeFmtArgRefs testRefWrapper{testInfo};
 
-
-	REQUIRE(formatter::format("{:%L}", testInfo) == "Trace");
-	REQUIRE(formatter::format("{:%l}", testInfo) == "T");
+	// Whole Reference Pack Formatting For Logger Levels
+	REQUIRE(formatter::format("{:%L}", testRefWrapper) == "Trace");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper) == "T");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::info);
-	REQUIRE(formatter::format("{:%L}", testInfo) == "Info");
-	REQUIRE(formatter::format("{:%l}", testInfo) == "I");
+	REQUIRE(formatter::format("{:%L}", testRefWrapper) == "Info");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper) == "I");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::debug);
-	REQUIRE(formatter::format("{:%L}", testInfo) == "Debug");
-	REQUIRE(formatter::format("{:%l}", testInfo) == "D");
+	REQUIRE(formatter::format("{:%L}", testRefWrapper) == "Debug");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper) == "D");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::warning);
-	REQUIRE(formatter::format("{:%L}", testInfo) == "Warn");
-	REQUIRE(formatter::format("{:%l}", testInfo) == "W");
+	REQUIRE(formatter::format("{:%L}", testRefWrapper) == "Warn");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper) == "W");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::error);
-	REQUIRE(formatter::format("{:%L}", testInfo) == "Error");
-	REQUIRE(formatter::format("{:%l}", testInfo) == "E");
+	REQUIRE(formatter::format("{:%L}", testRefWrapper) == "Error");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper) == "E");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::fatal);
-	REQUIRE(formatter::format("{:%L}", testInfo) == "Fatal");
-	REQUIRE(formatter::format("{:%l}", testInfo) == "F");
+	REQUIRE(formatter::format("{:%L}", testRefWrapper) == "Fatal");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper) == "F");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::off);
-	REQUIRE(formatter::format("{:%L}", testInfo) == "");
-	REQUIRE(formatter::format("{:%l}", testInfo) == "");
+	REQUIRE(formatter::format("{:%L}", testRefWrapper) == "");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper) == "");
 
-	serenity::source_flag srcFlag{ serenity::source_flag::all};
-	cf::Format_Source_Loc testSrc(testInfo, srcFlag);
+	// Direct Logger Level Formatting
+	testInfo.SetMsgLevel(serenity::LoggerLevel::trace);
+	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Trace");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "T");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::info);
+	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Info");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "I");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::debug);
+	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Debug");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "D");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::warning);
+	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Warn");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "W");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::error);
+	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Error");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "E");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::fatal);
+	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Fatal");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "F");
+	testInfo.SetMsgLevel(serenity::LoggerLevel::off);
+	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "");
+	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "");
 
-	REQUIRE(formatter::format("{:%s}", testInfo) == testSrc.FormatUserPattern());
+
+	serenity::source_flag srcFlag = {serenity::source_flag::empty};
+	cf::Format_Source_Loc testSrc(testRefWrapper.m_src, srcFlag);
+
+	// Whole Reference Pack Formatting For Source Location
+	REQUIRE(formatter::format("{:%s}", testRefWrapper) == testSrc.FormatUserPattern());
+	srcFlag =  serenity::source_flag::all;
+	REQUIRE(formatter::format("{:%s:a}", testRefWrapper) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::column;
+	REQUIRE(formatter::format("{:%s:c}", testRefWrapper) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::file;
+	REQUIRE(formatter::format("{:%s:f}", testRefWrapper) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::line;
+	REQUIRE(formatter::format("{:%s:l}", testRefWrapper) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::function;
+	REQUIRE(formatter::format("{:%s:F}", testRefWrapper) == testSrc.FormatUserPattern());
+
+	// Direct Source Location Formatting
+	srcFlag = serenity::source_flag::empty;
+	REQUIRE(formatter::format("{:%s}", testRefWrapper.m_src) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::all;
+	REQUIRE(formatter::format("{:%s:a}", testRefWrapper.m_src) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::column;
+	REQUIRE(formatter::format("{:%s:c}", testRefWrapper.m_src) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::file;
+	REQUIRE(formatter::format("{:%s:f}", testRefWrapper.m_src) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::line;
+	REQUIRE(formatter::format("{:%s:l}", testRefWrapper.m_src) == testSrc.FormatUserPattern());
+	srcFlag = serenity::source_flag::function;
+	REQUIRE(formatter::format("{:%s:F}", testRefWrapper.m_src) == testSrc.FormatUserPattern());
 
 
-	cf::Format_Thread_ID threadID{};
-	REQUIRE(formatter::format("{:%t}", testInfo) == threadID.FormatUserPattern(0));
-	REQUIRE(formatter::format("{:%t:1}", testInfo) == threadID.FormatUserPattern(1));
-	REQUIRE(formatter::format("{:%t:2}", testInfo) == threadID.FormatUserPattern(2));
-	REQUIRE(formatter::format("{:%t:3}", testInfo) == threadID.FormatUserPattern(3));
-	REQUIRE(formatter::format("{:%t:4}", testInfo) == threadID.FormatUserPattern(4));
-	REQUIRE(formatter::format("{:%t:5}", testInfo) == threadID.FormatUserPattern(5));
-	REQUIRE(formatter::format("{:%t:6}", testInfo) == threadID.FormatUserPattern(6));
-	REQUIRE(formatter::format("{:%t:7}", testInfo) == threadID.FormatUserPattern(7));
-	REQUIRE(formatter::format("{:%t:8}", testInfo) == threadID.FormatUserPattern(8));
-	REQUIRE(formatter::format("{:%t:9}", testInfo) == threadID.FormatUserPattern(9));
+	cf::Format_Thread_ID threadID{testRefWrapper.m_thread};
+	// Whole Reference Pack Formatting For Thread ID
+	REQUIRE(formatter::format("{:%t}", testRefWrapper) == threadID.FormatUserPattern(0));
+	REQUIRE(formatter::format("{:%t:1}", testRefWrapper) == threadID.FormatUserPattern(1));
+	REQUIRE(formatter::format("{:%t:2}", testRefWrapper) == threadID.FormatUserPattern(2));
+	REQUIRE(formatter::format("{:%t:3}", testRefWrapper) == threadID.FormatUserPattern(3));
+	REQUIRE(formatter::format("{:%t:4}", testRefWrapper) == threadID.FormatUserPattern(4));
+	REQUIRE(formatter::format("{:%t:5}", testRefWrapper) == threadID.FormatUserPattern(5));
+	REQUIRE(formatter::format("{:%t:6}", testRefWrapper) == threadID.FormatUserPattern(6));
+	REQUIRE(formatter::format("{:%t:7}", testRefWrapper) == threadID.FormatUserPattern(7));
+	REQUIRE(formatter::format("{:%t:8}", testRefWrapper) == threadID.FormatUserPattern(8));
+	REQUIRE(formatter::format("{:%t:9}", testRefWrapper) == threadID.FormatUserPattern(9));
 
-	REQUIRE(formatter::format("{:%+}", testInfo) == testInfo.Message());
+	// Direct Thread ID Formatting
+	REQUIRE(formatter::format("{:%t}", testRefWrapper.m_thread) == threadID.FormatUserPattern(0));
+	REQUIRE(formatter::format("{:%t:1}", testRefWrapper.m_thread) == threadID.FormatUserPattern(1));
+	REQUIRE(formatter::format("{:%t:2}", testRefWrapper.m_thread) == threadID.FormatUserPattern(2));
+	REQUIRE(formatter::format("{:%t:3}", testRefWrapper.m_thread) == threadID.FormatUserPattern(3));
+	REQUIRE(formatter::format("{:%t:4}", testRefWrapper.m_thread) == threadID.FormatUserPattern(4));
+	REQUIRE(formatter::format("{:%t:5}", testRefWrapper.m_thread) == threadID.FormatUserPattern(5));
+	REQUIRE(formatter::format("{:%t:6}", testRefWrapper.m_thread) == threadID.FormatUserPattern(6));
+	REQUIRE(formatter::format("{:%t:7}", testRefWrapper.m_thread) == threadID.FormatUserPattern(7));
+	REQUIRE(formatter::format("{:%t:8}", testRefWrapper.m_thread) == threadID.FormatUserPattern(8));
+	REQUIRE(formatter::format("{:%t:9}", testRefWrapper.m_thread) == threadID.FormatUserPattern(9));
+
+
+	REQUIRE(formatter::format("{:%+}", testRefWrapper) == testInfo.Message());
 }
 
 #endif    //  USE_BUILT_IN_FMT

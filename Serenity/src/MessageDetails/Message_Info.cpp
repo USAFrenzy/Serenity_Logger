@@ -2,8 +2,8 @@
 
 namespace serenity::msg_details {
 	Message_Info::Message_Info(std::string_view name, LoggerLevel level, message_time_mode mode)
-		: m_name(name), m_msgLevel(level), m_msgTime(mode), m_msgTimePoint(std::chrono::system_clock::now()),
-		  threadHash(std::hash<std::thread::id>()(std::this_thread::get_id())) { }
+		: m_name(name), m_msgLevel(level), m_msgTime(mode), m_msgTimePoint(std::chrono::system_clock::now()), m_source(std::source_location {}),
+		  m_message(std::string {}), m_threadID(std::this_thread::get_id()) { }
 
 	LoggerLevel& Message_Info::MsgLevel() {
 		return m_msgLevel;
@@ -61,8 +61,8 @@ namespace serenity::msg_details {
 		return m_message;
 	}
 
-	size_t Message_Info::CurrentThreadHash() const {
-		return threadHash;
+	const std::thread::id& Message_Info::ThisThreadID() const {
+		return m_threadID;
 	}
 
 	size_t Message_Info::MessageSize() const {
@@ -70,15 +70,15 @@ namespace serenity::msg_details {
 	}
 
 	void Message_Info::SetSrcLoc(const std::source_location& src) const {
-		source = src;
+		m_source = src;
 	}
 
 	std::source_location& Message_Info::SourceLocation() {
-		return source;
+		return m_source;
 	}
 
 	const std::source_location& Message_Info::SourceLocation() const {
-		return source;
+		return m_source;
 	}
 
 }    // namespace serenity::msg_details

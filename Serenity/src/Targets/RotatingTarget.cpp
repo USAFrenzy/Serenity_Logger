@@ -312,7 +312,7 @@ namespace serenity::experimental::targets {
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		VFORMAT_TO(FileBuffer(), MsgFmt()->Locale(), MsgFmt()->Pattern(), *(MsgInfo().get()), MsgInfo()->TimeInfo());
+		FormatLogMessage(FileBuffer());
 		if( !ShouldRotate() ) {
 				// Haven't written anything to the actual file yet, as the buffer is still smaller than the limit - just keep track of  and update the "file" size
 				SetCurrentFileSize(FileSize() + FileBufferSize());
