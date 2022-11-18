@@ -52,6 +52,17 @@ namespace serenity {
 namespace serenity::targets::helpers {
 
 	constexpr size_t max_size_size_t { (size_t)-1 };
+	constexpr size_t pageSize =
+#if defined(_WIN32) && not defined(_WIN64)
+	/** x86-32 has large page sizes of 2MB available, so use that instead **/
+	static_cast<size_t>(2 * MB);
+#elif defined _WIN64
+	/** x86-64 has large page sizes of 4MB available, so use that instead **/
+	static_cast<size_t>(4 * MB);
+#else
+	/** We'll default to just  using the default value that was being used before **/
+	return static_cast<size_t>(DEFAULT_BUFFER_SIZE);
+#endif    // _WIN32 && !_WIN64
 
 	class FileHelper
 	{
@@ -90,7 +101,6 @@ namespace serenity::targets::helpers {
 		int retryAttempt;
 		bool fileOpen;
 		int file;
-		size_t pageSize;
 		std::vector<char> buffer;
 		std::mutex fileHelperMutex;
 		std::unique_ptr<FileCache> fileCache;

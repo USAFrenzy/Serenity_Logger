@@ -39,7 +39,7 @@ namespace serenity::targets {
 		msgPattern->SetPattern(std::string { pattern.data(), pattern.size() });
 	}
 
-	void TargetBase::SetFlushPolicy(const serenity::experimental::Flush_Policy& pPolicy) {
+	void TargetBase::SetFlushPolicy(const Flush_Policy& pPolicy) {
 		std::unique_lock<std::mutex> lock(baseMutex, std::defer_lock);
 		if( baseHelper->isMTSupportEnabled() ) {
 				lock.lock();

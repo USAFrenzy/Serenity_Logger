@@ -1,14 +1,12 @@
 ﻿
 
-#define ENABLE_MEMORY_LEAK_DETECTION              0
-#define GENERAL_SANDBOX                           0
-#define ROTATING_TESTING                          0
-#define PARSE_TESTING                             1
-#define ENABLE_PARSE_BENCHING                     0
-#define ENABLE_PARSE_SANDBOX                      0
-#define ENABLE_CTIME_SANDBOX                      0
-#define ENABLE_CUSTOMFMT_SANDBOX                  1
-#define ENABLE_ONLY_MOCK_LOG_IN_CUSTOMFMT_SANDBOX 0
+#define ENABLE_MEMORY_LEAK_DETECTION 0
+#define GENERAL_SANDBOX              0
+#define ROTATING_TESTING             0
+#define PARSE_TESTING                1
+#define ENABLE_PARSE_BENCHING        0
+#define ENABLE_PARSE_SANDBOX         0
+#define ENABLE_CTIME_SANDBOX         0
 
 #if ENABLE_ONLY_MOCK_LOG_IN_CUSTOMFMT_SANDBOX
 	#define ONLY_MOCK_LOG_MESSAGE_ENABLED
@@ -27,16 +25,6 @@
 #include <serenity/Utilities/Utilities.h>
 
 #include <iostream>
-
-#if ENABLE_CUSTOMFMT_SANDBOX
-	#ifdef USE_BUILT_IN_FMT
-		#include <serenity/CustomFormat/argfmt_backend.h>
-	#elif defined USE_FMT_LIB
-		#include <serenity/CustomFormat/stdfmt_backend.h>
-	#elif defined USE_STD_FMT
-		#include <serenity/CustomFormat/fmtlib_backend.h>
-	#endif    // USE_BUILT_IN_FMT
-#endif
 
 #if PARSE_TESTING
 	#include <ArgFormatter/ArgFormatter.h>
@@ -787,172 +775,6 @@ int main() {
 	//  standard uses, serenity is still well above 50% faster than the standard in this case.
 
 #endif    // ENABLE_CTIME_SANDBOX
-
-#ifdef ENABLE_CUSTOMFMT_SANDBOX
-
-	#ifdef USE_BUILT_IN_FMT    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	std::string value;
-	serenity::MsgWithLoc message { "This is a test message for custom formatting of Message_Info" };
-	const serenity::msg_details::Message_Info testInfo { "TestFormatting", LoggerLevel::trace, message_time_mode::local };
-	testInfo.Message() = message.msg;
-	testInfo.SetSrcLoc(message.source);
-	std::cout << "Size Of Message_Info: " << sizeof(serenity::msg_details::Message_Info) << "\n\n";
-	std::cout << "Size Of SeFmtArgRefs: " << sizeof(serenity::targets::SeFmtArgRefs) << "\n\n";
-
-	std::getchar();
-	std::cout << "\n\n";
-
-	auto iters { 1'000'000 };
-	Instrumentator customTimer {};
-
-	std::cout << formatter::format(
-	"{0:*^120}\n\n", formatter::format(std::locale("en_US.UTF8"), " Simple Benchmarks For Each Flag And A Mock Log Call Each Averaged Over {:L} Iterations ", iters));
-
-		#ifndef ONLY_MOCK_LOG_MESSAGE_ENABLED
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("- Logger Name:\t{:%N}\n- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Log Message:\t{:%+}\n- Log "
-				                       "Source:\t{:%s}\n- Thread ID:\t{:%t}\n",
-				                       testInfo) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("- Logger Name:\t{:%N}\n- Long Level:\t{:%L}\n- Short Level:\t{:%l}\n- Log Message:\t{:%+}\n- Log "
-	                          "Source:\t{:%s}\n- Thread ID:\t{:%t}\n",
-	                          testInfo);
-	std::cout << formatter::format("Separated Calls To Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n";
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("{0}", testInfo) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("{0}", testInfo);
-	std::cout
-	<< formatter::format("Default Custom Formatting Elapsed In An Average Of: [ {} ns]\nWith Result:\n{}", (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n";
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("{:%N}", testInfo) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("{:%N}", testInfo);
-	std::cout << formatter::format("Single Flag Custom Formatting For Logger Name Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n";
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("{:%L}", testInfo) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("{:%L}", testInfo);
-	std::cout << formatter::format("Single Flag Custom Formatting For Long Log Level Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n";
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("{:%l}", testInfo) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("{:%l}", testInfo);
-	std::cout << formatter::format("Single Flag Custom Formatting For Short Log Level Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n";
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("{:%+}", testInfo) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("{:%+}", testInfo);
-	std::cout << formatter::format("Single Flag Custom Formatting For Message Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n";
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("{:%s}", testInfo) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("{:%s}", testInfo);
-	std::cout << formatter::format("Single Flag Custom Formatting For Log Source Location Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n";
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("{:%t}", testInfo) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("{:%t}", testInfo);
-	std::cout << formatter::format("Single Flag Custom Formatting For Logger Thread ID Elapsed In An Average Of: [ {} ns]\nWith Result: {}",
-	                               (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n";
-		#endif    // !ONLY_MOCK_LOG_MESSAGE_ENABLED
-
-	// File Target with current implementation lands around 253.882751 ns.
-	// This mock file structure using a message of 61 chars instead of 400 is landing around  257.79352 ns.
-	// ! NOTE: 14Nov22 - some small changes brought this time down to 242.1503 ns which is definitely an improvement, but still need to be much faster to swap out
-	//!//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// ! ---------------------------------------------------------------------------------------- MAJOR NOTE: 14Nov22
-	// ----------------------------------------------------------------------------------------
-	//! Making the mock log message the same as the one used in the bench suite where the first number is pulled from lands between 247.4391ns and 261.3007ns.  Right
-	//! where it is now, this is good enough to do a one-for-one swap and get rid of the FormatterArgs files and structs that are used as well as all the arrays that
-	//! are redundant due to the need for them with FormatterArgs' structs (the ones already used in ArgFormatter by default). I should also be able to rework how
-	//! StoreFormat() is implemented now(now that the vector of FormatterArg structs is no longer needed) as well as rework how the formatting call is made in
-	//! general (given that instead of iterating through the vector of formatting structs and calling their respective format function, I now only need to provide
-	//! the right arguments such as Message_Info and Message_Time to the formatting call).
-	//!
-	//! This should actually streamline things in general just in the formatting aspect as I can now generalize calls made based on whether or not serenity custom
-	//! flags are present and whether or not time flags are present.
-	//!
-	//! There should only be 4 cases to consider -> It's inevitable that a serenity flag will always appear due to '+' being the token that displays the log message:
-	//!  1) one for only custom serenity flags + any other text
-	//! 2) one for both custom serenity flags and time flags + any text
-	//! 3) one for no custom flags *OTHER* than the '+' flag and no time flags + any other text
-	//! 4) one for no custom flags *OTHER* than the '+' flag  and *WITH* time flags + any other text
-	//! With the above 4 cases in mind, the changes made should make things more efficient on the formatting calls and lower the latency of the log message itself.
-	//!//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// TODO://///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// TODO: Once the above has been taken of and proven to work *AND* is working without *ANY* performance regression, then streamline the formatting calls to the
-	// TODO: file device directly, whether that be the console or an actual file (the file targets use a buffer, so for those, it should be super straight-forward
-	// TODO: and I should only need to pass a handle to that buffer and call formatter::format_to() on it)
-	// TODO://///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	static constexpr std::string_view mockMsg { "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sed porttitor orci. Nullam "
-		                                        "aliquet ultrices nisl, porta eleifend tortor. Sed commodo tellus at lorem tincidunt feugiat. Nam "
-		                                        "porta elit vitae eros dapibus, quis aliquet ante commodo. Pellentesque tempor a purus nec porta."
-		                                        " Quisque vitae ullamcorper ante. Fusce ac mauris magna. In vulputate at leo vel dapibus. Ut ornare"
-		                                        " mi non odio." };
-	testInfo.Message() = mockMsg;
-
-	customTimer.StopWatch_Reset();
-	for( auto i { 0 }; i < iters; ++i ) {
-			auto _ { formatter::format("|{0:%l}| {1:%a %T %d%b%y} [{0:%N}]: {0:%+}", testInfo, testInfo.TimeInfo()) };
-		}
-	customTimer.StopWatch_Stop();
-	value = formatter::format("|{0:%l}| {1:%a %T %d%b%y} [{0:%N}]: {0:%+}", testInfo, testInfo.TimeInfo());
-	std::cout
-	<< formatter::format("Mock Log Structure Format Elapsed In An Average Of: [ {} ns]\nWith Result: {}", (customTimer.Elapsed_In(time_mode::ns) / iters), value);
-
-	std::cout << "\n\n\n";
-
-	#endif    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////USE_BUILT_IN_FMT
-
-#endif
 
 #if ENABLE_MEMORY_LEAK_DETECTION
 	_CrtDumpMemoryLeaks();

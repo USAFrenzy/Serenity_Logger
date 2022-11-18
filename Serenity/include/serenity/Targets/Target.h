@@ -19,7 +19,7 @@ namespace serenity::targets {
 		TargetBase(std::string_view name);
 		TargetBase(std::string_view name, std::string_view msgPattern);
 		~TargetBase() = default;
-		void SetFlushPolicy(const serenity::experimental::Flush_Policy& pPolicy);
+		void SetFlushPolicy(const Flush_Policy& pPolicy);
 		std::string LoggerName() const;
 		void SetPattern(std::string_view pattern);
 		void ResetPatternToDefault();
@@ -40,7 +40,7 @@ namespace serenity::targets {
 
 		template<typename T>
 		requires utf_utils::utf_constraints::IsSupportedUContainer<std::remove_cvref_t<T>>
-		constexpr void FormatLogMessage(T& cont);
+		constexpr void FormatLogMessage(T&& cont);
 
 	  protected:
 		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();

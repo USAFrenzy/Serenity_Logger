@@ -5,7 +5,7 @@
 #include <chrono>
 #include <mutex>
 
-namespace serenity::experimental {
+namespace serenity {
 	enum class FlushSetting
 	{
 		always,
@@ -50,4 +50,4 @@ namespace serenity::experimental {
 		PeriodicOptions subOpt;
 		PeriodicSettings subSettings;
 	};
-}    // namespace serenity::experimental
+}    // namespace serenity

@@ -56,7 +56,7 @@ namespace serenity::targets {
 
 	void FileTarget::PrintMessage() {
 		std::unique_lock<std::mutex> lock(fileMutex, std::defer_lock);
-		auto& backgroundThread { BackgoundThreadInfo() };
+		const auto& backgroundThread { BackgoundThreadInfo() };
 		const auto& flushThreadEnabled { backgroundThread->flushThreadEnabled.load() };
 		if( flushThreadEnabled ) {
 				if( !backgroundThread->flushComplete.load() ) {
@@ -92,22 +92,22 @@ namespace serenity::targets {
 				lock.lock();
 		}
 		auto& policy { TargetHelper()->Policy() };
-		if( policy->PrimarySetting() == serenity::experimental::FlushSetting::never ) {
+		if( policy->PrimarySetting() == FlushSetting::never ) {
 				// If the flush thread was active, no need to hog a thread if never flushing
 				StopBackgroundThread();
 		};
-		if( policy->PrimarySetting() == serenity::experimental::FlushSetting::always ) {
+		if( policy->PrimarySetting() == FlushSetting::always ) {
 				// Similar reasoning as Never setting except for the fact of ALWAYS flushing
 				StopBackgroundThread();
 				Flush();
 		}
 		switch( policy->SubSetting() ) {
-				case serenity::experimental::PeriodicOptions::timeBased:
+				case PeriodicOptions::timeBased:
 					{
 						StartBackgroundThread();
 					}
 					break;    // time based bounds
-				case serenity::experimental::PeriodicOptions::logLevelBased:
+				case PeriodicOptions::logLevelBased:
 					{
 						if( MsgInfo()->MsgLevel() < policy->SecondarySettings().flushOn ) return;
 						Flush();

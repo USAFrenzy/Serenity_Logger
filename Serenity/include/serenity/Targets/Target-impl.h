@@ -1,12 +1,12 @@
 #pragma once
-#include <serenity/Common.h>
 #include <serenity/Targets/Target.h>
+
 #include <chrono>
 #include <string>
 
 template<typename... Args> void serenity::targets::TargetBase::LogMessage(std::string_view msg, Args&&... args) {
 	using namespace std::chrono;
-	if( msgPattern->HasTimeField() ) {
+	if( msgPattern->FmtFunctionFlag() >= serenity::msg_details::SeFmtFuncFlags::Time ) {
 			msgDetails->SetTimePoint();
 			auto now = msgDetails->MessageTimePoint();
 			if( duration_cast<seconds>(now.time_since_epoch()) != msgDetails->TimeDetails().LastLogPoint() ) {
@@ -19,46 +19,79 @@ template<typename... Args> void serenity::targets::TargetBase::LogMessage(std::s
 	PrintMessage();
 	PolicyFlushOn();
 }
-
 //! NOTE [17Nov22] This is slightly messy but the whole process of checking what fields are currently needing to be formatted sped the process back up by ~6% again
+//! NOTE [18Nov22] - Shifted the first branch around in favor of negation checking and having the default case as the first called if sourc/thread aren't present
 template<typename T>
 requires utf_utils::utf_constraints::IsSupportedUContainer<std::remove_cvref_t<T>>
-inline constexpr void serenity::targets::TargetBase::FormatLogMessage(T& cont) {
-	using v = std::string_view;
-	if( const auto& fmtr { *msgPattern }; fmtr.HasTimeField() ) {
-			// we have a time field so check for source and thread
-			if( fmtr.HasSourceField() && fmtr.HasThreadField() ) {
-					// we have both source and thread fields so format based on if time is localized
-					return !(fmtr.HasLocalizedTime())
-					     ? VFORMAT_TO(cont, v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_src, fmtRefs.m_thread, fmtRefs.m_time)
-					     : VFORMAT_TO_L(cont, fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_src, fmtRefs.m_thread,
-					                    fmtRefs.m_time);
-			} else if( fmtr.HasSourceField() ) {
-					// we don't have a thread field, but do have a source field, now fmt based on localized time flags
-					return !(fmtr.HasLocalizedTime())
-					     ? VFORMAT_TO(cont, v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_src, fmtRefs.m_time)
-					     : VFORMAT_TO_L(cont, fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_src, fmtRefs.m_time);
-			} else if( fmtr.HasThreadField() ) {
-					// we don't have a source field, but do have a thread field, now fmt based on localized time flags
-					return !(fmtr.HasLocalizedTime())
-					     ? VFORMAT_TO(cont, v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_thread, fmtRefs.m_time)
-					     : VFORMAT_TO_L(cont, fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_thread, fmtRefs.m_time);
-			} else {
-					// we don't have either a source or a thread field so format based on if time is localized
-					return !(fmtr.HasLocalizedTime())
-					     ? VFORMAT_TO(cont, v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_time)
-					     : VFORMAT_TO_L(cont, fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_time);
+inline constexpr void serenity::targets::TargetBase::FormatLogMessage(T&& cont) {
+	using enum serenity::msg_details::SeFmtFuncFlags;
+	namespace cf = serenity::msg_details::custom_flags;
+
+	using v      = std::string_view;
+	const auto& fmtr { *msgPattern };
+	switch( msgPattern->FmtFunctionFlag() ) {
+			case Base: [[fallthrough]];
+			default:
+				{
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg));
 				}
-	} else if( fmtr.HasSourceField() ) {
-			// we don't have a time field, but we do have a source field, format based on whether we have a thread field present or not
-			return fmtr.HasThreadField() ? VFORMAT_TO(cont, v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_src, fmtRefs.m_thread)
-			                             : VFORMAT_TO(cont, v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_src);
-	} else if( fmtr.HasThreadField() ) {
-			// we don't have a time field or source field present, but do have a thread field, so format based off that
-			return VFORMAT_TO(cont, v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_thread);
-	} else {
-			// we don't have a time field, source field, or thread field so do the basic formatting call
-			return VFORMAT_TO(cont, v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg));
+			case Time_Base:
+				{
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_time);
+				}
+			case Src_Base:
+				{
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()));
+				}
+			case Thread_Base:
+				{
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()));
+				}
+			case Src_Thread_Base:
+				{
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()),
+					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()));
+				}
+			case Time_Src_Thread_Base:
+				{
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()),
+					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), fmtRefs.m_time);
+				}
+			case Localized_Time_Src_Thread_Base:
+				{
+					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                    v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()),
+					                    cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), fmtRefs.m_time);
+				}
+			case Localized_Time_Base:
+				{
+					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_src,
+					                    fmtRefs.m_time);
+				}
+			case Time_Src_Base:
+				{
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()), fmtRefs.m_time);
+				}
+			case Localized_Time_Src_Base:
+				{
+					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                    v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()), fmtRefs.m_time);
+				}
+			case Time_Thread_Base:
+				{
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), fmtRefs.m_time);
+				}
+			case Localized_Time_Thread_Base:
+				{
+					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                    cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), fmtRefs.m_time);
+				}
 		}
 }
 
@@ -69,7 +102,7 @@ inline constexpr void serenity::targets::TargetBase::FormatLogMessage(T& cont) {
 template<typename... Args> void serenity::targets::TargetBase::Trace(serenity::MsgWithLoc s, Args&&... args) {
 	if( logLevel <= LoggerLevel::trace ) {
 			msgDetails->SetMsgLevel(LoggerLevel::trace);
-			if( msgPattern->HasSourceField() ) {
+			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
 			LogMessage(s.msg, std::forward<Args>(args)...);
@@ -79,7 +112,7 @@ template<typename... Args> void serenity::targets::TargetBase::Trace(serenity::M
 template<typename... Args> void serenity::targets::TargetBase::Info(serenity::MsgWithLoc s, Args&&... args) {
 	if( logLevel <= LoggerLevel::info ) {
 			msgDetails->SetMsgLevel(LoggerLevel::info);
-			if( msgPattern->HasSourceField() ) {
+			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
 			LogMessage(s.msg, std::forward<Args>(args)...);
@@ -89,7 +122,7 @@ template<typename... Args> void serenity::targets::TargetBase::Info(serenity::Ms
 template<typename... Args> void serenity::targets::TargetBase::Debug(serenity::MsgWithLoc s, Args&&... args) {
 	if( logLevel <= LoggerLevel::debug ) {
 			msgDetails->SetMsgLevel(LoggerLevel::debug);
-			if( msgPattern->HasSourceField() ) {
+			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
 			LogMessage(s.msg, std::forward<Args>(args)...);
@@ -99,7 +132,7 @@ template<typename... Args> void serenity::targets::TargetBase::Debug(serenity::M
 template<typename... Args> void serenity::targets::TargetBase::Warn(serenity::MsgWithLoc s, Args&&... args) {
 	if( logLevel <= LoggerLevel::warning ) {
 			msgDetails->SetMsgLevel(LoggerLevel::warning);
-			if( msgPattern->HasSourceField() ) {
+			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
 			LogMessage(s.msg, std::forward<Args>(args)...);
@@ -109,7 +142,7 @@ template<typename... Args> void serenity::targets::TargetBase::Warn(serenity::Ms
 template<typename... Args> void serenity::targets::TargetBase::Error(serenity::MsgWithLoc s, Args&&... args) {
 	if( logLevel <= LoggerLevel::error ) {
 			msgDetails->SetMsgLevel(LoggerLevel::error);
-			if( msgPattern->HasSourceField() ) {
+			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
 			LogMessage(s.msg, std::forward<Args>(args)...);
@@ -119,7 +152,7 @@ template<typename... Args> void serenity::targets::TargetBase::Error(serenity::M
 template<typename... Args> void serenity::targets::TargetBase::Fatal(serenity::MsgWithLoc s, Args&&... args) {
 	if( logLevel <= LoggerLevel::fatal ) {
 			msgDetails->SetMsgLevel(LoggerLevel::fatal);
-			if( msgPattern->HasSourceField() ) {
+			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
 			LogMessage(s.msg, std::forward<Args>(args)...);

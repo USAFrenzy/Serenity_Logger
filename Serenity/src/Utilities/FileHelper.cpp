@@ -94,22 +94,9 @@ namespace serenity {
 
 }    // namespace serenity
 
-static constexpr size_t PageSize() {
-#if defined(_WIN32) && not defined(_WIN64)
-	/** x86-32 has large page sizes of 2MB available, so use that instead **/
-	return static_cast<size_t>(2 * MB);
-#elif defined _WIN64
-	/** x86-64 has large page sizes of 4MB available, so use that instead **/
-	return static_cast<size_t>(4 * MB);
-#else
-	/** We'll default to just  using the default value that was being used before **/
-	return static_cast<size_t>(DEFAULT_BUFFER_SIZE);
-#endif    // _WIN32 && !_WIN64
-}
-
 namespace serenity::targets::helpers {
 
-	FileHelper::FileHelper(const std::string_view fpath): retryAttempt(5), fileOpen(false), file(int {}), pageSize(PageSize()), buffer(std::vector<char> {}) {
+	FileHelper::FileHelper(const std::string_view fpath): retryAttempt(5), fileOpen(false), file(int {}), buffer(std::vector<char> {}) {
 		fileCache    = std::make_unique<FileCache>(fpath);
 		targetHelper = std::make_unique<BaseTargetHelper>();
 		flushWorker  = std::make_unique<BackgroundThread>();
@@ -140,47 +127,21 @@ namespace serenity::targets::helpers {
 		if( targetHelper->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		auto TryOpen = [ &, this ]() {
-			if( !truncate ) {
-					OpenImpl(truncate);
-			} else {
-					OpenImpl(truncate);
-				}
-			if( file != -1 ) {
-					ResumeBackgroundThread();
-					return true;
-			}
-			return false;
-		};
-
-		for( int tries = 0; tries < retryAttempt; ++tries ) {
-				if( tries == retryAttempt ) {
-						printf("Max Attempts At Opening File Reached - Unable To Open File\n");
-						return false;
-				}
-				if( TryOpen() ) break;
-				std::this_thread::sleep_for(std::chrono::nanoseconds(100));
-			}
+		OpenImpl(truncate);
+		if( file == -1 ) return false;
+		ResumeBackgroundThread();
 		return true;
 	}
 
 	bool FileHelper::CloseFile(bool onRotation) {
+		std::unique_lock<std::mutex> lock(fileHelperMutex, std::defer_lock);
+		if( targetHelper->isMTSupportEnabled() ) {
+				lock.lock();
+		}
 		PauseBackgroundThread();
 		if( !onRotation ) Flush();
-
-		auto TryClose = [ this ]() {
-			CloseImpl();
-			return true;
-		};
-		for( int tries = 0; tries < retryAttempt; ++tries ) {
-				if( tries == retryAttempt ) {
-						printf("Max Attempts At Closing File Reached - Unable To Close File\n");
-						return false;
-				}
-				if( TryClose() ) break;
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			}
-		return true;
+		CloseImpl();
+		return fileOpen;
 	}
 
 	void FileHelper::Flush() {
@@ -236,14 +197,14 @@ namespace serenity::targets::helpers {
 				flushWorker->flushThread.request_stop();
 				flushWorker->cleanUpThreads.store(true);
 				flushWorker->cleanUpThreads.notify_one();
-				targetHelper->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::never);
+				targetHelper->Policy()->SetPrimaryMode(FlushSetting::never);
 				flushWorker->flushThreadEnabled.store(false);
 		}
 	}
 
 	void FileHelper::StartBackgroundThread() {
 		if( !flushWorker->flushThreadEnabled.load() ) {
-				targetHelper->Policy()->SetPrimaryMode(serenity::experimental::FlushSetting::periodically);
+				targetHelper->Policy()->SetPrimaryMode(FlushSetting::periodically);
 				flushWorker->cleanUpThreads.store(false);
 				flushWorker->flushThread = std::jthread(&FileHelper::BackgroundFlushThread, this, flushWorker->interruptThread);
 				flushWorker->flushThreadEnabled.store(true);
@@ -307,20 +268,16 @@ namespace serenity::targets::helpers {
 			}
 	}
 
-	// This seems to be ~35ns- to ~45ns faster than the fileHandle.rdbuf()->sputn(formatted.data(), formatted.size())
-	//  method and brings the throughput from ~1450 MB/s up to ~1715 MB/s
 	void FileHelper::WriteImpl() {
-		if( buffer.size() >= pageSize ) {
-				WRITE(file, buffer.data(), pageSize);
-				buffer.erase(buffer.begin(), buffer.begin() + pageSize);
-		}
+		if( buffer.size() < pageSize ) return;
+		WRITE(file, buffer.data(), pageSize);
+		buffer.erase(buffer.begin(), buffer.begin() + pageSize);
 	}
 
 	void FileHelper::WriteImpl(size_t writeLimit, bool truncateRest) {
-		if( buffer.size() >= writeLimit ) {
-				WRITE(file, buffer.data(), writeLimit);
-				truncateRest ? buffer.erase(buffer.begin(), buffer.end()) : buffer.erase(buffer.begin(), buffer.begin() + writeLimit);
-		}
+		if( buffer.size() < writeLimit ) return;
+		WRITE(file, buffer.data(), writeLimit);
+		truncateRest ? buffer.erase(buffer.begin(), buffer.end()) : buffer.erase(buffer.begin(), buffer.begin() + writeLimit);
 	}
 
 	void FileHelper::FlushImpl() {
