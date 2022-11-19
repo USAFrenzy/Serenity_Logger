@@ -1,5 +1,6 @@
 #pragma once
 
+#include <UTF-Utils/utf-utils.h>
 #include <serenity/Common.h>
 #include <serenity/MessageDetails/FlushPolicy.h>
 #include <serenity/MessageDetails/Message_Formatter.h>
@@ -36,11 +37,11 @@ namespace serenity::targets {
 		virtual void SetLocale(const std::locale& loc);
 		const std::locale& GetLocale() const;
 		const std::string& FmtStr() const;
-		const serenity::targets::SeFmtArgRefs& FmtRefs();
+		const SeFmtArgRefs& FmtRefs();
 
 		template<typename T>
 		requires utf_utils::utf_constraints::IsSupportedUContainer<std::remove_cvref_t<T>>
-		constexpr void FormatLogMessage(T&& cont);
+		constexpr auto FormatLogMessage(T&& cont);
 
 	  protected:
 		std::shared_ptr<helpers::BaseTargetHelper>& TargetHelper();
@@ -58,7 +59,7 @@ namespace serenity::targets {
 		std::unique_ptr<msg_details::Message_Formatter> msgPattern;
 		std::shared_ptr<helpers::BaseTargetHelper> baseHelper;
 		template<typename... Args> void LogMessage(std::string_view msg, Args&&... args);
-		serenity::targets::SeFmtArgRefs fmtRefs;
+		SeFmtArgRefs fmtRefs;
 	};
 
 #include "Target-impl.h"

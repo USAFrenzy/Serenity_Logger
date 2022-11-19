@@ -20,8 +20,8 @@ namespace serenity {
 	//               appropriately encode back to the appropriate  encoding for the char type present in the container provided.
 	struct MsgWithLoc
 	{
-		std::string_view msg;
-		std::source_location source;
+		const std::string_view msg;
+		const std::source_location& source;
 		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
 		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
 		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
