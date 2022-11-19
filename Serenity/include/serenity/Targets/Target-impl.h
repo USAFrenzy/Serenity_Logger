@@ -24,71 +24,79 @@ requires utf_utils::utf_constraints::IsSupportedUContainer<std::remove_cvref_t<T
 inline constexpr auto serenity::targets::TargetBase::FormatLogMessage(T&& cont) {
 	using enum serenity::msg_details::SeFmtFuncFlags;
 	namespace cf = serenity::msg_details::custom_flags;
+#ifdef USE_FMT_LIB
+	// make local copies because fmt doesn't like const arguments
+	auto lvl { fmtRefs.m_lvl };
+	auto timeStruct { fmtRefs.m_time };
+#else
+	const auto& lvl { fmtRefs.m_lvl };
+	const auto& timeStruct { fmtRefs.m_time };
+#endif    // USE_FMT_LIB
 
-	using v      = std::string_view;
+	using v = std::string_view;
 	const auto& fmtr { *msgPattern };
 	switch( msgPattern->FmtFunctionFlag() ) {
 			case Base: [[fallthrough]];
 			default:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg));
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg));
 				}
 			case Time_Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), fmtRefs.m_time);
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg), timeStruct);
 				}
 			case Src_Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
 					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()));
 				}
 			case Thread_Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
 					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()));
 				}
 			case Src_Thread_Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
 					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()),
 					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()));
 				}
 			case Time_Src_Thread_Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
 					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()),
-					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), fmtRefs.m_time);
+					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), timeStruct);
 				}
 			case Localized_Time_Src_Thread_Base:
 				{
-					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
 					                    v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()),
-					                    cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), fmtRefs.m_time);
+					                    cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), timeStruct);
 				}
 			case Localized_Time_Base:
 				{
-					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
-					                    v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()), fmtRefs.m_time);
+					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                    v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()), timeStruct);
 				}
 			case Time_Src_Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
-					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()), fmtRefs.m_time);
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                  v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()), timeStruct);
 				}
 			case Localized_Time_Src_Base:
 				{
-					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
-					                    v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()), fmtRefs.m_time);
+					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                    v(cf::Format_Source_Loc { fmtRefs.m_src, fmtr.SourceFmtFlag() }.FormatUserPattern()), timeStruct);
 				}
 			case Time_Thread_Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
-					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), fmtRefs.m_time);
+					return VFORMAT_TO(std::forward<T>(cont), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                  cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), timeStruct);
 				}
 			case Localized_Time_Thread_Base:
 				{
-					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), fmtRefs.m_lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
-					                    cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), fmtRefs.m_time);
+					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), v(fmtr.Pattern()), lvl, v(fmtRefs.m_name), v(fmtRefs.m_msg),
+					                    cf::Format_Thread_ID { fmtRefs.m_thread }.FormatUserPattern(fmtr.ThreadFmtLength()), timeStruct);
 				}
 		}
 }

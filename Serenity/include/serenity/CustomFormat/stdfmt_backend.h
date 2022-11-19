@@ -17,27 +17,18 @@ template<> struct std::formatter<serenity::LoggerLevel>
 	constexpr auto parse(std::format_parse_context& parse) {
 		using CustomErrors = serenity::CustomFlagError::CustomErrors;
 		auto end { parse.end() };
-		auto pos { parse.begin() - 1 };
+		auto pos { parse.begin() };
 
 		for( ;; ) {
-				if( ++pos >= end ) {
+				if( pos >= end ) {
 						errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
 				}
 				switch( *pos ) {
-						case '}': return parse.begin();
-						case ':':
-							{
-								if( ++pos >= end ) {
-										errHandler.ReportCustomError(CustomErrors::no_flag_mods);
-								}
-								if( *pos != '%' ) {
-										errHandler.ReportCustomError(CustomErrors::missing_flag_specifier);
-								}
-								break;
-							}
+						case '}': return pos;
+						case '%': break;
 						// if we don't hit ':' then assume that the flag hasn't been seen yet or doesn't
 						// exist and continue until we reach it or hit the end of the parse string
-						default: continue;
+						default: ++pos; continue;
 					}
 				for( ;; ) {
 						if( ++pos >= end ) {
@@ -49,7 +40,7 @@ template<> struct std::formatter<serenity::LoggerLevel>
 								case '}':
 									{
 										if( view == LevelView::Invalid ) errHandler.ReportCustomError(CustomErrors::token_with_no_flag);
-										return parse.begin();;
+										return pos;
 									}
 								case ' ': [[fallthrough]];    // ignore whitespace when determining if valid thread id bracket
 								default: continue;
@@ -61,26 +52,52 @@ template<> struct std::formatter<serenity::LoggerLevel>
 		switch( view ) {
 				case LevelView::Short:
 					{
-						return std::format_to(ctx.out(), "{}", serenity::LevelToShortView(lvl));
+						std::format_to(ctx.out(), "{}", serenity::LevelToShortView(lvl));
+						return ctx.out();
 					}
 				case LevelView::Long:
 					{
-						return std::format_to(ctx.out(), "{}", serenity::LevelToLongView(lvl));
+						std::format_to(ctx.out(), "{}", serenity::LevelToLongView(lvl));
+						return ctx.out();
 					}
 				case LevelView::Invalid: [[fallthrough]];
-				default: constexpr std::string_view invalidMessage { "INVALID_LEVEL" }; return std::format_to(ctx.out(), "{}", invalidMessage);
+				default:
+					{
+						constexpr std::string_view invalidMessage { "INVALID_LEVEL" };
+						std::format_to(ctx.out(), "{}", invalidMessage);
+						return ctx.out();
+					}
 			}
 	}
 };
 
 template<> struct std::formatter<std::tm>
 {
+	serenity::CustomFlagError::custom_error_handler errHandler {};
+	// Bypassing the really slow std::chrono formatter in favor of strftime so we need to store the pattern in `fmtStr` to refer to in the formatting call. There
+	// should be the same error checking that is in ArgFormatter ParseTimeField() here. Also *WILL* need a way to check for subsecond  precision and
+	// handle that as well -> I may end up needing to copy pasta the ctime parsing AND formatting out of ArgFormatter and into these parse()/format()
+	//  functions for this case since std::tm is *NOT* natively supported in <format> AND the std::chrono formatter is terribly slow for this use case.
+	std::string fmtStr {};
+
 	constexpr auto parse(std::format_parse_context& parse) {
-		return parse.begin();
+		using CustomErrors = serenity::CustomFlagError::CustomErrors;
+		auto end { parse.end() };
+		auto pos { parse.begin() };
+		for( ;; ) {
+				if( pos >= end ) {
+						errHandler.ReportCustomError(CustomErrors::missing_enclosing_bracket);
+				}
+				if( *pos == '}' ) break;
+				fmtStr += *pos++;
+			}
+		return pos;
 	}
 
 	auto format(const std::tm& tmStruct, std::format_context& ctx) const {
-		auto tmp { tmStruct };
-		return std::format_to(ctx.out(), ctx.locale(), "{}", std::mktime(&tmp));
+		std::array<char, 128> largeBuff {};
+		auto written { strftime(largeBuff.data(), 255, fmtStr.data(), &tmStruct) };
+		std::format_to(ctx.out(), ctx.locale(), "{}", std::string_view(largeBuff.data(), written));
+		return ctx.out();
 	}
 };
