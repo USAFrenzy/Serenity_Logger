@@ -1,5 +1,6 @@
 #pragma once
 
+#include <UTF-Utils/utf-utils.h>
 #include <serenity/Defines.h>
 
 #include <source_location>
@@ -13,19 +14,12 @@
 
 namespace serenity {
 
-	// This lovely and amazing end to my headaches for getting the correct call site was provided by ivank at :
-	//   https://stackoverflow.com/a/66402319/11410972
-	// TODO: Probably In the top level formatting call, but just like how string types are converted to utf-8 in the formatting section,
-	//                I should handle encoding to utf-8 in the message itself as well in case other encodings are present and so that I can
-	//               appropriately encode back to the appropriate  encoding for the char type present in the container provided.
-	struct MsgWithLoc
+	struct MsgWithLoc: public utf_utils::InputSource
 	{
-		const std::string_view msg;
 		const std::source_location& source;
-		MsgWithLoc(std::string_view sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(const char* sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
-		MsgWithLoc(const std::string& sv, const std::source_location& src = std::source_location::current()): msg(sv), source(src) { }
+		template<typename T>
+		requires utf_utils::utf_constraints::IsSupportedUSource<T> MsgWithLoc(T&& msg, const std::source_location& src = std::source_location::current())
+			: utf_utils::InputSource(std::forward<T>(msg)), source(src) { }
 	};
 
 	namespace globals {

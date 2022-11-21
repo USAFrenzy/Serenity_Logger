@@ -32,7 +32,7 @@
 
 	#define ISATTY _isatty
 	#define FILENO _fileno
-[[noreturn]] __forceinline void unreachable() {
+[[noreturn]] __forceinline constexpr void unreachable() {
 	__assume(false);
 }
 	#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
@@ -44,7 +44,7 @@
 	#include <unistd.h>
 	#define ISATTY                      isatty
 	#define FILENO                      fileno
-[[noreturn]] inline __attribute__((always_inline)) void unreachable() {
+[[noreturn]] inline __attribute__((always_inline)) constexpr void unreachable() {
 	__builtin_unreachable();
 }
 	#define LOCAL_TIME(tmStruct, timeT) localtime_r(&tmStruct, &timeT)

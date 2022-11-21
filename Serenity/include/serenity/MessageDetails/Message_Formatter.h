@@ -73,7 +73,7 @@ namespace serenity::msg_details {
 		std::string_view LineEnding() const;
 		const std::string& Pattern() const;
 		void ModifyInternalFormatStringIfNeeded();
-		SeFmtFuncFlags FmtFunctionFlag();
+		SeFmtFuncFlags FmtFunctionFlag() const;
 		source_flag SourceFmtFlag() const;
 		int ThreadFmtLength() const;
 

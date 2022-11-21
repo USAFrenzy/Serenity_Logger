@@ -210,13 +210,13 @@ namespace serenity::msg_details {
 						switch( pattern[ pos ] ) {
 								case 'L':
 									{
-										fmtPattern.append("{0:%L}");
+										fmtPattern.append("{0:L}");
 										pattern.remove_prefix(++pos);
 										continue;
 									}
 								case 'l':
 									{
-										fmtPattern.append("{0:%l}");
+										fmtPattern.append("{0:l}");
 										pattern.remove_prefix(++pos);
 										continue;
 									}
@@ -409,7 +409,34 @@ namespace serenity::msg_details {
 										case 'M': fmtPattern.append("%M"); continue;
 										case 'R': fmtPattern.append("%R"); continue;
 										case 'S': fmtPattern.append("%S"); continue;
-										case 'T': fmtPattern.append("%T"); continue;
+										case 'T':
+											{
+												fmtPattern.append("%T");
+												if( ++pos >= size ) {
+														fmtPattern += '}';
+														return;
+												}
+												if( pattern[ pos ] != '.' ) {
+														fmtPattern += '}';
+														break;
+												}
+												if( ++pos >= size ) {
+														throw std::runtime_error("Error In User Defined Format String: Subsecond Precision Detected For Flag '%T' "
+														                         "Without Any Modifiers");
+														fmtPattern += '}';
+														return;
+												}
+												fmtPattern += '.';
+												for( ;; ) {
+														if( !IsDigit(pattern[ pos ]) ) break;
+														fmtPattern += pattern[ pos ];
+														if( ++pos >= size ) {
+																fmtPattern += '}';
+																break;
+														}
+													}
+												continue;
+											}
 										case 'U': fmtPattern.append("%U"); continue;
 										case 'V': fmtPattern.append("%V"); continue;
 										case 'W': fmtPattern.append("%W"); continue;
@@ -434,7 +461,7 @@ namespace serenity::msg_details {
 											}
 										case ' ': fmtPattern += ' '; continue;
 										default:
-											if( pattern[ --pos ] == ' ' ) {
+											if( fmtPattern[ --pos ] == ' ' ) {
 													// this is just for consistency's sake and doesn't affect the funtionality
 													++pos;
 													fmtPattern[ fmtPattern.size() - 1 ] = '}';
@@ -463,7 +490,7 @@ namespace serenity::msg_details {
 		return fmtPattern;
 	}
 
-	SeFmtFuncFlags serenity::msg_details::Message_Formatter::FmtFunctionFlag() {
+	SeFmtFuncFlags serenity::msg_details::Message_Formatter::FmtFunctionFlag() const {
 		return fmtFlags;
 	}
 
