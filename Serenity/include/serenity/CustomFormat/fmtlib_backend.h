@@ -45,7 +45,7 @@ template<> struct fmt::formatter<serenity::LoggerLevel>
 						default: ++pos; continue;
 					}
 			}
-		unreachable();
+		se_unreachable();
 		return pos;
 	}
 
