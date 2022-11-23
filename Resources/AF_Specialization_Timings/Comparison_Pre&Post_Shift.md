@@ -233,3 +233,80 @@
 -  133.400 MB/s
 
 ***************************************************************************************
+
+
+## Current Timings [23NOV22] - After the changes made in ArgFormatter (v1.0.5)
+
+```Color Console Target (ST)```
+
+        - In Nanoseconds:                       8.517250 ns
+        - In Microseconds:                      0.008517 us
+        - In Milliseconds:                      0.000009 ms
+        - In Seconds:                           0.000000 s
+
+```Spdlog Color Console Sink (ST)```
+
+        - In Nanoseconds:                       11.004750 s
+        - In Microseconds:                      0.011005 us
+        - In Milliseconds:                      0.000011 ms
+        - In Seconds:                           0.000000 s
+
+- ```Color Console Target Is + 22.603876 Percent Of Spdlog's Color Console Sink Speed```
+
+```File Target (ST)```
+
+        - In Nanoseconds:                       312.973511 ns
+        - In Microseconds:                      0.312973 us
+        - In Milliseconds:                      0.000313 ms
+        - In Seconds:                           0.000000 s
+
+```Spdlog Basic File Sink (ST)```
+
+        - In Nanoseconds:                       1247.370239 ns
+        - In Microseconds:                      1.247370 us
+        - In Milliseconds:                      0.001247 ms
+        - In Seconds:                           0.000001 s
+- ```File Target Is +74.909332 Percent Of Spdlog's File Sink Speed```
+
+```Roating Target (ST)```
+
+        - In Nanoseconds:                       1186.155396 ns
+        - In Microseconds:                      1.186155 us
+        - In Milliseconds:                      0.001186 ms
+        - In Seconds:                           0.000001 s
+
+```Spdlog Rotating File Sink (ST)```
+
+        - In Nanoseconds:                       2814.528564 ns
+        - In Microseconds:                      2.814528 us
+        - In Milliseconds:                      0.002815 ms
+        - In Seconds:                           0.000003 s
+
+- ```Rotating Target Is +57.855980 Percent Of Spdlog's Rotating File Sink Speed```
+
+Program Throughput :
+
+```Color Console Target Throughput:```
+
+-  44787.895 MB/s
+
+```spdlog Color Sink Throughput:```
+  
+-  34664.098 MB/s
+
+```File Target Throughput:```
+
+-  1218.856 MB/s
+
+```spdlog File Sink Throughput:```
+
+-  305.819 MB/s
+
+```Rotating Target Throughput:```
+
+-  321.602 MB/s
+
+```spdlog Rotating File Sink Throughput:```
+
+-  135.536 MB/s
+***************************************************************************************

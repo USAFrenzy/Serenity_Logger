@@ -45,7 +45,7 @@ template<> struct std::formatter<serenity::LoggerLevel>
 						default: ++pos; continue;
 					}
 			}
-		unreachable();
+		se_unreachable();
 		return pos;
 	}
 	auto format(const serenity::LoggerLevel& lvl, std::format_context& ctx) const {

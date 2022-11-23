@@ -11,10 +11,10 @@ get_and_increment_version()
 message("-- ${PROJECT_NAME} Building Version: ${SERENITY_FULL_VERSION}")
 
 # Versions of sub projects to build
-set(ARG_FMT_VERSION 1.0.4)
+set(ARG_FMT_VERSION 1.0.5)
 set(UTF_UTILS_VERSION 1.0.2)
 set(FMT_LIB_VERSION 9.1.0)
-set(SPDLOG_VERSION v1.10.0)
+set(SPDLOG_VERSION v1.11.0)
 
 # include directory paths from the sub projects
 set(VENDOR_FILE_LOCATION ${CMAKE_BINARY_DIR}/_deps)
