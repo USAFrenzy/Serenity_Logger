@@ -80,7 +80,7 @@ namespace serenity::targets::helpers {
 		size_t FileBufferSize();
 		void SetBufferCapacity(size_t value);
 		void InitializeFilePath(std::string_view fileName = "");
-		virtual bool RenameFile(std::string_view newFileName);
+		virtual bool RenameFile(utf_utils::InputSource newFileName);
 		void BackgroundFlushThread(std::stop_token stopToken);
 		void StopBackgroundThread();
 		void StartBackgroundThread();

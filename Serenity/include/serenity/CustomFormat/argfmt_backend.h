@@ -38,7 +38,7 @@ template<> struct formatter::CustomFormatter<serenity::LoggerLevel>
 														if( view == LevelView::Invalid ) errHandler.ReportCustomError(CustomErrors::token_with_no_flag);
 														return;
 													}
-												case ' ': [[fallthrough]];    // ignore whitespace 
+												case ' ': [[fallthrough]];    // ignore whitespace
 												default: continue;
 											}
 									}
@@ -62,7 +62,7 @@ template<> struct formatter::CustomFormatter<serenity::LoggerLevel>
 					}
 				case LevelView::Long:
 					{
-					const auto& tmp { serenity::LevelToLongView(lvl) };
+						const auto& tmp { serenity::LevelToLongView(lvl) };
 						fch::WriteToContainer(tmp, tmp.size(), std::forward<resultCtx>(ctx));
 						break;
 					}

@@ -73,8 +73,8 @@ namespace serenity::experimental::targets {
 	{
 	  public:
 		explicit RotatingTarget();
-		explicit RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
-		explicit RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists = false);
+		explicit RotatingTarget(utf_utils::InputSource name, utf_utils::InputSource filePath, bool replaceIfExists = false);
+		explicit RotatingTarget(utf_utils::InputSource name, utf_utils::InputSource formatPattern, utf_utils::InputSource filePath, bool replaceIfExists = false);
 		RotatingTarget(const RotatingTarget&)            = delete;
 		RotatingTarget& operator=(const RotatingTarget&) = delete;
 		~RotatingTarget();
@@ -84,7 +84,7 @@ namespace serenity::experimental::targets {
 		RotateLimits RotationLimits() const;
 
 		void RotateFile();
-		bool RenameFile(std::string_view newFileName) override;
+		bool RenameFile(utf_utils::InputSource newFileName) override;
 		bool ShouldRotate();
 		void SetLocale(const std::locale& loc) override;
 		void TruncLogOnFileSize(bool truncate);

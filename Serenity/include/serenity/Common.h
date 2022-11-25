@@ -83,7 +83,7 @@ namespace serenity {
 		off     = 6,
 	};
 
-	static std::string_view LevelToShortView(LoggerLevel level) {
+	static std::string_view LevelToShortView(const LoggerLevel& level) {
 		switch( level ) {
 				case LoggerLevel::info: return "I"; break;
 				case LoggerLevel::trace: return "T"; break;
@@ -95,7 +95,7 @@ namespace serenity {
 			}
 	}
 
-	static std::string_view LevelToLongView(LoggerLevel level) {
+	static std::string_view LevelToLongView(const LoggerLevel& level) {
 		switch( level ) {
 				case LoggerLevel::info: return "Info"; break;
 				case LoggerLevel::trace: return "Trace"; break;

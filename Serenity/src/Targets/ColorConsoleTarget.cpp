@@ -10,7 +10,7 @@ namespace serenity::targets {
 		}
 	}
 
-	ColorConsole::ColorConsole(std::string_view name): TargetBase(name), consoleMode(console_interface::std_out), coloredOutput(false) {
+	ColorConsole::ColorConsole(utf_utils::InputSource name): TargetBase(std::move(name.input)), consoleMode(console_interface::std_out), coloredOutput(false) {
 		TargetHelper()->Policy()->SetPrimaryMode(FlushSetting::always);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -19,8 +19,8 @@ namespace serenity::targets {
 		}
 	}
 
-	ColorConsole::ColorConsole(std::string_view name, std::string_view msgPattern)
-		: TargetBase(name, msgPattern), consoleMode(console_interface::std_out), coloredOutput(false) {
+	ColorConsole::ColorConsole(utf_utils::InputSource name, utf_utils::InputSource msgPattern)
+		: TargetBase(std::move(name.input), std::move(msgPattern.input)), consoleMode(console_interface::std_out), coloredOutput(false) {
 		TargetHelper()->Policy()->SetPrimaryMode(FlushSetting::always);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -57,12 +57,12 @@ namespace serenity::targets {
 #endif    // WINDOWS_PLATFORM
 	}
 
-	void ColorConsole::SetMsgColor(LoggerLevel level, std::string_view color) {
+	void ColorConsole::SetMsgColor(LoggerLevel level, utf_utils::InputSource color) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		msgLevelColors.at(level) = color;
+		msgLevelColors.at(level) = std::move(color.input);
 	}
 
 	std::string_view ColorConsole::GetMsgColor(LoggerLevel level) {

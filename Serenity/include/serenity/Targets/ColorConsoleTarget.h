@@ -18,12 +18,12 @@ namespace serenity::targets {
 	{
 	  public:
 		ColorConsole();
-		explicit ColorConsole(std::string_view name);
-		explicit ColorConsole(std::string_view name, std::string_view msgPattern);
+		explicit ColorConsole(utf_utils::InputSource name);
+		explicit ColorConsole(utf_utils::InputSource name, utf_utils::InputSource msgPattern);
 		~ColorConsole();
 
 		std::string_view GetMsgColor(LoggerLevel level);
-		void SetMsgColor(LoggerLevel level, std::string_view color);
+		void SetMsgColor(LoggerLevel level, utf_utils::InputSource color);
 		void SetConsoleInterface(console_interface mode);
 		const console_interface ConsoleInterface();
 		void ColorizeOutput(bool colorize);

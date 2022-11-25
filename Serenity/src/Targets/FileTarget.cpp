@@ -29,23 +29,24 @@ namespace serenity::targets {
 		InitializeLogs(((std::filesystem::current_path() /= "Logs") /= "Generic_Log.txt").string(), true);
 	}
 
-	FileTarget::FileTarget(std::string_view fileName, bool replaceIfExists): TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
+	FileTarget::FileTarget(utf_utils::InputSource fileName, bool replaceIfExists): TargetBase("File_Logger"), FileHelper(""), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
-		std::filesystem::path filePath { fileName };
+		std::filesystem::path filePath { fileName.input };
 		filePath.has_relative_path() ? InitializeLogs(filePath.string(), replaceIfExists)
-									 : InitializeLogs(((std::filesystem::current_path() /= "Logs") /= fileName).string(), replaceIfExists);
+									 : InitializeLogs(((std::filesystem::current_path() /= "Logs") /= fileName.input).string(), replaceIfExists);
 	}
 
-	FileTarget::FileTarget(std::string_view name, std::string_view fPath, bool replaceIfExists): TargetBase(name), FileHelper(fPath), fileMutex(std::mutex {}) {
+	FileTarget::FileTarget(utf_utils::InputSource name, utf_utils::InputSource fPath, bool replaceIfExists)
+		: TargetBase(std::move(name.input)), FileHelper(fPath.input), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
-		std::filesystem::path filePath { fPath };
+		std::filesystem::path filePath { std::move(fPath.input) };
 		filePath.has_relative_path() ? InitializeLogs(filePath.string(), replaceIfExists) : InitializeLogs(FileCacheHelper()->FilePath().string(), replaceIfExists);
 	}
 
-	FileTarget::FileTarget(std::string_view name, std::string_view formatPattern, std::string_view fPath, bool replaceIfExists)
-		: TargetBase(name, formatPattern), FileHelper(fPath), fileMutex(std::mutex {}) {
+	FileTarget::FileTarget(utf_utils::InputSource name, utf_utils::InputSource formatPattern, utf_utils::InputSource fPath, bool replaceIfExists)
+		: TargetBase(std::move(name.input), std::move(formatPattern.input)), FileHelper(fPath.input), fileMutex(std::mutex {}) {
 		SyncTargetHelpers(TargetHelper());
-		std::filesystem::path filePath { fPath };
+		std::filesystem::path filePath { std::move(fPath.input) };
 		filePath.has_relative_path() ? InitializeLogs(filePath.string(), replaceIfExists) : InitializeLogs(FileCacheHelper()->FilePath().string(), replaceIfExists);
 	}
 

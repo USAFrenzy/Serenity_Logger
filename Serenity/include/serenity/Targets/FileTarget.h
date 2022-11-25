@@ -10,9 +10,9 @@ namespace serenity::targets {
 	{
 	  public:
 		FileTarget();
-		explicit FileTarget(std::string_view fileName, bool replaceIfExists = false);
-		explicit FileTarget(std::string_view name, std::string_view filePath, bool replaceIfExists = false);
-		explicit FileTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists = false);
+		explicit FileTarget(utf_utils::InputSource fileName, bool replaceIfExists = false);
+		explicit FileTarget(utf_utils::InputSource name, utf_utils::InputSource filePath, bool replaceIfExists = false);
+		explicit FileTarget(utf_utils::InputSource name, utf_utils::InputSource formatPattern, utf_utils::InputSource filePath, bool replaceIfExists = false);
 		FileTarget(const FileTarget&)            = delete;
 		FileTarget& operator=(const FileTarget&) = delete;
 		~FileTarget();

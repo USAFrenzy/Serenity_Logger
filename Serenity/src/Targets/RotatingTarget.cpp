@@ -115,9 +115,10 @@ namespace serenity::experimental::targets {
 		SetCurrentFileSize(std::filesystem::file_size(FileCacheHelper()->FilePath()));
 	}
 
-	RotatingTarget::RotatingTarget(std::string_view name, std::string_view filePath, bool replaceIfExists)
-		: TargetBase(name), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
-		  messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true), numBuff(std::array<char, 6> {}) {
+	RotatingTarget::RotatingTarget(utf_utils::InputSource name, utf_utils::InputSource filePath, bool replaceIfExists)
+		: TargetBase(std::move(name.input)), RotateSettings(std::move(filePath.input)), rotationEnabled(true), m_mode(IntervalMode::file_size),
+		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true),
+		  numBuff(std::array<char, 6> {}) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 
 		SyncTargetHelpers(TargetHelper());
@@ -136,10 +137,10 @@ namespace serenity::experimental::targets {
 		SetCurrentFileSize(std::filesystem::file_size(FileCacheHelper()->FilePath()));
 	}
 
-	RotatingTarget::RotatingTarget(std::string_view name, std::string_view formatPattern, std::string_view filePath, bool replaceIfExists)
-		: TargetBase(name, formatPattern), RotateSettings(std::string(filePath)), rotationEnabled(true), m_mode(IntervalMode::file_size),
-		  currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false), truncateMessage(true),
-		  numBuff(std::array<char, 6> {}) {
+	RotatingTarget::RotatingTarget(utf_utils::InputSource name, utf_utils::InputSource formatPattern, utf_utils::InputSource filePath, bool replaceIfExists)
+		: TargetBase(std::move(name.input), std::move(formatPattern.input)), RotateSettings(std::move(filePath.input)), rotationEnabled(true),
+		  m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()), messageSize(0), dsCache(RotatingDaylightCache {}), isAboveMsgLimit(false),
+		  truncateMessage(true), numBuff(std::array<char, 6> {}) {
 		dsCache.initialDSValue = MsgInfo()->TimeDetails().IsDaylightSavings();
 		SyncTargetHelpers(TargetHelper());
 		std::filesystem::path rotationReadyFile { FileCacheHelper()->FilePath() };
@@ -170,18 +171,18 @@ namespace serenity::experimental::targets {
 		CloseFile();
 	}
 
-	bool RotatingTarget::RenameFile(std::string_view newFileName) {
+	bool RotatingTarget::RenameFile(utf_utils::InputSource newFileName) {
 		std::unique_lock<std::mutex> lock(rotatingMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		// make copy for old file conversion and cache new values
-		if( !utf_utils::IsValidU8(newFileName) ) {
+		if( newFileName.input.size() == 0 ) {
 				throw std::runtime_error("Error In File Name For Rotating Target Function Rename(): Invalid UTF-8 Sequence Detected - A Proper File Name Cannot Be "
 				                         "Constructed");
 		}
+		// make copy for old file conversion and cache new values
 		std::filesystem::path newFile { FileCacheHelper()->FilePath() };
-		newFile.replace_filename(newFileName);
+		newFile.replace_filename(std::move(newFileName.input));
 		FileCacheHelper()->CacheFile(newFile.string(), true);
 		try {
 				RotateFile();
@@ -252,7 +253,6 @@ namespace serenity::experimental::targets {
 						}
 				}
 			}
-		std::filesystem::remove(fileToReplace);
 		auto previousFile { FileCacheHelper()->FileName() };
 		if( !fileToReplace.empty() ) {
 				FileCacheHelper()->SetFilePath(fileToReplace);

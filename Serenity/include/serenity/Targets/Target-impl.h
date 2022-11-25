@@ -106,7 +106,7 @@ template<typename... Args> void serenity::targets::TargetBase::Trace(MsgWithLoc 
 			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
-			LogMessage(s.input, std::forward<Args>(args)...);
+			LogMessage(std::move(s.input), std::forward<Args>(args)...);
 	}
 }
 
@@ -116,7 +116,7 @@ template<typename... Args> void serenity::targets::TargetBase::Info(MsgWithLoc s
 			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
-			LogMessage(s.input, std::forward<Args>(args)...);
+			LogMessage(std::move(s.input), std::forward<Args>(args)...);
 	}
 }
 
@@ -126,7 +126,7 @@ template<typename... Args> void serenity::targets::TargetBase::Debug(MsgWithLoc 
 			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
-			LogMessage(s.input, std::forward<Args>(args)...);
+			LogMessage(std::move(s.input), std::forward<Args>(args)...);
 	}
 }
 
@@ -136,7 +136,7 @@ template<typename... Args> void serenity::targets::TargetBase::Warn(MsgWithLoc s
 			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
-			LogMessage(s.input, std::forward<Args>(args)...);
+			LogMessage(std::move(s.input), std::forward<Args>(args)...);
 	}
 }
 
@@ -146,7 +146,7 @@ template<typename... Args> void serenity::targets::TargetBase::Error(MsgWithLoc 
 			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
-			LogMessage(s.input, std::forward<Args>(args)...);
+			LogMessage(std::move(s.input), std::forward<Args>(args)...);
 	}
 }
 
@@ -156,6 +156,6 @@ template<typename... Args> void serenity::targets::TargetBase::Fatal(MsgWithLoc 
 			if( auto flag { msgPattern->FmtFunctionFlag() }; flag == (flag & serenity::msg_details::SeFmtFuncFlags::Src) ) {
 					msgDetails->SourceLocation() = s.source;
 			}
-			LogMessage(s.input, std::forward<Args>(args)...);
+			LogMessage(std::move(s.input), std::forward<Args>(args)...);
 	}
 }
