@@ -227,19 +227,22 @@ namespace serenity::targets::helpers {
 	}
 
 	bool FileHelper::RenameFile(utf_utils::InputSource newFileName) {
+		if( !CloseFile() ) {
+				fprintf(stderr, "Error In RenameFile(): Unable To Close The File For Renaming\n");
+				return false;
+		}
+		// make copy for old file conversion
+		std::filesystem::path newFile { fileCache->FilePath() };
+		newFile.replace_filename(std::move(newFileName.input));
 		try {
-				CloseFile();
-				// make copy for old file conversion
-				std::filesystem::path newFile { fileCache->FilePath() };
-				newFile.replace_filename(std::move(newFileName.input));
 				std::filesystem::rename(fileCache->FilePath(), newFile);
-				fileCache->SetFilePath(std::move(newFile));
-				return OpenFile();
 			}
 		catch( const std::exception& e ) {
-				printf("Error In Renaming File: %s\n", e.what());
+				printf("Error In RenameFile(): %s\n", e.what());
 				return false;
 			}
+		fileCache->SetFilePath(std::move(newFile));
+		return OpenFile();
 	}
 
 	void FileHelper::OpenImpl(bool truncate) {
@@ -296,10 +299,13 @@ namespace serenity::targets::helpers {
 
 	void FileHelper::CloseImpl() {
 		if( fileOpen ) {
-				CLOSE(file);
-				fileOpen = false;
+				if( CLOSE(file) != 1 ) {
+						fileOpen = false;
+						buffer.clear();
+						return;
+				}
+				fprintf(stderr, "%s", std::system_error(EBADF, std::system_category()).what());
 		}
-		buffer.clear();
 	}
 
 	void FileHelper::WriteToFile(size_t writeLimit, bool truncateRest) {

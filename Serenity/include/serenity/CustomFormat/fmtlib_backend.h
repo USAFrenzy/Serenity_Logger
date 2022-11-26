@@ -128,10 +128,14 @@ template<> struct fmt::formatter<std::tm>
 		return pos;
 	}
 
+#ifndef FMT_BUFF_SIZE
+	#define FMT_BUFF_SIZE 128
+#endif
+
 	auto format(const std::tm& tmStruct, fmt::format_context& ctx) const {
-		std::array<char, 128> largeBuff {};
+		std::array<char, FMT_BUFF_SIZE> largeBuff {};
 		if( subSecStr.size() == 1 ) {
-				auto written { strftime(largeBuff.data(), 255, fmtStr.data(), &tmStruct) };
+				auto written { strftime(largeBuff.data(), FMT_BUFF_SIZE, fmtStr.data(), &tmStruct) };
 				fmt::vformat_to(ctx.out(), "{}", fmt::make_format_args(std::string_view(largeBuff.data(), written)));
 		} else {
 				auto pos { -1 };
@@ -142,14 +146,14 @@ template<> struct fmt::formatter<std::tm>
 						if( fmt[ pos ] != 'T' ) continue;
 						auto firstPortion { std::move(fmt.substr(0, ++pos)) };
 						fmt.remove_prefix(pos);
-						auto written { strftime(largeBuff.data(), 255, firstPortion.data(), &tmStruct) };
+						auto written { strftime(largeBuff.data(), FMT_BUFF_SIZE, firstPortion.data(), &tmStruct) };
 						for( const auto& ch: subSecStr ) {
 								largeBuff[ written ] = ch;
 								++written;
 							}
 						if( fmt.size() != 0 ) {
 								firstPortion = fmt.substr(written, fmt.size());
-								written += strftime(largeBuff.data() + pos, 255, firstPortion.data(), &tmStruct);
+								written += strftime(largeBuff.data() + pos, FMT_BUFF_SIZE, firstPortion.data(), &tmStruct);
 						}
 						fmt::vformat_to(ctx.out(), "{}", fmt::make_format_args(std::string_view(largeBuff.data(), written)));
 						break;

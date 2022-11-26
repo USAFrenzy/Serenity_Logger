@@ -262,7 +262,7 @@ namespace serenity::msg_details {
 														case 'F': sourceFlag |= serenity::source_flag::function; continue;
 														default: break;
 													}
-												pattern.remove_prefix(++pos);
+												pattern.remove_prefix(pos);
 												fmtPattern += '}';
 												break;
 											}

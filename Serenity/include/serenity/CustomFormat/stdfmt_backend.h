@@ -96,10 +96,10 @@ template<> struct std::formatter<std::tm>
 							{
 								if( subSecStr.size() == 1 ) {
 										fmtStr.append(parse.begin(), pos);
-								} else if( static_cast<size_t>(end - pos) >  lastMarker ) {
-									std::string_view tmp {parse.begin() + lastMarker, end};
-									tmp.remove_suffix(end-pos);
-									fmtStr.append(tmp.data(), tmp.size());
+								} else if( static_cast<size_t>(end - pos) > lastMarker ) {
+										std::string_view tmp { parse.begin() + lastMarker, end };
+										tmp.remove_suffix(end - pos);
+										fmtStr.append(tmp.data(), tmp.size());
 								}
 								return pos;
 							}
@@ -126,10 +126,14 @@ template<> struct std::formatter<std::tm>
 		return pos;
 	}
 
+#ifndef FMT_BUFF_SIZE
+	#define FMT_BUFF_SIZE 128
+#endif
+
 	auto format(const std::tm& tmStruct, std::format_context& ctx) const {
-		std::array<char, 128> largeBuff {};
+		std::array<char, FMT_BUFF_SIZE> largeBuff {};
 		if( subSecStr.size() == 1 ) {
-				auto written { strftime(largeBuff.data(), 255, fmtStr.data(), &tmStruct) };
+				auto written { strftime(largeBuff.data(), FMT_BUFF_SIZE, fmtStr.data(), &tmStruct) };
 				std::format_to(ctx.out(), ctx.locale(), "{}", std::string_view(largeBuff.data(), written));
 		} else {
 				auto pos { -1 };
@@ -140,14 +144,14 @@ template<> struct std::formatter<std::tm>
 						if( fmt[ pos ] != 'T' ) continue;
 						auto firstPortion { std::move(fmt.substr(0, ++pos)) };
 						fmt.remove_prefix(pos);
-						auto written { strftime(largeBuff.data(), 255, firstPortion.data(), &tmStruct) };
+						auto written { strftime(largeBuff.data(), FMT_BUFF_SIZE, firstPortion.data(), &tmStruct) };
 						for( const auto& ch: subSecStr ) {
 								largeBuff[ written ] = ch;
 								++written;
 							}
 						if( fmt.size() != 0 ) {
 								firstPortion = fmt.substr(written, fmt.size());
-								written += strftime(largeBuff.data() + pos, 255, firstPortion.data(), &tmStruct);
+								written += strftime(largeBuff.data() + pos, FMT_BUFF_SIZE, firstPortion.data(), &tmStruct);
 						}
 						std::format_to(ctx.out(), ctx.locale(), "{}", std::string_view(largeBuff.data(), written));
 						break;

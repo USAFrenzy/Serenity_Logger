@@ -342,7 +342,7 @@ namespace serenity::experimental::targets {
 		auto limits { RotationLimits() };
 
 		if( !rotationEnabled ) return false;
-		auto& cache = MsgInfo()->TimeDetails().Cache();
+		const auto& cache = MsgInfo()->TimeDetails().Cache();
 
 		switch( RotationMode() ) {
 				case IntervalMode::file_size:

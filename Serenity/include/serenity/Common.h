@@ -138,43 +138,46 @@ namespace serenity {
 	}
 
 	namespace msg_details::custom_flags {
+
+		inline static constexpr size_t SOURCE_BUFF_SIZE { 6 };
+
+		// Not All Functions Can Be Made `constexpr` due to the usage of `std::memset()` and `std::to_chars()`
 		class Format_Source_Loc
 		{
 		  public:
 			explicit Format_Source_Loc(const std::source_location& src, const source_flag& flag)
-				: srcLocation(src), buff(std::array<char, 6> {}), spec(flag), result(std::string {}) { }
+				: srcLocation(src), buff(std::array<char, SOURCE_BUFF_SIZE> {}), spec(flag), result(std::string {}) { }
 			Format_Source_Loc(const Format_Source_Loc&)            = delete;
 			Format_Source_Loc& operator=(const Format_Source_Loc&) = delete;
 			~Format_Source_Loc()                                   = default;
 
 			void FormatAll() {
-				result.append("[ ").append(srcLocation.file_name()).append("(");
-				std::memset(buff.data(), 0, buff.size());
-				auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-				result.append(buff.data(), end - buff.data()).append(":");
-				std::memset(buff.data(), 0, buff.size());
-				end = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column()).ptr;
-				result.append(buff.data(), end - buff.data()).append(") ");
+				auto data { buff.data() };
+				result.append("[ ").append(std::move(std::filesystem::path { srcLocation.file_name() }.filename().string())).append("(");
+				std::memset(data, 0, SOURCE_BUFF_SIZE);
+				result.append(data, std::to_chars(data, data + SOURCE_BUFF_SIZE, srcLocation.line()).ptr - data).append(":");
+				std::memset(data, 0, SOURCE_BUFF_SIZE);
+				result.append(data, std::to_chars(data, data + SOURCE_BUFF_SIZE, srcLocation.column()).ptr - data).append(") ");
 				result.append(srcLocation.function_name()).append(" ]");
 			}
 
 			void FormatLine() {
-				std::memset(buff.data(), 0, buff.size());
-				auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.line());
-				result.append(buff.data(), end - buff.data());
+				auto data { buff.data() };
+				std::memset(data, 0, SOURCE_BUFF_SIZE);
+				result.append(data, std::to_chars(data, data + SOURCE_BUFF_SIZE, srcLocation.line()).ptr - data);
 			}
 
 			void FormatColumn() {
-				std::memset(buff.data(), 0, buff.size());
-				auto [ end, ec ] = std::to_chars(buff.data(), buff.data() + buff.size(), srcLocation.column());
-				result.append(buff.data(), end - buff.data());
+				auto data { buff.data() };
+				std::memset(data, 0, 6);
+				result.append(data, std::to_chars(data, data + 6, srcLocation.column()).ptr - data);
 			}
 
 			void FormatFile() {
-				result.append(srcLocation.file_name());
+				result.append(std::move(std::filesystem::path { srcLocation.file_name() }.filename().string()));
 			}
 
-			void FormatFunction() {
+			inline constexpr void FormatFunction() {
 				result.append(srcLocation.function_name());
 			}
 
@@ -211,6 +214,7 @@ namespace serenity {
 							break;
 						case 11:
 							FormatFunction();
+							result.append(": (");
 							FormatLine();
 							result.append(":");
 							FormatColumn();
@@ -228,7 +232,7 @@ namespace serenity {
 
 		  private:
 			const std::source_location& srcLocation;
-			std::array<char, 6> buff;
+			std::array<char, SOURCE_BUFF_SIZE> buff;
 			const source_flag& spec;
 			std::string result;
 		};

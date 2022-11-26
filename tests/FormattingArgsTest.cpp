@@ -441,29 +441,28 @@ TEST_CASE("Format Function Test") {
 TEST_CASE("Custom Formatting Test For Message_Info") {
 	namespace cf = serenity::msg_details::custom_flags;
 	const serenity::msg_details::Message_Info testInfo { "TestFormatting", serenity::LoggerLevel::trace, serenity::message_time_mode::local };
-	serenity::targets::SeFmtArgRefs testRefWrapper { testInfo };
 
 	testInfo.SetMsgLevel(serenity::LoggerLevel::trace);
-	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Trace");
-	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "T");
+	REQUIRE(formatter::format("{:%L}", testInfo.MsgLevel()) == "Trace");
+	REQUIRE(formatter::format("{:%l}", testInfo.MsgLevel()) == "T");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::info);
-	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Info");
-	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "I");
+	REQUIRE(formatter::format("{:%L}", testInfo.MsgLevel()) == "Info");
+	REQUIRE(formatter::format("{:%l}", testInfo.MsgLevel()) == "I");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::debug);
-	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Debug");
-	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "D");
+	REQUIRE(formatter::format("{:%L}", testInfo.MsgLevel()) == "Debug");
+	REQUIRE(formatter::format("{:%l}", testInfo.MsgLevel()) == "D");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::warning);
-	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Warn");
-	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "W");
+	REQUIRE(formatter::format("{:%L}", testInfo.MsgLevel()) == "Warn");
+	REQUIRE(formatter::format("{:%l}", testInfo.MsgLevel()) == "W");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::error);
-	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Error");
-	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "E");
+	REQUIRE(formatter::format("{:%L}", testInfo.MsgLevel()) == "Error");
+	REQUIRE(formatter::format("{:%l}", testInfo.MsgLevel()) == "E");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::fatal);
-	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "Fatal");
-	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "F");
+	REQUIRE(formatter::format("{:%L}", testInfo.MsgLevel()) == "Fatal");
+	REQUIRE(formatter::format("{:%l}", testInfo.MsgLevel()) == "F");
 	testInfo.SetMsgLevel(serenity::LoggerLevel::off);
-	REQUIRE(formatter::format("{:%L}", testRefWrapper.m_lvl) == "");
-	REQUIRE(formatter::format("{:%l}", testRefWrapper.m_lvl) == "");
+	REQUIRE(formatter::format("{:%L}", testInfo.MsgLevel()) == "");
+	REQUIRE(formatter::format("{:%l}", testInfo.MsgLevel()) == "");
 }
 
 #endif    //  USE_BUILT_IN_FMT
