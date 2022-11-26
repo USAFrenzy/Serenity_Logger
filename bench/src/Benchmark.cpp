@@ -54,7 +54,7 @@ constexpr const char* msg { "{}" };
 
 int main() {
 	std::vector<spdlog::sink_ptr> sinks;
-	std::string spdlogPattern { "%^|%L| %a %d%b%C %T [%n]: %v%$" };
+	std::string spdlogPattern { "%^|%L| %a %d%b%y %T [%n]: %v%$" };
 
 	auto stdoutSink { std::make_shared<spdlog::sinks::stdout_color_sink_st>() };
 	sinks.emplace_back(stdoutSink);

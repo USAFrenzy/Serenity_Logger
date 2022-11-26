@@ -46,6 +46,7 @@ namespace serenity::msg_details {
 				case 'e': [[fallthrough]];
 				case 'g': [[fallthrough]];
 				case 'j': [[fallthrough]];
+				case 'k': [[fallthrough]];
 				case 'm': [[fallthrough]];
 				case 'p': [[fallthrough]];
 				case 'r': [[fallthrough]];
@@ -341,6 +342,16 @@ namespace serenity::msg_details {
 										case 'e': fmtPattern.append("%e"); continue;
 										case 'g': fmtPattern.append("%g"); continue;
 										case 'j': fmtPattern.append("%j"); continue;
+										case 'k':
+											{
+#ifdef USE_BUILT_IN_FMT
+												fmtPattern.append("%k");
+#else
+												fmtPattern.append("%a %d%b%y %T");
+#endif    // USE_NATIVEFMT
+												continue;
+											}
+
 										case 'm': fmtPattern.append("%m"); continue;
 										case 'p': fmtPattern.append("%p"); continue;
 										case 'r': fmtPattern.append("%r"); continue;
@@ -459,7 +470,17 @@ namespace serenity::msg_details {
 												fmtPattern += '%';
 												continue;
 											}
-										case ' ': fmtPattern += ' '; continue;
+										case ' ':
+											// this is just for consistency's sake and doesn't affect the funtionality
+											if( ++pos >= size ) return;
+											if( fmtPattern[ pos ] != '}' ) {
+													--pos;
+													fmtPattern += ' ';
+													continue;
+											} else {
+													--pos;
+													continue;
+												}
 										default:
 											if( fmtPattern[ --pos ] == ' ' ) {
 													// this is just for consistency's sake and doesn't affect the funtionality

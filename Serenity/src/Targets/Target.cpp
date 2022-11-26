@@ -11,7 +11,7 @@
 #endif        // BUILT_IN_FORMATTING_ENABLED
 
 namespace serenity::targets {
-	constexpr const char* DEFAULT_PATTERN = "|%l| %a %d%b%y %T [%N]: %+";
+	constexpr const char* DEFAULT_PATTERN = "|%l| %k [%N]: %+";
 
 	TargetBase::TargetBase()
 		: logLevel(LoggerLevel::trace), msgLevel(LoggerLevel::trace), pattern(DEFAULT_PATTERN),
