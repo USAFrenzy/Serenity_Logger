@@ -14,13 +14,13 @@ namespace serenity::targets {
 		std_log,
 	};
 
-	class ColorConsole: public TargetBase
+	class ConsoleTarget: public TargetBase
 	{
 	  public:
-		ColorConsole();
-		explicit ColorConsole(utf_utils::InputSource name);
-		explicit ColorConsole(utf_utils::InputSource name, utf_utils::InputSource msgPattern);
-		~ColorConsole();
+		ConsoleTarget();
+		explicit ConsoleTarget(utf_utils::InputSource name);
+		explicit ConsoleTarget(utf_utils::InputSource name, utf_utils::InputSource msgPattern);
+		~ConsoleTarget();
 
 		std::string_view GetMsgColor(LoggerLevel level);
 		void SetMsgColor(LoggerLevel level, utf_utils::InputSource color);
@@ -46,6 +46,6 @@ namespace serenity::targets {
 #endif    // WINDOWS_PLATFORM
 		std::mutex consoleMutex;
 		std::string message;
-	};    // class ColorConsole
+	};    // class ConsoleTarget
 
 }    // namespace serenity::targets

@@ -52,7 +52,7 @@ namespace serenity::msg_details {
 		bool IsDaylightSavings() const;
 		void UpdateTimeDate(std::chrono::system_clock::time_point timePoint);
 		void UpdateCache(std::chrono::system_clock::time_point timePoint);
-		const std::tm& Cache() const;
+		std::tm& Cache() const;
 		void SetTimeMode(message_time_mode mode);
 		const message_time_mode& Mode() const;
 		const std::chrono::seconds& LastLogPoint() const;
@@ -65,7 +65,7 @@ namespace serenity::msg_details {
 
 	  private:
 		message_time_mode m_mode;
-		std::tm m_cache;
+		mutable std::tm m_cache;
 		std::chrono::seconds secsSinceLastLog;
 		bool leapYear;
 		int currentYear;

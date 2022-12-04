@@ -3,7 +3,7 @@
 #include <serenity/Targets/Target.h>
 #include <serenity/Utilities/FileHelper.h>
 
-namespace serenity::experimental {
+namespace serenity {
 
 	struct RotateLimits
 	{
@@ -24,7 +24,7 @@ namespace serenity::experimental {
 		monthly   = 4,
 	};
 
-	class RotateSettings: public serenity::targets::helpers::FileHelper
+	class RotateSettings: public targets::helpers::FileHelper
 	{
 	  public:
 		explicit RotateSettings(const std::string& path);
@@ -52,9 +52,9 @@ namespace serenity::experimental {
 		size_t currentFileSize;
 		bool initalRotationEnabled;
 	};
-}    // namespace serenity::experimental
+}    // namespace serenity
 
-namespace serenity::experimental::targets {
+namespace serenity::targets {
 
 	// Initialize to negative values so condition checks pass if isn't DS and these haven't been
 	// updated rather than zero-initializing them and causing a potential false positive conditional check
@@ -69,7 +69,7 @@ namespace serenity::experimental::targets {
 		int dsDayOfMonth { -1 };
 	};
 
-	class RotatingTarget: public serenity::targets::TargetBase, public serenity::experimental::RotateSettings
+	class RotatingTarget: public TargetBase, public RotateSettings
 	{
 	  public:
 		explicit RotatingTarget();

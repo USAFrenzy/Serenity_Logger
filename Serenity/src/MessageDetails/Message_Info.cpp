@@ -9,7 +9,7 @@ namespace serenity::msg_details {
 		return m_msgLevel;
 	}
 
-	const LoggerLevel& Message_Info::MsgLevel() const {
+	LoggerLevel& Message_Info::MsgLevel() const {
 		return m_msgLevel;
 	}
 
@@ -17,7 +17,7 @@ namespace serenity::msg_details {
 		return m_name;
 	}
 
-	const std::string& Message_Info::Name() const {
+	std::string_view Message_Info::Name() const {
 		return m_name;
 	}
 
@@ -49,7 +49,7 @@ namespace serenity::msg_details {
 		return m_msgTime.Mode();
 	}
 
-	const std::tm& Message_Info::TimeInfo() const {
+	std::tm& Message_Info::TimeInfo() const {
 		return m_msgTime.Cache();
 	}
 
@@ -57,7 +57,7 @@ namespace serenity::msg_details {
 		return m_message;
 	}
 
-	std::string& Message_Info::Message() const {
+	std::string_view Message_Info::Message() const {
 		return m_message;
 	}
 

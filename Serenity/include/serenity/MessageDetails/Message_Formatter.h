@@ -71,7 +71,7 @@ namespace serenity::msg_details {
 		void SetLocaleReference(const std::locale& loc);
 		const std::locale& Locale() const;
 		std::string_view LineEnding() const;
-		const std::string& Pattern() const;
+		std::string_view Pattern() const;
 		void ModifyInternalFormatStringIfNeeded();
 		SeFmtFuncFlags FmtFunctionFlag() const;
 		source_flag SourceFmtFlag() const;

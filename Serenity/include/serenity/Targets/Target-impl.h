@@ -24,84 +24,71 @@ template<typename T>
 requires utf_utils::utf_constraints::IsSupportedUContainer<std::remove_cvref_t<T>>
 inline constexpr auto serenity::targets::TargetBase::FormatLogMessage(T&& cont) {
 	using enum serenity::msg_details::SeFmtFuncFlags;
-	namespace cf = serenity::msg_details::custom_flags;
-	using sv     = std::string_view;
+	using namespace serenity::msg_details::custom_flags;
+	const auto& info { *msgDetails };
+	const auto& fmt { *msgPattern };
 
-	const auto& details { *msgDetails };
-	const auto& fmtr { *msgPattern };
-
-#ifdef USE_FMT_LIB
-	// make local copies because fmt doesn't like const arguments
-	auto lvl { details.MsgLevel() };
-	auto timeStruct { details.TimeInfo() };
-#else
-	const auto& lvl { details.MsgLevel() };
-	const auto& timeStruct { details.TimeInfo() };
-#endif    // USE_FMT_LIB
-
-	switch( fmtr.FmtFunctionFlag() ) {
+	switch( fmt.FmtFunctionFlag() ) {
 			case Time_Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), timeStruct);
+					return VFORMAT_TO(std::forward<T>(cont), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), info.TimeInfo());
 				}
 			case Localized_Time_Base:
 				{
-					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), timeStruct);
+					return VFORMAT_TO_L(std::forward<T>(cont), fmt.Locale(), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), info.TimeInfo());
 				}
 			case Base:
 				{
-					return VFORMAT_TO(std::forward<T>(cont), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()));
+					return VFORMAT_TO(std::forward<T>(cont), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message());
 				}
 			case Src_Base:
 				{
-					auto src { std::move(cf::Format_Source_Loc { details.SourceLocation(), fmtr.SourceFmtFlag() }.FormatUserPattern()) };
-					return VFORMAT_TO(std::forward<T>(cont), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), sv(src));
+					auto src { std::string_view(std::move(Format_Source_Loc { info.SourceLocation(), fmt.SourceFmtFlag() }.FormatUserPattern())) };
+					return VFORMAT_TO(std::forward<T>(cont), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), src);
 				}
 			case Time_Src_Base:
 				{
-					auto src { std::move(cf::Format_Source_Loc { details.SourceLocation(), fmtr.SourceFmtFlag() }.FormatUserPattern()) };
-					return VFORMAT_TO(std::forward<T>(cont), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), sv(src), timeStruct);
+					auto src { std::string_view(std::move(Format_Source_Loc { info.SourceLocation(), fmt.SourceFmtFlag() }.FormatUserPattern())) };
+					return VFORMAT_TO(std::forward<T>(cont), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), src, info.TimeInfo());
 				}
 			case Localized_Time_Src_Base:
 				{
-					auto src { std::move(cf::Format_Source_Loc { details.SourceLocation(), fmtr.SourceFmtFlag() }.FormatUserPattern()) };
-					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), sv(src), timeStruct);
+					auto src { std::string_view(std::move(Format_Source_Loc { info.SourceLocation(), fmt.SourceFmtFlag() }.FormatUserPattern())) };
+					return VFORMAT_TO_L(std::forward<T>(cont), fmt.Locale(), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), src, info.TimeInfo());
 				}
 			case Thread_Base:
 				{
-					auto thread { std::move(cf::Format_Thread_ID { details.ThisThreadID() }.FormatUserPattern(fmtr.ThreadFmtLength())) };
-					return VFORMAT_TO(std::forward<T>(cont), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), thread);
+					auto thread { std::string_view(std::move(Format_Thread_ID { info.ThisThreadID() }.FormatUserPattern(fmt.ThreadFmtLength()))) };
+					return VFORMAT_TO(std::forward<T>(cont), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), thread);
 				}
 			case Time_Thread_Base:
 				{
-					auto thread { std::move(cf::Format_Thread_ID { details.ThisThreadID() }.FormatUserPattern(fmtr.ThreadFmtLength())) };
-					return VFORMAT_TO(std::forward<T>(cont), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), sv(thread), timeStruct);
+					auto thread { std::string_view(std::move(Format_Thread_ID { info.ThisThreadID() }.FormatUserPattern(fmt.ThreadFmtLength()))) };
+					return VFORMAT_TO(std::forward<T>(cont), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), thread, info.TimeInfo());
 				}
 			case Localized_Time_Thread_Base:
 				{
-					auto thread { std::move(cf::Format_Thread_ID { details.ThisThreadID() }.FormatUserPattern(fmtr.ThreadFmtLength())) };
-					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), sv(thread),
-					                    timeStruct);
+					auto thread { std::string_view(std::move(Format_Thread_ID { info.ThisThreadID() }.FormatUserPattern(fmt.ThreadFmtLength()))) };
+					return VFORMAT_TO_L(std::forward<T>(cont), fmt.Locale(), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), thread, info.TimeInfo());
 				}
 			case Src_Thread_Base:
 				{
-					auto src { std::move(cf::Format_Source_Loc { details.SourceLocation(), fmtr.SourceFmtFlag() }.FormatUserPattern()) };
-					auto thread { std::move(cf::Format_Thread_ID { details.ThisThreadID() }.FormatUserPattern(fmtr.ThreadFmtLength())) };
-					return VFORMAT_TO(std::forward<T>(cont), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), sv(src), thread);
+					auto src { std::string_view(std::move(Format_Source_Loc { info.SourceLocation(), fmt.SourceFmtFlag() }.FormatUserPattern())) };
+					auto thread { std::string_view(std::move(Format_Thread_ID { info.ThisThreadID() }.FormatUserPattern(fmt.ThreadFmtLength()))) };
+					return VFORMAT_TO(std::forward<T>(cont), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), src, thread);
 				}
 			case Time_Src_Thread_Base:
 				{
-					auto src { std::move(cf::Format_Source_Loc { details.SourceLocation(), fmtr.SourceFmtFlag() }.FormatUserPattern()) };
-					auto thread { std::move(cf::Format_Thread_ID { details.ThisThreadID() }.FormatUserPattern(fmtr.ThreadFmtLength())) };
-					return VFORMAT_TO(std::forward<T>(cont), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), sv(src), sv(thread), timeStruct);
+					auto src { std::string_view(std::move(Format_Source_Loc { info.SourceLocation(), fmt.SourceFmtFlag() }.FormatUserPattern())) };
+					auto thread { std::string_view(std::move(Format_Thread_ID { info.ThisThreadID() }.FormatUserPattern(fmt.ThreadFmtLength()))) };
+					return VFORMAT_TO(std::forward<T>(cont), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), src, thread, info.TimeInfo());
 				}
 			case Localized_Time_Src_Thread_Base: [[fallthrough]];
 			default:
 				{
-					auto src { std::move(cf::Format_Source_Loc { details.SourceLocation(), fmtr.SourceFmtFlag() }.FormatUserPattern()) };
-					auto thread { std::move(cf::Format_Thread_ID { details.ThisThreadID() }.FormatUserPattern(fmtr.ThreadFmtLength())) };
-					return VFORMAT_TO_L(std::forward<T>(cont), fmtr.Locale(), sv(fmtr.Pattern()), lvl, sv(details.Name()), sv(details.Message()), sv(src),
-					                    sv(thread), timeStruct);
+					auto src { std::string_view(std::move(Format_Source_Loc { info.SourceLocation(), fmt.SourceFmtFlag() }.FormatUserPattern())) };
+					auto thread { std::string_view(std::move(Format_Thread_ID { info.ThisThreadID() }.FormatUserPattern(fmt.ThreadFmtLength()))) };
+					return VFORMAT_TO_L(std::forward<T>(cont), fmt.Locale(), fmt.Pattern(), info.MsgLevel(), info.Name(), info.Message(), src, thread, info.TimeInfo());
 				}
 		}
 }

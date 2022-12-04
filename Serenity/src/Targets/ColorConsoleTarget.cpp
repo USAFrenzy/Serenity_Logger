@@ -1,7 +1,7 @@
-#include <serenity/Targets/ColorConsoleTarget.h>
+#include <serenity/Targets/ConsoleTarget.h>
 
 namespace serenity::targets {
-	ColorConsole::ColorConsole(): TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false) {
+	ConsoleTarget::ConsoleTarget(): TargetBase("Console Logger"), consoleMode(console_interface::std_out), coloredOutput(false) {
 		TargetHelper()->Policy()->SetPrimaryMode(FlushSetting::always);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -10,7 +10,7 @@ namespace serenity::targets {
 		}
 	}
 
-	ColorConsole::ColorConsole(utf_utils::InputSource name): TargetBase(std::move(name.input)), consoleMode(console_interface::std_out), coloredOutput(false) {
+	ConsoleTarget::ConsoleTarget(utf_utils::InputSource name): TargetBase(std::move(name.input)), consoleMode(console_interface::std_out), coloredOutput(false) {
 		TargetHelper()->Policy()->SetPrimaryMode(FlushSetting::always);
 		SetConsoleInterface(consoleMode);
 		SetOriginalColors();
@@ -19,7 +19,7 @@ namespace serenity::targets {
 		}
 	}
 
-	ColorConsole::ColorConsole(utf_utils::InputSource name, utf_utils::InputSource msgPattern)
+	ConsoleTarget::ConsoleTarget(utf_utils::InputSource name, utf_utils::InputSource msgPattern)
 		: TargetBase(std::move(name.input), std::move(msgPattern.input)), consoleMode(console_interface::std_out), coloredOutput(false) {
 		TargetHelper()->Policy()->SetPrimaryMode(FlushSetting::always);
 		SetConsoleInterface(consoleMode);
@@ -29,7 +29,7 @@ namespace serenity::targets {
 		}
 	}
 
-	ColorConsole::~ColorConsole() {
+	ConsoleTarget::~ConsoleTarget() {
 		// If console was redirected, flush output to destination
 #ifdef WINDOWS_PLATFORM
 		if( !IsTerminalType() ) {
@@ -47,9 +47,9 @@ namespace serenity::targets {
 				fflush(outputHandle);
 		}
 #endif    // WINDOWS_PLATFORM
-	}     // ~ColorConsole
+	}     // ~ConsoleTarget
 
-	bool ColorConsole::IsValidHandle() {
+	bool ConsoleTarget::IsValidHandle() {
 #ifdef WINDOWS_PLATFORM
 		return outputHandle != INVALID_HANDLE_VALUE;
 #else
@@ -57,7 +57,7 @@ namespace serenity::targets {
 #endif    // WINDOWS_PLATFORM
 	}
 
-	void ColorConsole::SetMsgColor(LoggerLevel level, utf_utils::InputSource color) {
+	void ConsoleTarget::SetMsgColor(LoggerLevel level, utf_utils::InputSource color) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
@@ -65,7 +65,7 @@ namespace serenity::targets {
 		msgLevelColors.at(level) = std::move(color.input);
 	}
 
-	std::string_view ColorConsole::GetMsgColor(LoggerLevel level) {
+	std::string_view ConsoleTarget::GetMsgColor(LoggerLevel level) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
@@ -73,7 +73,7 @@ namespace serenity::targets {
 		return msgLevelColors.at(level);
 	}
 
-	void ColorConsole::ColorizeOutput(bool colorize) {
+	void ConsoleTarget::ColorizeOutput(bool colorize) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
@@ -84,7 +84,7 @@ namespace serenity::targets {
 	// Other than some wierd color trailing on the right-hand side for some of the
 	// differently colored lines, This now ACTUALLY works as intended (color
 	// trailing might be result of known windows cell issue)
-	void ColorConsole::SetConsoleInterface(console_interface mode) {
+	void ConsoleTarget::SetConsoleInterface(console_interface mode) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
@@ -113,7 +113,7 @@ namespace serenity::targets {
 #endif    // WINDOWS_PLATFORM
 	}
 
-	const console_interface ColorConsole::ConsoleInterface() {
+	const console_interface ConsoleTarget::ConsoleInterface() {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
@@ -121,12 +121,12 @@ namespace serenity::targets {
 		return consoleMode;
 	}
 
-	bool ColorConsole::IsTerminalType() {
+	bool ConsoleTarget::IsTerminalType() {
 		auto consoleType { (consoleMode == console_interface::std_out) ? stdout : stderr };
 		return (ISATTY(FILENO(consoleType))) ? true : false;
 	}
 
-	void ColorConsole::PrintMessage() {
+	void ConsoleTarget::PrintMessage() {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
@@ -156,7 +156,7 @@ namespace serenity::targets {
 		}    // IsValidHandle() Check
 	}        // PrintMessage()
 
-	void ColorConsole::SetLocale(const std::locale& loc) {
+	void ConsoleTarget::SetLocale(const std::locale& loc) {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();
@@ -164,7 +164,7 @@ namespace serenity::targets {
 		TargetBase::SetLocale(loc);
 	}
 
-	void ColorConsole::SetOriginalColors() {
+	void ConsoleTarget::SetOriginalColors() {
 		std::unique_lock<std::mutex> lock(consoleMutex, std::defer_lock);
 		if( TargetHelper()->isMTSupportEnabled() ) {
 				lock.lock();

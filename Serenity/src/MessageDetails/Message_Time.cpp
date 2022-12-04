@@ -135,7 +135,7 @@ namespace serenity::msg_details {
 		UpdateTimeDate(timePoint);
 	}
 
-	const std::tm& Message_Time::Cache() const {
+	std::tm& Message_Time::Cache() const {
 		return m_cache;
 	}
 

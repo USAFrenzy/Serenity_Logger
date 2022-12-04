@@ -1,6 +1,6 @@
 #include <serenity/Targets/RotatingTarget.h>
 
-namespace serenity::experimental {
+namespace serenity {
 
 	RotateSettings::RotateSettings(const std::string& path): FileHelper(path), currentFileSize(0), initalRotationEnabled(true), settingLimits(RotateLimits {}) {
 		if( !path.empty() ) {
@@ -91,9 +91,9 @@ namespace serenity::experimental {
 		return settingLimits;
 	}
 
-}    // namespace serenity::experimental
+}    // namespace serenity
 
-namespace serenity::experimental::targets {
+namespace serenity::targets {
 
 	RotatingTarget::RotatingTarget()
 		: TargetBase("Rotating_Logger"), RotateSettings(""), rotationEnabled(true), m_mode(IntervalMode::file_size), currentCache(MsgInfo()->TimeInfo()),
@@ -644,4 +644,4 @@ namespace serenity::experimental::targets {
 		return messageSize;
 	}
 
-}    // namespace serenity::experimental::targets
+}    // namespace serenity::targets

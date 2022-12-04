@@ -141,7 +141,7 @@ namespace serenity::targets::helpers {
 		PauseBackgroundThread();
 		if( !onRotation ) Flush();
 		CloseImpl();
-		return fileOpen;
+		return !(fileOpen);
 	}
 
 	void FileHelper::Flush() {

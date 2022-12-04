@@ -1,8 +1,8 @@
 #include <serenity/Color/Color.h>
-#include <serenity/Targets/ColorConsoleTarget.h>
+#include <serenity/Targets/ConsoleTarget.h>
 
 int main() {
-	serenity::targets::ColorConsole console;
+	serenity::targets::ConsoleTarget console;
 	console.SetPattern("%+");
 
 	using namespace se_colors;
@@ -56,10 +56,10 @@ int main() {
 	              Tag::Green_On_Bright_Magenta("Green On Bright Magenta") + Tag::Green_On_Bright_Cyan("Green On Bright Cyan") +
 	              Tag::Green_On_Bright_White("Green On Bright White") + Tag::Reset() + "|");
 
-	console.Trace(Tag::Yellow_On_Grey("|Yellow On Grey") + Tag::Yellow_On_Bright_Red("Yellow On Bright Red") + Tag::Yellow_On_Bright_Green("Yellow On Bright Green") +
-	              Tag::Yellow_On_Bright_Yellow("Yellow On Bright Yellow") + Tag::Yellow_On_Bright_Blue("Yellow On Bright Blue") +
-	              Tag::Yellow_On_Bright_Magenta("Yellow On Bright Magenta") + Tag::Yellow_On_Bright_Cyan("Yellow On Bright Cyan") +
-	              Tag::Yellow_On_Bright_White("Yellow On Bright White") + Tag::Reset() + "|");
+	console.Trace(Tag::Yellow_On_Grey("|Yellow On Grey") + Tag::Yellow_On_Bright_Red("Yellow On Bright Red") +
+	              Tag::Yellow_On_Bright_Green("Yellow On Bright Green") + Tag::Yellow_On_Bright_Yellow("Yellow On Bright Yellow") +
+	              Tag::Yellow_On_Bright_Blue("Yellow On Bright Blue") + Tag::Yellow_On_Bright_Magenta("Yellow On Bright Magenta") +
+	              Tag::Yellow_On_Bright_Cyan("Yellow On Bright Cyan") + Tag::Yellow_On_Bright_White("Yellow On Bright White") + Tag::Reset() + "|");
 
 	console.Trace(Tag::Blue_On_Grey("|Blue On Grey") + Tag::Blue_On_Bright_Red("Blue On Bright Red") + Tag::Blue_On_Bright_Green("Blue On Bright Green") +
 	              Tag::Blue_On_Bright_Yellow("Blue On Bright Yellow") + Tag::Blue_On_Bright_Blue("Blue On Bright Blue") +
@@ -133,7 +133,8 @@ int main() {
 	console.Trace(Tag::Bright_Green_On_Grey("|Bright Green On Grey") + Tag::Bright_Green_On_Bright_Red("Bright Green On Bright Red") +
 	              Tag::Bright_Green_On_Bright_Green("Bright Green On Bright Green") + Tag::Bright_Green_On_Bright_Yellow("Bright Green On Bright Yellow") +
 	              Tag::Bright_Green_On_Bright_Blue("Bright Green On Bright Blue") + Tag::Bright_Green_On_Bright_Magenta("Bright Green On Bright Magenta") +
-	              Tag::Bright_Green_On_Bright_Cyan("Bright Green On Bright Cyan") + Tag::Bright_Green_On_Bright_White("Bright Green On Bright White") + Tag::Reset() + "|");
+	              Tag::Bright_Green_On_Bright_Cyan("Bright Green On Bright Cyan") + Tag::Bright_Green_On_Bright_White("Bright Green On Bright White") +
+	              Tag::Reset() + "|");
 
 	console.Trace(Tag::Bright_Yellow_On_Grey("|Bright Yellow On Grey") + Tag::Bright_Yellow_On_Bright_Red("Bright Yellow On Bright Red") +
 	              Tag::Bright_Yellow_On_Bright_Green("Bright Yellow On Bright Green") + Tag::Bright_Yellow_On_Bright_Yellow("Bright Yellow On Bright Yellow") +
@@ -160,5 +161,6 @@ int main() {
 	console.Trace(Tag::Bright_White_On_Grey("|Bright White On Grey") + Tag::Bright_White_On_Bright_Red("Bright White On Bright Red") +
 	              Tag::Bright_White_On_Bright_Green("Bright White On Bright Green") + Tag::Bright_White_On_Bright_Yellow("Bright White On Bright Yellow") +
 	              Tag::Bright_White_On_Bright_Blue("Bright White On Bright Blue") + Tag::Bright_White_On_Bright_Magenta("Bright White On Bright Magenta") +
-	              Tag::Bright_White_On_Bright_Cyan("Bright White On Bright Cyan") + Tag::Bright_White_On_Bright_White("Bright White On Bright White") + Tag::Reset() + "|");
+	              Tag::Bright_White_On_Bright_Cyan("Bright White On Bright Cyan") + Tag::Bright_White_On_Bright_White("Bright White On Bright White") +
+	              Tag::Reset() + "|");
 }

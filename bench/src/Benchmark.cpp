@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <serenity/Targets/ColorConsoleTarget.h>
+#include <serenity/Targets/ConsoleTarget.h>
 #include <serenity/Targets/FileTarget.h>
 #include <serenity/Targets/RotatingTarget.h>
 #include <serenity/Utilities/Utilities.h>
@@ -85,11 +85,10 @@ int main() {
 	using namespace serenity;
 	using namespace se_utils;
 	using namespace se_colors;
-	using namespace experimental;
 
-	serenity::targets::ColorConsole C;
+	serenity::targets::ConsoleTarget C;
 	serenity::targets::FileTarget testFile;
-	serenity::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", (LogDirPath() /= "Rotating_Log.txt").string(), true);
+	serenity::targets::RotatingTarget rotatingFile("Rotating_Logger", (LogDirPath() /= "Rotating_Log.txt").string(), true);
 
 	Instrumentator timer;
 	static_assert(testView.size() == 400);

@@ -507,7 +507,7 @@ namespace serenity::msg_details {
 	std::string_view serenity::msg_details::Message_Formatter::LineEnding() const {
 		return SERENITY_LUTS::line_ending[ platformEOL ];
 	}
-	const std::string& Message_Formatter::Pattern() const {
+	std::string_view Message_Formatter::Pattern() const {
 		return fmtPattern;
 	}
 

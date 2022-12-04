@@ -18,7 +18,7 @@
 	#include <stdlib.h>
 #endif
 
-#include <serenity/Targets/ColorConsoleTarget.h>
+#include <serenity/Targets/ConsoleTarget.h>
 #include <serenity/Targets/FileTarget.h>
 #include <serenity/Targets/RotatingTarget.h>
 
@@ -111,7 +111,6 @@ int main() {
 	using namespace serenity;
 	using namespace se_utils;
 	using namespace se_colors;
-	using namespace experimental;
 
 #ifdef WINDOWS_PLATFORM
 	SetConsoleOutputCP(CP_UTF8);
@@ -119,19 +118,16 @@ int main() {
 
 #if GENERAL_SANDBOX
 
-	formatter::targets::ColorConsole C;
-	formatter::targets::FileTarget testFile;
+	serenity::targets::ConsoleTarget C;
+	serenity::targets::FileTarget testFile;
 
 	#ifdef ENABLE_ROTATION_SECTION
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Daily/DailyLog.txt";
 	#else
 	std::filesystem::path dailyFilePath = LogDirPath() /= "Rotating_Log.txt";
 	#endif    // ENABLE_ROTATION_SECTION
-	formatter::experimental::targets::RotatingTarget rotatingFile("Rotating_Logger", dailyFilePath.string(), true);
+	serenity::targets::RotatingTarget rotatingFile("Rotating_Logger", dailyFilePath.string(), true);
 
-#endif    //  GENERAL_SANDBOX
-
-#ifdef ENABLE_ROTATION_SECTION
 	std::cout << "###############################################################"
 				 "#####\n";
 	std::cout << "# This Will Be The Default Pattern Format And Message Level "
@@ -192,97 +188,7 @@ int main() {
 	testFile.StopBackgroundThread();
 	testFile.Flush();
 
-	RotateSettings settings;
-	settings.fileSizeLimit         = 512 * KB;
-	settings.maxNumberOfFiles      = 10;
-	settings.monthModeSetting      = 3;
-	settings.weekModeSetting       = 6;
-	settings.dayModeSettingHour    = 21;
-	settings.dayModeSettingMinute  = 45;
-
-	PeriodicSettings flushSettings = {};
-	flushSettings.flushEvery       = std::chrono::seconds(60);
-	Flush_Policy flushPolicy(FlushSetting::periodically, PeriodicOptions::timeBased, flushSettings);
-
-	rotatingFile.SetRotateSettings(settings);
-	rotatingFile.SetFlushPolicy(flushPolicy);
-	rotatingFile.SetRotationMode(RotateSettings::IntervalMode::daily);
-
-	auto onSizeFilePath = LogDirPath() /= "FileSize/OnSizeRotation.txt";
-	experimental::targets::RotatingTarget rotatingLoggerOnSize("RotateOnSize_Logger", onSizeFilePath.string(), true);
-	rotatingLoggerOnSize.SetRotateSettings(settings);
-	rotatingLoggerOnSize.SetFlushPolicy(flushPolicy);
-	// should be the default anyways
-	rotatingLoggerOnSize.SetRotationMode(RotateSettings::IntervalMode::file_size);
-
-	auto onHourFilePath = LogDirPath() /= "Hourly/OnHourRotation.txt";
-	experimental::targets::RotatingTarget rotatingLoggerHourly("RotateHourly_Logger", onHourFilePath.string(), true);
-	rotatingLoggerHourly.SetRotateSettings(settings);
-	rotatingLoggerHourly.SetFlushPolicy(flushPolicy);
-	rotatingLoggerHourly.SetRotationMode(RotateSettings::IntervalMode::hourly);
-
-	// Testing (probably won't work first time around)
-	rotatingLoggerOnSize.EnableMultiThreadingSupport();
-	rotatingFile.EnableMultiThreadingSupport();
-	rotatingLoggerHourly.EnableMultiThreadingSupport();
-
-	size_t rotationIterations = 1'000'000;
-	std::mutex consoleMutex;
-
-	auto NotifyConsole = [ & ](std::string message) {
-		std::unique_lock<std::mutex> lock(consoleMutex);
-		std::cout << message;
-	};
-
-	std::cout << "\n\nLogging messages to test rotation on hour mark, daily "
-				 "mark, and file size\n\n";
-	auto LogHourly = [ & ]() {
-		std::mutex hourlyMutex;
-		for( int i = 1; i <= rotationIterations; ++i ) {
-				std::unique_lock<std::mutex> lock(hourlyMutex);
-				rotatingLoggerHourly.Info("Logging message {} to rotating file based on hour mode", i);
-				std::string message = "Message ";
-				message.append(std::to_string(i)).append(" Logged To File For Rotate On Hourly\n");
-				NotifyConsole(message);
-				std::this_thread::sleep_for(std::chrono::minutes(1));
-			}
-	};
-
-	auto LogOnDaily = [ & ]() {
-		std::mutex dailyMutex;
-		for( int i = 1; i <= rotationIterations; ++i ) {
-				std::unique_lock<std::mutex> lock(dailyMutex);
-				rotatingFile.Info("Logging message {} to rotating file based on daily mode", i);
-				std::string message = "Message ";
-				message.append(std::to_string(i)).append(" Logged To File For Rotate On Daily\n");
-				NotifyConsole(message);
-				std::this_thread::sleep_for(std::chrono::minutes(2));
-			}
-	};
-
-	// auto LogOnSize = [ & ]() {
-	//	std::mutex fileSizeMutex;
-	//	for( int i = 1; i <= rotationIterations; ++i ) {
-	//			std::unique_lock<std::mutex> lock(fileSizeMutex);
-	//			rotatingLoggerOnSize.Info("Logging message {} to rotating file based on file size mode", i);
-	//			std::string message = "Message ";
-	//			message.append(std::to_string(i)).append(" Logged To File For Rotate On Size\n");
-	//			NotifyConsole(message);
-	//			std::this_thread::sleep_for(std::chrono::milliseconds(400));
-	//		}
-	// };
-
-	// std::thread t1 { LogOnSize };
-	std::thread t2 { LogHourly };
-	std::thread t3 { LogOnDaily };
-	while( /* !(t1.joinable()) ||*/ !(t2.joinable()) || !(t3.joinable()) ) {
-			std::this_thread::sleep_for(std::chrono::nanoseconds(50));
-		}
-	// t1.join();
-	t2.join();
-	t3.join();
-
-#endif    // !ENABLE_ROTATION_SECTION
+#endif
 
 #ifdef ENABLE_PARSE_SECTION
 	using namespace formatter::arg_formatter;
@@ -314,14 +220,14 @@ int main() {
 	std::vector<char> finalStr {};
 		#endif
 
-	formatter::targets::ColorConsole console("", "%+");
+	serenity::targets::ConsoleTarget console("", "%+");
 	console.SetMsgColor(LoggerLevel::debug, bright_colors::foreground::cyan);
 
 	for( int i { 0 }; i < 3; ++i ) {
 			// serenity's format loop using back_insert_iterator
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
-					parseString.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
+					parseString.format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
 					finalStr.clear();
 				}
 			timer.StopWatch_Stop();
@@ -329,7 +235,7 @@ int main() {
 
 			auto serenityTime1 { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
 			console.Debug("ArgFormatter se_format_to()  Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime1));
-			parseString.se_format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
+			parseString.format_to(std::back_inserter(finalStr), ParseFormatStringString, a, b, c, d, e, f, tmp);
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 			finalStr.clear();
 
@@ -337,7 +243,7 @@ int main() {
 			timer.StopWatch_Reset();
 			for( size_t i { 0 }; i < 10'000'000; ++i ) {
 		#if TEST_STRING_CASE
-					finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
+					finalStr = parseString.format(ParseFormatStringString, a, b, c, d, e, f, tmp);
 		#endif
 				}
 			timer.StopWatch_Stop();
@@ -346,7 +252,7 @@ int main() {
 			auto serenityTime2 { timer.Elapsed_In(time_mode::ns) / 10'000'000.0f };
 			console.Debug("ArgFormatter  se_format() Elapsed Time Over 10,000,000 iterations: [{} ns]", std::to_string(serenityTime2));
 		#if TEST_STRING_CASE
-			finalStr = parseString.se_format(ParseFormatStringString, a, b, c, d, e, f, tmp);
+			finalStr = parseString.format(ParseFormatStringString, a, b, c, d, e, f, tmp);
 		#endif
 			console.Info("With Result: {}", std::string_view(finalStr.data(), finalStr.size()));
 			finalStr.clear();
@@ -492,14 +398,8 @@ int main() {
 	std::tm cTime {};
 	auto now { std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) };
 	LOCAL_TIME(cTime, now);
-	serenity::msg_details::Message_Formatter::Formatters structFormatter {};
 	serenity::msg_details::Message_Info info("", LoggerLevel::trace, serenity::message_time_mode::local);
 	info.TimeDetails().UpdateCache(std::chrono::system_clock::now());
-	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_d>(info));
-	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_b>(info));
-	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_y>(info));
-	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_Char>(std::string_view(" ")));
-	structFormatter.Emplace_Back(std::make_unique<serenity::msg_details::Format_Arg_T>(info));
 
 	auto tz { std::chrono::current_zone() };
 	auto localTime { tz->to_local(std::chrono::system_clock::now()) };
@@ -682,46 +582,6 @@ int main() {
 	cTimeTimer.StopWatch_Stop();
 	std::cout << formatter::format("Serenity Formatter For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
 	                               cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), formatter::format(loc, formatString, cTime));
-
-	// %a Short Day takes ~15ns
-	// %b Short Month takes ~18ns
-	// %c Time-Date takes ~45ns
-	// %d PaddedDay takes ~14ns
-	//  Formatter structs don't have %g, %j, or %e(as space-padded day) so times are absent here
-	// %m Padded Month takes~18ns
-	// %y Short year takes ~14ns
-	// %n here is custom typing and not newline therefore no valid comparison can be made
-	// %p AMPM takes ~15ns
-	// %r 12hour time takes ~28ns (on laptop)
-	// %t is used as thread id here so no comparison can be made
-	// %u was never imlemented hera
-	// %w decimal weekday takes ~16ns (on laptop)
-	// %z UtcOffset takes ~14ns
-	// Apparently I never implemented %x here, so there's no comparison to be made...
-	// %A Long Weekday takes ~13ns
-	// %B Long Month takes ~15ns
-	// %F YYYY-MM-DD takes ~13ns
-	// %H 24 Hour takes ~15ns
-	// %I 12 Hour takes ~15ns
-	// %M minute takes ~14ns
-	// %R 24HourMin takes ~18ns
-	// %S Seconds takes ~15ns
-	// %T 24 hour full time takes ~14ns -> adding subsecond precision to the mix drops this to ~68ns
-	// %U was never implemented here
-	// %V was never implemented here
-	// %W was never implemented here
-	// %X Same as %T unless localized (localization not implemented yet)
-	// %Y Long Year takes ~15ns
-	// %Z timezone abbreviated takes ~15ns
-
-	// cTimeTimer.StopWatch_Reset();
-	// for( size_t i { 0 }; i < timeIterations; ++i ) {
-	//		timeStr.clear();
-	//		timeStr.append(structFormatter.FormatUserPattern());
-	//	}
-	// cTimeTimer.StopWatch_Stop();
-	// std::cout << formatter::format("FormatterArgs Struct For Time Specs Took: [{} ns] \nWith Result: {}\n\n",
-	//                              cTimeTimer.Elapsed_In(time_mode::ns) / static_cast<float>(timeIterations), structFormatter.FormatUserPattern());
 
 	// standard
 	auto flooredTime { std::chrono::floor<std::chrono::seconds>(localTime) };    // taking this out of the loop (should've been outside the loop anyways)
