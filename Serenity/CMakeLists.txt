@@ -9,7 +9,7 @@ set(MESSAGE_DETAILS_SOURCE_FILES
 
 set(TARGETS_SOURCE_FILES
     "src/Targets/Target.cpp"
-    "src/Targets/ColorConsoleTarget.cpp"
+    "src/Targets/ConsoleTarget.cpp"
     "src/Targets/FileTarget.cpp"
     "src/Targets/RotatingTarget.cpp"
 )
@@ -32,7 +32,7 @@ set(MESSAGE_DETAILS_HEADER_FILES
 set(TARGETS_HEADER_FILES
     "include/serenity/Targets/Target.h"
     "include/serenity/Targets/Target-impl.h"
-    "include/serenity/Targets/ColorConsoleTarget.h"
+    "include/serenity/Targets/ConsoleTarget.h"
     "include/serenity/Targets/FileTarget.h"
     "include/serenity/Targets/RotatingTarget.h"
 )
