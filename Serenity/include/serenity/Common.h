@@ -279,7 +279,7 @@ namespace serenity {
 			};
 
 			static constexpr std::array<const char*, 5> custom_error_messages = {
-				"Unkown Formatting Error Occured In Internal Serenity CustomFlag Formatting.",
+				"Unknown Formatting Error Occurred In Internal Serenity CustomFlag Formatting.",
 				"Error In Internal CustomFlag Formatting For Serenity: Missing '%' before flag.",
 				"Error In Internal CustomFlag Formatting For Serenity:  An Escaped Opening Bracket Was Detected - Missing Escaped Closing Bracket.",
 				"Error In Internal CustomFlag Formatting For Serenity:  An Unsupported Flag Was Encountered.",
