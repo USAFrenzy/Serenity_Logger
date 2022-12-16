@@ -5,7 +5,7 @@ namespace serenity::targets::helpers {
 
 	BaseTargetHelper& serenity::targets::helpers::BaseTargetHelper::operator=(BaseTargetHelper& other) {
 		multiThreadSupport = other.multiThreadSupport;
-		policy             = std::move(other.policy);
+		policy             = std::make_unique<Flush_Policy>(*other.policy);
 		return *this;
 	}
 
