@@ -23,7 +23,7 @@ namespace se_colors {
 		constexpr const char* blink              = "\033[5m";
 		constexpr const char* invert             = "\033[7m";
 		constexpr const char* strike_out         = "\033[9m";
-		constexpr const char* diasble_bold       = "\033[21m";
+		constexpr const char* disable_bold       = "\033[21m";
 		constexpr const char* revert_intensity   = "\033[23m";
 		constexpr const char* disable_underline  = "\033[24m";
 		constexpr const char* disable_blink      = "\033[25m";
