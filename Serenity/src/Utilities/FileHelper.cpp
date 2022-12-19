@@ -125,13 +125,8 @@ namespace serenity::targets::helpers {
 				lock.lock();
 		}
 		PauseBackgroundThread();
-		try {
-				OpenImpl(truncate);
-			}
-		catch( const std::system_error& err ) {
-				fprintf(stderr, "Error In OpenFile: %s\n", err.what());
-				return false;
-			}
+		OpenImpl(truncate);
+		if( !fileOpen ) return false;
 		ResumeBackgroundThread();
 		return true;
 	}
@@ -261,17 +256,7 @@ namespace serenity::targets::helpers {
 								 : OPEN(file, fileCache->FilePath().string().c_str(), O_APPEND | _O_WRONLY | _O_BINARY);
 					}
 			}
-		if( file != -1 ) {
-				fileOpen = true;
-		} else {
-				switch( errno ) {
-						case EACCES: throw std::system_error(EACCES, std::system_category());
-						case EEXIST: throw std::system_error(EEXIST, std::system_category());
-						case EINVAL: throw std::system_error(EINVAL, std::system_category());
-						case EMFILE: throw std::system_error(EMFILE, std::system_category());
-						case ENOENT: throw std::system_error(ENOENT, std::system_category());
-					}
-			}
+		fileOpen = file != -1;
 	}
 
 	void FileHelper::WriteImpl() {
