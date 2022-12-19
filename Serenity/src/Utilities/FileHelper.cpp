@@ -124,7 +124,6 @@ namespace serenity::targets::helpers {
 		if( targetHelper->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		PauseBackgroundThread();
 		OpenImpl(truncate);
 		if( !fileOpen ) return false;
 		ResumeBackgroundThread();
