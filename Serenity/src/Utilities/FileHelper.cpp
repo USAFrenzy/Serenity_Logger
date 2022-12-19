@@ -124,8 +124,14 @@ namespace serenity::targets::helpers {
 		if( targetHelper->isMTSupportEnabled() ) {
 				lock.lock();
 		}
-		OpenImpl(truncate);
-		if( file == -1 ) return false;
+		PauseBackgroundThread();
+		try {
+				OpenImpl(truncate);
+			}
+		catch( const std::system_error& err ) {
+				fprintf(stderr, "Error In OpenFile: %s\n", err.what());
+				return false;
+			}
 		ResumeBackgroundThread();
 		return true;
 	}
