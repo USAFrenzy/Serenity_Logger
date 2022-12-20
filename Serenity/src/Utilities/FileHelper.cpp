@@ -282,7 +282,6 @@ namespace serenity::targets::helpers {
 		if( fileOpen ) {
 				if( CLOSE(file) != 1 ) {
 						fileOpen = false;
-						buffer.clear();
 						return;
 				}
 				fprintf(stderr, "%s", std::system_error(EBADF, std::system_category()).what());
