@@ -90,7 +90,6 @@ namespace serenity::targets::helpers {
 
 	  private:
 		void OpenImpl(bool truncate);
-		void WriteImpl();
 		void WriteImpl(size_t writeLimit, bool truncateRest = false);
 		void FlushImpl();
 		void CloseImpl();

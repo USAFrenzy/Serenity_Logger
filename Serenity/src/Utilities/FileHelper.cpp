@@ -258,12 +258,6 @@ namespace serenity::targets::helpers {
 		fileOpen = file != -1;
 	}
 
-	void FileHelper::WriteImpl() {
-		if( buffer.size() < pageSize ) return;
-		WRITE(file, buffer.data(), pageSize);
-		buffer.erase(buffer.begin(), buffer.begin() + pageSize);
-	}
-
 	void FileHelper::WriteImpl(size_t writeLimit, bool truncateRest) {
 		if( buffer.size() < writeLimit ) return;
 		WRITE(file, buffer.data(), writeLimit);
@@ -296,7 +290,7 @@ namespace serenity::targets::helpers {
 	}
 
 	void FileHelper::WriteToFile(size_t writeLimit, bool truncateRest) {
-		writeLimit == max_size_size_t ? WriteImpl() : WriteImpl(writeLimit, truncateRest);
+		writeLimit == max_size_size_t ? FlushImpl() : WriteImpl(writeLimit, truncateRest);
 	}
 
 }    // namespace serenity::targets::helpers
