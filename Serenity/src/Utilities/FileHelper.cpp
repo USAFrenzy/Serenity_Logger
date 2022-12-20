@@ -264,16 +264,25 @@ namespace serenity::targets::helpers {
 		truncateRest ? buffer.erase(buffer.begin(), buffer.end()) : buffer.erase(buffer.begin(), buffer.begin() + writeLimit);
 	}
 
+	void FileHelper::WriteImpl() {
+		if( buffer.size() < pageSize ) return;
+		WRITE(file, buffer.data(), pageSize);
+		buffer.erase(buffer.begin(), buffer.begin() + pageSize);
+	}
+
 	void FileHelper::FlushImpl() {
-		if( buffer.size() >= pageSize ) {
-				auto pages { buffer.size() / pageSize };
+		auto bufferSize { buffer.size() };
+		auto bufferData { buffer.data() };
+		if( bufferSize >= pageSize ) {
+				auto pages { bufferSize / pageSize };
 				for( pages; pages != 0; --pages ) {
-						WRITE(file, buffer.data(), pageSize);
-						buffer.erase(buffer.begin(), buffer.begin() + pageSize);
+						WRITE(file, bufferData, pageSize);
+						bufferData += pageSize;
+						bufferSize -= pageSize;
 					}
 		}
-		if( buffer.size() != 0 ) {
-				WRITE(file, buffer.data(), buffer.size());
+		if( bufferSize != 0 ) {
+				WRITE(file, bufferData, bufferSize);
 		}
 		buffer.clear();
 	}
@@ -289,7 +298,7 @@ namespace serenity::targets::helpers {
 	}
 
 	void FileHelper::WriteToFile(size_t writeLimit, bool truncateRest) {
-		writeLimit == max_size_size_t ? FlushImpl() : WriteImpl(writeLimit, truncateRest);
+		writeLimit == max_size_size_t ? WriteImpl() : WriteImpl(writeLimit, truncateRest);
 	}
 
 }    // namespace serenity::targets::helpers
