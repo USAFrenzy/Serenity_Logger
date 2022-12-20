@@ -59,7 +59,7 @@ namespace serenity::targets::helpers {
 	static_cast<size_t>(4 * MB);
 #else
 	/** We'll default to just  using the default value that was being used before **/
-	return static_cast<size_t>(DEFAULT_BUFFER_SIZE);
+	static_cast<size_t>(DEFAULT_BUFFER_SIZE);
 #endif    // _WIN32 && !_WIN64
 
 	class FileHelper
