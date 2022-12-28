@@ -169,8 +169,8 @@ namespace serenity {
 
 			void FormatColumn() {
 				auto data { buff.data() };
-				std::memset(data, 0, 6);
-				result.append(data, std::to_chars(data, data + 6, srcLocation.column()).ptr - data);
+				std::memset(data, 0, SOURCE_BUFF_SIZE);
+				result.append(data, std::to_chars(data, data + SOURCE_BUFF_SIZE, srcLocation.column()).ptr - data);
 			}
 
 			void FormatFile() {
@@ -238,13 +238,18 @@ namespace serenity {
 		};
 
 		inline static constexpr size_t defaultThreadIdLength = 10;    // Precision argument dictates the length of the hashed id returned (0-10)
-		struct Format_Thread_ID
+		inline static constexpr size_t THREAD_BUFF_SIZE      = 64;
+		class Format_Thread_ID
 		{
+		  public:
 			Format_Thread_ID(const std::thread::id& id): thread(id) { }
+			Format_Thread_ID(const Format_Thread_ID&)            = delete;
+			Format_Thread_ID& operator=(const Format_Thread_ID&) = delete;
+			~Format_Thread_ID()                                  = default;
 
 			std::string FormatUserPattern(size_t precision) {
-				std::array<char, 64> buf {};
-				std::to_chars(buf.data(), buf.data() + buf.size(), std::hash<std::thread::id>()(thread));
+				std::array<char, THREAD_BUFF_SIZE> buf {};
+				std::to_chars(buf.data(), buf.data() + THREAD_BUFF_SIZE, std::hash<std::thread::id>()(thread));
 				return std::string(buf.data(), buf.data() + ((precision != 0) ? precision : defaultThreadIdLength));
 			}
 
