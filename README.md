@@ -1,9 +1,12 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/3yywxhc5bc4gq6hr/branch/dev?svg=true)](https://ci.appveyor.com/project/USAFrenzy/serenity-logger/branch/dev)
 
 
-### For all current details about the library, check out the documentation [HERE](https://usafrenzy.github.io/Serenity_Logger/) ###
+### For all current details about the library, check out the documentation [HERE](https://usafrenzy.github.io/Serenity_Logger/) [ DEPRECATED - SEE THIRD POINT BELOW ] ###
+
 - NOTE: THE DOCUMENTATION IS NOT UP-TO-DATE WITH THE CURRENT PROGRESS OF SERENITY AT THE MOMENT <br>
 - The READ-ME is slightly more up-to-date and can still be used as a quick reference.
+- ### For the work-in-progress documentation that is being written for the current status of this repo, please visit  [HERE](https://usafrenzy.github.io/Serenity_Custom_Docs/) ###
+
 <br><br>
 
 
@@ -12,14 +15,14 @@
 
 
 ## For Out Of The Box Usage ##
-- C++20 
+- C++20
   - C++20 features used
     - the new method of lambda ```this``` capture
-    - using enum 
+    - using enum
     - template constraints with ```requires``` and ```concept``` usage
     - ```<source_location>``` and, if ```USE_STD_FORMAT``` is enabled, ```<format>```
     - large use of ```std::remove_cvref_t```
-    - jthread and stop_tokens 
+    - jthread and stop_tokens
 - CMake
 - MSVC toolchain if using the option ```USE_STD_FORMAT``` (Currently only MSVC has an implementation of libfmt).
   - This library will be updated to support clang and g++ once libfmt is <br>
@@ -28,7 +31,7 @@
 - If not using the above two options, you're all set! This logging framework includes a stripped down but fully<br>functional
   version of the formatting interface via the ```ArgFormatter.h``` header file and is enabled by default<br>if the other options
   aren't defined.
-  - The only caveats to the built-in version is that there's no type erasure of arguments captured<br>and no utf-8 support as of yet. 
+  - The only caveats to the built-in version is that there's no type erasure of arguments captured<br>and no utf-8 support as of yet.
 - With the addition of the ```ArgFormatter.h``` header, the goal in the future is to fully drop the requirements<br>down to C++17
   and only require C++20 when ```USE_STD_FORMAT``` has been defined, however, for now anyways, <br>C++20 is the default requirement.
 
@@ -36,19 +39,19 @@
 <h1 align="center"> Motivation </h1>
 
 <p align="center">Starting from commit 037a0d2, which was relatively early on, this project shifted from being solely a wrapper to one of being a home-brewed logging framework.
-As for the motivation, one often doesn't think of logging as a fun endeavor, but my goal here is to have just that - a logger that's highly 
-efficient, fast, customizable, fun, and easy to use. I wanted to make a logger that had several color choices to pick from 
-(More than a user may ever need, while still modularizing components for choices a user may not want). I plan on extending 
-this to cover some basic RGB color combos as well and add user defined formatting call backs and a way to add user defined flags. </p> 
+As for the motivation, one often doesn't think of logging as a fun endeavor, but my goal here is to have just that - a logger that's highly
+efficient, fast, customizable, fun, and easy to use. I wanted to make a logger that had several color choices to pick from
+(More than a user may ever need, while still modularizing components for choices a user may not want). I plan on extending
+this to cover some basic RGB color combos as well and add user defined formatting call backs and a way to add user defined flags. </p>
 
-<p align="center">This project is honestly more of a learning project meant for practicing. This is for a multitude of different reasons - the major 
+<p align="center">This project is honestly more of a learning project meant for practicing. This is for a multitude of different reasons - the major
  one being that my main aim is to have a project that was completed from start to finish while learning more on performance oriented designs and and some
 minor stepping stones into the world of templates (before this project, I had never written anything templated). </p>
 
-<p align="center">For now, my goal is simply to achieve a multi-threaded and single-threaded version of a console target, color console target, 
-file target, rotating file target, some form of an XML target capable of shredding, and lastly the possibility of a very basic 
-HTML target. I would like to add many more built-in capabilities than just these, but I feel that this would be a strong start 
-for this project. I did at one point try to use function pointers for formatting functions, however that route ended up being 
+<p align="center">For now, my goal is simply to achieve a multi-threaded and single-threaded version of a console target, color console target,
+file target, rotating file target, some form of an XML target capable of shredding, and lastly the possibility of a very basic
+HTML target. I would like to add many more built-in capabilities than just these, but I feel that this would be a strong start
+for this project. I did at one point try to use function pointers for formatting functions, however that route ended up being
 slower than the standard I'm aiming to beat - so for now these are in the form of formatting structs.</p>
 
 --------------------------------------
@@ -60,20 +63,20 @@ and settings used by all the derived targets. </p>
 
 
 --------------------------------------------------------------------------------------
-<p align="left"> The TargetBase class exposes the following: 
+<p align="left"> The TargetBase class exposes the following:
 
 **The TargetBase class can be found in the ```<serenity/Targets/Target.h>``` header.**
 - The ability to set a user specified flush policy
   - This determines how often log messages should be flushed to disk
   - Current policies control a wall-clock time interval based flushing system and a
-    message level threshold based flushing system. 
+    message level threshold based flushing system.
     - The time interval policy utilizes a background thread to keep track of elapsed
       time <br>
       and will protect against data races when flushing the file to disk.
     - Therefore, this policy will block log messages only when the time elapsed is
       greater <br>
       than or equal to the interval limit that was set by calling ```Flush()```.
-- Current flush policies expanded: 
+- Current flush policies expanded:
   - If interval based, can flush the file to disk every 5 seconds for example (time can be customized).
   - If message threshold based, can flush the file to disk every time a message with a level of warning or <br>
   higher (warning, error, and fatal) is logged as an example (level threshold can be customized).
@@ -101,7 +104,7 @@ and settings used by all the derived targets. </p>
 
 
 --------------------------------------
-<p align="left"> The FileTarget class is capable of the following: 
+<p align="left"> The FileTarget class is capable of the following:
 
 **File logging occurs via the FileTarget class found in the ```<serenity/Targets/FileTarget.h>``` header.**
 - Creating a log file if it doesn't exist
@@ -109,7 +112,7 @@ and settings used by all the derived targets. </p>
 - Able to rename the file being logged to (this does block logs until rename completes)
 - Ability to explicitly open, close, and flush the logging file.
 - The ability to inherit from this target to specialize the ```PolicyFlushOn()```, ```PrintMessage()```, and ```RenameFile()``` functions.
-- This gives the user some flexibility over how they may want to implement flushing and logging type functions. 
+- This gives the user some flexibility over how they may want to implement flushing and logging type functions.
 - ```RenameFile()``` is also a virtual function so that the user can define if they want a specific routine for<br>
 this purpose or if they don't want this function to do anything when called.
 - Change the default buffer size held by the file handle by altering the DEFAULT_BUFFER_SIZE macro.
@@ -118,18 +121,18 @@ this purpose or if they don't want this function to do anything when called.
 </p>
 
 ------------------------------------------------------
-<p align="left"> The RotatingTarget class is capable of the following: 
+<p align="left"> The RotatingTarget class is capable of the following:
 
-**Rotational logging occurs via the RotatingTarget class found in the ```<serenity/Targets/RotatingTarget.h>``` header.** 
+**Rotational logging occurs via the RotatingTarget class found in the ```<serenity/Targets/RotatingTarget.h>``` header.**
 - Enable/Disble rotation if desired
-  - If disabled, this class effectively mirrors FileTarget class functionality. 
+  - If disabled, this class effectively mirrors FileTarget class functionality.
 - Set specific rotation settings
   - The current rotation settings only implement file-size based rotations
   - Current rotation settings are:
     - enable/disable rotating initially
     - set the maximum number of files to create and rotate through <br>
     when the file size limit has been reached
-    - set the file size limit for files being logged to 
+    - set the file size limit for files being logged to
 - Caching the file path and its components as well as the file's base name and
   setting up the current file for <br>
   rotation via ```RenameFileForRotation()```
@@ -137,7 +140,7 @@ this purpose or if they don't want this function to do anything when called.
   - This is also done when ```RenameFile()``` is called AND rotation is enabled.
   - If rotation was initially disabled but re-enabled after renaming the file, future logs will be named to <br>
   this base name during their rotation
-    - Previous logs are unaffected until the next time they are selected in the rotation queue. 
+    - Previous logs are unaffected until the next time they are selected in the rotation queue.
 - Inherits from FileTarget functions, TargetBase functions and both of their utilities.
 </p>
 
@@ -160,10 +163,10 @@ this purpose or if they don't want this function to do anything when called.
   - These options mirror the standard outputs
 - Enabling/Disabling color output for messages
 - Resetting to default colors through ```SetOriginalColors()```
-- Ability to check if an output handle is valid (```IsValidHandle()```) and <br> 
+- Ability to check if an output handle is valid (```IsValidHandle()```) and <br>
   if the output handle is a terminal device (```IsTerminalType()```)
 - If terminal output is being piped to another location instead:
-  - If Windows platform, ```WriteFile()``` will be called instead of the default ```WriteConsole()``` 
+  - If Windows platform, ```WriteFile()``` will be called instead of the default ```WriteConsole()```
   - Output will be flushed when output handle's internal buffer is full or when ```Flush()``` <br>
     is explicitly called. Will also call ```Flush()``` in the destructor to ensure contents are <br>
     present in the pipe.
@@ -182,9 +185,9 @@ header under the se_colors namespace.
 namespace color = serenity::se_colors::bright_colors;
 namespace target = serenity::targets;
 // Create the console target with default format pattern and user-defined name
-target::ColorConsoleTarget example("Example_Logger"); 
+target::ColorConsoleTarget example("Example_Logger");
 // Set the message level to any ansi-supported code (using helper header here)
-example.SetMsgColor(LoggerLevel::trace, color::foreground::grey );  
+example.SetMsgColor(LoggerLevel::trace, color::foreground::grey );
 ```
 
 </p>
@@ -212,7 +215,7 @@ TODO: Document examples here
 - [Note]: For the console targets, message outputting was disabled, so the timings for Serenity ColorConsole<br>
         and Spdlog's Console Sink reflect that difference compared to the rest of the benched targets.
     ___________________________________________________________________________________________
-    |      Logging Sink/Target      |      Logging Speed       |      Logging Throughput      |             
+    |      Logging Sink/Target      |      Logging Speed       |      Logging Throughput      |
     |-------------------------------|--------------------------|------------------------------|
     | Serenity Console Target       |        5.656 ns          |         67437.398 MB/s       |
     | Spdlog Console Sink           |       10.837 ns          |         35197.914 MB/s       |
@@ -222,7 +225,7 @@ TODO: Document examples here
     | Spdlog Rotating Sink          |     2919.572 ns          |           130.659 MB/s       |
     -------------------------------------------------------------------------------------------
 - Serenity's console target is ~40%-42% faster than spdlog's current counterpart.
-- Serenity's file target is ~79%-81% faster than spdlog's current counterpart. 
+- Serenity's file target is ~79%-81% faster than spdlog's current counterpart.
 - Serenity's rotating Target is ~78%-79% faster than spdlog's current counterpart.
 
 
